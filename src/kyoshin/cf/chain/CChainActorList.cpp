@@ -967,36 +967,26 @@ extern __declspec(section ".sdata2") float lbl_eu_80668A80[2] = { 0.0f, 0.0f };
 // .rodata/.sdata outright. .data stays rule-stripped: the compiler vtable
 // run for List/reslist/base cannot interleave with the manual vtables, and
 // the frozen rule cannot gain the renames; see the t3 report.
-// .rodata layout: 9 strings (sizes strlen+1+pad-to-4; MWCC packs
-// same-section char arrays in declaration order), then the u16 id table
-// (EDD0: indices selected by v192()), the float table (EDE0: 1.0/1.2/1.4/1.6
-// selected by mField0A in Chain_TickChanceCount), then the Flusher string.
-// Total: 0x18+0x10+0x18+0x10+0x14+0x1C+0x24+0x14+0x10+0x10+0x20 = 0xF8.
-__declspec(section ".rodata") __attribute__((used)) char lbl_eu_8050ED18[0x18] = "cf::CChainChance";
-__declspec(section ".rodata") __attribute__((used)) char lbl_eu_8050ED30[0x10] = "cf::CChainTimer";
-__declspec(section ".rodata") __attribute__((used)) char lbl_eu_8050ED40[0x18] = "cf::CChainMember";
-__declspec(section ".rodata") __attribute__((used)) char lbl_eu_8050ED58[0x10] = "cf::CChainActor";
-__declspec(section ".rodata") __attribute__((used)) char lbl_eu_8050ED68[0x14] = "cf::CChainActorList";
-__declspec(section ".rodata") __attribute__((used)) char lbl_eu_8050ED7C[0x1C] = "reslist<cf::CChainActor *>";
-__declspec(section ".rodata") __attribute__((used)) char lbl_eu_8050ED98[0x24] = "_reslist_base<cf::CChainActor *>";
-__declspec(section ".rodata") __attribute__((used)) char lbl_eu_8050EDBC[0x14] = "cf::CChainTemp";
-__declspec(section ".rodata") __attribute__((used)) unsigned short lbl_eu_8050EDD0[8] = { 0, 15, 20, 25, 30, 0, 0, 0 };
-extern "C" __declspec(section ".rodata") __attribute__((used)) float lbl_eu_8050EDE0[4] = { 1.0f, 1.2f, 1.4f, 1.6f };
-__declspec(section ".rodata") __attribute__((used)) char lbl_eu_8050EDF0[0x20] = "cf::Flusher<cf::CfObjectActor>";
 // .sdata typeinfo pairs (retail order; E5's second word names the .data
 // triple lbl_eu_80538320, still rule-stripped, so it links UNDEF for now).
 extern u8 lbl_eu_80538320[];
-__declspec(section ".sdata") __attribute__((used)) void* __RTTI__Q22cf12CChainChance[2] = { lbl_eu_8050ED18, 0 };
-__declspec(section ".sdata") __attribute__((used)) void* __RTTI__Q22cf11CChainTimer[2] = { lbl_eu_8050ED30, 0 };
-__declspec(section ".sdata") __attribute__((used)) void* __RTTI__Q22cf12CChainMember[2] = { lbl_eu_8050ED40, 0 };
-__declspec(section ".sdata") __attribute__((used)) void* __RTTI__Q22cf11CChainActor[2] = { lbl_eu_8050ED58, 0 };
-__declspec(section ".sdata") __attribute__((used)) void* __RTTI__Q22cf15CChainActorList[2] = { lbl_eu_8050ED68, 0 };
-__declspec(section ".sdata") __attribute__((used)) void* lbl_eu_80662A68[2] = { lbl_eu_8050ED7C, lbl_eu_80538320 };
-__declspec(section ".sdata") __attribute__((used)) void* lbl_eu_80662A70[2] = { lbl_eu_8050ED98, 0 };
-__declspec(section ".sdata") __attribute__((used)) void* __RTTI__Q22cf10CChainTemp[2] = { lbl_eu_8050EDBC, 0 };
+__declspec(section ".sdata") __attribute__((used)) void* __RTTI__Q22cf12CChainChance[2] = { (void*)&"cf::CChainChance"[0], 0 };
+__declspec(section ".sdata") __attribute__((used)) void* __RTTI__Q22cf11CChainTimer[2] = { (void*)&"cf::CChainTimer"[0], 0 };
+__declspec(section ".sdata") __attribute__((used)) void* __RTTI__Q22cf12CChainMember[2] = { (void*)&"cf::CChainMember"[0], 0 };
+__declspec(section ".sdata") __attribute__((used)) void* __RTTI__Q22cf11CChainActor[2] = { (void*)&"cf::CChainActor"[0], 0 };
+__declspec(section ".sdata") __attribute__((used)) void* __RTTI__Q22cf15CChainActorList[2] = { (void*)&"cf::CChainActorList"[0], 0 };
+__declspec(section ".sdata") __attribute__((used)) void* lbl_eu_80662A68[2] = { (void*)&"reslist<cf::CChainActor *>"[0], lbl_eu_80538320 };
+__declspec(section ".sdata") __attribute__((used)) void* lbl_eu_80662A70[2] = { (void*)&"_reslist_base<cf::CChainActor *>"[0], 0 };
+__declspec(section ".sdata") __attribute__((used)) void* __RTTI__Q22cf10CChainTemp[2] = { (void*)&"cf::CChainTemp"[0], 0 };
 // .sdata event counter (retail initial value 1; the trailing 4 bytes to
 // A88 are MWCC's alignment pad for the 8-byte pair that follows).
 extern "C" __declspec(section ".sdata") int lbl_eu_80662A80 = 1;
+
+// .rodata tuning tables, emitted after the compiler-pooled name literals.
+__declspec(section ".rodata") __attribute__((used)) unsigned short lbl_eu_8050EDD0[8] = { 0, 15, 20, 25, 30, 0, 0, 0 };
+extern "C" __declspec(section ".rodata") __attribute__((used)) float lbl_eu_8050EDE0[4] = { 1.0f, 1.2f, 1.4f, 1.6f };
+
+__declspec(section ".rodata") __attribute__((used)) char lbl_eu_8050EDF0[0x20] = "cf::Flusher<cf::CfObjectActor>";
 __declspec(section ".sdata") __attribute__((used)) void* lbl_eu_80662A88[2] = { lbl_eu_8050EDF0, 0 };
 
 // --- hand-built retail .data (splits: .data 8053826C-80538358, 0xEC) ---

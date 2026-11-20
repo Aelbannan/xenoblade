@@ -260,7 +260,7 @@ struct PcEffectScanRec {
     /* 0x16 */ u8 _16[2];
 };
 
-// PcEffect07 state blob (lbl_eu_80664398). Three entries at stride 0x18;
+// PcEffect07 state blob (gpPcEffectData). Three entries at stride 0x18;
 // offset 0x58 = maxEffects count.
 struct PcEffectData {
     u8 _00[0xC];
@@ -395,7 +395,7 @@ extern u32 lbl_eu_80533738[];
 extern const f32 lbl_eu_80667DEC;
 
 // External data symbols referenced by this TU (defined in other TUs).
-extern PcEffectData* lbl_eu_80664398;   // PcEffect07 state (three effect slots)
+extern PcEffectData* gpPcEffectData;   // PcEffect07 state (three effect slots)
 extern u16 lbl_eu_805049F8[];           // wstring table of slot ids (index = id - 0x700)
 extern const f32 lbl_eu_80667DF4;       // sdata2 float constant (schedule interval)
 extern const f32 lbl_eu_80667DE8;       // sdata2 float constant (ctor initial value)

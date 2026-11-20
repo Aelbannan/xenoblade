@@ -133,19 +133,11 @@ CDeviceFileCri::~CDeviceFileCri() {
 
 namespace {
 
-struct CriMsgView { // raw CMsgParam<8> tail view (members private); isException replica
-    u8 _00[0x1A4];
-    CMsgParamEntry* mArrayPtr; // 0x1A4
-    u32 mFront;                // 0x1A8
-    u32 mSize;                 // 0x1AC
-    u32 mCapacity;             // 0x1B0
-};
 inline int criFindException(CDeviceFileCri* self) {
-    for (int i = 0; (u32)i < ((CriMsgView*)self)->mSize; i++) {
-        u32 slot = (((CriMsgView*)self)->mFront + i) %
-                   ((CriMsgView*)self)->mCapacity;
-        if ((((CriMsgView*)self)->mArrayPtr)[slot].command ==
-            CWorkThread::EVT_EXCEPTION) {
+    const CMsgParamRing<8>& ring = self->mMsgQueue.mRing;
+    for (int i = 0; (u32)i < ring.mSize; i++) {
+        u32 slot = (ring.mFront + i) % ring.mCapacity;
+        if (ring.mArrayPtr[slot].command == CWorkThread::EVT_EXCEPTION) {
             return i;
         }
     }
@@ -949,12 +941,11 @@ extern "C" __declspec(align(8)) const char lbl_eu_80522C90[0x18] = {
 
 // [.sdata] 0x806636C8-0x806636E0 (0x18 = 24B): singleton-string pointers +
 // RTTI locator.
-extern "C" u32 lbl_eu_8066A3B0;  // shared string ("CDeviceFileCri"-related)
 extern "C" u32 lbl_eu_806636D8[2];
 extern "C" u32 lbl_eu_8056C408[6];  // RTTI base list (defined below)
-extern "C" const wchar_t* sCriFilePathA = (const wchar_t*)&lbl_eu_8066A3B0;
-extern "C" const wchar_t* sCriFilePathB = (const wchar_t*)&lbl_eu_8066A3B0;
-extern "C" const wchar_t* sCriFilePathC[2] = { (const wchar_t*)&lbl_eu_8066A3B0, NULL };
+extern "C" const wchar_t* sCriFilePathA = L"";
+extern "C" const wchar_t* sCriFilePathB = L"";
+extern "C" const wchar_t* sCriFilePathC[2] = { L"", NULL };
 extern "C" u32 lbl_eu_806636D8[2] = { (u32)&lbl_eu_80522C90, (u32)&lbl_eu_8056C408 };
 
 // [.data] 0x8056C330-0x8056C420 (0xF0 = 240B): wkUpdate jumptable (emitted

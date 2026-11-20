@@ -282,9 +282,6 @@ struct CMenuBattleDamageFontView {
 extern CMenuBattleDamage* spBattleDamageMenu;
 // sdata2 float pool (values from CMenuBattlePlayerState sibling).
 extern const f32 lbl_eu_80666F94; // 0.0f
-extern const f32 lbl_eu_80666F98; // 110.0f
-extern const f32 lbl_eu_80666F9C; // 86.0f
-extern const f32 lbl_eu_80666FA0; // -178.0f
 // Layout pane names / layout file string table (char array).
 extern char lbl_eu_804FD720[];
 
@@ -333,9 +330,3 @@ extern char lbl_eu_8052C230[];
 extern u32 lbl_eu_80535AD0[3]; // retail name of the null PMF triple
 extern u32 gmPauseFlags;
 extern const f32 lbl_eu_80666F68; // 0.0f (zero-fill constant)
-extern const f32 lbl_eu_80666F6C; // 1.0f
-extern const f32 lbl_eu_80666F70; // screen x offset
-extern const f32 lbl_eu_80666F74; // screen y offset
-extern const f32 lbl_eu_80666F78; // screen y scale
-extern const f32 lbl_eu_80666F7C; // direction offset
-extern const f32 lbl_eu_80666F80; // anim frame delay scale

@@ -637,55 +637,17 @@ extern "C" u32 ScnRes_ResolveGroundHeight(void* a, void* b, u32 c, u32 d, u32 e,
 extern "C" {
 extern float lbl_eu_80665ECC;
 extern float lbl_eu_80665ED0; // atan2 scale (blendAnimHeading)
-extern float lbl_eu_80665ED4; // wrap-diff gate (blendAnimHeading)
 }
 extern "C" u8 lbl_eu_80663D4C;
 // sdata2 float constants used by the anim start/setup helpers (f32, loaded
 // via lfs in retail).
 extern float lbl_eu_80665EB8;
-extern const float lbl_eu_80665E9C;
-extern const double lbl_eu_80665EE8; // 2^52+2^31 u32->f64 conversion magic (xoris trick)
 extern const float lbl_eu_80665EA0; // const: lets MWCC hoist the sdata2 load like a pool constant (MWCC_REF §SDA hoist)
 extern const float lbl_eu_80665ED8; // fidx scale (makeAxisAngleQ / sinAnimFIdx)
 extern const float lbl_eu_80665F00; // half-angle (makeAxisAngleQ)
 extern float lbl_eu_80665F18;
-extern const float lbl_eu_80665EA4; // (initAnimState init)
-extern const float lbl_eu_80665EA8; // (initAnimState init)
-extern const float lbl_eu_80665EAC; // (initAnimState init)
-extern const float lbl_eu_80665EB0; // (initAnimState init / func_800504DC clamp)
-extern const float lbl_eu_80665EB4; // (initAnimState init / func_800504DC)
-extern const float lbl_eu_80665EBC; // (initAnimState init: pre-multiplied with 8066A210)
-extern const float lbl_eu_80665EC0; // (func_8004B9D4 angle normalization divisor)
-extern const float lbl_eu_80665F04; // (func_800504DC rand scale)
-extern const float lbl_eu_80665F1C; // (func_800504DC angle threshold)
-extern const float lbl_eu_80665F20; // (func_800504DC angle threshold)
-extern const float lbl_eu_80665F24; // (func_800504DC angle threshold)
-extern const float lbl_eu_80665F28; // (func_800504DC clamp bound)
-extern const float lbl_eu_80665F2C; // (func_800504DC clamp scale)
-extern const float lbl_eu_80665F30; // (func_800504DC clamp bound)
-extern const float lbl_eu_80665F34; // (func_800504DC clamp bound)
-extern const float lbl_eu_80665F38; // (func_800504DC clamp bound)
-extern const float lbl_eu_80665F40; // (func_800504DC clamp bound)
-extern const float lbl_eu_80665F44; // (func_800504DC clamp scale)
-extern const float lbl_eu_80665F48; // (func_800504DC clamp bound)
-extern const float lbl_eu_80665EF8; // (func_800504DC clamp bound / stepAnimState gate)
-extern const float lbl_eu_80665EFC; // (func_800504DC angle threshold / stepAnimState gate)
-extern const float lbl_eu_80665EF0; // 10.0f (anim blend threshold, fireBlendCust/FCE0)
-extern const float lbl_eu_80665EF4; // (func_8004E9EC direction-length gate)
-extern const float lbl_eu_80665F08; // (stepAnimState anim clamp bound)
-extern const float lbl_eu_80665F10; // (solveHeadRate anim angle bound)
-extern const float lbl_eu_80665F0C; // (stepAnimState/FFBC speed limit scale)
 extern float lbl_eu_80663D48; // (sdata anim gate, sinit_800539E0 + stepAnimState)
-extern const float lbl_eu_80665EC4; // (updateLeafDist)
-extern const float lbl_eu_80665EC8; // (updateLeafDist)
-extern const float lbl_eu_80665EDC; // (stepAnimState/FFBC speed limit scale)
-extern const float lbl_eu_80665EE0; // (updateLeafDist: anim blend threshold)
 extern float lbl_eu_80665F3C;
-extern float lbl_eu_80665F4C;
-extern float lbl_eu_80665F50;
-extern float lbl_eu_80665F54;
-extern const float lbl_eu_80665F14; // (alignAnimQuat acos-angle epsilon)
-extern const float lbl_eu_80665F5C; // (alignAnimQuat dot threshold)
 extern float lbl_eu_80665F6C;
 extern float lbl_eu_80665F70;
 
@@ -697,7 +659,6 @@ void func_80053198(CActParamAnim* self, ml::CVec3* v);
 extern "C" f32 getSecPerFrame__9CDeviceVIFv();
 extern "C" void Warning__Q24nw4r2dbFPCciPCce(const char* file, int line,
                                               const char* msg, ...);
-extern const float lbl_eu_80665F74; // (func_80053198 min-move scale)
 
 // Child-data gate helpers called with the embedded CActParamData (+0x10).
 extern "C" int getParamRefS16A(void* data);
@@ -734,10 +695,6 @@ void* getScnHandle();
 extern "C" int ScnData_FwdBC9A0();
 
 // Extra sdata2/sdata float constants.
-extern const float lbl_eu_80665F58;
-extern const float lbl_eu_80665F60;
-extern const float lbl_eu_80665F64;
-extern const float lbl_eu_80665F68;
 extern float lbl_eu_8066AF20;
 
 // nw4r debug strings used by the FSqrt-style assert (file/msg pair).

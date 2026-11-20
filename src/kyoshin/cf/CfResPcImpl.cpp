@@ -980,7 +980,7 @@ void CfResPcImpl_open(cf::CfResPcImpl* self) {
     // table[1..10]; table[0] shares its first word with the mLength slot of
     // the FixStr buffer below (retail stack layout).
     cf::CfResPcPosTableEntry table[11];
-    *(cf::CfResPcPosTable*)(table + 1) = lbl_eu_80503B30;
+    *(cf::CfResPcPosTable*)(table + 1) = cfResPcPosTableData;
     if ((self->field_00->field_6C & 0x3000) &&
         (entry_d->field_2C)->isInUse(entry_d) == 0) {
         ok = 0;
@@ -1112,11 +1112,11 @@ void CfResPcImpl_reloadStateMachine(cf::CfResPcImpl* self) {
 
 // Dispatch one of the 4 reload handlers selected by field_08 (u16) when the
 // state at field_0A is valid (>= 0). MWCC lowers the pmf call to
-// mulli/lis/addi + `bl __ptmf_scall` against the lbl_eu_80532730 table.
+// mulli/lis/addi + `bl __ptmf_scall` against the cfResPcPmfDispatch table.
 void CfResPcImpl_dispatchReloadHandler(cf::CfResPcImpl* self)
 {
     if (self->field_0A >= 0 && self->field_08 < 4) {
-        (self->*lbl_eu_80532730[self->field_08].p)();
+        (self->*cfResPcPmfDispatch[self->field_08].p)();
     }
 }
 
@@ -1433,7 +1433,8 @@ CfRes_tryRefreshByBits(((u32)gmGlobalFlag44 << 10) | (((u32)gmGlobalFlag42 << 20
 // by the data gate when bytes match.
 // .rodata 0x50: position table copied by CfResPcImpl_open (10 float pairs).
 __declspec(section ".rodata") __attribute__((aligned(8), used))
-cf::CfResPcPosTable lbl_eu_80503B30 = { {
+// name-guess: typed 0x50 position table copied by CfResPcImpl_open.
+cf::CfResPcPosTable cfResPcPosTableData = { {
     {0.1f, 0.9f}, {0.04f, 0.9f}, {0.19f, 0.9f}, {0.07f, 0.9f}, {0.1f, 0.9f},
     {0.19f, 0.9f}, {0.1f, 0.9f}, {0.19f, 0.9f}, {0.1f, 0.9f}, {0.1f, 0.9f},
 } };
@@ -1454,7 +1455,8 @@ char lbl_eu_80503BC4[0x14] = "%s(%x)\0JUspA";
 // .data 0x30: PMF dispatch rows ({0,-1,func}; free-function targets are not
 // expressible as PMFs, so init via the raw-word view like CfResObjImpl).
 __declspec(section ".data") __attribute__((aligned(8), used))
-CfResPcImplPmfEntry lbl_eu_80532730[4] = {
+// name-guess: 0x30 dispatch table walked by CfResPcImpl_reload.
+CfResPcImplPmfEntry cfResPcPmfDispatch[4] = {
     { 0, 0xFFFFFFFFu, (u32)CfResPcImpl_reload },
     { 0, 0xFFFFFFFFu, (u32)CfResPcImpl_advance },
     { 0, 0xFFFFFFFFu, (u32)CfResPcImpl_open },
@@ -1521,22 +1523,10 @@ __declspec(section ".sdata") __attribute__((aligned(8), used))
 const void* lbl_eu_806624D8[2] = { lbl_eu_80503BB8, 0 };
 // .sdata2 0x30: float pool + trailing double, in retail order. Aggregate
 // (not scalars): MWCC -ipa file folds scalar consts into code. The hpp
-// keeps plain `extern const float` decls for documentation; the use sites
-// above rewrite to members via the defines below (Npc/Elv pattern).
+// declares the entries as extern const float; this object supplies the bytes.
 struct Sdata2_ResPcPool {
     float f40, f44, f48, f4C, f50, f54, f58, f5C, f60, f64, f68, f6C_pad;
 };
 __declspec(section ".sdata2") __attribute__((used, aligned(8)))
 const Sdata2_ResPcPool sdata2_ResPcPool = {0.0f, 2.0f, -8.0f, 0.7f, 1.4f, -0.1f, 0.3f, 3.0f, 1.0f, 20.0f, 0.5f, 0.0f};
-#define lbl_eu_80667A40 (sdata2_ResPcPool.f40)
-#define lbl_eu_80667A44 (sdata2_ResPcPool.f44)
-#define lbl_eu_80667A48 (sdata2_ResPcPool.f48)
-#define lbl_eu_80667A4C (sdata2_ResPcPool.f4C)
-#define lbl_eu_80667A50 (sdata2_ResPcPool.f50)
-#define lbl_eu_80667A54 (sdata2_ResPcPool.f54)
-#define lbl_eu_80667A58 (sdata2_ResPcPool.f58)
-#define lbl_eu_80667A5C (sdata2_ResPcPool.f5C)
-#define lbl_eu_80667A60 (sdata2_ResPcPool.f60)
-#define lbl_eu_80667A64 (sdata2_ResPcPool.f64)
-#define lbl_eu_80667A68 (sdata2_ResPcPool.f68)
 

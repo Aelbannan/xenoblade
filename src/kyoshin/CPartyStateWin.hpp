@@ -303,14 +303,8 @@ extern const u32 lbl_eu_806681E4;
 // .data unit; +0x88 is the secondary interface vtable offset).
 extern u8 lbl_eu_805352DC[];
 
-// Float written to field_6BE8 by the ctor (.sdata, retail unmangled).
-extern const f32 lbl_eu_806681D8;
-
-// Timer constants used by PartyStateWin_StateEquipInput: lbl_eu_806681DC is added to
-// field_6BE8 each frame; lbl_eu_806681E0 clamps it (.sdata, retail
-// unmangled).
-extern const f32 lbl_eu_806681DC;
-extern const f32 lbl_eu_806681E0;
+// The ctor's initial field_6BE8 value and the equip-input timer step/clamp are
+// plain 0.0f / 1.0f / 10.0f literals in the .cpp (compiler-emitted .sdata2 pool).
 
 // Global mode bitfield (bit 0x400 gates the party-window render).
 extern u32 gmPauseFlags;

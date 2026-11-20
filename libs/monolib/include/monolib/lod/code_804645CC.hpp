@@ -29,7 +29,6 @@ extern u32 sCachedCurrentMtx;
 extern u32 lbl_eu_8066581C;
 extern u32 lbl_eu_80665820;
 extern u32 lbl_eu_80665824;
-extern const double lbl_eu_8066A628;
 extern const float lbl_eu_8066A630;
 }
 

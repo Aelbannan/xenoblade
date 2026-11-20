@@ -6,14 +6,8 @@
 
 // Foreign .sdata/.sdata2 float constants referenced by this TU.
 extern float lbl_eu_80663964;
-extern const float lbl_eu_8066A940;
-extern const float lbl_eu_8066A944;
 extern const float lbl_eu_8066A948;
 extern const float lbl_eu_8066A994;
-extern const float lbl_eu_8066A9BC;
-extern const float lbl_eu_8066A9C0;
-extern const float lbl_eu_8066A9C4;
-extern const float lbl_eu_8066A9C8;
 extern const float lbl_eu_8066A9CC;
 
 // Minimal nw4r g3d handle wrappers (single-pointer value types).
@@ -76,15 +70,6 @@ extern "C" void* simGetLeafActData(void* object);
 extern void MaruShadowDrawBillboard(CScnMaruShadowNw4r* shadow, ShadowCtx* ctx, float scale);
 
 } // extern "C"
-
-// Foreign .sdata2 constants used by the draw path.
-extern const float lbl_eu_8066A990;
-extern const float lbl_eu_8066A998;
-extern const float lbl_eu_8066A99C;
-extern const float lbl_eu_8066A9A0;
-extern const float lbl_eu_8066A9B8;
-extern const double lbl_eu_8066A9A8;
-extern const double lbl_eu_8066A9B0;
 
 // String / key globals referenced by the shadow setup.
 extern const char* lbl_eu_8066395C; // user-data dictionary key A

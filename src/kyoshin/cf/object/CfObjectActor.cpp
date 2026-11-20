@@ -66,7 +66,7 @@ void CfObjectActor::CBattleState_notifyEntryUpdated(CBattleStateEntry* arg) {
             buf.field_0x14 = (u16)f->field_0x1638;
             buf.field_0x16 = (u16)f->field_0x1640;
             buf.field_0x18 = (u16)f->field_0x1644;
-            buf.field_0x20 = lbl_eu_80667738;
+            buf.field_0x20 = 0.0f;
             buf.field_0x30 = 0x10001;
             CBattleState_enterStatusEntry((cf::CBattleStateEntry*)&buf);
         }
@@ -84,7 +84,7 @@ void CfObjectActor::CBattleState_getLinkedActorId(CBattleStateEntry* arg) {
     int v = reinterpret_cast<cf::CfActorParamArg*>(arg)->field_0xC;
     switch (v) {
     case 0xE5:
-        CfObject_syncModelRate(lbl_eu_80667738);
+        CfObject_syncModelRate(0.0f);
         break;
     case 0x10: {
         cf::CfActorParamFields* f = reinterpret_cast<cf::CfActorParamFields*>(this);
@@ -120,15 +120,15 @@ void CfObjectActor::CfObjectActor_flushStatusPair() {
 }
 
 void CfObjectActor::CActorParam_setHp(float val) {
-    // The direct cast makes MWCC synthesize the shared sdata2 magic double
-    // (lbl_eu_80667748); the decomp pools an @N entry of the same value at
-    // the same reloc site (name-only drift - accepted, cf. getAdjustedFacing).
+    // The direct cast makes MWCC synthesize the shared 2^52 magic double;
+    // the decomp pools an @N entry of the same value at the same reloc site
+    // (name-only drift - accepted, cf. getAdjustedFacing).
     float f = (float)(int)val;
     if ((gmGameFlags & 0x10000000) == 0 && (gmPauseFlags & 0x800) == 0) {
-        if (f < lbl_eu_80667740) {
+        if (f < 1.0f) {
             void* bm = getInstance__Q22cf14CBattleManagerFv();
             if (CChain_ProbeActorReady((cf::CChain*)((u8*)bm + 0x1A8), (CChainBattleObjTail*)this) != 0) {
-                f = lbl_eu_80667740;
+                f = 1.0f;
             }
         }
         reinterpret_cast<cf::CfActorParamFields*>(this)->field_0x17E8 = f;
@@ -154,7 +154,7 @@ void CfObjectActor::CActorParam_applyDamage(float value, int a, int b, int c) {
     if (v27 != 0) return;
 
     c &= ~3;   // low 2 flag bits are cleared in place (retail clrlwi r31, r31, 2)
-    if (f > lbl_eu_80667738) {
+    if (f > 0.0f) {
         BtlDmg_SetField779((c & (0x80000000 | 0x200)) != 0);
         BtlDmg_SetByte778(0);
         BtlDmg_SetByte777(0);
@@ -169,8 +169,8 @@ void CfObjectActor::CActorParam_applyDamage(float value, int a, int b, int c) {
             BtlDmg_SetByte777(0);
         }
     }
-    if (f < lbl_eu_80667738 && isBattleStatusActive((u8*)this + 8, 1) != 0) {
-        f = lbl_eu_80667738;
+    if (f < 0.0f && isBattleStatusActive((u8*)this + 8, 1) != 0) {
+        f = 0.0f;
     }
     // Status 0x33: adjust the gauge value inside the status entry. `ep` is
     // one register reused across every status block (retail keeps the entry
@@ -182,15 +182,15 @@ void CfObjectActor::CActorParam_applyDamage(float value, int a, int b, int c) {
             if (ep != 0) {
                 if ((c & (0x80000000 | 0x8000)) != 0) {
                     BtlDmg_FilterNotifyDamage((void*)reinterpret_cast<cf::CfActorField3F10*>(this)->field_0x3F10, 3, 0x10);
-                    if (f > lbl_eu_80667738) {
+                    if (f > 0.0f) {
                         ep->field_0x14 = (s16)(s32)f;
                         releaseVisionSlot(this, 0);
                         return;
                     }
                     CBattleState_applyEventEntry((cf::CBattleStateEntry*)ep);
-                    if (lbl_eu_80667738 == f) return;
+                    if (0.0f == f) return;
                 } else {
-                    if (f <= lbl_eu_80667738) {
+                    if (f <= 0.0f) {
                         ep->field_0x14 = (s16)((float)(s16)ep->field_0x14 + f);
                         BtlDmg_FilterNotifyDamage((void*)reinterpret_cast<cf::CfActorField3F10*>(this)->field_0x3F10, 3, 0x10);
                         if ((s16)ep->field_0x14 > 0) {
@@ -199,50 +199,50 @@ void CfObjectActor::CActorParam_applyDamage(float value, int a, int b, int c) {
                         }
                         f = (float)(s16)ep->field_0x14;
                         CBattleState_applyEventEntry((cf::CBattleStateEntry*)ep);
-                        if (lbl_eu_80667738 == f) return;
+                        if (0.0f == f) return;
                     }
                 }
             }
         }
     }
-    if (f > lbl_eu_80667738 && isBattleStatusActive((u8*)this + 8, 0x120) != 0) return;
+    if (f > 0.0f && isBattleStatusActive((u8*)this + 8, 0x120) != 0) return;
     // Round the gauge to the nearest int (half away from zero), then clamp.
     float v = reinterpret_cast<cf::CfActorParamFields*>(this)->field_0x17E8 + f;
     reinterpret_cast<cf::CfActorParamFields*>(this)->field_0x17E8 = v;
     double round;
-    if (v > lbl_eu_80667738) {
-        round = lbl_eu_80667750;
+    if (v > 0.0f) {
+        round = 0.5;
     } else {
-        round = lbl_eu_80667758;
+        round = -0.5;
     }
     v = (float)(s32)((double)v + round);
     reinterpret_cast<cf::CfActorParamFields*>(this)->field_0x17E8 = v;
-    if (v < lbl_eu_80667740) {
-        reinterpret_cast<cf::CfActorParamFields*>(this)->field_0x17E8 = lbl_eu_80667738;
+    if (v < 1.0f) {
+        reinterpret_cast<cf::CfActorParamFields*>(this)->field_0x17E8 = 0.0f;
     }
     v = reinterpret_cast<cf::CfActorParamFields*>(this)->field_0x17E8;
-    if (v < lbl_eu_80667738) {
-        reinterpret_cast<cf::CfActorParamFields*>(this)->field_0x17E8 = lbl_eu_80667738;
+    if (v < 0.0f) {
+        reinterpret_cast<cf::CfActorParamFields*>(this)->field_0x17E8 = 0.0f;
     } else if (v > reinterpret_cast<cf::CfActorParamFields*>(this)->field_0x17F4) {
         reinterpret_cast<cf::CfActorParamFields*>(this)->field_0x17E8 = reinterpret_cast<cf::CfActorParamFields*>(this)->field_0x17F4;
     }
     BtlDmg_SetDamageType((u8)a);
     BtlDmg_SetDamageDir((u8)b);
-    if (f <= lbl_eu_80667738) {
+    if (f <= 0.0f) {
         BtlDmg_NotifyDamage((void*)reinterpret_cast<cf::CfActorField3F10*>(this)->field_0x3F10, (u32)(s32)-f);
         CChain_AccumGaugeDelta((cf::CChain*)((u8*)getInstance__Q22cf14CBattleManagerFv() + 0x1A8), (cf::CChainFlag*)this, -f);
     } else {
         BtlDmg_NotifyDamage((void*)reinterpret_cast<cf::CfActorField3F10*>(this)->field_0x3F10, (u32)(s32)f);
     }
-    if (f <= lbl_eu_80667738) {
+    if (f <= 0.0f) {
         // Status 0xC3: scale a ratio from the entry value.
         if (isBattleStatusActive((u8*)this + 8, 0xC3) != 0) {
             ep = (cf::CfStatusEntry*)findBattleStatusEntry((u8*)this + 8, 0xC3);
             if (ep != 0) {
-                f = lbl_eu_80667740;
+                f = 1.0f;
                 if (ep->field_0x10 != 0) {
                     float g = this->CActorParam_getDamageScale();
-                    f = (float)(s32)ep->field_0x10 * (g / lbl_eu_80667760);
+                    f = (float)(s32)ep->field_0x10 * (g / 100.0f);
                 }
                 if (this->CActorParam_getHp() < f) {
                     this->CActorParam_setHp(f);
@@ -266,13 +266,13 @@ void CfObjectActor::CActorParam_applyDamage(float value, int a, int b, int c) {
                 }
                 ep = (cf::CfStatusEntry*)findBattleStatusEntry((u8*)this + 8, 0x92);
                 if (ep != 0) {
-                    if (this->CActorParam_getHp() < lbl_eu_80667740) {
+                    if (this->CActorParam_getHp() < 1.0f) {
                         s32 val = ep->field_0x10;
                         if (ep->field_0x8 == 0x2000) val += v27b;
                         if ((c & 0xA0000000) != 0) {
-                            this->CActorParam_setHp(lbl_eu_80667740);
+                            this->CActorParam_setHp(1.0f);
                         } else if (rand() % 100 < val) {
-                            this->CActorParam_setHp(lbl_eu_80667740);
+                            this->CActorParam_setHp(1.0f);
                         }
                     }
                 }
@@ -282,7 +282,7 @@ void CfObjectActor::CActorParam_applyDamage(float value, int a, int b, int c) {
         if (isBattleStatusActive((u8*)this + 8, 0xFC) != 0) {
             ep = (cf::CfStatusEntry*)findBattleStatusEntry((u8*)this + 8, 0xFC);
             if (ep != 0) {
-                if (this->CActorParam_getHp() < lbl_eu_80667740) {
+                if (this->CActorParam_getHp() < 1.0f) {
                     float g = this->CActorParam_getDamageScale();
                     f = lbl_eu_80667764 * ((float)(s32)ep->field_0x10 * g);
                     getInstance__Q22cf14CBattleManagerFv();
@@ -297,7 +297,7 @@ void CfObjectActor::CActorParam_applyDamage(float value, int a, int b, int c) {
         if (isBattleStatusActive((u8*)this + 8, 0x100) != 0) {
             ep = (cf::CfStatusEntry*)findBattleStatusEntry((u8*)this + 8, 0x100);
             if (ep != 0) {
-                if (this->CActorParam_getHp() < lbl_eu_80667740) {
+                if (this->CActorParam_getHp() < 1.0f) {
                     float g = this->CActorParam_getDamageScale();
                     f = lbl_eu_80667764 * ((float)(s32)ep->field_0x10 * g);
                     getInstance__Q22cf14CBattleManagerFv();
@@ -310,16 +310,16 @@ void CfObjectActor::CActorParam_applyDamage(float value, int a, int b, int c) {
             }
         }
     }
-    if (this->CActorParam_getHp() < lbl_eu_80667740) {
+    if (this->CActorParam_getHp() < 1.0f) {
         if (CChain_ProbeActorReady((cf::CChain*)((u8*)getInstance__Q22cf14CBattleManagerFv() + 0x1A8), (CChainBattleObjTail*)this) != 0) {
-            this->CActorParam_setHp(lbl_eu_80667740);
+            this->CActorParam_setHp(1.0f);
         }
     }
     releaseVisionSlot(this, 0);
 }
 
 void CfObjectActor::CActorParam_addHp(float value) {
-    if (value <= lbl_eu_80667738) {
+    if (value <= 0.0f) {
         this->CActorParam_applyDamage(value, 0, 0, 0);
     } else {
         this->CActorParam_applyDamage(value, 3, 0, 0);
@@ -327,7 +327,7 @@ void CfObjectActor::CActorParam_addHp(float value) {
 }
 
 void CfObjectActor::CfObjectActor_takeDamageValue(float value, int arg) {
-    if (value <= lbl_eu_80667738) {
+    if (value <= 0.0f) {
         this->CActorParam_applyDamage(value, 0, 0, arg);
     } else {
         this->CActorParam_applyDamage(value, 3, 0, arg);
@@ -498,21 +498,9 @@ extern "C" void openVisionPairEngage(void* self);
 __declspec(section ".data") __attribute__((used))
 const u32 sVisionPairEngagePtmf[3] = { 0, 0xFFFFFFFFu, (u32)openVisionPairEngage };
 
-// .sdata2 pool (retail 0x44) as typed consts in retail declaration order.
-__declspec(section ".sdata2") __attribute__((used))
-const float lbl_eu_80667738 = 0.0f;
+// Remaining shared .sdata2 constants, as typed consts in retail order.
 __declspec(section ".sdata2") __attribute__((used))
 const float lbl_eu_8066773C = 0.5f;
-__declspec(section ".sdata2") __attribute__((used))
-const float lbl_eu_80667740 = 1.0f;
-__declspec(section ".sdata2") __attribute__((used))
-const double lbl_eu_80667748 = 4503601774854144.0;
-__declspec(section ".sdata2") __attribute__((used))
-const double lbl_eu_80667750 = 0.5;
-__declspec(section ".sdata2") __attribute__((used))
-const double lbl_eu_80667758 = -0.5;
-__declspec(section ".sdata2") __attribute__((used))
-const float lbl_eu_80667760 = 100.0f;
 __declspec(section ".sdata2") __attribute__((used))
 const float lbl_eu_80667764 = 0.01f;
 __declspec(section ".sdata2") __attribute__((used))

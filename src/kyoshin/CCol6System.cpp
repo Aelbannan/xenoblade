@@ -151,9 +151,7 @@ extern "C" CCol6CheckBat* __ct__CCol6CheckBat(CProcess* parent) {
     CCol6CheckBat* obj = reinterpret_cast<CCol6CheckBat*>(
         mtl::MemManager::allocate(0x74, CWorkThreadSystem::getWorkMem()));
 
-    if (obj != 0) {
-        new (obj) CCol6CheckBat(parent);
-    }
+    new (obj) CCol6CheckBat(parent);
 
     sCol6CheckBatInstance = (int)(uintptr_t)obj;
     ((CProcess*)obj)->Regist(parent, false);
@@ -225,18 +223,10 @@ void Col6_ReserveBoxSlot_D3A0() {
 // CCol6Hint::CCol6Hint - real member ctor. The IUIWindow/CTTask/IWorkEvent/
 // IScnRender base ctors emit the primary, +0x6C and +0x70 vptr stores and the
 // null PTMF slots; the body only initializes this class's own members.
-CCol6Hint::CCol6Hint(CProcess* parent) : mCur18(0), mScrollBar(0) {
-    __ct__17UnkClass_8045F564Fv(
-        reinterpret_cast<UnkClass_8045F564*>(mMemRegion));
-    mParentPtr = parent;
-    mField88 = 0;
-    mField90 = 0;
-    mField94 = 0;
-    mFlag98 = 0;
-    mState = 0;
-    mField11C = 0;
-    mField120 = 0;
-    mField121 = 0;
+CCol6Hint::CCol6Hint(CProcess* parent)
+    : mParentPtr(parent), mField88(0), mField90(0), mField94(0), mFlag98(0),
+      mState(0), mField11C(0), mField120(0), mField121(0), mCur18(0),
+      mScrollBar(0) {
     memset(mUnk9C, 0, 0x80);
 }
 
@@ -249,7 +239,7 @@ extern "C" void* __dt__9CCol6HintFv(CCol6Hint* self, int flags) {
     if (self != 0) {
         __dt__10CScrollBarFv(&self->mScrollBar, -1);
         __dt__6CCur18Fv(&self->mCur18, -1);
-        __dt__17UnkClass_8045F564Fv(self->mMemRegion, -1);
+        __dt__17UnkClass_8045F564Fv(&self->mMemRegion, -1);
         if (self != 0) {
             if (self != 0) {
                 __dt__8CProcessFv(reinterpret_cast<CProcess*>(self), 0);
@@ -304,7 +294,7 @@ void CCol6Hint::Term() {
     }
 
     releaseArcResourceAccessor(reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(mField8C));
-    reinterpret_cast<UnkClass_8045F564*>(&mMemRegion)->deleteRegion();
+    mMemRegion.deleteRegion();
     sCol6SystemInstance = 0;
 }
 
@@ -423,10 +413,8 @@ extern "C" int Col6_HintOnFile_DB08(CCol6Hint* self, CEventFile* event) {
 
         mtl::ALLOC_HANDLE mem = mtl::MemManager::getHandleMEM2();
         char* pool = lbl_eu_80502050;
-        reinterpret_cast<UnkClass_8045F564*>(&self->mMemRegion)
-            ->createRegion(mem, 0x20000, &pool[0x38], 0);
-        Class_8045F858 host(
-            reinterpret_cast<UnkClass_8045F564*>(&self->mMemRegion));
+        self->mMemRegion.createRegion(mem, 0x20000, &pool[0x38], 0);
+        Class_8045F858 host(&self->mMemRegion);
 
         CFileHandle* handle = self->mField88;
         data = handle->mData;
@@ -447,8 +435,7 @@ extern "C" int Col6_HintOnFile_DB08(CCol6Hint* self, CEventFile* event) {
         reinterpret_cast<CScn*>(self->mParentPtr)->addRenderCB(render, 0xd, 0);
 
         self->mField88 = 0;
-        reinterpret_cast<UnkClass_8045F564*>(&self->mMemRegion)
-            ->validateHeap();
+        self->mMemRegion.validateHeap();
     }
     return 1;
 fail:
@@ -852,21 +839,10 @@ extern "C" void col6HintInput(CCol6Hint* self) {
 
 // CCol6System::CCol6System - real member ctor; base ctors emit all three vptrs
 // and the PTMF slots. The body initializes only this class's own members.
-CCol6System::CCol6System(CProcess* parent) : mCur1(0), mCur2(0) {
-    __ct__17UnkClass_8045F564Fv(
-        reinterpret_cast<UnkClass_8045F564*>(mMemRegion));
-    mScn = reinterpret_cast<CScn*>(parent);
-    mFileHandle = 0;
-    mAnim90 = 0;
-    mAnim94 = 0;
-    mAnim98 = 0;
-    mAnim9C = 0;
-    mFlagA0 = 0;
-    mFlagA1 = 0;
-    mFieldA2 = 0;
-    mFieldA4 = 0;
-    mPadA5[0] = 0;
-    mPadA5[1] = 0;
+CCol6System::CCol6System(CProcess* parent)
+    : mScn(reinterpret_cast<CScn*>(parent)), mFileHandle(0), mAnim90(0),
+      mAnim94(0), mAnim98(0), mAnim9C(0), mFlagA0(0), mFlagA1(0),
+      mFieldA2(0), mFieldA4(0), mPadA5_0(0), mPadA5_1(0), mCur1(0), mCur2(0) {
     __ct__7CSysWinFUc(mSysWin1, 0);
     __ct__7CSysWinFUc(mSysWin2, 0);
 
@@ -874,7 +850,7 @@ CCol6System::CCol6System(CProcess* parent) : mCur1(0), mCur2(0) {
     // CVec3(f,f,f) and copied memberwise (MWCC routes the bits through GPRs,
     // lfs/stfs-to-stack + lwz/stw), while the trailing float/byte pairs are
     // stored directly.
-    f32 f = 0.0f;
+    f32 f = lbl_eu_80667564;
     // Camera/vector block: every CVec3 is built from a stack temp
     // CVec3(f,f,f) and copied memberwise (MWCC routes the bits through GPRs,
     // lfs/stfs-to-stack + lwz/stw), while the trailing float/byte pairs are
@@ -908,7 +884,7 @@ extern "C" void* __dt__11CCol6SystemFv(CCol6System* self, int flags) {
         __dt__7CSysWinFv(&self->mSysWin1, -1);
         __dt__6CCur18Fv(&self->mCur2, -1);
         __dt__6CCur18Fv(&self->mCur1, -1);
-        __dt__17UnkClass_8045F564Fv(self->mMemRegion, -1);
+        __dt__17UnkClass_8045F564Fv(&self->mMemRegion, -1);
         if (self != 0) {
             if (self != 0) {
                 __dt__8CProcessFv(reinterpret_cast<CProcess*>(self), 0);
@@ -1019,7 +995,7 @@ void CCol6System::Term() {
 
     releaseArcResourceAccessor(mArcAccessor);
     mArcAccessor = 0;
-    reinterpret_cast<UnkClass_8045F564*>(&mMemRegion)->deleteRegion();
+    mMemRegion.deleteRegion();
     sCol6InviteInstance = 0;
 }
 
@@ -1029,14 +1005,14 @@ void CCol6System::Term() {
 inline void CCol6System::updateCursorPos() {
     if (reinterpret_cast<CSysWin*>(&mSysWin1)->isOpened() != 0) {
         nw4r::math::VEC3 pos;
-        CSysWin::getPaneScreenPos(reinterpret_cast<nw4r::math::VEC3*>(reinterpret_cast<u8*>(&pos)), reinterpret_cast<CSysWin*>(&mSysWin1), mPadA5[1]);
+        CSysWin::getPaneScreenPos(reinterpret_cast<nw4r::math::VEC3*>(reinterpret_cast<u8*>(&pos)), reinterpret_cast<CSysWin*>(&mSysWin1), mPadA5_1);
         mCur2.setRootPaneTranslate(&pos);
     } else {
         char buf[0x20];
         if (mFieldA4 >= 6) {
-            sprintf(buf, &lbl_eu_80502050[0xa9], (s8)mPadA5[0] + 1);
+            sprintf(buf, &lbl_eu_80502050[0xa9], (s8)mPadA5_0 + 1);
         } else {
-            sprintf(buf, &lbl_eu_80502050[0xe], (s8)mPadA5[0] + 1);
+            sprintf(buf, &lbl_eu_80502050[0xe], (s8)mPadA5_0 + 1);
         }
         nw4r::lyt::Pane* rootPane =
             mLayout->GetRootPane();
@@ -1105,9 +1081,9 @@ body:
         // Out anim done: resolve the target index from the player slot.
         if (AnimRewindFrame(mAnim90, lbl_eu_80667558) == 0) break;
         mField60 = 0xff;
-        if ((s8)mPadA5[0] == 2) mField60 = 1;
-        else if ((s8)mPadA5[0] == 1) mField60 = 2;
-        mPadA5[0] = 0;
+        if ((s8)mPadA5_0 == 2) mField60 = 1;
+        else if ((s8)mPadA5_0 == 1) mField60 = 2;
+        mPadA5_0 = 0;
         mField64 = 1;
         break;
 
@@ -1119,7 +1095,7 @@ body:
         mLayout->SetAnimationEnable(mAnim94, 0);
         mLayout->SetAnimationEnable(mAnim98, 0);
         mLayout->SetAnimationEnable(mAnim9C, 1);
-        mPadA5[0] = 0;
+        mPadA5_0 = 0;
         updateCursorPos();
         break;
 
@@ -1138,7 +1114,7 @@ body:
         // Close the box: reset the player and position the cursor.
         if (AnimRewindFrame(mAnim98, lbl_eu_80667558) == 0) break;
         mFieldA4 = 3;
-        mPadA5[0] = 0;
+        mPadA5_0 = 0;
         updateCursorPos();
         break;
 
@@ -1146,7 +1122,7 @@ body:
         // Window 1 active: switch to the slot-selection state.
         if (reinterpret_cast<CSysWin*>(&mSysWin1)->isActive() == 0) break;
         mFieldA4 = 0xb;
-        mPadA5[1] = 0;
+        mPadA5_1 = 0;
         updateCursorPos();
         break;
 
@@ -1157,11 +1133,11 @@ body:
     case 0xc:
         // Window 1 active: confirm posts the item-box sync, up re-opens.
         if (reinterpret_cast<CSysWin*>(&mSysWin1)->isActive() == 0) break;
-        if ((s8)mPadA5[1] == 0) {
+        if ((s8)mPadA5_1 == 0) {
             mFieldA4 = 0xd;
             CUICfManager_queueFadeMenu(0, 0, lbl_eu_80667578, lbl_eu_80667578,
                           lbl_eu_80667578);
-            Col6_SyncBoxSlot_0EE4((u32)(uintptr_t)this, (s8)mPadA5[0]);
+            Col6_SyncBoxSlot_0EE4((u32)(uintptr_t)this, (s8)mPadA5_0);
         } else {
             mFieldA4 = 7;
             updateCursorPos();
@@ -1349,7 +1325,7 @@ body:
                                      0x7c);
             u16 id = BdatGetU16ByTableKey((char*)"CL6_rwdlist",
                                    (char*)"itemID",
-                                   (s8)mPadA5[0] + 1);
+                                   (s8)mPadA5_0 + 1);
             UIWin_CreateItemMulti(id, 0, 0, 0, 0, 1, 0, 1, 0);
         }
         break;
@@ -1512,10 +1488,8 @@ extern "C" int Col6_SysOnFile_0118(CCol6System* self, CEventFile* event) {
 
         mtl::ALLOC_HANDLE mem = mtl::MemManager::getHandleMEM2();
         char* pool = lbl_eu_80502050;
-        reinterpret_cast<UnkClass_8045F564*>(&self->mMemRegion)
-            ->createRegion(mem, 0x20000, &pool[0xd0], 0);
-        Class_8045F858 host(
-            reinterpret_cast<UnkClass_8045F564*>(&self->mMemRegion));
+        self->mMemRegion.createRegion(mem, 0x20000, &pool[0xd0], 0);
+        Class_8045F858 host(&self->mMemRegion);
 
         CFileHandle* handle = self->mFileHandle;
         data = handle->mData;
@@ -1534,8 +1508,7 @@ extern "C" int Col6_SysOnFile_0118(CCol6System* self, CEventFile* event) {
         self->mScn->addRenderCB(render, 0xd, 0);
 
         self->mFileHandle = 0;
-        reinterpret_cast<UnkClass_8045F564*>(&self->mMemRegion)
-            ->validateHeap();
+        self->mMemRegion.validateHeap();
     }
     return 1;
 fail:
@@ -1589,7 +1562,7 @@ extern "C" IUIWindow* col6SysCreate(CProcess* pParent, CScn* pScene) {
 // player-count rows and summary panes, then refreshes the per-player item box
 // (col6FillSlots) and writes the reserved-slot count string.
 extern "C" void col6SysLayout(CCol6System* self) {
-    self->mPadA5[0] = 0;
+    self->mPadA5_0 = 0;
 
     buildLayout(&self->mLayout, self->mArcAccessor, (char*)"mf35_rv00.brlyt");
     bindLayoutAnimTransform(self->mLayout, &self->mAnim90, self->mArcAccessor, (char*)"mf35_rv00_in.brlan");
@@ -1697,7 +1670,7 @@ extern "C" void col6SysLayout(CCol6System* self) {
                       0);
     }
 
-    col6FillSlots(self, (s8)self->mPadA5[0]);
+    col6FillSlots(self, (s8)self->mPadA5_0);
 
     // Remaining summary rows.
     LayoutSetTextBoxFmtValue(self->mLayout, (char*)"txt_now",
@@ -1909,10 +1882,10 @@ void Col6_SyncBoxSlot_0EE4(u32 unused, s32 arg) {
 // total owned count must cover the needed quantity (table id * 100), and each
 // of the five sub-slots must have its item present with a sufficient count.
 extern "C" int Col6_ValidateBox_1024(CCol6System* self) {
-    u8 f = (u8)CtrlRemote_TouchBitByArg((u32)((s8)self->mPadA5[0] + 0x7fe));
+    u8 f = (u8)CtrlRemote_TouchBitByArg((u32)((s8)self->mPadA5_0 + 0x7fe));
     u16 id = BdatGetU16ByTableKey(
         &lbl_eu_80502050[0x2cc], &lbl_eu_80502050[0x2dd],
-        (u32)((s32)f + (s8)self->mPadA5[0] * 5 + 1));
+        (u32)((s32)f + (s8)self->mPadA5_0 * 5 + 1));
     if ((u32)CItemBlock_getPtr20E8() < (u32)id * 100) {
         return 0;
     }
@@ -1924,12 +1897,12 @@ extern "C" int Col6_ValidateBox_1024(CCol6System* self) {
         sprintf(buf1, &lbl_eu_80502050[0x320], sub);
         u16 id2 = (u16)BdatGetU16ByTableKey(
             &lbl_eu_80502050[0x2cc], buf1,
-            (u32)((s32)f + (s8)self->mPadA5[0] * 5 + 1));
+            (u32)((s32)f + (s8)self->mPadA5_0 * 5 + 1));
         if (id2 == 0) continue;
         sprintf(buf2, &lbl_eu_80502050[0x32b], sub);
         u8 v = BdatGetU8ByTableKey(
             &lbl_eu_80502050[0x2cc], buf2,
-            (u32)((s32)f + (s8)self->mPadA5[0] * 5 + 1));
+            (u32)((s32)f + (s8)self->mPadA5_0 * 5 + 1));
         void* item = CItem_findRecByFamily(id2);
         if (item == 0) return 0;
         if ((s32)CItem_sumFamilyByte6(id2) < (s32)v) return 0;
@@ -1956,7 +1929,7 @@ void col6PadHandle(CCol6System* self) {
     }
 
     if (up) {
-        if ((s8)self->mPadA5[0] == 0) {
+        if ((s8)self->mPadA5_0 == 0) {
             // Player 1: open the box (all four anims on) and refresh it.
             self->mFieldA4 = 6;
             self->mLayout->SetAnimationEnable(self->mAnim9C, 0);
@@ -1974,7 +1947,7 @@ void col6PadHandle(CCol6System* self) {
             self->mLayout->SetAnimationEnable(self->mAnim94, 1);
         }
         self->mCur1.SetVisible(0);
-        if (self->mPadA5[0] == 2) self->mPadA5[0] = 3;
+        if (self->mPadA5_0 == 2) self->mPadA5_0 = 3;
         playUISound(3);
     } else if (down) {
         self->mFieldA4 = 4;
@@ -1983,24 +1956,24 @@ void col6PadHandle(CCol6System* self) {
         self->mLayout->SetAnimationEnable(self->mAnim90, 0);
         self->mLayout->SetAnimationEnable(self->mAnim94, 1);
         self->mCur1.SetVisible(0);
-        self->mPadA5[0] = 3;
+        self->mPadA5_0 = 3;
         playUISound(6);
     } else if (sels) {
         // Player index down (wrap to 2).
-        self->mPadA5[0] = self->mPadA5[0] - 1;
-        if ((s8)self->mPadA5[0] < 0) self->mPadA5[0] = 2;
+        self->mPadA5_0 = self->mPadA5_0 - 1;
+        if ((s8)self->mPadA5_0 < 0) self->mPadA5_0 = 2;
         if (reinterpret_cast<CSysWin*>(&self->mSysWin1)->isOpened() != 0) {
             u8 tmp[0x18];
-            CSysWin::getPaneScreenPos(reinterpret_cast<nw4r::math::VEC3*>(tmp), reinterpret_cast<CSysWin*>(&self->mSysWin1), self->mPadA5[1]);
+            CSysWin::getPaneScreenPos(reinterpret_cast<nw4r::math::VEC3*>(tmp), reinterpret_cast<CSysWin*>(&self->mSysWin1), self->mPadA5_1);
             self->mCur2.setRootPaneTranslate(
                 reinterpret_cast<nw4r::math::VEC3*>(tmp));
         } else {
             char buf[0x20];
             if (self->mFieldA4 >= 6) {
                 sprintf(buf, (char*)"nul_sel%02d",
-                        (s8)self->mPadA5[0] + 1);
+                        (s8)self->mPadA5_0 + 1);
             } else {
-                sprintf(buf, (char*)"txt_%02d", (s8)self->mPadA5[0] + 1);
+                sprintf(buf, (char*)"txt_%02d", (s8)self->mPadA5_0 + 1);
             }
             nw4r::lyt::Pane* pane1 = self->mLayout->GetRootPane()->FindPaneByName(buf, true);
             nw4r::lyt::Pane* pane2 = self->mLayout->GetRootPane()->FindPaneByName((char*)"nul_proportion", true);
@@ -2013,20 +1986,20 @@ void col6PadHandle(CCol6System* self) {
         playUISound(1);
     } else if (confirm != 0) {
         // Player index up (wrap to 0).
-        self->mPadA5[0] = self->mPadA5[0] + 1;
-        if ((s8)self->mPadA5[0] > 2) self->mPadA5[0] = 0;
+        self->mPadA5_0 = self->mPadA5_0 + 1;
+        if ((s8)self->mPadA5_0 > 2) self->mPadA5_0 = 0;
         if (reinterpret_cast<CSysWin*>(&self->mSysWin1)->isOpened() != 0) {
             u8 tmp[0x18];
-            CSysWin::getPaneScreenPos(reinterpret_cast<nw4r::math::VEC3*>(tmp), reinterpret_cast<CSysWin*>(&self->mSysWin1), self->mPadA5[1]);
+            CSysWin::getPaneScreenPos(reinterpret_cast<nw4r::math::VEC3*>(tmp), reinterpret_cast<CSysWin*>(&self->mSysWin1), self->mPadA5_1);
             self->mCur2.setRootPaneTranslate(
                 reinterpret_cast<nw4r::math::VEC3*>(tmp));
         } else {
             char buf[0x20];
             if (self->mFieldA4 >= 6) {
                 sprintf(buf, (char*)"nul_sel%02d",
-                        (s8)self->mPadA5[0] + 1);
+                        (s8)self->mPadA5_0 + 1);
             } else {
-                sprintf(buf, (char*)"txt_%02d", (s8)self->mPadA5[0] + 1);
+                sprintf(buf, (char*)"txt_%02d", (s8)self->mPadA5_0 + 1);
             }
             nw4r::lyt::Pane* pane1 = self->mLayout->GetRootPane()->FindPaneByName(buf, true);
             nw4r::lyt::Pane* pane2 = self->mLayout->GetRootPane()->FindPaneByName((char*)"nul_proportion", true);
@@ -2059,7 +2032,7 @@ void col6SwitchBox(CCol6System* self) {
     }
 
     if (up) {
-        s32 pid = (s8)self->mPadA5[0];
+        s32 pid = (s8)self->mPadA5_0;
         if (pid == 4) {
             // Player 5: open the box (all four anims on).
             self->mFieldA4 = 9;
@@ -2109,21 +2082,21 @@ void col6SwitchBox(CCol6System* self) {
         playUISound(6);
     } else if (sels) {
         // Player index down (wrap to 4) and refresh the box.
-        self->mPadA5[0] = self->mPadA5[0] - 1;
-        if ((s8)self->mPadA5[0] < 0) self->mPadA5[0] = 4;
-        col6FillSlots(self, (s8)self->mPadA5[0]);
+        self->mPadA5_0 = self->mPadA5_0 - 1;
+        if ((s8)self->mPadA5_0 < 0) self->mPadA5_0 = 4;
+        col6FillSlots(self, (s8)self->mPadA5_0);
         if (reinterpret_cast<CSysWin*>(&self->mSysWin1)->isOpened() != 0) {
             u8 tmp[0x18];
-            CSysWin::getPaneScreenPos(reinterpret_cast<nw4r::math::VEC3*>(tmp), reinterpret_cast<CSysWin*>(&self->mSysWin1), self->mPadA5[1]);
+            CSysWin::getPaneScreenPos(reinterpret_cast<nw4r::math::VEC3*>(tmp), reinterpret_cast<CSysWin*>(&self->mSysWin1), self->mPadA5_1);
             self->mCur2.setRootPaneTranslate(
                 reinterpret_cast<nw4r::math::VEC3*>(tmp));
         } else {
             char buf[0x20];
             if (self->mFieldA4 >= 6) {
                 sprintf(buf, (char*)"nul_sel%02d",
-                        (s8)self->mPadA5[0] + 1);
+                        (s8)self->mPadA5_0 + 1);
             } else {
-                sprintf(buf, (char*)"txt_%02d", (s8)self->mPadA5[0] + 1);
+                sprintf(buf, (char*)"txt_%02d", (s8)self->mPadA5_0 + 1);
             }
             nw4r::lyt::Pane* pane1 = self->mLayout->GetRootPane()->FindPaneByName(buf, true);
             nw4r::lyt::Pane* pane2 = self->mLayout->GetRootPane()->FindPaneByName((char*)"nul_proportion", true);
@@ -2136,21 +2109,21 @@ void col6SwitchBox(CCol6System* self) {
         playUISound(1);
     } else if (confirm != 0) {
         // Player index up (wrap to 0) and refresh the box.
-        self->mPadA5[0] = self->mPadA5[0] + 1;
-        if ((s8)self->mPadA5[0] > 4) self->mPadA5[0] = 0;
-        col6FillSlots(self, (s8)self->mPadA5[0]);
+        self->mPadA5_0 = self->mPadA5_0 + 1;
+        if ((s8)self->mPadA5_0 > 4) self->mPadA5_0 = 0;
+        col6FillSlots(self, (s8)self->mPadA5_0);
         if (reinterpret_cast<CSysWin*>(&self->mSysWin1)->isOpened() != 0) {
             u8 tmp[0x18];
-            CSysWin::getPaneScreenPos(reinterpret_cast<nw4r::math::VEC3*>(tmp), reinterpret_cast<CSysWin*>(&self->mSysWin1), self->mPadA5[1]);
+            CSysWin::getPaneScreenPos(reinterpret_cast<nw4r::math::VEC3*>(tmp), reinterpret_cast<CSysWin*>(&self->mSysWin1), self->mPadA5_1);
             self->mCur2.setRootPaneTranslate(
                 reinterpret_cast<nw4r::math::VEC3*>(tmp));
         } else {
             char buf[0x20];
             if (self->mFieldA4 >= 6) {
                 sprintf(buf, (char*)"nul_sel%02d",
-                        (s8)self->mPadA5[0] + 1);
+                        (s8)self->mPadA5_0 + 1);
             } else {
-                sprintf(buf, (char*)"txt_%02d", (s8)self->mPadA5[0] + 1);
+                sprintf(buf, (char*)"txt_%02d", (s8)self->mPadA5_0 + 1);
             }
             nw4r::lyt::Pane* pane1 = self->mLayout->GetRootPane()->FindPaneByName(buf, true);
             nw4r::lyt::Pane* pane2 = self->mLayout->GetRootPane()->FindPaneByName((char*)"nul_proportion", true);
@@ -2184,20 +2157,20 @@ void col6WinScroll(CCol6System* self) {
 
     if (sels) {
         // Scroll the slot counter down (wrap to 1), reposition the cursor.
-        self->mPadA5[1] = self->mPadA5[1] - 1;
-        if ((s8)self->mPadA5[1] < 0) self->mPadA5[1] = 1;
+        self->mPadA5_1 = self->mPadA5_1 - 1;
+        if ((s8)self->mPadA5_1 < 0) self->mPadA5_1 = 1;
         if (reinterpret_cast<CSysWin*>(&self->mSysWin1)->isOpened() != 0) {
             u8 tmp[0x18];
-            CSysWin::getPaneScreenPos(reinterpret_cast<nw4r::math::VEC3*>(tmp), reinterpret_cast<CSysWin*>(&self->mSysWin1), self->mPadA5[1]);
+            CSysWin::getPaneScreenPos(reinterpret_cast<nw4r::math::VEC3*>(tmp), reinterpret_cast<CSysWin*>(&self->mSysWin1), self->mPadA5_1);
             self->mCur2.setRootPaneTranslate(
                 reinterpret_cast<nw4r::math::VEC3*>(tmp));
         } else {
             char buf[0x20];
             if (self->mFieldA4 >= 6) {
                 sprintf(buf, (char*)"nul_sel%02d",
-                        (s8)self->mPadA5[0] + 1);
+                        (s8)self->mPadA5_0 + 1);
             } else {
-                sprintf(buf, (char*)"txt_%02d", (s8)self->mPadA5[0] + 1);
+                sprintf(buf, (char*)"txt_%02d", (s8)self->mPadA5_0 + 1);
             }
             nw4r::lyt::Pane* pane1 = self->mLayout->GetRootPane()->FindPaneByName(buf, true);
             nw4r::lyt::Pane* pane2 = self->mLayout->GetRootPane()->FindPaneByName((char*)"nul_proportion", true);
@@ -2210,20 +2183,20 @@ void col6WinScroll(CCol6System* self) {
         playUISound(1);
     } else if (confirm != 0) {
         // Scroll the slot counter up (wrap to 0).
-        self->mPadA5[1] = self->mPadA5[1] + 1;
-        if ((s8)self->mPadA5[1] > 1) self->mPadA5[1] = 0;
+        self->mPadA5_1 = self->mPadA5_1 + 1;
+        if ((s8)self->mPadA5_1 > 1) self->mPadA5_1 = 0;
         if (reinterpret_cast<CSysWin*>(&self->mSysWin1)->isOpened() != 0) {
             u8 tmp[0x18];
-            CSysWin::getPaneScreenPos(reinterpret_cast<nw4r::math::VEC3*>(tmp), reinterpret_cast<CSysWin*>(&self->mSysWin1), self->mPadA5[1]);
+            CSysWin::getPaneScreenPos(reinterpret_cast<nw4r::math::VEC3*>(tmp), reinterpret_cast<CSysWin*>(&self->mSysWin1), self->mPadA5_1);
             self->mCur2.setRootPaneTranslate(
                 reinterpret_cast<nw4r::math::VEC3*>(tmp));
         } else {
             char buf[0x20];
             if (self->mFieldA4 >= 6) {
                 sprintf(buf, (char*)"nul_sel%02d",
-                        (s8)self->mPadA5[0] + 1);
+                        (s8)self->mPadA5_0 + 1);
             } else {
-                sprintf(buf, (char*)"txt_%02d", (s8)self->mPadA5[0] + 1);
+                sprintf(buf, (char*)"txt_%02d", (s8)self->mPadA5_0 + 1);
             }
             nw4r::lyt::Pane* pane1 = self->mLayout->GetRootPane()->FindPaneByName(buf, true);
             nw4r::lyt::Pane* pane2 = self->mLayout->GetRootPane()->FindPaneByName((char*)"nul_proportion", true);
@@ -2242,7 +2215,7 @@ void col6WinScroll(CCol6System* self) {
         playUISound(3);
     } else if (down) {
         self->mFieldA4 = 0xc;
-        self->mPadA5[1] = 1;
+        self->mPadA5_1 = 1;
         self->mCur2.SetVisible(0);
         reinterpret_cast<CSysWin*>(&self->mSysWin1)->advancePhase3();
         playUISound(6);
@@ -2260,9 +2233,9 @@ extern "C" void col6DoOpenBox(CCol6System* self) {
     if (isFadeActive(fade) != 0) return;
 
     // Bump this player's count and the two summary counters.
-    u32 f = CtrlRemote_TouchBitByArg((u32)((s8)self->mPadA5[0] + 0x7fe));
-    CtrlRemote_SetSharedBit((u32)((s8)self->mPadA5[0] + 0x7fe), f + 1);
-    u32 n = f + (s8)self->mPadA5[0] * 5 + 1;
+    u32 f = CtrlRemote_TouchBitByArg((u32)((s8)self->mPadA5_0 + 0x7fe));
+    CtrlRemote_SetSharedBit((u32)((s8)self->mPadA5_0 + 0x7fe), f + 1);
+    u32 n = f + (s8)self->mPadA5_0 * 5 + 1;
     u8 a = (u8)BdatGetU8ByTableKey((char*)"CL6_uplist", (char*)"rev_LV", n);
     CtrlRemote_SetSharedBit(0x7fc, CtrlRemote_TouchBitByArg(0x7fc) + a);
     u8 b = (u8)BdatGetU8ByTableKey((char*)"CL6_uplist", (char*)"rev_people", n);
@@ -2271,7 +2244,7 @@ extern "C" void col6DoOpenBox(CCol6System* self) {
     // Seed the TaskLOD/audio slots for this player's three id ranges.
     UnkClass_80083298* gm = getGameSubManager__Q22cf13CfGameManagerFv();
     if (gm != 0) {
-        u8 v1 = (u8)(((s8)self->mPadA5[0] + 1) * 10 + f + 1);
+        u8 v1 = (u8)(((s8)self->mPadA5_0 + 1) * 10 + f + 1);
         activateLOD__8CTaskLODFv(v1);
         ScnData_FwdB7D9C(getScnHandle(), v1);
         forwardMpfCallB__17UnkClass_8047BB54Fv(&gm->field_0xF0, v1);
@@ -2526,7 +2499,7 @@ extern "C" void col6DoOpenBox(CCol6System* self) {
     char* s2b6 = BdatTouchStringCell((char*)"MNU_col6", (char*)"name", cnt);
     LayoutSetTextBoxFmtValue(self->mLayout, (char*)"txt_now06", s2b6, 0);
 
-    col6FillSlots(self, (s8)self->mPadA5[0]);
+    col6FillSlots(self, (s8)self->mPadA5_0);
     self->mFlagA1 = 1;
     self->mFieldA4 = 0xf;
 }
@@ -2543,14 +2516,14 @@ void Col6Win2_2C40(CCol6System* self) {
     char* tbl = lbl_eu_80502050;
     // Single expression so MWCC keeps p*5 in a scratch register and folds
     // the count add into the named temp (retail add r28, r0, r3 shape).
-    u32 f = CtrlRemote_TouchBitByArg((u32)((s8)self->mPadA5[0] + 0x7fe));
-    u32 n = (s8)self->mPadA5[0] * 5 + f;
+    u32 f = CtrlRemote_TouchBitByArg((u32)((s8)self->mPadA5_0 + 0x7fe));
+    u32 n = (s8)self->mPadA5_0 * 5 + f;
     u8 a = (u8)BdatGetU8ByTableKey(&tbl[0x334], &tbl[0x33f], n);
     u8 b = (u8)BdatGetU8ByTableKey(&tbl[0x334], &tbl[0x346], n);
 
-    char* str0 = BdatTouchStringCell(tbl, &tbl[0x9], (s8)self->mPadA5[0] + 0x4e);
+    char* str0 = BdatTouchStringCell(tbl, &tbl[0x9], (s8)self->mPadA5_0 + 0x4e);
     char* str1 =
-        BdatTouchStringCell(tbl, &tbl[0x9], (s8)self->mPadA5[0] * 5 + f + 0x53);
+        BdatTouchStringCell(tbl, &tbl[0x9], (s8)self->mPadA5_0 * 5 + f + 0x53);
     char* str2 = BdatTouchStringCell(tbl, &tbl[0x9], 0x78);
     char* str3 = BdatTouchStringCell(tbl, &tbl[0x9], 0x79);
 
@@ -2627,7 +2600,7 @@ extern "C" void col6Win2Count(CCol6System* self) {
         }
     } else {
         // Player count for the current slot and the total bucket (0x802).
-        s32 f = (s32)CtrlRemote_TouchBitByArg((u32)((s8)self->mPadA5[0] + 0x7fe));
+        s32 f = (s32)CtrlRemote_TouchBitByArg((u32)((s8)self->mPadA5_0 + 0x7fe));
         s32 ok = 1;
         s32 big = 0;
         u8 total = (u8)CtrlRemote_TouchBitByArg(0x802) + 1;
@@ -2711,7 +2684,7 @@ extern "C" void col6Win2Count(CCol6System* self) {
             // "player N joined" banner in window 2.
             self->mFieldA4 = 0x23;
             char* s1 = BdatTouchStringCell((char*)"MNU_col6", (char*)"name",
-                                     (s8)self->mPadA5[0] + 0x72);
+                                     (s8)self->mPadA5_0 + 0x72);
             char* s2 = BdatTouchStringCell((char*)"MNU_col6", (char*)"name",
                                      0x77);
             ml::FixStr<128> buf;
@@ -2893,12 +2866,12 @@ void col6Win2PerPl(CCol6System* self) {
         return;
     }
 
-    bool ge = (s32)CtrlRemote_TouchBitByArg((u32)((s8)self->mPadA5[0] + 0x7fe)) >= 5;
+    bool ge = (s32)CtrlRemote_TouchBitByArg((u32)((s8)self->mPadA5_0 + 0x7fe)) >= 5;
     if (ge != 0) {
         // Banner: "player N joined" (char 0x72+N is the player name).
         self->mFieldA4 = 0x23;
         char* s1 = BdatTouchStringCell((char*)"MNU_col6", (char*)"name",
-                                 (s8)self->mPadA5[0] + 0x72);
+                                 (s8)self->mPadA5_0 + 0x72);
         char* s2 = BdatTouchStringCell((char*)"MNU_col6", (char*)"name", 0x77);
         ml::FixStr<128> buf;
         buf.format((char*)"%s<n>%s", s1, s2);

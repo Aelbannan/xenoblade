@@ -1277,16 +1277,6 @@ struct CamEventTableEntry {
 };
 extern CamEventTableEntry cfCamEventWeightTable[12];
 
-extern const f32 lbl_eu_80666458;   // sdata2 triplet constants used by the sinit
-extern const f32 lbl_eu_80666464;
-extern const f32 lbl_eu_80666474;
-extern const f32 lbl_eu_80666478;
-extern const f32 lbl_eu_8066647C;
-extern const f32 lbl_eu_80666480;
-extern const f32 lbl_eu_80666484;
-extern const f32 lbl_eu_80666488;
-extern const f32 lbl_eu_8066648C;
-extern const f32 lbl_eu_80666490;
 // 0x28-byte camera-source region read by CamEvtDispatchState: two aim vectors at
 // +0x00/+0x0C, a third triplet at +0x18, and a scalar at +0x24. The triplets
 // are CVec3 so whole-vector copies keep the retail lwz/stw schedule.
@@ -1322,15 +1312,7 @@ extern "C" void* findObjectById__Fi(int id);
 extern "C" void* func_800BBC0C(void* obj);
 extern "C" f32   lbl_eu_8066641C;
 extern "C" f32   lbl_eu_80666418;
-extern "C" f64   lbl_eu_80666420;
-extern "C" f64   lbl_eu_80666438;   // signed-int -> double conversion constant
-extern "C" f32   lbl_eu_80666460;   // cam-table speed divisor
 extern "C" void* cfCamEventBdatTableB;   // event-cam bdat table pointer
-extern "C" f32   lbl_eu_80666428;
-extern "C" f32   lbl_eu_80666448;
-extern "C" f32   lbl_eu_80666444;
-extern "C" f32   lbl_eu_8066644C;
-extern "C" f32   lbl_eu_80666454;
 extern "C" const char cfCamEventAssertStrings[0xf4];
 extern "C" u32   Bdat_GetMaxRow_B1EC(void* self);
 extern "C" void* Bdat_GetTable_AA34(void);
@@ -1338,7 +1320,6 @@ extern "C" u32   Bdat_GetRowBase_B41C(void* bdat);
 extern void* cfCamEventBdatTableA;      // sbss bdat-table pointer (set by Bdat_GetTable_AA34)
 extern char  cfCamEventSdaFloat[8];   // sdata column-name buffer (digit at +4)
 extern char  lbl_eu_80527638[0xA]; // data column-name buffer (digit at +8)
-extern f32   lbl_eu_8066645C;      // sdata2 compare constant
 extern "C" f32   Atan2FIdx__Q24nw4r4mathFff(f32 y, f32 x);
 extern "C" int   CfRes_getD80Flag();
 extern "C" void  CamEvtCalcAimPoint(ml::CVec3* out, CinemCamSrc* src);
@@ -1350,15 +1331,10 @@ extern "C" int CamEvtPickWeightedRow(int unused, int type_, CamEventSrc* src,
 extern "C" void CamEvtClearSlotBytes(u8* self);
 // Vector-normalize helper (body provided by this TU).
 
-extern "C" f32 lbl_eu_8066642C;
-extern "C" f32 lbl_eu_80666430;
-extern "C" f32 lbl_eu_80666440;
-extern "C" f32 lbl_eu_80666468;   // acos-range lower bound
 // nw4r debug warning (CamEvtCheckAimAngles range violations)
 extern "C" void Warning__Q24nw4r2dbFPCciPCce(const char* file, int line, const char* fmt, ...);
 extern const char lbl_eu_805262F0[];   // warning file name
 extern const char lbl_eu_805262C8[];   // warning format string
-extern "C" f32 lbl_eu_8066646C;   // acos-angle scale
 // Dynamic-cast result region (getCameraDataBlock -> __dynamic_cast): a single
 // flag byte is stored at +0x294 by the cam-event setup.
 struct CfCamDynObj {
@@ -1375,7 +1351,6 @@ extern "C" void notifyCameraManager__Q22cf13CfGameManagerFv(void);
 extern "C" void cleanupMapEffects__Q22cf13CfGameManagerFv();
 extern "C" void MapFxStepAllEntries(u32 state);
 extern "C" void MapFxApplyEntryPositions(u32 state, void* p);
-extern "C" f32 lbl_eu_80666470;
 extern "C" CfCamEventObj* CamEvtCreateSlotObj(u32 first, CfCamEventObj* second,
                                                       CfCamEventObj* third, CfCamEventObj* fourth,
                                                       CfCamEventObj* fifth,
@@ -1400,7 +1375,6 @@ extern "C" void* CamEvtSetupFollowCam(CfCamEventManager* self, int unk34,
 
 // Pose-solver helper called by CamEvtSolveAimPair.
 extern "C" void cfCam_applyBasis(void* out, void* in, void* vec, f32 f);
-extern "C" f32 lbl_eu_80666450;   // sdata2 damping factor
 struct CfObj90E4;
 extern "C" int ScnRes_SegQueryForward_E348(void* a, void* b, u32 c, u32 d);
 extern "C" void CamEvtSolveAimPair(ml::CVec3* out1, ml::CVec3* out2, CamCamSrc* a,

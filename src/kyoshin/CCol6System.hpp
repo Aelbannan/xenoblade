@@ -18,6 +18,7 @@
 #include "monolib/device/CDeviceVI.hpp"
 #include "monolib/scn/IScnRender.hpp"
 #include "monolib/lib/CLibLayout.hpp"
+#include "monolib/lib/UnkClass_8045F564.hpp"
 #include "monolib/util/MemManager.hpp"
 #include "monolib/math/CVec3.hpp"
 
@@ -40,7 +41,7 @@ public:
     virtual void cbRenderBefore();
     virtual ~CCol6Hint();
 
-    /* 0x74 */ u8 mMemRegion[0x10];        // UnkClass_8045F564
+    /* 0x74 */ UnkClass_8045F564 mMemRegion;
     /* 0x84 */ CProcess* mParentPtr;       // stored parent pointer
     /* 0x88 */ CFileHandle* mField88;      // loaded arc file handle
     /* 0x8C */ u32 mField8C;               // ArcResourceAccessor*
@@ -83,7 +84,7 @@ public:
     // Cursor/window position sync; MWCC inlines this into every Move() call site.
     void updateCursorPos();
 
-    /* 0x74 */ u8 mMemRegion[0x10];             // UnkClass_8045F564 scratch region
+    /* 0x74 */ UnkClass_8045F564 mMemRegion;    // UnkClass_8045F564 scratch region
     /* 0x84 */ CScn* mScn;                      // owning scene (render-CB receiver)
     /* 0x88 */ CFileHandle* mFileHandle;        // loaded arc file handle
     /* 0x8C */ nw4r::lyt::ArcResourceAccessor* mArcAccessor; // arc accessor (Term release)
@@ -95,7 +96,9 @@ public:
     /* 0xA1 */ u8 mFlagA1;                      // draw-gate flag (cbRenderBefore)
     /* 0xA2 */ u16 mFieldA2;                    // halfword (retail ctor: sth 0)
     /* 0xA4 */ u8 mFieldA4;                      // byte flag, set 0x22 by Col6_Win2Interact_378C
-    /* 0xA5 */ u8 mPadA5[3];                     // retail pads to 0xA8
+    /* 0xA5 */ u8 mPadA5_0;                      // init 0
+    /* 0xA6 */ u8 mPadA5_1;                      // init 0
+    /* 0xA7 */ u8 mPadA5_2;
     /* 0xA8 */ CCur18 mCur1;
     /* 0xC0 */ CCur18 mCur2;
     /* 0xD8 */ u8 mSysWin1[0x3C];               // CSysWin window 1
@@ -190,7 +193,6 @@ void ScnData_FwdB7DD4(void*, u8);                                        // code
 void forwardMpfCallB__17UnkClass_8047BB54Fv(void*, u8);                 // code_80135FDC.cpp
 void forwardMpfCallC__17UnkClass_8047BB54Fv(void*, u8);                 // code_80135FDC.cpp
 void __ct__8CProcessFv(CProcess* self);                              // CProcess ctor
-extern "C" void __ct__10CScrollBarFUc(void* self, u8 direction);                     // CScrollBar ctor (retail short name)
 void __ct__7CSysWinFUc(void* self, int arg);                              // CSysWin ctor (retail short name)
 int sprintf(char*, const char*, ...);                                // stdio (CRT)
 }
@@ -242,7 +244,6 @@ extern "C" const u8 lbl_eu_80667576;
 #include "kyoshin/cf/CtrlRemoteApi.hpp"
 extern "C" void __dt__7CSysWinFv(void*, int);
 extern "C" void __dt__17UnkClass_8045F564Fv(void*, int);
-extern "C" void __ct__17UnkClass_8045F564Fv(void* self);
 
 void Col6_ClearGlobals_D0B8();
 int Col6_ScanItemSlots_D310();
@@ -250,4 +251,3 @@ void Col6_ReserveBoxSlot_D3A0();
 extern "C" void CUICfManager_setMessageWindowVisible(u8 enable);                                // message-window show/hide
 extern "C" void UIWin_CreateQuestWin(int id, int a, int b);                     // window open request
 extern u32 gmPauseFlags;  // .sbss mode bitfield (bit 0x400000 gates hint draws)
-extern "C" void __ct__17UnkClass_8045F564Fv(void* self);

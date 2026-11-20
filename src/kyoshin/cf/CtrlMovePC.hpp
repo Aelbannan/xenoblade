@@ -166,41 +166,6 @@ void* getPlayer__Q22cf13CfGameManagerFi(int idx);
 }
 
 
-// Additional sdata2 float constants used by the state functions (values from
-// retail .sdata2; keep as named labels so the relocs pair with retail).
-extern const f32 lbl_eu_80667B64;   // 32.0f
-extern const f32 lbl_eu_80667B6C;   // 0.1f
-extern const f32 lbl_eu_80667B70;   // 2.0f
-extern const f32 lbl_eu_80667B74;   // 0.25f
-extern const f32 lbl_eu_80667B78;   // 25.0f
-extern const f32 lbl_eu_80667B7C;   // 0.6f
-extern const f32 lbl_eu_80667B80;   // 100.0f
-extern const f32 lbl_eu_80667B84;   // 10.0f
-extern const f32 lbl_eu_80667B88;   // 16.0f
-extern const f32 lbl_eu_80667B8C;   // 40.0f
-extern const f32 lbl_eu_80667B90;   // 20.0f
-extern const f32 lbl_eu_80667B94;   // 15.0f
-extern const f32 lbl_eu_80667B98;   // 225.0f
-extern const f32 lbl_eu_80667B9C;   // 40.743664f
-extern const f32 lbl_eu_80667BA0;   // 0.7f
-extern const f32 lbl_eu_80667BA4;   // -0.7f
-extern const f32 lbl_eu_80667BD0;   // -1.0f
-extern const f32 lbl_eu_80667C04;   // 9.0f
-extern const f32 lbl_eu_80667C08;   // 0.3f
-extern const f32 lbl_eu_80667C14;   // 0.333f
-extern const f32 lbl_eu_80667C18;   // 1.2f
-extern const f32 lbl_eu_80667C1C;   // 10.889999f
-extern const f32 lbl_eu_80667C20;   // 5.29f
-extern const f32 lbl_eu_80667C24;
-extern const f32 lbl_eu_80667BAC;   // goal-proximity squared threshold
-extern const f32 lbl_eu_80667BD4;   // probe height offset
-extern const f32 lbl_eu_80667BCC;   // arrival radius squared (nudge path)
-extern const f32 lbl_eu_80667BE0;   // slope gate
-extern const f64 lbl_eu_80667BE8;   // probe angle bias (double)
-extern const f32 lbl_eu_80667C44;   // arrival radius squared
-extern const f32 lbl_eu_80667C48;   // raycast param
-extern const f32 lbl_eu_80667C4C;   // raycast param
-extern const f32 lbl_eu_80667C50;   // max follow distance
 
 // lbl_eu_80663E28 is declared by kyoshin/cf/object/CfObjectMove.hpp (canonical
 // non-const form); do not redeclare here.

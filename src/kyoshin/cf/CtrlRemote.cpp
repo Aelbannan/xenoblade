@@ -26,13 +26,14 @@
 #include "monolib/math/CVec3.hpp"
 #include "monolib/util/MemManager.hpp"
 #include <nw4r/math/math_types.h>
+#include <nw4r/math/math_triangular.h>
+#include <nw4r/db/db_assert.h>
 
 #include <stdlib.h>
 #include <string.h>
 #include "kyoshin/CfEnumListHolder.hpp"
 #include "kyoshin/menu/CMenuBattleCommu.hpp"
 #include "kyoshin/cf/CSuddenCommu.hpp"
-namespace nw4r { namespace math { f32 FrSqrt(f32 x); } }
 
 cf::CtrlRemote* __ct__CtrlRemote(cf::CtrlRemote* obj, void* posObj, int arg5)
 {
@@ -174,7 +175,7 @@ void func_80098EF8(CtrlPcVf38* self)
     if (isBattleStatusActive(&self->mField5C->mField8, 0xb) != 0) {
         float vec[3];
         if (self->vf25(vec) != 0 && (gmGameFlags & 0x4000000) == 0) {
-            f32 ang = Atan2FIdx__Q24nw4r4mathFff(vec[0], vec[2]);
+            f32 ang = nw4r::math::Atan2FIdx(vec[0], vec[2]);
             f32 v = ang * 0.024543693f;
             self->mField14 = 0.4f;
             self->mFieldC = v;
@@ -336,7 +337,7 @@ void func_80098EF8(CtrlPcVf38* self)
                 f32 f31v =
                     ml::pi +
                     ((CtrlGm8Vf1C*)gm8)->vf05()->mField4 - self->mFieldC;
-                f32 f1 = 0.024543693f * Atan2FIdx__Q24nw4r4mathFff(d.x, d.z);
+                f32 f1 = 0.024543693f * nw4r::math::Atan2FIdx(d.x, d.z);
                 f32 f3 = f31v - f1;
                 while (f3 >= ml::pi) {
                     f3 -= ml::tau;
@@ -367,7 +368,7 @@ void func_80098EF8(CtrlPcVf38* self)
                 }
             }
             self->mField10 =
-                0.024543693f * Atan2FIdx__Q24nw4r4mathFff(d.x, d.z);
+                0.024543693f * nw4r::math::Atan2FIdx(d.x, d.z);
         } else if ((self->mField4 & 0x200) != 0) {
             self->mField4 |= 0x2000;
         }
@@ -410,15 +411,15 @@ void func_80098EF8(CtrlPcVf38* self)
         probePlayerCtrl((cf::CtrlPc*)self, &v13, 0x13) == 0 &&
         probePlayerCtrl((cf::CtrlPc*)self, &v805, 0x805) == 0) {
         if (f31 != 0.0f || f30 != 0.0f) {
-            f32 a1 = Atan2FIdx__Q24nw4r4mathFff(f31, f30);
+            f32 a1 = nw4r::math::Atan2FIdx(f31, f30);
             self->mFieldC = a1 * 0.024543693f;
         }
         if (f31 != 0.0f || f30 != 0.0f) {
-            f32 a2 = Atan2FIdx__Q24nw4r4mathFff(f31, f30);
+            f32 a2 = nw4r::math::Atan2FIdx(f31, f30);
             self->mField8 = a2 * 0.024543693f;
         }
         if (f31 * f31 + f30 * f30 < 0.0f) {
-            Warning__Q24nw4r2dbFPCciPCce(lbl_eu_80526324, 0x273,
+            nw4r::db::Warning(lbl_eu_80526324, 0x273,
                                         lbl_eu_80526300);
         }
         f32 d2 = f31 * f31 + f30 * f30;
@@ -480,7 +481,7 @@ a89c:
             nw4r::math::VEC3Sub(
                 reinterpret_cast<nw4r::math::VEC3*>(&diff), pOther, pSelf);
             ml::CVec3 d = diff;
-            f32 ang = Atan2FIdx__Q24nw4r4mathFff(d.x, d.z);
+            f32 ang = nw4r::math::Atan2FIdx(d.x, d.z);
             self->mField14 = 0.0f;
             self->mFieldC = ang * 0.024543693f;
             self->mField5C->mSub3E9C.v47(self->mFieldC);
@@ -505,7 +506,7 @@ a89c:
             nw4r::math::VEC3Sub(
                 reinterpret_cast<nw4r::math::VEC3*>(&diff), pT, pSelf);
             ml::CVec3 d = diff;
-            f32 ang = Atan2FIdx__Q24nw4r4mathFff(d.x, d.z);
+            f32 ang = nw4r::math::Atan2FIdx(d.x, d.z);
             self->mFieldC = ang * 0.024543693f;
             self->mField5C->mSub3E9C.v47(self->mFieldC);
         }

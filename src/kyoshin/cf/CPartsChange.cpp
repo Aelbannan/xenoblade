@@ -1,6 +1,10 @@
 // Auto-scaffolded catalog TU for kyoshin/cf/CPartsChange
 #include "kyoshin/cf/CfBdat.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"  // canonical isResourceFlagSet decl
+#include "kyoshin/cf/CfSoundMan.hpp"     // real CfSoundMan::playActorSound
+#include "monolib/math/Random.hpp"       // real ml::math::mtRand
+#include <nw4r/math/math_triangular.h>   // real SinFIdx / CosFIdx
+#include <nw4r/db/db_assert.h>           // real nw4r::db::Warning
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
@@ -755,10 +759,6 @@ void CPartsChange_CheckPlayerReload(){}
 
 extern "C" int CfRes_getD80Flag();
 f32 Scn_GetFrameDelta(void* view);
-extern const f32 lbl_eu_80667AC0;
-extern const f32 lbl_eu_80667AD4;
-extern const f32 lbl_eu_80667AB8;
-extern const f32 lbl_eu_80667ABC;
 extern u32 lbl_eu_80664184;
 
 // 0xA0: re-seed one party-change element: clear flag 0x4, read the BDAT row
@@ -1107,10 +1107,7 @@ extern "C" s32 CItem_rollBoxContents(u32 row, u32 flag);
 extern "C" void evictTboxOverflow();
 extern "C" void* spawnVoiceActor(void* tag, void* argB, void* argC, f32 val);
 extern "C" void copyTboxFromObj(void* arg);
-extern "C" u16 playActorSound__Q22cf10CfSoundManFUlUlUlUlf(u32 a, u32 b, u32 c, u32 d, f32 e);
 extern const u16 sPartsChangeDropSoundIds[4];  // name-guess: 0/0x1CC/0x1CD/0x1CE sound IDs indexed by the box roll result; only xref is CPartsChange_SpawnItemDrop
-extern const f32 lbl_eu_80667AE8;
-extern const f32 lbl_eu_80667B24;
 
 extern "C" void CPartsChange_SpawnItemDrop(u32 id, u8* obj, f32* pos, u8* arg4, f32 angle) {
     f32 ang = angle;
@@ -1144,7 +1141,7 @@ extern "C" void CPartsChange_SpawnItemDrop(u32 id, u8* obj, f32* pos, u8* arg4, 
     reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_setStatScale(1.5f);
     *(u32*)(actor + 0x73C) = id;
     copyTboxFromObj(actor);
-    playActorSound__Q22cf10CfSoundManFUlUlUlUlf(0, sPartsChangeDropSoundIds[n], 0, 0, lbl_eu_80667AD0);
+    cf::CfSoundMan::playActorSound(0, sPartsChangeDropSoundIds[n], 0, 0, lbl_eu_80667AD0);
 }
 
 extern "C" void CPartsChange_ReleaseEntryWithDrop(void* mgr, void* obj, int a, int b){}
@@ -1271,7 +1268,6 @@ static inline u8* PcActorOf(u32 id) {
     return p;
 }
 
-extern "C" int mtRand__Q22ml4mathFi(int);
 
 // 0x1A8: three sweeps over the 16 eight-byte id slots at self+0.
 //  1. resolve each slot: live actors lose 0x20 from their 0x3F00 flags,
@@ -1315,7 +1311,7 @@ extern "C" void CPartsChange_ResolveSlotReplayIds(u8* self) {
                 *(u16*)(self + 0xA0) |= 4;
                 break;
             }
-            if (mtRand__Q22ml4mathFi(100) <= 30) {
+            if (ml::math::mtRand(100) <= 30) {
                 if ((*(u16*)(self + 0xA0) & 4) == 0 ||
                     *(u16*)(self + 0x9A) == 0) {
                     *(u16*)(self + 0x9A) = replay;
@@ -1395,11 +1391,6 @@ struct SpawnPose {
 
 // nw4r FIdx trig plus the spawn-angle constants (pi/4 offset, 40.743664 FIdx
 // scale, 2^52+2^31 signed int->double magic).
-extern "C" f32 SinFIdx__Q24nw4r4mathFf(f32);
-extern "C" f32 CosFIdx__Q24nw4r4mathFf(f32);
-extern const f32 lbl_eu_80667B50;
-extern const f32 lbl_eu_80667B4C;
-extern const f64 lbl_eu_80667B58;
 
 extern "C" void CPartsChange_CopyHeaderAndLoad(u32* src, u32* dst) {
     u32 w0 = src[0];
@@ -1426,8 +1417,8 @@ extern "C" void CPartsChange_ComputeSpawnPoseModulo(SpawnPose* src, SpawnPose* d
     d[0] = s[0];
     d[1] = s[1];
     d[2] = s[2];
-    dst->x += rad * SinFIdx__Q24nw4r4mathFf(40.743664f * angle);
-    dst->z += rad * CosFIdx__Q24nw4r4mathFf(40.743664f * angle);
+    dst->x += rad * nw4r::math::SinFIdx(40.743664f * angle);
+    dst->z += rad * nw4r::math::CosFIdx(40.743664f * angle);
     CPartsChange_ProbePartyCollisions((u32*)src, (u32*)dst);
 }
 
@@ -1445,11 +1436,11 @@ extern "C" void CPartsChange_ComputeSpawnPoseA(SpawnPose* src, SpawnPose* dst) {
     f32 radius = (f32)((n - 1) >> 1) * src->field_1C + src->field_1C;
     f32 angle = src->field_18 + ml::halfpi;
     if ((n & 1) != 0) {
-        dst->x += radius * SinFIdx__Q24nw4r4mathFf(40.743664f * angle);
-        dst->z += radius * CosFIdx__Q24nw4r4mathFf(40.743664f * angle);
+        dst->x += radius * nw4r::math::SinFIdx(40.743664f * angle);
+        dst->z += radius * nw4r::math::CosFIdx(40.743664f * angle);
     } else {
-        dst->x -= radius * SinFIdx__Q24nw4r4mathFf(40.743664f * angle);
-        dst->z -= radius * CosFIdx__Q24nw4r4mathFf(40.743664f * angle);
+        dst->x -= radius * nw4r::math::SinFIdx(40.743664f * angle);
+        dst->z -= radius * nw4r::math::CosFIdx(40.743664f * angle);
     }
     CPartsChange_ProbePartyCollisions((u32*)src, (u32*)dst);
 }
@@ -1466,8 +1457,8 @@ extern "C" void CPartsChange_ComputeSpawnPoseDirect(SpawnPose* src, SpawnPose* d
     d[0] = w0;
     d[2] = s[2];
     f32 radius = (f32)src->field_14 * src->field_1C;
-    dst->x -= radius * SinFIdx__Q24nw4r4mathFf(40.743664f * src->field_18);
-    dst->z -= radius * CosFIdx__Q24nw4r4mathFf(40.743664f * src->field_18);
+    dst->x -= radius * nw4r::math::SinFIdx(40.743664f * src->field_18);
+    dst->z -= radius * nw4r::math::CosFIdx(40.743664f * src->field_18);
     CPartsChange_ProbePartyCollisions((u32*)src, (u32*)dst);
 }
 
@@ -1485,8 +1476,8 @@ extern "C" void CPartsChange_ComputeSpawnPoseB(SpawnPose* src, SpawnPose* dst) {
     d[2] = s[2];
     f32 radius = (f32)src->field_14 * src->field_1C;
     f32 angle = src->field_18 + ml::quarterpi;
-    dst->x -= radius * SinFIdx__Q24nw4r4mathFf(40.743664f * angle);
-    dst->z -= radius * CosFIdx__Q24nw4r4mathFf(40.743664f * angle);
+    dst->x -= radius * nw4r::math::SinFIdx(40.743664f * angle);
+    dst->z -= radius * nw4r::math::CosFIdx(40.743664f * angle);
     CPartsChange_ProbePartyCollisions((u32*)src, (u32*)dst);
 }
 
@@ -1501,8 +1492,8 @@ extern "C" void CPartsChange_ComputeSpawnPoseC(SpawnPose* src, SpawnPose* dst) {
     d[2] = s[2];
     f32 radius = (f32)src->field_14 * src->field_1C;
     f32 angle = src->field_18 - ml::quarterpi;
-    dst->x -= radius * SinFIdx__Q24nw4r4mathFf(40.743664f * angle);
-    dst->z -= radius * CosFIdx__Q24nw4r4mathFf(40.743664f * angle);
+    dst->x -= radius * nw4r::math::SinFIdx(40.743664f * angle);
+    dst->z -= radius * nw4r::math::CosFIdx(40.743664f * angle);
     CPartsChange_ProbePartyCollisions((u32*)src, (u32*)dst);
 }
 
@@ -1520,12 +1511,12 @@ extern "C" void CPartsChange_ComputeSpawnPoseD(SpawnPose* src, SpawnPose* dst) {
     f32 radius = (f32)(m >> 1) * src->field_1C + src->field_1C;
     if ((m & 1) != 0) {
         f32 angle = src->field_18 + ml::quarterpi;
-        dst->x -= radius * SinFIdx__Q24nw4r4mathFf(40.743664f * angle);
-        dst->z -= radius * CosFIdx__Q24nw4r4mathFf(40.743664f * angle);
+        dst->x -= radius * nw4r::math::SinFIdx(40.743664f * angle);
+        dst->z -= radius * nw4r::math::CosFIdx(40.743664f * angle);
     } else {
         f32 angle = src->field_18 - ml::quarterpi;
-        dst->x -= radius * SinFIdx__Q24nw4r4mathFf(40.743664f * angle);
-        dst->z -= radius * CosFIdx__Q24nw4r4mathFf(40.743664f * angle);
+        dst->x -= radius * nw4r::math::SinFIdx(40.743664f * angle);
+        dst->z -= radius * nw4r::math::CosFIdx(40.743664f * angle);
     }
     CPartsChange_ProbePartyCollisions((u32*)src, (u32*)dst);
 }
@@ -1544,12 +1535,12 @@ extern "C" void CPartsChange_ComputeSpawnPoseStaggered(SpawnPose* src, SpawnPose
     f32 dz = lbl_eu_80667B28;
     if ((src->field_14 & 1) != 0) {
         f32 a = src->field_18 + ml::halfpi;
-        dx += src->field_1C * SinFIdx__Q24nw4r4mathFf(40.743664f * a);
-        dz += src->field_1C * CosFIdx__Q24nw4r4mathFf(40.743664f * a);
+        dx += src->field_1C * nw4r::math::SinFIdx(40.743664f * a);
+        dz += src->field_1C * nw4r::math::CosFIdx(40.743664f * a);
     }
     f32 rad = (f32)(src->field_14 >> 1) * src->field_1C;
-    dx -= rad * SinFIdx__Q24nw4r4mathFf(src->field_18 * 40.743664f);
-    dz -= rad * CosFIdx__Q24nw4r4mathFf(src->field_18 * 40.743664f);
+    dx -= rad * nw4r::math::SinFIdx(src->field_18 * 40.743664f);
+    dz -= rad * nw4r::math::CosFIdx(src->field_18 * 40.743664f);
     dst->x += dx;
     dst->z += dz;
     CPartsChange_ProbePartyCollisions(s, d);
@@ -1560,7 +1551,6 @@ extern "C" void CPartsChange_ComputeSpawnPoseStaggered(SpawnPose* src, SpawnPose
 // the radius to its (rad, rad) 2-vector magnitude through the nw4r FrSqrt
 // helper. The radius is then scaled by (m / 3) + 1 and the rotated offset is
 // subtracted from the destination x/z before the party probe.
-extern "C" void Warning__Q24nw4r2dbFPCciPCce(const char* file, int line, const char* msg);
 extern const char lbl_eu_80526324[];
 extern const char lbl_eu_80526300[];
 
@@ -1581,7 +1571,7 @@ extern "C" void CPartsChange_ComputeSpawnPoseFull(SpawnPose* src, SpawnPose* dst
         ang += ml::quarterpi;
     } else {
         if (rad * rad + rad * rad < lbl_eu_80667B28) {
-            Warning__Q24nw4r2dbFPCciPCce(lbl_eu_80526324, 0x273, lbl_eu_80526300);
+            nw4r::db::Warning(lbl_eu_80526324, 0x273, lbl_eu_80526300);
         }
         f32 d2 = rad * rad + rad * rad;
         if (d2 > lbl_eu_80667B28) {
@@ -1591,8 +1581,8 @@ extern "C" void CPartsChange_ComputeSpawnPoseFull(SpawnPose* src, SpawnPose* dst
         }
     }
     rad = (f32)(m / 3) * rad + rad;
-    dst->x -= rad * SinFIdx__Q24nw4r4mathFf(40.743664f * ang);
-    dst->z -= rad * CosFIdx__Q24nw4r4mathFf(40.743664f * ang);
+    dst->x -= rad * nw4r::math::SinFIdx(40.743664f * ang);
+    dst->z -= rad * nw4r::math::CosFIdx(40.743664f * ang);
     CPartsChange_ProbePartyCollisions((u32*)src, (u32*)dst);
 }
 

@@ -249,8 +249,6 @@ struct Fe48Table {
 
 // Walk-graph float constants (retail .rodata pool)
 extern "C" const f32 lbl_eu_8066A898;
-extern "C" const f32 lbl_eu_8066A894;
-extern "C" const f32 lbl_eu_8066A8A8;
+extern "C" const f32 lbl_eu_8066A8B4;
 extern "C" const f32 lbl_eu_8066A8AC;
-extern "C" const f32 lbl_eu_8066A8B8;
 extern "C" u32 sDefaultPositionCallbackBlock[4]; // ptmf reference block copied into the 0x9C slot

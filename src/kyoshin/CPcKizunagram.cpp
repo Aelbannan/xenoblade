@@ -634,9 +634,8 @@ int CPcKizunagram::OnFileEvent(CEventFile* event) {
 
         // Bind the font handle into the layout's root pane.
         nw4r::lyt::Pane* rootPane = mLayout->GetRootPane();
-        CDeviceFontVtblView* font =
-            (CDeviceFontVtblView*)getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, mLayout);
-        u32 fontResult = font->vf7();
+        IDeviceFontInfo* font = (IDeviceFontInfo*)CDeviceFont::getFontInfo(1, mLayout);
+        u32 fontResult = (u32)font->getFont();
         ApplyFontToTxtPanes(rootPane, (const nw4r::ut::Font*)fontResult);
         CUICfManager_getPackedFont9C();
 

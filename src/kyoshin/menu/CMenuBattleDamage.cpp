@@ -751,7 +751,7 @@ void CMenuBattleDamage::BtlDmg_SpawnPopup(int actorId, int value, u32 flags) {
 
         switch (this->mDamageType) {
         case 0:
-            sprintf(buf8, lbl_eu_804FD524 + 0xc9);
+            sprintf(buf8, "*");
             break;
         case 1:
             sprintf(buf8, "*");
@@ -778,32 +778,32 @@ void CMenuBattleDamage::BtlDmg_SpawnPopup(int actorId, int value, u32 flags) {
         case 4:
             buf.format("%s",
                        BdatTouchStringCell("MNU_battle",
-                                     lbl_eu_804FD524 + 0xc4, 0xb));
+                                     "MNU_battle", 0xb));
             break;
         case 5:
             buf.format("%s%d %s", buf8, e.field_20,
                        BdatTouchStringCell("MNU_battle",
-                                     lbl_eu_804FD524 + 0xc4, 0xc));
+                                     "MNU_battle", 0xc));
             break;
         case 6:
             buf.format("%s%d %s", buf8, e.field_20,
                        BdatTouchStringCell("MNU_battle",
-                                     lbl_eu_804FD524 + 0xc4, 0xe));
+                                     "MNU_battle", 0xe));
             break;
         case 7:
             buf.format("%s%d %s", buf8, e.field_20,
                        BdatTouchStringCell("MNU_battle",
-                                     lbl_eu_804FD524 + 0xc4, 0xd));
+                                     "MNU_battle", 0xd));
             break;
         case 8:
             buf.format("%s",
                        BdatTouchStringCell("MNU_battle",
-                                     lbl_eu_804FD524 + 0xc4, 0xe));
+                                     "MNU_battle", 0xe));
             break;
         case 9:
             buf.format("%s",
                        BdatTouchStringCell("MNU_battle",
-                                     lbl_eu_804FD524 + 0xc4, 0xd));
+                                     "MNU_battle", 0xd));
             break;
         case 0xa:
             buf.format("%s%d", buf8, e.field_20);
@@ -911,11 +911,11 @@ void CMenuBattleDamage::BtlDmg_SpawnPopup(int actorId, int value, u32 flags) {
         if (flags & 0x8) {
             text = BdatGetPtrDirect(
                 reinterpret_cast<const void*>(::cf::CfBdat::spBtlBuffListFileData),
-                lbl_eu_804FD524 + 0xc4, value);
+                "MNU_battle", value);
         } else if (flags & 0x10) {
             text = BdatGetPtrDirect(
                 ::cf::CfBdat::spBtlPssListFileData,
-                lbl_eu_804FD524 + 0xc4, value);
+                "MNU_battle", value);
         } else if (flags & 0x20) {
             switch (value) {
             case 1:

@@ -6,23 +6,11 @@
 #include "kyoshin/cf/object/CActorParam.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 
-// Retail float constants referenced by CfObjectActor functions (SDA2 access).
-extern const float lbl_eu_80667738;   // CActorParam_addHp / CfObjectActor_takeDamageValue threshold
+// Retail float constants still referenced by CfObjectActor functions (SDA2 access).
 
 extern const float lbl_eu_8066773C;   // CfObject_UnkVirtualFunc179 CfObjectMove vf70 arg
 
-extern const float lbl_eu_80667740;
-
-
 extern u32 gmPauseFlags;     // mode bitfield (.sbss; bit 0x800 gates the 33 path)
-
-extern const double lbl_eu_80667748;  // 2^52 + 2^31 magic (CfObjectActor_getAdjustedFacing s16 -> float)
-
-extern const double lbl_eu_80667750;  // +0.5 rounding add (CActorParam_applyDamage gauge)
-
-extern const double lbl_eu_80667758;  // -0.5 rounding add (CActorParam_applyDamage gauge)
-
-extern const float lbl_eu_80667760;         // CActorParam_applyDamage 0xC3 ratio divisor
 
 extern const float lbl_eu_80667764;         // CActorParam_applyDamage 0xFC/0x100 gauge scale
 extern const float lbl_eu_8066776C;         // CfObjectActor_readActionScale null-pointer fallback

@@ -667,41 +667,12 @@ extern "C" void* getArtsParamByIdx(void* base, int index);           // arts-par
 extern "C" void setArtsSlotByIdx(void* base, unsigned short value, int index); // arts slot write
 
 
-// .sdata2 constants: 0.0f gauge floor (Func34/42/31), 1.0f Func34 rounding
-// floor, and the +/-0.5 double rounding addends (Func34 round-to-nearest).
-extern float lbl_eu_80666968;
-extern float lbl_eu_80666980;
-extern const double lbl_eu_806669B8;
-extern const double lbl_eu_806669C0;
-
-// initEnemyBdatParams / applyEnemyReward constants (.sdata2): 2^52 u16->f32 magic,
-// 2^52+2^31 s32->f32 magic and the scale constant.
-extern const double lbl_eu_806669A0;
-extern const double lbl_eu_806669A8;
-extern const float lbl_eu_806669B0;
-
-// applyEnemyReward bdat file pointer (.sdata2) and drop-channel tables (.sbss):
+// applyEnemyReward drop-channel tables (.sbss):
 // u16 mode word at 0x80663E42 and the per-mode channel halfword table whose
 // entries are addressed at byte offset mode*100 from 0x80663E44.
 extern u16 gmGlobalFlag42;
 extern u16 gmGlobalFlag44;
 
-// applyEnemyReward bdat file pointer (.sbss).
-
-// initEnemyBattleState func_804B0AD4 float args (.sdata2).
-extern float lbl_eu_8066696C;
-extern float lbl_eu_80666970;
-
-// .sdata2 constants used by the CfObjectEne arts/attack loaders
-// (CActorParam_UnkVirtualFunc166/167) and the loadEnemyParams setup.
-extern float lbl_eu_8066697C;   // u8/u16 -> f32 divisor (166/167, loadEnemyParams)
-extern float lbl_eu_80666984;   // loadEnemyParams vf198/vf1A4 arg
-extern float lbl_eu_80666988;   // loadEnemyParams vf1BC scale
-extern float lbl_eu_8066698C;   // loadEnemyParams vf1BC divisor
-extern float lbl_eu_80666990;   // loadEnemyParams vf334 ratio divisor
-extern float lbl_eu_80666994;   // 166 and loadEnemyParams f32 divisor
-extern float lbl_eu_80666998;   // loadEnemyParams scaled-vfE8 multiplier
-extern float lbl_eu_806669B4;   // 166 0xFF arts-gauge fallback
 
 // ml::rad2deg / ml::deg2rad are already declared `const float` in
 // CfObjectModel.hpp (in the CfObjectActor.hpp chain) - reuse those.

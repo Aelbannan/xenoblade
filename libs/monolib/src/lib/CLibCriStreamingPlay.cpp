@@ -85,12 +85,8 @@ extern "C" {
     void __cvt_fp2unsigned(float f);
     
     // Global state
-    extern CLibCriStreamingPlay* lbl_eu_806656E8;
-    extern void* lbl_eu_806656EC;
-    extern const char* lbl_eu_806637A4;
-    extern u32 lbl_eu_806637A0;
-    extern double lbl_eu_8066A518;
-    extern const u32 lbl_eu_80523050[20];
+    // name-guess: ADX output-volume lookup table used by the volume helpers
+    extern const u32 sVolumeDbTable[20];
     extern const u32 lbl_eu_805230B8[24];
 
     // Shared ".ahx" literal (monolibdata2 .sdata2 pool)
@@ -148,20 +144,29 @@ extern "C" {
     extern void onViBeginFrame__20CLibCriStreamingPlayFv();
 }
 
+// name-guess: singleton set by the ctor, cleared by the dtor, read by every stream API
+extern CLibCriStreamingPlay* spStreamingPlay;
+// name-guess: MEM2 block allocated by the ctor and freed by the dtor
+extern void* spStreamBuffer;
+// name-guess: ".ahx" extension pointer used by startStream
+extern const char* sAhxExtension;
+// name-guess: 48 kHz sample-rate constant used by the buffer-size calculation
+extern u32 sStreamSampleRate;
+
 // Re-evaluate a stream's ADX pause state: paused while its own pause bits are
 // set, the global pause counter is non-zero, or a flow is active.
 // Inlined by MWCC at each call site.
 static inline void applyPause(StreamEntry* entry) {
     u32 flags = entry->flags;
     ADXT_Pause(entry->adxt, CWorkControl::hasFlow() |
-                            ((*(s32*)((u8*)lbl_eu_806656E8 + 0x4B0) != 0) |
+                            ((*(s32*)((u8*)spStreamingPlay + 0x4B0) != 0) |
                              (flags & 1) | ((flags >> 1) & 1)));
 }
 
 // Volume lookup helper - searches table for volume dB value.
 // Inlined by MWCC into every caller (retail inlines the loop).
 static int lookupVolume(int volDb) {
-    const int* table = reinterpret_cast<const int*>(lbl_eu_80523050);
+    const int* table = reinterpret_cast<const int*>(sVolumeDbTable);
     int lo;
     int hi;
     while ((hi = table[0]) >= 0) {
@@ -177,7 +182,7 @@ static int lookupVolume(int volDb) {
 
 // Find a stream slot by id (inlined by MWCC; returns the slot pointer or NULL).
 static StreamEntry* findStreamSlot(u32 id) {
-    u8* entry = reinterpret_cast<u8*>(lbl_eu_806656E8) + 0x1C8;
+    u8* entry = reinterpret_cast<u8*>(spStreamingPlay) + 0x1C8;
     for (int i = 0; i < 5; i++) {
         if (*(u32*)(entry + 4) == id) {
             return reinterpret_cast<StreamEntry*>(entry);
@@ -191,7 +196,7 @@ static void releaseSlot(StreamEntry* entry);
 
 // Find a free (unused) stream slot; NULL if all five are in use.
 static StreamEntry* findFreeSlot() {
-    u8* entry = reinterpret_cast<u8*>(lbl_eu_806656E8) + 0x1C8;
+    u8* entry = reinterpret_cast<u8*>(spStreamingPlay) + 0x1C8;
     for (int i = 0; i < 5; i++) {
         if (*(u32*)(entry + 4) + 0x10000 == 0xFFFF) {
             return reinterpret_cast<StreamEntry*>(entry);
@@ -223,7 +228,7 @@ extern "C" CLibCriStreamingPlay* __ct__CLibCriStreamingPlay(CLibCriStreamingPlay
     *(u32*)(base + 0x4B0) = 0;
     
     // Store global instance
-    lbl_eu_806656E8 = mem;
+    spStreamingPlay = mem;
     
     // Set work type
     *(u32*)(base + 0x50) = 0x11;
@@ -240,7 +245,7 @@ extern "C" CLibCriStreamingPlay* __ct__CLibCriStreamingPlay(CLibCriStreamingPlay
     
     // Allocate MEM2 audio buffer (~64KB)
     u32 mem2 = getHandleMEM2__Q23mtl10MemManagerFv();
-    lbl_eu_806656EC = allocate_head__Q23mtl10MemManagerFUlUli(mem2, 0xA000, 4);
+    spStreamBuffer = allocate_head__Q23mtl10MemManagerFUlUli(mem2, 0xA000, 4);
     
     // Initialize exception handler
     ((CException*)(base + 0x1C4))->AddToGlobalArray(nullptr);
@@ -270,13 +275,13 @@ extern "C" CLibCriStreamingPlay* __dt__20CLibCriStreamingPlayFv(CLibCriStreaming
         CException::RemoveFromGlobalArray((IException*)exc);
 
         // Free audio buffer
-        if (lbl_eu_806656EC) {
-            mtl::MemManager::deallocate(lbl_eu_806656EC);
-            lbl_eu_806656EC = nullptr;
+        if (spStreamBuffer) {
+            mtl::MemManager::deallocate(spStreamBuffer);
+            spStreamBuffer = nullptr;
         }
 
         // Clear instance
-        lbl_eu_806656E8 = nullptr;
+        spStreamingPlay = nullptr;
 
         // Base destructor, then free when invoked as deleting dtor
         __dt__11CWorkThreadFv(self, 0);
@@ -324,7 +329,7 @@ extern "C" int startStream__20CLibCriStreamingPlayFv(const char* filename, int p
 
     // .ahx extension or forced AHX mode selects the AHX decoder.
     found = 0;
-    if (strstr(file, lbl_eu_806637A4) != NULL || ahx) {
+    if (strstr(file, sAhxExtension) != NULL || ahx) {
         found = 1;
     }
     if (found != 0) {
@@ -338,7 +343,7 @@ extern "C" int startStream__20CLibCriStreamingPlayFv(const char* filename, int p
     // Streaming buffer size (ch = 2 for stereo, 1 for mono-AHX):
     //   (rate/10000 >> 6) * ch*25000 * 0xBA2F8BA3 >> 32 >> 5 * 6,
     // rounded up to 0x800, plus ch*24768 + 100.
-    u32 rate = lbl_eu_806637A0;
+    u32 rate = sStreamSampleRate;
     int bit = (int)((slot->flags >> 2) & 1);
     int ch1 = 2 - bit;
     u32 a = (rate / 10000) >> 6;
@@ -370,7 +375,7 @@ extern "C" int startStream__20CLibCriStreamingPlayFv(const char* filename, int p
 
     // Generate a unique stream id: (slotIdx+1 & 0xFF) | (counter & 0xFF) << 8.
     u32* counterPtr = reinterpret_cast<u32*>(
-        reinterpret_cast<u8*>(lbl_eu_806656E8) + 0x4AC);
+        reinterpret_cast<u8*>(spStreamingPlay) + 0x4AC);
     u32 counter = *counterPtr;
     slot->id = ((slot->slotId + 1) & 0xFF) | ((counter & 0xFF) << 8);
     *counterPtr = counter + 1;
@@ -404,7 +409,7 @@ extern "C" int startStream__20CLibCriStreamingPlayFv(const char* filename, int p
 
         if (slot->flags & 0x04) {
             u32 idx = slot->slotId << 13;
-            ADXT_AttachAhx(slot->adxt, reinterpret_cast<u8*>(lbl_eu_806656EC) + idx, 0x2000);
+            ADXT_AttachAhx(slot->adxt, reinterpret_cast<u8*>(spStreamBuffer) + idx, 0x2000);
             ADXT_SetSvrFreq(slot->adxt, 0x1e);
         }
 
@@ -444,7 +449,7 @@ extern "C" int startStream__20CLibCriStreamingPlayFv(const char* filename, int p
 // matches any slot that is itself not unused (-1).
 extern "C" bool isStreamActive__20CLibCriStreamingPlayFv(u32 id) {
     CLibCriStreamingPlayData* data = reinterpret_cast<CLibCriStreamingPlayData*>(
-        reinterpret_cast<u8*>(lbl_eu_806656E8) + 0x1C8);
+        reinterpret_cast<u8*>(spStreamingPlay) + 0x1C8);
 
     for (int i = 0; i < 5; i++) {
         u32 v = (u32)data->entries[i].id;
@@ -460,7 +465,7 @@ extern "C" bool isStreamActive__20CLibCriStreamingPlayFv(u32 id) {
 // per-stage "bne next / b done" pairs and chained pointer advance.
 extern "C" void stopStream__20CLibCriStreamingPlayFv(int id) {
     StreamEntry* entry = reinterpret_cast<StreamEntry*>(
-        reinterpret_cast<u8*>(lbl_eu_806656E8) + 0x1C8);
+        reinterpret_cast<u8*>(spStreamingPlay) + 0x1C8);
 
     entry =
         (u32)entry->id == (u32)id ? entry :
@@ -481,7 +486,7 @@ extern "C" void stopStream__20CLibCriStreamingPlayFv(int id) {
 // stopAllStreams - Stop all streams
 void CLibCriStreamingPlay::stopAllStreams() {
     StreamEntry* entry = reinterpret_cast<CLibCriStreamingPlayView*>(
-        lbl_eu_806656E8)->entries;
+        spStreamingPlay)->entries;
 
     for (u32 i = 0; i < 5; i++, entry++) {
         // Defensive per-entry null guard (retail keeps the check in-loop).
@@ -512,7 +517,7 @@ void CLibCriStreamingPlay::stopAllStreams() {
 // per-stage "bne next / b done" pairs and chained pointer advance.
 extern "C" void setStreamPause__20CLibCriStreamingPlayFv(int id, bool pause) {
     StreamEntry* entry = reinterpret_cast<StreamEntry*>(
-        reinterpret_cast<u8*>(lbl_eu_806656E8) + 0x1C8);
+        reinterpret_cast<u8*>(spStreamingPlay) + 0x1C8);
 
     entry =
         (u32)entry->id == (u32)id ? entry :
@@ -534,7 +539,7 @@ extern "C" void setStreamPause__20CLibCriStreamingPlayFv(int id, bool pause) {
         u32 flags = entry->flags;
         int flow = CWorkControl::hasFlow();
         int pauseArg = (flags & 1) |
-                       (*(s32*)((u8*)lbl_eu_806656E8 + 0x4B0) != 0) |
+                       (*(s32*)((u8*)spStreamingPlay + 0x4B0) != 0) |
                        ((flags >> 1) & 1) | flow;
         ADXT_Pause(entry->adxt, pauseArg);
 
@@ -555,7 +560,7 @@ extern "C" void setStreamPause__20CLibCriStreamingPlayFv(int id, bool pause) {
 // retail's per-stage "bne next / b done" pair and chained pointer advance.
 extern "C" int getStreamPosition__20CLibCriStreamingPlayFv(int id) {
     StreamEntry* entry = reinterpret_cast<StreamEntry*>(
-        reinterpret_cast<u8*>(lbl_eu_806656E8) + 0x1C8);
+        reinterpret_cast<u8*>(spStreamingPlay) + 0x1C8);
 
     entry =
         (u32)entry->id == (u32)id ? entry :
@@ -571,7 +576,7 @@ extern "C" int getStreamPosition__20CLibCriStreamingPlayFv(int id) {
 // Volume lookup helper used by wkUpdate: retail performs the interpolation
 // with double arithmetic (dbl(hi-lo) * dbl(volDb-lo) / dbl(tbl1-tbl3)).
 static int lookupVolumeDb(int volDb) {
-    const int* table = reinterpret_cast<const int*>(lbl_eu_80523050);
+    const int* table = reinterpret_cast<const int*>(sVolumeDbTable);
     int hi;
     while ((hi = table[0]) >= 0) {
         if (volDb >= hi) {
@@ -730,7 +735,7 @@ bool CLibCriStreamingPlay::wkStandbyLogout() {
     if (mChildren.mStartNodePtr->mNext == mChildren.mStartNodePtr) {
         u32 i = 0;
         StreamEntry* entry = reinterpret_cast<CLibCriStreamingPlayView*>(
-            lbl_eu_806656E8)->entries;
+            spStreamingPlay)->entries;
 
         for (; i < 5; i++, entry++) {
             // Defensive per-entry null guard (retail keeps the check in-loop).
@@ -783,7 +788,7 @@ void CLibCriStreamingPlay::OnPauseTrigger(bool paused) {
         u32 flags = entry->flags;
         int flow = CWorkControl::hasFlow();
         int bit0 = (int)(flags & 1);
-        s32 count = *(s32*)((u8*)lbl_eu_806656E8 + 0x4B0);
+        s32 count = *(s32*)((u8*)spStreamingPlay + 0x4B0);
         int bit1 = (int)((flags >> 1) & 1);
         int pauseArg = (bit0 | (count != 0)) | bit1 | flow;
         ADXT_Pause(entry->adxt, pauseArg);
@@ -804,7 +809,7 @@ void CLibCriStreamingPlay::OnPauseTrigger(bool paused) {
 // per-stage "bne next / b done" pairs and chained pointer advance.
 extern "C" float getStreamVolume__20CLibCriStreamingPlayFv(int id) {
     StreamEntry* entry = reinterpret_cast<StreamEntry*>(
-        reinterpret_cast<u8*>(lbl_eu_806656E8) + 0x1C8);
+        reinterpret_cast<u8*>(spStreamingPlay) + 0x1C8);
 
     entry =
         (u32)entry->id == (u32)id ? entry :
@@ -822,7 +827,7 @@ extern "C" float getStreamVolume__20CLibCriStreamingPlayFv(int id) {
 // per-stage "bne next / b done" pairs and chained pointer advance.
 extern "C" void setStreamVolume__20CLibCriStreamingPlayFv(int id, float volume) {
     StreamEntry* entry = reinterpret_cast<StreamEntry*>(
-        reinterpret_cast<u8*>(lbl_eu_806656E8) + 0x1C8);
+        reinterpret_cast<u8*>(spStreamingPlay) + 0x1C8);
 
     entry =
         (u32)entry->id == (u32)id ? entry :
@@ -857,7 +862,7 @@ extern "C" void setStreamVolume__20CLibCriStreamingPlayFv(int id, float volume) 
 // per-stage "bne next / b done" pairs and chained pointer advance.
 extern "C" void setStreamVolumeScale__20CLibCriStreamingPlayFv(int id, float volume) {
     StreamEntry* entry = reinterpret_cast<StreamEntry*>(
-        reinterpret_cast<u8*>(lbl_eu_806656E8) + 0x1C8);
+        reinterpret_cast<u8*>(spStreamingPlay) + 0x1C8);
 
     entry =
         (u32)entry->id == (u32)id ? entry :
@@ -884,7 +889,7 @@ extern "C" void setStreamVolumeScale__20CLibCriStreamingPlayFv(int id, float vol
 // Unrolled-by-MWCC 5-slot scan by id; MWCC inlines this at each use site.
 static StreamEntry* findSlotById(u32 id) {
     StreamEntry* entry = reinterpret_cast<StreamEntry*>(
-        reinterpret_cast<u8*>(lbl_eu_806656E8) + 0x1C8);
+        reinterpret_cast<u8*>(spStreamingPlay) + 0x1C8);
 
     return
         (u32)entry->id == (u32)id ? entry :
@@ -949,7 +954,7 @@ extern "C" void setStreamPanVolume__20CLibCriStreamingPlayFv(int id, const u8* i
     // Unrolled match chain (same shape as getStreamPosition): reproduces retail's
     // per-stage "bne next / b done" pairs and chained pointer advance.
     StreamEntry* slot = reinterpret_cast<StreamEntry*>(
-        reinterpret_cast<u8*>(lbl_eu_806656E8) + 0x1C8);
+        reinterpret_cast<u8*>(spStreamingPlay) + 0x1C8);
 
     slot =
         (u32)slot->id == (u32)id ? slot :
@@ -1004,7 +1009,7 @@ extern "C" void setStreamPanVolume__20CLibCriStreamingPlayFv(int id, const u8* i
 void CLibCriStreamingPlay::clearAllStreams() {
     u32 i = 0;
     StreamEntry* entry = reinterpret_cast<CLibCriStreamingPlayView*>(
-        lbl_eu_806656E8)->entries;
+        spStreamingPlay)->entries;
 
     for (; i < 5; i++, entry++) {
         // Defensive per-entry null guard (retail keeps the check in-loop).
@@ -1036,7 +1041,7 @@ extern "C" int calcStreamBufferSize__20CLibCriStreamingPlayFv(int ch) {
     int neg = -ch;
     ch = neg | ch;
     u32 t = ((ch >> 31) + 2) * 25000;
-    u32 b = t * (lbl_eu_806637A0 / 1000);
+    u32 b = t * (sStreamSampleRate / 1000);
     u32 c = b / 44;
     u32 d = c * 6;
     u32 e = (d + 0x800) & ~0x7FFu;
@@ -1048,7 +1053,7 @@ extern "C" int calcStreamBufferSize__20CLibCriStreamingPlayFv(int ch) {
 // per-stage "bne next / b done" pairs and chained pointer advance.
 extern "C" bool isStreamPaused__20CLibCriStreamingPlayFv(CLibCriStreamingPlay* self) {
     u32 flags;
-    CLibCriStreamingPlay* inst = lbl_eu_806656E8;
+    CLibCriStreamingPlay* inst = spStreamingPlay;
     if (inst == NULL) return false;
 
     StreamEntry* entry = reinterpret_cast<StreamEntry*>(
@@ -1095,7 +1100,7 @@ extern "C" void onViDestroy__20CLibCriStreamingPlayFv(void* self) {
 // CLibCriStreamingPlay.s.
 
 // dB volume lookup table (.rodata 0x80523050, read by lookupVolume)
-extern "C" __declspec(section ".rodata") __attribute__((aligned(8))) const u32 lbl_eu_80523050[20] = {
+extern "C" __attribute__((aligned(8))) const u32 sVolumeDbTable[20] = {
     0x00000064, 0x00000000, 0x00000046, 0xFFFFFFE2,
     0x00000032, 0xFFFFFFC4, 0x00000028, 0xFFFFFFA6,
     0x0000001E, 0xFFFFFF88, 0x00000014, 0xFFFFFF60,
@@ -1104,10 +1109,10 @@ extern "C" __declspec(section ".rodata") __attribute__((aligned(8))) const u32 l
 };
 
 // monolib RTTI name string (.rodata 0x805230A0)
-extern "C" __declspec(section ".rodata") const char lbl_eu_805230A0[21] = "CLibCriStreamingPlay";
+extern "C" const char lbl_eu_805230A0[21] = "CLibCriStreamingPlay";
 
 // ADX status message strings, SJIS (.rodata 0x805230B8; wkUpdate slices it)
-extern "C" __declspec(section ".rodata") const u32 lbl_eu_805230B8[24] = {
+extern "C" const u32 lbl_eu_805230B8[24] = {
     0x92E28E7E, 0x92860041, 0x44582082, 0xCC837783,
     0x62835F8F, 0xEE95F18E, 0xE693BE92, 0x86008DC4,
     0x90B68F80, 0x94F59286, 0x00836683, 0x52815B83,
@@ -1117,8 +1122,8 @@ extern "C" __declspec(section ".rodata") const u32 lbl_eu_805230B8[24] = {
 };
 
 // AFS archive paths (.rodata 0x80523118 / 0x80523128)
-extern "C" __declspec(section ".rodata") const char lbl_eu_80523118[15] = "hbm/jp/hbm.arc";
-extern "C" __declspec(section ".rodata") __attribute__((aligned(8))) const char lbl_eu_80523128[16] = "hbm/nd/hbm.arc";
+extern "C" const char lbl_eu_80523118[15] = "hbm/jp/hbm.arc";
+extern "C" __attribute__((aligned(8))) const char lbl_eu_80523128[16] = "hbm/nd/hbm.arc";
 
 // vtable (.data 0x8056D028): primary {typeinfo, 0, slots...} + CDeviceVICb
 // secondary at +0xA0 {typeinfo, -0x1C4, thunk dtor, thunk cb, stop-all}
@@ -1156,16 +1161,16 @@ extern "C" u32 lbl_eu_8056D0DC[5] = {
 };
 
 // Sample-rate constant, 48000 Hz (.sdata 0x806637A0)
-extern "C" __declspec(section ".sdata") __attribute__((aligned(8))) u32 lbl_eu_806637A0 = 48000;
+extern "C" __attribute__((aligned(8))) u32 sStreamSampleRate = 48000;
 
 // ".ahx" extension selector pointer (.sdata 0x806637A4)
-extern "C" __declspec(section ".sdata") const char* lbl_eu_806637A4 = (const char*)lbl_eu_8066A500;
+extern "C" const char* sAhxExtension = (const char*)lbl_eu_8066A500;
 
 // monolib type descriptor {name, base list} (.sdata 0x806637A8)
-extern "C" __declspec(section ".sdata") u32 __RTTI__20CLibCriStreamingPlay[2] = {
+extern "C" u32 __RTTI__20CLibCriStreamingPlay[2] = {
     (u32)&lbl_eu_805230A0, (u32)&lbl_eu_8056D0DC
 };
 
 // Streaming singletons (.sbss 0x806656E8)
-CLibCriStreamingPlay* lbl_eu_806656E8 __attribute__((aligned(8)));
-void* lbl_eu_806656EC;
+CLibCriStreamingPlay* spStreamingPlay __attribute__((aligned(8)));
+void* spStreamBuffer;

@@ -22,7 +22,7 @@
  */
 namespace {
 
-class ITagCode {
+class __declspec(novtable) ITagCode {
 public:
     typedef nw4r::ut::TagProcessorBase<wchar_t>::Operation Operation;
 
@@ -337,12 +337,11 @@ extern "C" void TagParamInitCode(TagParam* p, u8 a) {
 TagParam::~TagParam() {}
 
 // Tag-processor base constructor (retail __ct__17CTagProcessorBaseFv): the member
-// ctor provides the compiler-generated nw4r base-ctor call -- placement new
-// would add a null beq the retail does not have. novtable: the retail vtable
-// data lives in .data (lbl_eu_8052DA68), so the vptr is stored explicitly.
+// ctor provides the compiler-generated nw4r base-ctor call and the vptr store
+// to the compiler-emitted vtable -- placement new would add a null beq the
+// retail does not have.
 CTagProcessorBase::CTagProcessorBase() {
     field_804 = 0;
-    *(void**)this = (void*)lbl_eu_8052DA68;
     field_808 = lbl_eu_806671F0;
     field_80c = lbl_eu_806671F0;
     field_810 = 0;
@@ -2151,11 +2150,11 @@ u16* CTagCodeFade::v14(u16* ret, const wchar_t* str, TagParam* dst) {
     int count = SplitWStringTrim((u16*)str, 0x3a, (u16**)tokens);
     u8 idx = 0;
     WcsToUpperInPlace((u16*)tokens[0]);
-    if (wcscmp(tokens[0], &lbl_eu_80661FC8[0]) == 0)
+    if (wcscmp(tokens[0], L"OUT") == 0)
         idx = 0;
-    else if (wcscmp(tokens[0], &lbl_eu_80661FC8[4]) == 0)
+    else if (wcscmp(tokens[0], L"OUTIN") == 0)
         idx = 1;
-    else if (wcscmp(tokens[0], &lbl_eu_80661FC8[10]) == 0)
+    else if (wcscmp(tokens[0], L"IN") == 0)
         idx = 2;
     if (count > 1) {
         WcsToUpperInPlace((u16*)tokens[1]);
@@ -2432,7 +2431,7 @@ nw4r::ut::TagProcessorBase<wchar_t>::Operation CTagCodeLine::CalcRect(nw4r::ut::
     nw4r::ut::TextWriterBase<wchar_t>* tw = ctx->writer;
     f32 sp = TagWriterGetWidthLimit(tw);
     TagWriterSetWidthLimit(tw, lbl_eu_80667260);
-    f32 w = tw->CalcStringWidth(&lbl_eu_80661FC8[0xd], 2);
+    f32 w = tw->CalcStringWidth(L"──", 2);
     TagWriterSetWidthLimit(tw, sp);
     TagWriterAdvanceCursorX(tw, w);
     f32 h = TagWriterGetCursorY(ctx->writer);
@@ -2460,7 +2459,7 @@ nw4r::ut::TagProcessorBase<wchar_t>::Operation CTagCodeLine::Process(u16 tag, nw
     TagWriterSetWidthLimit(&local, 3.4028235e+38f);
     TagWriterSetScale(&local, 2.0f * sx, sy);
     TagWriterSetCursorPos(&local, x, y);
-    local.Print(&lbl_eu_80661FC8[0x10], 1);
+    local.Print(L"─", 1);
     bool validRegs2 = true;
     bool validRegs = true;
     bool validIo2 = true;
@@ -2698,9 +2697,9 @@ inline void TagWriterSetScale(nw4r::ut::TextWriterBase<wchar_t>* tw, float x, fl
 u16* CTagCodeMouth::v14(u16* buf, const wchar_t* arg, TagParam* prm) {
     WcsToUpperInPlace((u16*)arg);
     s16 v = 0xff;
-    if (wcscmp(arg, &lbl_eu_80661FC8[0x12]) == 0)
+    if (wcscmp(arg, L"ON") == 0)
         v = 0;
-    else if (wcscmp(arg, &lbl_eu_80661FC8[0x15]) == 0)
+    else if (wcscmp(arg, L"OFF") == 0)
         v = -1;
     buf[0] = 9;
     buf[1] = (u16)v;
@@ -2714,23 +2713,23 @@ u16* CTagCodeMouth::v14(u16* buf, const wchar_t* arg, TagParam* prm) {
 u16* CTagCodePos::v14(u16* ret, const wchar_t* str, TagParam* dst) {
     u8 v = 0;
     WcsToUpperInPlace((u16*)str);
-    if (wcscmp(str, &lbl_eu_80661FC8[0x19]) == 0)
+    if (wcscmp(str, L"TLEFT") == 0)
         v = 1;
-    else if (wcscmp(str, &lbl_eu_80661FC8[0x1f]) == 0)
+    else if (wcscmp(str, L"TCENTER") == 0)
         v = 2;
-    else if (wcscmp(str, &lbl_eu_80661FC8[0x27]) == 0)
+    else if (wcscmp(str, L"TRIGHT") == 0)
         v = 3;
-    else if (wcscmp(str, &lbl_eu_80661FC8[0x2e]) == 0)
+    else if (wcscmp(str, L"CLEFT") == 0)
         v = 4;
-    else if (wcscmp(str, &lbl_eu_80661FC8[0x34]) == 0)
+    else if (wcscmp(str, L"CCENTER") == 0)
         v = 5;
-    else if (wcscmp(str, &lbl_eu_80661FC8[0x3c]) == 0)
+    else if (wcscmp(str, L"CRIGHT") == 0)
         v = 6;
-    else if (wcscmp(str, &lbl_eu_80661FC8[0x43]) == 0)
+    else if (wcscmp(str, L"BLEFT") == 0)
         v = 7;
-    else if (wcscmp(str, &lbl_eu_80661FC8[0x49]) == 0)
+    else if (wcscmp(str, L"BCENTER") == 0)
         v = 8;
-    else if (wcscmp(str, &lbl_eu_80661FC8[0x51]) == 0)
+    else if (wcscmp(str, L"BRIGHT") == 0)
         v = 9;
     TagParam p;
     TagParamInitCode(&p, 8);
@@ -2747,13 +2746,13 @@ u16* CTagCodePos::v14(u16* ret, const wchar_t* str, TagParam* dst) {
 u16* CTagCodeType::v14(u16* ret, const wchar_t* str, TagParam* dst) {
     u8 v = 0;
     WcsToUpperInPlace((u16*)str);
-    if (wcscmp(str, &lbl_eu_80661FC8[0x58]) == 0)
+    if (wcscmp(str, L"DEF") == 0)
         v = 0;
-    else if (wcscmp(str, &lbl_eu_80661FC8[0x5c]) == 0)
+    else if (wcscmp(str, L"ANGER") == 0)
         v = 1;
-    else if (wcscmp(str, &lbl_eu_80661FC8[0x62]) == 0)
+    else if (wcscmp(str, L"SAD") == 0)
         v = 2;
-    else if (wcscmp(str, &lbl_eu_80661FC8[0x66]) == 0)
+    else if (wcscmp(str, L"THINK") == 0)
         v = 3;
     TagParam p;
     TagParamInitCode(&p, 8);
@@ -2777,66 +2776,66 @@ u16* CTagCodeTrust::v14(u16* out, const wchar_t* str, TagParam* prm) {
     int tag3 = 0xff;
     int tag4 = 0xff;
     WcsToUpperInPlace((u16*)tokens[0]);
-    if (wcscmp(tokens[0], &lbl_eu_80661FC8[0x6c]) == 0)
+    if (wcscmp(tokens[0], L"P") == 0)
         tag1 = 1;
-    else if (wcscmp(tokens[0], &lbl_eu_80661FC8[0x6e]) == 0)
+    else if (wcscmp(tokens[0], L"F") == 0)
         tag1 = 2;
     WcsToUpperInPlace((u16*)tokens[1]);
     wchar_t* end1 = 0;
     int val = (int)wcstol(tokens[1], &end1, 10);
     WcsToUpperInPlace((u16*)tokens[2]);
     int tag2;
-    if (wcscmp(tokens[2], &lbl_eu_80661FC8[0x70]) == 0)
+    if (wcscmp(tokens[2], L"A") == 0)
         tag2 = BdatGetS16ByTableKey(lbl_eu_804FFC48, &lbl_eu_804FFC48[0xc], 1);
-    else if (wcscmp(tokens[2], &lbl_eu_80661FC8[0x72]) == 0)
+    else if (wcscmp(tokens[2], L"B") == 0)
         tag2 = BdatGetS16ByTableKey(lbl_eu_804FFC48, &lbl_eu_804FFC48[0xc], 2);
-    else if (wcscmp(tokens[2], &lbl_eu_80661FC8[0x74]) == 0)
+    else if (wcscmp(tokens[2], L"C") == 0)
         tag2 = BdatGetS16ByTableKey(lbl_eu_804FFC48, &lbl_eu_804FFC48[0xc], 3);
-    else if (wcscmp(tokens[2], &lbl_eu_80661FC8[0x76]) == 0)
+    else if (wcscmp(tokens[2], L"D") == 0)
         tag2 = BdatGetS16ByTableKey(lbl_eu_804FFC48, &lbl_eu_804FFC48[0xc], 4);
-    else if (wcscmp(tokens[2], &lbl_eu_80661FC8[0x78]) == 0)
+    else if (wcscmp(tokens[2], L"E") == 0)
         tag2 = BdatGetS16ByTableKey(lbl_eu_804FFC48, &lbl_eu_804FFC48[0xc], 5);
-    else if (wcscmp(tokens[2], &lbl_eu_80661FC8[0x6e]) == 0)
+    else if (wcscmp(tokens[2], L"F") == 0)
         tag2 = BdatGetS16ByTableKey(lbl_eu_804FFC48, &lbl_eu_804FFC48[0xc], 6);
-    else if (wcscmp(tokens[2], &lbl_eu_80661FC8[0x7a]) == 0)
+    else if (wcscmp(tokens[2], L"G") == 0)
         tag2 = BdatGetS16ByTableKey(lbl_eu_804FFC48, &lbl_eu_804FFC48[0xc], 7);
-    else if (wcscmp(tokens[2], &lbl_eu_80661FC8[0x7c]) == 0)
+    else if (wcscmp(tokens[2], L"H") == 0)
         tag2 = BdatGetS16ByTableKey(lbl_eu_804FFC48, &lbl_eu_804FFC48[0xc], 8);
-    else if (wcscmp(tokens[2], &lbl_eu_80661FC8[0x7e]) == 0)
+    else if (wcscmp(tokens[2], L"I") == 0)
         tag2 = BdatGetS16ByTableKey(lbl_eu_804FFC48, &lbl_eu_804FFC48[0xc], 9);
-    else if (wcscmp(tokens[2], &lbl_eu_80661FC8[0x80]) == 0)
+    else if (wcscmp(tokens[2], L"J") == 0)
         tag2 = BdatGetS16ByTableKey(lbl_eu_804FFC48, &lbl_eu_804FFC48[0xc], 0xa);
-    else if (wcscmp(tokens[2], &lbl_eu_80661FC8[0x82]) == 0)
+    else if (wcscmp(tokens[2], L"K") == 0)
         tag2 = BdatGetS16ByTableKey(lbl_eu_804FFC48, &lbl_eu_804FFC48[0xc], 0xb);
-    else if (wcscmp(tokens[2], &lbl_eu_80661FC8[0x84]) == 0)
+    else if (wcscmp(tokens[2], L"L") == 0)
         tag2 = BdatGetS16ByTableKey(lbl_eu_804FFC48, &lbl_eu_804FFC48[0xc], 0xc);
-    else if (wcscmp(tokens[2], &lbl_eu_80661FC8[0x86]) == 0)
+    else if (wcscmp(tokens[2], L"M") == 0)
         tag2 = BdatGetS16ByTableKey(lbl_eu_804FFC48, &lbl_eu_804FFC48[0xc], 0xd);
-    else if (wcscmp(tokens[2], &lbl_eu_80661FC8[0x88]) == 0)
+    else if (wcscmp(tokens[2], L"N") == 0)
         tag2 = BdatGetS16ByTableKey(lbl_eu_804FFC48, &lbl_eu_804FFC48[0xc], 0xe);
-    else if (wcscmp(tokens[2], &lbl_eu_80661FC8[0x8a]) == 0)
+    else if (wcscmp(tokens[2], L"O") == 0)
         tag2 = BdatGetS16ByTableKey(lbl_eu_804FFC48, &lbl_eu_804FFC48[0xc], 0xf);
-    else if (wcscmp(tokens[2], &lbl_eu_80661FC8[0x6c]) == 0)
+    else if (wcscmp(tokens[2], L"P") == 0)
         tag2 = BdatGetS16ByTableKey(lbl_eu_804FFC48, &lbl_eu_804FFC48[0xc], 0x10);
-    else if (wcscmp(tokens[2], &lbl_eu_80661FC8[0x8c]) == 0)
+    else if (wcscmp(tokens[2], L"Q") == 0)
         tag2 = BdatGetS16ByTableKey(lbl_eu_804FFC48, &lbl_eu_804FFC48[0xc], 0x11);
-    else if (wcscmp(tokens[2], &lbl_eu_80661FC8[0x8e]) == 0)
+    else if (wcscmp(tokens[2], L"R") == 0)
         tag2 = BdatGetS16ByTableKey(lbl_eu_804FFC48, &lbl_eu_804FFC48[0xc], 0x12);
-    else if (wcscmp(tokens[2], &lbl_eu_80661FC8[0x90]) == 0)
+    else if (wcscmp(tokens[2], L"S") == 0)
         tag2 = BdatGetS16ByTableKey(lbl_eu_804FFC48, &lbl_eu_804FFC48[0xc], 0x13);
-    else if (wcscmp(tokens[2], &lbl_eu_80661FC8[0x92]) == 0)
+    else if (wcscmp(tokens[2], L"T") == 0)
         tag2 = BdatGetS16ByTableKey(lbl_eu_804FFC48, &lbl_eu_804FFC48[0xc], 0x14);
-    else if (wcscmp(tokens[2], &lbl_eu_80661FC8[0x94]) == 0)
+    else if (wcscmp(tokens[2], L"U") == 0)
         tag2 = BdatGetS16ByTableKey(lbl_eu_804FFC48, &lbl_eu_804FFC48[0xc], 0x15);
-    else if (wcscmp(tokens[2], &lbl_eu_80661FC8[0x96]) == 0)
+    else if (wcscmp(tokens[2], L"V") == 0)
         tag2 = BdatGetS16ByTableKey(lbl_eu_804FFC48, &lbl_eu_804FFC48[0xc], 0x16);
-    else if (wcscmp(tokens[2], &lbl_eu_80661FC8[0x98]) == 0)
+    else if (wcscmp(tokens[2], L"W") == 0)
         tag2 = BdatGetS16ByTableKey(lbl_eu_804FFC48, &lbl_eu_804FFC48[0xc], 0x17);
-    else if (wcscmp(tokens[2], &lbl_eu_80661FC8[0x9a]) == 0)
+    else if (wcscmp(tokens[2], L"X") == 0)
         tag2 = BdatGetS16ByTableKey(lbl_eu_804FFC48, &lbl_eu_804FFC48[0xc], 0x18);
-    else if (wcscmp(tokens[2], &lbl_eu_80661FC8[0x9c]) == 0)
+    else if (wcscmp(tokens[2], L"Y") == 0)
         tag2 = BdatGetS16ByTableKey(lbl_eu_804FFC48, &lbl_eu_804FFC48[0xc], 0x19);
-    else if (wcscmp(tokens[2], &lbl_eu_80661FC8[0x9e]) == 0)
+    else if (wcscmp(tokens[2], L"Z") == 0)
         tag2 = BdatGetS16ByTableKey(lbl_eu_804FFC48, &lbl_eu_804FFC48[0xc], 0x1a);
     else {
         wchar_t* end2 = 0;
@@ -2872,27 +2871,27 @@ u16* CTagCodeTrust::v14(u16* out, const wchar_t* str, TagParam* prm) {
 inline u16* CTagCodeCol::v14(u16* out, const wchar_t* str, TagParam* prm) {
     WcsToUpperInPlace((u16*)str);
     u32 v = 0;
-    if (wcscmp(str, &lbl_eu_80661FC8[0x58]) == 0)
+    if (wcscmp(str, L"DEF") == 0)
         v = 0x483A21FF;
-    else if (wcscmp(str, &lbl_eu_80661FC8[0x76]) == 0)
+    else if (wcscmp(str, L"D") == 0)
         v = 0x483A21FF;
-    else if (wcscmp(str, &lbl_eu_80661FC8[0xa0]) == 0)
+    else if (wcscmp(str, L"DEF2") == 0)
         v = -0x501;
-    else if (wcscmp(str, &lbl_eu_80661FC8[0xa5]) == 0)
+    else if (wcscmp(str, L"D2") == 0)
         v = -0x501;
-    else if (wcscmp(str, &lbl_eu_80661FC8[0xa8]) == 0)
+    else if (wcscmp(str, L"DEF3") == 0)
         v = 0x483A21FF;
-    else if (wcscmp(str, &lbl_eu_80661FC8[0xad]) == 0)
+    else if (wcscmp(str, L"D3") == 0)
         v = 0x483A21FF;
-    else if (wcscmp(str, &lbl_eu_80661FC8[0xb0]) == 0)
+    else if (wcscmp(str, L"RED") == 0)
         v = 0xFF0000FF;
-    else if (wcscmp(str, &lbl_eu_80661FC8[0xb4]) == 0)
+    else if (wcscmp(str, L"ITEM") == 0)
         v = 0xC81E1EFF;
-    else if (wcscmp(str, &lbl_eu_80661FC8[0x7e]) == 0)
+    else if (wcscmp(str, L"I") == 0)
         v = 0xC81E1EFF;
-    else if (wcscmp(str, &lbl_eu_80661FC8[0xb9]) == 0)
+    else if (wcscmp(str, L"S1") == 0)
         v = 0xC81E1EFF;
-    else if (wcscmp(str, &lbl_eu_80661FC8[0xbc]) == 0)
+    else if (wcscmp(str, L"S2") == 0)
         v = 0x509CCCFF;
     else if (str[0] == 0x23) {
         int len = wcslen(str + 1);
@@ -3283,9 +3282,9 @@ inline nw4r::ut::TagProcessorBase<wchar_t>::Operation CTagCodeRuby::Process(u16 
 inline u16* CTagCodeDel::v14(u16* dst, const wchar_t* str, TagParam* prm) {
     WcsToUpperInPlace((u16*)str);
     s16 v = 0xff;
-    if (wcscmp(str, &lbl_eu_80661FC8[0xbf]) == 0)
+    if (wcscmp(str, L"ALL") == 0)
         v = -1;
-    else if (wcscmp(str, &lbl_eu_80661FC8[0xc3]) == 0)
+    else if (wcscmp(str, L"THIS") == 0)
         v = 0;
     dst[0] = 4;
     dst[1] = (u16)v;
@@ -3301,9 +3300,9 @@ inline u16* CTagCodeWait::v14(u16* buf, const wchar_t* arg, TagParam* prm) {
     wchar_t* str = (wchar_t*)arg;
     WcsToUpperInPlace((u16*)str);
     s32 v;
-    if (wcscmp(str, &lbl_eu_80661FC8[0xc8]) == 0)
+    if (wcscmp(str, L"KEY") == 0)
         v = -1;
-    else if (wcscmp(str, &lbl_eu_80661FC8[0xcc]) == 0)
+    else if (wcscmp(str, L"VOICE") == 0)
         v = -2;
     else {
         wchar_t* endptr = 0;

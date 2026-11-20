@@ -16,6 +16,13 @@ extern "C" {
 extern char lbl_eu_80526338[];
 }
 
+// name-guess: runtime-populated dispatch tables written by
+// CActParamData::initParamStatics.  Declaration order is the retail order:
+// sActParamTbl19 (0x805705F0, 0x198) then sActParamTbl1 (0x80570788, 0xA8);
+// their 101/21 entries are the function relocations in the retail initializer.
+ActParamTbl19Fn sActParamTbl19[0x66];
+ActParamTbl1Fn sActParamTbl1[0x2A];
+
 // Stream-reset entry: one canonical C-linkage declaration in
 // kyoshin/action/CActParamData.hpp (no TU-local duplicate).
 
@@ -781,12 +788,12 @@ foundA:
 //   condition (bdnz candidate, -16B/84).
 // - Best ordering found: sub ternary -> off load -> cur -> global store LAST.
 //   Store-last fixes the lhz placement (63 vs 64/66); remaining top-window diff
-//   is only the stw/addi-r29 pair swap around the lbl_eu_80570788 LO reloc.
+//   is only the stw/addi-r29 pair swap around the sActParamTbl1 LO reloc.
 //   tbl-local hoisting between them swaps sub/table coloring (68) - ruled out.
 // - Residual walls: (a) retail stamp scan uses mtctr/bdnz with separate idx
 //   counter; unit-locked -O4 gives addic./bdnz pointer-walk only (wall #6);
 //   (b) top-of-function scheduling of lhz/lis/stw/addi interleaving around the
-//   spActParamGlobalTable sda21 store and lbl_eu_80570788 HA/LO split - reloc drift
+//   spActParamGlobalTable sda21 store and sActParamTbl1 HA/LO split - reloc drift
 //   sites 0x30-0x3e all live in this 4-instruction window; (c) mr-vs-or r5
 //   forms and lwz r0 vs r3 count-load reg choice track the same coloring.
 #define ACTPARAM_STAMP_SHORT_B(selfP, targetP)                                 \
@@ -837,7 +844,7 @@ int evalParamRecord(CActParamData* self, void* data, int sel, u32 gate) {
         // gate==0 or a type-2/0x29 record avoids the early exit; only 0x29
         // records actually dispatch through the handler table.
         if (gate == 0 || type == 0x29 || type == 2) {
-            if (type == 0x29 && lbl_eu_80570788[type](2, self, sub, cur) != 0) {
+            if (type == 0x29 && sActParamTbl1[type](2, self, sub, cur) != 0) {
                 ACTPARAM_STAMP_SHORT_B(self, cur);
                 ACTPARAM_STAMP_SHORT_B(self, data);
                 return 1;
@@ -1221,7 +1228,7 @@ int walkParamContext(CActParamData* self, void* ctx) {
 body:
     // Every record type dispatches through the handler table; a nonzero
     // result registers the record and stops the walk.
-    if (lbl_eu_80570788[type](9, self, ctx, cur) != 0) {
+    if (sActParamTbl1[type](9, self, ctx, cur) != 0) {
         ACTPARAM_STAMP_SHORT_94(self, cur);
         ACTPARAM_STAMP_SHORT_94(self, rec14);
         return 1;
@@ -2505,7 +2512,7 @@ int evalParamCb14(u32 flags, ActParamHost5* host, ActParamVals5* vals, ActParamS
 int evalParamByte(u32 flags, ActParamHost5* host, ActParamVals5* vals, ActParamSrc5* src);
 
 void CActParamData::initParamStatics() {
-    ActParamTbl1Fn* t1 = (ActParamTbl1Fn*)lbl_eu_80570788;
+    ActParamTbl1Fn* t1 = (ActParamTbl1Fn*)sActParamTbl1;
     t1[0] = actParamZero1;
     t1[1] = actParamZero2;
     t1[2] = actParamZero3;
@@ -2528,7 +2535,7 @@ void CActParamData::initParamStatics() {
     t1[19] = (ActParamTbl1Fn)evalParamCb14;
     t1[20] = (ActParamTbl1Fn)fireParamPhaseA;
 
-    ActParamTbl19Fn* t2 = (ActParamTbl19Fn*)lbl_eu_805705F0;
+    ActParamTbl19Fn* t2 = (ActParamTbl19Fn*)sActParamTbl19;
     t2[0] = actParamZero0;
     t2[1] = (ActParamTbl19Fn)actAnimVt38;
     t2[2] = (ActParamTbl19Fn)actAnimVt40;
@@ -2647,7 +2654,7 @@ convert:
 // ============================================================
 // us-80058208: dispatchParamTable
 // Range test against the packed halfword pair at c+0x28/0x2A, then
-// dispatch through lbl_eu_805705F0[(u16)lo - 0x2A] with
+// dispatch through sActParamTbl19[(u16)lo - 0x2A] with
 // (a->mField10, c->mField24, hi). Semantics verified against retail asm;
 // byte-match of the conversion blocks still open (see attempts.jsonl).
 // ============================================================
@@ -2689,14 +2696,14 @@ ret0:
     return 0;
 dispatch:
     u32 packed = c->mField08;
-    return lbl_eu_805705F0[(u16)packed - 0x2A](a->mField10, c->mField24,
+    return sActParamTbl19[(u16)packed - 0x2A](a->mField10, c->mField24,
                                                packed >> 16)
                ? 1
                : 0;
 }// us-80057d24: evalParamTableOp
 // Window variant of dispatchParamTable: bounds are the halfword pair at c+0x10 /
 // c+0x12, flag bit 0 gates, and the dispatch passes (vals->mField10,
-// c->mField0C, hi) into lbl_eu_805705F0[(u16)lo - 0x2A].
+// c->mField0C, hi) into sActParamTbl19[(u16)lo - 0x2A].
 struct ActParamT19ArgD {
     u8 _pad00[8];
     u32 mWord08;
@@ -2744,7 +2751,7 @@ ret0:
     return 0;
 dispatch:
     u32 packed = c->mWord08;
-    return lbl_eu_805705F0[(u16)packed - 0x2A](a->mField10, c->mField0C,
+    return sActParamTbl19[(u16)packed - 0x2A](a->mField10, c->mField0C,
                                                packed >> 16)
                ? 1
                : 0;
@@ -3249,7 +3256,7 @@ zeroret:
 // ============================================================
 // us-80054e3c: initParamBlock
 // Initialize the destination block from defaults and the previous entry,
-// walk the record chain dispatching through lbl_eu_80570788, then locate
+// walk the record chain dispatching through sActParamTbl1, then locate
 // which host slot's node extent contains src.
 // ============================================================
 static inline ActParamT1Rec* nextT1Rec(ActParamT1Rec* rec) {
@@ -3282,7 +3289,7 @@ extern "C" void* initParamBlock(ActParamT1Host* host, ActParamT1Dst* dst, ActPar
     u8 byte30 = dst->mByte30;
     u32 old38 = dst->mField38;
     float f28 = dst->mFloat28;
-    const ActParamTbl1Fn* tbl = lbl_eu_80570788;
+    const ActParamTbl1Fn* tbl = sActParamTbl1;
     float f40 = dst->mFloat40;
     u32 field0C = src->mField0C;
     dst->mPtr18 = dst->mPtr14;

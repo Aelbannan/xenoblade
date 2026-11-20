@@ -10,7 +10,6 @@ class CScn;
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim).
 // Global-scope data/function names are not mangled by MWCC; lbl_* keeps the
 // exact retail label.
-extern char lbl_eu_8053AE90[];    // CfHikariItemManager vtable (.data)
 extern "C" u32 CfRes_getAllocHandle();
 
 namespace cf {
@@ -46,92 +45,23 @@ void hikariResetManagerRecords(cf::CfHikariItemManager* self);
 // sdata2 float constant loaded by hikariInitRecordTimers (lfs with r0 zero-base).
 // const so MWCC treats the load as a constant and schedules it early.
 extern const float lbl_eu_80668EF8;
-// sdata2 random-velocity scale (hikariSpawnSlot) - NON-const so MWCC reloads
-// it per mtRand conversion like retail.
-extern float lbl_eu_80668EEC;
 // sdata2 draw-pass constants for cbRenderBefore (Scn_HasCamItem view axes).
 extern const float lbl_eu_80668ED0; // 1.0f
-extern const float lbl_eu_80668ED4; // 0.4f
-extern const float lbl_eu_80668ED8; // -0.4f
-extern const float lbl_eu_80668EDC; // 0.5f
-extern const float lbl_eu_80668EE0; // -0.5f
-extern const float lbl_eu_80668EE4; // 0.125f
-extern const float lbl_eu_80668EE8; // -0.125f
 extern u32 lbl_eu_80668ECC;         // 0xFFFFFFFF mat/amb color word
-// sdata2 spawn/update constants for hikariTickRecord.  EFC/F00 are NON-const:
-// they are used inside the 8-iteration spawn loop, so retail reloads them
-// per call (lfs inside the loop body).
-extern float lbl_eu_80668EFC;        // 0.1f
-extern float lbl_eu_80668F00;        // 1.5f
-extern const float lbl_eu_80668F04;  // 10.0f
-extern const float lbl_eu_80668F08;  // 15.0f
-extern const float lbl_eu_80668F0C;  // 2.0f
-extern const float lbl_eu_80668F10;  // 2500.0f
-extern const float lbl_eu_80668F14;  // 4225.0f
-extern const float lbl_eu_80668F18;  // 0.75f
-extern const float lbl_eu_80668F1C;  // 0.005f
-extern const float lbl_eu_80668F20;  // 20.0f
-extern const double lbl_eu_80668F28; // 20.0 (double compare)
-extern const float lbl_eu_80668F30;  // 225.0f
-extern const float lbl_eu_80668F34;  // 0.2f
-extern const double lbl_eu_80668F38; // 4503601774854144.0 (int->float magic)
 // sdata2 int->float conversion magic double (0x4330000080000000), used by
 // hikariSpawnSlot's (f32)mtRand() conversions.
 extern double lbl_eu_80668EF0;
-// sdata2 gradient-table constants for sinit_802B46E0 (all loaded up-front
-// with lfs and CSE'd into callee-saved FPRs - no calls in the function, so
-// const scheduling is safe here).
-extern const float lbl_eu_80668F70;
-extern const float lbl_eu_80668F74;
-extern const float lbl_eu_80668F78;
-extern const float lbl_eu_80668F7C;
-extern const float lbl_eu_80668F80;
-extern const float lbl_eu_80668F84;
-extern const float lbl_eu_80668F88;
-extern const float lbl_eu_80668F8C;
-extern const float lbl_eu_80668F90;
-extern const float lbl_eu_80668F94;
-extern const float lbl_eu_80668F98;
-extern const float lbl_eu_80668F9C;
-extern const float lbl_eu_80668FA0;
-extern const float lbl_eu_80668FA4;
-extern const float lbl_eu_80668FA8;
-extern const float lbl_eu_80668FAC;
-extern const float lbl_eu_80668FB0;
-extern const float lbl_eu_80668FB4;
-// sdata2 sparkle-streak constants for hikariEmitSparkle (scale/brightness).
-extern const float lbl_eu_80668F40; // 0.025f
-extern const float lbl_eu_80668F44; // 0.5f
-extern const float lbl_eu_80668F48; // 0.9f
-extern const float lbl_eu_80668F4C; // 0.7f
-extern const float lbl_eu_80668F50; // -0.3f
-// sdata2 gradient-scale constants for hikariEmitGradQuad.  NON-const like
-// lbl_eu_80668EC8: the loads must stay after the hikariGradColor call.
-extern float lbl_eu_80668F64;
-extern float lbl_eu_80668F68;
-extern float lbl_eu_80668F6C;
 
 // .rodata gradient thresholds/blend weights for hikariEmitGradQuad (count=2:
 // table[0..1] thresholds, table[2..3] weights).  NON-const: a const load
 // gets hoisted before the hikariGradColor call into a callee-saved FPR;
 // retail loads the table at its use sites after the call.
 extern float sHikariGradQuadColorStops[4];
-// .bss colour-gradient rows for hikariEmitGradQuad, indexed by the record's
-// (s16)field_1C_h[1] * 8 floats.
-extern f32 lbl_eu_80577750[0x40 / 4];
 // sdata2 1.0f constant for hikariGradColor's gradient lerp (1.0f - blend).
 extern const float lbl_eu_80668F54;
-// sdata2 scale constants for hikariInitRandomEntry's random velocity setup.
-extern const float lbl_eu_80668F58;
-extern const float lbl_eu_80668F5C;
 // sdata2 limit for hikariUpdateSlotRecord's +0x18 accumulator check.
 // const so MWCC treats the load as a constant and schedules it early.
 extern const float lbl_eu_80668F60;
-// sdata2 LOD constant for the ctor's four GXInitTexObjLOD calls (all three
-// LOD args share one load; MWCC fmr's the pair).  Deliberately NON-const:
-// a const sdata2 load is loop-invariant and MWCC hoists it out of the tex
-// loop into a callee-saved FPR; retail loads it at the use site instead.
-extern float lbl_eu_80668EC8;
 
 // .sbss manager singleton published by the ctor (retail stw + sda21).
 extern cf::CfHikariItemManager* lbl_eu_80664C10;
@@ -145,28 +75,9 @@ extern "C" void* Scn_HasCamItem(void* scene, void* view);
 // Manager singleton getter (retail ClearMenu_GetGlobal10, defined in CMenuGameClear).
 extern "C" cf::CfHikariItemManager* ClearMenu_GetGlobal10();
 
-// .rodata static-archive file path passed to CLibStaticData::getStaticFileData
-// by the ctor (retail lis/addi, so a plain extern array - no sdata).
-extern const char lbl_eu_80513580[];
 // .data Panic strings (file + format) for the ctor's ResFile alignment check.
 extern char lbl_eu_80526354[];
 extern char lbl_eu_8052637C[];
-
-// sbss counter block; the four words are zeroed together by func_802B371C,
-// hikariUpdateFadeRecord/4470 bump +0x24.  (unsigned long matches hikariUpdateFadeRecord's
-// local extern so the matched function stays untouched.)
-extern unsigned long lbl_eu_80664C18;
-extern unsigned long lbl_eu_80664C1C;
-extern unsigned long lbl_eu_80664C20;
-extern unsigned long lbl_eu_80664C24;
-
-// .bss global state block.  func_802B371C copies the record's
-// first three words into +0x00/+0x04/+0x08.  Declared as an array (like
-// CfGimmick's gGimmickPartySlotState) so MWCC materializes a base register and
-// merges the first store into stwu.  hikariUpdateRecord reads 4-float color
-// gradient rows at +0x10/+0x50/+0x90 indexed by field_40; sinit_802B46E0
-// fills four 16-float rows at +0x10/+0x50/+0x90/+0xd0.
-extern u32 lbl_eu_80577680[0xD0 / 4];
 
 // sdata2/.data gradient keyframe tables for hikariGradColor (2*count floats:
 // count thresholds then count blend weights) - hikariUpdateRecord passes these.

@@ -133,7 +133,7 @@ void refillMCItemSubTable(CMCItemBoxSub* x, u8 pad102, CMCItemBoxEntry* listBase
     f32 v = (f32)x->count / 30.0f;
     s32 t = (s32)v;              // floor since v >= 0 (fctiwz truncates)
     f32 frac = v - (f32)t;
-    if (lbl_eu_80668BD4 != frac) t++;
+    if (0.0f != frac) t++;
     x->limit = (u8)t;
     if (x->limit == 0) x->limit = 1;
     x->counter = 0;
@@ -787,7 +787,7 @@ extern "C" CMCItemBoxEntry* getMCItemSubEntry(CMCItemBoxSub* x, u32 index) {
 }
 
 extern "C" void forwardMCSubObj88(void* self, u8 visible) {
-    ((CBaseCur*)((char*)self + 0x88))->SetVisible(visible);
+    ((CMCGetItemBox*)self)->subObj_88.SetVisible(visible);
 }
 
 // Advance the cursor / tab selection in the item box.
@@ -1312,7 +1312,8 @@ bool CMCGetItemBox::OnFileEvent(CEventFile* pEventFile) {
         // root pane here rather than keeping it live across the text stamping.
         nw4r::lyt::Pane* tagPane =
             this->layout40->GetRootPane()->FindPaneByName(&lbl_eu_8050FF8C[0x1d0], true);
-        if (tagPane != 0) *(u32*)((u8*)tagPane + 0xF8) = (u32)this->objAt50;
+        if (tagPane != 0)
+            ((nw4r::lyt::TextBox*)tagPane)->SetTagProcessor((nw4r::ut::WideTagProcessor*)this->objAt50);
 
         LayoutSetTextBoxFmtValue(this->layout40, &lbl_eu_8050FF8C[0x274],
                       (char*)BdatTouchStringCell(&lbl_eu_8050FF8C[0x269], &lbl_eu_8050FF8C[0xc], 6), 0);
@@ -1336,9 +1337,9 @@ bool CMCGetItemBox::OnFileEvent(CEventFile* pEventFile) {
         nw4r::math::VEC3 v1;
         nw4r::math::VEC3 s2;
         nw4r::math::VEC3 v2;
-        code80135FDC_setVec3((nw4r::math::VEC3*)((float*)&s1), -58.0f, -51.0f, lbl_eu_80668BD4);
+        code80135FDC_setVec3((nw4r::math::VEC3*)((float*)&s1), -58.0f, -51.0f, 0.0f);
         v1 = s1;
-        code80135FDC_setVec3((nw4r::math::VEC3*)((float*)&s2), lbl_eu_80668C00, -51.0f, lbl_eu_80668BD4);
+        code80135FDC_setVec3((nw4r::math::VEC3*)((float*)&s2), lbl_eu_80668C00, -51.0f, 0.0f);
         v2 = s2;
         this->subObj_70.SetTwoPanes(&v2, &v1);
 

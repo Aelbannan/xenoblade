@@ -119,10 +119,6 @@ extern u8 lbl_eu_804FBC20[];
 // __ct__CtrlRemote because the class is __declspec(novtable).
 extern u8 lbl_eu_80527F88[];
 
-// sdata2 float constant stored to the 32 floats at +0x1DC by __ct__CtrlRemote
-// (const declaration so MWCC references the retail pool slot directly).
-extern const f32 lbl_eu_80666730;
-
 // ---------------------------------------------------------------------------
 // Imports / view types used by the CtrlRemote_MenuComboSweep pad-handler sweep.
 // ---------------------------------------------------------------------------
@@ -314,8 +310,6 @@ public:
 };
 
 // nw4r math helpers and battle-manager chain probe (retail C-ABI names).
-extern "C" f32 Atan2FIdx__Q24nw4r4mathFff(f32 y, f32 x);
-extern "C" void Warning__Q24nw4r2dbFPCciPCce(const char*, int, const char*, ...);
 extern "C" u32 SkipTimer_IsActiveFlag();
 
 // Debug-assert strings pooled by the Warning call in func_80098EF8 (retail
@@ -323,20 +317,8 @@ extern "C" u32 SkipTimer_IsActiveFlag();
 extern const char lbl_eu_80526324[];
 extern const char lbl_eu_80526300[];
 
-// sdata2 float constants used by func_80098EF8. const declarations so MWCC
-// references the retail pool slots directly (see CtrlPc.hpp notes).
-extern const f32 lbl_eu_80666734;
-extern const f32 lbl_eu_80666738;
-extern const f64 lbl_eu_80666740;
-extern const f32 lbl_eu_8066674C;
-extern const f32 lbl_eu_80666750;
-extern const f32 lbl_eu_80666754;
-extern const f32 lbl_eu_80666758;
-extern const f32 lbl_eu_8066675C;
-extern const f32 lbl_eu_80666760;
-extern const f32 lbl_eu_80666764;
-extern const f32 lbl_eu_80666768;
-extern const f32 lbl_eu_8066676C;
+// sdata2 float constant stored to the 32-float ring by CtrlRemote_FrameUpdate.
+// const declaration so MWCC references the retail pool slot directly.
 extern const f32 lbl_eu_80666748;
 
 // ---------------------------------------------------------------------------

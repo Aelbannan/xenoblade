@@ -73,12 +73,12 @@ extern const f32 lbl_eu_8066A648;    // 1.0f
 // Per-record draw dispatch table (target drawLodBillView1C): entry index is the
 // record's field_0x29; called with (r3, r4, r5, r6).
 typedef void (*LodD9B0Fn)(void*, void*, void*, u32);
-extern "C" LodD9B0Fn lbl_eu_8056D9B0[];
+extern "C" LodD9B0Fn sLodBillboardPosFuncTable[];
 
 // Record-draw dispatch table (target dispatchLodRecord): called with the byte-
 // stream pointer in r3; the callee advances the stream in place.
 typedef void (*LodD980Fn)(void*);
-extern "C" LodD980Fn lbl_eu_8056D980[];
+extern "C" LodD980Fn sLodBatchDrawFuncTable[];
 
 // Cross-TU LOD/scene entry points referenced by the record-draw helpers.
 // ColiLodBuildRecordMatrix / ScnData_FwdB7E0C have unmangled retail symbols (C linkage).
@@ -175,7 +175,7 @@ struct LodDrawRec {
 // (dispatchLodRecords walks it).  Each entry takes (self, out) and returns the
 // next record pointer.
 typedef u8* (*LodDispatchFn)(u8*, u8*);
-extern "C" LodDispatchFn lbl_eu_8056D998[];
+extern "C" LodDispatchFn sLodCullFuncTable[];
 
 /**
  * One record of the LOD object's record array (retail stride 0x2C).  The

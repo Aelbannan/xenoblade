@@ -623,9 +623,6 @@ void MaruShadowDrawBillboard(CScnMaruShadowNw4r* shadow, ShadowCtx* ctx, float s
 }
 
 // us-804926f0: MaruShadowPickScale (0x20 bytes)
-extern const float lbl_eu_8066A994;  // foreign .sdata2
-extern const float lbl_eu_8066A9CC;  // foreign .sdata2
-
 extern "C" void MaruShadowPickScale(void* obj, int condition) {
     if (condition != 0) {
         *(float*)((char*)obj + 0x1c) = lbl_eu_8066A994;

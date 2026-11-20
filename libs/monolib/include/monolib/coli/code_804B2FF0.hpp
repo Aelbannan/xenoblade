@@ -9,7 +9,7 @@
 struct CColiBounds;
 struct CColiHx;
 struct CColiQx;
-struct CColiWalkState;
+struct CColiWalkStateObj;
 struct CColiQueryNode;
 struct CColiMoveNode;
 struct CColiProcLocal;
@@ -34,12 +34,12 @@ extern "C" s16 g_coliNodeIndex; // master node index (lha)
 extern "C" f32 lbl_eu_8066AEB0; // 0.0f
 extern "C" f32 lbl_eu_8066AEB4; // 1.0f
 extern "C" void ColiSetMoveEnableFlag(void*, int);
-extern "C" CColiWalkState sColiWalkState;
-extern "C" u8 sColiTargetTable;
+extern CColiWalkStateObj sColiWalkState;
+extern u32 sColiTargetTable[3];
 extern "C" void __ct__9CColiProcFv(CColiProcLocal* self);
-extern "C" f32 lbl_eu_8066AEC0;
-extern "C" f32 lbl_eu_8066AEC4;
-extern "C" f32 lbl_eu_8066AEC8;
+extern const f32 lbl_eu_8066AEC0;
+extern const f32 lbl_eu_8066AEC4;
+extern const f32 lbl_eu_8066AEC8;
 extern "C" void ColiInitSegment(void*, const Vec*, const Vec*, void*);
 extern "C" void ColiMakeAabbMinMax(void*, const Vec*, const Vec*);
 extern "C" int ColiTestAabbContains(const void*, const CColiQueryNode*);

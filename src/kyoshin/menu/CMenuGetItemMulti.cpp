@@ -1717,7 +1717,7 @@ void GetItemMulti_ShowDetail(CMenuGetItemMulti* self, int arg2, CMenuGetItemMult
         // Inline ternary: branches compute into the arg register (r3), the
         // u16 assignment masks once at the join (retail clrlwi r3, r3, 16).
         u16 id = (arg3 != 0) ? (arg3->packed >> 20) : (u32)arg2;
-        setLayoutTextBoxNumber(self->mLayout, &lbl_eu_80504A3C[0xeb], CItem_sumFamilyByte6(id));
+        setLayoutTextBoxNumber(self->mLayout, "txt_havenum", CItem_sumFamilyByte6(id));
         // Arms kept uncast: with the u8-typed helper return the ternary is
         // signed-typed, which keeps MWCC's clrlwi+cmpwi dispatch chain.
         u8 cat = (arg3 != 0) ? ((arg3->packed >> 16) & 0xf)
@@ -2560,11 +2560,10 @@ void GetItemMulti_HandlePad(CMenuGetItemMulti* self) {
             }
             // Retail materializes the string-pool base once (r30) and offsets
             // all six label arguments from it.
-            char* base = lbl_eu_80504A3C;
             self->field_1F8 = 8;
-            char* n1 = BdatTouchStringCell(base + 0x177, base + 0x182, 0x1c);
-            char* n2 = BdatTouchStringCell(base + 0x177, base + 0x182, 0x1d);
-            char* n3 = BdatTouchStringCell(base + 0x177, base + 0x182, 0x1e);
+            char* n1 = BdatTouchStringCell("MNU_sysmes", "name", 0x1c);
+            char* n2 = BdatTouchStringCell("MNU_sysmes", "name", 0x1d);
+            char* n3 = BdatTouchStringCell("MNU_sysmes", "name", 0x1e);
             reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->switchKindPane(2);
             reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->setKindContent(reinterpret_cast<char*>(n1), 0);
             reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->setTwoTextValues(reinterpret_cast<char*>(n2), reinterpret_cast<char*>(n3));
@@ -2599,15 +2598,15 @@ void GetItemMulti_HandlePad(CMenuGetItemMulti* self) {
             char buf[32];
             s8 m = (s8)mv;
             if (m == 5) {
-                sprintf(buf, &lbl_eu_80504A3C[0x16b]);
+                sprintf(buf, "txt_close00");
             } else if (m == 4) {
-                sprintf(buf, &lbl_eu_80504A3C[0x192], m + 1);
+                sprintf(buf, "txt_item%02d", m + 1);
             } else {
-                sprintf(buf, &lbl_eu_80504A3C[0x3c9], m + 1);
+                sprintf(buf, "nul_item%02d", m + 1);
             }
             nw4r::lyt::Pane* pane = self->mLayout->GetRootPane()->FindPaneByName(buf, true);
             nw4r::lyt::Pane* refPane = self->mLayout->GetRootPane()->FindPaneByName(
-                &lbl_eu_80504A3C[0x3d6], true);
+                "nul_proportion", true);
             nw4r::math::VEC3 pos;
             ScalePaneWorldPos(&pos, pane, refPane, self->mLayout->GetRootPane());
             self->mCursor.setRootPaneTranslate(&pos);
@@ -2674,15 +2673,15 @@ void GetItemMulti_HandlePad(CMenuGetItemMulti* self) {
             char buf[32];
             s8 m = (s8)self->mMaxVisibleItems;
             if (m == 5) {
-                sprintf(buf, &lbl_eu_80504A3C[0x16b]);
+                sprintf(buf, "txt_close00");
             } else if (m == 4) {
-                sprintf(buf, &lbl_eu_80504A3C[0x192], m + 1);
+                sprintf(buf, "txt_item%02d", m + 1);
             } else {
-                sprintf(buf, &lbl_eu_80504A3C[0x3c9], m + 1);
+                sprintf(buf, "nul_item%02d", m + 1);
             }
             nw4r::lyt::Pane* pane = self->mLayout->GetRootPane()->FindPaneByName(buf, true);
             nw4r::lyt::Pane* refPane = self->mLayout->GetRootPane()->FindPaneByName(
-                &lbl_eu_80504A3C[0x3d6], true);
+                "nul_proportion", true);
             nw4r::math::VEC3 pos;
             ScalePaneWorldPos(&pos, pane, refPane, self->mLayout->GetRootPane());
             self->mCursor.setRootPaneTranslate(&pos);
@@ -2749,15 +2748,15 @@ void GetItemMulti_HandlePad(CMenuGetItemMulti* self) {
             char buf[32];
             s8 m = (s8)self->mMaxVisibleItems;
             if (m == 5) {
-                sprintf(buf, &lbl_eu_80504A3C[0x16b]);
+                sprintf(buf, "txt_close00");
             } else if (m == 4) {
-                sprintf(buf, &lbl_eu_80504A3C[0x192], m + 1);
+                sprintf(buf, "txt_item%02d", m + 1);
             } else {
-                sprintf(buf, &lbl_eu_80504A3C[0x3c9], m + 1);
+                sprintf(buf, "nul_item%02d", m + 1);
             }
             nw4r::lyt::Pane* pane = self->mLayout->GetRootPane()->FindPaneByName(buf, true);
             nw4r::lyt::Pane* refPane = self->mLayout->GetRootPane()->FindPaneByName(
-                &lbl_eu_80504A3C[0x3d6], true);
+                "nul_proportion", true);
             nw4r::math::VEC3 pos;
             ScalePaneWorldPos(&pos, pane, refPane, self->mLayout->GetRootPane());
             self->mCursor.setRootPaneTranslate(&pos);
@@ -2793,7 +2792,7 @@ void GetItemMulti_HandlePad(CMenuGetItemMulti* self) {
                     text = reinterpret_cast<CItemBoxPage*>(self->mRankSlotIds)->GetItemName(idx);
                 } else {
                     text = BdatGetPtrDirect(reinterpret_cast<const void*>(gpItemMultiSkillBdat),
-                                         &lbl_eu_80504A3C[0x141], slotId);
+                                         "help", slotId);
                 }
                 reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->switchKindPane(0);
                 reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->setKindContent(reinterpret_cast<char*>(text), 0);

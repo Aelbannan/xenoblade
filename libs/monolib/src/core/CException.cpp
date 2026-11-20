@@ -19,17 +19,6 @@
 #include <new>
 namespace nw4r { namespace db { void Panic(const char* file, int line, const char* fmt, ...); } }
 
-// Message ring header embedded in CWorkThread at +0x84 (the getMessageQueueSlot
-// helper indexes array/front/capacity at +0x120/+0x124/+0x12C from here).
-struct CWorkThreadMsgQueue {
-    u8 pad[0x120];            // +0x84..0x1A4
-    CMsgParamEntry* array;    // +0x1A4
-    u32 front;                // +0x1A8
-    u32 size;                 // +0x1AC
-    u32 capacity;             // +0x1B0
-    u32 lastIndex;            // +0x1B4
-};
-
 extern "C" {
     // C++ delete helper for the extern "C" deleting dtor.
 
@@ -53,7 +42,7 @@ extern "C" {
     extern char lbl_eu_8052DC3C[];
 
     void getFontId__11CDeviceFontFv();
-    void* findFontByDevice__11CDeviceFontFv(u32 index);
+    nw4r::ut::TextWriterBase<wchar_t>* findFontByDevice__11CDeviceFontFv(u32 index);
     void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32 index, nw4r::lyt::Layout* layout);
     ml::CCol4* CTaskGame_setVec4(ml::CCol4* out, f32 r, f32 g, f32 b, f32 a);
     void __ct__7CDrawGXFv(CDrawGX* self);
@@ -65,10 +54,10 @@ extern "C" {
     void Print__Q34nw4r2ut17TextWriterBaseFPCwi(void* writer, const wchar_t* text, int len);
     void TagWriterSetScale(void* writer, f32 a, f32 b);
     void TagWriterSetCharSpace(void* writer, f32 a);
-    void* getMessageQueueSlot__10CExceptionFv(CMsgParamEntry* entries, u32 value);
-    void drawExceptionText__10CExceptionFv(const void* message);
-    void setWriterCursor__10CExceptionFv(u8* writer, f32 x, f32 y, f32 z);
-    void printExceptionMessage__10CExceptionFv(u8* writer, const wchar_t* text);
+    CMsgParamEntry* getMessageQueueSlot__10CExceptionFv(CMsgParamRing<8>* ring, u32 value);
+    void drawExceptionText__10CExceptionFv(const wchar_t* message);
+    void setWriterCursor__10CExceptionFv(nw4r::ut::TextWriterBase<wchar_t>* writer, f32 x, f32 y, f32 z);
+    void printExceptionMessage__10CExceptionFv(nw4r::ut::TextWriterBase<wchar_t>* writer, const wchar_t* text);
 
     // Device exception is an unnamed class in CDevice.cpp.
     void* CDeviceException_getInstance();
@@ -192,24 +181,22 @@ CException* CException::createException(CWorkThread* pThread, const wchar_t* mes
 
     // Push an EVT_EXCEPTION copy of the newest queue entry onto the thread's
     // message ring, then tag the new tail and link it to the exception.
-    CWorkThreadMsgQueue* queue =
-        reinterpret_cast<CWorkThreadMsgQueue*>((u8*)pThread + 0x84);
-    u32 sum = queue->front + queue->size;
-    u32 idx = sum % queue->capacity;
-    CMsgParamEntry* slot =
-        reinterpret_cast<CMsgParamEntry*>((u8*)queue->array + idx * 0x24);
+    CMsgParamRing<8>& ring = pThread->mMsgQueue.mRing;
+    u32 sum = ring.mFront + ring.mSize;
+    u32 idx = sum % ring.mCapacity;
+    CMsgParamEntry* slot = &ring.mArrayPtr[idx];
     CMsgParamEntry msg;
     *slot = msg;
     slot->command = CWorkThread::EVT_EXCEPTION;
     slot->unk23 = 0;
-    queue->size += 1;
-    queue->lastIndex = queue->size - 1;
+    ring.mSize += 1;
+    ring.field6 = ring.mSize - 1;
 
-    CMsgParamEntry* tail1 = (CMsgParamEntry*)getMessageQueueSlot__10CExceptionFv(
-        (CMsgParamEntry*)queue, queue->lastIndex);
+    CMsgParamEntry* tail1 = getMessageQueueSlot__10CExceptionFv(
+        &ring, ring.field6);
     tail1->unk23 = 3;
-    CMsgParamEntry* tail2 = (CMsgParamEntry*)getMessageQueueSlot__10CExceptionFv(
-        (CMsgParamEntry*)queue, queue->lastIndex);
+    CMsgParamEntry* tail2 = getMessageQueueSlot__10CExceptionFv(
+        &ring, ring.field6);
     tail2->wid = exception->mWorkID;
     return exception;
 }
@@ -226,13 +213,13 @@ CException* CException::validateExceptionType() {
 }
 
 // Ring buffer index calculation
-extern "C" void* getMessageQueueSlot__10CExceptionFv(CMsgParamEntry* entries, u32 value) {
-    u32 offset = *(u32*)((u8*)entries + 0x124);
-    u32 capacity = *(u32*)((u8*)entries + 0x12C);
+extern "C" CMsgParamEntry* getMessageQueueSlot__10CExceptionFv(CMsgParamRing<8>* ring, u32 value) {
+    u32 offset = ring->mFront;
+    u32 capacity = ring->mCapacity;
     u32 index = offset + value;
     u32 remainder = index / capacity;
     remainder = index - remainder * capacity;
-    return (u8*)*(u32*)((u8*)entries + 0x120) + remainder * 0x24;
+    return &ring->mArrayPtr[remainder];
 }
 
 // Render function
@@ -290,15 +277,16 @@ void CException::wkRender() {
 }
 
 // Main exception text renderer.
-extern "C" void drawExceptionText__10CExceptionFv(const void* message) {
-    u8* writer = (u8*)findFontByDevice__11CDeviceFontFv(0);
+extern "C" void drawExceptionText__10CExceptionFv(const wchar_t* message) {
+    nw4r::ut::TextWriterBase<wchar_t>* writer = findFontByDevice__11CDeviceFontFv(0);
     SetupGX__Q34nw4r2ut10CharWriterFv(writer);
     setWriterCursor__10CExceptionFv(writer, lbl_eu_8066A480, lbl_eu_8066A480, lbl_eu_8066A480);
-    printExceptionMessage__10CExceptionFv(writer, (const wchar_t*)message);
+    printExceptionMessage__10CExceptionFv(writer, message);
 }
 
 // Set the nw4r TextWriter font pointer.
-extern "C" void setWriterFont__10CExceptionFv(u8* writer, void* font) {
+extern "C" void setWriterFont__10CExceptionFv(nw4r::ut::TextWriterBase<wchar_t>* writer,
+                                              const nw4r::ut::Font* font) {
     // Validate the writer pointer against the Wii memory map (MEM1, MEM2,
     // hardware IO registers); panic if it falls outside every known range.
     bool writerRegs2 = true;
@@ -360,7 +348,7 @@ extern "C" void setWriterFont__10CExceptionFv(u8* writer, void* font) {
     if (!fontRegs2) {
         nw4r::db::Panic(lbl_eu_80537818, 0x42, lbl_eu_805377E0, font);
     }
-    *(void**)((u8*)writer + 0x48) = font;
+    writer->SetFont(*font);
 }
 
 // RGBA setter
@@ -372,7 +360,8 @@ extern "C" void setExceptionColor__10CExceptionFv(u8* buffer, u8 r, u8 g, u8 b, 
 }
 
 // Set a TextWriter cursor position.
-extern "C" void setWriterCursor__10CExceptionFv(u8* writer, f32 x, f32 y, f32 z) {
+extern "C" void setWriterCursor__10CExceptionFv(nw4r::ut::TextWriterBase<wchar_t>* writer,
+                                                 f32 x, f32 y, f32 z) {
     u32 address = (u32)writer;
     bool validMem1 = true;
     bool validMem2 = true;
@@ -402,13 +391,12 @@ extern "C" void setWriterCursor__10CExceptionFv(u8* writer, f32 x, f32 y, f32 z)
     if (!validRegs2) {
         nw4r::db::Panic(lbl_eu_805378A0, 0x102, lbl_eu_8053786C, writer);
     }
-    *(f32*)((u8*)writer + 0x2C) = x;
-    *(f32*)((u8*)writer + 0x30) = y;
-    *(f32*)((u8*)writer + 0x34) = z;
+    writer->SetCursor(x, y, z);
 }
 
 // Print a wide string through a TextWriter.
-extern "C" void printExceptionMessage__10CExceptionFv(u8* writer, const wchar_t* text) {
+extern "C" void printExceptionMessage__10CExceptionFv(nw4r::ut::TextWriterBase<wchar_t>* writer,
+                                                       const wchar_t* text) {
     bool writerRegs2 = true;
     bool writerRegs = true;
     bool writerIo2 = true;
@@ -465,7 +453,7 @@ extern "C" void printExceptionMessage__10CExceptionFv(u8* writer, const wchar_t*
     if (!textRegs2) {
         nw4r::db::Panic(lbl_eu_805376EC, 0x101, lbl_eu_805376B8, text);
     }
-    ((nw4r::ut::TextWriterBase<wchar_t>*)writer)->Print(text, (int)wcslen(text));
+    writer->Print(text, (int)wcslen(text));
 }
 
 // Login setup
@@ -516,10 +504,8 @@ bool CException::wkStandbyLogin() {
 
 // Logout teardown
 bool CException::wkStandbyLogout() {
-    // Child-list header pointer at 0x60; empty when its back-link points at itself.
     // Proceed only when fully faded out or one of the override conditions holds.
-    CDoubleListNode* header = *(CDoubleListNode**)((u8*)this + 0x60);
-    if (header->GetPrev() == header &&
+    if (mChildren.empty() &&
         (lbl_eu_8066A480 == mAlpha || isOff__11CWorkSystemFv() ||
          isHbmStopPending__7CLibHbmFv() != nullptr || mFlag210 != 0)) {
         setAppException__8CDesktopFi(0);

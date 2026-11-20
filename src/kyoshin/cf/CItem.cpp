@@ -210,7 +210,7 @@ extern "C" void CItem_reCount(CItemExt* self) {
                 u32 v;
                 u8 b[4];
             } tmp;
-            tmp.v = getBdatStringColumnValue(h, lbl_eu_80501C58 + 0x5a,
+            tmp.v = getBdatStringColumnValue(h, "jwl_slot",
                                              (w2 >> 5) & 0x7FF);
             self->mCount = tmp.b[0];
         }
@@ -530,7 +530,7 @@ extern "C" void CItem_RebuildEntries(u32 unused, CItemExt* self) {
             } t;
             // Fresh field_00 read here: retail reloads the word from memory
             // before extracting the row id for this call.
-            t.v = getBdatStringColumnValue(h, lbl_eu_80501C58 + 0x5a,
+            t.v = getBdatStringColumnValue(h, "jwl_slot",
                                            (self->field_00 >> 5) & 0x7FF);
             self->mCount = t.b[0];
         }
@@ -579,7 +579,7 @@ extern "C" void CItem_RebuildEntries(u32 unused, CItemExt* self) {
                             u16 h[2];
                         } t3;
                         t3.v = getBdatStringColumnValue(::cf::CfBdat::spItmItemListFileData,
-                                                        lbl_eu_80501C58 + 0x4a,
+                                                        "itemID",
                                                         t.h[0]);
                         v2 = t3.h[0];
                     }
@@ -588,7 +588,7 @@ extern "C" void CItem_RebuildEntries(u32 unused, CItemExt* self) {
                         u8 b[4];
                     } t4;
                     t4.v = getBdatStringColumnValue(::cf::CfBdat::spItmItemListFileData,
-                                                    lbl_eu_80501C58 + 0x51,
+                                                    "rankType",
                                                     t.h[0]);
                     CItemRec_packFromBdat(rec, v, v2, 1, t4.b[0]);
                 }
@@ -732,23 +732,23 @@ extern "C" void CItem_refRow2(u32 unused, CItemData* self) {
     row = (word >> 5) & 0x7FF;
     n = CItem_initItemImplInstances(self)->vf78(self);
     *(u16*)&self->field_08[8] = 0;
-    t1.v = getBdatStringColumnValue(handle, lbl_eu_80501C58 + 0x9b, row);
+    t1.v = getBdatStringColumnValue(handle, "rank", row);
     CItem_initItemImplInstances(self)->vf0C(self, t1.b[0]);
-    t2.v = getBdatStringColumnValue(handle, lbl_eu_80501C58 + 0xa0, row);
+    t2.v = getBdatStringColumnValue(handle, "cylinder", row);
     CItem_initItemImplInstances(self)->vf84(self, t2.b[0]);
     self->field_08[0xE] = 1;
-    t3.v = getBdatStringColumnValue(handle, lbl_eu_80501C58 + 0x6d, row);
+    t3.v = getBdatStringColumnValue(handle, "atr_type", row);
     u32 f7 = self->field_07;
     f7 = __rlwimi(f7, t3.b[0], 2, 24, 29);
     self->field_07 = (u8)f7;
     // Duplicate lookup kept: retail emits a second getBdatStringColumnValue
     // call with identical args whose result is discarded (side-effect call).
-    t3.v = getBdatStringColumnValue(handle, lbl_eu_80501C58 + 0x6d, row);
-    t4.v = getBdatStringColumnValue(handle, lbl_eu_80501C58 + 0xa9, row);
+    t3.v = getBdatStringColumnValue(handle, "atr_type", row);
+    t4.v = getBdatStringColumnValue(handle, "skill1", row);
     halfs[0] = (u16)t4.b[0];
-    t5.v = getBdatStringColumnValue(handle, lbl_eu_80501C58 + 0xb0, row);
+    t5.v = getBdatStringColumnValue(handle, "\x83\x47\x81\x5b\x83\x65\x83\x8b\x8d\x7a\x90\xce", row);
     halfs[1] = (u16)t5.b[0];
-    t6.v = getBdatStringColumnValue(::cf::CfBdat::spCurBtlEneListFileData, lbl_eu_80501C58 + 0xb7, (u16)n);
+    t6.v = getBdatStringColumnValue(::cf::CfBdat::spCurBtlEneListFileData, "name", (u16)n);
     // Branchless boolean scaled by 2, computed before the rand call
     // (retail: neg/or/srawi then rlwinm extracting bit 30 -> 0 or 2).
     // One variable chains count -> roll index -> max.
@@ -800,7 +800,7 @@ extern "C" void CItem_rerank4(u32 unused, CItemData* self) {
         u32 value;
         u8 b[4];
     } tmp;
-    tmp.value = getBdatStringColumnValue(handle, lbl_eu_80501C58 + 0x6d, (u16)v);
+    tmp.value = getBdatStringColumnValue(handle, "atr_type", (u16)v);
     u32 f7 = __rlwimi(self->field_07, tmp.b[0], 2, 24, 29);
     u32 f18 = __rlwimi(self->field_18, v, 0, 17, 31);
     self->field_07 = (u8)f7;
@@ -862,7 +862,7 @@ extern "C" void CItem_wordRef(u32 unused, CItemData* self) {
     u16 val;
     if ((word >> 20) != 0) {
         union { u32 v; u16 h[2]; } tmp;
-        tmp.v = getBdatStringColumnValue(::cf::CfBdat::spItmItemListFileData, lbl_eu_80501C58 + 0x4a, word >> 20);
+        tmp.v = getBdatStringColumnValue(::cf::CfBdat::spItmItemListFileData, "itemID", word >> 20);
         val = tmp.h[0];
     } else {
         val = 0;
@@ -871,7 +871,7 @@ extern "C" void CItem_wordRef(u32 unused, CItemData* self) {
     word = __rlwimi(word, val, 5, 16, 26);
     self->field_00 = word;
     union { u32 v; u8 b[4]; } t2;
-    t2.v = getBdatStringColumnValue(::cf::CfBdat::spItmItemListFileData, lbl_eu_80501C58 + 0x51, word >> 20);
+    t2.v = getBdatStringColumnValue(::cf::CfBdat::spItmItemListFileData, "rankType", word >> 20);
     CItem_initItemImplInstances(self)->vf0C(self, t2.b[0]);
     u32 family = self->field_00 >> 20;
     if (family == 0) {
@@ -881,11 +881,11 @@ extern "C" void CItem_wordRef(u32 unused, CItemData* self) {
         u16 v2 = 0;
         if (family != 0) {
             union { u32 v; u16 h[2]; } t3;
-            t3.v = getBdatStringColumnValue(handle, lbl_eu_80501C58 + 0x4a, family);
+            t3.v = getBdatStringColumnValue(handle, "itemID", family);
             v2 = t3.h[0];
         }
         union { u32 v; u8 b[4]; } t4;
-        t4.v = getBdatStringColumnValue(handle, lbl_eu_80501C58 + 0x51, family);
+        t4.v = getBdatStringColumnValue(handle, "rankType", family);
         CItemRec_packFromBdat((CItemRec*)self->field_08, family, v2, 0, t4.b[0]);
     }
 }
@@ -1671,13 +1671,13 @@ extern "C" __declspec(noinline) CItemExt* CItem_findOrCreateRec(u32 a, s16* pOut
         u32 v;
         u16 h[2];
     } t2;
-    t1.v = getBdatStringColumnValue(::cf::CfBdat::spItmItemListFileData, lbl_eu_80501C58 + 0xbd, a);
+    t1.v = getBdatStringColumnValue(::cf::CfBdat::spItmItemListFileData, "qst_name", a);
     u32 flag = 0;
     if ((u32)(t1.h[0] - 10) <= 3) flag = 1;
     CItemExt* result;
     if (flag) {
         // Duplicate lookup kept: retail calls the +0xBD column twice.
-        t2.v = getBdatStringColumnValue(::cf::CfBdat::spItmItemListFileData, lbl_eu_80501C58 + 0xbd, a);
+        t2.v = getBdatStringColumnValue(::cf::CfBdat::spItmItemListFileData, "qst_name", a);
         result = 0;
         if (t2.h[0] != 0) {
             // Declaration order pins the stack slots: n@0x10, stride@0x14.
@@ -1738,7 +1738,7 @@ extern "C" __declspec(noinline) CItemExt* CItem_findOrCreateRec(u32 a, s16* pOut
     if (result != 0) {
         CItem_initItemImplInstances((CItemData*)result)->vf1C((CItemData*)result);
         if (((result->field_00 >> 16) & 0xF) == 3) {
-            t3.v = getBdatStringColumnValue(::cf::CfBdat::spItmItemListFileData, lbl_eu_80501C58 + 0x42, a);
+            t3.v = getBdatStringColumnValue(::cf::CfBdat::spItmItemListFileData, "percent", a);
             if (t3.b[0] != 0) {
                 CItem_initItemImplInstances((CItemData*)result)->vf94((CItemData*)result, t3.b[0]);
             }
@@ -2538,29 +2538,28 @@ extern "C" __declspec(noinline) void CItem_buildSortName(CItemSortBuf* buf, u32 
     if (b - 1 > 5) b = 1;
     if (d < 4 || b >= 11) d = 4;
     void* h170 = ::cf::CfBdat::spMnuItemFileData;
-    const char* base = lbl_eu_80501C58;
-    const char* s = (const char*)getBdatStringColumnValue(h170, base + 0xd3, b + 0x94);
+    const char* s = (const char*)getBdatStringColumnValue(h170, "name", b + 0x94);
     s1.mLen = (s32)strlen(s);
     strcpy(s1.mStr, s);
     if (a == 2) {
         if (c != 0) {
-            s = (const char*)getBdatStringColumnValue(::cf::CfBdat::spBtlSkillListFileData, base + 0xe1, f);
+            s = (const char*)getBdatStringColumnValue(::cf::CfBdat::spBtlSkillListFileData, "cylinder_name", f);
         } else {
-            tmp.v = getBdatStringColumnValue(::cf::CfBdat::spBtlEneListFileData, base + 0xef, c);
-            s = (const char*)getBdatStringColumnValue(::cf::CfBdat::spBtlCrystalNameListFileData, base + 0xd3, tmp.b[0]);
+            tmp.v = getBdatStringColumnValue(::cf::CfBdat::spBtlEneListFileData, "c_name_id", c);
+            s = (const char*)getBdatStringColumnValue(::cf::CfBdat::spBtlCrystalNameListFileData, "name", tmp.b[0]);
         }
         s2.mLen = (s32)strlen(s);
         strcpy(s2.mStr, s);
     } else if (a == 3) {
-        s = (const char*)getBdatStringColumnValue(h170, base + 0xd3, d + 0x8b);
+        s = (const char*)getBdatStringColumnValue(h170, "name", d + 0x8b);
         s2.mLen = (s32)strlen(s);
         strcpy(s2.mStr, s);
     } else {
-        s = (const char*)getBdatStringColumnValue(h170, base + 0xd3, d + 0x8b);
+        s = (const char*)getBdatStringColumnValue(h170, "name", d + 0x8b);
         s2.mLen = (s32)strlen(s);
         strcpy(s2.mStr, s);
     }
-    s = (const char*)getBdatStringColumnValue(h170, base + 0xd3, e + 0x9a);
+    s = (const char*)getBdatStringColumnValue(h170, "name", e + 0x9a);
     s3.mLen = (s32)strlen(s);
     strcpy(s3.mStr, s);
     u8 lang = CDeviceSC::getLanguage();
@@ -3105,13 +3104,13 @@ extern "C" void __declspec(noinline) CItem_rollWeighted4(CItemFour* self, u32 it
     // Retail keeps each full result on the stack and converts it right
     // before the next lookup. The column base is written inline so MWCC
     // materializes it as a late CSE temp.
-    t1.v = getBdatStringColumnValue(handle, lbl_eu_80501C58 + 0xf9, item);
+    t1.v = getBdatStringColumnValue(handle, "equip_per", item);
     probs[0] = (u16)t1.b[0];
-    t2.v = getBdatStringColumnValue(handle, lbl_eu_80501C58 + 0x103, item);
+    t2.v = getBdatStringColumnValue(handle, "wpn_per", item);
     probs[1] = (u16)t2.b[0];
-    t3.v = getBdatStringColumnValue(handle, lbl_eu_80501C58 + 0x10b, item);
+    t3.v = getBdatStringColumnValue(handle, "crystal_per", item);
     probs[2] = (u16)t3.b[0];
-    t4.v = getBdatStringColumnValue(handle, lbl_eu_80501C58 + 0x117, item);
+    t4.v = getBdatStringColumnValue(handle, "arts_per", item);
     probs[3] = (u16)t4.b[0];
     s32 added = 0;
     while (added < (s32)count) {
@@ -3164,7 +3163,6 @@ extern "C" void __declspec(noinline) CItem_rollWeighted4(CItemFour* self, u32 it
 // to 100 times), roll the matching kind's record, and dedupe the last two
 // records when they share the same family id.
 extern "C" void CItem_rollWeighted4B(CItemFour* self, u32 item, u32 count) {
-    const char* base = lbl_eu_80501C58;
     void* handle = ::cf::CfBdat::spCurDropSprListFileData;
     u16 probs[4];
     union {
@@ -3183,13 +3181,13 @@ extern "C" void CItem_rollWeighted4B(CItemFour* self, u32 item, u32 count) {
         u32 v;
         u8 b[4];
     } t4;
-    t1.v = getBdatStringColumnValue(handle, base + 0x117, item);
+    t1.v = getBdatStringColumnValue(handle, "arts_per", item);
     probs[0] = (u16)t1.b[0];
-    t2.v = getBdatStringColumnValue(handle, base + 0x103, item);
+    t2.v = getBdatStringColumnValue(handle, "wpn_per", item);
     probs[1] = (u16)t2.b[0];
-    t3.v = getBdatStringColumnValue(handle, base + 0x120, item);
+    t3.v = getBdatStringColumnValue(handle, "uni_wpn_per", item);
     probs[2] = (u16)t3.b[0];
-    t4.v = getBdatStringColumnValue(handle, base + 0x12c, item);
+    t4.v = getBdatStringColumnValue(handle, "uni_equip_per", item);
     probs[3] = (u16)t4.b[0];
     s32 added = 0;
     while (added < (s32)count) {
@@ -3301,13 +3299,12 @@ extern "C" s32 CItem_rollBoxEntry(s32 type, u32 row) {
     u32 oldCount = blk->mCount;
     if (oldCount >= 4) return 0;
     void* handle = ::cf::CfBdat::spCurBtlEneListFileData;
-    char* cols = lbl_eu_80501C58;
     union { u32 v; u8 b[4]; } t0;   // 0x10
     union { u32 v; u8 b[4]; } t1;   // 0x0c
     union { u32 v; u8 b[4]; } t2;   // 0x08
-    t0.v = getBdatStringColumnValue(handle, cols, row);
-    t1.v = getBdatStringColumnValue(handle, cols + 0x9, row);
-    t2.v = getBdatStringColumnValue(handle, cols + 0x12, row);
+    t0.v = getBdatStringColumnValue(handle, "drop_nml", row);
+    t1.v = getBdatStringColumnValue(handle, "drop_rar", row);
+    t2.v = getBdatStringColumnValue(handle, "drop_spr", row);
     u8 a = t0.b[0];
     u8 b = t1.b[0];
     u8 c = t2.b[0];

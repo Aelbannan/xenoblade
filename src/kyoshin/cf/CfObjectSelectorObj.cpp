@@ -26,17 +26,11 @@ extern "C" void __dla__FPv(void* p);
 
 extern u8 lbl_eu_8052585C[];   // reslist base vtable
 extern u8 lbl_eu_8052BDD8[];   // selector inner vtable
-extern const f32 lbl_eu_80666EF8;
 extern f32 lbl_eu_80661DB0;
-extern const f32 lbl_eu_80666EFC;  // radians -> FIdx angle scale
-extern const f32 lbl_eu_80666F00;  // half-angle scale
 
 // Retail keeps these in split1.s (.sbss 0x80663F10/0x80663F14); declare
 // extern so this TU emits no local storage.
 extern f32 lbl_eu_80663F10;
-extern const f32 lbl_eu_80666F0C;
-extern const f32 lbl_eu_80666F08;
-extern const f32 lbl_eu_80666F04;
 
 // Opaque item tag for the top-level lists; only the pointer type matters.
 class CfObjEnumItem;
@@ -537,11 +531,6 @@ bool Selector_UpdateFilter(cf::CfObjectSelectorObj* obj, unsigned int c) {
     return self->mInner1.w3044 != 0;
 }
 
-void sinit_800FEA14() {
-    // lbl_eu_80663F10 = lbl_eu_80666F08 * (ml::pi / lbl_eu_80666F0C);
-    lbl_eu_80663F10 = lbl_eu_80666F08 * (ml::pi / lbl_eu_80666F0C);
-}
-
 // ---------------------------------------------------------------------
 // Selector_RunRequest (selector request worker).
 // Rebuilds the inner enum list for the pending request, then optionally
@@ -555,7 +544,7 @@ extern "C" void Selector_RunRequest(cf::CfSelectorUnit* self) {
     }
     startEnumObjects(reinterpret_cast<CfMoveEnumList*>(&self->mList), self->w3048,
                   self->w304C);
-    if (lbl_eu_80666EF8 != self->f3058) {
+    if (0.0f != self->f3058) {
         void* spot = ((SelPosDispatch*)self->w3054)->vAC();
         __ct__800FB044(&self->mList, spot, 0, self->f3058);
     }
@@ -568,8 +557,6 @@ extern "C" void Selector_RunRequest(cf::CfSelectorUnit* self) {
         nw4r::math::VEC3* dp = &d;
         const f32 pi = ml::pi;
         nw4r::math::VEC3* deltap = &delta;
-        const f32 angScale = lbl_eu_80666EFC;
-        const f32 halfScale = lbl_eu_80666F00;
         for (u32 i = 0; i < self->mCount; i++) {
             SelEnumSlotView* info =
                 reinterpret_cast<SelEnumSlotView*>(
@@ -607,15 +594,15 @@ extern "C" void Selector_RunRequest(cf::CfSelectorUnit* self) {
             d.y = deltap->y;
             d.z = deltap->z;
             f32 dist = PSVECMag((const Vec*)dp);
-            f32 ang = angScale * nw4r::math::Atan2FIdx(d.x, d.z) - facing;
+            f32 ang = 0.024543693f * nw4r::math::Atan2FIdx(d.x, d.z) - facing;
             while (pi <= ang) {
                 ang -= twoPi;
             }
             while (ang < -pi) {
                 ang += twoPi;
             }
-            bool hit = range >= dist && -(cone * halfScale) <= ang &&
-                       ang <= cone * halfScale;
+            bool hit = range >= dist && -(cone * 0.5f) <= ang &&
+                       ang <= cone * 0.5f;
             if (!hit) {
                 info->field_18 |= 0x70;
             }
@@ -677,13 +664,13 @@ void Selector_ReinitState(cf::CfObjectSelectorData* obj, u32 a4, u32 a5) {
     obj->mInner1.w3048 = zero;
     obj->mInner1.w304C = zero;
     obj->mInner1.w3050 = a5;
-    obj->mInner1.f3058 = lbl_eu_80666EF8;
+    obj->mInner1.f3058 = 0.0f;
     obj->mInner1.w3068 = zero;
     obj->mInner2.w3044 = zero;
     obj->mInner2.w3048 = zero;
     obj->mInner2.w304C = zero;
     obj->mInner2.w3050 = a5;
-    obj->mInner2.f3058 = lbl_eu_80666EF8;
+    obj->mInner2.f3058 = 0.0f;
     obj->mInner2.w3068 = zero;
     obj->mInner1.f305C = lbl_eu_80661DB0;
     obj->mInner2.f305C = lbl_eu_80661DB0;
@@ -719,7 +706,7 @@ void __ct__800FDB4C() {
             __ct__cf_CfObjEnumList((u8*)&obj->mInner1.mList);
             u32 zero = 0;
             obj->mInner1.w3044 = zero;
-            f32 fv = lbl_eu_80666EF8;
+            f32 fv = 0.0f;
             obj->mInner1.w3048 = zero;
             obj->mInner1.w3050 = zero;
             obj->mInner1.w3054 = zero;
@@ -728,7 +715,7 @@ void __ct__800FDB4C() {
             obj->mInner2.vtable = (u32)lbl_eu_8052BDD8;
             __ct__cf_CfObjEnumList((u8*)&obj->mInner2.mList);
             obj->mInner2.w3044 = zero;
-            fv = lbl_eu_80666EF8;
+            fv = 0.0f;
             obj->mInner2.w3048 = zero;
             obj->mInner2.w3050 = zero;
             obj->mInner2.w3054 = zero;
@@ -768,7 +755,7 @@ void __dt__800FDEF8(cf::CfObjectSelectorData* obj) {
         obj->mInner1.w304C = 0;
         obj->mInner1.w3050 = 0;
         obj->mInner1.w3054 = 0;
-        obj->mInner1.f3058 = lbl_eu_80666EF8;
+        obj->mInner1.f3058 = 0.0f;
         obj->mInner1.w3068 = 0;
         obj->mInner1.mList.destroyList();
         obj->mInner2.w3044 = 0;
@@ -776,7 +763,7 @@ void __dt__800FDEF8(cf::CfObjectSelectorData* obj) {
         obj->mInner2.w304C = 0;
         obj->mInner2.w3050 = 0;
         obj->mInner2.w3054 = 0;
-        obj->mInner2.f3058 = lbl_eu_80666EF8;
+        obj->mInner2.f3058 = 0.0f;
         obj->mInner2.w3068 = 0;
         obj->mInner2.mList.destroyList();
         obj->mList1.clearList();
@@ -959,7 +946,7 @@ void Selector_FrameUpdate(cf::CfObjectSelectorData* self) {
             goto l_fee90;
         SelAuxInfo* aux = reinterpret_cast<SelAuxDispatch*>(
                               reinterpret_cast<u8*>(reinterpret_cast<SelOwnerView*>(self->fieldC17C)) + 0x3E9C)->a110();
-        if (aux->dist > lbl_eu_80666F04) goto l_fee90;
+        if (aux->dist > 0.01f) goto l_fee90;
         if (self->field6080 == self->field3660) goto l_ffeff4;
         goto l_fee90;
     }
@@ -1055,4 +1042,8 @@ l_end:
         self->mInner2.w3068 &= 0xFFFFFFBF;
         self->fieldC180 = c & 0xFFFFFEFF;
     }
+}
+
+void sinit_800FEA14() {
+    lbl_eu_80663F10 = 14.0f * (ml::pi / 18.0f);
 }

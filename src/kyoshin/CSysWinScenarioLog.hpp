@@ -876,9 +876,7 @@ extern "C" void* __ct__CTagProcessor(void* self);
 extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
     u32 arg, nw4r::lyt::Layout* layout);
 
-// Scenario-log string pool (split .rodata) and the u16->f32 conversion magic
-// double (2^52 = 0x4330000000000000, CfTFile.cpp convention).
-extern char lbl_eu_8050EE24[];
+// u16->f32 conversion magic double (2^52 = 0x4330000000000000, CfTFile.cpp convention).
 extern "C" double lbl_eu_80668AD8;
 
 // CSysWinScenarioLog::Move helpers.

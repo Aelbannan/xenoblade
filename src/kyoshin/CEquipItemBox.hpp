@@ -333,14 +333,14 @@ struct CEquipItemBoxSlotTable {
    patched into the slot table by findEIBEquipSlot. */
 
 // 36-byte equipment-slot table (data import, same .data block as the string pool).
-extern CEquipItemBoxSlotTable equipItemBoxSlotDefsTable;
+extern const CEquipItemBoxSlotTable equipItemBoxSlotDefsTable;
 
 /* 24-byte equipment-category table (6 u32 entries; the low byte of each word
    is a category id). Copied to a stack local by rebuildEIBGridPage. */
 struct CEquipItemBoxCatWordTable {
     u32 w[6];   // 0x00..0x17
 };
-extern CEquipItemBoxCatWordTable lbl_eu_8050EF50;
+extern const CEquipItemBoxCatWordTable equipItemBoxCatWordTable; // name-guess: category word table copied by rebuildEIBGridPage
 
 /* 12-byte u32 table copied by useEIBSelectedItem and indexed by the matched
    category slot (three CfMove search types). */
@@ -450,14 +450,12 @@ extern s16 equipItemBox_sortOptionLabelAltBottom[4];
 // Item-kind -> display-count probe (calcEIBCountKey's default band).
 extern "C" u32 __cvt_fp2unsigned(double);
 
-/* 16-byte record copied off lbl_eu_8050EF68 by calcEIBCountKey and read back
-   as floats indexed by the item's vf08 id (retail indexes past the 4 words
-   with a masked shift, so the float view is oversized on purpose). */
-union CEquipItemBoxF32Record {
-    u32 w[4];
-    float f[4];
+/* 28-byte record copied by calcEIBCountKey and indexed as floats by the
+   item's vf08 id (retail's count-scale table at .rodata:0x8050EF68). */
+struct CEquipItemBoxF32Record {
+    float f[7];
 };
-extern CEquipItemBoxF32Record lbl_eu_8050EF68;
+extern const CEquipItemBoxF32Record equipItemBoxF32Record; // name-guess: count-scale record copied by calcEIBCountKey
 
 // Item-name string providers (CErrMes TU, current hint/error strings).
 extern "C" char* getErrMesText16(void);
@@ -502,6 +500,5 @@ extern "C" s32 CItem_slotCnt(u32);   // canonical form from cf/CItem.hpp/CItem.c
 extern const float lbl_eu_80668B30;
 extern const float lbl_eu_80668B34;
 extern const float lbl_eu_80668B38;
-extern const float lbl_eu_80668B44;
 
 extern "C" void CItemBlock_setFlag120EC(u32 id, u32 arg);

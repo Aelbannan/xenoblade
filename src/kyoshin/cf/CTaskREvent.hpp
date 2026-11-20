@@ -236,11 +236,7 @@ struct REvtMgrView {
 // Data symbols (retail linker names - global scope, no extern "C" needed)
 extern const char* gpEventBaseName; // base event-name string (evtGetBaseNameAddr returns it as u32)
 extern u32 gStreamVolumeLevel;
-extern f32 lbl_eu_8066762C;
 extern f32 lbl_eu_80667628; // ctor float initializer (field_0x1E4/0x1E8)
-extern f64 lbl_eu_80667630; // u32->float conversion constant (2^52+2^31)
-extern f32 lbl_eu_80667644; // evtUpdateBusyDimming camera-position write value (x)
-extern f32 lbl_eu_80667648; // evtUpdateBusyDimming camera-position write value (y)
 extern u16 gmGlobalFlag42; // evtOnFileEvent expected event-id halfword
 extern u16 gmGlobalFlag44; // evtOnFileEvent expected event-id halfword
 // Event-name table blob (retail .data:0x80530300): byte table at +0x130
@@ -376,9 +372,6 @@ extern "C" {
     u32 EvtSeqGetCounter100();
     int CTaskGame_isStreamPaused();
     void Scn_SetStopFlag(u8* self, u32 flag);
-    extern f32 lbl_eu_80667638;
-    extern f32 lbl_eu_8066763C;
-    extern f32 lbl_eu_80667640;
     void func_80086B5C__Q22cf13CfGameManagerFv(u32 a, u32 b);
     u8* getGlobalSda();
     CFileHandle* readFile__11CDeviceFileFUlPCcP10IWorkEventii(

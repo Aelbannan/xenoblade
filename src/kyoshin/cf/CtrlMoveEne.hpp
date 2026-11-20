@@ -584,7 +584,6 @@ extern "C" void unregisterBattleActor(void* self, void* obj);
 // Heading-difference cosine threshold (CtrlMoveEne_UpdateMoveHeading compares against it).
 // CtrlMoveEne_ProbeApproachPoint scan constants: mtRand(201) walk scale, ground-probe depth,
 // height band and the fall-gap thresholds (upper 0.5 / lower 1.5 scales).
-extern const f32 lbl_eu_80661C30;   // 0.005 (mtRand(201) scale)
 extern const f32 _lbl_eu_80666604;  // 10000 (init best gap)
 extern const f32 _lbl_eu_80666608;  // CtrlMoveEne_InitBattleMove field_0x16C fallback (mode byte != 3)
 // CtrlMoveEne_TrackMoveTarget turn-probe constants: random-walk scale (-1), pi/2 turn bias.

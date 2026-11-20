@@ -36,19 +36,6 @@ bool sHbmStopPending;
 bool sHbmStopFlag;
 u32 lbl_eu_80665708[2];
 
-// ===== Dissolved monolibdata2 (.rodata) owned by this TU =====
-// The five hbm filenames packed into one retail rodata blob
-// (0x80523138-0x80523190, 88B). OnFileEvent indexes it at 0x00/0x10/0x22/
-// 0x37/0x44; this is a plain byte blob (no relocs).
-extern "C" const char lbl_eu_80523138[88] = {
-    0x68,0x62,0x6D,0x2F,0x68,0x6F,0x6D,0x65,0x42,0x74,0x6E,0x2E,0x61,0x72,0x63,0x00, // hbm/homeBtn.arc
-    0x68,0x62,0x6D,0x2F,0x53,0x70,0x65,0x61,0x6B,0x65,0x72,0x53,0x65,0x2E,0x61,0x72, // hbm/SpeakerSe.ar
-    0x63,0x00,0x68,0x62,0x6D,0x2F,0x48,0x6F,0x6D,0x65,0x42,0x75,0x74,0x74,0x6F,0x6E, // c.hbm/HomeButton
-    0x53,0x65,0x2E,0x61,0x72,0x63,0x00,0x68,0x62,0x6D,0x2F,0x68,0x6F,0x6D,0x65,0x2E, // Se.arc.hbm/home.
-    0x63,0x73,0x76,0x00,0x68,0x62,0x6D,0x2F,0x63,0x6F,0x6E,0x66,0x69,0x67,0x2E,0x74, // csv.hbm/config.t
-    0x78,0x74,0x00,0x00,0x00,0x00,0x00,0x00,                                          // xt. + pad
-};
-
 // Forward decl for the manual vtable block at the bottom (CLibG3d pattern).
 extern "C" u32 lbl_eu_8056D1A8[];
 
@@ -405,23 +392,23 @@ bool CLibHbm::OnFileEvent(CEventFile* pFile){
             ARCFileInfo fileInfo;
 
             if(ARCInitHandle(unk1E8, &arcHandle)){
-                if(ARCOpen(&arcHandle, &lbl_eu_80523138[0x00], &fileInfo)){
+                if(ARCOpen(&arcHandle, "hbm/homeBtn.arc", &fileInfo)){
                     mpLayoutBuf = ARCGetStartAddrInMem(&fileInfo);
                 }
 
-                if(ARCOpen(&arcHandle, &lbl_eu_80523138[0x10], &fileInfo)){
+                if(ARCOpen(&arcHandle, "hbm/SpeakerSe.arc", &fileInfo)){
                     mpSpkSeBuf = ARCGetStartAddrInMem(&fileInfo);
                 }
 
-                if(ARCOpen(&arcHandle, &lbl_eu_80523138[0x22], &fileInfo)){
+                if(ARCOpen(&arcHandle, "hbm/HomeButtonSe.arc", &fileInfo)){
                     mpHbmSeBuf = ARCGetStartAddrInMem(&fileInfo);
                 }
 
-                if(ARCOpen(&arcHandle, &lbl_eu_80523138[0x37], &fileInfo)){
+                if(ARCOpen(&arcHandle, "hbm/home.csv", &fileInfo)){
                     mpMsgBuf = ARCGetStartAddrInMem(&fileInfo);
                 }
 
-                if(ARCOpen(&arcHandle, &lbl_eu_80523138[0x44], &fileInfo)){
+                if(ARCOpen(&arcHandle, "hbm/config.txt", &fileInfo)){
                     mpConfigBuf = ARCGetStartAddrInMem(&fileInfo);
                     mConfigBufSize = ARCGetLength(&fileInfo);
                 }

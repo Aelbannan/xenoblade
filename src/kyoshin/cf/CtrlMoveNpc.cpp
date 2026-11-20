@@ -93,14 +93,6 @@ extern const char lbl_eu_80526300[];
 extern int (CCtrlMoveNpc::*const __ptmf_null)();
 
 // sdata2 float literals referenced by beginNpcMove / tickNpcMove.
-extern const f32 lbl_eu_80667C58;
-extern const f32 lbl_eu_80667C5C;
-extern const f32 lbl_eu_80667C60;
-extern const f32 lbl_eu_80667C64;
-extern const f32 lbl_eu_80667C68;
-extern const f32 lbl_eu_80667C6C;
-extern const f32 lbl_eu_80667C70;
-extern const f32 lbl_eu_80667C74;
 extern const f32 lbl_eu_80667C78[2];
 
 // bdat column string table + row bitmap + other globals.
@@ -135,33 +127,33 @@ extern "C" void beginNpcMove(CCtrlMoveNpc* ths, const ml::CVec3* vec, f32 scale,
     ths->mField74 =
         *reinterpret_cast<float*>(ths->mpDataPtr->mPosObj->CfObject_getMoveRateScale());
     ths->mField78 = gCfTEventFrameCounter;
-    ths->mField70 = lbl_eu_80667C58;
-    ths->mpDataPtr->field_0x14 = lbl_eu_80667C5C;
+    ths->mField70 = 0.1f;
+    ths->mpDataPtr->field_0x14 = 0.0f;
 
     // PS vector subtraction: delta = target - current position.
     ml::CVec3* pos = ths->mpDataPtr->mPosObj->CfObject_getPosVector();
     ml::CVec3 diff = *vec - *pos;
     float len2 = diff.x * diff.x + diff.z * diff.z;
 
-    if (len2 < lbl_eu_80667C5C) {
+    if (len2 < 0.0f) {
         Warning__Q24nw4r2dbFPCciPCce(lbl_eu_80526324, 0x273, lbl_eu_80526300);
     }
     // Normalise the horizontal distance, guarding the epsilon case.
     float sq;
-    if (len2 > lbl_eu_80667C5C) {
+    if (len2 > 0.0f) {
         sq = len2 * nw4r::math::FrSqrt(len2);
     } else {
-        sq = lbl_eu_80667C5C;
+        sq = 0.0f;
     }
 
-    float t = lbl_eu_80667C64 * sq / scale + lbl_eu_80667C60;
+    float t = 0.2f + 3.6f * sq / scale;
     if (t > ml::epsilon) {
         float v = t / ths->mField74;
         ths->mField70 = v;
-        if (v < lbl_eu_80667C58) {
-            v = lbl_eu_80667C58;
-        } else if (v > lbl_eu_80667C68) {
-            v = lbl_eu_80667C68;
+        if (v < 0.1f) {
+            v = 0.1f;
+        } else if (v > 1.0f) {
+            v = 1.0f;
         }
         ths->mField70 = v;
     }
@@ -262,35 +254,35 @@ void tickNpcMove(CCtrlMoveNpc* ths) {
     // Horizontal (XZ) distance squared to the target.
     const f32 len2 = v.x * v.x + v.z * v.z;
 
-    if (len2 > lbl_eu_80667C6C) {
+    if (len2 > 0.040000003f) {
         ml::CVec3 v2;
         f32 speed = ths->mField70;
-        if (len2 < lbl_eu_80667C70) {
-            if (len2 < lbl_eu_80667C5C) {
+        if (len2 < 4.0f) {
+            if (len2 < 0.0f) {
                 Warning__Q24nw4r2dbFPCciPCce(lbl_eu_80526324, 0x273, lbl_eu_80526300);
             }
             // Norm the horizontal distance, guarding the epsilon case.
             f32 len;
-            if (len2 > lbl_eu_80667C5C) {
+            if (len2 > 0.0f) {
                 len = len2 * nw4r::math::FrSqrt(len2);
             } else {
-                len = lbl_eu_80667C5C;
+                len = 0.0f;
             }
-            speed = (ths->mField70 - lbl_eu_80667C58) * (len - lbl_eu_80667C60)
-                    * lbl_eu_80667C74 + lbl_eu_80667C58;
+            speed = (ths->mField70 - 0.1f) * (len - 0.2f)
+                    * 0.5f + 0.1f;
         }
 
-        v2.set(lbl_eu_80667C5C, lbl_eu_80667C5C, lbl_eu_80667C5C);
+        v2.set(0.0f, 0.0f, 0.0f);
         moveBaseUpdate(ths, &v2, &ths->mField58, 1, 0);
         setMoveFacing((cf::CCtrlMoveBase*)ths, &v2, speed);
-        if (VecMath_CircleOverlapXZ(pos, &ths->mField58, speed, lbl_eu_80667C60) == 0) {
+        if (VecMath_CircleOverlapXZ(pos, &ths->mField58, speed, 0.2f) == 0) {
             return;
         }
     }
 
     // Idle tail: clear the approach rate; when paramB allows it, also run the
     // turn-rate helper before dropping back to the idle state function.
-    ths->mpDataPtr->field_0x14 = lbl_eu_80667C5C;
+    ths->mpDataPtr->field_0x14 = 0.0f;
     if (ths->mField6C < lbl_eu_80667C78[0]) {
         CtrlMoveEne_CommitHeadAngle(ths->mpDataPtr,
                       ths->mField6C * ml::deg2rad);
@@ -390,11 +382,11 @@ u32 lbl_eu_80575870[42];
 
 // [.rodata] 0x80503D20-0x80503D70 (80B): class-name string (unreferenced pool
 // bytes, kept under the retail label) + the bdat column-name table.
-__declspec(section ".rodata") __attribute__((used, aligned(8)))
-char lbl_eu_80503D20[0x10] = {
+__attribute__((used, aligned(8)))
+const char lbl_eu_80503D20[0x10] = {
     0x63,0x66,0x3A,0x3A,0x43,0x74,0x72,0x6C,0x4D,0x6F,0x76,0x65,0x4E,0x70,0x63,0x00,
 };
-__declspec(section ".rodata") __attribute__((used, aligned(8)))
+__attribute__((used, aligned(8)))
 // name-guess: nine BDAT column names used only by isNpcRowUsable / refreshNpcRowFlags
 const char sNpcRowColumnNames[0x40] = {
     0x65,0x72,0x61,0x73,0x65,0x00,0x71,0x75,0x65,0x73,0x74,0x49,0x44,0x00,0x71,0x73,
@@ -404,9 +396,7 @@ const char sNpcRowColumnNames[0x40] = {
 };
 
 // [.sdata] 0x80662548-0x80662550 (8B): rodata-name + data-tail locator pair.
-#pragma section data_type ".sdata" ".sdata"
 extern __declspec(section ".sdata") u32 __RTTI__Q22cf11CtrlMoveNpc[2] = { (u32)&lbl_eu_80503D20, (u32)&lbl_eu_80532DC0 };
-#pragma section data_type ".data" ".data"
 
 // [.sdata2] 0x80667C58-0x80667C80 (40B): movement float table in retail order
 // (splits .sdata2 80667C58-80): 0.1/0.0/0.2/3.6/1.0/~0.04/4.0/0.5/360.0+0.0.
@@ -415,12 +405,4 @@ extern __declspec(section ".sdata") u32 __RTTI__Q22cf11CtrlMoveNpc[2] = { (u32)&
 // 8-byte object (symbols.txt size 0x8), defined as an f32 pair; the code
 // reads element [0]. Defined at EOF so the const values cannot propagate
 // into the functions above (their lfs loads stay symbolic, as retail).
-extern __declspec(section ".sdata2") const f32 lbl_eu_80667C58 = 0.1f;
-extern __declspec(section ".sdata2") const f32 lbl_eu_80667C5C = 0.0f;
-extern __declspec(section ".sdata2") const f32 lbl_eu_80667C60 = 0.2f;
-extern __declspec(section ".sdata2") const f32 lbl_eu_80667C64 = 3.6f;
-extern __declspec(section ".sdata2") const f32 lbl_eu_80667C68 = 1.0f;
-extern __declspec(section ".sdata2") const f32 lbl_eu_80667C6C = 0.040000003f;
-extern __declspec(section ".sdata2") const f32 lbl_eu_80667C70 = 4.0f;
-extern __declspec(section ".sdata2") const f32 lbl_eu_80667C74 = 0.5f;
-extern __declspec(section ".sdata2") const f32 lbl_eu_80667C78[2] = { 360.0f, 0.0f };
+extern const f32 lbl_eu_80667C78[2] = { 360.0f, 0.0f };

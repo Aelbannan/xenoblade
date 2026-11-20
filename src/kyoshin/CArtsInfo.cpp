@@ -258,9 +258,6 @@ void CArtsInfo_ReqState4(CArtsInfo* self) {
     self->field_0x49 = 0;
 }
 
-// Frame view of nw4r::lyt::AnimTransform: the current frame sits at +0x10 (retail
-// stores it directly; SetFrame would emit an out-of-line bl).
-struct AnimTransFrameView { u8 _pad00[0x10]; f32 frame; };
 void CArtsInfo_OpenDetail6(CArtsInfo* self) {
     if (self->field_0x44 != 3) return;
 
@@ -274,7 +271,7 @@ void CArtsInfo_OpenDetail6(CArtsInfo* self) {
     self->mpLayout1->SetAnimationEnable(self->mpAnimTrans1, true);
 
     // Reset anim transform frame (retail stores 0.0f straight to +0x10)
-    reinterpret_cast<AnimTransFrameView*>(self->mpAnimTrans4)->frame = lbl_eu_80668680;
+    self->mpAnimTrans4->SetFrame(lbl_eu_80668680);
 
     self->mpLayout1->Animate(0);
 
@@ -285,7 +282,7 @@ void CArtsInfo_OpenDetail6(CArtsInfo* self) {
     self->mpLayout1->SetAnimationEnable(self->mpAnimTrans3, true);
 
     // Reset anim transform frame
-    reinterpret_cast<AnimTransFrameView*>(self->mpAnimTrans3)->frame = lbl_eu_80668680;
+    self->mpAnimTrans3->SetFrame(lbl_eu_80668680);
 
     self->mpLayout1->Animate(0);
 
@@ -294,7 +291,7 @@ void CArtsInfo_OpenDetail6(CArtsInfo* self) {
     self->mpLayout2->SetAnimationEnable(self->mpAnimTrans5, true);
 
     // Reset anim transform frame
-    reinterpret_cast<AnimTransFrameView*>(self->mpAnimTrans5)->frame = lbl_eu_80668680;
+    self->mpAnimTrans5->SetFrame(lbl_eu_80668680);
 
     self->mpLayout2->Animate(0);
 
@@ -333,7 +330,7 @@ void CArtsInfo_ToStateA(CArtsInfo* self) {
     self->mpLayout2->SetAnimationEnable(self->mpAnimTrans5, true);
 
     // Set anim transform frame
-    reinterpret_cast<AnimTransFrameView*>(self->mpAnimTrans5)->frame = lbl_eu_80668680;
+    self->mpAnimTrans5->SetFrame(lbl_eu_80668680);
 
     self->mpLayout2->Animate(0);
 
@@ -2347,7 +2344,7 @@ bool CArtsInfo::OnFileEvent(CEventFile* event) {
         bindLayoutAnimTransform(mpLayout1, &mpAnimTrans3, (nw4r::lyt::ArcResourceAccessor*)field_0x1C, (char*)"mf15_arts30_set_inf_lvup_out.brlan");
         bindLayoutAnimTransform(mpLayout1, &mpAnimTrans4, (nw4r::lyt::ArcResourceAccessor*)field_0x1C, (char*)"mf15_arts30_set_inf_lvup_in.brlan");
 
-        nw4r::lyt::Pane* root1 = *(nw4r::lyt::Pane**)((u8*)mpLayout1 + 0x10);
+        nw4r::lyt::Pane* root1 = mpLayout1->GetRootPane();
         void* fontObj1 = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, mpLayout1);
         ApplyFontToTxtPanes(root1, (const nw4r::ut::Font*)((u32)((IDeviceFontInfo*)fontObj1)->getFont()));
 
@@ -2402,9 +2399,7 @@ bool CArtsInfo::OnFileEvent(CEventFile* event) {
             if (msgPane1 != 0) {
                 u16 row = msg->chain->pCoords->row;
                 u16 col = msg->chain->pCoords->col;
-                CArtsPaneSize* ps = (CArtsPaneSize*)msgPane1;
-                ps->width.f = (float)(int)row;
-                ps->height.f = (float)(int)col;
+                msgPane1->SetSize(nw4r::lyt::Size((float)(int)row, (float)(int)col));
             }
         }
 
@@ -2413,7 +2408,7 @@ bool CArtsInfo::OnFileEvent(CEventFile* event) {
         bindLayoutAnimTransform(mpLayout2, &mpAnimTrans6, (nw4r::lyt::ArcResourceAccessor*)field_0x1C, (char*)"mf15_arts30_set_inf_lvup.brlan");
 
         void* fontObj2 = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, mpLayout2);
-        ApplyFontToTxtPanes(*(nw4r::lyt::Pane**)((u8*)mpLayout2 + 0x10),
+        ApplyFontToTxtPanes(mpLayout2->GetRootPane(),
                       (const nw4r::ut::Font*)((u32)((IDeviceFontInfo*)fontObj2)->getFont()));
 
         if (lang != 0) {
@@ -2434,20 +2429,22 @@ bool CArtsInfo::OnFileEvent(CEventFile* event) {
 
         // Detail panes on layout2: hide each extra pane; the message pane's
         // anchor triple is rotated before it is hidden.
-        setPaneVisible((*(nw4r::lyt::Pane**)((u8*)mpLayout2 + 0x10))->FindPaneByName((char*)"nul_inf", true), 0);
-        nw4r::lyt::Pane* pn1028 = (*(nw4r::lyt::Pane**)((u8*)mpLayout2 + 0x10))->FindPaneByName((char*)"pic_bl", true);
+        setPaneVisible((mpLayout2->GetRootPane())->FindPaneByName((char*)"nul_inf", true), 0);
+        nw4r::lyt::Pane* pn1028 = (mpLayout2->GetRootPane())->FindPaneByName((char*)"pic_bl", true);
         if (pn1028 != 0) {
-            CArtsPanePos* pos = (CArtsPanePos*)((char*)pn1028 + 0x2C);
-            CArtsFpu x = pos->x, y = pos->y, z = pos->z;
-            pos->x.f = z.f;
-            pos->y.f = x.f;
-            pos->z.f = y.f;
+            const nw4r::math::VEC3& pos = pn1028->GetTranslate();
+            float x = pos.x;
+            float y = pos.y;
+            float z = pos.z;
+            pn1028->SetSRTElement(0, z);
+            pn1028->SetSRTElement(1, x);
+            pn1028->SetSRTElement(2, y);
         }
-        setPaneVisible((*(nw4r::lyt::Pane**)((u8*)mpLayout2 + 0x10))->FindPaneByName((char*)"nul_arw", true), 0);
-        setPaneVisible((*(nw4r::lyt::Pane**)((u8*)mpLayout2 + 0x10))->FindPaneByName((char*)"txt_aptit", true), 0);
-        setPaneVisible((*(nw4r::lyt::Pane**)((u8*)mpLayout2 + 0x10))->FindPaneByName((char*)"txt_ap", true), 0);
-        setPaneVisible((*(nw4r::lyt::Pane**)((u8*)mpLayout2 + 0x10))->FindPaneByName((char*)"nul_meswin", true), 0);
-        nw4r::lyt::Pane* pn238 = (*(nw4r::lyt::Pane**)((u8*)mpLayout2 + 0x10))->FindPaneByName((char*)"txt_value02_02", true);
+        setPaneVisible((mpLayout2->GetRootPane())->FindPaneByName((char*)"nul_arw", true), 0);
+        setPaneVisible((mpLayout2->GetRootPane())->FindPaneByName((char*)"txt_aptit", true), 0);
+        setPaneVisible((mpLayout2->GetRootPane())->FindPaneByName((char*)"txt_ap", true), 0);
+        setPaneVisible((mpLayout2->GetRootPane())->FindPaneByName((char*)"nul_meswin", true), 0);
+        nw4r::lyt::Pane* pn238 = (mpLayout2->GetRootPane())->FindPaneByName((char*)"txt_value02_02", true);
         setPaneVisible(pn238, 0);
 
         // Snapshot the message pane's two vertex-colour pairs into the sbss

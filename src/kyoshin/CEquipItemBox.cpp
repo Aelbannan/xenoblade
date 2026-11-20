@@ -46,8 +46,16 @@ extern const float lbl_eu_80668B28;
 extern const float lbl_eu_80668B04;
 
 // Constant records owned by this translation unit; MWCC emits them into .rodata.
-static const CEquipItemBoxCatTable12 sEquipSlotClearCategories = {{ 2, 4, 5, 6, 7, 8, 2, 4, 5, 6, 7, 8 }};
+const CEquipItemBoxSlotTable equipItemBoxSlotDefsTable = {{
+    { 2, 0, 0, 1, 0 }, { 4, 0, 0, 4, 0 }, { 5, 0, 0, 5, 0 },
+    { 6, 0, 0, 6, 0 }, { 7, 0, 0, 7, 0 }, { 8, 0, 0, 8, 0 },
+}};
 static const CEquipItemBoxMoveTable sEquipMoveSearchTypes = {{ 0x10, 0x100000, 0x200000 }};
+// name-guess: 24-byte equipment-category word table at retail .rodata:0x8050EF50
+const CEquipItemBoxCatWordTable equipItemBoxCatWordTable = {{ 2, 4, 5, 6, 7, 8 }};
+// name-guess: seven-float display-count scale record at retail .rodata:0x8050EF68
+const CEquipItemBoxF32Record equipItemBoxF32Record = {{ 0.0f, 1.0f, 1.2f, 1.5f, 1.8f, 2.0f, 2.5f }};
+static const CEquipItemBoxCatTable12 sEquipSlotClearCategories = {{ 2, 4, 5, 6, 7, 8, 2, 4, 5, 6, 7, 8 }};
 
 // varargs name formatter (MWCC keeps the unmangled library name).
 int sprintf(char*, const char*, ...);
@@ -460,12 +468,12 @@ u32 CEquipItemGrid::calcEIBCountKey(CItemInstance* item) {
         u32 id = CItem_initItemImplInstances((CItemData*)item)->vf08((CItemData*)item);
         u16 count =
             (u16)BdatGetU16Direct((const void*)::cf::CfBdat::spBtlSkillListFileData, "money", key);
-        CEquipItemBoxF32Record rec = lbl_eu_8050EF68;
+        CEquipItemBoxF32Record rec = equipItemBoxF32Record;
         // int->double via the 0x4330 magic, then scale by rec[id] and truncate.
         result = __cvt_fp2unsigned((double)(u32)count * (double)rec.f[id & 0x3F]);
     } else if (cat == 9) {
         u32 id = CItem_initItemImplInstances((CItemData*)item)->vf08((CItemData*)item);
-        CEquipItemBoxF32Record rec = lbl_eu_8050EF68;
+        CEquipItemBoxF32Record rec = equipItemBoxF32Record;
         for (u8 i = 0; i < 4; i++) {
             CItemInstance* entry =
                 (CItemInstance*)CItem_initItemImplInstances((CItemData*)item)->vf2C((CItemData*)item, i);
@@ -868,7 +876,6 @@ void CEquipItemGrid::sortEIBByNameMode(u32 mode) {
 // Bubble-sort the this entries ascending by the item name-byte key from
 // BdatGetU8Direct's bdat lookup (u8 compare). Same 3-temp chained copy swap.
 void CEquipItemGrid::sortEIBByNameKey() {
-    const char* base = lbl_eu_8050EFDC;
     for (u16 i = 0; i < count - 1; i++) {
         int swapped = 0;
         for (u16 j = 0; j < count - 1 - i; j++) {
@@ -898,7 +905,6 @@ void CEquipItemGrid::sortEIBByNameKey() {
 // BdatGetU8Direct's bdat lookup (u8 compare, name pattern offset 0x69). Same
 // 3-temp chained copy swap.
 void CEquipItemGrid::sortEIBByNameKey69() {
-    const char* base = lbl_eu_8050EFDC;
     CEquipItemData* a;
     for (u16 i = 0; i < count - 1; i++) {
         int swapped = 0;
@@ -2948,14 +2954,13 @@ void CEquipItemBox::resetEIBPageView() {
 // selects retail's _savegpr prologue for this 13-saved-reg frame.
 void CEquipItemBox::rebuildEIBEquipPage(int a, int b) {
     // Declaration order follows retail's saved-register allocation
-    // (this=r19, a=r20, b=r21, rateB=r22, rateA=r23, g=r24, base=r25,
+    // (this=r19, a=r20, b=r21, rateB=r22, rateA=r23, g=r24,
     // kind2=r26, name72=r27, name7a=r28, name61=r29, hi=r30, name69=r31).
     // Int-typed (retail defers narrow-masking to use sites; rates are
     // small table ids so no value ever exceeds u16 range).
     u16 rateB;
     u16 rateA;
     u32 g;
-    char* base;
     u16 kind2;
     u8 name72;
     u8 name7a;
@@ -2964,7 +2969,6 @@ void CEquipItemBox::rebuildEIBEquipPage(int a, int b) {
     u8 name69;
     char buf[0x20];
     char nb[0x28];
-    base = lbl_eu_8050EFDC;
     setPaneVisible(field_38->GetRootPane()->FindPaneByName("nul_para_01", true), 1);
     setPaneVisible(field_38->GetRootPane()->FindPaneByName("txt_para01", true), 1);
     setPaneVisible(field_38->GetRootPane()->FindPaneByName("txt_para04", true), 1);
@@ -3058,7 +3062,6 @@ void CEquipItemBox::rebuildEIBEquipPage(int a, int b) {
 // box to the kind-specific helper. -O4,s selects retail's stmw
 // r24 prologue for this 8-saved-reg frame.
 void CEquipItemBox::rebuildEIBKind48Page(int kind, int item) {
-    char* base = lbl_eu_8050EFDC;
     u16 kind2;
     u8 nameA, nameB, nameC;
     setPaneVisible(field_38->GetRootPane()->FindPaneByName("nul_para_01", true), 1);
@@ -3142,7 +3145,6 @@ void CEquipItemBox::rebuildEIBKind48Page(int kind, int item) {
 // anchor panes, then store the selection into the page tables (+0x220 kind,
 // +0x2c0 state byte 3, +0x2cc count byte) and the embedded item-box index.
 void CEquipItemBox::rebuildEIBKind3Page(int kind, int item) {
-    char* base = lbl_eu_8050EFDC;
     // All pane lookups in this handler go through the layout's pane-finder
     // sub-object (vtable slot 13), not the root pane.
     setPaneVisible(field_38->GetRootPane()
@@ -3219,7 +3221,6 @@ void CEquipItemBox::rebuildEIBKind3Page(int kind, int item) {
 // +0x210/+0x2B8/+0x2C4/+0x2D0 (+ the page VEC3 records at +0x228). The
 // slot==-1 path reads the item's flag list instead.
 void CEquipItemBox::rebuildEIBKind2Cells(int a, int b) {
-    char* base = lbl_eu_8050EFDC;
     if (b == 0) return;
     if (((CItemInstance*)b)->word == 0) return;
     CItemImpl* impl = CItem_initItemImplInstances((CItemData*)b);
@@ -3507,7 +3508,6 @@ char* CEquipItemBox::getEIBPageHint() {
 bool CEquipItemBox::OnFileEvent(CEventFile* ev) {
     void* h = ev->mFileHandle;
     if (field_24 == h) {
-        char* base = lbl_eu_8050EFDC;
         void* mem = (void*)mtl::MemManager::getHandleMEM2();
         mRegion04.createRegion((int)mem, 0x20000, "CEquipItemBox", 1);
         Class_8045F858 host(&mRegion04);
@@ -3648,7 +3648,6 @@ bool CEquipItemBox::OnFileEvent(CEventFile* ev) {
         return 1;
     }
     if (field_28 == h) {
-        char* base = lbl_eu_8050EFDC;
         void* mem = (void*)mtl::MemManager::getHandleMEM2();
         mRegion14.createRegion((int)mem, 0x100, "CEquipItemBoxTex", 1);
         Class_8045F858 host(&mRegion14);
@@ -3723,8 +3722,7 @@ void CEquipItemGrid::rebuildEIBGridPage(u8 v, u8 b, u8 hi) {
         field_2026[i] = 6;
     }
     u32 total = CItemBlock_countKindSlots(v);
-    CEquipItemBoxCatWordTable catsTemp = lbl_eu_8050EF50;
-    const char* base = lbl_eu_8050EFDC;
+    CEquipItemBoxCatWordTable catsTemp = equipItemBoxCatWordTable;
     for (u16 n = 0; n < (u16)total; n++) {
         CItemInstance* obj = (CItemInstance*)CItem_kindPtr(v, (s16)n);
         if (obj == 0 || obj->word == 0) continue;
@@ -3779,7 +3777,7 @@ void CEquipItemGrid::rebuildEIBGridPage(u8 v, u8 b, u8 hi) {
             cell->unk6 = 1;
             // Name check: name-byte 1/2 clears the cell when the window kind
             // disagrees with the vf54 name.
-            u8 name1 = BdatGetU8Direct((const void*)::cf::CfBdat::spBtlSkillListFileData, (char*)base, (u16)CItem_initItemImplInstances((CItemData*)obj)->vf54((CItemData*)obj));
+            u8 name1 = BdatGetU8Direct((const void*)::cf::CfBdat::spBtlSkillListFileData, "attach", (u16)CItem_initItemImplInstances((CItemData*)obj)->vf54((CItemData*)obj));
             if ((u8)name1 == 1) {
                 if (hi != 2) cell->unk6 = 0;
             } else if ((u8)name1 == 2) {

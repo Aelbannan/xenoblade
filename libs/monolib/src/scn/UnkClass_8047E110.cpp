@@ -81,36 +81,6 @@ extern u8 sWalkWaypointTable[0x30];
 extern s8 sWalkWaypointInitFlags[8]; // init-once flag (read as signed char)
 extern ScnPtmf sDefaultWalkBoxCallbackRef;   // default 12-byte reference block
 
-// Retail s16/s32->f32 conversion magic (lbl_eu_8066A8A0 = 0x4330000080000000),
-// owned by this TU so the builtin conversions resolve to the retail name.
-extern const f64 lbl_eu_8066A8A0 = 4503601774854144.0;
-union F64Conv_A8A0 {
-    f64 d;
-    u32 w[2];
-};
-static inline f32 s32ToF_A8A0(s32 v) {
-    F64Conv_A8A0 c;
-    c.w[0] = 0x43300000u;
-    c.w[1] = (u32)v ^ 0x80000000u;
-    return (f32)(c.d - lbl_eu_8066A8A0);
-}
-
-// Same conversion but kept in double precision so MWCC can fuse the
-// following cell-size multiply into a single fmuls/fmadds.
-static inline f64 s32ToF64_A8A0(s32 v) {
-    F64Conv_A8A0 c;
-    c.w[0] = 0x43300000u;
-    c.w[1] = (u32)v ^ 0x80000000u;
-    return c.d - lbl_eu_8066A8A0;
-}
-
-// Scaled node-coordinate conversion: MWCC's builtin int->float path subtracts
-// the 0x4330000080000000 magic (unified onto lbl_eu_8066A8A0) with single
-// rounding, then the cell-size multiply contracts into one fmuls.
-static inline f32 scaleNodeCoord(s32 v) {
-    return (f32)(lbl_eu_8066A898 * v);
-}
-
 // Real-signature views of the findClosestNeighbor member stub
 // (retail Fv mangling; signatures recovered from caller register setup).
 extern "C" s32 findNodeContaining__17UnkClass_8047E110Fv(UnkClass_8047E110* self, const ml::CVec3* pos);
@@ -123,10 +93,10 @@ extern "C" bool scanNeighbors__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
     const WalkQueryInfo* info, s32 value, s32 slotSel);
 
 static inline void setWalkRect(CVec3& min, CVec3& max, const ScnWalkNode& node) {
-    min.x = lbl_eu_8066A898 * s32ToF_A8A0(node.x);
-    max.x = min.x + lbl_eu_8066A898 * s32ToF_A8A0(node.width + 1);
-    min.z = lbl_eu_8066A898 * s32ToF_A8A0(node.z);
-    max.z = min.z + lbl_eu_8066A898 * s32ToF_A8A0(node.depth + 1);
+    min.x = 0.5f * (f32)(node.x);
+    max.x = min.x + 0.5f * (f32)(node.width + 1);
+    min.z = 0.5f * (f32)(node.z);
+    max.z = min.z + 0.5f * (f32)(node.depth + 1);
 }
 
 // ============================================================
@@ -269,7 +239,7 @@ extern "C" s32 findClosestNeighbor__17UnkClass_8047E110Fv(UnkClass_8047E110* sel
     const ScnWalkNode* node = m.nodes;
     node += count1;
     s32 best = -1;                  // r7
-    f32 bestDist = lbl_eu_8066A894; // f5
+    f32 bestDist = 100000.0f; // f5
     s32 haveStrict = 1;             // r8: any strict candidate seen
     s32 haveMargin = 1;             // r9: any margin-only candidate seen
     s32 haveFlagged = 1;            // r10: no flagged strict take yet
@@ -304,14 +274,14 @@ gEnd:
         if (skip)
             continue;
         // rect expanded by clearance must contain pos
-        f32 minX = lbl_eu_8066A898 * (f32)node->x;
-        f32 minZ = lbl_eu_8066A898 * (f32)node->z;
+        f32 minX = 0.5f * (f32)node->x;
+        f32 minZ = 0.5f * (f32)node->z;
         if (pxHi < minX)
             continue;
         if (pzHi < minZ)
             continue;
-        f32 maxX = lbl_eu_8066A898 * (f32)(node->x + node->width + 1);
-        f32 maxZ = lbl_eu_8066A898 * (f32)(node->z + node->depth + 1);
+        f32 maxX = 0.5f * (f32)(node->x + node->width + 1);
+        f32 maxZ = 0.5f * (f32)(node->z + node->depth + 1);
         if (pxLo >= maxX)
             continue;
         if (pzLo >= maxZ)
@@ -396,10 +366,10 @@ extern "C" s32 resolveNodeAtPos__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
     f32 pxHi = posX + clearance;
     s16 z0 = node.z;
     f32 pzHi = pos->z + clearance;
-    f32 minX = lbl_eu_8066A898 * (f32)x0;
-    f32 minZ = lbl_eu_8066A898 * (f32)z0;
-    f32 maxX = lbl_eu_8066A898 * (f32)(x0 + node.width + 1);
-    f32 maxZ = lbl_eu_8066A898 * (f32)(z0 + node.depth + 1);
+    f32 minX = 0.5f * (f32)x0;
+    f32 minZ = 0.5f * (f32)z0;
+    f32 maxX = 0.5f * (f32)(x0 + node.width + 1);
+    f32 maxZ = 0.5f * (f32)(z0 + node.depth + 1);
     f32 dist0 = __fabs(pos->y - node.xPos);
     s32 looseOk = 0;
     // expanded-cell test (clearance margin)
@@ -438,10 +408,10 @@ extern "C" s32 resolveNodeAtPos__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
             if (nb.reserved8 & 4)
                 continue;
         }
-        f32 nMinX = lbl_eu_8066A898 * (f32)nb.x;
-        f32 nMinZ = lbl_eu_8066A898 * (f32)nb.z;
-        f32 nMaxX = lbl_eu_8066A898 * (f32)(nb.x + nb.width + 1);
-        f32 nMaxZ = lbl_eu_8066A898 * (f32)(nb.z + nb.depth + 1);
+        f32 nMinX = 0.5f * (f32)nb.x;
+        f32 nMinZ = 0.5f * (f32)nb.z;
+        f32 nMaxX = 0.5f * (f32)(nb.x + nb.width + 1);
+        f32 nMaxZ = 0.5f * (f32)(nb.z + nb.depth + 1);
         if (pxHi < nMinX || pzHi < nMinZ || pxHi >= nMaxX || pzHi >= nMaxZ)
             continue;
         if (__fabs(pos->y - nb.xPos) > m.field_0x20)
@@ -748,10 +718,10 @@ extern "C" void computeWalkDirection__17UnkClass_8047E110Fv(UnkClass_8047E110* s
     const ScnWalkNode& na = m.nodes[idxA];
     const ScnWalkNode& nb = m.nodes[idxB];
     // rect of B (cell size scaled; max = min + cell*(extent+1))
-    f32 minXb = scaleNodeCoord(nb.x);
-    f32 minZb = scaleNodeCoord(nb.z);
-    f32 maxXb = lbl_eu_8066A898 * s32ToF_A8A0(nb.width + 1) + minXb;
-    f32 maxZb = lbl_eu_8066A898 * s32ToF_A8A0(nb.depth + 1) + minZb;
+    f32 minXb = (0.5f * (f32)(nb.x));
+    f32 minZb = (0.5f * (f32)(nb.z));
+    f32 maxXb = 0.5f * (f32)(nb.width + 1) + minXb;
+    f32 maxZb = 0.5f * (f32)(nb.depth + 1) + minZb;
 
     f32 xSlot;
     f32 zSlot;
@@ -768,22 +738,22 @@ extern "C" void computeWalkDirection__17UnkClass_8047E110Fv(UnkClass_8047E110* s
 
     if (!found) {
         // not adjacent: aim at B's center
-        xSlot = lbl_eu_8066A898 * (maxXb + minXb);
-        zSlot = lbl_eu_8066A898 * (maxZb + minZb);
+        xSlot = 0.5f * (maxXb + minXb);
+        zSlot = 0.5f * (maxZb + minZb);
     } else {
         // rect of A + vertical midpoint term
-        f32 minXa = scaleNodeCoord(na.x);
-        f32 minZa = scaleNodeCoord(na.z);
-        f32 maxXa = lbl_eu_8066A898 * s32ToF_A8A0(na.width + 1) + minXa;
-        f32 maxZa = lbl_eu_8066A898 * s32ToF_A8A0(na.depth + 1) + minZa;
-        f32 midY = lbl_eu_8066A898 * (na.xPos + nb.xPos);
+        f32 minXa = (0.5f * (f32)(na.x));
+        f32 minZa = (0.5f * (f32)(na.z));
+        f32 maxXa = 0.5f * (f32)(na.width + 1) + minXa;
+        f32 maxZa = 0.5f * (f32)(na.depth + 1) + minZa;
+        f32 midY = 0.5f * (na.xPos + nb.xPos);
         (void)midY;
 
         if (maxXa == minXb) {
             // shared edge on A's +x side: clamp the z overlap of both rects
             f32 hi = (maxZa >= maxZb) ? maxZb : maxZa;
             f32 lo = (minZa >= minZb) ? minZb : minZa;
-            zSlot = lbl_eu_8066A898 * (hi + lo);
+            zSlot = 0.5f * (hi + lo);
             if (pos->x > lo && pos->x < hi)
                 xSlot = maxXb;
             else
@@ -792,7 +762,7 @@ extern "C" void computeWalkDirection__17UnkClass_8047E110Fv(UnkClass_8047E110* s
             // shared edge on B's +x side
             f32 hi = (maxZa >= maxZb) ? maxZb : maxZa;
             f32 lo = (minZa >= minZb) ? minZb : minZa;
-            zSlot = lbl_eu_8066A898 * (hi + lo);
+            zSlot = 0.5f * (hi + lo);
             if (pos->x > lo && pos->x < hi)
                 xSlot = minXb;
             else
@@ -801,7 +771,7 @@ extern "C" void computeWalkDirection__17UnkClass_8047E110Fv(UnkClass_8047E110* s
             // shared edge on A's +z side: clamp the x overlap
             f32 hi = (maxXa >= maxXb) ? maxXb : maxXa;
             f32 lo = (minXa >= minXb) ? minXb : minXa;
-            xSlot = lbl_eu_8066A898 * (hi + lo);
+            xSlot = 0.5f * (hi + lo);
             if (pos->x > lo && pos->x < hi)
                 zSlot = maxZb;
             else
@@ -810,14 +780,14 @@ extern "C" void computeWalkDirection__17UnkClass_8047E110Fv(UnkClass_8047E110* s
             // shared edge on B's +z side
             f32 hi = (maxXa >= maxXb) ? maxXb : maxXa;
             f32 lo = (minXa >= minXb) ? minXb : minXa;
-            xSlot = lbl_eu_8066A898 * (hi + lo);
+            xSlot = 0.5f * (hi + lo);
             if (pos->x > lo && pos->x < hi)
                 zSlot = minZb;
             else
                 zSlot = maxZb;
         } else {
-            xSlot = lbl_eu_8066A898 * (maxXb + minZa);
-            zSlot = lbl_eu_8066A898 * (maxZb + maxZa);
+            xSlot = 0.5f * (maxXb + minZa);
+            zSlot = 0.5f * (maxZb + maxZa);
         }
     }
 
@@ -853,22 +823,19 @@ extern "C" s32 fetchWalkTarget__17UnkClass_8047E110Fv(UnkClass_8047E110* self, S
             // waypoint table layout (f32 triples):
             //   block 0: {A8AC, A8AC, A8B4}  block 1: {A8AC, A8AC, A890}
             //   block 2: {A8B4, A8AC, A8AC}  block 3: {A890, A8AC, A8AC}
-            const f32 vDepth = (-1.0f);
-            const f32 vFlat = lbl_eu_8066A8AC;
-            ((f32*)sWalkWaypointTable)[0] = vFlat;
             f32* wp = (f32*)sWalkWaypointTable;
-            const f32 vHalf = lbl_eu_8066A890;
-            wp[1] = vFlat;
-            wp[2] = vDepth;
-            wp[3] = vFlat;
-            wp[4] = vFlat;
-            wp[5] = vHalf;
-            wp[6] = vDepth;
-            wp[7] = vFlat;
-            wp[8] = vFlat;
-            wp[9] = vHalf;
-            wp[10] = vFlat;
-            wp[11] = vFlat;
+            wp[0] = lbl_eu_8066A8AC;
+            wp[1] = lbl_eu_8066A8AC;
+            wp[2] = lbl_eu_8066A8B4;
+            wp[3] = lbl_eu_8066A8AC;
+            wp[4] = lbl_eu_8066A8AC;
+            wp[5] = lbl_eu_8066A890;
+            wp[6] = lbl_eu_8066A8B4;
+            wp[7] = lbl_eu_8066A8AC;
+            wp[8] = lbl_eu_8066A8AC;
+            wp[9] = lbl_eu_8066A890;
+            wp[10] = lbl_eu_8066A8AC;
+            wp[11] = lbl_eu_8066A8AC;
             sWalkWaypointInitFlags[0] = 1;
         }
 
@@ -1252,10 +1219,10 @@ extern "C" bool testPortalCrossing__17UnkClass_8047E110Fv(
     const ScnWalkNode& goalNodeData = graph.nodes[goalNode];
     CVec3 goalCenter;
     goalCenter.y = position->y;
-    goalCenter.z = lbl_eu_8066A898 * s32ToF_A8A0(goalNodeData.z)
-        + lbl_eu_8066A8A8 * s32ToF_A8A0(goalNodeData.depth + 1);
-    goalCenter.x = lbl_eu_8066A898 * s32ToF_A8A0(goalNodeData.x)
-        + lbl_eu_8066A8A8 * s32ToF_A8A0(goalNodeData.width + 1);
+    goalCenter.z = 0.5f * (f32)(goalNodeData.z)
+        + 0.25f * (f32)(goalNodeData.depth + 1);
+    goalCenter.x = 0.5f * (f32)(goalNodeData.x)
+        + 0.25f * (f32)(goalNodeData.width + 1);
     CVec3 direction;
     direction = goalCenter - *position;
 
@@ -1270,10 +1237,11 @@ extern "C" bool testPortalCrossing__17UnkClass_8047E110Fv(
     f32 maxZ;
     f32 minX;
     f32 minZ;
-    dzPerX = lbl_eu_8066A8AC;
-    dxPerZ = lbl_eu_8066A8AC;
-    if (direction.x != lbl_eu_8066A8AC) dzPerX = direction.z / direction.x;
-    if (direction.z != lbl_eu_8066A8AC) dxPerZ = direction.x / direction.z;
+    f32 zero = 0.0f;
+    dzPerX = zero;
+    dxPerZ = zero;
+    if (direction.x != zero) dzPerX = direction.z / direction.x;
+    if (direction.z != zero) dxPerZ = direction.x / direction.z;
 
     if (goalCenter.x < position->x) {
         maxX = position->x;
@@ -1298,7 +1266,7 @@ extern "C" bool testPortalCrossing__17UnkClass_8047E110Fv(
     s32* next = frontierB;
     s32 frontierCount = 1;
     frontier[0] = startNode;
-    f32 bestDistance = lbl_eu_8066A8B8;
+    f32 bestDistance = -100000.0f;
 
     pass = 0;
     while (frontierCount != 0 && ++pass < 90) {
@@ -1335,7 +1303,7 @@ extern "C" bool testPortalCrossing__17UnkClass_8047E110Fv(
                         portalMin.z = candidateMin.z;
                     portalMax.x = currentMax.x;
                     portalMin.x = currentMax.x;
-                    if (dzPerX == lbl_eu_8066A8AC) continue;
+                    if (dzPerX == zero) continue;
                     crossingX = portalMax.x;
                     crossingZ = goalCenter.z + dzPerX * (crossingX - goalCenter.x);
                     if (portalMax.z - clearance < crossingZ) continue;
@@ -1354,7 +1322,7 @@ extern "C" bool testPortalCrossing__17UnkClass_8047E110Fv(
                         portalMin.z = candidateMin.z;
                     portalMax.x = candidateMax.x;
                     portalMin.x = candidateMax.x;
-                    if (dzPerX == lbl_eu_8066A8AC) continue;
+                    if (dzPerX == zero) continue;
                     crossingX = portalMax.x;
                     crossingZ = goalCenter.z + dzPerX * (crossingX - goalCenter.x);
                     if (portalMax.z - clearance < crossingZ) continue;
@@ -1367,7 +1335,7 @@ extern "C" bool testPortalCrossing__17UnkClass_8047E110Fv(
                     portalMin.x = currentMin.x > candidateMin.x ? currentMin.x : candidateMin.x;
                     portalMax.z = currentMax.z;
                     portalMin.z = currentMax.z;
-                    if (dxPerZ == lbl_eu_8066A8AC) continue;
+                    if (dxPerZ == zero) continue;
                     crossingZ = portalMax.z;
                     crossingX = goalCenter.x + dxPerZ * (crossingZ - goalCenter.z);
                     if (portalMax.x - clearance < crossingX) continue;
@@ -1380,7 +1348,7 @@ extern "C" bool testPortalCrossing__17UnkClass_8047E110Fv(
                     portalMin.x = currentMin.x > candidateMin.x ? currentMin.x : candidateMin.x;
                     portalMax.z = candidateMax.z;
                     portalMin.z = candidateMax.z;
-                    if (dxPerZ == lbl_eu_8066A8AC) continue;
+                    if (dxPerZ == zero) continue;
                     crossingZ = portalMax.z;
                     crossingX = goalCenter.x + dxPerZ * (crossingZ - goalCenter.z);
                     if (portalMax.x - clearance < crossingX) continue;
@@ -1490,10 +1458,10 @@ end:
 extern "C" s32 probeWalkerContact__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
     const WalkHitQuery* q) {
     ScnManagerLayout& m = *(ScnManagerLayout*)self;
-    f32 wx = lbl_eu_8066A8A8 * (f32)(q->gxCell + 1)
-        + lbl_eu_8066A898 * (f32)q->gridX;
-    f32 wz = lbl_eu_8066A8A8 * (f32)(q->gzCell + 1)
-        + lbl_eu_8066A898 * (f32)q->gridZ;
+    f32 wx = 0.25f * (f32)(q->gxCell + 1)
+        + 0.5f * (f32)q->gridX;
+    f32 wz = 0.25f * (f32)(q->gzCell + 1)
+        + 0.5f * (f32)q->gridZ;
     f32 py = q->field_0x0;
     f32 dx = wx - m.field_0x54;
     f32 dz = wz - m.field_0x5C;
@@ -1554,13 +1522,13 @@ extern "C" bool isNodeInWalkBox__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
         goto checks;
     return false;
 checks:
-    if (!(scaleNodeCoord(node->x) <= m.field_0x54))
+    if (!((0.5f * (f32)(node->x)) <= m.field_0x54))
         goto fail;
-    if (!(scaleNodeCoord(node->x + node->width + 1) >= m.field_0x48))
+    if (!((0.5f * (f32)(node->x + node->width + 1)) >= m.field_0x48))
         goto fail;
-    if (!(scaleNodeCoord(node->z) <= m.field_0x5C))
+    if (!((0.5f * (f32)(node->z)) <= m.field_0x5C))
         goto fail;
-    if (!(scaleNodeCoord(node->z + node->depth + 1) >= m.field_0x50))
+    if (!((0.5f * (f32)(node->z + node->depth + 1)) >= m.field_0x50))
         goto fail;
     // float local forces the frsp rounding step seen in retail
     f32 dy = __fabs(m.field_0x4C - node->xPos);
@@ -1576,13 +1544,13 @@ fail:
 extern "C" bool isNodeAtPosition__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
     const ScnWalkNode* node) {
     ScnManagerLayout& m = *(ScnManagerLayout*)self;
-    if (!(scaleNodeCoord(node->x) <= m.field_0x54))
+    if (!((0.5f * (f32)(node->x)) <= m.field_0x54))
         goto fail;
-    if (!(scaleNodeCoord(node->x + node->width + 1) >= m.field_0x54))
+    if (!((0.5f * (f32)(node->x + node->width + 1)) >= m.field_0x54))
         goto fail;
-    if (!(scaleNodeCoord(node->z) <= m.field_0x5C))
+    if (!((0.5f * (f32)(node->z)) <= m.field_0x5C))
         goto fail;
-    if (!(scaleNodeCoord(node->z + node->depth + 1) >= m.field_0x5C))
+    if (!((0.5f * (f32)(node->z + node->depth + 1)) >= m.field_0x5C))
         goto fail;
     // float local forces the frsp rounding step seen in retail
     f32 dy = __fabs(m.field_0x58 - node->xPos);
@@ -1786,10 +1754,10 @@ extern "C" s32 stepWalker__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
     const f32 zeroF = lbl_eu_8066A8AC;
     for (s32 pass = 0; pass < 90; ++pass) {
         const ScnWalkNode& cn = m.nodes[idx];
-        f32 curMinX = scaleNodeCoord(cn.x);
-        f32 curMinZ = scaleNodeCoord(cn.z);
-        f32 curMaxX = (f32)(cell * s32ToF64_A8A0(cn.width + 1)) + curMinX;
-        f32 curMaxZ = (f32)(cell * s32ToF64_A8A0(cn.depth + 1)) + curMinZ;
+        f32 curMinX = (0.5f * (f32)(cn.x));
+        f32 curMinZ = (0.5f * (f32)(cn.z));
+        f32 curMaxX = (f32)(cell * (f64)(cn.width + 1)) + curMinX;
+        f32 curMaxZ = (f32)(cell * (f64)(cn.depth + 1)) + curMinZ;
 
         u16 cnt = m.edges[cn.edgeOffset];
         const u16* p = &m.edges[cn.edgeOffset + 1];
@@ -1799,10 +1767,10 @@ extern "C" s32 stepWalker__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
             const ScnWalkNode& nn = m.nodes[n];
             if (nn.reserved8 & 2)
                 continue;
-            f32 nMinX = scaleNodeCoord(nn.x);
-            f32 nMinZ = scaleNodeCoord(nn.z);
-            f32 nMaxX = (f32)(cell * s32ToF64_A8A0(nn.width + 1)) + nMinX;
-            f32 nMaxZ = (f32)(cell * s32ToF64_A8A0(nn.depth + 1)) + nMinZ;
+            f32 nMinX = (0.5f * (f32)(nn.x));
+            f32 nMinZ = (0.5f * (f32)(nn.z));
+            f32 nMaxX = (f32)(cell * (f64)(nn.width + 1)) + nMinX;
+            f32 nMaxZ = (f32)(cell * (f64)(nn.depth + 1)) + nMinZ;
 
             if (curMaxX == nMinX) {
                 // neighbour directly on the +x side: vertical portal

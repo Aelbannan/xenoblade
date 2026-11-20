@@ -25,6 +25,7 @@
 #include "monolib/lod/code_804645CC.hpp"
 #include "libs/monolib/src/lod/code_80468434.hpp"
 #include "monolib/lod/UnkClass_8046D144.hpp"
+#include "monolib/scn/CScn.hpp"
 namespace LOD {
 struct UnkClass_804645CC {
     void drawLodRecordExt();
@@ -96,14 +97,6 @@ extern "C" void scnLgtEnterMode20(CScnEnvLgtCtrl* ctrl);
 
 typedef void (*LodCallFn)();  // no-arg dispatch-table entry
 
-// Scene item handed to setupLodTexFog (r3).
-struct LodSceneItem {
-    u8 pad_00[0x64];
-    u32 field_0x64;  // resource-pointer holder
-    u8 pad_68[0x7C - 0x68];
-    u32 field_0x7C;  // env-light ctrl
-};
-
 struct LodSceneResPtr {
     u8 pad_00[0x08];
     u32 field_0x08;  // base of the 0x11xx word block
@@ -159,6 +152,14 @@ struct LodStateRec {
     u16 field_0x1E;  // fade-distance cache index
 };
 
+// Work area shared by the LOD texture-matrix/fog pass: scale words followed
+// by the incoming tex-matrix and the scene projection tex-matrix.
+struct LodTexMatrixWork {
+    u32 mScaleLut[14];              // 0x00..0x37
+    f32 mTexMatrix[3][4];           // 0x38..0x67
+    nw4r::math::MTX34 mProjection;  // 0x68..0x97
+};
+
 // Texture selector record consumed by buildLodTexObj.
 struct LodTexSel {
     union {
@@ -178,10 +179,10 @@ struct LodTexSel {
 // ---------------------------------------------------------------------------
 // us-8046910c  setupLodTexFog  (frame tex-matrix + fog state setup)
 // ---------------------------------------------------------------------------
-extern "C" void setupLodTexFog__Q23LOD17UnkClass_804645CCFv(LodSceneItem* item,
+extern "C" void setupLodTexFog__Q23LOD17UnkClass_804645CCFv(CScn* item,
                                                            LodDrawObj* obj) {
     LodRes11xx* res =
-        (LodRes11xx*)((LodSceneResPtr*)item->field_0x64)->field_0x08;
+        (LodRes11xx*)((LodSceneResPtr*)item->unk64)->field_0x08;
     u32* mtx = sAmbientScaleLut;
 
     mtx[0] = res->field_0x11A8;
@@ -215,15 +216,15 @@ extern "C" void setupLodTexFog__Q23LOD17UnkClass_804645CCFv(LodSceneItem* item,
     sLodLightMask0 = obj->field_0x410;
     sLodLightMask1 = obj->field_0x69C;
     sLodLightMask2 = obj->field_0x928;
-    f32 (*mtxBlock)[3][4] = (f32 (*)[3][4])(void*)((u8*)sAmbientScaleLut + 0x38);
-    GXLoadTexMtxImm(*mtxBlock, 0x40, GX_MTX_3x4);
+    GXLoadTexMtxImm(((LodTexMatrixWork*)sAmbientScaleLut)->mTexMatrix,
+                    0x40, GX_MTX_3x4);
 
     nw4r::g3d::Camera cam =
         ((nw4r::g3d::ScnRoot*)getScnRootSlot10(item))->GetCurrentCamera();
     cam.GetProjectionTexMtx(
-        (nw4r::math::MTX34*)(void*)((u8*)sAmbientScaleLut + 0x68));
+        &((LodTexMatrixWork*)sAmbientScaleLut)->mProjection);
 
-    scnLgtEnterMode20((CScnEnvLgtCtrl*)item->field_0x7C);
+    scnLgtEnterMode20(item->mLgtCtrl);
     lbl_eu_806657FC = 1;
     nw4r::g3d::G3DState::LoadFog(0);
     lbl_eu_80665810 = (u32)obj;

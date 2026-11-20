@@ -2,13 +2,9 @@
 
 #include <types.h>
 
-extern const float lbl_eu_80665F7C;  // default float (sdata2)
-extern const float lbl_eu_80665F78;  // default float (sdata2)
 extern const float lbl_eu_80665F80;  // default float (sdata2)
-extern const float lbl_eu_80665F84;  // default float (sdata2)
 extern const float lbl_eu_80665F88;  // default float (sdata2)
 extern const double lbl_eu_80665F90; // sdata2: 2^52 (int->float magic)
-extern const double lbl_eu_80665F98; // sdata2: 2^52 (int->float magic, getParamSelS16)
 
 // External data referenced by sub-object pointers at +0x74.
 // Both getShortValue_A and getShortValue_B read from this.
@@ -357,13 +353,14 @@ struct ActParamT19ArgC {
     u16 mShort2A;
 };
 typedef int (*ActParamTbl19Fn)(u32, u32, u32);
-extern const ActParamTbl19Fn lbl_eu_805705F0[];
+// name-guess: retail .bss 0x198 table written by CActParamData::initParamStatics
+extern ActParamTbl19Fn sActParamTbl19[0x66];
 // Handlers referenced by the dispatch tables but not yet decompiled.
 int actParamZero0(u32, u32, u32);
 int actParamZero1(u32, void*, void*, void*);
 int actParamZero2(u32, void*, void*, void*);
 int actParamZero3(u32, void*, void*, void*);
-// vtable-thunk handlers referenced by lbl_eu_805705F0 but not yet decompiled.
+// vtable-thunk handlers referenced by sActParamTbl19 but not yet decompiled.
 extern "C" int actAnimSlot03(void*, u32);
 extern "C" int actAnimSlot04(void*, u32);
 extern "C" int actAnimSlot05(void*, u32);
@@ -654,7 +651,7 @@ extern "C" int evalParamTiming(CActParamData* self,
                                        ActParamD3CMember* member,
                                        ActParamD3CTimeRec* rec, int gate);
 // ---- initParamBlock ----
-// Record-chain walker driven through the handler table lbl_eu_80570788.
+// Record-chain walker driven through the handler table sActParamTbl1.
 struct ActParamT1Rec {
     u16 mOffset0;                  // stride to the next record
     u16 mType2;                    // handler-table index while > 1
@@ -665,7 +662,8 @@ struct ActParamT1Node {
     u32 mSize04;
 };
 typedef int (*ActParamTbl1Fn)(u32, void*, void*, void*);
-extern const ActParamTbl1Fn lbl_eu_80570788[];
+// name-guess: retail .bss 0xA8 table written by CActParamData::initParamStatics
+extern ActParamTbl1Fn sActParamTbl1[0x2A];
 
 // Chain-entry/source view: linked list of parameter entries.
 struct ActParamT1Src {

@@ -119,10 +119,6 @@ unsigned int lbl_eu_80663D5C_tail[1];
 // (0x4330000080000000); MWCC's inline int->float cast pulls its pool double
 // from here (CREvtModelMap.cpp convention).
 extern double lbl_eu_80665FB8;
-// Retail-symbol import: sdata2 u32->f32 conversion magic double used by
-// Env_SetClock's seconds cast.
-extern double lbl_eu_80665FF0;
-
 // Retail constructs CTaskEnvironment through a C-linkage out-of-line ctor
 // entry point taking (self, arg) and returning self (CSysWinSave /
 // CREvtModelMap precedent). noinline keeps the create-site call a real bl.

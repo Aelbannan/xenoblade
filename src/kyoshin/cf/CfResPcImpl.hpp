@@ -110,14 +110,14 @@ struct CfResPcAreaEntry {
     /* 0x06 */ u16 field_06;
 };
 
-// 8-byte float pair of the position table copied from lbl_eu_80503B30 by
+// 8-byte float pair of the position table copied from cfResPcPosTableData by
 // CfResPcImpl_open (indexed by the slot id).
 struct CfResPcPosTableEntry {
     /* 0x00 */ f32 field_00;
     /* 0x04 */ f32 field_04;
 };
 
-// 0x50-byte block copied from lbl_eu_80503B30 into table[1..10] by
+// 0x50-byte block copied from cfResPcPosTableData into table[1..10] by
 // CfResPcImpl_open (struct copy so MWCC emits the inline lwzu/stwu loop).
 struct CfResPcPosTable {
     /* 0x00 */ CfResPcPosTableEntry entries[10];
@@ -411,7 +411,7 @@ union CfResPcImplPmfEntry {
     CfResPcImplPmf3 w;
     CfResPcImplPMF p;
 };
-extern CfResPcImplPmfEntry lbl_eu_80532730[4];
+extern CfResPcImplPmfEntry cfResPcPmfDispatch[4];
 
 // Secondary vtable for CfResPcImpl, stored at +0x10 by the ctor (.data).
 extern "C" void* lbl_eu_80532774[];
@@ -542,7 +542,7 @@ extern "C" void* Scn_InitGlobalA(void* global, void* data, void* buf);
 extern cf::CfResPcAreaEntry lbl_eu_805327F8[8];
 
 // Position table copied by CfResPcImpl_open (.data, 0x50 bytes).
-extern cf::CfResPcPosTable lbl_eu_80503B30;
+extern cf::CfResPcPosTable cfResPcPosTableData;
 
 // Float constant passed to the +0x48 slot by CfResPcImpl_open (.sdata2).
 extern const float lbl_eu_80667A60;
@@ -587,7 +587,6 @@ extern "C" void __dt__Q22cf11CfResPcImplFv();
 extern const void* lbl_eu_806623D8[2];
 // .sdata2 float constants used by CfResPcImpl_advance.
 extern const float lbl_eu_80667A44;
-extern const float lbl_eu_80667A48;
 extern const float lbl_eu_80667A4C;
 extern const float lbl_eu_80667A50;
 extern const float lbl_eu_80667A54;

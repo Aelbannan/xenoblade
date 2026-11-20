@@ -83,7 +83,7 @@ kyoshin/plugin/ocBdat.cpp:
 	extabindex  start:0x8002140C end:0x800214E4
 	.text       start:0x8003AE14 end:0x8003C18C
 
-	.bss        start:0x805705d0 end:0x805708d0
+	.bss        start:0x805705D0 end:0x805705F0
 	.data        start:0x80524d90 end:0x80524e50
 	.rodata        start:0x804fa470 end:0x804fa4c0
 	.sbss        start:0x80663d10 end:0x80663d18
@@ -187,6 +187,7 @@ kyoshin/action/CActParamData.cpp:
 	extabindex  start:0x80022708 end:0x800228B8
 	.text       start:0x80054044 end:0x80058A7C
 
+	.bss        start:0x805705F0 end:0x80570830
 	.data        start:0x80526338 end:0x80526348
 	.rodata        start:0x804fb078 end:0x804fb088
 	.sdata        start:0x806619b8 end:0x806619c0
@@ -205,6 +206,7 @@ kyoshin/cf/CTaskEnvironment.cpp:
 	.text       start:0x80058BE4 end:0x8005A520
 	.ctors      start:0x804F9FD0 end:0x804F9FD4
 
+	.bss        start:0x80570830 end:0x805708D0
 	.data        start:0x80526354 end:0x80526418
 	.rodata        start:0x804fb098 end:0x804fb0c8
 	.sbss        start:0x80663d58 end:0x80663d60

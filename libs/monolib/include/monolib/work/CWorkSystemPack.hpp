@@ -2,10 +2,25 @@
 
 #include <types.h>
 #include "monolib/work/CWorkThread.hpp"
+#include "monolib/util/reslist.hpp"
 
-class CWorkSystemPack : public CWorkThread {
+class CPackItem;
+class CArcItem;
+
+// The work system owns the two resource lists; use the real template types so
+// MWCC emits their vtables, RTTI locators and RTTI name strings.
+typedef _reslist_node<CPackItem*> PackItemListNode;
+typedef _reslist_base<CPackItem*> PackItemListBase;
+typedef reslist<CPackItem*> PackItemList;
+
+typedef _reslist_node<CArcItem*> ArcItemListNode;
+typedef _reslist_base<CArcItem*> ArcItemListBase;
+typedef reslist<CArcItem*> ArcItemList;
+
+class __declspec(novtable) CWorkSystemPack : public CWorkThread {
 public:
     CWorkSystemPack(const char* pName, CWorkThread* pParent);
+    ~CWorkSystemPack();
 
     DECL_WORKTHREAD_CREATE(CWorkSystemPack);
 
@@ -15,8 +30,13 @@ public:
     static bool areArcsReady();
     static void SavePkhFilenamesArrayPtr(const char* const[]);
     static void SaveStaticArcFilenameStringPtr(const char* const*);
+    bool wkStandbyLogin();
+    bool wkStandbyLogout();
+    void wkUpdate();
 
     //0x0: vtable
-    //0x0-1c4: CWorkThread
-    u8 unk1C4[0x208 - 0x1C4];
+
+    PackItemList mPackList; // 0x1C4
+    ArcItemList mArcList;   // 0x1E4
+    u32 unk204;             // 0x204 - name-guess: retail sizeof(CWorkSystemPack) == 0x208
 };

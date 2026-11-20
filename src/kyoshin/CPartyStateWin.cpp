@@ -29,6 +29,25 @@
 #include "kyoshin/code_80135FDC_State.hpp"
 #include "kyoshin/code_80135FDC_Lyt.hpp"
 
+CPartyStateWin::CPartyStateWin(u32 arg1, u32 arg2) {
+    mArg1 = arg1;
+    mArg2 = arg2;
+    u8* vtbl = lbl_eu_805352DC;
+    mVtbl0 = (u32)vtbl;
+    mVtbl4 = (u32)(vtbl + 0x88);
+    mScene = 0;
+    mWork14 = 0;
+    __ct__11CTitleAHelpFPcUc(reinterpret_cast<CTitleAHelp*>(&_pad18), 0, 0);
+    __ct__CModelDisp(reinterpret_cast<CModelDisp*>(&_pad50), 0);
+    __ct__11CPartyStateFv(reinterpret_cast<CPartyState*>(&_pad3038));
+    __ct__CModelDispEquip(&mModelDispEquip, 0, 0);
+    __ct__12CEquipChangeFv(reinterpret_cast<CEquipChange*>(&_pad4150));
+    __ct__7CSysWinFUc(reinterpret_cast<CSysWin*>(&_pad6BA8), 0);
+    field_6BE4 = 0;
+    field_6BE5 = 0;
+    field_6BE8 = 0.0f;
+}
+
 // Screen-active check used by cbRenderBefore (unit-private import) (retail unmangled).
 
 
@@ -687,7 +706,7 @@ extern "C" void PartyStateWin_StateGateEquip(CPartyStateWin* self) {
 
 // us-801fc71c | PartyStateWin_StateEquipInput
 // Equip-change input step: increments the window timer field_6BE8 (clamped at
-// lbl_eu_806681E0), then while the equip-change sub-object is active,
+// 10.0f), then while the equip-change sub-object is active,
 // dispatches on the held/pressed/turbo pad flags. Two mirror chains (classic
 // vs Wii controller layout, selected by isClassicController): each chain tests a
 // list of flag combinations and either opens a system window (string ids
@@ -696,9 +715,9 @@ extern "C" void PartyStateWin_StateGateEquip(CPartyStateWin* self) {
 // The shared tail refreshes the title help from the sys-win state or the
 // equip-change result.
 extern "C" void PartyStateWin_StateEquipInput(CPartyStateWin* self) {
-    self->field_6BE8 += lbl_eu_806681DC;
-    if (self->field_6BE8 > lbl_eu_806681E0) {
-        self->field_6BE8 = lbl_eu_806681E0;
+    self->field_6BE8 += 1.0f;
+    if (self->field_6BE8 > 10.0f) {
+        self->field_6BE8 = 10.0f;
     }
     if (reinterpret_cast<CEquipChange*>(&self->_pad4150)->IsActiveFlag() == 0) {
         return;
@@ -864,10 +883,10 @@ extern "C" void PartyStateWin_StateEquipInput(CPartyStateWin* self) {
             code80135FDC_getByte_64077() > 1 &&
             reinterpret_cast<CEquipChange*>(&self->_pad4150)->IsSortOrSubPage() == 0 &&
             reinterpret_cast<CEquipChange*>(&self->_pad4150)->IsWeaponRow() == 0) {
-            if (self->field_6BE8 > lbl_eu_806681DC) {
+            if (self->field_6BE8 > 1.0f) {
                 playUISound(0x2);
             }
-            self->field_6BE8 = lbl_eu_806681D8;
+            self->field_6BE8 = 0.0f;
             reinterpret_cast<CEquipChange*>(&self->_pad4150)->ShowSubPanes(1);
             if ((cfPad->mTurboPressButtonFlags & 0x2001) != 0) {
                 if (reinterpret_cast<CEquipChange*>(&self->_pad4150)->CheckBoxOpen() != 0 &&
@@ -1281,24 +1300,6 @@ extern "C" void PartyStateWin_RefreshTitleHelp(CPartyStateWin* self) {
 // Constructs the composite vtables, stores the two ctor args, then builds
 // the six embedded sub-objects in ascending address order and finishes with
 // the byte flags and the field_6BE8 float.
-CPartyStateWin::CPartyStateWin(u32 arg1, u32 arg2) {
-    mArg1 = arg1;
-    mArg2 = arg2;
-    u8* vtbl = lbl_eu_805352DC;
-    mVtbl0 = (u32)vtbl;
-    mVtbl4 = (u32)(vtbl + 0x88);
-    mScene = 0;
-    mWork14 = 0;
-    __ct__11CTitleAHelpFPcUc(reinterpret_cast<CTitleAHelp*>(&_pad18), 0, 0);
-    __ct__CModelDisp(reinterpret_cast<CModelDisp*>(&_pad50), 0);
-    __ct__11CPartyStateFv(reinterpret_cast<CPartyState*>(&_pad3038));
-    __ct__CModelDispEquip(&mModelDispEquip, 0, 0);
-    __ct__12CEquipChangeFv(reinterpret_cast<CEquipChange*>(&_pad4150));
-    __ct__7CSysWinFUc(reinterpret_cast<CSysWin*>(&_pad6BA8), 0);
-    field_6BE4 = 0;
-    field_6BE5 = 0;
-    field_6BE8 = lbl_eu_806681D8;
-}
 
 // cbRenderBefore is a large out-of-line function, 0xBC bytes).
 void CPartyStateWin::cbRenderBefore() {
@@ -1387,13 +1388,13 @@ extern "C" void PartyStateWin_OpenWindow(CPartyStateWin* self) {
     reinterpret_cast<CView*>(self->mWork14)->setRect(
         *reinterpret_cast<ml::CRect16*>(&quad));
 
-    f32 c = lbl_eu_806681D8;
+    f32 c = 0.0f;
     PartyStateWin_StoreVec4Quad(self, reinterpret_cast<const u32*>(
                             CTaskGame_setVec4(&quadTmp, c, c, c, c)));
     PartyStateWin_PushRingRecord(reinterpret_cast<CPartyStateWinRing*>(self->mWork14), 0);
 
     PartyStateWin_InitMemCounters(&mem);
-    PartyStateWin_InitGaugeRecord(&gauge, self->mArg2, lbl_eu_806681D8, 0x20, 0x20, 0x10);
+    PartyStateWin_InitGaugeRecord(&gauge, self->mArg2, 0.0f, 0x20, 0x20, 0x10);
     mtl::ALLOC_HANDLE handle = PartyStateWin_PickAllocHandle(&mem, 0x09000000);
 
     // cast: CScnNw4r is a distinct class here, but this page stores the scene

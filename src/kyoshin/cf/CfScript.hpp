@@ -9,9 +9,7 @@ struct CFileHandle;
 // at global scope so MWCC keeps the retail names unmangled (no extern "C"
 // needed - global-scope data names are not mangled).
 extern char lbl_eu_804FB3A4[];   // .data:0x804FB3A4 script-name / extension string table
-extern char lbl_eu_805708D0[];   // .data:0x805708D0 current-dir path buffer
 extern char lbl_eu_80661AD0[8];  // .sdata:0x80661AD0 extension separator "." (+ section-tail fill to 0x18)
-extern char* lbl_eu_80661AC0;    // .sdata:0x80661AC0 current-dir string pointer
 extern char lbl_eu_80570918[];   // .bss  manager instance storage
 extern s8 lbl_eu_80663D88;       // .sdata singleton-init flag
 
@@ -83,6 +81,8 @@ public:
     void update();
 };
 
+typedef void (cf::CfScript::*CfScriptPMF)();
+
 // CfScriptManager - manages an array of up to 3 CfScript objects.
 // The array is embedded at offset 0. Singleton accessed via getInstance().
 class CfScriptManager {
@@ -115,6 +115,11 @@ public:
     // Main update and exec
     void updateScript();
     void resetScripts();
+
+    // File-owned state defined in CfScript.cpp.
+    static char sPathBuffer[0x48];
+    static char* spDirPointer;
+    static CfScriptPMF sWaitHandlers[2];
 };
 
 } // namespace cf
@@ -129,8 +134,6 @@ public:
 // (same convention as CUICfManager/CSortMenu).
 extern "C" bool OnFileEvent__8CfScriptFP10CEventFile(cf::CfScript* self, ::CEventFile* event);
 
-typedef void (cf::CfScript::*CfScriptPMF)();
-extern CfScriptPMF lbl_eu_80526DD0[2];
 
 // Unmangled retail symbols implemented in this TU (C linkage so the emitted
 // symbol names match the retail split verbatim).

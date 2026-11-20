@@ -190,12 +190,6 @@ struct SymbolMarkRenderItem {
 // CDeviceVI is the real monolib class; included above the folded imports.
 #include "monolib/device/CDeviceVI.hpp"
 
-// Object prefix view: interface vtable installed at +0x10 by the ctor.
-struct ProcPrefixView {
-    u8 pad00[0x10];
-    void* vt10;
-};
-
 // Field view over actor objects reached through findObjectById: measured-id
 // halfword at +0x8C, dispatch-kind byte at +0x91, marker name word at +0x74.
 struct CfActorFields {
@@ -243,24 +237,6 @@ struct EntryInputPos {
     u8 pad20[0x2C - 0x20];
     f32 posZ;                 // +0x2C
 };
-
-// Raw lyt pane field view: translate/rotate/scale triples + visibility flag.
-struct LytPaneFields {
-    u8 pad00[0x2C];
-    f32 trX, trY, trZ;        // 0x2C
-    f32 rotX, rotY, rotZ;     // 0x38
-    f32 scX, scY, scZ;        // 0x44
-    u8 pad50[0xBB - 0x50];
-    u8 flagBB;                // 0xBB bit0: hidden flag
-};
-
-// Layout object view: root pane pointer at +0x10.
-struct LytLayoutFields {
-    u8 pad00[0x10];
-    LytPaneFields* rootPane;  // +0x10
-};
-
-// Real Pane type provides FindPaneByName at 0x3C (replaces LytPaneFindView pad)
 
 // Current map/area id global (read by SymMark_Store's state gate).
 extern u32 lbl_eu_80664184;
@@ -356,9 +332,6 @@ struct ArrowDLEntry {
     u16 pltIdx;     // 0x0A: palette index
     u32 flags;      // 0x0C: bit0 selects the per-entry Z mode (second pass)
 };
-
-// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
-extern "C" void __dt__17UnkClass_8045F564Fv(void* self, int deleteFlag);
 
 // Unmangled retail helper imports.
 extern "C" {

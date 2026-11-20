@@ -7,6 +7,7 @@
 #include "monolib/work/CWorkThread.hpp"
 #include "monolib/util/CPathUtil.hpp"
 #include "monolib/util/MemManager.hpp"
+#include "monolib/work/CWorkSystemPack.hpp"
 
 // ---------------------------------------------------------------------------
 // CPackItem (monolib/core/CPackItem.hpp): load-state field at 0x78, base name
@@ -57,77 +58,18 @@ struct CArcItemDestroyHook {
     virtual bool destroy(int flag);    // vtable+8
 };
 
-// POD mirror of _reslist_node<CPackItem*>.
-struct PackItemListNode {
-    PackItemListNode* mNext; // 0x0
-    PackItemListNode* mPrev; // 0x4
-    CPackItem* mItem;        // 0x8
-};
-
-// POD mirror of _reslist_base<CPackItem*> (size 0x20).
-struct PackItemList {
-    u32 m_vtable;                 // 0x0
-    PackItemListNode* mStartNodePtr; // 0x4
-    PackItemListNode mStartNode;  // 0x8
-    PackItemListNode* mList;      // 0x14
-    int mCapacity;                // 0x18
-    bool unk1C;                   // 0x1C
-};
-
-// POD mirror of _reslist_node<CArcItem*>.
-struct ArcItemListNode {
-    ArcItemListNode* mNext; // 0x0
-    ArcItemListNode* mPrev; // 0x4
-    CArcItem* mItem;        // 0x8
-};
-
-// POD mirror of _reslist_base<CArcItem*> (size 0x20).
-struct ArcItemList {
-    u32 m_vtable;                 // 0x0
-    ArcItemListNode* mStartNodePtr; // 0x4
-    ArcItemListNode mStartNode;   // 0x8
-    ArcItemListNode* mList;       // 0x14
-    int mCapacity;                // 0x18
-    bool unk1C;                   // 0x1C
-};
-
-class __declspec(novtable) CWorkSystemPack : public CWorkThread {
-public:
-    CWorkSystemPack(const char* pName, CWorkThread* pParent);
-    ~CWorkSystemPack();
-    static bool findPackResource(const char* pName, void* pOut, u32* pFileId);
-    static bool isPackLoadIdle(int pExcept);
-    static bool arePacksLoaded();
-    static bool areArcsReady();
-    static void SavePkhFilenamesArrayPtr(const char* const[]);
-    static void SaveStaticArcFilenameStringPtr(const char* const*);
-    bool wkStandbyLogin();
-    bool wkStandbyLogout();
-    void wkUpdate();
-
-    // 0x0: vtable
-    // 0x0-0x1c4: CWorkThread (mType at 0x50)
-    PackItemList mPackList; // 0x1C4 - reslist<CPackItem*>
-    ArcItemList mArcList;   // 0x1E4 - reslist<CArcItem*>
-};
-
 // Work-system singleton pointer (.sbss).
-// _reslist_base<CPackItem*> / _reslist_base<CArcItem*> vtables (DOL data).
-extern u32 lbl_eu_8056FF48[4];
-extern u32 lbl_eu_8056FF24[3];
 // Pack work-memory region handle (.sdata) and pack string table (.rodata).
 extern u32 lbl_eu_80663BC8[2];
 extern const char lbl_eu_80524714[];
-// CWorkSystemPack / reslist<CPackItem*> / reslist<CArcItem*> vtables (DOL data).
+// CWorkSystemPack vtable (DOL data).
 extern u32 lbl_eu_8056FE58[40];
-extern u32 lbl_eu_8056FF30[3];
-extern u32 lbl_eu_8056FF0C[3];
 // Static filename registration tables (set by the Save* helpers below).
 
 extern "C" {
 
 // _reslist_base<CPackItem*>::clearList() - unlink every node (retail func_804DDADC).
- void func_804DDADC(PackItemList* list) {
+ void func_804DDADC(PackItemListBase* list) {
     PackItemListNode* walk = list->mStartNodePtr->mNext;
     while (walk != list->mStartNodePtr) {
         PackItemListNode* node = walk;
@@ -138,7 +80,7 @@ extern "C" {
 }
 
 // _reslist_base<CArcItem*>::clearList() (retail clearArcItemList).
- void clearArcItemList(ArcItemList* list) {
+ void clearArcItemList(ArcItemListBase* list) {
     ArcItemListNode* walk = list->mStartNodePtr->mNext;
     while (walk != list->mStartNodePtr) {
         ArcItemListNode* node = walk;
@@ -149,62 +91,39 @@ extern "C" {
 }
 
 
- void* __dt___reslist_base_CPackItem(PackItemList* self, int deleting) {
-    if (self != 0) {
-        self->m_vtable = (u32)lbl_eu_8056FF48;
-        func_804DDADC(self);
-        if (self->unk1C == 0) {
-            if (self->mList != 0) {
-                delete[] self->mList;
-                self->mList = 0;
-            }
-        }
-        if (deleting > 0) {
-            delete self;
-        }
+} // extern "C"
+
+// The real reslist specializations emit the retail vtable/RTTI objects.
+template <>
+_reslist_base<CPackItem*>::~_reslist_base() {
+    func_804DDADC(this);
+    if (unk1C == false && mList != 0) {
+        delete[] mList;
+        mList = 0;
     }
-    return self;
 }
 
-// reslist<CPackItem*>::~reslist(int deleting)
-void* __dt__reslist_CPackItem(PackItemList* self, int deleting) {
-    if (self != 0) {
-        __dt___reslist_base_CPackItem(self, 0);
-        if (deleting > 0) {
-            delete self;
-        }
-    }
-    return self;
+// reslist<CPackItem*>::~reslist()
+template <>
+reslist<CPackItem*>::~reslist() {
 }
 
 // _reslist_base<CArcItem*>::~_reslist_base(int deleting)
- void* __dt___reslist_base_CArcItem(ArcItemList* self, int deleting) {
-    if (self != 0) {
-        self->m_vtable = (u32)lbl_eu_8056FF24;
-        clearArcItemList(self);
-        if (self->unk1C == 0) {
-            if (self->mList != 0) {
-                delete[] self->mList;
-                self->mList = 0;
-            }
-        }
-        if (deleting > 0) {
-            delete self;
-        }
+template <>
+_reslist_base<CArcItem*>::~_reslist_base() {
+    clearArcItemList(this);
+    if (unk1C == false && mList != 0) {
+        delete[] mList;
+        mList = 0;
     }
-    return self;
 }
 
-// reslist<CArcItem*>::~reslist(int deleting)
-void* __dt__reslist_CArcItem(ArcItemList* self, int deleting) {
-    if (self != 0) {
-        __dt___reslist_base_CArcItem(self, 0);
-        if (deleting > 0) {
-            delete self;
-        }
-    }
-    return self;
+// reslist<CArcItem*>::~reslist()
+template <>
+reslist<CArcItem*>::~reslist() {
 }
+
+extern "C" {
 
 // Defined in monolib/src/device/CDeviceFile.cpp with C++ linkage.
 void DevFile_SubstLangPath(char* pPath);
@@ -324,30 +243,9 @@ CWorkSystemPack::CWorkSystemPack(const char* pName, CWorkThread* pParent)
     : CWorkThread(pName, pParent, 0) {
     int i; // declared early: birth order keeps the loop index off the zero-reg copy path
 
-    // CWorkSystemPack vtable, then the two reslists. Each list's inlined ctor
-    // chain (_reslist_base then reslist) stores its vtable twice: base, then
-    // derived (e.g. pack: lbl_eu_8056FF48 then lbl_eu_8056FF30).
-    // Same shape as the matched CWorkSystemCache ctor: the sentinel-pointer
-    // reads between the two vtable stores block MWCC's DSE of the base-vtable
-    // / NULL-mList stores that the derived overwrite makes look dead.
-    mPackList.mList = 0;
+    // CWorkSystemPack is novtable: retail stores its vtable here. The two
+    // reslist members are real objects and their ctors emit their own vtables.
     *(u32**)this = (u32*)lbl_eu_8056FE58;
-    mPackList.m_vtable = (u32)lbl_eu_8056FF48;
-    mPackList.mCapacity = 0;
-    mPackList.unk1C = false;
-    mPackList.mStartNodePtr = &mPackList.mStartNode;
-    mPackList.mStartNodePtr->mNext = &mPackList.mStartNode;
-    mPackList.mStartNodePtr->mPrev = mPackList.mStartNodePtr->mNext;
-    mPackList.m_vtable = (u32)lbl_eu_8056FF30;
-
-    mArcList.m_vtable = (u32)lbl_eu_8056FF24;
-    mArcList.mList = 0;
-    mArcList.mCapacity = 0;
-    mArcList.unk1C = false;
-    mArcList.mStartNodePtr = &mArcList.mStartNode;
-    mArcList.mStartNodePtr->mNext = &mArcList.mStartNode;
-    mArcList.mStartNodePtr->mPrev = mArcList.mStartNodePtr->mNext;
-    mArcList.m_vtable = (u32)lbl_eu_8056FF0C;
 
     sWorkSystemPackInstance = this;
     mType = CWorkThread::THREAD_CWORKSYSTEMPACK;
@@ -383,26 +281,8 @@ CWorkSystemPack::CWorkSystemPack(const char* pName, CWorkThread* pParent)
     }
 }
 
-// extern "C" free-function form: clear the work-system singleton, then tear
-// down the two resource lists (mArcList +0x1E4, mPackList +0x1C4 -- retail's
-// addic. null-checks), the base CWorkThread (unchecked), and the flags-based
-// delete.
-extern "C" void __dt__11CWorkThreadFv(void* self, int flags);
-extern "C" void* __dt__15CWorkSystemPackFv(CWorkSystemPack* self, int flags) {
-    if (self != 0) {
-        sWorkSystemPackInstance = 0;
-        if (&self->mArcList != 0) {
-            __dt___reslist_base_CArcItem(&self->mArcList, 0);
-        }
-        if (&self->mPackList != 0) {
-            __dt___reslist_base_CPackItem(&self->mPackList, 0);
-        }
-        __dt__11CWorkThreadFv(self, 0);
-        if (flags > 0) {
-            operator delete(self);
-        }
-    }
-    return self;
+CWorkSystemPack::~CWorkSystemPack() {
+    sWorkSystemPackInstance = 0;
 }
 
 // Walk the pack list, comparing each item's base name against pName. Returns
@@ -698,17 +578,12 @@ extern "C" void wkStandbyExceptionRetry__11CWorkThreadFUl();
 extern "C" u32 __RTTI__10IWorkEvent;
 extern "C" u32 __RTTI__11CWorkThread;
 }
+extern "C" void __dt__15CWorkSystemPackFv(void*, int);
 extern "C" void wkStandbyLogin__15CWorkSystemPackFv(); // defined below (member)
 extern "C" void wkUpdate__15CWorkSystemPackFv();       // defined below (member)
 extern "C" void wkStandbyLogout__15CWorkSystemPackFv(); // defined below (member)
 extern "C" u32 __RTTI__15CWorkSystemPack[2];
-extern "C" u32 lbl_eu_80663BD8[2];
-extern "C" u32 lbl_eu_80663BE0[2];
-extern "C" u32 lbl_eu_80663BE8[2];
-extern "C" u32 lbl_eu_80663BF0[2];
 extern "C" u32 lbl_eu_8056FEF8[5];
-extern "C" u32 lbl_eu_8056FF18[3];
-extern "C" u32 lbl_eu_8056FF3C[3];
 
 extern "C" u32 lbl_eu_8056FE58[40] = {
     (u32)&__RTTI__15CWorkSystemPack, 0x00000000, (u32)&__dt__15CWorkSystemPackFv,
@@ -750,43 +625,17 @@ extern "C" u32 lbl_eu_8056FE58[40] = {
     (u32)&wkStandbyLogout__15CWorkSystemPackFv,
     (u32)&PackBlob::wkStandbyExceptionRetry__11CWorkThreadFUl,
 };
+
+// [.rodata] 0x80524688-0x805246FC (116B): RTTI name pool.
+extern "C" __declspec(align(4)) const char lbl_eu_80524688[16] = "CWorkSystemPack";
+
+// [.sdata] 0x80663BC8-0x80663BF8 (48B): region handle + RTTI locators.
+extern "C" u32 lbl_eu_80663BC8[2] = { 0xFFFFFFFF, 0x00000000 };
 extern "C" u32 lbl_eu_8056FEF8[5] = {
     (u32)&PackBlob::__RTTI__10IWorkEvent, 0x00000000,
     (u32)&PackBlob::__RTTI__11CWorkThread, 0x00000000, 0x00000000,
 };
-extern "C" u32 lbl_eu_8056FF0C[3] = {
-    (u32)&lbl_eu_80663BD8, 0x00000000, (u32)&__dt__reslist_CArcItem,
-};
-extern "C" u32 lbl_eu_8056FF18[3] = {
-    (u32)&lbl_eu_80663BE0, 0x00000000, 0x00000000,
-};
-extern "C" u32 lbl_eu_8056FF24[3] = {
-    (u32)&lbl_eu_80663BE0, 0x00000000, (u32)&__dt___reslist_base_CArcItem,
-};
-extern "C" u32 lbl_eu_8056FF30[3] = {
-    (u32)&lbl_eu_80663BE8, 0x00000000, (u32)&__dt__reslist_CPackItem,
-};
-extern "C" u32 lbl_eu_8056FF3C[3] = {
-    (u32)&lbl_eu_80663BF0, 0x00000000, 0x00000000,
-};
-extern "C" u32 lbl_eu_8056FF48[4] = {
-    (u32)&lbl_eu_80663BF0, 0x00000000, (u32)&__dt___reslist_base_CPackItem, 0x00000000,
-};
-
-// [.rodata] 0x80524688-0x805246FC (116B): RTTI name pool.
-extern "C" __declspec(align(4)) const char lbl_eu_80524688[16] = "CWorkSystemPack";
-extern "C" __declspec(align(4)) const char lbl_eu_80524698[20] = "reslist<CArcItem *>";
-extern "C" __declspec(align(4)) const char lbl_eu_805246AC[26] = "_reslist_base<CArcItem *>";
-extern "C" __declspec(align(4)) const char lbl_eu_805246C8[21] = "reslist<CPackItem *>";
-extern "C" __declspec(align(4)) const char lbl_eu_805246E0[28] = "_reslist_base<CPackItem *>";
-
-// [.sdata] 0x80663BC8-0x80663BF8 (48B): region handle + RTTI locators.
-extern "C" u32 lbl_eu_80663BC8[2] = { 0xFFFFFFFF, 0x00000000 };
 extern "C" u32 __RTTI__15CWorkSystemPack[2] = { (u32)&lbl_eu_80524688, (u32)&lbl_eu_8056FEF8 };
-extern "C" u32 lbl_eu_80663BD8[2] = { (u32)&lbl_eu_80524698, (u32)&lbl_eu_8056FF18 };
-extern "C" u32 lbl_eu_80663BE0[2] = { (u32)&lbl_eu_805246AC, 0x00000000 };
-extern "C" u32 lbl_eu_80663BE8[2] = { (u32)&lbl_eu_805246C8, (u32)&lbl_eu_8056FF3C };
-extern "C" u32 lbl_eu_80663BF0[2] = { (u32)&lbl_eu_805246E0, 0x00000000 };
 
 // [.sbss] 0x80665A10-0x80665A20 (16B).
 CWorkSystemPack* sWorkSystemPackInstance;

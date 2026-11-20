@@ -1,6 +1,7 @@
 #pragma once
 
 #include <types.h>
+#include "monolib/device/CDeviceFont.hpp"
 #include "kyoshin/code_80135FDC_Bdat.hpp"
 
 #include "monolib/lib/UnkClass_8045F564.hpp"
@@ -49,21 +50,6 @@ public:
     CPcKizunagram();
     ~CPcKizunagram();
     int OnFileEvent(CEventFile* event);
-};
-
-// View into the object returned by CDeviceFont::getFontInfo: vtable+0x24
-// (index 7, no args) yields the u32 bound into the layout's font pane.
-// All-pure so no vtable is emitted; the call keeps the retail r12 dispatch.
-class CDeviceFontVtblView {
-public:
-    virtual void vf0() = 0; // index 0 -> +0x08
-    virtual void vf1() = 0; // index 1 -> +0x0C
-    virtual void vf2() = 0; // index 2 -> +0x10
-    virtual void vf3() = 0; // index 3 -> +0x14
-    virtual void vf4() = 0; // index 4 -> +0x18
-    virtual void vf5() = 0; // index 5 -> +0x1C
-    virtual void vf6() = 0; // index 6 -> +0x20
-    virtual u32 vf7() = 0;  // index 7 -> +0x24
 };
 
 // C-linkage accessors matching retail unmangled symbols.
@@ -246,17 +232,7 @@ extern "C" u32 gKizunagramBdatTableId;
 extern "C" u32 lbl_eu_806688A8;
 extern "C" u32 lbl_eu_806688AC;
 
-// nw4r layout/animation loaders used by the cursor init (KizunaCurInitLayout).
-extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32 arg, nw4r::lyt::Layout* layout);
-extern "C" bool Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(
-    nw4r::lyt::ArcResourceAccessor* self, void* data, const char* name);
-extern "C" void setMemInitFlag__Q23mtl10MemManagerFb(bool value);
-extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv();
-
-// Scratch region guard (RAII Class_8045F858): explicit buffer + C-ABI ctor/dtor
-// calls so the retail stack slot and the -1 dealloc flag match exactly.
-// Opaque-parameter form: the repo-wide canonical declaration (CItemBoxGrid.hpp /
-// CEquipItemBoxImports.hpp / CMenuUpdate.hpp); callers pass the raw storage.
+// Shared scratch-region guard ctor/dtor spelling used by CPassiveSkill.cpp.
 extern "C" void __ct__14Class_8045F858FP17UnkClass_8045F564(void* self, void* base);
 extern "C" void __dt__14Class_8045F858Fv(void* self, int dealloc);
 

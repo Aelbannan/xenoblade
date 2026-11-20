@@ -182,8 +182,6 @@ extern "C" void* sCrystalItemTable;  // unused address anchor - kept void*
 extern "C" void* sCrystalMesTable;  // unused address anchor - kept void*
 extern "C" void* sItemMesTable;  // unused address anchor - kept void*
 extern "C" const float lbl_eu_80668BF0;
-// lbl_eu_80668BD4 is the 0.0f used for the fractional-part comparison.
-extern const float lbl_eu_80668BD4;
 // lbl_eu_80668BD8 (double) is the 2^52 constant of MWCC's u32->f64 trick;
 // lbl_eu_80668BEC is the 0.25f row divisor used when converting a flat
 // cursor index to row/column (field_304 / field_305).

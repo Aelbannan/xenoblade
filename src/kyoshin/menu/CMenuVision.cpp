@@ -29,7 +29,6 @@ extern const f32 lbl_eu_80667DCC;
 extern const f32 lbl_eu_80667DDC;
 extern u32 lbl_eu_80575858[6];
 extern const f32 lbl_eu_80667DC4; // 1.0f
-extern const f32 lbl_eu_80667DC8; // scale factor
 // MWCC does not mangle global-scope data names.
 extern char lbl_eu_80504268[];    // string table base
 extern u32 visionPaneNameTable[];     // 6 pane-name pointers
@@ -41,9 +40,9 @@ extern CMenuVision* sVisionMenuInstance;
 
 void tickVisionExpiry(CMenuVision*, CMenuVisionEntry*);
 
-extern "C" {
-void* findObjectById__Fi(int);
+#include "kyoshin/cf/CActParamAnimGame.hpp"
 
+extern "C" {
 extern u32 visionTextColorNeutral;
 extern u32 visionPaneColorNeutralFirst;
 extern u32 visionPaneColorNeutralSecond;
@@ -58,7 +57,6 @@ extern u32 visionPaneColorMode42TenSecond;
 extern u32 visionPaneColorMode3COneSecond;
 extern u32 visionPaneColorMode42TenAltSecond;
 extern u32 visionPaneColorMode42OneSecond;
-extern f32 lbl_eu_80667DD4;
 extern u32 lbl_eu_80667DD0;
 extern const char* visionKnownStatusIconNames[4];
 extern const char* visionOtherStatusIconNames[4];
@@ -549,7 +547,7 @@ extern "C" void driveVisionUpdate(int flags) {
         }
         void* actorBase;
         void* image = 0;
-        void* actor = findObjectById__Fi(battle->actor);
+        void* actor = findObjectById(battle->actor);
         if (actor == 0) {
             return;
         }
@@ -633,7 +631,7 @@ extern "C" void driveVisionUpdate(int flags) {
         u32 color1 = visionTextColorNeutral;
         u32 color2 = visionPaneColorNeutralFirst;
         u32 color3 = visionPaneColorNeutralSecond;
-        void* actor = findObjectById__Fi(battle->actor);
+        void* actor = findObjectById(battle->actor);
         if (actor != 0) {
             actor = (u8*)actor - 0x3E9C;
         }
@@ -710,7 +708,7 @@ extern "C" void driveVisionUpdate(int flags) {
         if (battle->flags824 & 0x20000) {
             image = menuVisionResource(lbl_eu_80504268 + 0x439);
         } else {
-            void* actor = findObjectById__Fi(battle->targetActor);
+            void* actor = findObjectById(battle->targetActor);
             if (actor == 0) {
                 return;
             }
@@ -816,8 +814,8 @@ extern "C" void driveVisionUpdate(int flags) {
                 setLayoutTextBoxNumber(
                     entry.mLayout, lbl_eu_80504268 + 0x1FB, ScMain_GetSummedInt((ScMain*)battle));
                 nw4r::math::VEC2 scale;
-                scale.x = lbl_eu_80667DD4;
-                scale.y = lbl_eu_80667DD4;
+                scale.x = 0.63f;
+                scale.y = 0.63f;
                 nw4r::lyt::Pane* pane =
                     entry.mLayout->GetRootPane()->FindPaneByName(lbl_eu_80504268 + 0x1FB, true);
                 pane->SetScale(scale);
@@ -836,7 +834,7 @@ extern "C" void driveVisionUpdate(int flags) {
             VisionQuad second = visionTevColorDefaultSecond;
             u32 color1 = visionPaneColorNeutralFirst;
             u32 color2 = visionPaneColorNeutralSecond;
-            void* actor = findObjectById__Fi(battle->actor);
+            void* actor = findObjectById(battle->actor);
             if (actor != 0) {
                 actor = (u8*)actor - 0x3E9C;
             }
@@ -973,7 +971,7 @@ extern "C" void driveVisionUpdate(int flags) {
             }
 
             if (battle->targetActor != 0) {
-                void* target = findObjectById__Fi(battle->targetActor);
+                void* target = findObjectById(battle->targetActor);
                 if (target != 0) {
                     target = (u8*)target - 0x3E9C;
                 }
@@ -1004,7 +1002,7 @@ extern "C" void driveVisionUpdate(int flags) {
         nw4r::math::VEC2 position;
         position.x = trans->transX;
         position.y = trans->transY;
-        position.x = lbl_eu_80667DC8 * ScMain_GetRatio((ScMain*)battle);
+        position.x = 298.0f * ScMain_GetRatio((ScMain*)battle);
         bar = barEntry.mLayout->GetRootPane()->FindPaneByName(lbl_eu_80504268 + 0x215, true);
         trans = reinterpret_cast<PaneTransAccess*>(bar);
         trans->transX = position.x;
@@ -1162,7 +1160,7 @@ L_continue:
                     nw4r::math::VEC2 position;
                     position.x = trans->transX;
                     position.y = trans->transY;
-                    position.x = lbl_eu_80667DC8 * ScMain_GetRatio((ScMain*)bmObj);
+                    position.x = 298.0f * ScMain_GetRatio((ScMain*)bmObj);
                     posPane = e->mLayout->GetRootPane()->FindPaneByName(lbl_eu_80504268 + 0x215, true);
                     trans = reinterpret_cast<PaneTransAccess*>(posPane);
                     trans->transX = position.x;

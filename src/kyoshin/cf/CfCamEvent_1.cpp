@@ -97,7 +97,7 @@ CamEventTableEntry cfCamEventWeightTable[12] = {
 // (C4,0),(C8,0),(CC,0),(D0,0),(D4,0),(D8,0),(DC,0),(E0,2),(E4,0),(E8,0),
 // (EC,0),(F0,0),(F4,0). MWCC pads cam_name (0xA) to 8-align the table,
 // reproducing the 6-byte retail gap at 0x3E2.
-__declspec(section ".data") __attribute__((used)) char lbl_eu_80527638[0xA] = "cam_name1";
+__attribute__((used)) char lbl_eu_80527638[0xA] = "cam_name1";
 extern "C" {
 extern const float lbl_eu_806664A8;
 extern const float lbl_eu_806664AC;
@@ -410,7 +410,7 @@ int CamEvtAdvanceShake(CfCamShakeState* self, int mode) {
         CfRes_getD80Flag();
         delta = Scn_GetFrameDelta(gmScene);
     } else {
-        delta = lbl_eu_80666428;
+        delta = 1.0f;
     }
 
     if (self->flag_active)
@@ -468,13 +468,13 @@ int CamEvtAdvanceShake(CfCamShakeState* self, int mode) {
     u16 kind = self->elems[cur].c;
     switch (kind) {
     case 1:
-        t = lbl_eu_80666428 +
+        t = 1.0f +
             SinFIdx__Q24nw4r4mathFf(40.743664f *
                 (ml::halfpi * t - ml::halfpi));
         break;
     case 2:
         t = 0.5f *
-            (lbl_eu_80666428 +
+            (1.0f +
              SinFIdx__Q24nw4r4mathFf(40.743664f *
                  (ml::pi * t - ml::halfpi)));
         break;
@@ -484,7 +484,7 @@ int CamEvtAdvanceShake(CfCamShakeState* self, int mode) {
         break;
     case 3:
         if (t > 0.5f)
-            t = lbl_eu_80666428 - 0.5f *
+            t = 1.0f - 0.5f *
                 SinFIdx__Q24nw4r4mathFf(40.743664f *
                     (ml::pi * t));
         else
@@ -984,21 +984,21 @@ void CamEvtSolveAimPair(ml::CVec3* out1, ml::CVec3* out2, CamCamSrc* a, CamCamSr
             f32 ya = ((CinemVecOut*)((CamEventVoice*)&a->voice)->getVecOut())->v.y;
             CinemVecOut* vb = (CinemVecOut*)((CamEventVoice*)handle)
                                   ->getVecOut();
-            if (vb->v.y - ya >= lbl_eu_80666428) {
+            if (vb->v.y - ya >= 1.0f) {
                 if (((CamGroundQueryFn)ScnRes_VertRayForward_E398)(  // DEBT(callcast): C symbol; retail callers use several incompatible arities / GPR-vs-FPR arg views
                         (float*)out2, 0x4044a05, 0, 0,
                         1.5f, lbl_eu_8066641C)) {
                     CamTripletLocals t; // retail 0x1B8
                     ((CamGroundRecordFn)ScnRes_CopyEntryHead)((float*)&t, 0);  // DEBT(callcast): C symbol; retail caller passes a stale second GPR argument
-                    out2->y = t.y + lbl_eu_80666428;
+                    out2->y = t.y + 1.0f;
                 } else {
-                    out2->y = out2->y + lbl_eu_80666428;
+                    out2->y = out2->y + 1.0f;
                 }
             }
         }
     }
     if (ScnRes_SegQueryForward_E348(out2, out1, 0x4044a03, 0)) {
-        out1->y = out1->y + lbl_eu_80666428;
+        out1->y = out1->y + 1.0f;
     }
 }
 
@@ -1516,9 +1516,9 @@ void* CamEvtSetupFollowCam(CfCamEventManager* self, int unk34,
 }
 
 // Union temp reproducing MWCC's 0x4330-magic int->double conversion slots.
-// Hand-built (like CItemBoxGrid's converters) so the pool references are the
-// named sdata2 magics lbl_eu_80666420/80666438 instead of anonymous @-labels;
-// retail alternates two of these slots per conversion site.
+// Hand-built (like CItemBoxGrid's converters) so the conversion magics stay in
+// the TU's own sdata2 pool instead of anonymous @-labels; retail alternates
+// two of these slots per conversion site.
 union CamConvTmp {
     u32 w[2];
     f64 d;
@@ -2441,7 +2441,7 @@ int CamEvtUpdateFrame(CfCamEventManager* self) {
             f32 Vy = self->tab0.baseY;
             f32 Vz = self->tab0.baseZ;
             f32 k1 = lbl_eu_8066641C;
-            f32 half = lbl_eu_80666428;
+            f32 half = 1.0f;
             f32 ax = u0->u.tab.baseX;
             f32 ay = u0->u.tab.baseY;
             f32 mag = (f32)__fabs((f64)u0->u.tab.baseZ);
@@ -2509,7 +2509,7 @@ int CamEvtUpdateFrame(CfCamEventManager* self) {
         f32 Vy = self->tab0.baseY;
         f32 Vz = self->tab0.baseZ;
         f32 k1 = lbl_eu_8066641C;
-        f32 half = lbl_eu_80666428;
+        f32 half = 1.0f;
         f32 ax = u0->u.tab.baseX;
         f32 ay = u0->u.tab.baseY;
         f32 mag = (f32)__fabs((f64)u0->u.tab.baseZ);
@@ -2619,7 +2619,7 @@ int CamEvtAdvanceBusy(CfCamEventManager* self) {
         CamEventMtx a;
         a.m[0] = c1; a.m[1] = -s1; a.m[2] = lbl_eu_8066641C;
         a.m[3] = s1; a.m[4] = c1; a.m[5] = lbl_eu_8066641C;
-        a.m[6] = lbl_eu_8066641C; a.m[7] = lbl_eu_8066641C; a.m[8] = lbl_eu_80666428;
+        a.m[6] = lbl_eu_8066641C; a.m[7] = lbl_eu_8066641C; a.m[8] = 1.0f;
         // Step the matrix in place through scalar temporaries (the macro's
         // two-matrix form costs stack slots retail does not spend).
         {
@@ -2642,7 +2642,7 @@ int CamEvtAdvanceBusy(CfCamEventManager* self) {
         // values from step one are no longer needed).
         a.m[0] = c3; a.m[1] = -s3; a.m[2] = lbl_eu_8066641C;
         a.m[3] = s3; a.m[4] = c3; a.m[5] = lbl_eu_8066641C;
-        a.m[6] = lbl_eu_8066641C; a.m[7] = lbl_eu_8066641C; a.m[8] = lbl_eu_80666428;
+        a.m[6] = lbl_eu_8066641C; a.m[7] = lbl_eu_8066641C; a.m[8] = 1.0f;
         {
             f32 t6 = a.m[0] + s3 * a.m[1] + c3 * a.m[2];
             f32 t7 = a.m[3] + s3 * a.m[4] + c3 * a.m[5];
@@ -2981,15 +2981,15 @@ void CamEvtCheckAimAngles(CfCamEventManager* self) {
             f32 f31 = a.x * a.x + a.y * a.y + a.z * a.z;
             f32 f30 = b.x * b.x + b.y * b.y + b.z * b.z;
 
-            // Clamp f31 to [-1.0f, lbl_eu_80666428], then validate
+            // Clamp f31 to [-1.0f, 1.0f], then validate
             // the range (nw4r warning on violation).
             if (f31 < -1.0f) {
                 f31 = -1.0f;
-            } else if (f31 > lbl_eu_80666428) {
-                f31 = lbl_eu_80666428;
+            } else if (f31 > 1.0f) {
+                f31 = 1.0f;
             }
             int ok = 0;
-            if (f31 <= lbl_eu_80666428 && f31 >= -1.0f) ok = 1;
+            if (f31 <= 1.0f && f31 >= -1.0f) ok = 1;
             if (ok == 0) {
                 Warning__Q24nw4r2dbFPCciPCce(lbl_eu_805262F0, 0xef, lbl_eu_805262C8);
             }
@@ -3001,11 +3001,11 @@ void CamEvtCheckAimAngles(CfCamEventManager* self) {
             if (a1 > 5.0f * ml::deg2rad) {
                 if (f30 < -1.0f) {
                     f30 = -1.0f;
-                } else if (f30 > lbl_eu_80666428) {
-                    f30 = lbl_eu_80666428;
+                } else if (f30 > 1.0f) {
+                    f30 = 1.0f;
                 }
                 int ok2 = 0;
-                if (f30 <= lbl_eu_80666428 && f30 >= -1.0f) ok2 = 1;
+                if (f30 <= 1.0f && f30 >= -1.0f) ok2 = 1;
                 if (ok2 == 0) {
                     Warning__Q24nw4r2dbFPCciPCce(lbl_eu_805262F0, 0xef, lbl_eu_805262C8);
                 }
@@ -3022,7 +3022,7 @@ void CamEvtCheckAimAngles(CfCamEventManager* self) {
 
     if (updateResult != 0) {
         cleanupMapEffects__Q22cf13CfGameManagerFv();
-        cf::CfMapEffectManager::pushFlash(1e+01f, lbl_eu_80666428);
+        cf::CfMapEffectManager::pushFlash(1e+01f, 1.0f);
     }
 
     if (self->field_0x38 != 0) {
@@ -3196,10 +3196,10 @@ void sinit_8007BE74() {
     tbl[10].v0.y = 0.02f;
     tbl[10].v0.z = 0.01f;
     p = &local[2];
-    p->x = lbl_eu_80666490;
+    p->x = 0.6f;
     p->y = 0.2f;
     p->z = 0.05f;
-    tbl[10].v1.x = lbl_eu_80666490;
+    tbl[10].v1.x = 0.6f;
     tbl[10].v1.y = 0.2f;
     tbl[10].v1.z = 0.05f;
     p = &local[1];
@@ -3210,16 +3210,16 @@ void sinit_8007BE74() {
     tbl[11].v0.y = 0.1f;
     tbl[11].v0.z = 0.01f;
     p = &local[0];
-    p->x = lbl_eu_80666428;
+    p->x = 1.0f;
     p->y = 0.05f;
     p->z = 0.05f;
-    tbl[11].v1.x = lbl_eu_80666428;
+    tbl[11].v1.x = 1.0f;
     tbl[11].v1.y = 0.05f;
     tbl[11].v1.z = 0.05f;
 }
 
 // BDAT column names: prefix kept until the orphaned s_*/e_* columns get real use sites.
-__declspec(section ".rodata") __attribute__((aligned(8))) __attribute__((used)) const char cfCamEventAssertStrings[0xf4] =
+__attribute__((aligned(8))) __attribute__((used)) const char cfCamEventAssertStrings[0xf4] =
     "camType\0"
     "enemy_size\0"
     "range\0"

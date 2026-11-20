@@ -70,12 +70,6 @@ public:
 // and hands it a font path.
 class CDeviceFontLoader;
 
-// Retail font-path pointers (sdata2) selected by the SC language in
-// wkUpdate: lbl_eu_806636F8 -> "font/font_eu5.brfna",
-// lbl_eu_806636FC -> "font/MenuFont.brfna".
-extern const char* lbl_eu_806636F8;
-extern const char* lbl_eu_806636FC;
-
 // Minimal view of a child font-layer work thread (CDeviceFontLayer). This TU
 // only searches the children list for a layer and tail-calls one of its
 // methods, so only mType (0x50), the font-id field (0x1F8) and the called
@@ -108,9 +102,6 @@ public:
 // global references emit the retail spDeviceFont reloc name.
 extern CDeviceFont* spDeviceFont;
 
-// Retail rodata string passed as the font-layer work-thread name.
-extern const char lbl_eu_80522DDC[];
-
 // Retail font-device config/state word (sdata2).
 extern u32 sDeviceFontInitCount;
 
@@ -129,24 +120,6 @@ namespace db {
 void Panic(const char* file, int line, const char* message, ...);
 } // namespace db
 } // namespace nw4r
-
-// sdata2 constants used by wkRender (fade ramp + projection/cursor math).
-extern f64 lbl_eu_8066A3B8;
-extern f64 lbl_eu_8066A3C0;
-extern const f32 lbl_eu_8066A3C8;
-extern const f32 lbl_eu_8066A3CC;
-extern const f32 lbl_eu_8066A3D0;
-extern const f32 lbl_eu_8066A3D4;
-extern const f32 lbl_eu_8066A3D8;
-extern const f32 lbl_eu_8066A3DC;
-extern const f32 lbl_eu_8066A3E0;
-extern const f32 lbl_eu_8066A3E4;
-extern const f32 lbl_eu_8066A3E8;
-extern const f32 lbl_eu_8066A3EC;
-extern const f32 lbl_eu_8066A3F0;
-extern const f32 lbl_eu_8066A3F4;
-extern const f32 lbl_eu_8066A3F8;
-extern const f32 lbl_eu_8066A3FC;
 
 // UTF-16 render buffer (wchar_t[0x200]) filled by wkRender.
 extern wchar_t lbl_eu_80657750[512];

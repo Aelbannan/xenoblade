@@ -69,11 +69,11 @@ void CSysWinScenarioLog::Init() {
 
     IWorkEvent* ev74 = this;
     mFileHandle74 = CDeviceFile::readFile(
-        mtl::MemManager::getHandleMEM2(), lbl_eu_8050EE24, ev74, 0, 0);
+        mtl::MemManager::getHandleMEM2(), "menu/jp/ScenarioLog.arc", ev74, 0, 0);
 
     IWorkEvent* ev78 = this;
     mFileHandle78 = CDeviceFile::readCommonArchiveFile(
-        KyoshinHeap_GetField44(), &lbl_eu_8050EE24[0x18], ev78, 0, 0);
+        KyoshinHeap_GetField44(), "/common/jp/bdat_menu_slog.bin", ev78, 0, 0);
 }
 
 // ---------------------------------------------------------------------------
@@ -256,37 +256,37 @@ extern "C" void SysWinLog_OpenContent(CSysWinScenarioLog* self) {
     u16 count = (u16)Bdat_GetMaxRow_B1EC((void*)lbl_eu_8066490C);
     int i = 1;
     while ((u16)i <= count) {
-        if ((u16)BdatGetU16Direct((void*)lbl_eu_8066490C, &lbl_eu_8050EE24[0x36],
+        if ((u16)BdatGetU16Direct((void*)lbl_eu_8066490C, "flag",
                                (u16)i) >= maxId) {
             chosen = i;
             break;
         }
         i++;
     }
-    char* s = BdatTouchStringCell(&lbl_eu_8050EE24[0x3b], &lbl_eu_8050EE24[0x44], 0x19);
-    LayoutSetTextBoxFmtValue(self->mpLayout, &lbl_eu_8050EE24[0x49], s, 0);
-    char* t = BdatGetPtrDirect((void*)lbl_eu_8066490C, &lbl_eu_8050EE24[0x56],
+    char* s = BdatTouchStringCell("MNU_main", "name", 0x19);
+    LayoutSetTextBoxFmtValue(self->mpLayout, "txt_titlemes", s, 0);
+    char* t = BdatGetPtrDirect((void*)lbl_eu_8066490C, "help",
                             (u16)chosen);
-    LayoutSetTextBoxFmtValue(self->mpLayout, &lbl_eu_8050EE24[0x5b], t, (u32)self->mField94);
-    char* u = BdatTouchStringCell(&lbl_eu_8050EE24[0x68], &lbl_eu_8050EE24[0x56], 0x2c);
-    LayoutSetTextBoxFmtValue(self->mpLayout, &lbl_eu_8050EE24[0x76], u, 0);
+    LayoutSetTextBoxFmtValue(self->mpLayout, "txt_sysmes01", t, (u32)self->mField94);
+    char* u = BdatTouchStringCell("MNU_kyeassign", "help", 0x2c);
+    LayoutSetTextBoxFmtValue(self->mpLayout, "txt_close00", u, 0);
     const char* sel = cf::CfGameManager::isClassicController(-1) != 0
-                          ? &lbl_eu_8050EE24[0x82]
-                          : &lbl_eu_8050EE24[0x8b];
-    u16 msgId = (u16)BdatGetU16ByTableKey(&lbl_eu_8050EE24[0x68], sel, 0x2c);
+                          ? "fileID_2"
+                          : "fileID_1";
+    u16 msgId = (u16)BdatGetU16ByTableKey("MNU_kyeassign", sel, 0x2c);
     void* tex = MakeTplNameSysFile(msgId);
     nw4r::lyt::ArcResourceAccessor* mgr = CUICfManager_getArcResourceAccessor();
     void* mat = mgr->GetResource(0x74696d67, (const char*)tex, 0);
     if (mat == 0) {
         return;
     }
-    PaneSetTexPaletteByName(self->mpLayout, &lbl_eu_8050EE24[0x94], (TPLPalette*)mat);
+    PaneSetTexPaletteByName(self->mpLayout, "pic_btn00", (TPLPalette*)mat);
     CSysWinTexMeta* meta = (CSysWinTexMeta*)mat;
     u16 w = meta->field_0x8->field_0x2;
     u16 h = meta->field_0x8->field_0x0;
     void* pane =
         ((CSysWinPaneView*)self->mpLayout->GetRootPane())->mSetText(
-            &lbl_eu_8050EE24[0x94], 1);
+            "pic_btn00", 1);
     if (pane == 0) {
         return;
     }
@@ -314,7 +314,7 @@ extern "C" bool SysWinLog_BuildLayout(CSysWinScenarioLog* self, CFileHandle* fh)
     void* data = fh->mData;
     if (self->mFileHandle74 == data) {
         self->mMemRegion.createRegion(mtl::MemManager::getHandleMEM2(), 0x8000,
-                                      &lbl_eu_8050EE24[0x9e], 0);
+                                      "CSysWinScenarioLog", 0);
         Class_8045F858 memHost(&self->mMemRegion);
         void* fileData = self->mFileHandle74->getData();
         mtl::MemManager::setMemInitFlag(false);
@@ -324,9 +324,9 @@ extern "C" bool SysWinLog_BuildLayout(CSysWinScenarioLog* self, CFileHandle* fh)
         }
         self->mField94 = (nw4r::lyt::Layout*)tag;
         self->mpAccessor = CLibLayout::createArcResourceAccessor();
-        self->mpAccessor->Attach(fileData, &lbl_eu_8050EE24[0xb1]);
-        buildLayout(&self->mpLayout, self->mpAccessor, &lbl_eu_8050EE24[0xb5]);
-        bindLayoutAnimTransform(self->mpLayout, &self->mpAnim, self->mpAccessor, &lbl_eu_8050EE24[0xce]);
+        self->mpAccessor->Attach(fileData, "arc");
+        buildLayout(&self->mpLayout, self->mpAccessor, "mf70_cf60_syswin14.brlyt");
+        bindLayoutAnimTransform(self->mpLayout, &self->mpAnim, self->mpAccessor, "mf70_cf60_syswin14_in.brlan");
         nw4r::lyt::Pane* rootPane = self->mpLayout->GetRootPane();
         void* fontObj = CDeviceFont::getFontInfo(1, self->mpLayout);
         u32 fontHandle = ((CSysWinFontObjView*)fontObj)->getFontHandle();
@@ -334,7 +334,7 @@ extern "C" bool SysWinLog_BuildLayout(CSysWinScenarioLog* self, CFileHandle* fh)
         self->mpLayout->SetAnimationEnable(self->mpAnim, true);
         self->mpLayout->Animate(0);
         void* pane = ((CSysWinPaneView*)self->mpLayout->GetRootPane())->mSetText(
-            &lbl_eu_8050EE24[0x5b], 1);
+            "txt_sysmes01", 1);
         ((CSysWinPaneView*)pane)->field_0xF8 = (u32)self->mField94;
         self->mFileHandle74 = 0;
         self->mMemRegion.validateHeap();
@@ -344,7 +344,7 @@ extern "C" bool SysWinLog_BuildLayout(CSysWinScenarioLog* self, CFileHandle* fh)
         void* fileData78 = self->mFileHandle78->getData();
         CBdat::setBdatEntry(2, fileData78);
         Bdat_GetTable_AA34();
-        lbl_eu_8066490C = (u32)getFP(&lbl_eu_8050EE24[0xea]);
+        lbl_eu_8066490C = (u32)getFP("MNU_scenario");
         self->mFileHandle78 = 0;
         return 1;
     }

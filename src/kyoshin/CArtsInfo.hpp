@@ -92,23 +92,6 @@ struct CArtsMsgObj {
     CArtsMsgChain* chain; // 0x8
 };
 
-// Pane overlays used by OnFileEvent: message-pane size floats (+0x4C/+0x50)
-// and an anchor-pane position triple (+0x2C..+0x36) read/written through a
-// u32/float punning union (retail moves the values GPR->FPR via the stack).
-union CArtsFpu {
-    u32 u;
-    float f;
-};
-struct CArtsPaneSize {
-    u8 gap[0x4C];
-    CArtsFpu width;  // +0x4C
-    CArtsFpu height; // +0x50
-};
-struct CArtsPanePos {
-    CArtsFpu x; // +0x2C
-    CArtsFpu y; // +0x30
-    CArtsFpu z; // +0x34
-};
 
 
 

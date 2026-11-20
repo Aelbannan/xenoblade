@@ -832,7 +832,7 @@ int CtrlMoveEne_ProbeApproachPoint(cf::CtrlMoveEne* self,
     cf::CFunc8008F9ECSub* sub =
         (cf::CFunc8008F9ECSub*)self->mpDataPtr->mPosObj;
     // Random walk distance interpolated between f2 and f1.
-    f32 dist = f2 + f1 * (lbl_eu_80661C30 * (f32)ml::math::mtRand(0xC9));
+    f32 dist = f2 + f1 * (0.005f * (f32)ml::math::mtRand(0xC9));
     // Heading index: the move sub's own heading, or a random half-turn.
     f32 ang;
     if (arg != 0) {
@@ -1393,7 +1393,7 @@ void CtrlMoveEne_InitMoveHook(cf::CtrlMoveEne* self) {
         u32 w;
         u8 b;
     } row;
-    row.w = ((cf::CfObjectEne*)obj)->getEneBdatColumn(lbl_eu_804FB9E8);
+    row.w = ((cf::CfObjectEne*)obj)->getEneBdatColumn("move_type");
     u8 state = row.b;
     if (state >= 0xf) {
         state = state - 0xf;
@@ -1433,7 +1433,7 @@ void CtrlMoveEne_InitMoveHook(cf::CtrlMoveEne* self) {
         u32 w;
         u16 h;
     } row2;
-    row2.w = ((cf::CfObjectEne*)obj)->getEneBdatColumn(lbl_eu_804FB9E8 + 0xA);
+    row2.w = ((cf::CfObjectEne*)obj)->getEneBdatColumn("rndwalkR");
     u16 level = row2.h;
     if (level != 0) {
         *(f32*)&self->field_0x5C = (f32)(u32)level;
@@ -1650,7 +1650,7 @@ void CtrlMoveEne_InitBattleMove(cf::CtrlMoveEne* self) {
         u32 w;
         u8 b;
     } row53;
-    row53.w = ((cf::CfObjectEne*)obj)->getEneBdatColumn(lbl_eu_804FB9E8 + 0x53);
+    row53.w = ((cf::CfObjectEne*)obj)->getEneBdatColumn("snap");
     if (row53.b == 0) {
         self->field_0x180 |= 1;
     }
@@ -1666,7 +1666,7 @@ void CtrlMoveEne_InitBattleMove(cf::CtrlMoveEne* self) {
                 u32 w;
                 u8 b;
             } row58;
-            row58.w = ((cf::CfObjectEne*)obj)->getEneBdatColumn(lbl_eu_804FB9E8 + 0x58);
+            row58.w = ((cf::CfObjectEne*)obj)->getEneBdatColumn("pop_type");
             u8 v58 = row58.b;
             if ((v58 & 1) != 0) {
                 CtrlMoveEne_InitMoveHook(self);
@@ -1752,7 +1752,7 @@ void CtrlMoveEne_InitBattleMove(cf::CtrlMoveEne* self) {
         u32 w;
         u8 b;
     } row61;
-    row61.w = ((cf::CfObjectEne*)obj)->getEneBdatColumn(lbl_eu_804FB9E8 + 0x61);
+    row61.w = ((cf::CfObjectEne*)obj)->getEneBdatColumn("posATR");
     u8 mode = row61.b;
     if ((obj->field_3374 & 0x100u) != 0) {
         self->field_0x180 |= 0x8;
@@ -1771,7 +1771,7 @@ void CtrlMoveEne_InitBattleMove(cf::CtrlMoveEne* self) {
             u32 w;
             s16 h;
         } conv160;
-        conv160.w = ((cf::CfObjectEne*)obj)->getEneBdatColumn(lbl_eu_804FB9E8 + 0x27);
+        conv160.w = ((cf::CfObjectEne*)obj)->getEneBdatColumn("p_type");
         f32 f160 = (f32)conv160.h;
         view->field_0x160 = f160;
         if (mode == 1) view->field_0x160 = f160 * 0.10000000149011612f;
@@ -1781,7 +1781,7 @@ void CtrlMoveEne_InitBattleMove(cf::CtrlMoveEne* self) {
     if (mode == 5) self->field_0x180 |= 0x200;
     if ((obj->field_3374 & 0x10000u) != 0) self->field_0x180 |= 0x40;
     void* fp = getFP(obj->field_3F14);
-    u32 bval = getBdatStringColumnValue(fp, lbl_eu_804FB9E8 + 0x68,
+    u32 bval = getBdatStringColumnValue(fp, "avoid",
                                         obj->field_3F28);
     union {
         u32 w;
@@ -1814,7 +1814,7 @@ void CtrlMoveEne_InitBattleMove(cf::CtrlMoveEne* self) {
             u32 w;
             s16 h;
         } conv4;
-        conv4.w = ((cf::CfObjectEne*)obj)->getEneBdatColumn(lbl_eu_804FB9E8 + 0x27);
+        conv4.w = ((cf::CfObjectEne*)obj)->getEneBdatColumn("p_type");
         f32 f4 = (f32)conv4.h;
         *(f32*)&view->field_0x00.y = f4;
         if (mode == 1) *(f32*)&view->field_0x00.y = f4 * 0.10000000149011612f;

@@ -531,7 +531,7 @@ void CollObjSetupRotBoxState4Timed(cf::CfObjectColl* self, ml::CVec3* pos, const
 // then format the display name from the retail format string.
 void CollObjSetResIdPairName(cf::CfObjectColl* self, u32 a, u32 b) {
     self->field_0x9C = Tok_Pack08(a, b);
-    self->fieldName120.format(lbl_eu_804FC134, a, b);
+    self->fieldName120.format("%02d%02df", a, b);
 }
 
 // Set or clear the indexed FixStr<16> entry in the name array that starts at
@@ -553,7 +553,7 @@ void CollObjSetNameSlot(cf::CfObjectColl* self, const char* name, int index) {
 // into the embedded FixStr<16> using the suffix of the retail format string.
 void CollObjSetResIdPathName(cf::CfObjectColl* self, const char* name) {
     self->field_0x9C = Tok_ParseFile(name);
-    self->fieldName120.format(lbl_eu_804FC134 + 0xa, name);
+    self->fieldName120.format("%s", name);
 }
 
 void CollObjPackResIdWords(void* self, unsigned long a, unsigned long b) {
@@ -562,7 +562,7 @@ void CollObjPackResIdWords(void* self, unsigned long a, unsigned long b) {
 
 unsigned long CollObjSetResIdReady(void* self) {
     extern unsigned long CtrlRemote_SetSharedBit(unsigned long);
-    unsigned long v = *(unsigned long*)((char*)self + 0x9c);
+    unsigned long v = ((cf::CfObjectColl*)self)->field_0x9C;
     return CtrlRemote_SetSharedBit((v >> 16) + 0x20c8);
 }
 
@@ -647,9 +647,9 @@ void* cf::CfObject::CfObject_getPosTriple() { return &mPos3C; }
 // +0x3C/0x40/0x44 in that order. Kept as the counted Fv stub until the retail
 // symbol can be renamed to the real (float, float, float) signature.
 extern "C" void CfObject_setPosXYZ__Q22cf8CfObjectFv(cf::CfObject* self, float a, float b, float c) {
-    *(float*)((char*)self + 0x3c) = a;
-    *(float*)((char*)self + 0x40) = b;
-    *(float*)((char*)self + 0x44) = c;
+    self->mPos3C = a;
+    self->mPos40 = b;
+    self->mPos44 = c;
 }
 
 int cf::CfObject::CfObject_checkTargetState() { return 1; }

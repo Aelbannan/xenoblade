@@ -44,7 +44,6 @@ extern "C" void* getReslistBC8();
 // Scene pose block comes from the typed view in the header
 // (ScnXformBlock, returned by Scn_FindCamItem).
 // Naturally-mangled retail helpers (MWCC emits these exact symbols).
-extern "C" void __ct__8CProcessFv(void* self);
 extern "C" void SymMark_Place(
     CMenuSymbolMark* self, SymbolMarkEntry* entry,
     nw4r::math::VEC3* worldIn, EntryInputPos* posSrc, u32 flag);
@@ -284,12 +283,11 @@ struct EntryClearView {
             clr.worldZ = jz;                                                   \
             clr.unk1C = 0;                                                     \
             nw4r::lyt::Pane* pane =                                            \
-                (nw4r::lyt::Pane*)((LytLayoutFields*)mEntries[i].layout)       \
-                    ->rootPane;                                                \
+                ((nw4r::lyt::Layout*)mEntries[i].layout)->GetRootPane();        \
             if (pane != 0) {                                                   \
                 nw4r::lyt::Pane* found = pane->FindPaneByName(sBase + 0x14, true);   \
                 if (found != 0) {                                              \
-                    ((LytPaneFields*)found)->flagBB &= 0xFE;                   \
+                    found->SetVisible(false);                                   \
                 }                                                              \
             }                                                                  \
         }                                                                      \
@@ -559,7 +557,7 @@ extern "C" void SymMark_Place(
     nw4r::math::VEC3* worldIn, EntryInputPos* posSrc, u32 flag) {
 // Re-derive the root pane at every use: the pane stores can alias the layout
 // pointer slot, so MWCC reloads it for each store group (matches retail).
-#define SYM_ROOT_PANE() (((LytPaneFields*)((LytLayoutFields*)entry->layout)->rootPane))
+#define SYM_ROOT_PANE() (((nw4r::lyt::Layout*)entry->layout)->GetRootPane())
     nw4r::math::VEC3 worldPos;
     nw4r::math::VEC3 screen;
     nw4r::math::VEC3 t;
@@ -583,11 +581,11 @@ extern "C" void SymMark_Place(
     }
     CamMan_ProjectToScreen(&screen, pose, &worldPos);
     // Hidden only when both projected coordinates exceed the bound.
-    LytPaneFields* pane = ((LytLayoutFields*)entry->layout)->rootPane;
+    nw4r::lyt::Pane* pane = ((nw4r::lyt::Layout*)entry->layout)->GetRootPane();
     if (screen.x <= sMarkZero || screen.y <= sMarkZero) {
-        pane->flagBB &= 0xFE;
+        pane->SetVisible(false);
     } else {
-        pane->flagBB |= 1;
+        pane->SetVisible(true);
     }
     if (entry->flag2 != 0) {
         // Distance-based placement: transform a unit offset by the pose matrix,
@@ -604,17 +602,17 @@ extern "C" void SymMark_Place(
             scaleX *= sWideScaleFactor;
         }
         f32 baseScale = sMarkScaleBase / ml::pi;
-        SYM_ROOT_PANE()->trX = worldPos.x;
-        SYM_ROOT_PANE()->trY = worldPos.y;
-        SYM_ROOT_PANE()->trZ = worldPos.z;
+        SYM_ROOT_PANE()->SetSRTElement(0, worldPos.x);
+        SYM_ROOT_PANE()->SetSRTElement(1, worldPos.y);
+        SYM_ROOT_PANE()->SetSRTElement(2, worldPos.z);
         nw4r::math::VEC3 sc =
             *reinterpret_cast<const nw4r::math::VEC3*>(&pose->proj118[0]) *
             baseScale;
-        SYM_ROOT_PANE()->rotX = sc.x;
-        SYM_ROOT_PANE()->rotY = sc.y;
-        SYM_ROOT_PANE()->rotZ = sc.z;
-        SYM_ROOT_PANE()->scX = scaleX;
-        SYM_ROOT_PANE()->scY = scaleY;
+        SYM_ROOT_PANE()->SetSRTElement(3, sc.x);
+        SYM_ROOT_PANE()->SetSRTElement(4, sc.y);
+        SYM_ROOT_PANE()->SetSRTElement(5, sc.z);
+        SYM_ROOT_PANE()->SetSRTElement(6, scaleX);
+        SYM_ROOT_PANE()->SetSRTElement(7, scaleY);
     } else {
         // Vertical slide clamped into a band around the screen edge.
         f32 slideY = (screen.y - sMarkCenterY) * sMarkSlideRate;
@@ -631,9 +629,9 @@ extern "C" void SymMark_Place(
                 screen.y = slideY + (sMarkSlideMax - g);
             }
         }
-        pane->trX = screen.x;
-        pane->trY = screen.y;
-        pane->trZ = z;
+        pane->SetSRTElement(0, screen.x);
+        pane->SetSRTElement(1, screen.y);
+        pane->SetSRTElement(2, z);
     }
 }
 

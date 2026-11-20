@@ -845,6 +845,9 @@ struct ReloadPosVec {
     }
 };
 
+// name-guess: the retail string pool starts with an orphan "NONE" literal that has no surviving text reference; likely a dead-stripped debug-name helper. A real non-static function keeps MWCC's pool order while the linker drops the function itself.
+const char* CfResReloadImpl_debugTypeName() { return "NONE"; }
+
 // Reload-distance check: reads three s16-derived floats plus a u16-derived
 // radius from the BDAT table (two column sets selected by arg2), returns 1
 // when the radius is non-positive or the horizontal distance between the
@@ -867,22 +870,22 @@ extern "C" int reloadInRange(cf::CfResReloadImpl* self, u32 arg2, int arg3) {
     u32 c2;
     u32 cr;
     if (arg2 == 2) {
-        c0 = getBdatStringColumnValue(bdat, lbl_eu_80503140 + 0x05, row);
+        c0 = getBdatStringColumnValue(bdat, "wb_size_X", row);
         vals[0] = (f32)(s16)(u16)c0;
-        c1 = getBdatStringColumnValue(bdat, lbl_eu_80503140 + 0x0f, row);
+        c1 = getBdatStringColumnValue(bdat, "wb_size_Y", row);
         vals[1] = (f32)(s16)(u16)c1;
-        c2 = getBdatStringColumnValue(bdat, lbl_eu_80503140 + 0x19, row);
+        c2 = getBdatStringColumnValue(bdat, "wb_size_Z", row);
         vals[2] = (f32)(s16)(u16)c2;
-        cr = getBdatStringColumnValue(bdat, lbl_eu_80503140 + 0x23, row);
+        cr = getBdatStringColumnValue(bdat, "wb_radius", row);
         radius = (f32)(u16)cr;
     } else {
-        c0 = getBdatStringColumnValue(bdat, lbl_eu_80503140 + 0x2d, row);
+        c0 = getBdatStringColumnValue(bdat, "wa_size_X", row);
         vals[0] = (f32)(s16)(u16)c0;
-        c1 = getBdatStringColumnValue(bdat, lbl_eu_80503140 + 0x37, row);
+        c1 = getBdatStringColumnValue(bdat, "wa_size_Y", row);
         vals[1] = (f32)(s16)(u16)c1;
-        c2 = getBdatStringColumnValue(bdat, lbl_eu_80503140 + 0x41, row);
+        c2 = getBdatStringColumnValue(bdat, "wa_size_Z", row);
         vals[2] = (f32)(s16)(u16)c2;
-        cr = getBdatStringColumnValue(bdat, lbl_eu_80503140 + 0x4b, row);
+        cr = getBdatStringColumnValue(bdat, "wa_radius", row);
         radius = (f32)(u16)cr;
     }
     if (radius <= ml::epsilon) {
@@ -914,11 +917,11 @@ extern "C" int isReloadReady(u32 type) {
     u16 a;
     u16 b;
     if (type == 1) {
-        a = (u16)getBdatStringColumnValue(bdat, lbl_eu_80503140 + 0x55, row);
-        b = (u16)getBdatStringColumnValue(bdat, lbl_eu_80503140 + 0x61, row);
+        a = (u16)getBdatStringColumnValue(bdat, "a_S_FLG_MIN", row);
+        b = (u16)getBdatStringColumnValue(bdat, "a_S_FLG_MAX", row);
     } else if (type == 2) {
-        a = (u16)getBdatStringColumnValue(bdat, lbl_eu_80503140 + 0x6d, row);
-        b = (u16)getBdatStringColumnValue(bdat, lbl_eu_80503140 + 0x79, row);
+        a = (u16)getBdatStringColumnValue(bdat, "b_S_FLG_MIN", row);
+        b = (u16)getBdatStringColumnValue(bdat, "b_S_FLG_MAX", row);
     } else {
         a = 0;
         b = 0;
@@ -935,7 +938,7 @@ extern "C" int isReloadReady(u32 type) {
     if (gm > b) {
         return 2;
     }
-    u8 v = (u8)getBdatStringColumnValue(bdat, lbl_eu_80503140 + 0x85, row);
+    u8 v = (u8)getBdatStringColumnValue(bdat, "mapATR", row);
     u32 mask = (type == 1) ? 0x4 : 0x10;
     return (v & mask) == 0 ? 1 : 0;
 }
@@ -945,12 +948,11 @@ extern "C" int isReloadReady(u32 type) {
 // bit 0 -> 1, bit pair 1-2 -> sub 1, 3-4 -> sub 2, 5-6 -> sub 3, 7-8 -> sub 4.
 // The column name depends on the type field (2 picks a different column).
 extern "C" int testReloadSub(u32 type, int sub) {
-    char* tbl = lbl_eu_80503140;
     char* col;
     if (type == 2) {
-        col = tbl + 0x8c;
+        col = "wb_time";
     } else {
-        col = tbl + 0x94;
+        col = "wa_time";
     }
     u16 v = (u16)getBdatStringColumnValue(::cf::CfBdat::spFldMapListFileData, col, (u16)lbl_eu_80664184);
     if (v & 1) {
@@ -986,9 +988,9 @@ extern "C" int calcReloadPrm(u32 type, u32 arg2, int arg3, u16* out1, u16* out2)
     u16 row = (u16)lbl_eu_80664184;
     char* c1;
     if (type == 2) {
-        c1 = lbl_eu_80503140 + 0x9c;
+        c1 = "wb_pop_rate";
     } else {
-        c1 = lbl_eu_80503140 + 0xa8;
+        c1 = "wa_pop_rate";
     }
 
     u8 s1[4];
@@ -997,9 +999,9 @@ extern "C" int calcReloadPrm(u32 type, u32 arg2, int arg3, u16* out1, u16* out2)
 
     char* c2;
     if (type == 2) {
-        c2 = lbl_eu_80503140 + 0xb4;
+        c2 = "wb_end_time";
     } else {
-        c2 = lbl_eu_80503140 + 0xc0;
+        c2 = "wa_end_time";
     }
     u8 s2[4];
     *(u32*)s2 = getBdatStringColumnValue(bdat, c2, row);
@@ -1007,18 +1009,18 @@ extern "C" int calcReloadPrm(u32 type, u32 arg2, int arg3, u16* out1, u16* out2)
 
     char* c3;
     if (type == 2) {
-        c3 = lbl_eu_80503140 + 0x8c;
+        c3 = "wb_time";
     } else {
-        c3 = lbl_eu_80503140 + 0x94;
+        c3 = "wa_time";
     }
     u8 s3[4];
     *(u32*)s3 = getBdatStringColumnValue(bdat, c3, row);
 
     char* c4;
     if (type == 2) {
-        c4 = lbl_eu_80503140 + 0xcc;
+        c4 = "wb_type";
     } else {
-        c4 = lbl_eu_80503140 + 0xd4;
+        c4 = "wa_type";
     }
     u8 s4[4];
     *(u32*)s4 = getBdatStringColumnValue(bdat, c4, row);
@@ -1186,11 +1188,10 @@ extern "C" void runReloadMain(cf::CfResReloadImpl* self) {
     if (typeRet == 1) {
         u16 p = sReloadType;
         u16 row = (u16)lbl_eu_80664184;
-        char* tbl = lbl_eu_80503140;
         void* bdat = ::cf::CfBdat::spFldMapListFileData;
-        char* col = tbl + 0xd4;
+        char* col = "wa_type";
         if (p == 2) {
-            col = tbl + 0xcc;
+            col = "wb_type";
         }
         // Full-word store of the call result to the stack, then byte reload:
         // retail emits stw/lbz instead of folding the mask.
@@ -1275,12 +1276,12 @@ void updateReloadP1(cf::CfResReloadImpl* self) {
             *(u32*)bytes = v;
             sReloadParam1 = bytes[0];
         } else if (p == 1) {
-            u32 v = getBdatStringColumnValue(bdat, lbl_eu_80503140 + 0xdc, row);
+            u32 v = getBdatStringColumnValue(bdat, "wind_WA", row);
             u8 bytes[4];
             *(u32*)bytes = v;
             sReloadParam1 = bytes[0];
         } else if (p == 2) {
-            u32 v = getBdatStringColumnValue(bdat, lbl_eu_80503140 + 0xe4, row);
+            u32 v = getBdatStringColumnValue(bdat, "wind_WB", row);
             u8 bytes[4];
             *(u32*)bytes = v;
             sReloadParam1 = bytes[0];

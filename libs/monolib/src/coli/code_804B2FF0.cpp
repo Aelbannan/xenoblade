@@ -10,24 +10,7 @@ class __declspec(novtable) CTaskColiManager;
 #include <string.h>
 #include "monolib/coli/CTaskColiManager.hpp"
 #include <monolib/coli/CColiProc.hpp> // CColiResCall (the mover object this TU updates)
-// The shared header declares sColiWalkState / sColiTargetTable as SDA-sized
-// externs (4-byte pointer / 1-byte u8), but retail addresses both as full
-// objects via lis/addi (ADDR16_HA/LO relocs). Rename the header's declarations
-// aside and re-declare them at their full size below so MWCC keeps the 32-bit
-// addressing the retail relocs require instead of SDA21. lbl_eu_8066AEC0 is
-// re-declared const so MWCC can hoist its load past the aliasing stores (like
-// a pooled literal) while still emitting the retail reloc name.
-#define sColiTargetTable sColiTargetTable_hdr
-#define sColiWalkState sColiWalkState_hdr
-#define lbl_eu_8066AEC0 lbl_eu_8066AEC0_hdr
-#define lbl_eu_8066AEC4 lbl_eu_8066AEC4_hdr
-#define lbl_eu_8066AEC8 lbl_eu_8066AEC8_hdr
 #include "monolib/coli/code_804B2FF0.hpp"
-#undef sColiTargetTable
-#undef sColiWalkState
-#undef lbl_eu_8066AEC0
-#undef lbl_eu_8066AEC4
-#undef lbl_eu_8066AEC8
 #include "monolib/work/CTTask.hpp"
 #include "monolib/util/MemManager.hpp"
 #include "monolib/work/CWorkThreadSystem.hpp"
@@ -37,13 +20,8 @@ class __declspec(novtable) CTaskColiManager;
 #include <nw4r/g3d/res/g3d_resnode.h>
 #include <nw4r/db/db_assert.h>
 
-// Full-size externs (retail: walk-state object at 0x8065D138, target table at
-// 0x8056F4F0). Declared at global scope so MWCC emits the names unmangled.
-extern u32 sColiTargetTable[3];
-extern const f32 lbl_eu_8066AEC0;
-extern const f32 lbl_eu_8066AEC4;
-extern const f32 lbl_eu_8066AEC8;
-
+// sColiWalkState / sColiTargetTable are declared with their full types in
+// code_804B2FF0.hpp and defined in the dissolved-data block at the TU tail.
 // C-linkage retail import (declared at global scope so MWCC emits the name
 // unmangled; the definition lives in the sibling coli unit).
 extern "C" void ColiTranslatePoints(void* self);
@@ -205,8 +183,6 @@ struct CColiWalkState {
 struct CColiWalkStateObj : CColiWalkState {
     u8 tail[4]; //0x64..0x67 retail padding
 };
-
-extern CColiWalkStateObj sColiWalkState;
 
 // Query scratch filled by ColiMakeAabbMinMax/ColiMakeAabbRadius: component-wise min x
 // at +0x0 and max x at +0xC (trailing pad keeps the retail 0x18-byte slot).

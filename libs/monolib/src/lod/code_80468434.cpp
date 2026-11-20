@@ -123,7 +123,7 @@ u16* LOD::UnkClass_80468434::drawLodBillDual() {
         nw4r::math::VEC3Add(&corner[0], &corner[0], &scaled);
 
         if ((r->field_0x2B & 1) != 0) {
-            lbl_eu_8056D9B0[r->field_0x29](&pos, &corner[0], r, i);
+            sLodBillboardPosFuncTable[r->field_0x29](&pos, &corner[0], r, i);
         } else {
             pos.x = r->field_0x0;
             pos.y = r->field_0x4;
@@ -159,7 +159,7 @@ u16* LOD::UnkClass_80468434::drawLodBillDual() {
 // Stores the object as current, selects the view matrix (from the matrix
 // tables or the caller's argument), uploads it, assembles the per-record
 // matrices, submits the display lists, registers the vertex arrays and
-// dispatches the record's render functions through lbl_eu_8056D980.
+// dispatches the record's render functions through sLodBatchDrawFuncTable.
 // ===========================================================================
 void dispatchLodRecord__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self,
                                                 u8* arg2) {
@@ -255,7 +255,7 @@ void dispatchLodRecord__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self,
     LodStateFlags &= ~2u;
     u8* p = (u8*)self + *(u32*)((u8*)self + idx * 4 + 0x1c);
     for (u32 i = 0; i < count; i++) {
-        lbl_eu_8056D980[*p](p);
+        sLodBatchDrawFuncTable[*p](p);
     }
 }
 
@@ -557,7 +557,7 @@ u16* drawLodBillNorm__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self) {
 // us-8046d108  drawLodBillView1C  (billboard record draw, +0x1C view)
 // Guard chain returns the +0x1C record view; the direction normal is the
 // transformed X axis of a matrix selected by the u16 at header +0x0E, and
-// each record either dispatches through lbl_eu_8056D9B0 (bit 0 of +0x2B) or
+// each record either dispatches through sLodBillboardPosFuncTable (bit 0 of +0x2B) or
 // copies its position base directly.
 // ===========================================================================
 u16* drawLodBillView1C__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self) {
@@ -642,7 +642,7 @@ u16* drawLodBillView1C__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self) {
 
         nw4r::math::VEC3 pos;
         if ((r->field_0x2B & 1) != 0) {
-            lbl_eu_8056D9B0[r->field_0x29](&pos, &corner[1], r, i);
+            sLodBillboardPosFuncTable[r->field_0x29](&pos, &corner[1], r, i);
         } else {
             pos.x = r->field_0x0;
             pos.y = r->field_0x4;
@@ -803,7 +803,7 @@ void transformSpawnPosAlt__Q23LOD17UnkClass_80468434Fv(Vec* self, Vec* vec,
 // us-8046c8fc  dispatchLodRecords  (record dispatch loop)
 // Stores the object pointer, reads the count at u16[self + idx*2 + 6], then
 // walks the byte stream at self + u32[self + idx*4 + 0x1C]: each byte selects
-// a render function from lbl_eu_8056D998 which is called with (p, &flag) and
+// a render function from sLodCullFuncTable which is called with (p, &flag) and
 // whose return value becomes the next pointer.  Returns the flag byte.
 // ===========================================================================
 s32 dispatchLodRecords__Q23LOD17UnkClass_80468434Fv(u8* self) {
@@ -813,7 +813,7 @@ s32 dispatchLodRecords__Q23LOD17UnkClass_80468434Fv(u8* self) {
         u8 flag = 0;
         u8* p = self + *(u32*)(self + lbl_eu_80665794 * 4 + 0x1c);
         for (s32 i = 0; i < n; i++) {
-            p = (u8*)lbl_eu_8056D998[*p](p, &flag);
+            p = (u8*)sLodCullFuncTable[*p](p, &flag);
         }
         return flag;
     }
@@ -928,23 +928,29 @@ void transformSpawnPos__Q23LOD17UnkClass_80468434Fv();
 void transformSpawnPosAlt__Q23LOD17UnkClass_80468434Fv();
 }
 }
-extern "C" __declspec(align(8)) u32 lbl_eu_8056D980[16] = {
-    (u32)&Blob34::renderLodBatch__Q23LOD17UnkClass_80468434Fv,
-    (u32)&Blob34::drawLodBillDual__Q23LOD17UnkClass_80468434Fv,
-    (u32)&Blob34::drawLodBillView1C__Q23LOD17UnkClass_80468434Fv,
-    (u32)&Blob34::renderLodBatchAlt__Q23LOD17UnkClass_80468434Fv,
-    (u32)&Blob34::drawLodBillNorm__Q23LOD17UnkClass_80468434Fv,
-    (u32)&Blob34::drawLodBillView48__Q23LOD17UnkClass_80468434Fv,
-    (u32)&Blob34::cullLodRecordA__Q23LOD17UnkClass_80468434Fv,
-    (u32)&Blob34::cullLodEntry__Q23LOD17UnkClass_80468434Fv,
-    (u32)&Blob34::cullLodEntry__Q23LOD17UnkClass_80468434Fv,
-    (u32)&Blob34::cullLodRecordB__Q23LOD17UnkClass_80468434Fv,
-    (u32)&Blob34::cullLodEntryAlt__Q23LOD17UnkClass_80468434Fv,
-    (u32)&Blob34::cullLodEntryAlt__Q23LOD17UnkClass_80468434Fv,
-    (u32)&Blob34::copySpawnPos__Q23LOD17UnkClass_80468434Fv,
-    (u32)&Blob34::transformSpawnPos__Q23LOD17UnkClass_80468434Fv,
-    (u32)&Blob34::transformSpawnPosAlt__Q23LOD17UnkClass_80468434Fv,
-    0x00000000,
+extern "C" __declspec(align(8)) LodD980Fn sLodBatchDrawFuncTable[6] = { // name-guess: retail 0x8056D980 holds the six batch/draw entry points
+    (LodD980Fn)&Blob34::renderLodBatch__Q23LOD17UnkClass_80468434Fv,
+    (LodD980Fn)&Blob34::drawLodBillDual__Q23LOD17UnkClass_80468434Fv,
+    (LodD980Fn)&Blob34::drawLodBillView1C__Q23LOD17UnkClass_80468434Fv,
+    (LodD980Fn)&Blob34::renderLodBatchAlt__Q23LOD17UnkClass_80468434Fv,
+    (LodD980Fn)&Blob34::drawLodBillNorm__Q23LOD17UnkClass_80468434Fv,
+    (LodD980Fn)&Blob34::drawLodBillView48__Q23LOD17UnkClass_80468434Fv,
+};
+
+extern "C" LodDispatchFn sLodCullFuncTable[6] = { // name-guess: retail 0x8056D998 holds the six cull entry points
+    (LodDispatchFn)&Blob34::cullLodRecordA__Q23LOD17UnkClass_80468434Fv,
+    (LodDispatchFn)&Blob34::cullLodEntry__Q23LOD17UnkClass_80468434Fv,
+    (LodDispatchFn)&Blob34::cullLodEntry__Q23LOD17UnkClass_80468434Fv,
+    (LodDispatchFn)&Blob34::cullLodRecordB__Q23LOD17UnkClass_80468434Fv,
+    (LodDispatchFn)&Blob34::cullLodEntryAlt__Q23LOD17UnkClass_80468434Fv,
+    (LodDispatchFn)&Blob34::cullLodEntryAlt__Q23LOD17UnkClass_80468434Fv,
+};
+
+extern "C" LodD9B0Fn sLodBillboardPosFuncTable[4] = { // name-guess: retail 0x8056D9B0 holds spawn/billboard position entry points
+    (LodD9B0Fn)&Blob34::copySpawnPos__Q23LOD17UnkClass_80468434Fv,
+    (LodD9B0Fn)&Blob34::transformSpawnPos__Q23LOD17UnkClass_80468434Fv,
+    (LodD9B0Fn)&Blob34::transformSpawnPosAlt__Q23LOD17UnkClass_80468434Fv,
+    0,
 };
 
 extern "C" char lbl_eu_8056D9C0[0x18] = {

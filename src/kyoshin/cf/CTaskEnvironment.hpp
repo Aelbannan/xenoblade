@@ -107,36 +107,6 @@ struct CTaskEnvRotMtx {
 
 // sdata2 constants shared by the clock/rotation/light helpers.
 extern const float lbl_eu_80665FA0;
-extern const float lbl_eu_80665FB4;
-extern const float lbl_eu_80665FCC;
-extern const float lbl_eu_80665FD0;
-extern const float lbl_eu_80665FD4;
-extern const float lbl_eu_80665FD8;
-extern const float lbl_eu_80665FDC;
-extern const float lbl_eu_80665FE0;
-extern const float lbl_eu_80665FE4;
-extern const float lbl_eu_80665FE8;
-extern const float lbl_eu_80665FA4;
-extern const float lbl_eu_80665FA8;
-extern const float lbl_eu_80665FB0;
-extern const float lbl_eu_80665FAC;
-extern const float lbl_eu_80665FC0;
-extern const float lbl_eu_80665FC4;
-extern const float lbl_eu_80665FC8;
-extern const float lbl_eu_80665FF8;
-extern const float lbl_eu_80665FFC;
-extern const float lbl_eu_80666000;
-extern const float lbl_eu_80666004;
-extern const float lbl_eu_80666008;
-extern const float lbl_eu_8066600C;
-extern const float lbl_eu_80666010;
-extern const float lbl_eu_80666014;
-extern const float lbl_eu_80666018;
-extern const float lbl_eu_8066601C;
-extern const float lbl_eu_80666020;
-extern const float lbl_eu_80666024;
-extern const float lbl_eu_80666028;
-extern const float lbl_eu_8066602C;
 extern const float lbl_eu_80666030;
 extern const float lbl_eu_80665FEC;
 

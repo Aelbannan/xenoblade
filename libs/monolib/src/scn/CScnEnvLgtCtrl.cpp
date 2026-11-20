@@ -31,6 +31,7 @@
 #include "libs/monolib/src/scn/CScnCameraMan.hpp"
 #include "libs/monolib/src/scn/CScnItemModelNw4r.hpp"  // getScnRootSlot10 / Scn_GetFrameDelta queries
 #include "libs/monolib/src/scn/CScnFogMan.hpp"
+#include "libs/monolib/src/scn/CScnBloom.hpp"  // real CScnBloom::mView blend slot
 #include "monolib/math/CVec4.hpp"       // ml::CVec4 (scnLgtDispatchEnv slot/walk vecs)
 // The catalog header declares the post-update hook ScnEnvLgt_noopF940 as (void),
 // which conflicts with the real signature declared in CScnEnvLgtCtrl.hpp
@@ -3043,14 +3044,6 @@ struct ScnLgtLimitHolder {
     CScnEnvLgtCtrlLgtLimit* limit;  // +0x4C
 };
 
-// Bloom's +0x48 CScnEnvLgtBlend sub-object viewed by scnLgtSetBlendBloom
-// (bytes: CScnEnvLgtBlend is abstract, so the slot is addressed by name
-// and cast at the use site instead of embedded by value).
-struct ScnLgtBloomBlendView {
-    u8 _00[0x48];
-    u8 blend48[0x0C];  // +0x48 CScnEnvLgtBlend sub-object
-};
-
 extern "C" void scnLgtSetFlag31(CScnEnvLgtCtrl* self, int flag) {
     if (flag != 0) {
         self->field_0x04 |= 0x80000000u;
@@ -3967,7 +3960,7 @@ extern "C" void scnLgtSetBlendBloom(CScnEnvLgtCtrl* self, int init) {
             // retail's `beq` over the addi - no materialized null store.
             CScnEnvLgtBlend* filter = (CScnEnvLgtBlend*)self->field_0x2C_bloom;
             if (filter != 0) {
-                filter = (CScnEnvLgtBlend*)&((ScnLgtBloomBlendView*)filter)->blend48;
+                filter = (CScnEnvLgtBlend*)&((CScnBloom*)filter)->mView;
             }
             ScnFilterMan_appendFilter(
                 ((CScnEnvLgtOwnerLgt*)self->field_0x04_ptr)->field_0x70,
@@ -3987,7 +3980,7 @@ extern "C" void scnLgtSetBlendBloom(CScnEnvLgtCtrl* self, int init) {
             // Same conditional-rebase form as the init pass.
             CScnEnvLgtBlend* filter = (CScnEnvLgtBlend*)self->field_0x2C_bloom;
             if (filter != 0) {
-                filter = (CScnEnvLgtBlend*)&((ScnLgtBloomBlendView*)filter)->blend48;
+                filter = (CScnEnvLgtBlend*)&((CScnBloom*)filter)->mView;
             }
             ScnFilterMan_toggleFilter(
                 ((CScnEnvLgtOwnerLgt*)self->field_0x04_ptr)->field_0x70,

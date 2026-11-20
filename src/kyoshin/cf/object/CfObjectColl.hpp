@@ -10,10 +10,6 @@
 extern const float lbl_eu_80666910;
 extern const float lbl_eu_80666914;
 extern const float lbl_eu_80666928;
-extern const float lbl_eu_80666930;
-extern const float lbl_eu_8066694C;
-extern const float lbl_eu_80666950;
-extern char lbl_eu_804FC134[];
 
 namespace ml { struct CVec3; }
 

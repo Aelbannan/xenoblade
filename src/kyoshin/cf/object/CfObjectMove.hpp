@@ -74,15 +74,6 @@ extern u32 gmGameFlags;
 extern u16 gmGlobalFlag42;   // mode words checked by CfObject_UnkVirtualFunc26 (== 4 / == 1)
 extern u16 gmGlobalFlag44;
 #include "kyoshin/cf/CfGameManagerData.hpp"  // canonical gmScene owner
-// Shared speed constant (retail unmangled name; the .cpp also defines a
-// namespace-cf copy used by the resetMoveSpeed helper). Declared const so
-// MWCC treats the SDA load as read-only and hoists/schedules it at retail's
-// position (MWCC_CASES pair-copy / CArtsInfo store-order fix).
-extern const float lbl_eu_80666A88;
-// Shared camera-time constant (sdata2): CfObject_syncModelRate calls the
-// EU helper with (lbl_eu_80666A94 - value). Const so MWCC keeps the SDA
-// load at retail's position.
-extern const float lbl_eu_80666A94;
 // Movement-speed constants (sdata2, retail unmangled names) used by
 // CfObjectMove_updateSpeedA8 (lbl_eu_80666AA4/AA8/AAC/AB0 + ml::epsilon) and
 // CfObject_setMoveTargetPtr (lbl_eu_80666AD0 scale).
@@ -91,31 +82,14 @@ extern const float lbl_eu_80666AA8;
 extern const float lbl_eu_80666AAC;
 extern const float lbl_eu_80666AB0;
 extern const float lbl_eu_80666AD0;
-extern const float lbl_eu_80666AB4;   // CfObject_updateMoveRate movement-rate constant
-// CfObject_UnkVirtualFunc26 constants: lbl_eu_80666AD4 is the amount clamp
-// threshold, lbl_eu_80666AD8 the sum-vector Y offset.
-extern const float lbl_eu_80666AD4;
-extern const float lbl_eu_80666AD8[2];
 // Movement constants for CfObjectMove_testMoveProximity: lbl_eu_80666A98 is the squared-
 // distance threshold, lbl_eu_80666A9C the fallback distance, lbl_eu_80666AA0
 // the addend applied when the camera/player distance check fails.
 extern const float lbl_eu_80666A98;
 extern const float lbl_eu_80666A9C;
 extern const float lbl_eu_80666AA0;
-// CfObject_UnkVirtualFunc4 movement-threshold constant (compared against the
-// +0x98 sub-object's vtable +0x4C result).
-extern const float lbl_eu_80666A8C;
-// CfObjectMove_resetMoveTarget movement constants: lbl_eu_80666AB8/ABC are the scale/angle
-// factors for the Sin/Cos sweep, lbl_eu_80666AC0 the fallback factor, and
-// lbl_eu_80666AC4/AF20 the ScnRes_ResolveGroundHeight tail factors.
-extern const float lbl_eu_80666AB8;
-extern const float lbl_eu_80666ABC;
-extern const float lbl_eu_80666AC0;
-extern const float lbl_eu_80666AC4;
+// ScnRes_ResolveGroundHeight tail factor used by CfObjectMove_resetMoveTarget.
 extern f32 lbl_eu_8066AF20; // f32 form: must match CtrlMoveBase.hpp (10197/10505 on mixed spellings)
-// CfObjectMove_initAnimTarget approach-rate constants (selected by mFlags68 bit 1).
-extern const float lbl_eu_80666AC8;
-extern const float lbl_eu_80666ACC;
 
 // Scene-time query (CfGameManager.cpp, retail unmangled name): returns the
 // current time value from the shared scene object. extern "C" keeps the

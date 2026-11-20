@@ -420,10 +420,6 @@ extern const double lbl_eu_8066A390;  // u32->f64 magic (2^52)
 extern const f32 lbl_eu_8066A378;
 extern const f32 lbl_eu_8066A380;
 extern const f32 lbl_eu_8066A37C;     // 255.0f color scale
-extern const f32 lbl_eu_8066A398;     // scissor aspect multiplier
-extern const f32 lbl_eu_8066A39C;     // projection znear scale
-extern const f32 lbl_eu_8066A3A0;
-extern const f32 lbl_eu_8066A3A4;
 
 // Retail .sdata u32s used by the ring cache-update functions (imports; the
 // definitions live in the monolib shared data blob, not this TU).
@@ -686,11 +682,11 @@ extern "C" void execGXCmd__8CGXCacheFv(CGXCache* self, u32 sel, void* data) {
         if (rmo->field_rendering) {
             u32 field = VIGetNextField();
             GXSetViewportJitter(s32ToF(vp[0]), s32ToF(vp[1]), s32ToF(vp[2]),
-                                s32ToF(vp[3]), lbl_eu_8066A378, lbl_eu_8066A380,
+                                s32ToF(vp[3]), 0.0f, 1.0f,
                                 field);
         } else {
             GXSetViewport(s32ToF(vp[0]), s32ToF(vp[1]), s32ToF(vp[2]),
-                          s32ToF(vp[3]), lbl_eu_8066A378, lbl_eu_8066A380);
+                          s32ToF(vp[3]), 0.0f, 1.0f);
         }
         break;
     case 0xc: {
@@ -1196,7 +1192,7 @@ void CGXCache::getClearColor() { findRingEntry__8CGXCacheFv(&unk4, 2); }
 // t/l/n = lbl_eu_8066A378, b = deltaY, r = deltaX, f = -unk500 (retail FPRs).
 void CGXCache::updateOrthoGX() {
     CGXCache* cache = cacheInstance__9CDeviceGX;
-    f32 c = lbl_eu_8066A378;
+    f32 c = 0.0f;
     f32 far = s32ToF(-unk500);
     f32 right = s32ToF(cache->mScissorDeltaX);
     f32 bottom = s32ToF(cache->mScissorDeltaY);
@@ -1246,7 +1242,7 @@ void CGXCache::setOrthoProj() {
         del = cvtS32Slot(&su, dx);
         top = num / den * del;
         f32 far = cvtS32Slot(&ss, -unk500);
-        C_MTXOrtho(mProjMtx, top, bottom, left, right, lbl_eu_8066A378, far);
+        C_MTXOrtho(mProjMtx, top, bottom, left, right, 0.0f, far);
     } else {
         // Plain ortho: top/left/near = 1.0, bottom = deltaY, right = deltaX,
         // far = -unk500 (same shape as updateOrthoGX).
@@ -1255,8 +1251,8 @@ void CGXCache::setOrthoProj() {
         f32 far = cvtS32Slot(&cs, -unk500);
         f32 right = cvtS32Slot(&cs, cacheInstance__9CDeviceGX->mScissorDeltaX);
         f32 bottom = cvtS32Slot(&cs, cacheInstance__9CDeviceGX->mScissorDeltaY);
-        C_MTXOrtho(mProjMtx, lbl_eu_8066A378, bottom, lbl_eu_8066A378, right,
-                   lbl_eu_8066A378, far);
+        C_MTXOrtho(mProjMtx, 0.0f, bottom, 0.0f, right,
+                   0.0f, far);
     }
     GXSetProjection(mProjMtx, GX_ORTHOGRAPHIC);
 }
@@ -2170,7 +2166,7 @@ CGXCache::CGXCache() {
     // Retail nests the vec4 setter into the ring call: the callee's r3 return
     // is moved to r5 (mr), not recomputed as a fresh stack-temp address.
     ((CMsgParam<32>*)&unk4)->storeMsg4WB(2,
-        (u32*)CTaskGame_setVec4(&v4, lbl_eu_8066A378, lbl_eu_8066A378, lbl_eu_8066A378, lbl_eu_8066A378));
+        (u32*)CTaskGame_setVec4(&v4, 0.0f, 0.0f, 0.0f, 0.0f));
 
     ((CMsgParam<32>*)&unk4)->storeMsg1W(3, &sGxCmd3Wid);
     ((CMsgParam<32>*)&unk4)->storeMsg1W(4, &sGxCmd4Wid);

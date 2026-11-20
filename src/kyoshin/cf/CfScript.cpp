@@ -27,7 +27,7 @@ extern "C" char* CfScript_CopyName(char* dest, const char* src);
 
 // CfScript_InitPath - initializer for path string
 extern "C" void CfScript_InitPath() {
-    CfScript_CopyName(lbl_eu_805708D0, lbl_eu_80661AC0);
+    CfScript_CopyName(cf::CfScriptManager::sPathBuffer, cf::CfScriptManager::spDirPointer);
 }
 
 // CfScript_CopyName - copy string with length tracking; returns dest
@@ -292,7 +292,7 @@ extern "C" bool CfScript_LoadScript(CfScript* script, const char* name) {
     // Build "dir + bare-name" into path (format varargs).
     ml::CPathUtil::getNoPathExtName(*(ml::FixStr<64>*)&extBuffer, (*(ml::FixStr<128>*)pathStorage).mString);
     ml::FixStr<128>& path = *(ml::FixStr<128>*)pathStorage;
-    path.format(&lbl_eu_804FB3A4[0x1C], lbl_eu_805708D0, extBuffer.mString);
+    path.format(&lbl_eu_804FB3A4[0x1C], cf::CfScriptManager::sPathBuffer, extBuffer.mString);
 
     // Retail derives the archive extension from the live pool base (addi
     // off the format pool register) and reuses it for strlen/strcat.
@@ -302,7 +302,7 @@ extern "C" bool CfScript_LoadScript(CfScript* script, const char* name) {
     // If the current directory already matches, sanity-check the file exists.
     // Retail materializes the strcmp == 0 test into a named int temp
     // (MWCC cntlzw/srwi boolean idiom, CR reused by the branch).
-    int sameDir = strcmp(lbl_eu_805708D0, lbl_eu_80661AC0) == 0;
+    int sameDir = strcmp(cf::CfScriptManager::sPathBuffer, cf::CfScriptManager::spDirPointer) == 0;
     if (sameDir) {
         if (getFileSize__11CDeviceFileFPCc((*(ml::FixStr<128>*)pathStorage).mString, 1) < 0) {
             if (strstr((*(ml::FixStr<128>*)pathStorage).mString, &lbl_eu_804FB3A4[0x25]) == nullptr) {
@@ -394,7 +394,7 @@ extern "C" bool OnFileEvent__8CfScriptFP10CEventFile(cf::CfScript* self, ::CEven
         } else {
             // Failed/other event: look for fallback names, mark "ready".
             const char* path = event->mName;
-            if (strstr(path, lbl_eu_80661AC0) != nullptr &&
+            if (strstr(path, cf::CfScriptManager::spDirPointer) != nullptr &&
                 strstr(path, &lbl_eu_804FB3A4[0x25]) == nullptr) {
                 strstr(path, &lbl_eu_804FB3A4[0x2B]);
             }
@@ -477,14 +477,14 @@ void CfScriptManager::init() {
 
 // CfScriptManager::func_800694B0 - main update loop: while a slot is not yet
 // loaded (waitCount 0/1), dispatch its state handler through the retail ptmf
-// table lbl_eu_80526DD0 ({waitLoad, update}); then run the VM unless the game
+// table cf::CfScriptManager::sWaitHandlers ({waitLoad, update}); then run the VM unless the game
 // manager says we are in a menu/frozen state.
 void CfScriptManager::updateScript() {
     for (u32 i = 0; i < 3; i++) {
         CfScript& script = mScripts[i];
 
         if (script.mWaitCount >= 0 && (u32)script.mWaitCount < 2) {
-            (script.*lbl_eu_80526DD0[script.mWaitCount])();
+            (script.*cf::CfScriptManager::sWaitHandlers[script.mWaitCount])();
         }
     }
 
@@ -532,8 +532,8 @@ void CfScriptManager::resetScripts() {
 
 // sinit_800696C8 - static initializer
 void sinit_800696C8() {
-    const char* src = lbl_eu_80661AC0;
-    char* dest = lbl_eu_805708D0;
+    const char* src = cf::CfScriptManager::spDirPointer;
+    char* dest = cf::CfScriptManager::sPathBuffer;
     u32 len = strlen(src);
     ((CfScriptNameBuffer*)dest)->mLength = len;
     strcpy(dest, src);
@@ -698,7 +698,7 @@ char lbl_eu_804FB3A4[0x34] =
 
 // --- .sdata (retail 0x18) ---
 __declspec(section ".sdata") __attribute__((used, aligned(8)))
-char* lbl_eu_80661AC0 = (char*)lbl_eu_804FB388;
+char* cf::CfScriptManager::spDirPointer = (char*)lbl_eu_804FB388;  // name-guess: pointer to the script directory string
 __declspec(section ".sdata") __attribute__((used, aligned(8)))
 void* __RTTI__Q22cf8CfScript[2] = { lbl_eu_804FB394, lbl_eu_80526E70 };
 __declspec(section ".sdata") __attribute__((used))
@@ -815,7 +815,7 @@ __declspec(section ".data") __attribute__((used))
 void* lbl_eu_80526DC0[4] = { __RTTI__Q22cf8IResInfo, 0, 0, 0 };
 // PMF dispatch pair selected by mWaitCount (retail bytes {0,-1,func} x2).
 __declspec(section ".data") __attribute__((used))
-CfScriptPMF lbl_eu_80526DD0[2] = { &cf::CfScript::waitLoad, &cf::CfScript::update };
+cf::CfScriptPMF cf::CfScriptManager::sWaitHandlers[2] = { &cf::CfScript::waitLoad, &cf::CfScript::update };  // name-guess: PMF pair indexed by mWaitCount
 // CfScript IWorkEvent vtable blob [ti, 0, dtor, ...] (retail 0x88).
 __declspec(section ".data") __attribute__((used))
 void* lbl_eu_80526DE8[34] = {
@@ -849,7 +849,7 @@ u32 lbl_eu_80526E70[4] = { (u32)__RTTI__10IWorkEvent, 0, 0, 0 };
 // (sinit_800696C8, CfScript_LoadScript) away from retail. Section align 8
 // is held by the camera vector below (0x150 is 8-aligned, so it is free).
 __attribute__((used))
-char lbl_eu_805708D0[0x48];
+char cf::CfScriptManager::sPathBuffer[0x48];  // name-guess: current script path buffer written by InitPath/sinit
 __attribute__((used))
 char lbl_eu_80570918[0x108];
 // Camera-default vector (copied as 3 words into CfCam's 80570A2C).

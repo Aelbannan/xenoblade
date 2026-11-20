@@ -4386,8 +4386,6 @@ int CActParamAnim::getChainInt() {
     return *(int*)((char*)this + 1204);
 }
 
-extern u8 lbl_eu_80663D4C;
-
 void clrAnimHeight(CActParamAnim* self) {
     self->field3C4 = 0.0f;
 }
@@ -4481,7 +4479,6 @@ extern "C" void clrAnimGate() { lbl_eu_80663D4C = 0; }
 
 extern "C" u8 getAnimGate() { return lbl_eu_80663D4C; }
 
-extern u8 lbl_eu_80663D4C;
 extern "C" void setAnimGate() { lbl_eu_80663D4C = 1; }
 
 bool CActParamAnim::isAnimBlendActive() { return false; }
@@ -4506,8 +4503,6 @@ bool CActParamAnim::isAnimFrameActive() { return false; }
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 extern "C" void sinit_800539E0() {
-    extern float lbl_eu_80663D48;
-    extern float lbl_eu_8066AF20;
     lbl_eu_80663D48 = lbl_eu_8066AF20;
 }
 

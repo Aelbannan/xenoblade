@@ -163,44 +163,12 @@ void* findObjectById(int id);
 // localized map name via sprintf+getFP into the global BDAT cache, then
 // initializes the marker/gimmick tables and pulls the per-row pane ids/scale
 // from the current BDAT row.
-CMiniMap::CMiniMap() {
+CMiniMap::CMiniMap()
+  : mFileHandle(0), mAccessor(0), mLayout0C(0), mAnimTrans0(0),
+    mAnimTrans1(0), field_0x18(0), field_0x19(1), mReady(0), mFlag1B(0),
+    field_0x1C(0), field_0x1E(0), mField20(0.0f), mField24(0), mField28(0),
+    mField3C("minimaplist%04d") {
     CMiniMap* self = this;
-    // Shared string-pool base (retail keeps it in a callee-saved register).
-    CMMSubHead* sub = &self->mSub;
-    self->mFileHandle = 0;
-    self->mAccessor = 0;
-    self->mLayout0C = 0;
-    self->mAnimTrans0 = 0;
-    self->mAnimTrans1 = 0;
-    self->field_0x18 = 0;
-    self->field_0x19 = 1;
-    self->mReady = 0;
-    self->mFlag1B = 0;
-    self->field_0x1C = 0;
-    self->field_0x1E = 0;
-    self->mField20 = 0.0f;
-    self->mField24 = 0;
-    self->mField28 = 0;
-
-    // Embedded loader subobject at +0x2C (inlined member ctor in retail).
-    sub->mVtable = (void*)lbl_eu_8052C9F0;
-    sub->mPtr04 = 0;
-    sub->mPtr08 = 0;
-    self->mField3C.mFlag38 = 0;
-    self->mField3C.mFlag39 = 0;
-    self->mField3C.mFlag3A = 0;
-
-    // Resolve the localized minimap layout name for the current BDAT row into
-    // the global table cache.
-    spMiniMapBdat = 0;
-    char buf[0x20];
-    sprintf(buf, "minimaplist%04d", sMiniMapRowIds[lbl_eu_80664184 - 1]);
-    spMiniMapBdat = getFP(buf);
-
-    MiniMapInitTable3x5((MiniMapTable*)self->mField3C.mW);
-    MiniMapResetGimmickTables((CMiniMapGimmickData*)self->mField17C.mW);
-    new (&self->m824) UnkClass_8045F564();
-    new (&self->m834) UnkClass_8045F564();
 
     // u32->f32 via the shared 0x4330 double-magic idiom (textual reference
     // keeps MWCC's pool on the retail lbl_eu name instead of an @N label).
@@ -210,11 +178,23 @@ CMiniMap::CMiniMap() {
     self->field_0x1E = BdatGetS16Direct(bdat, "minimap_y", row);
     self->mField20 = (f32)BdatGetU8Direct((const void*)bdat, "minimap_rate", row) * 0.1f;
     self->mField24 = (char*)getFP("scmarkerlist");
-    self->mField28 = (u32)getFP(sMiniMapLayoutNames[lbl_eu_80664184 - 1]);
+    self->mField28 = (u32)getFP(sMiniMapLayoutNames[(u32)lbl_eu_80664184 - 1u]);
 }
 
 // m834 then m824 destroyed in reverse construction order by their real members.
 CMiniMap::~CMiniMap() {}
+
+inline CMMTableBlock::CMMTableBlock(const char* fmt) {
+    spMiniMapBdat = 0;
+    char buf[0x20];
+    sprintf(buf, fmt, sMiniMapRowIds[(u32)lbl_eu_80664184 - 1u]);
+    spMiniMapBdat = getFP(buf);
+    MiniMapInitTable3x5((MiniMapTable*)this);
+}
+
+inline CMMViewBlock::CMMViewBlock() {
+    MiniMapResetGimmickTables((CMiniMapGimmickData*)this);
+}
 
 // ============================================================================
 // CMMClock::OnFileEvent - build the clock layout + animations once the arc
@@ -629,10 +609,10 @@ extern "C" void MiniMapTeardownMarkerPanes(CMiniMap* self) {
     releaseArcResourceAccessor(self->mAccessor);
     (&self->m824)->deleteRegion();
     (&self->m834)->deleteRegion();
-    closeFileHandle((CFileHandle**)&self->mSub.mPtr04);
-    if (self->mSub.mPtr08 != NULL) {
-        deallocate__Q23mtl10MemManagerFPv(self->mSub.mPtr08);
-        self->mSub.mPtr08 = NULL;
+    closeFileHandle((CFileHandle**)&self->mSub.mFileHandle);
+    if (self->mSub.mData != NULL) {
+        deallocate__Q23mtl10MemManagerFPv(self->mSub.mData);
+        self->mSub.mData = NULL;
     }
 }
 
@@ -1803,7 +1783,7 @@ void CMenuMiniMap2::Init() {
     // Buffers/subobject temps declared up front; filled at their use sites.
     char nameBuf[0x40];
     char rowBuf[0x20];
-    CMMSub sub;
+    CMMTex sub;
 
     // `this` converts to the IScnRender secondary base at +0x5C; MWCC emits
     // the mr/beq/addi adjusted-this sequence for the non-primary base cast.
@@ -1848,8 +1828,8 @@ void CMenuMiniMap2::Init() {
         mMiniMap.mField20 = map.mField20;
         mMiniMap.mField24 = map.mField24;
         mMiniMap.mField28 = map.mField28;
-        mMiniMap.mSub.mPtr04 = map.mSub.mPtr04;
-        mMiniMap.mSub.mPtr08 = map.mSub.mPtr08;
+        mMiniMap.mSub.mFileHandle = map.mSub.mFileHandle;
+        mMiniMap.mSub.mData = map.mSub.mData;
         mMiniMap.mField3C = map.mField3C;
         mMiniMap.mField17C = map.mField17C;
         mMiniMap.m824 = map.m824;
@@ -1860,32 +1840,31 @@ void CMenuMiniMap2::Init() {
         mtl::ALLOC_HANDLE handle = mtl::MemManager::getHandleMEM2();
         // Retail issues a second, unused MEM2 probe before the regions.
         mtl::MemManager::getHandleMEM2();
-        ((UnkClass_8045F564*)&mMiniMap.m824)->createRegion(
+        mMiniMap.m824.createRegion(
             handle, 0x4000, "MiniMap2", 0);
-        ((UnkClass_8045F564*)&mMiniMap.m834)->createRegion(
+        mMiniMap.m834.createRegion(
             handle, -0x8000, "MiniMap2_ObjM", 0);
 
-        sprintf(nameBuf, "menu/jp/mm%04d.arc", sMiniMapRowIds[lbl_eu_80664184 - 1]);
+        sprintf(nameBuf, "menu/jp/mm%04d.arc", sMiniMapRowIds[(u32)lbl_eu_80664184 - 1u]);
         mMiniMap.mFileHandle = CDeviceFile::readFile(
             mtl::MemManager::getHandleMEM2(), nameBuf,
             (IWorkEvent*)&mMiniMap, 0, 0);
 
         // Re-seed the loader subobject from scratch, refresh the global BDAT
         // pane-name cache for the current row, then request the map image.
-        sub.mVtable = (void*)lbl_eu_8052C9F0;
-        sub.mPtr04 = NULL;
-        sub.mPtr08 = NULL;
-        sub.mFlag0C = 0;
-        sub.mFlag0D = 0;
-        sub.mFlag0E = 0;
+        sub.mFileHandle = NULL;
+        sub.mData = NULL;
+        sub.mReady = 0;
+        sub.mRow = 0;
+        sub.mMode = 0;
         spMiniMapBdat = NULL;
-        sprintf(rowBuf, "minimaplist%04d", sMiniMapRowIds[lbl_eu_80664184 - 1]);
+        sprintf(rowBuf, "minimaplist%04d", sMiniMapRowIds[(u32)lbl_eu_80664184 - 1u]);
         spMiniMapBdat = getFP(rowBuf);
-        mMiniMap.mSub.mPtr04 = sub.mPtr04;
-        mMiniMap.mSub.mPtr08 = sub.mPtr08;
-        mMiniMap.mField3C.mFlag38 = sub.mFlag0C;
-        mMiniMap.mField3C.mFlag39 = sub.mFlag0D;
-        mMiniMap.mField3C.mFlag3A = sub.mFlag0E;
+        mMiniMap.mSub.mFileHandle = sub.mFileHandle;
+        mMiniMap.mSub.mData = sub.mData;
+        mMiniMap.mSub.mReady = sub.mReady;
+        mMiniMap.mSub.mRow = sub.mRow;
+        mMiniMap.mSub.mMode = sub.mMode;
         ((CMMMapImg*)&mMiniMap.mSub)->MiniMapRequestMapImage();
     }
 }
@@ -1963,7 +1942,7 @@ extern "C" void MiniMapUpdateSubobject(CMiniMap* self) {
                 }
             }
         }
-        u8 curBand = self->mField3C.mFlag39;
+        u8 curBand = self->mSub.mRow;
         if (band != curBand) {
             // Band changed -> re-run the fade-in to rebuild markers.
             self->field_0x18 = 4;
@@ -1992,7 +1971,7 @@ extern "C" void MiniMapUpdateSubobject(CMiniMap* self) {
             } else {
                 newFlag = 0;
             }
-            if (newFlag != self->mField3C.mFlag3A) {
+            if (newFlag != self->mSub.mMode) {
                 self->field_0x18 = 4;
             }
         }
@@ -2039,10 +2018,10 @@ extern "C" void MiniMapUpdateSubobject(CMiniMap* self) {
         break;
     case 7:
         // Map image ready -> show it (uses the cached timg when present).
-        if (self->mField3C.mFlag38 == 0) break;
+        if (self->mSub.mReady == 0) break;
         self->field_0x18 = 5;
         {
-            void* res = self->mSub.mPtr08;
+            void* res = self->mSub.mData;
             if (res == NULL) {
                 res = self->mAccessor->GetResource(0x74696D67,
                                                    "mf00_com00_dmy.tpl", 0);
@@ -2076,10 +2055,10 @@ void CMenuMiniMap2::Move() {
         // clock-show flag (mField38) plus minimap ready bit both set.
         if (gmGameFlags & 0xBFE40000) break;
         if (mClock.mReady == 0) break;
-        if ((mMiniMap.mField3C.mFlag38 != 0 ? mMiniMap.mReady : 0) == 0) break;
+        if ((mMiniMap.mSub.mReady != 0 ? mMiniMap.mReady : 0) == 0) break;
         // Load the cached resource first (retail hoists lwz r5,0xc4 above the
         // store sequence); the fresh GetResource result merges into it.
-        u8* res = mMiniMap.mSub.mPtr08;
+        u8* res = mMiniMap.mSub.mData;
         mField8D4 = 1;
         mClock.field_0x18 = 1;
         mClock.field_0x19 = 0;
@@ -2126,7 +2105,7 @@ void CMenuMiniMap2::Move() {
     case 3:
         // Fade-out done -> back to idle.
         if (mClock.mReady != 0) {
-            if ((mMiniMap.mField3C.mFlag38 != 0 ? mMiniMap.mReady : 0) != 0) {
+            if ((mMiniMap.mSub.mReady != 0 ? mMiniMap.mReady : 0) != 0) {
                 mField8D4 = 0;
             }
         }

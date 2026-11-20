@@ -113,12 +113,15 @@ public:
 
 class CMMTex : public IWorkEvent {
 public:
+    CMMTex() : mFileHandle(0), mData(0), mReady(0), mRow(0), mMode(0) {}
     virtual ~CMMTex();
     bool OnFileEvent(CEventFile* pEventFile);
 
     CFileHandle* mFileHandle; // 0x4 - requested file handle
     u8* mData;                // 0x8 - loaded file data buffer
     u8 mReady;                // 0xC - load-complete flag
+    u8 mRow;                  // 0xD - selected row
+    u8 mMode;                 // 0xE - resource variant
 };
 
 // Unknown loader subobject embedded at CMiniMap+0x2C. Retail's inlined member
@@ -141,13 +144,10 @@ struct CMMSubHead {
     u8* mPtr08;      // 0x34 abs - cached 'timg' resource (Move)
 };
 
-// Marker-table region 0x38..0x178 (0x140 bytes). The leading bytes alias the
-// loader flags.
+// Marker-table region 0x3C..0x178; the three loader flags live in the
+// CMMTex subobject at +0x3C..+0x3E (CMiniMap::mSub).
 struct CMMTableBlock {
-    u8 mFlag38;      // 0x38 - clock-show flag (Move)
-    u8 mFlag39;      // 0x39
-    u8 mFlag3A;      // 0x3A
-    u8 mPad3B;
+    CMMTableBlock(const char* fmt);
     u32 mW[0x4F];    // 0x3C..0x178 (MiniMapBuildMarkerPanes marker table)
 };
 
@@ -216,6 +216,7 @@ struct CMiniMapGimmickData {
 
 // Gimmick-view region 0x178..0x820.
 struct CMMViewBlock {
+    CMMViewBlock();
     u32 mW[0x1AA];   // MiniMapInitGimmickTables gimmick view
 };
 
@@ -239,7 +240,7 @@ public:
     f32 mField20;                          // 0x20 - marker grid scale
     char* mField24;                        // 0x24 - getFP-resolved pane name
     u32 mField28;                          // 0x28 - getFP-resolved layout name
-    CMMSubHead mSub;                       // 0x2C..0x38 (flags in mField3C head)
+    CMMTex mSub;                           // 0x2C..0x3C (real loader subobject)
     CMMTableBlock mField3C;                // 0x38..0x178 (marker-table region, MiniMapBuildMarkerPanes)
     CMMViewBlock mField17C;                // 0x178..0x820 (gimmick-view region, MiniMapInitGimmickTables)
     u32 mPad820;                           // 0x820..0x824

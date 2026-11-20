@@ -55,7 +55,7 @@ CPcEffect07::CPcEffect07(PcEffectActorView* actor) {
     maxEffects = 0;
     mField5C = 0.0f;
     mField60 = 0.0f;
-    lbl_eu_80664398 = (PcEffectData*)this;
+    gpPcEffectData = (PcEffectData*)this;
 }
 } // namespace cf
 
@@ -70,8 +70,8 @@ extern "C" void* __dt__Q22cf11CPcEffect07Fv(void* self, int flag) {
         *(u32*)((char*)this_ + 0) = (u32)lbl_eu_80533744;
         *(u32*)((char*)this_ + 4) = (u32)lbl_eu_80533744 + 0x10;
         freePcEffects(reinterpret_cast<PcEffectData*>(this_));
-        if ((void*)lbl_eu_80664398 == (void*)this_) {
-            lbl_eu_80664398 = 0;
+        if ((void*)gpPcEffectData == (void*)this_) {
+            gpPcEffectData = 0;
         }
         if (flag > 0) {
             ::operator delete(this_);
@@ -91,7 +91,7 @@ extern "C" void* __dt__Q22cf11CPcEffect07Fv(void* self, int flag) {
 // r3 = effect type (selects the 0x700+n id via the switch AND is recorded as
 // the entry/global id byte); r4 = slot selector (negative = auto-pick).
 extern "C" s32 spawnPcEffect(u8 type, s32 slotSel) {
-    PcEffectData* data = lbl_eu_80664398;
+    PcEffectData* data = gpPcEffectData;
     s32 slot = slotSel;
     if (data == 0)
         return -1;
@@ -131,11 +131,11 @@ extern "C" s32 spawnPcEffect(u8 type, s32 slotSel) {
     CPcEffect07Obj* obj =
         reinterpret_cast<PcEffectFactoryView*>(data)->Create(id, -1, 0, 0);
     // Clear the new object's aux slot and stash the bank pointer there.
-    obj->mFieldB0 = (u32)lbl_eu_80664398;
+    obj->mFieldB0 = (u32)gpPcEffectData;
 
     // Link the object to the actor's schedule sub-object (+0x3E9C).
     PcEffectScheduleSub* sub =
-        reinterpret_cast<PcEffectScheduleSub*>(lbl_eu_80664398->mActor);
+        reinterpret_cast<PcEffectScheduleSub*>(gpPcEffectData->mActor);
     if (sub != NULL)
         sub = &reinterpret_cast<PcEffectActorView*>(sub)->mSub;
     bindPartnerO_((cf::CfObjectEff*)obj, (u8*)sub, (u8*)0);
@@ -144,16 +144,16 @@ extern "C" s32 spawnPcEffect(u8 type, s32 slotSel) {
     // transform pointer with the holder fetched from the sub-object
     // (vtable slot 0x12C, keyed by the per-slot table value). The record
     // address is recomputed at each use (retail keeps only the offset).
-    ((PcEffectSpawnRec*)((char*)lbl_eu_80664398 + off))->mObj = obj;
+    ((PcEffectSpawnRec*)((char*)gpPcEffectData + off))->mObj = obj;
     u32 key = lbl_eu_80533738[slot];
     // Recomputed here (retail reloads the actor pointer after the attach call).
-    sub = reinterpret_cast<PcEffectScheduleSub*>(lbl_eu_80664398->mActor);
+    sub = reinterpret_cast<PcEffectScheduleSub*>(gpPcEffectData->mActor);
     if (sub != NULL)
         sub = &reinterpret_cast<PcEffectActorView*>(sub)->mSub;
     PcEffectSchedHolder* holder =
         reinterpret_cast<PcEffectSchedFetchSub*>(sub)->GetHolder(key);
     // Short-lived record view: dies before the virtual calls below.
-    PcEffectSpawnRec* rec = (PcEffectSpawnRec*)((char*)lbl_eu_80664398 + off);
+    PcEffectSpawnRec* rec = (PcEffectSpawnRec*)((char*)gpPcEffectData + off);
     rec->mMat = reinterpret_cast<ml::CMat34*>(holder);
     rec->mActive = 1;
 
@@ -168,39 +168,39 @@ extern "C" s32 spawnPcEffect(u8 type, s32 slotSel) {
     // Rotation: holder is re-fetched from the entry (not cached across the
     // SetPos call), via getRotXYZ, then SetRot.
     ml::CVec3 rot;
-    ((PcEffectSpawnRec*)((char*)lbl_eu_80664398 + off))
+    ((PcEffectSpawnRec*)((char*)gpPcEffectData + off))
         ->mMat->getRotXYZ(rot);
     obj->SetRot(rot);
 
     // Record the type byte in the entry and globally, reset the cooldown.
-    ((PcEffectSpawnRec*)((char*)lbl_eu_80664398 + off))->mId = type;
-    lbl_eu_80664398->maxEffects = type;
-    lbl_eu_80664398->mField5C = 52.0f;
+    ((PcEffectSpawnRec*)((char*)gpPcEffectData + off))->mId = type;
+    gpPcEffectData->maxEffects = type;
+    gpPcEffectData->mField5C = 52.0f;
     return slot;
 }
 
 // Current effect-bank byte: -1 when the global bank is absent or the lookup
 // fails, else the bank byte at +0x58 (retail reloads it for the return).
 extern "C" int spawnBankByte(void) {
-    if (lbl_eu_80664398 == 0)
+    if (gpPcEffectData == 0)
         return -1;
-    if (spawnPcEffect(*(u8*)((u8*)lbl_eu_80664398 + 0x58), -1) < 0)
+    if (spawnPcEffect(*(u8*)((u8*)gpPcEffectData + 0x58), -1) < 0)
         return -1;
-    return *(u8*)((u8*)lbl_eu_80664398 + 0x58);
+    return *(u8*)((u8*)gpPcEffectData + 0x58);
 }
 
 int getEffectMax() {
-    if (lbl_eu_80664398 == 0) {
+    if (gpPcEffectData == 0) {
         return 0;
     }
-    return lbl_eu_80664398->maxEffects;
+    return gpPcEffectData->maxEffects;
 }
 
 // Slot id lookup: negative index scans slots 2..0 for the first active entry;
 // a non-negative index addresses the slot directly. Returns the entry's slot
 // ID byte, or -1 when no bank/no active entry.
 s32 getSlotEffectId(int index) {
-    PcEffectData* data = lbl_eu_80664398;
+    PcEffectData* data = gpPcEffectData;
     if (data == 0)
         return -1;
 
@@ -220,7 +220,7 @@ s32 getSlotEffectId(int index) {
 
 int findActiveEntryID(int index)
 {
-    PcEffectData* data = lbl_eu_80664398;
+    PcEffectData* data = gpPcEffectData;
     if (data == 0)
         return -1;
 
@@ -241,7 +241,7 @@ int findActiveEntryID(int index)
 // are active - retail walks the pointer backwards with a countdown that never
 // terminates by the counter; reproduced verbatim).
 extern "C" u32 countPcEffectSlots(u32 index) {
-    PcEffectData* data = lbl_eu_80664398;
+    PcEffectData* data = gpPcEffectData;
     if (data == 0) return 0;
 
     int count = 0;
@@ -267,7 +267,7 @@ extern "C" u32 countPcEffectSlots(u32 index) {
 // is stored. When amount <= 0 the object also gets a setChildB59__ poke with
 // the sign-folded flag (retail's neg/or/srwi idiom always yields 1).
 s32 startPcEffect(u32 handle, s32 index, s32 bankByte, s32 amount) {
-    PcEffectData* data = lbl_eu_80664398;
+    PcEffectData* data = gpPcEffectData;
     if (data == 0)
         return 0;
     if (data->mField60 > 0.0f)
@@ -300,7 +300,7 @@ s32 startPcEffect(u32 handle, s32 index, s32 bankByte, s32 amount) {
     f32 lim = 2.0f;
     e->_10 = amount;
     e->_14 = bankByte;
-    lbl_eu_80664398->mField60 = lim;
+    gpPcEffectData->mField60 = lim;
     if (amount <= 0) {
         // Retail folds the byte into a constant via (-v | v) >> 31 + 1.
         setChildB59__(e->mObj, (s8)((((u32)(-bankByte | bankByte)) >> 31) + 1));
@@ -309,7 +309,7 @@ s32 startPcEffect(u32 handle, s32 index, s32 bankByte, s32 amount) {
 }
 
 s32 getFirstFreeSlot() {
-    PcEffectData* data = lbl_eu_80664398;
+    PcEffectData* data = gpPcEffectData;
     if (!data) return -1;
     for (s32 i = 0; i < 3; i++) {
         if (data->entries[i].mActive == 0) return i;
@@ -318,19 +318,19 @@ s32 getFirstFreeSlot() {
 }
 
 int isSlotActive(int index) {
-    if (lbl_eu_80664398 == 0) return 0;
+    if (gpPcEffectData == 0) return 0;
     s16 val;
     switch (index) {
-    case 0: val = lbl_eu_80664398->entries[0].mActive; break;
-    case 1: val = lbl_eu_80664398->entries[1].mActive; break;
-    case 2: val = lbl_eu_80664398->entries[2].mActive; break;
+    case 0: val = gpPcEffectData->entries[0].mActive; break;
+    case 1: val = gpPcEffectData->entries[1].mActive; break;
+    case 2: val = gpPcEffectData->entries[2].mActive; break;
     default: return 0;
     }
     return (val == 1) ? 1 : 0;
 }
 
 int hasAnyActiveSlot() {
-    PcEffectData* data = lbl_eu_80664398;
+    PcEffectData* data = gpPcEffectData;
     if (!data) return 0;
     for (int i = 0; i < 3; i++) {
         if (data->entries[i].mActive != 0) return 1;
@@ -339,7 +339,7 @@ int hasAnyActiveSlot() {
 }
 
 int countActiveSlots() {
-    PcEffectData* data = lbl_eu_80664398;
+    PcEffectData* data = gpPcEffectData;
     int result = 0;
     if (data != 0) {
         if (data->entries[0].mActive == 1) result = 1;
@@ -371,10 +371,10 @@ PcEffectSchedHolder* getSchedHolder(CPcEffect07* self, s32 id, s32 sel, s32 amou
 // Clear the caller's +0xB0 slot, then scan the 3-entry table at the global
 // bank's +0x10 (24-byte stride) for the entry pointing at r4 and wipe it.
 extern "C" void clearPcEffect(void* a1, void* pEffect) {
-    if (lbl_eu_80664398 == 0)
+    if (gpPcEffectData == 0)
         return;
     *(u32*)((u8*)pEffect + 0xB0) = 0;
-    PcEffectData* g = lbl_eu_80664398;
+    PcEffectData* g = gpPcEffectData;
     for (int i = 0; i < 3; i++) {
         PcEffectEntry* e = &g->entries[i];
         if (*(void**)e == pEffect) {
@@ -393,7 +393,7 @@ extern "C" void clearPcEffect(void* a1, void* pEffect) {
 // sign-folded constant. Afterwards the two timers at +0x5C/+0x60 are stepped
 // down by an sdata2 epsilon and clamped to it.
 void tickPcEffects(CPcEffect07* self) {
-    if (lbl_eu_80664398 == NULL)
+    if (gpPcEffectData == NULL)
         return;
     if (cf::CfGameManager::isSceneLoading())
         return;
@@ -403,7 +403,7 @@ void tickPcEffects(CPcEffect07* self) {
         if (e->mActive == 2) {
             // Aux timer lives in the same-strided record of the global bank
             // (aliases this entry's mField06).
-            lbl_eu_80664398->entries[i].mField06++;
+            gpPcEffectData->entries[i].mField06++;
             if ((s32)e->_10 > 0) {
                 --e->_10;
                 if (e->_10 == 0) {
@@ -463,10 +463,10 @@ void updatePcEffect(CPcEffect07* self) {
 // Retail order matters: the global bank is null-checked FIRST (before the
 // argument defaulting), then the argument defaults to it.
 void freePcEffects(PcEffectData* data) {
-    if (lbl_eu_80664398 == 0)
+    if (gpPcEffectData == 0)
         return;
     if (data == 0)
-        data = lbl_eu_80664398;
+        data = gpPcEffectData;
     if (data == 0)
         return;
 
@@ -487,7 +487,7 @@ void freePcEffects(PcEffectData* data) {
 // Retail order matters: the global bank is loaded and null-checked FIRST,
 // then the argument defaults to it.
 void dropPendingFx(PcEffectData* data) {
-    PcEffectData* bank = lbl_eu_80664398;
+    PcEffectData* bank = gpPcEffectData;
     if (bank == 0)
         return;
     if (data == 0)
@@ -530,16 +530,16 @@ extern "C" void thunk_adj4_update(void* self) { ((void(*)(void*))updatePcEffect)
 // spawnBankByte (which returns -1 on lookup failure); CArtsParam treats 0
 // as "no bank".
 extern "C" int getEffectBankByte() {
-    if (lbl_eu_80664398 == 0)
+    if (gpPcEffectData == 0)
         return 0;
-    return lbl_eu_80664398->maxEffects;
+    return gpPcEffectData->maxEffects;
 }
 
 // Slot-active query (retail func_801B1FFC): 1 when the global bank exists
 // and slot `index`'s active flag (s16 at entry+0x04, read via the +0x14
 // scan-record view) equals 1, else 0. CAIAction polls slots 0/1/2 with it.
 extern "C" int isPcEffectSlotActive(int index) {
-    PcEffectData* data = lbl_eu_80664398;
+    PcEffectData* data = gpPcEffectData;
     if (data == 0)
         return 0;
     return data->entries[index].mActive == 1;
@@ -548,3 +548,7 @@ extern "C" int isPcEffectSlotActive(int index) {
 extern "C" void fwdPcEffect20C8(u8* self) { ((void(*)(void*))getSchedHolder)((char*)self - 0x4); }
 
 extern "C" void fwdPcEffectDtor(u8* self) { ((void(*)(void*))__dt__Q22cf11CPcEffect07Fv)((char*)self - 0x4); }
+
+// name-guess: CPcEffect07 bank pointer; sole retail .sbss object at 0x80664398,
+// assigned by the constructor and cleared by the destructor.
+PcEffectData* gpPcEffectData;

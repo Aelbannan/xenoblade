@@ -866,7 +866,7 @@ extern "C" f32 lbl_eu_80668AE4;
 extern "C" void* CtrlObjectParam_GetCharEntry(u32 index);            // character-data lookup
 extern "C" u32 CtrlObjectParam_GetCurrentRowKey(void*);                       // character-data category
 extern "C" u32 Bdat_GetMaxRow_B1EC(void* fp);               // BDAT row count
-extern "C" u32 CtrlRemote_TouchBitByArg(u32 resourceId);         // message-count lookup
+#include "kyoshin/cf/CtrlRemoteApi.hpp"         // message-count lookup
 // BdatGetU16Direct / BdatGetPtrDirect return wider-than-u16 values in retail; the
 // call sites truncate with an explicit (u16) cast (see SysWinLog_OpenContent).
 // BdatGetPtrDirect's third arg is the u16 row key; declared int so call sites

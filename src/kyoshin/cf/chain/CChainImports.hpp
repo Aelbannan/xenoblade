@@ -85,10 +85,10 @@ extern double lbl_eu_80668A28;
 extern u32 gmPauseFlags;
 
 namespace cf { class CfObjectActor; }
-
+#include "kyoshin/cf/CtrlRemoteApi.hpp"
+#include "kyoshin/cf/CfCamSymbols.hpp"
 extern "C" {
     void CCharVoiceMan_FlushAll();
-    u32 CtrlRemote_TouchBitByArg(u32 resourceId);
     void CCharVoiceMan_PlayNodeById(u32 arg);
     int CCharVoiceMan_IsNodeActive(u32 arg);
     int CCharVoiceMan_AllocChainVoiceId();
@@ -123,7 +123,7 @@ extern "C" {
     // Presentation/event flag-bit probe (code_800F42AC.cpp; retail symbol
     // carries the Fi suffix) and battle-manager sub-check (CBattleManager).
     bool func_8006EF04__Fi(int mask);
-    bool isGlobalCamFlagSet__Fi(int mask);
+
     // Arts-select slot probe (CMenuArtsSelect.cpp): unmangled at the retail
     // call site, so declared here with C linkage rather than through the
     // class member (which mangles to checkSlotUsable__15CMenuArtsSelectFl).

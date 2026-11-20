@@ -2,6 +2,7 @@
 // Auto-scaffolded catalog TU for kyoshin/CEquipItemBox
 // Replace stubs with high-level C/C++ during decomp.
 
+#include "kyoshin/cf/CfBdat.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/code_8025FB10.hpp"
@@ -458,7 +459,7 @@ u32 CEquipItemGrid::calcEIBCountKey(CItemInstance* item) {
         u32 key = CItem_initItemImplInstances((CItemData*)item)->vf54((CItemData*)item);
         u32 id = CItem_initItemImplInstances((CItemData*)item)->vf08((CItemData*)item);
         u16 count =
-            (u16)BdatGetU16Direct((const void*)lbl_eu_806640D8, "money", key);
+            (u16)BdatGetU16Direct((const void*)::cf::CfBdat::spBtlSkillListFileData, "money", key);
         CEquipItemBoxF32Record rec = lbl_eu_8050EF68;
         // int->double via the 0x4330 magic, then scale by rec[id] and truncate.
         result = __cvt_fp2unsigned((double)(u32)count * (double)rec.f[id & 0x3F]);
@@ -469,7 +470,7 @@ u32 CEquipItemGrid::calcEIBCountKey(CItemInstance* item) {
             CItemInstance* entry =
                 (CItemInstance*)CItem_initItemImplInstances((CItemData*)item)->vf2C((CItemData*)item, i);
             if (entry != 0) {
-                u16 count = (u16)BdatGetU16Direct((const void*)lbl_eu_806640D8,
+                u16 count = (u16)BdatGetU16Direct((const void*)::cf::CfBdat::spBtlSkillListFileData,
                                                "money", i);
                 double dcount = (double)(u32)count;
                 double dacc = (double)(u32)result;
@@ -479,7 +480,7 @@ u32 CEquipItemGrid::calcEIBCountKey(CItemInstance* item) {
         }
     } else {
         u32 v = LookupItemTypeTable(kind);
-        u32 count = BdatGetU16Direct((const void*)lbl_eu_806640D8, "money", kind);
+        u32 count = BdatGetU16Direct((const void*)::cf::CfBdat::spBtlSkillListFileData, "money", kind);
         u8 n = (u8)CItem_initItemImplInstances((CItemData*)item)->vf30((CItemData*)item);
         float inc = lbl_eu_80668B28;
         for (u8 i = 0; i < n; i++) {
@@ -661,8 +662,8 @@ void CEquipItemGrid::sortEIBByNm58(int param) {
             CItemInstance* objB = (CItemInstance*)CItem_kindPtr(cat, b->unk0);
             u32 keyA = CItem_initItemImplInstances((CItemData*)objA)->vf54((CItemData*)objA);
             u32 keyB = CItem_initItemImplInstances((CItemData*)objB)->vf54((CItemData*)objB);
-            u8 nameA = BdatGetU8Direct((const void*)lbl_eu_806640D8, &lbl_eu_8050EFDC[0x58], (u16)keyA);
-            u8 nameB = BdatGetU8Direct((const void*)lbl_eu_806640D8, &lbl_eu_8050EFDC[0x58], (u16)keyB);
+            u8 nameA = BdatGetU8Direct((const void*)::cf::CfBdat::spBtlSkillListFileData, &lbl_eu_8050EFDC[0x58], (u16)keyA);
+            u8 nameB = BdatGetU8Direct((const void*)::cf::CfBdat::spBtlSkillListFileData, &lbl_eu_8050EFDC[0x58], (u16)keyB);
             u32 eqA = (u32)((u8)nameA == param);
             u32 eqB = (u32)((u8)nameB == param);
             if (eqA < eqB) {
@@ -692,8 +693,8 @@ void CEquipItemGrid::sortEIBByNm00(int param) {
             CItemInstance* objB = (CItemInstance*)CItem_kindPtr(cat, b->unk0);
             u32 keyA = CItem_initItemImplInstances((CItemData*)objA)->vf54((CItemData*)objA);
             u32 keyB = CItem_initItemImplInstances((CItemData*)objB)->vf54((CItemData*)objB);
-            u8 nameA = BdatGetU8Direct((const void*)lbl_eu_806640D8, &lbl_eu_8050EFDC[0], (u16)keyA);
-            u8 nameB = BdatGetU8Direct((const void*)lbl_eu_806640D8, &lbl_eu_8050EFDC[0], (u16)keyB);
+            u8 nameA = BdatGetU8Direct((const void*)::cf::CfBdat::spBtlSkillListFileData, &lbl_eu_8050EFDC[0], (u16)keyA);
+            u8 nameB = BdatGetU8Direct((const void*)::cf::CfBdat::spBtlSkillListFileData, &lbl_eu_8050EFDC[0], (u16)keyB);
             u32 eqA = (u32)((u8)nameA == param);
             u32 eqB = (u32)((u8)nameB == param);
             if (eqA < eqB) {
@@ -875,9 +876,9 @@ void CEquipItemGrid::sortEIBByNameKey() {
             CEquipItemData* b = &data[j + 1];
             CItemInstance* objA = (CItemInstance*)CItem_kindPtr(cat, a->unk0);
             CItemInstance* objB = (CItemInstance*)CItem_kindPtr(cat, b->unk0);
-            u32 gA = (u32)lbl_eu_806640F4;
+            u32 gA = (u32)::cf::CfBdat::spItmWpnListFileData;
             u8 nameA = BdatGetU8Direct((const void*)gA, "att_lev", (u16)BdatGetItemId(objA->word >> 20));
-            u32 gB = (u32)lbl_eu_806640F4;
+            u32 gB = (u32)::cf::CfBdat::spItmWpnListFileData;
             u8 nameB = BdatGetU8Direct((const void*)gB, "att_lev", (u16)BdatGetItemId(objB->word >> 20));
             if ((u8)nameA < (u8)nameB) {
                 CEquipItemData tC;
@@ -906,9 +907,9 @@ void CEquipItemGrid::sortEIBByNameKey69() {
             CEquipItemData* b = &data[j + 1];
             CItemInstance* objA = (CItemInstance*)CItem_kindPtr(cat, a->unk0);
             CItemInstance* objB = (CItemInstance*)CItem_kindPtr(cat, b->unk0);
-            u32 gA = (u32)lbl_eu_806640F4;
+            u32 gA = (u32)::cf::CfBdat::spItmWpnListFileData;
             u8 nameA = BdatGetU8Direct((const void*)gA, "grd_rate", (u16)BdatGetItemId(objA->word >> 20));
-            u32 gB = (u32)lbl_eu_806640F4;
+            u32 gB = (u32)::cf::CfBdat::spItmWpnListFileData;
             u8 nameB = BdatGetU8Direct((const void*)gB, "grd_rate", (u16)BdatGetItemId(objB->word >> 20));
             if ((u8)nameA < (u8)nameB) {
                 CEquipItemData tC;
@@ -936,8 +937,8 @@ void CEquipItemGrid::sortEIBByNm72() {
             CItemInstance* objB = (CItemInstance*)CItem_kindPtr(cat, b->unk0);
             u16 kindA = BdatGetItemId(objA->word >> 20);
             u16 kindB = BdatGetItemId(objB->word >> 20);
-            u8 nameA = BdatGetU8Direct((const void*)lbl_eu_806640F8, &lbl_eu_8050EFDC[0x72], kindA);
-            u8 nameB = BdatGetU8Direct((const void*)lbl_eu_806640F8, &lbl_eu_8050EFDC[0x72], kindB);
+            u8 nameA = BdatGetU8Direct((const void*)::cf::CfBdat::spItmEquipListFileData, &lbl_eu_8050EFDC[0x72], kindA);
+            u8 nameB = BdatGetU8Direct((const void*)::cf::CfBdat::spItmEquipListFileData, &lbl_eu_8050EFDC[0x72], kindB);
             if ((u8)nameA < (u8)nameB) {
                 CEquipItemData tC;
                 CEquipItemData tB;
@@ -964,8 +965,8 @@ void CEquipItemGrid::sortEIBByNm7A() {
             CItemInstance* objB = (CItemInstance*)CItem_kindPtr(cat, b->unk0);
             u16 kindA = BdatGetItemId(objA->word >> 20);
             u16 kindB = BdatGetItemId(objB->word >> 20);
-            u8 nameA = BdatGetU8Direct((const void*)lbl_eu_806640F8, &lbl_eu_8050EFDC[0x7a], kindA);
-            u8 nameB = BdatGetU8Direct((const void*)lbl_eu_806640F8, &lbl_eu_8050EFDC[0x7a], kindB);
+            u8 nameA = BdatGetU8Direct((const void*)::cf::CfBdat::spItmEquipListFileData, &lbl_eu_8050EFDC[0x7a], kindA);
+            u8 nameB = BdatGetU8Direct((const void*)::cf::CfBdat::spItmEquipListFileData, &lbl_eu_8050EFDC[0x7a], kindB);
             if ((u8)nameA < (u8)nameB) {
                 CEquipItemData tC;
                 CEquipItemData tB;
@@ -994,8 +995,8 @@ void CEquipItemGrid::sortEIBByNm17(int key) {
             CItemInstance* objB = (CItemInstance*)CItem_kindPtr(cat, b->unk0);
             u16 kindA = BdatGetItemId(objA->word >> 20);
             u16 kindB = BdatGetItemId(objB->word >> 20);
-            u8 nameA = BdatGetU8Direct((const void*)lbl_eu_806640F8, &lbl_eu_8050EFDC[0x17], kindA);
-            u8 nameB = BdatGetU8Direct((const void*)lbl_eu_806640F8, &lbl_eu_8050EFDC[0x17], kindB);
+            u8 nameA = BdatGetU8Direct((const void*)::cf::CfBdat::spItmEquipListFileData, &lbl_eu_8050EFDC[0x17], kindA);
+            u8 nameB = BdatGetU8Direct((const void*)::cf::CfBdat::spItmEquipListFileData, &lbl_eu_8050EFDC[0x17], kindB);
             u32 eqA = (u32)((u8)nameA == key);
             u32 eqB = (u32)((u8)nameB == key);
             if (eqA < eqB) {
@@ -1024,8 +1025,8 @@ void CEquipItemGrid::sortEIBByNm82() {
             CItemInstance* objB = (CItemInstance*)CItem_kindPtr(cat, b->unk0);
             u16 kindA = BdatGetItemId(objA->word >> 20);
             u16 kindB = BdatGetItemId(objB->word >> 20);
-            u8 nameA = BdatGetU8Direct((const void*)lbl_eu_806640F8, &lbl_eu_8050EFDC[0x82], kindA);
-            u8 nameB = BdatGetU8Direct((const void*)lbl_eu_806640F8, &lbl_eu_8050EFDC[0x82], kindB);
+            u8 nameA = BdatGetU8Direct((const void*)::cf::CfBdat::spItmEquipListFileData, &lbl_eu_8050EFDC[0x82], kindA);
+            u8 nameB = BdatGetU8Direct((const void*)::cf::CfBdat::spItmEquipListFileData, &lbl_eu_8050EFDC[0x82], kindB);
             if ((u8)nameA > (u8)nameB) {
                 CEquipItemData tC;
                 CEquipItemData tB;
@@ -1075,7 +1076,7 @@ void CEquipItemGrid::sortEIBByVf90() {
 // make MWCC emit its own 0x4330/lfd/fsubs s32->f32 magic.
 double CEquipItemGrid::getEIBProgress(CItemInstance* item) {
     u32 word = item->word;
-    u32 g = (u32)lbl_eu_806640F4;
+    u32 g = (u32)::cf::CfBdat::spItmWpnListFileData;
     u16 kind = BdatGetItemId(word >> 20);
     u16 result = BdatGetU16Direct((const void*)g, &lbl_eu_8050EFDC[0x8b], kind);
     u8 v2 = BdatGetU8Direct((const void*)g, &lbl_eu_8050EFDC[0x92], kind);
@@ -1107,7 +1108,7 @@ u32 CEquipItemGrid::hasEIBSlotFlag(CItemInstance* item) {
 // result. A miss falls back to 0xB when the kind is at most 0x4C, else 0.
 u8 CEquipItemGrid::getEIBNameKey(CItemInstance* item) {
     u32 word = item->word;
-    u32 v = (u32)lbl_eu_806640F4;
+    u32 v = (u32)::cf::CfBdat::spItmWpnListFileData;
     u16 kind = BdatGetItemId(word >> 20);
     for (u8 i = 1; i <= 10; i++) {
         char buf[0x28];
@@ -1299,8 +1300,8 @@ void CEquipItemBox::loadEIBFiles() {
                                                         &lbl_eu_8050EFDC[0x166],
                                                         this, 0, 0);
     mSortMenu.Init();
-    ((CEquipItemBoxSysWinView*)&mSysWin1)->v32();
-    ((CEquipItemBoxSysWinView*)&mSysWin2)->v32();
+    mSysWin1.loadSystemArc();
+    mSysWin2.loadSystemArc();
 }
 
 // Per-frame update of the equip box: dispatch the entry-state machine by
@@ -2007,7 +2008,7 @@ int CEquipItemBox::isEIBSelectBlocked() {
     if (item == 0) return 1;
     u32 w = *(u32*)item;
     if (w == 0) return 1;
-    u8 v = (u8)BdatGetU8Direct((const void*)lbl_eu_806640EC, "item_keep",
+    u8 v = (u8)BdatGetU8Direct((const void*)::cf::CfBdat::spItmItemListFileData, "item_keep",
                              w >> 20);
     if ((((u32)(s8)(v - 1)) >> 5) == 0) return 1;
     if (CtrlRemote_TouchBitByArg(0x3508) != 0) return 1;
@@ -2214,7 +2215,7 @@ void CEquipItemBox::bindEIBCellTexture(u16 kind, void* itemPtr,
     if (itemPtr != 0 && ((((CItemInstance*)itemPtr)->word >> 12) & 0xF) == 3) {
         u32 id = (u32)CItem_initItemImplInstances((CItemData*)itemPtr)
                      ->vf08((CItemData*)itemPtr);
-        switch ((u8)BdatGetU8Direct((const void*)lbl_eu_806640D8, "atr_type", (u16)id)) {
+        switch ((u8)BdatGetU8Direct((const void*)::cf::CfBdat::spBtlSkillListFileData, "atr_type", (u16)id)) {
         case 4: res = MakeTplNameSysFile(0x144); break;
         case 5: res = MakeTplNameSysFile(0x145); break;
         case 6: res = MakeTplNameSysFile(0x146); break;
@@ -2233,7 +2234,7 @@ void CEquipItemBox::bindEIBCellTexture(u16 kind, void* itemPtr,
     if (res == 0) {
         if (kind != 0) {
             res = MakeTplNameSysFile(
-                BdatGetU16Direct((const void*)lbl_eu_806640EC, "icon_base", kind));
+                BdatGetU16Direct((const void*)::cf::CfBdat::spItmItemListFileData, "icon_base", kind));
             res = field_34->GetResource(
                 nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE, (char*)res, 0);
             if (res == 0) {
@@ -2362,7 +2363,7 @@ void CEquipItemBox::bindEIBCellIcon(u16 kind, void* item, u8 i) {
     }
     if (res == 0) {
         if (kind != 0) {
-            char* name = MakeTplNameSysFile((u16)BdatGetU16Direct((const void*)lbl_eu_806640EC, &lbl_eu_8050EFDC[0x207], kind));
+            char* name = MakeTplNameSysFile((u16)BdatGetU16Direct((const void*)::cf::CfBdat::spItmItemListFileData, &lbl_eu_8050EFDC[0x207], kind));
             res = field_34->GetResource(
                 nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE, name, 0);
             if (res == 0) {
@@ -2988,7 +2989,7 @@ void CEquipItemBox::rebuildEIBEquipPage(int a, int b) {
     setPaneVisible(field_38->GetRootPane()->FindPaneByName("txt_ethvalue01", true), 1);
     setPaneVisible(field_38->GetRootPane()->FindPaneByName("txt_ethvalue02", true), 1);
     setPaneVisible(field_38->GetRootPane()->FindPaneByName("txt_ethvalue03", true), 1);
-    g = (u32)lbl_eu_806640F4;
+    g = (u32)::cf::CfBdat::spItmWpnListFileData;
     BdatGetItemType(a);
     kind2 = BdatGetItemId(a);
     rateA = BdatGetU16Direct((const void*)g, "dmg_low", kind2);
@@ -3084,7 +3085,7 @@ void CEquipItemBox::rebuildEIBKind48Page(int kind, int item) {
     setPaneVisible(field_38->GetRootPane()->FindPaneByName("txt_ethvalue03", true), 1);
     // Loaded into a register only here (retail keeps it live across the
     // bdat-name lookups below).
-    u32 g = (u32)lbl_eu_806640F8;
+    u32 g = (u32)::cf::CfBdat::spItmEquipListFileData;
     BdatGetItemType(kind);
     kind2 = (u16)BdatGetItemId(kind);
     nameA = BdatGetU8Direct((const void*)g, "arm_phy", kind2);
@@ -3093,9 +3094,9 @@ void CEquipItemBox::rebuildEIBKind48Page(int kind, int item) {
     setLayoutTextBoxNumber(field_38, "txt_value08", (u8)nameA);
     setLayoutTextBoxNumber(field_38, "txt_value09", (u8)nameB);
     setLayoutTextBoxNumber(field_38, "txt_value22", (u8)nameC);
-    // Retail reloads lbl_eu_806640F8 here: the three setLayoutTextBoxNumber calls
+    // Retail reloads ::cf::CfBdat::spItmEquipListFileData here: the three setLayoutTextBoxNumber calls
     // above are opaque, so the global must not be cached across them.
-    u8 v = BdatGetU8Direct((const void*)lbl_eu_806640F8, "arm_type", (u16)BdatGetItemId(kind));
+    u8 v = BdatGetU8Direct((const void*)::cf::CfBdat::spItmEquipListFileData, "arm_type", (u16)BdatGetItemId(kind));
     u8 b = (u8)v;
     char* str;
     if ((u32)(b - 4) <= 9) {
@@ -3169,7 +3170,7 @@ void CEquipItemBox::rebuildEIBKind3Page(int kind, int item) {
     LayoutSetTextBoxFmtValue(field_38, "txt_value50", str, 0);
     // Name text from the bdat lookup keyed by the vf54 name key.
     u32 name = BdatGetU8Direct(
-        (const void*)lbl_eu_806640D8, "name",
+        (const void*)::cf::CfBdat::spBtlSkillListFileData, "name",
         (u16)CItem_initItemImplInstances((CItemData*)obj)->vf54((CItemData*)obj));
     LayoutSetTextBoxFmtValue(field_38, "txt_para51", (char*)name, 0);
     // Detail text: when the vf90 value is present, prefix a per-name-byte
@@ -3178,7 +3179,7 @@ void CEquipItemBox::rebuildEIBKind3Page(int kind, int item) {
         LayoutSetTextBoxFmtValue(field_38, "txt_value51", "", 0);
     } else {
         char buf[0x20];
-        u8 v = BdatGetU8Direct((const void*)lbl_eu_806640D8, "rvs_type", (u16)key);
+        u8 v = BdatGetU8Direct((const void*)::cf::CfBdat::spBtlSkillListFileData, "rvs_type", (u16)key);
         if (v != 0 && (u32)(v - 3) <= 1) {
             char* str2 = BdatTouchStringCell("MNU_item", "name", 0x21);
             sprintf(buf, "%d%s",
@@ -3190,7 +3191,7 @@ void CEquipItemBox::rebuildEIBKind3Page(int kind, int item) {
         LayoutSetTextBoxText(field_38, "txt_value51", buf, 0);
     }
     // Category label: name-byte + 0x15 selects the category string.
-    u32 cat = BdatGetU8Direct((const void*)lbl_eu_806640D8, "attach", (u16)key);
+    u32 cat = BdatGetU8Direct((const void*)::cf::CfBdat::spBtlSkillListFileData, "attach", (u16)key);
     char* str3 = BdatTouchStringCell("MNU_item", "name", (u8)cat + 0x15);
     LayoutSetTextBoxFmtValue(field_38, "txt_para52", str3, 0);
     // Cursor anchor: midpoint helper between the detail pane and anchor pane
@@ -3246,7 +3247,7 @@ void CEquipItemBox::rebuildEIBKind2Cells(int a, int b) {
                            ->vf40((CItemData*)b, (u8)idx);
             if (slot != -1) {
                 CItemInstance* item = (CItemInstance*)CItem_kindPtr(3, slot);
-                u32 g = (u32)lbl_eu_806640D8;
+                u32 g = (u32)::cf::CfBdat::spBtlSkillListFileData;
                 u16 kind = (u16)CItem_initItemImplInstances((CItemData*)item)->vf54((CItemData*)item);
                 storeKind = kind;
                 char* name = BdatTouchStringCell("MNU_item", "name",
@@ -3299,7 +3300,7 @@ void CEquipItemBox::rebuildEIBKind2Cells(int a, int b) {
                                            ->vf2C((CItemData*)b, (u8)idx);
                 if (entry != 0 && (entry->flags & 1)) {
                     u16 kind2 = (u16)((entry->word >> 16) & 0xFFF);
-                    u32 g2 = (u32)lbl_eu_806640D8;
+                    u32 g2 = (u32)::cf::CfBdat::spBtlSkillListFileData;
                     u32 bits3 = (entry->word >> 22) & 7;
                     storeKind = kind2;
                     char* name2 = BdatTouchStringCell("MNU_item", "name", 0x1e - (bits3 - 1));
@@ -3778,7 +3779,7 @@ void CEquipItemGrid::rebuildEIBGridPage(u8 v, u8 b, u8 hi) {
             cell->unk6 = 1;
             // Name check: name-byte 1/2 clears the cell when the window kind
             // disagrees with the vf54 name.
-            u8 name1 = BdatGetU8Direct((const void*)lbl_eu_806640D8, (char*)base, (u16)CItem_initItemImplInstances((CItemData*)obj)->vf54((CItemData*)obj));
+            u8 name1 = BdatGetU8Direct((const void*)::cf::CfBdat::spBtlSkillListFileData, (char*)base, (u16)CItem_initItemImplInstances((CItemData*)obj)->vf54((CItemData*)obj));
             if ((u8)name1 == 1) {
                 if (hi != 2) cell->unk6 = 0;
             } else if ((u8)name1 == 2) {
@@ -3791,12 +3792,12 @@ general:
         if (b != 0) {
             u32 g2 = 0;
             switch (v) {
-            case 2: g2 = (u32)lbl_eu_806640F4; break;
+            case 2: g2 = (u32)::cf::CfBdat::spItmWpnListFileData; break;
             case 4:
             case 5:
             case 6:
             case 7:
-            case 8: g2 = (u32)lbl_eu_806640F8; break;
+            case 8: g2 = (u32)::cf::CfBdat::spItmEquipListFileData; break;
             }
             char buf[0x28];
             if (v == 2) {
@@ -3808,7 +3809,7 @@ general:
             if (BdatGetU8Direct((const void*)g2, (const char*)buf, kind2) != 0) cell->unk6 = 1;
             if (v == 2 && b == 0xb && (obj->word >> 20) == 0x4c) cell->unk6 = 1;
             if (v != 2) {
-                u8 name3 = BdatGetU8Direct((const void*)lbl_eu_806640F8, "arm_type", BdatGetItemId(obj->word >> 20));
+                u8 name3 = BdatGetU8Direct((const void*)::cf::CfBdat::spItmEquipListFileData, "arm_type", BdatGetItemId(obj->word >> 20));
                 if ((u32)(name3 - 4) <= 9) {
                     /* no-op */
                 } else if (name3 == 3) {
@@ -3840,7 +3841,7 @@ general:
             }
         }
 tail:
-        u8 name4 = BdatGetU8Direct((const void*)lbl_eu_806640EC, "item_keep", obj->word >> 20);
+        u8 name4 = BdatGetU8Direct((const void*)::cf::CfBdat::spItmItemListFileData, "item_keep", obj->word >> 20);
         cell->unk5 = ((u8)name4 == 1) ? 1 : 0;
         if (CtrlRemote_TouchBitByArg(0x3508) != 0) cell->unk5 = 0;
     }

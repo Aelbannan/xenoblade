@@ -1,3 +1,4 @@
+#include "kyoshin/cf/CfBdat.hpp"
 #include "kyoshin/cf/CBattleManager.hpp"
 #include "kyoshin/code_8025FB10.hpp"  // Counter_TestBit (owner)
 #include "kyoshin/cf/CtrlObjectParamSymbols.hpp"  // CtrlObjectParam_GetCharEntry (owner)
@@ -53,8 +54,7 @@ extern "C" int isBattleEventKind3(int); // battle-state status-id classifier (CB
 extern "C" bool isBattleStatusValid(unsigned int);
 extern "C" void* MapFx_ResolveOwner(void*);
 extern void* findObjectById(int);            // C++ linkage -> findObjectById__Fi
-extern "C" void* matchBattleStatusEntry(void*, u32, u32, u32, u32);
-extern "C" float calcBattleDamage(void*, void*, void*);
+
 extern "C" void broadcastBattleDamage(void*, void*, s32, s32, s32, s32, void*);
 // releaseVisionSlot: extern "C" decl from kyoshin/cf/object/CfObjectActor.hpp.
 extern "C" u32 countPcEffectSlots(u32);
@@ -441,10 +441,10 @@ __attribute__((used)) const double lbl_eu_806677F8 = 4503601774854144.0; // TU p
 
 void cf::CActorParam::CActorParam_updateStatusEntries(float dt) {
     getInstance__Q22cf13CfGameManagerFv();
-    if (isGlobalCamFlagSet__Fi(0x04000000)) return;
+    if (isGlobalCamFlagSet(0x04000000)) return;
     if (((cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv())->CheckUnk84Flag(0x10)) return;
     getInstance__Q22cf13CfGameManagerFv();
-    if (isGlobalCamFlagSet__Fi(0x10000000)) return;
+    if (isGlobalCamFlagSet(0x10000000)) return;
 
     bool flag = true;
     if (((cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv())->unk20C8.unk0 == 0) {
@@ -1958,7 +1958,7 @@ void CActorParam_applyArtsStats__Q22cf11CActorParamFPv(cf::CActorParam* self, cf
 // [lbl_eu_806677E8, lbl_eu_80667864].
 void cf::CActorParam::CActorParam_updateHateEntries(float dt) {
     getInstance__Q22cf13CfGameManagerFv();
-    if (isGlobalCamFlagSet__Fi(0x04000000)) return;
+    if (isGlobalCamFlagSet(0x04000000)) return;
     for (int i = 0; i < 8; i++) {
         cf::CActorParam_UnkStruct5* e = &this->unk1928[i];
         if (e->unk14 == 0) continue;
@@ -2637,7 +2637,7 @@ bool cf::CActorParam::CActorParam_isBattleLocked() {
 void cf::CActorParam::CActorParam_addHate(void* target, float f1, float f2, float f3) {
     CActorParam140Target* arg = static_cast<CActorParam140Target*>(target);
     getInstance__Q22cf13CfGameManagerFv();
-    if (isGlobalCamFlagSet__Fi(0x04000000)) return;
+    if (isGlobalCamFlagSet(0x04000000)) return;
     if (arg == NULL) return;
     u32 actorId = arg->field_0x3F10;
     int firstFree = -1; // live across the probes below (retail keeps it in a saved reg)
@@ -3108,7 +3108,7 @@ int cf::CActorParam::CActorParam_getCurrencyBalance() {
 // The bdat pointer is read before the virtual call (retail keeps it in r31
 // across the call).
 u32 cf::CActorParam::CActorParam_getLevelExp() {
-    void* bdat = lbl_eu_806640DC;
+    void* bdat = ::cf::CfBdat::spBtlGrowListFileData;
     u32 row = this->CActorParam_getArtsLevel() + 1;
     if (row > 0x63) {
         return 1;

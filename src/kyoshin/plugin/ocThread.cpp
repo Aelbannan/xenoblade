@@ -62,9 +62,29 @@ int wakeup_8003A88C(VMThread* pThread, u32 threadId) {
     return 0;
 }
 
+// ----- Retail data sections (defined by this TU) -----
+// name-guess: script-visible selectors of the "thread" OC plugin; retail
+// .data object 0x80524C08. MWCC pools the natural name literals into the
+// seven 8-byte .sdata2 slots at 0x80665B98..0x80665BC8 in first-use order.
+static OCSelector sOcThreadSelectors[7] = {
+    { "start", (OCSelectorFunc)start_8003A784, 0 },
+    { "end", (OCSelectorFunc)end_8003A7A8, 0 },
+    { "isAlive", (OCSelectorFunc)isAlive_8003A7D0, 0 },
+    { "join", (OCSelectorFunc)join_8003A820, 0 },
+    { "sleep", (OCSelectorFunc)sleep_8003A864, 0 },
+    { "wakeup", (OCSelectorFunc)wakeup_8003A88C, 0 },
+    { 0, 0, 0 },
+};
+
+// name-guess: root OCData registered by ocThreadRegist; retail .data object
+// 0x80524C60.
+static OCData sOcThreadData[1] = {
+    { "thread", (OCCtorFunc)thread, 0, sOcThreadSelectors },
+};
+
 // Registers this plugin's OC table with the script VM.
 void ocThreadRegist() {
-    vmOCRegist(&lbl_eu_80524C60);
+    vmOCRegist(sOcThreadData);
 }
 
 extern "C" OcThreadListHdr* getOcMsgList() {
@@ -97,30 +117,6 @@ void sinit_8003A4F8() {
     b->capacity = 9;
 }
 
-// ----- Retail data sections (all defined by this TU) -----
-// .sdata2 entry names (each sized to its 8-byte retail slot so the section
-// packs deterministically to 0x38), .data thread selector table +
-// OCData, .bss ring storages (plain tentatives auto-route to .bss).
-// Selector nameLength words are 0 in retail (lengths resolved at runtime);
-// the trailing null selector terminates the table.
-__declspec(section ".sdata2") __attribute__((used)) char lbl_eu_80665B98[8] = "start";
-__declspec(section ".sdata2") __attribute__((used)) char lbl_eu_80665BA0[8] = "end";
-__declspec(section ".sdata2") __attribute__((used)) char lbl_eu_80665BA8[8] = "isAlive";
-__declspec(section ".sdata2") __attribute__((used)) char lbl_eu_80665BB0[8] = "join";
-__declspec(section ".sdata2") __attribute__((used)) char lbl_eu_80665BB8[8] = "sleep";
-__declspec(section ".sdata2") __attribute__((used)) char lbl_eu_80665BC0[8] = "wakeup";
-__declspec(section ".sdata2") __attribute__((used)) char lbl_eu_80665BC8[8] = "thread";
-__declspec(section ".data") __attribute__((used)) OCSelector lbl_eu_80524C08[7] = {
-    { lbl_eu_80665B98, (OCSelectorFunc)start_8003A784, 0 },
-    { lbl_eu_80665BA0, (OCSelectorFunc)end_8003A7A8, 0 },
-    { lbl_eu_80665BA8, (OCSelectorFunc)isAlive_8003A7D0, 0 },
-    { lbl_eu_80665BB0, (OCSelectorFunc)join_8003A820, 0 },
-    { lbl_eu_80665BB8, (OCSelectorFunc)sleep_8003A864, 0 },
-    { lbl_eu_80665BC0, (OCSelectorFunc)wakeup_8003A88C, 0 },
-    { 0, 0, 0 },
-};
-__declspec(section ".data") __attribute__((used)) OCData lbl_eu_80524C60 = {
-    lbl_eu_80665BC8, (OCCtorFunc)thread, 0, lbl_eu_80524C08,
-};
+// BSS ring storages (plain tentatives auto-route to .bss).
 OcThreadMsgStorage lbl_eu_805704C8;
 OcThreadLogStorage lbl_eu_80570538;

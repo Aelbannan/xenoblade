@@ -287,14 +287,18 @@ def _linker_tail_pad(r, d, r_bytes, d_bytes, r_parsed, sec) -> int:
     the zero padding mwld inserts to align the next object.  The decomp
     object ends at its last datum.  The tail is accepted only when it is
     shorter than the retail section alignment, all zero (or zero-fill), and
-    carries no relocation.
+    carries no relocation.  The split end must be 4-aligned (every MWCC data
+    object starts on at least a 4-byte boundary), but it need not be a
+    multiple of this section's ``sh_addralign``: the next unit may have a
+    smaller alignment (e.g. a 4-aligned string after an 8-aligned rodata
+    section).
     """
     if r is None or d is None:
         return 0
     rsz, dsz = r["size"], d["size"]
     pad = rsz - dsz
     align = max(r.get("align") or 0, 1)
-    if pad <= 0 or pad >= align or rsz % align:
+    if pad <= 0 or pad >= align or rsz % 4:
         return 0
     if sec not in NOBITS:
         if any(r_bytes[r["off"] + dsz: r["off"] + rsz]):

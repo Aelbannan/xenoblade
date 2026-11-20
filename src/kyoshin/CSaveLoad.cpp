@@ -1,5 +1,6 @@
 #define IWORK_EVENT_INLINE_DTOR
 
+#include "kyoshin/cf/CfBdat.hpp"
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/cf/CtrlRemoteApi.hpp"
 #include "kyoshin/CSysWin.hpp"
@@ -46,7 +47,7 @@ extern "C" void CMenuGetItem_SetField54();
 extern "C" void invalidateQstFlag();
 extern "C" void CTaskGame_offerLoadCap();
 extern "C" void resetBattlePresentation__Q22cf13CfGameManagerFv();
-extern "C" u32 CtrlRemote_TouchBitByArg(u32);
+#include "kyoshin/cf/CtrlRemoteApi.hpp"
 
 extern "C" void awardCollectCount(int val);
 extern "C" void awardQuestFlags(void);
@@ -78,7 +79,6 @@ extern "C" void* __register_global_object(void*, void*, void*);
 extern u32 gmPauseFlags;
 // External function declarations needed by OnFileEvent
 // Declared as void* by kyoshin/cf/CfGameManager.hpp (via CWorkSystem.hpp)
-extern void* lbl_eu_806640A8;
 
 extern CSLData* gCSLDataInstance;
 extern CSaveLoad* gCSaveLoadInstance;
@@ -1217,7 +1217,7 @@ void CSaveLoad::renderSlots() {
                     }
                     // Look up the award icon texture and attach it
                     char* iconName = (char*)MakeTplNameSysFile(
-                        (u16)BdatGetU16Direct(lbl_eu_80664090, (const char*)&strBase[0x1f6], (u8)rec));
+                        (u16)BdatGetU16Direct(::cf::CfBdat::spBtlPcListFileData, (const char*)&strBase[0x1f6], (u8)rec));
                     void* awardRes =
                         ((nw4r::lyt::ArcResourceAccessor*)CUICfManager_getArcResourceAccessor())
                             ->GetResource(0x74696D67, iconName, 0);
@@ -1240,7 +1240,7 @@ void CSaveLoad::renderSlots() {
             if (slotData->mClassFlag != 0) {
                 slotIndicator = (char*)BdatTouchStringCell((char*)&strBase[0xa7], (char*)&strBase[0xb2], 0x53);
             } else {
-                slotIndicator = BdatGetPtrDirect(lbl_eu_806640A8, &strBase[0xb2], (u16)charResult);
+                slotIndicator = BdatGetPtrDirect(::cf::CfBdat::spFldMapListFileData, &strBase[0xb2], (u16)charResult);
             }
 
             if (slotData->mClassIndex != 0 && charResult == 1) {

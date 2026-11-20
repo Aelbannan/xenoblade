@@ -7,6 +7,7 @@
  * referenced as a data symbol.
  */
 
+#include "kyoshin/cf/CfBdat.hpp"
 #include "kyoshin/cf/CfGimmickItem.hpp"
 
 // BDAT column result: the raw call result lives in a word frame slot and is
@@ -33,7 +34,7 @@ cf::CfGimmickItem::CfGimmickItem(int rowId) {
     void* mgr = Bdat_GetTable_AA34();
     // Retail keeps the bdat table handle in a dedicated frame slot and
     // reloads it for every column read (its address escapes below).
-    u32 bdat = lbl_eu_8066413C;
+    u32 bdat = (u32)::cf::CfBdat::spCurItemGmFileData;
     this->field_64 = rowId;
 
     // Area position / extents (collider view) / rotation.

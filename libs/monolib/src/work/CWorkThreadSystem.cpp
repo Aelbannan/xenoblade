@@ -1,33 +1,22 @@
 #include "monolib/work.hpp"
 #include "monolib/util.hpp"
 
-// These symbols are owned by this TU (monolibdata1/monolibdata1d blob
-// dissolve). Addresses from symbols.txt:
-//   lbl_eu_80522460 (.rodata) = RTTI/region name string "WorkThreadSystem"
-//   lbl_eu_80663518 (.sdata)  = scRegionName   (const char* -> name string)
-//   lbl_eu_8066351C (.sdata)  = sAllocHandle   (mtl::ALLOC_HANDLE)  [defined in CWorkThread.cpp (owner)]
-//   lbl_eu_80665590 (.sbss)   = sMemAvailable  (BOOL)  - defined here
-//   lbl_eu_80665594 (.sbss)   = sAllocFlags    (u32*)  [defined in CWorkThread.cpp (owner)]
-//   lbl_eu_80665598 (.sbss)   = sWorkThreads   (CWorkThread**) [defined in CWorkThread.cpp (owner)]
-extern "C" {
-    extern const char lbl_eu_80522460[20] = {0x57,0x6F,0x72,0x6B,0x54,0x68,0x72,0x65,0x61,0x64,0x53,0x79,0x73,0x74,0x65,0x6D,0x00,0x00,0x00,0x00};  /* "WorkThreadSystem" pad to 0x80522460-74 */
-    const char* lbl_eu_80663518 = lbl_eu_80522460;
-    extern u32 lbl_eu_8066351C;
-    BOOL lbl_eu_80665590;              // sMemAvailable - defined here (blob monolibdata1d dissolve)
-    extern u32* lbl_eu_80665594;       // sAllocFlags - defined in CWorkThread.cpp (owner)
-    extern CWorkThread** lbl_eu_80665598[2];  // sWorkThreads - 8-byte sbss (word 0 in use), defined in CWorkThread.cpp (owner)
-}
+// sAllocHandle, sAllocFlags and sWorkThreads are defined in CWorkThread.cpp
+// (the owner of their retail data range); scRegionName and sMemAvailable
+// belong to this TU.
+const char* CWorkThreadSystem::scRegionName = "WorkThreadSystem";
+BOOL CWorkThreadSystem::sMemAvailable;
 
 void CWorkThreadSystem::initialize(){
-    lbl_eu_8066351C = mtl::MemManager::create(mtl::MemManager::getHandleMEM1(), REGION_SIZE, lbl_eu_80663518);
-    lbl_eu_80665590 = true;
+    sAllocHandle = mtl::MemManager::create(mtl::MemManager::getHandleMEM1(), REGION_SIZE, scRegionName);
+    sMemAvailable = true;
 
-    lbl_eu_80665594 = new (lbl_eu_8066351C) u32[ALLOC_FLAGS_COUNT];
-    lbl_eu_80665598[0] =
-        static_cast<CWorkThread**>(mtl::MemManager::allocate_head(lbl_eu_8066351C, sizeof(CWorkThread*) * MAX_WORK_ID, 4));
+    sAllocFlags = new (sAllocHandle) u32[ALLOC_FLAGS_COUNT];
+    sWorkThreads[0] =
+        static_cast<CWorkThread**>(mtl::MemManager::allocate_head(sAllocHandle, sizeof(CWorkThread*) * MAX_WORK_ID, 4));
 
     for(WORK_ID i = 0; i < ALLOC_FLAGS_COUNT; i++){
-        lbl_eu_80665594[i] = 0;
+        sAllocFlags[i] = 0;
     }
 }
 
@@ -36,11 +25,11 @@ WORK_ID CWorkThreadSystem::allocWID(CWorkThread* thread){
     for(u32 flag = 0; flag < ALLOC_FLAGS_COUNT; flag++){
 
         //All bits set means all IDs allocated
-        if(lbl_eu_80665594[flag] != 0xFFFFFFFF){
+        if(sAllocFlags[flag] != 0xFFFFFFFF){
 
             //Find the free bit in the flagset
             u32 mask = 1 << 0;
-            u32 flags = lbl_eu_80665594[flag];
+            u32 flags = sAllocFlags[flag];
 
             for(u32 i = 0; i < 32; i++, mask <<= 1){
                 //ID is already allocated
@@ -52,8 +41,8 @@ WORK_ID CWorkThreadSystem::allocWID(CWorkThread* thread){
                 WORK_ID wid = flag * 32 + i;
 
                 //Save thread information
-                lbl_eu_80665594[flag] |= mask;
-                lbl_eu_80665598[0][wid] = thread;
+                sAllocFlags[flag] |= mask;
+                sWorkThreads[0][wid] = thread;
 
                 return wid;
             }
@@ -66,15 +55,15 @@ WORK_ID CWorkThreadSystem::allocWID(CWorkThread* thread){
 }
 
 void CWorkThreadSystem::destroy(){
-    DELETE_ARRAY(lbl_eu_80665594);
-    DELETE_OBJ(lbl_eu_80665598[0]);
+    DELETE_ARRAY(sAllocFlags);
+    DELETE_OBJ(sWorkThreads[0]);
 
-    mtl::MemManager::erase(lbl_eu_8066351C);
-    lbl_eu_8066351C = mtl::INVALID_HANDLE;
+    mtl::MemManager::erase(sAllocHandle);
+    sAllocHandle = mtl::INVALID_HANDLE;
 
-    lbl_eu_80665590 = false;
+    sMemAvailable = false;
 }
 
 mtl::ALLOC_HANDLE CWorkThreadSystem::getWorkMem(){
-    return lbl_eu_8066351C;
+    return sAllocHandle;
 }

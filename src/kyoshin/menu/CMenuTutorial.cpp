@@ -23,7 +23,6 @@
 #include <nw4r/lyt/lyt_drawInfo.h>
 #include "kyoshin/CTitleAHelp.hpp"
 #include "kyoshin/CTitleAHelpImports.hpp"
-#include "kyoshin/CTutorialImports.hpp"
 #include "kyoshin/code_80135FDC_Bdat.hpp"
 
 // ---- Declarations private to this unit ----

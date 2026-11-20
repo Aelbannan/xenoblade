@@ -4,96 +4,12 @@
 #include <harness_catalog.h>
 
 #include "libs/CriWare/src/sofdec/mwply/mwsfd_types.h"
-__declspec(section ".rodata") __attribute__((aligned(8))) const char lbl_eu_80519870[0x320] = {
-    0x45,0x31,0x31,0x32,0x32,0x36,0x32,0x39,0x20,0x6D,0x77,0x50,
-    0x6C,0x79,0x53,0x65,0x74,0x46,0x72,0x6D,0x53,0x79,0x6E,0x63,
-    0x3A,0x20,0x68,0x61,0x6E,0x64,0x6C,0x65,0x20,0x69,0x73,0x20,
-    0x69,0x6E,0x76,0x61,0x6C,0x69,0x64,0x2E,0x00,0x45,0x32,0x30,
-    0x31,0x30,0x38,0x30,0x31,0x20,0x6D,0x77,0x50,0x6C,0x79,0x47,
-    0x65,0x74,0x46,0x72,0x6D,0x53,0x79,0x6E,0x63,0x3A,0x20,0x68,
-    0x61,0x6E,0x64,0x6C,0x65,0x20,0x69,0x73,0x20,0x69,0x6E,0x76,
-    0x61,0x6C,0x69,0x64,0x2E,0x00,0x45,0x34,0x31,0x30,0x31,0x33,
-    0x31,0x20,0x6D,0x77,0x50,0x6C,0x79,0x47,0x65,0x74,0x46,0x72,
-    0x6D,0x3A,0x20,0x68,0x61,0x6E,0x64,0x6C,0x65,0x20,0x69,0x73,
-    0x20,0x69,0x6E,0x76,0x61,0x6C,0x69,0x64,0x2E,0x00,0x45,0x34,
-    0x31,0x31,0x30,0x39,0x30,0x32,0x20,0x44,0x6F,0x6E,0x27,0x74,
-    0x20,0x75,0x73,0x65,0x20,0x61,0x6E,0x6F,0x74,0x68,0x65,0x72,
-    0x20,0x74,0x79,0x70,0x65,0x20,0x67,0x65,0x74,0x2F,0x72,0x65,
-    0x6C,0x20,0x66,0x72,0x61,0x6D,0x65,0x20,0x41,0x50,0x49,0x20,
-    0x74,0x6F,0x67,0x65,0x74,0x68,0x65,0x72,0x2E,0x00,0x45,0x31,
-    0x31,0x32,0x32,0x36,0x31,0x34,0x20,0x6D,0x77,0x50,0x6C,0x79,
-    0x47,0x65,0x74,0x43,0x75,0x72,0x46,0x72,0x6D,0x3A,0x20,0x68,
-    0x61,0x6E,0x64,0x6C,0x65,0x20,0x69,0x73,0x20,0x69,0x6E,0x76,
-    0x61,0x6C,0x69,0x64,0x2E,0x00,0x45,0x31,0x31,0x32,0x32,0x36,
-    0x31,0x38,0x20,0x6D,0x77,0x50,0x6C,0x79,0x49,0x73,0x4E,0x65,
-    0x78,0x74,0x46,0x72,0x6D,0x52,0x65,0x61,0x64,0x79,0x3A,0x20,
-    0x68,0x61,0x6E,0x64,0x6C,0x65,0x20,0x69,0x73,0x20,0x69,0x6E,
-    0x76,0x61,0x6C,0x69,0x64,0x2E,0x00,0x45,0x30,0x35,0x31,0x31,
-    0x31,0x39,0x31,0x30,0x20,0x6D,0x77,0x6C,0x5F,0x63,0x6F,0x6E,
-    0x76,0x50,0x74,0x79,0x70,0x65,0x46,0x72,0x6F,0x6D,0x53,0x46,
-    0x44,0x20,0x3A,0x20,0x49,0x6E,0x76,0x61,0x6C,0x69,0x64,0x20,
-    0x50,0x74,0x79,0x70,0x65,0x00,0x45,0x32,0x30,0x31,0x33,0x30,
-    0x31,0x20,0x4D,0x57,0x53,0x46,0x44,0x3A,0x20,0x47,0x65,0x74,
-    0x46,0x70,0x73,0x20,0x66,0x61,0x69,0x6C,0x65,0x64,0x2E,0x00,
-    0x45,0x33,0x30,0x31,0x32,0x37,0x31,0x20,0x6D,0x77,0x73,0x66,
-    0x66,0x72,0x6D,0x5F,0x44,0x65,0x63,0x69,0x64,0x65,0x46,0x72,
-    0x6D,0x54,0x79,0x70,0x65,0x28,0x29,0x20,0x3A,0x20,0x49,0x6E,
-    0x76,0x61,0x6C,0x69,0x64,0x20,0x50,0x73,0x74,0x72,0x75,0x63,
-    0x74,0x00,0x45,0x30,0x35,0x31,0x31,0x31,0x39,0x31,0x31,0x20,
-    0x6D,0x77,0x6C,0x5F,0x63,0x6F,0x6E,0x76,0x50,0x74,0x79,0x70,
-    0x65,0x54,0x6F,0x53,0x46,0x44,0x20,0x3A,0x20,0x49,0x6E,0x76,
-    0x61,0x6C,0x69,0x64,0x20,0x50,0x74,0x79,0x70,0x65,0x00,0x45,
-    0x34,0x31,0x30,0x31,0x33,0x32,0x20,0x6D,0x77,0x50,0x6C,0x79,
-    0x52,0x65,0x6C,0x46,0x72,0x6D,0x3A,0x20,0x68,0x61,0x6E,0x64,
-    0x6C,0x65,0x20,0x69,0x73,0x20,0x69,0x6E,0x76,0x61,0x6C,0x69,
-    0x64,0x2E,0x00,0x45,0x31,0x31,0x32,0x32,0x36,0x31,0x35,0x20,
-    0x6D,0x77,0x50,0x6C,0x79,0x52,0x65,0x6C,0x43,0x75,0x72,0x46,
-    0x72,0x6D,0x3A,0x20,0x68,0x61,0x6E,0x64,0x6C,0x65,0x20,0x69,
-    0x73,0x20,0x69,0x6E,0x76,0x61,0x6C,0x69,0x64,0x2E,0x00,0x45,
-    0x33,0x31,0x32,0x32,0x32,0x30,0x31,0x20,0x6D,0x77,0x50,0x6C,
-    0x79,0x47,0x65,0x74,0x4E,0x65,0x78,0x74,0x50,0x69,0x63,0x55,
-    0x73,0x72,0x3A,0x20,0x68,0x61,0x6E,0x64,0x6C,0x65,0x20,0x69,
-    0x73,0x20,0x69,0x6E,0x76,0x61,0x6C,0x69,0x64,0x2E,0x00,0x45,
-    0x32,0x30,0x32,0x32,0x33,0x31,0x20,0x6D,0x77,0x50,0x6C,0x79,
-    0x47,0x65,0x74,0x4E,0x75,0x6D,0x53,0x6B,0x69,0x70,0x44,0x69,
-    0x73,0x70,0x3A,0x20,0x68,0x61,0x6E,0x64,0x6C,0x65,0x20,0x69,
-    0x73,0x20,0x69,0x6E,0x76,0x61,0x6C,0x69,0x64,0x2E,0x00,0x45,
-    0x37,0x30,0x36,0x30,0x35,0x30,0x34,0x20,0x53,0x46,0x48,0x5F,
-    0x43,0x72,0x65,0x61,0x74,0x65,0x20,0x72,0x65,0x74,0x75,0x72,
-    0x6E,0x20,0x4E,0x55,0x4C,0x4C,0x2E,0x00,0x45,0x37,0x30,0x36,
-    0x30,0x35,0x30,0x35,0x20,0x53,0x46,0x48,0x5F,0x43,0x72,0x65,
-    0x61,0x74,0x65,0x20,0x72,0x65,0x74,0x75,0x72,0x6E,0x20,0x4E,
-    0x55,0x4C,0x4C,0x2E,0x00,0x45,0x34,0x30,0x39,0x31,0x37,0x31,
-    0x20,0x6D,0x77,0x50,0x6C,0x79,0x47,0x65,0x74,0x4E,0x75,0x6D,
-    0x52,0x65,0x6D,0x61,0x69,0x6E,0x46,0x72,0x6D,0x3A,0x20,0x68,
-    0x61,0x6E,0x64,0x6C,0x65,0x20,0x69,0x73,0x20,0x69,0x6E,0x76,
-    0x61,0x6C,0x69,0x64,0x2E,0x00,0x45,0x36,0x30,0x32,0x32,0x30,
-    0x31,0x20,0x6D,0x77,0x50,0x6C,0x79,0x47,0x65,0x74,0x50,0x6C,
-    0x61,0x79,0x69,0x6E,0x67,0x48,0x64,0x72,0x49,0x6E,0x66,0x3A,
-    0x20,0x68,0x61,0x6E,0x64,0x6C,0x65,0x20,0x69,0x73,0x20,0x69,
-    0x6E,0x76,0x61,0x6C,0x69,0x64,0x2E,0x00,
-};
-
+#include "libs/CriWare/src/sofdec/sfdcore/sfd/sfd_types.h"
 extern s32 MWSFD_GetUsePicUsr();
-
-void mwPlyGetCurFrm() {}
 
 /* ---- Frame-info conversion (mwl_convFrmInfFromSFD) ----
  * The player's frame table at +0xE0 holds 0x38-byte entries describing each
  * multiplexed frame; a frame index from the SFD stream header selects one. */
-
-typedef struct MwlSfdSelf {
-    u8 _00[0x58];            /* 0x00..0x58 */
-    void* field_0x58;        /* 0x58: SFD stream handle */
-    u8 _5c[0xd8 - 0x5c];     /* 0x5c..0xd8 */
-    s32 field_0xd8;          /* 0xd8: frame index */
-    u8 _dc[0x04];            /* 0xdc..0xe0 */
-    MwlSfdFrame frames[8];   /* 0xe0, stride 0x38 */
-    u8 _2a0[0x684 - 0x2a0];  /* 0x2a0..0x684 */
-    s32 field_0x684;
-    s32 field_0x688;
-    s32 field_0x68c;
-} MwlSfdSelf;
 
 typedef struct MwlSfdInfSub {
     u8 _00[0x10];            /* 0x48..0x58 */
@@ -118,7 +34,8 @@ typedef struct MwlSfdInfo {
     s32 field_0x2c;
     s32 field_0x30;
     s32 field_0x34;
-    u8 _38[0x10];
+    void* picInf;           /* 0x38 picture/SUD information from the SFD header */
+    u8 _3c[0x0c];
     MwlSfdInfSub sub;        /* 0x48..0x80 */
 } MwlSfdInfo;
 
@@ -129,10 +46,48 @@ extern int MWSFD_GetFxType(void* self, int idx);
 extern void MWSFSVM_Error(const char* fmt, ...);
 extern s32 SUD_AnalyTypeDivField(const char* buf, s32 len);
 
-void mwsffrm_SetPicUsrInf(void* a, void* b, void* out);
-void mwsffrm_SetSudDatInf(void* a, void* b, void* out);
+/* Picture-size and SUD records reached through the SFD header info. */
+typedef struct MwsfPicDat {
+    s32 w;
+    s32 h;
+} MwsfPicDat;
 
-void mwl_convFrmInfFromSFD(MwlSfdSelf* self, MwlSfdInfo* info, MwlSfdFrmInf* out) {
+typedef struct MwsfSudDat {
+    void* ptr;
+    s32 size;
+} MwsfSudDat;
+
+void mwsffrm_SetPicUsrInf(MWSFDPLY* a, MwlSfdInfo* b, MwlSfdFrmInf* out);
+void mwsffrm_SetSudDatInf(MWSFDPLY* a, MwlSfdInfo* b, MwlSfdFrmInf* out);
+
+// name-guess: these public mwPly entry points are named by their error
+// strings; the parameter lists and checks below are inferred from the
+// neighbouring playback APIs. MWLD dead-strips them from the game link.
+void mwPlySetFrmSync(void *hndl) {
+    if (hndl == NULL) MWSFSVM_Error("E1122629 mwPlySetFrmSync: handle is invalid.");
+}
+
+void mwPlyGetFrmSync(void *hndl) {
+    if (hndl == NULL) MWSFSVM_Error("E2010801 mwPlyGetFrmSync: handle is invalid.");
+}
+
+void mwPlyGetFrm(void *hndl) {
+    if (hndl == NULL) MWSFSVM_Error("E410131 mwPlyGetFrm: handle is invalid.");
+}
+
+void mwPlyCheckFrmApi(int api) {
+    if (api == 0) MWSFSVM_Error("E4110902 Don't use another type get/rel frame API together.");
+}
+
+void mwPlyGetCurFrm() {
+    MWSFSVM_Error("E1122614 mwPlyGetCurFrm: handle is invalid.");
+}
+
+void mwPlyIsNextFrmReady(void *hndl) {
+    if (hndl == NULL) MWSFSVM_Error("E1122618 mwPlyIsNextFrmReady: handle is invalid.");
+}
+
+void mwl_convFrmInfFromSFD(MWSFDPLY* self, MwlSfdInfo* info, MwlSfdFrmInf* out) {
     /* Local declaration order drives MWCC's callee-saved register colours:
      * first colorable local -> r14, then r18..r31 (params keep r15-r17).
      * Retail: f0c/r14, sfd/r18, picH/r19, picW/r20, frmIdx/r21, f28/r22,
@@ -167,7 +122,7 @@ void mwl_convFrmInfFromSFD(MwlSfdSelf* self, MwlSfdInfo* info, MwlSfdFrmInf* out
     s32 v58;
     s32 fx;
 
-    sfd = (s32)self->field_0x58;
+    sfd = (s32)self->sfd;
     f20 = info->field_0x20;
     switch (info->field_0x1c) {
     case 1: picKind = 1; break;
@@ -185,7 +140,7 @@ void mwl_convFrmInfFromSFD(MwlSfdSelf* self, MwlSfdInfo* info, MwlSfdFrmInf* out
     case 3: frmKind = 3; break;
     case 4: frmKind = 4; break;
     default:
-        MWSFSVM_Error(lbl_eu_80519870 + 0x11b);
+        MWSFSVM_Error("E05111910 mwl_convPtypeFromSFD : Invalid Ptype");
         frmKind = 1;
         break;
     }
@@ -198,7 +153,7 @@ void mwl_convFrmInfFromSFD(MwlSfdSelf* self, MwlSfdInfo* info, MwlSfdFrmInf* out
     f28 = info->field_0x28;
 
     if (SFD_GetFps((void*)sfd, &fps) != 0) {
-        MWSFSVM_Error(lbl_eu_80519870 + 0x14a);
+        MWSFSVM_Error("E201301 MWSFD: GetFps failed.");
     }
 
     /* 29.97 fps is stored as 30*999 = 29970, i.e. a multiple of 999; the
@@ -231,9 +186,9 @@ void mwl_convFrmInfFromSFD(MwlSfdSelf* self, MwlSfdInfo* info, MwlSfdFrmInf* out
     res2 = UTY_MulDiv(f30, fps2, frmCnt * mul);
 
     useFrm = 0;
-    if (self->frames[frmIdx % 8].state == 1) {
-        picW = self->frames[frmIdx % 8].picW;
-        picH = self->frames[frmIdx % 8].picH;
+    if (self->frmFx[frmIdx % 8].state == 1) {
+        picW = self->frmFx[frmIdx % 8].picW;
+        picH = self->frmFx[frmIdx % 8].picH;
         if (picW == 0 || picH == 0) {
             picW = picW0;
             picH = picH0;
@@ -247,7 +202,7 @@ void mwl_convFrmInfFromSFD(MwlSfdSelf* self, MwlSfdInfo* info, MwlSfdFrmInf* out
 
     /* Composition-mode dependent picture-size fixups. */
     if (mwPlyFxGetCompoMode(self) == 0x11) {
-        fx = MWSFD_GetFxType(self, self->field_0xd8);
+        fx = MWSFD_GetFxType(self, self->frmIdx);
         if (fx == 0x51 || fx == 0x61) fx = 0x41;
         if (fx == 0x21 && useFrm != 0) {
             picH = picH * 2;
@@ -257,7 +212,7 @@ void mwl_convFrmInfFromSFD(MwlSfdSelf* self, MwlSfdInfo* info, MwlSfdFrmInf* out
             picH = picH / 2;
         }
     } else if (mwPlyFxGetCompoMode(self) == 0) {
-        fx = MWSFD_GetFxType(self, self->field_0xd8);
+        fx = MWSFD_GetFxType(self, self->frmIdx);
         if (fx == 0x51 || fx == 0x61) fx = 0x41;
         if (fx == 0x21 && useFrm == 0) {
             picH = picH / 2;
@@ -301,7 +256,7 @@ void mwl_convFrmInfFromSFD(MwlSfdSelf* self, MwlSfdInfo* info, MwlSfdFrmInf* out
             useFrm2 = 2;
         }
     } else {
-        MWSFSVM_Error(lbl_eu_80519870 + 0x168);
+        MWSFSVM_Error("E301271 mwsffrm_DecideFrmType() : Invalid Pstruct");
     }
     if (MWSFD_GetUsePicUsr() == 1 && SUD_AnalyTypeDivField((const char*)sud0, sud1) == 1) {
         useFrm2 = 2;
@@ -310,46 +265,55 @@ void mwl_convFrmInfFromSFD(MwlSfdSelf* self, MwlSfdInfo* info, MwlSfdFrmInf* out
     memcpy(out->field_0x68, &info->sub, 0x38);
 }
 
-void mwsffrm_SetPicUsrInf(void* a, void* b, void* out) {
-    void* inf = *(void**)((u8*)b + 0x38);
-    s32 v = *(s32*)((u8*)inf + 0);
-    s32 w = *(s32*)((u8*)inf + 4);
-    u32 picadr = (u32)((u8*)a + 0x4A4);
-    u32 pic = *(u32*)((u8*)a + 0x4bc);
+// name-guess: message owners and checks inferred from the error text.
+void mwl_convPtypeToSFD(int ptype) {
+    if (ptype < 0) MWSFSVM_Error("E05111911 mwl_convPtypeToSFD : Invalid Ptype");
+}
+
+void mwPlyRelFrm(void *hndl) {
+    if (hndl == NULL) MWSFSVM_Error("E410132 mwPlyRelFrm: handle is invalid.");
+}
+
+void mwsffrm_SetPicUsrInf(MWSFDPLY* a, MwlSfdInfo* b, MwlSfdFrmInf* out) {
+    MwsfPicDat* inf = (MwsfPicDat*)b->picInf;
+    s32 v = inf->w;
+    s32 w = inf->h;
+    u32 picadr = (u32)&a->picUsr;
+    u32 pic = (u32)a->picUsrTgt;
     if (MWSFD_GetUsePicUsr(a) != 1) {
-        *(s32*)((u8*)out + 0x4c) = 0;
-        *(s32*)((u8*)out + 0x50) = 0;
+        out->field_0x4c = 0;
+        out->field_0x50 = 0;
         return;
     }
     if (pic == picadr) {
-        *(s32*)((u8*)out + 0x4c) = 0;
-        *(s32*)((u8*)out + 0x50) = 0;
+        out->field_0x4c = 0;
+        out->field_0x50 = 0;
         return;
     }
     if (v != 0 && w > 4) {
         v += 4;
         w -= 4;
     }
-    *(s32*)((u8*)out + 0x4c) = v;
-    *(s32*)((u8*)out + 0x50) = w;
+    out->field_0x4c = v;
+    out->field_0x50 = w;
 }
 
 extern void* SUD_SearchSudDat(void* a, void* b, void* c, void* d);
 
-void mwsffrm_SetSudDatInf(void* a, void* b, void* out) {
+void mwsffrm_SetSudDatInf(MWSFDPLY* a, MwlSfdInfo* b, MwlSfdFrmInf* out) {
     void* r1 = 0;
     void* r2 = 0;
-    void* sud = *(void**)((u8*)b + 0x38);
-    void* p = *(void**)((u8*)sud + 0);
-    s32 q = *(s32*)((u8*)sud + 4);
-    *(s32*)((u8*)out + 0xa0) = 0;
-    *(s32*)((u8*)out + 0xa4) = 0;
+    MwsfSudDat* sud = (MwsfSudDat*)b->picInf;
+    void* p = sud->ptr;
+    s32 q = sud->size;
+    out->field_0xa0 = 0;
+    out->field_0xa4 = 0;
     if (p != NULL && q > 4) {
         SUD_SearchSudDat((u8*)p + 4, (u8*)q - 4, &r1, &r2);
     }
     if (r1 != NULL && (s32)r2 > 0) {
-        *(s32*)((u8*)out + 0xa0) = (s32)r1;
-        *(s32*)((u8*)out + 0xa4) = (s32)r2;
+        out->field_0xa0 = (u32)(s32)r1;
+        out->field_0xa4 = (u32)(s32)r2;
     }
 }
 
@@ -376,21 +340,45 @@ void mwPlyCalcYccPlane(void *a, void *b, void *c, MwSfdYccPlane *out) {
     out->f = tmp.d;
 }
 
-void mwPlyRelCurFrm() {}
+void mwPlyRelCurFrm() {
+    MWSFSVM_Error("E1122615 mwPlyRelCurFrm: handle is invalid.");
+}
 
-int mwPlyGetTotalFrmNum(void* self) {
-    int index = *(s32*)((u8*)self + 0xd8) % 8;
-    u32* entry = (u32*)((u8*)self + index * 0x38);
-    if ((s32)entry[0xE0 / 4] != 1) return 0;
-    return entry[0x100 / 4];
+// name-guess: message owners and checks inferred from the error text.
+void mwPlyGetNextPicUsr(void *hndl) {
+    if (hndl == NULL) MWSFSVM_Error("E3122201 mwPlyGetNextPicUsr: handle is invalid.");
+}
+
+void mwPlyGetNumSkipDisp(void *hndl) {
+    if (hndl == NULL) MWSFSVM_Error("E202231 mwPlyGetNumSkipDisp: handle is invalid.");
+}
+
+void mwPlyCreateSfh(void) {
+    MWSFSVM_Error("E7060504 SFH_Create return NULL.");
+    MWSFSVM_Error("E7060505 SFH_Create return NULL.");
+}
+
+void mwPlyGetNumRemainFrm(void *hndl) {
+    if (hndl == NULL) MWSFSVM_Error("E409171 mwPlyGetNumRemainFrm: handle is invalid.");
+}
+
+void mwPlyGetPlayingHdrInf(void *hndl) {
+    if (hndl == NULL) MWSFSVM_Error("E602201 mwPlyGetPlayingHdrInf: handle is invalid.");
+}
+
+
+int mwPlyGetTotalFrmNum(MWSFDPLY* self) {
+    int index = self->frmIdx % 8;
+    if (self->frmFx[index].state != 1) return 0;
+    return self->frmFx[index].field_0x20;
 }
 
 void MWSFFRM_InitSfhInfTable() {}
 
 void SFD_SetSfdHeaderFn(void* a, void* cb, void* ctx);
 void mwsffrm_CallbackAnalyzeSofdecHeader();
-void MWSFFRM_SetShfCbFn(void* self) {
-    SFD_SetSfdHeaderFn(*(void**)((u8*)self + 0x58), mwsffrm_CallbackAnalyzeSofdecHeader, self);
+void MWSFFRM_SetShfCbFn(MWSFDPLY* self) {
+    SFD_SetSfdHeaderFn(self->sfd, mwsffrm_CallbackAnalyzeSofdecHeader, self);
 }
 
 void mwsffrm_CallbackAnalyzeSofdecHeader() {}
@@ -403,40 +391,40 @@ extern s32 SFH_AnlyElemPicSz(const void* sfd, s32 idx, s32* sz, s32* rate);
 extern s32 SFH_AnlyFtrNetWidth(const void* sfd, s32 idx, s32* out);
 extern s32 SFH_AnlyFtrNetHeight(const void* sfd, s32 idx, s32* out);
 
-void mwsffrm_AnalyAudioInfo(void* self, void* sj) {
+void mwsffrm_AnalyAudioInfo(MWSFDPLY* self, void* sj) {
     s32 i;
     s32 out;
-    if (*(s32*)((u8*)self + 0x2A0) != 1) return;
+    if (self->audInfEnable != 1) return;
     for (i = 0; i < 32; i++) {
-        s32* ent = (s32*)((u8*)self + i * 16 + 0x2A4);
+        MwsfSndInf* ent = &self->audInf[i];
         s32 idx = (i + 0xC0) & 0xFF;
-        ent[0] = 0;
-        ent[1] = 0;
-        ent[2] = 0;
-        ent[3] = 0;
+        ent->used = 0;
+        ent->ch = 0;
+        ent->rate = 0;
+        ent->stmId = 0;
         if (SFH_AnlyElemCodecAud(sj, idx, &out) == 1 && out == 1) {
-            ent[0] = 1;
+            ent->used = 1;
             if (SFH_AnlyElemChNum(sj, idx, &out) == 1) {
                 s32 ch = out;
                 if ((u32)(ch - 2) > 3) {
-                    ent[1] = 2;
+                    ent->ch = 2;
                 } else if (ch == 1) {
-                    ent[1] = 1;
+                    ent->ch = 1;
                 } else if (ch == 6) {
-                    ent[1] = 3;
+                    ent->ch = 3;
                 } else if (ch == 7) {
-                    ent[1] = 4;
+                    ent->ch = 4;
                 } else if (ch == 8) {
-                    ent[1] = 5;
+                    ent->ch = 5;
                 } else {
-                    ent[1] = 0;
+                    ent->ch = 0;
                 }
             }
             if (SFH_AnlyElemSmpHz(sj, idx, &out) == 1) {
-                ent[2] = out;
+                ent->rate = out;
             }
             if (SFH_IsExistStmId(sj, idx, &out) == 1) {
-                ent[3] = out;
+                ent->stmId = out;
             }
         }
     }
@@ -449,8 +437,8 @@ extern s32 SFD_GetCond(void* self, u32 idx, s32* out);
 extern void MWSFD_SetAudioSw(void* self, u32 sw);
 extern void MWSFD_SetCond(void* self, u32 sw, u32 unk);
 
-void mwsffrm_ChangeSettingSyncPlayback(void* self) {
-    void* hn;
+void mwsffrm_ChangeSettingSyncPlayback(MWSFDPLY* self) {
+    SfdHandle* hn;
     s32 mode1;
     s32 mode2;
     s32 ch1;
@@ -458,14 +446,14 @@ void mwsffrm_ChangeSettingSyncPlayback(void* self) {
     s32 ch2;
     s32 found;
     s32 i;
-    hn = mwPlyGetSfdHn(self);
+    hn = (SfdHandle*)mwPlyGetSfdHn(self);
     mode1 = 0;
     ch1 = -1;
-    if (*(s32*)((u8*)self + 0x5D8) == 1) {
-        if (*(s32*)((u8*)self + 0x5F0) == 1) {
-            ch1 = *(s32*)((u8*)self + 0x5F4);
-            if (*(s32*)((u8*)self + 0x2A4 + ch1 * 16) == 1) {
-                if (*(s32*)((u8*)self + 0x2A8 + ch1 * 16) == 5) {
+    if (self->sst[0].state == 1) {
+        if (self->sst[0].enable == 1) {
+            ch1 = self->sst[0].ch;
+            if (self->audInf[ch1].used == 1) {
+                if (self->audInf[ch1].ch == 5) {
                     MWSFD_SetSstCh(self, 0, ch1);
                     mode1 = 1;
                 }
@@ -478,10 +466,10 @@ void mwsffrm_ChangeSettingSyncPlayback(void* self) {
     }
     mode2 = 0;
     ch2 = -1;
-    if (*(s32*)((u8*)self + 0x600) == 1) {
-        if (*(s32*)((u8*)self + 0x618) == 1) {
-            ch2 = *(s32*)((u8*)self + 0x61C);
-            if (*(s32*)((u8*)self + 0x2A4 + ch2 * 16) == 1) {
+    if (self->sst[1].state == 1) {
+        if (self->sst[1].enable == 1) {
+            ch2 = self->sst[1].ch;
+            if (self->audInf[ch2].used == 1) {
                 MWSFD_SetSstCh(self, 1, ch2);
                 mode2 = 1;
             }
@@ -495,7 +483,7 @@ void mwsffrm_ChangeSettingSyncPlayback(void* self) {
     SFD_GetCond(hn, 30, &found);
     if (found == -1) {
         for (i = 0; i < 32; i++) {
-            if (*(s32*)((u8*)self + 0x2A4 + i * 16) == 1) {
+            if (self->audInf[i].used == 1) {
                 if (i != ch1 && i != ch2) {
                     found = i;
                     break;
@@ -504,17 +492,17 @@ void mwsffrm_ChangeSettingSyncPlayback(void* self) {
         }
     }
     if (found != -1 && found != ch1 && found != ch2) {
-        s32 st = *(s32*)((u8*)self + 0x2A8 + found * 16);
+        s32 st = self->audInf[found].ch;
         if (st == 1) {
             flag = 1;
         }
         if (st == 2) {
-            if (*(s32*)((u8*)hn + 0x3990) == 1) {
+            if ((s32)hn->audStereoStat == 1) {
                 flag = 1;
             }
         }
         if (st == 0) {
-            if (*(s32*)((u8*)hn + 0x3994) == 1) {
+            if ((s32)hn->audNoChanStat == 1) {
                 flag = 1;
             }
         }

@@ -1,3 +1,4 @@
+#include "kyoshin/cf/CfBdat.hpp"
 #include "kyoshin/help/CHelp_LearnArts.hpp"
 #include "kyoshin/CQuestWindowApi.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
@@ -50,7 +51,7 @@ bool CHelp_LearnArts::isLearnArtsReady() {
         colName = (const char*)lbl_eu_805138AC;
         cf::CHelpLearnArtsCharData* charData = (cf::CHelpLearnArtsCharData*)CtrlObjectParam_GetCharEntry((u16)character);
         artsBase = charData->mArts;
-        col.v = getBdatStringColumnValue(lbl_eu_806640F4, colName, charData->mWpnType);
+        col.v = getBdatStringColumnValue(::cf::CfBdat::spItmWpnListFileData, colName, charData->mWpnType);
         byteVal = col.b[0];
         bound = ((s16)character == 1) ? 8 : 16;
         counter = 0;

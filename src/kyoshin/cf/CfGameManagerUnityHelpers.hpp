@@ -5,13 +5,14 @@
 #include "kyoshin/code_800AA008_Tok.hpp"
 #include "kyoshin/cf/CItemBlockApi.hpp"
 #include "kyoshin/cf/object/CfObjectEffSymbols.hpp"
-
+#include "kyoshin/cf/CfCamSymbols.hpp"
 #include <types.h>
 #include "kyoshin/cf/object/CfObjectSelectorObj.hpp"
 #include "kyoshin/code_8025FB10.hpp"
 #include "kyoshin/cf/CfCamEventApi.hpp"
 #include <monolib/util/FixStr.hpp>  // ml::FixStr<64>
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
+#include "kyoshin/cf/IActParamEvent.hpp"
 #include "kyoshin/menu/MenuSndApi.hpp"
 #include "kyoshin/code_801F3BE0.hpp"
 #include "kyoshin/cf/CfSoundMan.hpp"
@@ -396,7 +397,7 @@ struct PlayerObjectContainer : public ItemContainerPrefix,
 };
 
 extern "C" cf::UnkClass_80082D90* getPlayerContainerForCam__Q22cf13CfGameManagerFv();
-extern "C" bool isGlobalCamFlagSet__Fi(s32 mask);
+
 extern "C" bool CfObject_isMoveActiveNow__Q22cf12CfObjectMoveFv(
     cf::CfObjectMove* player);
 extern "C" u32 cfCam_loadUnkC4(cf::CfObjectMove* player);
@@ -447,7 +448,7 @@ extern "C" bool isPlayerInEventRange__Q22cf13CfGameManagerFv() {
     PlayerObjectContainer* container = static_cast<PlayerObjectContainer*>(
         reinterpret_cast<PlayerVirtualInterface*>(
             getPlayerContainerForCam__Q22cf13CfGameManagerFv()));
-    if (isGlobalCamFlagSet__Fi(0x4000000)) {
+    if (isGlobalCamFlagSet(0x4000000)) {
         return false;
     }
     if (container != nullptr) {
@@ -1269,7 +1270,7 @@ union ResourceDestination {
     u32 id;
     const void* pointer;
 };
-extern "C" u32 CtrlRemote_TouchBitByArg(u32 resourceId);
+#include "kyoshin/cf/CtrlRemoteApi.hpp"
 extern "C" void CtrlRemote_SetSharedBit(u32 destination, u32 value);
 #include "kyoshin/cf/ResourceIndexTable.hpp"
 extern "C" const ResourceIndexTable lbl_eu_804FB7B0;
@@ -2053,13 +2054,13 @@ extern "C" void recoverFieldState__Q22cf13CfGameManagerFv(bool alternate) {
         syncBdatDataCache__Q22cf13CfGameManagerFv(value, &fallback, size);
     }
 }
-extern "C" bool CtrlObjectParam_FindSlotTypeIndex(UnkClass_8009ECB0* object, u32 value, s32* firstOut,
-                                s32* secondOut);
+extern "C" bool CtrlObjectParam_FindSlotTypeIndex(int* object, u32 value, int* firstOut,
+                                int* secondOut);
 extern "C" bool initParticleSystem__Q22cf13CfGameManagerFv(u32 value) {
     s32 firstOut;
     s32 secondOut;
     UnkClass_8009ECB0* object = (UnkClass_8009ECB0*)CtrlObjectParam_GetSlotTableBase();
-    bool found = CtrlObjectParam_FindSlotTypeIndex(object, value, &firstOut, &secondOut);
+    bool found = CtrlObjectParam_FindSlotTypeIndex(reinterpret_cast<int*>(object), value, (int*)&firstOut, (int*)&secondOut);
     bool result = false;
     if (found && firstOut == 1) result = true;
     return result;

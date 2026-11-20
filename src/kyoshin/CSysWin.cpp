@@ -220,9 +220,8 @@ case0:
     {
         nw4r::lyt::Pane* pane =
             mLayout->GetRootPane()->FindPaneByName("txt_sysmes01", true);
-        // TagProcCalcPageLayout's retail signature takes opaque view pointers
-        TagProcCalcPageLayout(mTagProcessor, reinterpret_cast<CTagMsgView*>(pane),
-                              reinterpret_cast<CTagOutView*>(pane0));
+        TagProcCalcPageLayout(mTagProcessor, reinterpret_cast<nw4r::lyt::TextBox*>(pane),
+                              reinterpret_cast<nw4r::lyt::Pane*>(pane0));
         f32 size[2];
         TagCopyVec2f(size, (f32*)&pane0->GetSize());
         f32 h = size[1];
@@ -259,14 +258,14 @@ case1:
     {
         nw4r::lyt::Pane* paneA =
             mLayout->GetRootPane()->FindPaneByName("txt_sysmes02_01", true);
-        TagProcCalcPageLayout(mTagProcessor, reinterpret_cast<CTagMsgView*>(paneA),
-                              reinterpret_cast<CTagOutView*>(pane0));
+        TagProcCalcPageLayout(mTagProcessor, reinterpret_cast<nw4r::lyt::TextBox*>(paneA),
+                              reinterpret_cast<nw4r::lyt::Pane*>(pane0));
         f32 posA[2];
         TagCopyVec2f(posA, (f32*)&pane0->GetSize());
         nw4r::lyt::Pane* paneB =
             mLayout->GetRootPane()->FindPaneByName("txt_sysmes02_00", true);
-        TagProcCalcPageLayout(mTagProcessor, reinterpret_cast<CTagMsgView*>(paneB),
-                              reinterpret_cast<CTagOutView*>(pane0));
+        TagProcCalcPageLayout(mTagProcessor, reinterpret_cast<nw4r::lyt::TextBox*>(paneB),
+                              reinterpret_cast<nw4r::lyt::Pane*>(pane0));
         f32 posB[2];
         TagCopyVec2f(posB, (f32*)&pane0->GetSize());
         f32 pick[2];
@@ -288,9 +287,8 @@ case2:
     {
         nw4r::lyt::Pane* pane =
             mLayout->GetRootPane()->FindPaneByName("txt_sysmes03", true);
-        // TagProcCalcPageLayout's retail signature takes opaque view pointers
-        TagProcCalcPageLayout(mTagProcessor, reinterpret_cast<CTagMsgView*>(pane),
-                              reinterpret_cast<CTagOutView*>(pane0));
+        TagProcCalcPageLayout(mTagProcessor, reinterpret_cast<nw4r::lyt::TextBox*>(pane),
+                              reinterpret_cast<nw4r::lyt::Pane*>(pane0));
         f32 size[2];
         TagCopyVec2f(size, (f32*)&pane0->GetSize());
         f32 h = size[1];
@@ -321,14 +319,14 @@ case3:
     {
         nw4r::lyt::Pane* paneA =
             mLayout->GetRootPane()->FindPaneByName("txt_sysmes04_01", true);
-        TagProcCalcPageLayout(mTagProcessor, reinterpret_cast<CTagMsgView*>(paneA),
-                              reinterpret_cast<CTagOutView*>(pane0));
+        TagProcCalcPageLayout(mTagProcessor, reinterpret_cast<nw4r::lyt::TextBox*>(paneA),
+                              reinterpret_cast<nw4r::lyt::Pane*>(pane0));
         f32 posA[2];
         TagCopyVec2f(posA, (f32*)&pane0->GetSize());
         nw4r::lyt::Pane* paneB =
             mLayout->GetRootPane()->FindPaneByName("txt_sysmes04_00", true);
-        TagProcCalcPageLayout(mTagProcessor, reinterpret_cast<CTagMsgView*>(paneB),
-                              reinterpret_cast<CTagOutView*>(pane0));
+        TagProcCalcPageLayout(mTagProcessor, reinterpret_cast<nw4r::lyt::TextBox*>(paneB),
+                              reinterpret_cast<nw4r::lyt::Pane*>(pane0));
         f32 posB[2];
         TagCopyVec2f(posB, (f32*)&pane0->GetSize());
         f32 pick[2];

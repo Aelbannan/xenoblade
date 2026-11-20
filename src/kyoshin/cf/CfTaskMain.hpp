@@ -11,7 +11,7 @@ namespace cf {
 // Game-root task that drives CfGameManager once per frame.
 class CfTaskMain : public CTTask<CfTaskMain>, public IWorkEvent {
 public:
-    CfTaskMain(CScn* scene) : mScene(scene) {}
+    CfTaskMain(::CScn* scene) : mScene(scene) {}
     virtual ~CfTaskMain();
 
     virtual void Init();
@@ -20,10 +20,10 @@ public:
     virtual void Draw();
     virtual void Tail();
 
-    static CfTaskMain* create(CProcess* parent, CScn* scene);
+    static CfTaskMain* create(CProcess* parent, ::CScn* scene);
 
     /* 0x54: IWorkEvent vptr */
-    /* 0x58 */ CScn* mScene;
+    /* 0x58 */ ::CScn* mScene;
 };
 
 } // namespace cf

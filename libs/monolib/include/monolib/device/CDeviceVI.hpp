@@ -9,7 +9,7 @@
 #include <revolution/VI.h>
 
 //size: 0x2c4 (retail __ct stw 704 = 0x2C0 unk2C0, ends 0x2C4)
-class __declspec(novtable) CDeviceVI : public CDeviceBase, public IErrorWii {
+class CDeviceVI : public CDeviceBase, public IErrorWii {
 public:
     CDeviceVI(const char* pName, CWorkThread* pParent);
     virtual ~CDeviceVI();

@@ -2,32 +2,6 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
-// .sdata2 0x30 as one struct: MWCC reorders individually-declared floats by
-// first use, so the pool is frozen in retail order. Code keeps the retail
-// label names via the macros below (read-only).
-struct Sdata2_GimmickObject {
-    float fA0, fA4;
-    double dA8;
-    float fB0, fB4, fB8, fBC;
-    double dC0;
-    float fC8a, fC8b;
-};
-__declspec(section ".sdata2") __attribute__((used, aligned(8)))
-const Sdata2_GimmickObject sdata2_GimmickObject = {
-    0.0f, 1.0f, 4503601774854144.0,
-    20.0f, 120.0f, 30.0f, 240.0f,
-    4503599627370496.0,
-    5.0f, 0.0f
-};
-#define lbl_eu_806681A0 (sdata2_GimmickObject.fA0)
-#define lbl_eu_806681A4 (sdata2_GimmickObject.fA4)
-#define lbl_eu_806681A8 (sdata2_GimmickObject.dA8)
-#define lbl_eu_806681B0 (sdata2_GimmickObject.fB0)
-#define lbl_eu_806681B4 (sdata2_GimmickObject.fB4)
-#define lbl_eu_806681B8 (sdata2_GimmickObject.fB8)
-#define lbl_eu_806681BC (sdata2_GimmickObject.fBC)
-#define lbl_eu_806681C0 (sdata2_GimmickObject.dC0)
-#define lbl_eu_806681C8 (sdata2_GimmickObject.fC8a)
 #include "monolib/scn/CScn.hpp"
 #include "kyoshin/cf/object/CfObjectMoveApi.hpp"
 #include "kyoshin/cf/object/CfObject.hpp"
@@ -123,7 +97,7 @@ extern "C" cf::CfGimmickObject* __ct__cf_CfGimmickObject(
     self->field_194 = 0;
 
     void* mgr = Bdat_GetTable_AA34();
-    void* holder = ((CfGimmickTableSet*)mgr)->lbl_eu_80664128;
+    void* holder = ((CfGimmickTableSet*)mgr)->mObjectGimmickBdatTable;
     char* colBase = lbl_eu_80507B60;
     self->field_64 = row;
 

@@ -41,10 +41,12 @@ private:
 
     static const char* devSys1String;
     static const char* devSys2String;
-    static ml::FixStr<64> spNotRunningDeviceName;
-    static ml::FixStr<64> spColdStartNotRunningDeviceName;
     static mtl::ALLOC_HANDLE sDeviceRegion1Handle;
     static mtl::ALLOC_HANDLE sDeviceRegion2Handle;
 
     static CDevice* spInstance;
 };
+
+// JP symbols.txt names these as plain globals, not class statics.
+extern ml::FixStr<64> spNotRunningDeviceName;
+extern ml::FixStr<64> spColdStartNotRunningDeviceName;

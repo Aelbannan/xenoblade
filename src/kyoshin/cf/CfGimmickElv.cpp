@@ -1,6 +1,7 @@
 // CfGimmickElv - elevator gimmick (cf namespace)
 // Decompiled from retail ASM at build/us/asm/kyoshin/cf/CfGimmickElv.s
 
+#include "kyoshin/cf/CfBdat.hpp"
 #include "kyoshin/cf/CfGimmickElv.hpp"
 #include "monolib/scn/CScn.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
@@ -16,7 +17,6 @@ struct __data_CfGimmickElv {
 __declspec(section ".data") __attribute__((used, aligned(4))) const __data_CfGimmickElv __data_blob_CfGimmickElv = {
     {0x00,0x00,0x00,0x00,0xFF,0xFF,0xFF,0xFF,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xFF,0xFF,0xFF,0xFF,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xFF,0xFF,0xFF,0xFF,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xFF,0xFF,0xFF,0xFF,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xFF,0xFF,0xFF,0xFF,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xFF,0xFF,0xFF,0xFF,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xFF,0xFF,0xFF,0xFF,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xFF,0xFF,0xFF,0xFF,0x00,0x00,0x00,0x00}
 };
-#define lbl_eu_80535868 ((char*)&__data_blob_CfGimmickElv.b)
 
 __declspec(section ".rodata") __attribute__((used)) const char lbl_eu_80508668[0x14] = "cf::CfGimmickElv";
 __declspec(section ".rodata") __attribute__((used)) const char lbl_eu_8050867C[0x5C] = {
@@ -60,7 +60,6 @@ __declspec(section ".sdata2") __attribute__((used, aligned(8))) const Sdata2_Elv
 extern "C" {
 extern char lbl_eu_805358C8[];   // CfGimmickElv vtable (actually next TU, keep extern)
 extern char gGimmickBdatColumns[];   // bdat column pointer table
-extern char lbl_eu_80664130[];    // bdat table pointer (via sda21)
 extern char gGimmickPartyFlags[];    // global flag
 typedef void (CfGimmickElvData::*CfGimmickElvStateFunc)();
 extern char gGimmickPartySlotState[];  // bit array
@@ -85,7 +84,7 @@ extern "C" void __ct__cf_CfGimmickElv(CfGimmickElvData* self, u16 rowId) {
     self->typeId = 3;
 
     void* mgr = Bdat_GetTable_AA34();
-    void* table = *(void**)((u8*)mgr + (u32)&lbl_eu_80664130);
+    void* table = *(void**)((u8*)mgr + (u32)&::cf::CfBdat::spCurElvGmFileData);
     u8* colBase = (u8*)gGimmickBdatColumns;
 
     self->bdatRowId = rowId;
@@ -256,7 +255,7 @@ extern "C" void* __dt__Q22cf12CfGimmickElvFv(CfGimmickElvData* self, int mode) {
 extern "C" void GimmickElv_Update(CfGimmickElvData* self) {
     if (*(u32*)gGimmickPartyFlags & 2) {
         // PTMF call through state table
-        typedef void (CfGimmickElvData::*PMF)(); PMF* tbl = (PMF*)lbl_eu_80535868; (self->*tbl[self->state])();
+        typedef void (CfGimmickElvData::*PMF)(); PMF* tbl = (PMF*)&__data_blob_CfGimmickElv.b; (self->*tbl[self->state])();
         GimmickElv_InitSubObjects(self);
     }
 }

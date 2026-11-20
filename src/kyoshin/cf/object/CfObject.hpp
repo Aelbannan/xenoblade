@@ -6,7 +6,7 @@
 
 namespace cf {
     struct CfObjectSub54 {
-        u8 field_0x0[0xC];
+        ml::CVec3 mPos;              // 0x00 position delta triplet
     };
 
     class CfObjectModel;

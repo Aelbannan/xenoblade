@@ -1,9 +1,10 @@
+#include "kyoshin/cf/CfBdat.hpp"
 #include "kyoshin/makecrystal/CMCEffStart.hpp"
 #include "kyoshin/CQuestWindow_Pane.hpp"
 
 // NOTE: CfBdat.hpp is intentionally NOT included. It declares
-// `extern void* lbl_eu_806640F4;` while code_80135FDC.hpp declares the same
-// symbol as `extern u32 lbl_eu_806640F4;` -- including both is a redeclaration
+// `extern void* ::cf::CfBdat::spItmWpnListFileData;` while code_80135FDC.hpp declares the same
+// symbol as `extern u32 ::cf::CfBdat::spItmWpnListFileData;` -- including both is a redeclaration
 // error (10563). This TU uses none of CfBdat's declarations (all symbols
 // below come from CMCEffStart.hpp / code_80135FDC.hpp / local externs), so
 // the include is dropped to keep the two extern forms apart.
@@ -662,13 +663,13 @@ void CMCEffCrystal::setTraceVisible(bool arg1) {
 void CMCEffCrystal::setCrystalInfo(u16 arg1, u8 arg2) {
     unk36 = arg1;
     unk38 = arg2;
-    char* name = BdatGetPtrDirect(lbl_eu_806640D8, &lbl_eu_805095EC[0x274], arg1);
+    char* name = BdatGetPtrDirect(::cf::CfBdat::spBtlSkillListFileData, &lbl_eu_805095EC[0x274], arg1);
     char* itemName = (char*)BdatTouchStringCell(&lbl_eu_805095EC[0x279], &lbl_eu_805095EC[0x274], 0x1e - (arg2 - 1));
     char buffer[0x20];
     sprintf(buffer, &lbl_eu_805095EC[0x282], name, itemName);
     LayoutSetTextBoxText(mLayout18, &lbl_eu_805095EC[0x287], buffer, 0);
     void* resource = nullptr;
-    u8 result = BdatGetU8Direct((const void*)lbl_eu_806640D8, &lbl_eu_805095EC[0x296], arg1);
+    u8 result = BdatGetU8Direct((const void*)::cf::CfBdat::spBtlSkillListFileData, &lbl_eu_805095EC[0x296], arg1);
     switch(result) {
         case 0:
             resource = mArcResourceAccessor->GetResource(mArcResourceAccessor->RES_TYPE_TEXTURE, &lbl_eu_805095EC[0x29f], 0);
@@ -729,7 +730,7 @@ void CMCEffCrystal::updateChange() {
         unk5 = 1;
     }
     if(mAnimTrans20->GetFrame() >= 5.0f) {
-        char* name = BdatGetPtrDirect(lbl_eu_806640D8, &lbl_eu_805095EC[0x274], unk36);
+        char* name = BdatGetPtrDirect(::cf::CfBdat::spBtlSkillListFileData, &lbl_eu_805095EC[0x274], unk36);
         char* itemName = (char*)BdatTouchStringCell(&lbl_eu_805095EC[0x279], &lbl_eu_805095EC[0x274], 0x1e - unk38);
         char buffer[0x20];
         sprintf(buffer, &lbl_eu_805095EC[0x282], name, itemName);

@@ -1,5 +1,5 @@
 #pragma once
-
+#include "kyoshin/cf/CtrlRemoteApi.hpp"
 #include <types.h>
 #include "kyoshin/CTaskGameEff.hpp"
 #include "kyoshin/TagProcCompareIds.hpp"
@@ -7,57 +7,15 @@
 #include <nw4r/db/db_assert.h>
 #include <nw4r/ut/ut_TagProcessorBase.h>
 #include <nw4r/ut/ut_Rect.h>
+#include <nw4r/ut/ut_Color.h>
+#include <nw4r/ut/ut_Font.h>
+#include <nw4r/ut/ut_CharWriter.h>
+#include <nw4r/ut/ut_TextWriterBase.h>
+#include <nw4r/lyt/lyt_pane.h>
+#include <nw4r/lyt/lyt_textBox.h>
 #include "kyoshin/code_80135FDC_Bdat.hpp"
 #include "kyoshin/code_80135FDC_Lyt.hpp"
 #include "kyoshin/code_80135FDC_State.hpp"
-
-// Forward decls only: this TU defines its own byte-wise nw4r::ut::Color, so the
-// real lyt headers (which pull ut_Color.h) cannot be included here.
-namespace nw4r {
-namespace lyt {
-class AnimTransform;
-class Pane;
-
-/* Layout view of nw4r::lyt::Font used by TagMeasureTextWidth: only the two virtual
- * slots the function calls are used (+0x34 int-returning height-ish getter,
- * +0x48 char-width getter). MWCC emits 2 hidden leading slots for
- * polymorphic classes in this TU (RTTI), so the first declared virtual sits
- * at +0x08 and the 12th/17th declared virtuals sit at +0x34/+0x48. */
-#ifndef NW4R_LYT_RESOURCES_H
-class Font {
-public:
-    virtual ~Font();   // +0x08
-    virtual void v0C();
-    virtual void v10();
-    virtual void v14();
-    virtual void v18();
-    virtual void v1C();
-    virtual void v20();
-    virtual void v24();
-    virtual void v28();
-    virtual void v2C();
-    virtual void v30();
-    virtual int v34();      // +0x34 returns int (font height-ish)
-    virtual void v38();
-    virtual void v3C();
-    virtual void v40();
-    virtual void v44();
-    virtual int v48(u16 c); // +0x48 returns int (char width)
-};
-#endif
-
-/* Layout view of nw4r::lyt::TextBox for TagMeasureTextWidth (GetFont is the only
- * member used; mangled name GetFont__Q34nw4r3lyt7TextBoxCFv). Only defined
- * when the real lyt_textBox.h has not been included yet. */
-#ifndef NW4R_LYT_TEXTBOX_H
-class TextBox {
-public:
-    Font* GetFont() const;
-};
-#endif
-
-}
-}
 
 /* Table copies used by TagWriterColorBlock's color-tag writer: 55 value dwords and
  * 56 name pointers copied from retail .data (0x804FEFB8 / 0x804FF488) onto
@@ -235,124 +193,6 @@ struct TagCopyBlock {
     f32 f4C, f50, f54;
     u32 w58, w5C, w60;
 };
-
-namespace nw4r {
-namespace ut {
-
-/* nw4r::ut::Color as seen by this TU: retail copy-assign is byte-wise,
- * so the class carries four plain u8 components (no u32 shortcut).
- * operator= is defined out-of-line in CTagProcessor.cpp so it is emitted
- * as the standalone retail symbol. Only defined when the real ut_Color.h
- * has not been included yet (other TUs include both). */
-#ifndef NW4R_UT_COLOR_H
-struct Color {
-    union {
-        u32 v;  // packed ARGB value (0xAARRGGBB)
-        struct {
-            u8 r;  // +0x00
-            u8 g;  // +0x01
-            u8 b;  // +0x02
-            u8 a;  // +0x03
-        } comp;
-    };
-
-    Color& operator=(const Color& rhs);
-};
-#endif
-
-/* 4-byte color-value pack for the name-list highlight walks: the retail
- * constructs the packed ARGB u32 with lis/addi and stores it to the stack
- * slot that the out-of-line Color::operator= then reads. */
-
-}  // namespace ut
-}  // namespace nw4r
-
-/* Minimal nw4r::ut::CharWriter / TextWriterBase views used by the tag-writer
- * family. The real ut_CharWriter.h / ut_TextWriterBase.h cannot be included
- * here (they pull ut_Color.h, which clashes with the byte-wise Color above),
- * so only the members called from this TU are declared. The class names and
- * signatures match the retail nw4r headers, so MWCC emits the same mangled
- * callee names (CalcStringWidth__Q34nw4r2ut17TextWriterBase<w>CFPCwi /
- * GetFontHeight__Q34nw4r2ut10CharWriterCFv). ut_TagProcessorBase.h already
- * forward-declares the template; this is the matching definition. */
-namespace nw4r {
-namespace ut {
-
-/* Opaque CharWriter font (ut::detail::Font view) used by TagWriterMeasureScratch:
- * vtable slot +0x48 is a no-arg int getter whose value is doubled and
- * float-converted for the cursor-advance math. 2 hidden leading slots
- * (RTTI), so 16 declared virtuals precede the +0x48 slot. */
-#ifndef NW4R_UT_FONT_H
-class FontH {
-public:
-    virtual ~FontH();   // +0x08
-    virtual void v0C();
-    virtual void v10();
-    virtual void v14();
-    virtual void v18();
-    virtual void v1C();
-    virtual void v20();
-    virtual void v24();
-    virtual void v28();
-    virtual void v2C();
-    virtual void v30();
-    virtual void v34();
-    virtual void v38();
-    virtual void v3C();
-    virtual void v40();
-    virtual void v44();
-    virtual int v48(u16 c);  // +0x48 char-width getter (TagWriterMeasureScratch passes U+2500)
-};
-#endif
-
-/* Layout view of CharWriter for the tag-writer accessors (real
- * ut_CharWriter.h layout): mCursorPos is a math::VEC3 at +0x2C with x at
- * 0x2C and y at 0x30. Only the fields the tag-writer family reads are
- * named; the rest is padding so the offsets stay exact. */
-#ifndef NW4R_UT_CHAR_WRITER_H
-class CharWriter {
-public:
-    f32 GetFontHeight() const;
-    f32 GetFontAscent() const;   // out-of-line nw4r method (retail bl)
-    f32 GetFontDescent() const;  // out-of-line nw4r method (retail bl)
-    void UpdateVertexColor();  // out-of-line nw4r method (retail bl)
-
-    u8  pad_00[0x18];                    // +0x00 mColorMapping..mVertexColor-1
-    nw4r::ut::Color mVertexColor;        // +0x18 (TagWriterApplyColor merges alpha here)
-    u8  pad_1C[0x8];                     // +0x1C
-    f32 field_24;                        // +0x24 (mScale region; TagWriterGetScaleX reads this)
-    f32 field_28;                        // +0x28 (mScale region; TagWriterGetScaleY reads this)
-    f32 cursorX;                         // +0x2C mCursorPos.x
-    f32 cursorY;                         // +0x30 mCursorPos.y
-    u8  pad_34[0x14];                    // +0x34 mCursorPos.z .. +0x47
-    FontH* mFont;                        // +0x48 (TagWriterMeasureScratch reads the +0x48 getter)
-};
-#endif
-
-/* Layout view of TextWriterBase for the tag-writer accessors: mWidthLimit
- * is the first TextWriterBase member, at +0x4C right after CharWriter. */
-#ifndef NW4R_UT_TEXT_WRITER_BASE_H
-template <typename T> class TextWriterBase : public CharWriter {
-public:
-    f32 CalcStringWidth(const T* pStr, int len) const;
-    void Print(const T* pStr, int len);  // TagWriterMeasureScratch prints the 1-char marker
-    ~TextWriterBase();  // __dt__Q34nw4r2ut17TextWriterBase<w>Fv (local scratch dtor)
-
-    f32 widthLimit;    // +0x4C mWidthLimit
-    f32 charSpace;     // +0x50 mCharSpace
-    u8  pad_54[0x8];   // +0x54 mLineSpace / mFontSize.x
-    /* +0x5C mFontSize.y region: the accessors treat it as u32, while
-     * TagWriterJustifyPair stores raw float bits into the scratch copy. */
-    union {
-        u32 field_5C;
-        f32 field_5Cf;
-      };
-    u8  pad_60[0x8];   // +0x60 mTagProcessor
-};
-#endif
-
-}  // namespace ut
-}  // namespace nw4r
 
 /* Tag-processor message object (retail tag-proc layout, 0x858 heap block):
  * 1024-wchar message buffer at +0x00, then u16 state fields. The tag-writer
@@ -704,33 +544,6 @@ struct TagColorArg {
     nw4r::ut::Color* field_04;       // +0x04
 };
 
-/* Message-context view used by the tag-writer position clamp
- * (TagProcCalcPageLayout): wchar_t* message string at +0xD8, copied into a local
- * buffer before TagProcMeasureText measures it. TagProcMeasureText reads the float
- * at +0xF4 (per-char spacing added to each glyph width). */
-struct CTagMsgView {
-    u8 pad[0xD8];        // +0x00
-    wchar_t* field_D8;   // +0xD8 message string pointer
-    u8 pad_E0[0x14];     // +0xE0
-    f32 field_F4;        // +0xF4 per-char spacing
-};
-
-/* Output view used by the tag-writer position clamp (TagProcCalcPageLayout):
- * VEC2 destination at +0x4C (copyVEC2 target). */
-struct CTagOutView {
-    u8 pad[0x4C];    // +0x00
-    f32 field_4C;    // +0x4C
-    f32 field_50;    // +0x50
-};
-
-/* Output view used by TagWriterMeasureStrings: reads field_00, writes field_08
- * (addToCharSpace additionally touches +0x04/+0x0C via the u8* helper). */
-struct TagLineOutView {
-    f32 field_00;  // +0x00
-    f32 field_04;  // +0x04
-    f32 field_08;  // +0x08
-};
-
 struct __declspec(novtable) CTagProcessorSE : public CTagProcessorBase {
     virtual ~CTagProcessorSE();
 
@@ -774,8 +587,8 @@ int TagProcStartMessage(void* tagProc, nw4r::lyt::Pane* pane);
 void TagProcBuildOpenText(CTagProcessorBase* tagProc, nw4r::lyt::Pane* pane,
                    const wchar_t* str);
 // Same signatures as the CTalkWindow.hpp declarations (shared C-ABI symbols).
-void TagProcRenderPage(CTagProcMsg* msg, TalkPaneView* a, TalkPaneView* b,
-                   TalkPaneView* c, const wchar_t* text);
+void TagProcRenderPage(CTagProcMsg* msg, nw4r::lyt::TextBox* a, nw4r::lyt::TextBox* b,
+                   nw4r::lyt::TextBox* c, const wchar_t* text);
 void TagProcResetPage(nw4r::lyt::AnimTransform* tag, nw4r::lyt::Pane* a,
                    nw4r::lyt::Pane* b, nw4r::lyt::Pane* c);
 
@@ -840,11 +653,11 @@ void TagWriterSetScale(nw4r::ut::TextWriterBase<wchar_t>* tw, float x, float y);
 void* TagWriterParseColonParam(void* unused, void* ret, wchar_t* str, TagParam* dst);
 // Text-position measurement for the tag-writer position clamp (TagProcCalcPageLayout):
 // out = (x, y) computed from the message context + string.
-void TagProcMeasureText(f32* out, CTagMsgView* msg, wchar_t* buf);
+void TagProcMeasureText(f32* out, nw4r::lyt::TextBox* msg, wchar_t* buf);
 // Tag-writer position clamp: copy the message into a local buffer, measure
 // it, clamp/snap the y position to the fixed step table, and write the
 // resulting VEC2 to out->field_4C.
-void TagProcCalcPageLayout(void* unused, CTagMsgView* msg, CTagOutView* out);
+void TagProcCalcPageLayout(void* unused, nw4r::lyt::TextBox* msg, nw4r::lyt::Pane* out);
 int TagWriterCharSpacePP(void* unused, TagCharContext* ctx, void* unused2,
                   TagWriterHolder* holder);
 void* TagWriterSelectParam8b(void* unused, void* ret, wchar_t* str, TagParam* dst);
@@ -863,7 +676,7 @@ u16* TagWriterColorBlock(void* unused, u16* dst, wchar_t* str);
 void* TagWriterSelectParam8a(void* unused, void* ret, wchar_t* str, TagParam* dst);
 // Tag-writer line layout: measure two adjacent strings from the tag buffer
 // into a scratch writer, advance the buffer pointer, return 2.
-int TagWriterMeasureStrings(void* unused, TagLineOutView* out, void* unused2,
+int TagWriterMeasureStrings(void* unused, nw4r::ut::Rect* out, void* unused2,
                   TagWriterHolder* holder);
 // Tag-writer two-string layout: measure the first string in a scratch
 // writer, distribute any excess width of the real writer's copy as char
@@ -899,7 +712,7 @@ int TagWriterMeasureScratch(void* unused, void* unused2, TagWriterHolder* holder
 // TagProcStepMessage's C-ABI imports: flat (or pre-mangled) retail names.
 extern "C" void* func_800BBC0C(void* obj);  // talk-source getter (retail r3 = prior call's result)
 extern "C" void func_8004B9D4(void* w, int a, int b, int c, int d);
-u32 CtrlRemote_TouchBitByArg(u32 id);
+
 void CtrlRemote_SetSharedBit(u32 owner, u32 value);
 void UIWin_CreateMenuUpdate(u32 a, u32 b, u32 c, u32 d);
 // cf::CfGameManager controller-mode query. Retail name keeps the Fv suffix

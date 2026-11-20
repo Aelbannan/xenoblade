@@ -940,7 +940,11 @@ typedef struct SfdHandle {
     SfdFrame* curFrame;     /* 0x27f4 frame currently handed out */
     SfdFrame frames[16];    /* 0x27f8 */
     SfdPicUsrBuf picUsr;    /* 0x38f8 */
-    u8  field_0x398c[0x14]; /* 0x398c */
+    u32 field_0x398c;       /* 0x398c */
+    u32 audStereoStat;      /* 0x3990 // name-guess: mwsffrm_ChangeSettingSyncPlayback checks it for channel mode 2 */
+    u32 audNoChanStat;      /* 0x3994 // name-guess: mwsffrm_ChangeSettingSyncPlayback checks it for channel mode 0 */
+    u32 field_0x3998;       /* 0x3998 */
+    u32 field_0x399c;       /* 0x399c */
     void (*writeNotify)(s32 arg, u32 addr); /* 0x39a0 SFMPS_AddWrite hook */
     s32 writeNotifyArg;     /* 0x39a4 */
     u32 writeTotal;         /* 0x39a8 bytes written so far */

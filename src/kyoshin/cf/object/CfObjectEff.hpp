@@ -3,8 +3,6 @@
 #include <types.h>
 #include "kyoshin/cf/object/CfObjectEffSymbols.hpp"
 #include "kyoshin/cf/object/CfObject.hpp"
-
-// Retail data symbols (linker-provided)
 // Retail data symbols (linker-provided)
 extern const float lbl_eu_80666960;  // X component baked into the move vector (moveEffOfs___)
 extern const float lbl_eu_80666964;  // scale passed to the vtable 0xB4 slot (moveEffOfs___)
@@ -134,7 +132,9 @@ struct CPcEffectBank {
 class __declspec(novtable) CfObjectEff : public CfObject {
 public:
     u32 mField70;                // 0x70 - packed type/id (top 5 bits = type, createEffect_)
-    u8 _pad74[0x8C - 0x74];
+    u32 mField74;                // 0x74 - manager counter snapshot
+    char mName[0x10];            // 0x78 - effect name buffer
+    u32 mNameLen;                // 0x88 - strlen result
     u16 mCount8C;                // 0x8C - effect count (createEffect_ passes count-1)
     u16 mCount8E;                // 0x8E - ptmf-table dispatch counter (updateEffect_)
     u8* mSubObj90;               // 0x90 - secondary vtable (CfObjectEff vtable + 0x178)

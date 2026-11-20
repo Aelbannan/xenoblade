@@ -1,9 +1,9 @@
 #pragma once
 
+
 #include <types.h>
 #include "kyoshin/plugin/ocBdat.hpp"
 
-extern u8* lbl_eu_806640E0;    // bdat file pointer (.sbss/.sdata)
 extern char lbl_eu_805018A8[]; // bdat column-name string block (.rodata)
 
 namespace cf {
@@ -86,7 +86,22 @@ namespace cf {
 
         u16 unk4;
         u16 unk6;
-        u8 unk8[0x1520];
+        // Split out the absolute-offset members used by the party-change
+        // accessors; the surrounding unk ranges keep the original size.
+        u8 unk8[0xE];              // +0x08..+0x15
+        u16 mFlags1E;              // +0x16 (abs 0x1E)
+        u8 unk20[0x10];            // +0x18..+0x27
+        void* mField30;            // +0x28 (abs 0x30)
+        u8 unk34[0x40];            // +0x2C..+0x6B
+        void* mField74;            // +0x6C (abs 0x74)
+        u8 unk78[0x14];            // +0x70..+0x83
+        f32 mField8C;              // +0x84 (abs 0x8C)
+        u8 unk90[4];               // +0x88..+0x8B
+        u32 mField94;              // +0x8C (abs 0x94)
+        u8 unk98[6];               // +0x90..+0x95
+        u16 mField9E;              // +0x96 (abs 0x9E)
+        u16 mFieldA0;              // +0x98 (abs 0xA0)
+        u8 unkA2[0x148E];          // +0x9A..+0x1527
         u8 unk1528[4];
         u8 unk152C[0x80];
         u8 unk15AC[0x15D4 - 0x15AC];

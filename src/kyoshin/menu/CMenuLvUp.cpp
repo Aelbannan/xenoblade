@@ -172,12 +172,7 @@ void* findObjectById(int id);
 // C-linkage data imports (retail names; global-scope plain externs keep the
 // unmangled symbol -- MWCC does not mangle global variables).
 extern char lbl_eu_8050EC70[];   // layout/animation name string table
-extern f32 lbl_eu_80668A00;      // anim frame reset value
-extern f32 lbl_eu_80668A04;      // anim frame target for advanceAnimTransform
-extern f32 lbl_eu_80668A08;      // screen-position post-scale offset x
-extern f32 lbl_eu_80668A0C;      // screen-position post-scale offset y
-extern f32 lbl_eu_80668A10;      // screen-position post-scale factor y
-extern u32 gmPauseFlags;      // task-state flag word (bit 21 gates the menu)
+extern u32 gmPauseFlags;
 
 
 CMenuLvUp::~CMenuLvUp() {}
@@ -193,7 +188,7 @@ void CMenuLvUp::Init() {
     mMemRegion.createRegion((int)handle, 0x3e00, lbl_eu_8050EC70, 0);
     Class_8045F858 regionGuard(&mMemRegion);
 
-    f32 resetFrame = lbl_eu_80668A00;
+    f32 resetFrame = 0.0f;
     for (u8 i = 0; i < 3; i++) {
         CMenuLvUpEntry* entry = &mEntries[i];
 
@@ -256,7 +251,7 @@ void CMenuLvUp::Move() {
     if (isSceneLoading__Q22cf13CfGameManagerFv()) return;
 
     if (mField11C != 0) {
-        f32 resetFrame = lbl_eu_80668A00;
+        f32 resetFrame = 0.0f;
         for (u8 i = 0; i < 3; i++) {
             CMenuLvUpEntry* entry = &mEntries[i];
             teardownLvUpEntry(this, entry);
@@ -264,13 +259,13 @@ void CMenuLvUp::Move() {
 
             switch (entry->field_0x14) {
             case 1:
-                if (advanceAnimTransform(entry->field_0x04, lbl_eu_80668A04) != 0) {
+                if (advanceAnimTransform(entry->field_0x04, 1.0f) != 0) {
                     entry->field_0x14 = 3;
                     entry->field_0x04->SetFrame(resetFrame);
                 }
                 break;
             case 2:
-                if (advanceAnimTransform(entry->field_0x0C, lbl_eu_80668A04) != 0) {
+                if (advanceAnimTransform(entry->field_0x0C, 1.0f) != 0) {
                     entry->field_0x14 = 3;
                     entry->field_0x0C->SetFrame(resetFrame);
                 }
@@ -454,66 +449,66 @@ void driveLvUpEntryState(CMenuLvUp* self, CMenuLvUpEntry* entry) {
         case 2:
             entry->field_0x14 = 2;
             entry->field_0x08->GetRootPane()
-                ->FindPaneByName(&lbl_eu_8050EC70[0x70], true)
+                ->FindPaneByName("pic_kiz00", true)
                 ->SetVisible(true);
             entry->field_0x08->GetRootPane()
-                ->FindPaneByName(&lbl_eu_8050EC70[0x7a], true)
+                ->FindPaneByName("pic_kiz01", true)
                 ->SetVisible(true);
             entry->field_0x08->GetRootPane()
-                ->FindPaneByName(&lbl_eu_8050EC70[0x84], true)
+                ->FindPaneByName("pic_ps00", true)
                 ->SetVisible(true);
             entry->field_0x08->GetRootPane()
-                ->FindPaneByName(&lbl_eu_8050EC70[0x8d], true)
+                ->FindPaneByName("pic_ps01", true)
                 ->SetVisible(false);
             entry->field_0x08->GetRootPane()
-                ->FindPaneByName(&lbl_eu_8050EC70[0x96], true)
+                ->FindPaneByName("pic_at00", true)
                 ->SetVisible(false);
             entry->field_0x08->GetRootPane()
-                ->FindPaneByName(&lbl_eu_8050EC70[0x9f], true)
+                ->FindPaneByName("pic_at01", true)
                 ->SetVisible(false);
             playUISound(0x93);
             break;
         case 3:
             entry->field_0x14 = 2;
             entry->field_0x08->GetRootPane()
-                ->FindPaneByName(&lbl_eu_8050EC70[0x70], true)
+                ->FindPaneByName("pic_kiz00", true)
                 ->SetVisible(false);
             entry->field_0x08->GetRootPane()
-                ->FindPaneByName(&lbl_eu_8050EC70[0x7a], true)
+                ->FindPaneByName("pic_kiz01", true)
                 ->SetVisible(false);
             entry->field_0x08->GetRootPane()
-                ->FindPaneByName(&lbl_eu_8050EC70[0x84], true)
+                ->FindPaneByName("pic_ps00", true)
                 ->SetVisible(false);
             entry->field_0x08->GetRootPane()
-                ->FindPaneByName(&lbl_eu_8050EC70[0x8d], true)
+                ->FindPaneByName("pic_ps01", true)
                 ->SetVisible(true);
             entry->field_0x08->GetRootPane()
-                ->FindPaneByName(&lbl_eu_8050EC70[0x96], true)
+                ->FindPaneByName("pic_at00", true)
                 ->SetVisible(true);
             entry->field_0x08->GetRootPane()
-                ->FindPaneByName(&lbl_eu_8050EC70[0x9f], true)
+                ->FindPaneByName("pic_at01", true)
                 ->SetVisible(true);
             playUISound(0x78);
             break;
         case 4:
             entry->field_0x14 = 2;
             entry->field_0x08->GetRootPane()
-                ->FindPaneByName(&lbl_eu_8050EC70[0x70], true)
+                ->FindPaneByName("pic_kiz00", true)
                 ->SetVisible(true);
             entry->field_0x08->GetRootPane()
-                ->FindPaneByName(&lbl_eu_8050EC70[0x7a], true)
+                ->FindPaneByName("pic_kiz01", true)
                 ->SetVisible(true);
             entry->field_0x08->GetRootPane()
-                ->FindPaneByName(&lbl_eu_8050EC70[0x84], true)
+                ->FindPaneByName("pic_ps00", true)
                 ->SetVisible(true);
             entry->field_0x08->GetRootPane()
-                ->FindPaneByName(&lbl_eu_8050EC70[0x8d], true)
+                ->FindPaneByName("pic_ps01", true)
                 ->SetVisible(false);
             entry->field_0x08->GetRootPane()
-                ->FindPaneByName(&lbl_eu_8050EC70[0x96], true)
+                ->FindPaneByName("pic_at00", true)
                 ->SetVisible(true);
             entry->field_0x08->GetRootPane()
-                ->FindPaneByName(&lbl_eu_8050EC70[0x9f], true)
+                ->FindPaneByName("pic_at01", true)
                 ->SetVisible(false);
             playUISound(0x92);
             break;
@@ -555,7 +550,7 @@ void placeLvUpEntry(CMenuLvUp* self, CMenuLvUpEntry* entry) {
     nw4r::math::VEC3 anchorPos;
 
     nw4r::lyt::Layout* l1 = entry->field_0x00;
-    f32 v = lbl_eu_80668A00;
+    f32 v = 0.0f;
     l1->GetRootPane()->SetVisible(true);
     entry->field_0x08->GetRootPane()->SetVisible(true);
 
@@ -586,10 +581,10 @@ void placeLvUpEntry(CMenuLvUp* self, CMenuLvUpEntry* entry) {
 
         MenuLvUpPose* pose = (MenuLvUpPose*)Scn_FindCamItem(self->mScene, -1);
         CamMan_ProjectToScreen(&screen, pose, &world);
-        screen.x -= lbl_eu_80668A08;
-        screen.y -= lbl_eu_80668A0C;
-        screen.y *= lbl_eu_80668A10;
-        screen.z = lbl_eu_80668A00;
+        screen.x -= 320.0f;
+        screen.y -= 224.0f;
+        screen.y *= -1.0f;
+        screen.z = 0.0f;
 
         a.x = pose->field_0x10c.x;
         a.y = pose->field_0x10c.y;

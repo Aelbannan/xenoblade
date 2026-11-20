@@ -1,5 +1,5 @@
 #pragma once
-
+#include "kyoshin/cf/CfCamSymbols.hpp"
 #include <types.h>
 #include "kyoshin/code_80135FDC_Bdat.hpp"
 #include "monolib/lib/UnkClass_8045F564.hpp"
@@ -156,7 +156,7 @@ extern "C" void UIWin_CreateSysWinBuff(u32);
 extern "C" bool hasQuestWindow();
 extern "C" bool QstCnt_HasInstance_6B94();
 extern "C" void writePanePos(void*, void*);
-extern "C" bool isGlobalCamFlagSet__Fi(int);
+
 extern "C" bool isKizunaTalkActive();
 extern "C" bool SkipTimer_IsActiveFlag();
 // Scn_QueryUnk80State: declared once in libs/monolib/src/scn/CScn_8049603C.hpp.

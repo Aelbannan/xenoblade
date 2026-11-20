@@ -1,6 +1,7 @@
 // TU for kyoshin/CPcKizunagram - PC affinity chart window.
 // KizunagramIsHidden / KizunagramIsOpen: FULL_MATCH (byte-identical).
 
+#include "kyoshin/cf/CfBdat.hpp"
 #include "kyoshin/CPcKizunagram.hpp"
 #include "kyoshin/code_8025FB10.hpp"
 #include "kyoshin/CPcKizunagramHelpers.hpp"
@@ -1064,7 +1065,7 @@ searchDone:
     // funnels through a u8 temporary (retail spills each to the stack).
     // off/sub are re-derived after the calls (retail keeps them live past
     // the getBdatStringColumnValue sequence).
-    u32 tbl = lbl_eu_80664158;
+    u32 tbl = (u32)::cf::CfBdat::spBtlPsvSkillFileData;
     char* const cols = lbl_eu_8050DB18;
     CPcKizunaSlotEntry* dst = (CPcKizunaSlotEntry*)((u8*)big + off + sub);
     dst->word = value;
@@ -1123,7 +1124,7 @@ searchDone:
         *pWord &= ~(1u << (id & 0x1f));
     }
 
-    u32 tbl = lbl_eu_80664158;
+    u32 tbl = (u32)::cf::CfBdat::spBtlPsvSkillFileData;
     entry->word = value;
     char* const cols = lbl_eu_8050DB18;
     u32 v1 = getBdatStringColumnValue((void*)tbl, cols + 0x6, value);
@@ -1195,7 +1196,7 @@ searchDone:
     // Repopulate the runtime columns from the BDAT table. Each result is
     // kept in a u32 local and re-read as a byte (deref-of-storage), which
     // reproduces retail's stw/lbz stack round-trip per column.
-    u32 tbl = lbl_eu_80664158;
+    u32 tbl = (u32)::cf::CfBdat::spBtlPsvSkillFileData;
     char* const cols = lbl_eu_8050DB18;
     ((CPcKizunaSlotEntry*)((u8*)big + off + sub + 0x3D4))->word = value;
     u32 v1 = getBdatStringColumnValue((void*)tbl, cols + 0x6, value);

@@ -1,4 +1,6 @@
 #pragma once
+
+#include "kyoshin/cf/CfBdat.hpp"
 extern "C" int Counter_TestBit(void*, u32);
 #include "kyoshin/code_8025FB10.hpp"
 
@@ -310,47 +312,6 @@ extern "C" void* Bdat_GetTable_AA34();
 
 extern void* equipItemBoxEquipListFilePtr;
 
-/* CSysWin vtable view exposing the layout-build virtual at +0x88 (slot 34 =
-   declared index 32 after the MWCC offset-to-top + RTTI prefix), dispatched by
-   loadEIBFiles after the file loads. Same shape as the CSysWinView classes in
-   CSysWinSave.hpp / COption.hpp / CCollepedia.hpp. */
-class CEquipItemBoxSysWinView {
-public:
-    virtual void v00() = 0;
-    virtual void v01() = 0;
-    virtual void v02() = 0;
-    virtual void v03() = 0;
-    virtual void v04() = 0;
-    virtual void v05() = 0;
-    virtual void v06() = 0;
-    virtual void v07() = 0;
-    virtual void v08() = 0;
-    virtual void v09() = 0;
-    virtual void v10() = 0;
-    virtual void v11() = 0;
-    virtual void v12() = 0;
-    virtual void v13() = 0;
-    virtual void v14() = 0;
-    virtual void v15() = 0;
-    virtual void v16() = 0;
-    virtual void v17() = 0;
-    virtual void v18() = 0;
-    virtual void v19() = 0;
-    virtual void v20() = 0;
-    virtual void v21() = 0;
-    virtual void v22() = 0;
-    virtual void v23() = 0;
-    virtual void v24() = 0;
-    virtual void v25() = 0;
-    virtual void v26() = 0;
-    virtual void v27() = 0;
-    virtual void v28() = 0;
-    virtual void v29() = 0;
-    virtual void v30() = 0;
-    virtual void v31() = 0;
-    virtual void v32() = 0; // vtable +0x88 (layout build)
-};
-
 /* 6-byte equipment-slot definition used by findEIBEquipSlot's slot scan:
    category byte, item-id short and a per-category base offset byte. */
 struct CEquipItemBoxSlotDef {
@@ -428,8 +389,6 @@ extern "C" u32 CtrlObjectParam_GetArtsDataWord(void*);
 // (rateA + rateB) clamp divisor shared by the equip-box/line stat displays.
 extern "C" void copyVEC3(void*, const void*);
 // Item/bdat table handles: canonical type from the owner header (cf/CItem.hpp).
-extern void* lbl_eu_806640D8;
-extern void* lbl_eu_806640F8;
 // isPaneVisible is declared once in CQuestWindow_Pane.hpp.
 
 // Item-box object type for the unk_20c pointer (forward decl; full layout in
@@ -484,10 +443,9 @@ extern s16 equipItemBox_sortOptionLabelAltBottom[4];
 // retail plain names). Return u32 (lbz zero-extends; avoids call-site masks).
 
 // Shared item/bdat table id passed as BdatGetU8Direct's group arg by the
-// equip-slot checks (same .sbss block as lbl_eu_806640F4).
-extern void* lbl_eu_806640EC;
+// equip-slot checks (same .sbss block as ::cf::CfBdat::spItmWpnListFileData).
 // Resource/flag helper: 0 when the named resource id is absent (CQuestLog).
-extern "C" u32 CtrlRemote_TouchBitByArg(u32);
+#include "kyoshin/cf/CtrlRemoteApi.hpp"
 
 // Item-kind -> display-count probe (calcEIBCountKey's default band).
 extern "C" u32 __cvt_fp2unsigned(double);
@@ -510,7 +468,6 @@ extern "C" u16 ArrayGet12(const u16*, u8);
 extern "C" void CopyTabSlotVec(nw4r::math::VEC3*, const u16*, u32);
 
 // Small-data global read by getEIBNameKey (item-impl table id, .sbss).
-extern void* lbl_eu_806640F4;
 
 // .sdata2 float constants used by the grid page-count math (rebuildEIBGridPage).
 

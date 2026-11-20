@@ -13,7 +13,7 @@
 // ===== Dissolved monolibdata2: static-member storage at retail addresses =====
 // spInstance -> lbl_eu_806656F8 and lbl_80667FD4 -> lbl_eu_806656FC live in
 // CLibG3d.o's sbss span; sCurWpadChannel -> lbl_eu_806637C0 lives in
-// CLibG3d.o's sdata; spHbmstopTplData/lbl_80667FDC/lbl_80667FDD are this
+// CLibG3d.o's sdata; spHbmstopTplData/sHbmStopPending/sHbmStopFlag are this
 // TU's own sbss words (defined below).
 #define spInstance lbl_eu_806656F8
 extern "C" CLibHbm* lbl_eu_806656F8;
@@ -22,18 +22,18 @@ extern "C" int lbl_eu_806637C0;
 #define lbl_80667FD4 lbl_eu_806656FC
 extern "C" bool lbl_eu_806656FC;
 #define spHbmstopTplData lbl_eu_80665700
-#define lbl_80667FDC lbl_eu_80665704
-#define lbl_80667FDD lbl_eu_80665705
 #define sTplTexObj lbl_eu_80657F90
 extern "C" GXTexObj lbl_eu_80657F90; // storage defined in CException.cpp's .bss slice
 
 // [.sbss] 0x80665700-0x80665710 zero-fill owned by this TU (size/align are
 // compared, not bytes): lbl_eu_80665700 = spHbmstopTplData,
-// lbl_eu_80665704/05 = lbl_80667FDC/lbl_80667FDD, and lbl_eu_80665708 is the
+// lbl_eu_80665704/05 = sHbmStopPending/sHbmStopFlag, and lbl_eu_80665708 is the
 // CLibHbmControl singleton-pointer storage (its TU declares it extern).
 TPLPalette* lbl_eu_80665700;
-bool lbl_eu_80665704;
-bool lbl_eu_80665705;
+// name-guess: isHbmStopPending() reads this word; set by the HBM stop release path
+bool sHbmStopPending;
+// name-guess: setHbmStopFlag() writes this word; wkUpdate tests it before starting HBM control
+bool sHbmStopFlag;
 u32 lbl_eu_80665708[2];
 
 // ===== Dissolved monolibdata2 (.rodata) owned by this TU =====
@@ -95,11 +95,11 @@ void CLibHbm::setCurrentWpadChannel(int channel){
 }
 
 void CLibHbm::setHbmStopFlag(bool flag){
-    lbl_80667FDD = flag;
+    sHbmStopFlag = flag;
 }
 
 bool CLibHbm::isHbmStopPending(){
-    return lbl_80667FDC;
+    return sHbmStopPending;
 }
 
 void CLibHbm::loadTplImage(void* pTplData){
@@ -280,7 +280,7 @@ void CLibHbm::wkUpdate(){
 
                 unk264 = false;
 
-                if(!lbl_80667FDD){
+                if(!sHbmStopFlag){
                     mState = STATE_3;
                     if(spHbmstopTplData == nullptr){
                         mState = STATE_NEG1;
@@ -301,7 +301,7 @@ void CLibHbm::wkUpdate(){
                     CDeviceFileCri* fileCri2 = CDeviceFileCri::getInstance();
                     bool criException2 = fileCri2->isException();
 
-                    if(criException2 || lbl_80667FDD){
+                    if(criException2 || sHbmStopFlag){
                         if(mState == STATE_NEG1){
                             setState(STATE_0);
                         }

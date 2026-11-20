@@ -13,19 +13,7 @@ extern "C" void ColiSetMoveVec2(void* obj, int param, float a, float b);
 extern "C" u32 CfRes_getAllocHandle();
 extern "C" int UIWin_HasPendingUpdate(int v);
 
-// Retail data labels referenced by this unit. gmGameFlags and
-// gmScene come from CfObjectMove.hpp.
-extern const float lbl_eu_80666AE0;
-extern const float lbl_eu_80666AE4;
-extern const float lbl_eu_80666AE8;
-extern const float lbl_eu_80666AEC;
-extern const float lbl_eu_80666AF0;
-extern const float lbl_eu_80666AF4;
-extern const float lbl_eu_80666AF8;
-extern const float lbl_eu_80666AFC;
-extern const double lbl_eu_80666B00;   // int->float conversion bias (2^52, sdata2)
 
-// Resource-impl child ctors (legacy flat retail names; defined in
 // CfResPcImpl.cpp / CfResReloadImpl.cpp). Only forward declarations here -
 // including CfResReloadImpl.hpp would collide its typed CfObjectMove_setRegionAttached
 // declaration with the void* form above.

@@ -29,7 +29,6 @@ struct CHelpLearnArtsCharData {
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 // CHelpManager singleton is declared (with mLearnArtsFlag @0x16) in
 // kyoshin/cf/CHelpManager.hpp; see that header.
-extern "C" void* lbl_eu_806640F4;
 extern "C" UNKWORD hasQuestWindow();
 extern "C" u32 GetItemMulti_IsActiveFlag();
 extern "C" void* CtrlObjectParam_GetCharEntry(u32 index);

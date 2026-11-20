@@ -1,5 +1,5 @@
 #pragma once
-
+#include "kyoshin/menu/CMenuZeal.hpp"
 #include <types.h>
 #include "kyoshin/cf/CfCamSymbols.hpp"
 #include <monolib/math/CVec3.hpp>
@@ -47,7 +47,7 @@ extern "C" u32 CfRes_getHeapHandle();                          // mtl heap handl
 extern "C" int cfCam_testPad100(void* self);
 extern "C" int CfRes_getE24Bit22();
 extern "C" int cfCam_getE28Bit24();
-extern "C" int GetZealObjPtr();
+
 extern "C" int isSceneActive__Q22cf13CfGameManagerFv();
 extern "C" int cfCam_maskUnk1D4(int self, int mask);        // CfCam sibling flag probe (0x1D4 word)
 extern "C" void cfCam_resetHist(cf::CfCamFollow* self, u8* src);         // CfCam sibling (retail 0x8006E18C)

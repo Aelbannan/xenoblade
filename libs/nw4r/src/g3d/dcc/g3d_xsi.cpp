@@ -108,7 +108,7 @@ void MakeTexSrtMtx_ST(math::MTX34* pMtx, const TexSrt& rSrt) {
 
 void MakeTexSrtMtx_SRT(math::MTX34* pMtx, const TexSrt& rSrt) {
     f32 r = rSrt.R;
-    f32 fidx = lbl_eu_80669CB8 * r;
+    f32 fidx = 0.7111111f * r;
     f32 sinR, cosR;
     math::SinCosFIdx(&sinR, &cosR, fidx);
 
@@ -151,7 +151,7 @@ void ProductTexSrtMtx_S(math::MTX34* pMtx, const TexSrt& rSrt) {
 
 void ProductTexSrtMtx_R(math::MTX34* pMtx, const TexSrt& rSrt) {
     f32 r = rSrt.R;
-    f32 fidx = lbl_eu_80669CB8 * r;
+    f32 fidx = 0.7111111f * r;
     f32 sinR, cosR;
     math::SinCosFIdx(&sinR, &cosR, fidx);
 
@@ -254,7 +254,7 @@ void ProductTexSrtMtx_SR(math::MTX34* pMtx, const TexSrt& rSrt) {
 void ProductTexSrtMtx_RT(math::MTX34* pMtx, const TexSrt& rSrt) {
     // Intermediate r local fixes load scheduling of R vs the constant.
     f32 r = rSrt.R;
-    f32 fidx = lbl_eu_80669CB8 * r;
+    f32 fidx = 0.7111111f * r;
     f32 sinR, cosR;
     math::SinCosFIdx(&sinR, &cosR, fidx);
 
@@ -319,7 +319,7 @@ void ProductTexSrtMtx_ST(math::MTX34* pMtx, const TexSrt& rSrt) {
 }
 
 void ProductTexSrtMtx_SRT(math::MTX34* pMtx, const TexSrt& rSrt) {
-    f32 fidx = lbl_eu_80669CB8 * rSrt.R;
+    f32 fidx = 0.7111111f * rSrt.R;
     f32 sinR, cosR;
     math::SinCosFIdx(&sinR, &cosR, fidx);
 
@@ -362,11 +362,11 @@ typedef void (*TexSrtMtxFunc)(math::MTX34* pMtx, const TexSrt& rSrt);
 // force_active are both ignored by -ipa file DCE). The definitions are
 // stripped and converted to UNDEF by UNIT_RULES extern_data_sections so they
 // resolve to the nw4r_data.s blob copies at link.
-extern "C" const ::TexSrtMtxFunc lbl_eu_8051D6F8[7] = {
+extern "C" const ::TexSrtMtxFunc TexSrtMtxSetDispatchXsi[7] = { // name-guess: 7-pointer TexSrtMtx set dispatch at .rodata:0x8051D6F8, called by CalcTexMtx_Xsi
     MakeTexSrtMtx_SRT, MakeTexSrtMtx_RT, MakeTexSrtMtx_ST,
     MakeTexSrtMtx_T, MakeTexSrtMtx_SR, MakeTexSrtMtx_R, MakeTexSrtMtx_S,
 };
-extern "C" const ::TexSrtMtxFunc lbl_eu_8051D714[7] = {
+extern "C" const ::TexSrtMtxFunc TexSrtMtxProductDispatchXsi[7] = { // name-guess: 7-pointer TexSrtMtx product dispatch at .rodata:0x8051D714, called by CalcTexMtx_Xsi
     ProductTexSrtMtx_SRT, ProductTexSrtMtx_RT, ProductTexSrtMtx_ST,
     ProductTexSrtMtx_T, ProductTexSrtMtx_SR, ProductTexSrtMtx_R,
     ProductTexSrtMtx_S,
@@ -381,9 +381,9 @@ bool CalcTexMtx_Xsi(math::MTX34* pMtx, bool bSet, const TexSrt& rSrt,
     }
 
     if (bSet) {
-        lbl_eu_8051D6F8[idx](pMtx, rSrt);
+        TexSrtMtxSetDispatchXsi[idx](pMtx, rSrt);
     } else {
-        lbl_eu_8051D714[idx](pMtx, rSrt);
+        TexSrtMtxProductDispatchXsi[idx](pMtx, rSrt);
     }
 
     pMtx->m[2][0] = lbl_eu_80669CB0;

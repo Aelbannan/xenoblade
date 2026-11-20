@@ -1,6 +1,7 @@
 #ifndef CF_OBJECT_ENE_HPP
 #define CF_OBJECT_ENE_HPP
 
+#include "kyoshin/cf/CfBdat.hpp"
 #include "kyoshin/cf/object/CfObjectMoveHelpers.hpp"
 #include "kyoshin/cf/object/CfObjectActor.hpp"
 
@@ -53,23 +54,12 @@ public:
 // CfObjectMove subobject region). func_800AF7E4 shifts it right 4 to key the
 // getBdatStringColumnValue lookup; sibling views CfPartsFlagView /
 // CfPartsChgObj read the same word.
-struct CfObjectEne456CView {
-    u8 _pad[0x456C];
-    u16 field_0x456C; // 0x456C (func_800AF7E4 row id, >> 4)
-};
 
 // Block view anchored at CAIAction+4 (and at CfObjectActor+0x3380+4 in the
 // CfObjectActor dtor's inlined copy). The CAIAction dtor null-checks the
 // block address AND the +8 address (MWCC folds both into addic.-beq guards;
 // see MWCC_CASES CacheList pattern), then zeroes the +0x20C/+0x210
 // words (= CAIAction unk210/unk214, store order 0x210 first).
-struct CfCAIActionBlockView {
-    u8 _pad[8];
-    void* field_8;   // +8 (address-null-checked second)
-    u8 _padC[0x20C - 0xC];
-    u32 field_20C;   // +0x20C (zeroed second)
-    u32 field_210;   // +0x210 (zeroed first)
-};
 
 // CfObjectActor +0x3380 = the CAIAction subobject base. The header's
 // multiple-inheritance layout is +0x80 off retail (CfObjectMove lands at
@@ -82,10 +72,6 @@ struct CfObjectCAISubView {
 
 // Absolute-offset views of CActorParam_UnkVirtualFunc88's fields: the +0x15E0
 // sub-object pointer on self and the +0x89C word on that sub-object.
-struct CfActorParam15E0View {
-    u8 _pad[0x15E0];
-    u8* field_0x15E0; // 0x15E0 (sub-object pointer; also read by UnkVirtualFunc128)
-};
 struct CfActorObj89CView {
     u8 _pad[0x89C];
     u32 field_0x89C; // 0x89C
@@ -95,26 +81,12 @@ struct CfActorObj89CView {
 // CActorParam getter/setter stubs. The CActorParam member block is +8 shifted
 // by the base-class layout (see CActorParamGaugeView in CActorParam.hpp), so
 // raw views pin the retail offsets.
-struct CfObjectEne1628View {
-    u8 _pad[0x1628];
-    u8 field_0x1628; // 0x1628 CActorParam_UnkVirtualFunc114 setter
-};
 
-struct CfObjectEne183AView {
-    u8 _pad[0x183A];
-    u8 field_0x183A; // 0x183A CActorParam_UnkVirtualFunc109
-    u8 field_0x183B; // 0x183B CActorParam_UnkVirtualFunc110
-    u8 field_0x183C; // 0x183C CActorParam_UnkVirtualFunc111
-};
 
 // Absolute-offset view of the CActorParam byte at 0x15F4 (the CActorParam
 // member block is +8 shifted by the base-class layout, so the declared
 // unk15F4[4] member lands at 0x15FC; raw view pins the retail offset). Used
 // by CActorParam_UnkVirtualFunc15.
-struct CfObjectEne15F4View {
-    u8 _pad[0x15F4];
-    u8 field_0x15F4; // 0x15F4 CActorParam_UnkVirtualFunc15
-};
 
 // 0x1520-byte block copied by CBattleState_UnkVirtualFunc24: retail emits a
 // counted 8-byte copy loop (li 0x2a4; mtctr; lwzu/stwu; bdnz) = full struct
@@ -135,18 +107,6 @@ struct CActorParamUnk1928Block {
 // Absolute-offset views of the CActorParam float gauge fields used by
 // CActorParam_UnkVirtualFunc31/42 (member block is +8 shifted by the
 // base-class layout; see CActorParamGaugeView in CActorParam.hpp).
-struct CActorParam1660View {
-    u8 _pad[0x1660];
-    f32 field_0x1660; // 0x1660 gauge current (Func30 setter / Func32 getter / Func31 add+clamp)
-};
-struct CActorParam17ECView {
-    u8 _pad[0x17EC];
-    f32 field_0x17EC; // 0x17EC gauge current (Func41 setter / Func43 getter / Func42 add+clamp)
-    f32 field_0x17F0; // 0x17F0
-    f32 field_0x17F4; // 0x17F4
-    f32 field_0x17F8; // 0x17F8 gauge max (Func44 getter / Func42 clamp top)
-    f32 field_0x17FC; // 0x17FC
-};
 
     // --- CfObjectEne ctor/dtor raw views ---
     // The header's C++ MI layout is +0x80 off retail (see the CfObjectActor
@@ -201,32 +161,11 @@ struct CActorParam17ECView {
 
     // Name/state fields used by initEnemyBdatParams: the bdat lookup name at
     // +0x3F14 (getFP arg) and the u16 row id at +0x3F28.
-    struct CfEneLookupView {
-        u8 _pad[0x3F14];
-        char field_0x3F14[0x28 - 0x14]; // 0x3F14 (getFP name)
-        u16 field_0x3F28;               // 0x3F28 (bdat row id)
-    };
 
     // Distinct absolute-offset views of the +0x3E9C CfObjectMove subobject
     // base, one per plain (non-virtual) call site in initEnemyBattleState so MWCC
     // re-materializes `addi r3, r31, 0x3e9c` per call instead of CSE-ing the
     // address into a callee-saved register (which would grow the frame).
-    struct CfEneMoveBaseA {
-        u8 _pad[0x3E9C];
-        u8 base; // 0x3E9C
-    };
-    struct CfEneMoveBaseB {
-        u8 _pad[0x3E9C];
-        u8 base; // 0x3E9C
-    };
-    struct CfEneMoveBaseC {
-        u8 _pad[0x3E9C];
-        u8 base; // 0x3E9C
-    };
-    struct CfEneMoveBaseD {
-        u8 _pad[0x3E9C];
-        u8 base; // 0x3E9C
-    };
     // NOTE: distinct view types do NOT stop MWCC from CSE-ing these
     // addresses across calls in initEnemyBattleState (value numbering ignores
     // types); they only keep the source sites self-documenting.
@@ -273,24 +212,20 @@ struct CActorParam17ECView {
         u32 field_0x4EC;           // 0x4EC flags (bit 8)
     };
 
-    // CBattleManager fields read by applyEnemyReward: party-count byte at
-    // +0x1AA, mode s16 at +0x20C8 and the +0x216C func_801BA2C8 buffer.
-    struct CfEneBmView {
-        u8 _pad[0x1AA];
-        u8 field_0x1AA;               // 0x1AA battle/party count
-        u8 _pad1AB[0x20C8 - 0x1AB];   // 0x1AB
-        s16 field_0x20C8;             // 0x20C8 mode
-        u8 _pad20CA[0x216C - 0x20CA]; // 0x20CA
-        u8 field_0x216C;              // 0x216C (func_801BA2C8 arg base)
-    };
 
-    // u16/u8/s32 -> f32 conversion slots pinned to the named sdata2 magic
     // doubles (same convention as CfActorF64Conv in CfObjectActor.hpp).
-    union CfEneF64Conv {
-        u32 w[2];
-        double d;
-    };
 
+    // applyEnemyReward reaches all of the battle manager through the real
+    // cf::CBattleManager class declared in kyoshin/cf/CBattleManager.hpp:
+    //   mChain.mHead.field_2  (+0x1AA) party/phase count,
+    //   unk20C8.unk0          (+0x20C8) mode selector,
+    //   mSuddenCommu          (+0x216C) SuddenCommu state buffer.
+    // The former CfEneBmView overlay duplicated those three absolute offsets,
+    // so it was removed; callers now name the real members directly.
+    //
+    // The +0x48 mActorList3 head is read in CfObjectPc.cpp through the same
+    // public battle-manager layout (reslist::mStartNodePtr).
+    // No layout or vtable change results from removing this former overlay.
     // Addressable raw-column holder for initEnemyBdatParams: full-word store of the
     // getBdatStringColumnValue result, punned u16 read on reload (retail's
     // stw-then-lhz pair around the slot +0xF0 vcall).
@@ -658,7 +593,7 @@ struct CActorParam17ECView {
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 
 // C-ABI free-function import: retail CfGameManager "party count" getter
-// (Fv-mangled member name; returns the u32 at lbl_eu_806640A4). Declared
+// (Fv-mangled member name; returns the u32 at ::cf::CfBdat::spCurRouteListFileData). Declared
 // extern "C" in CPartsChange.hpp too; re-declared here so the call reloc
 // inside func_800AF82C keeps the exact retail symbol.
 extern "C" u32 getGlobalWord640A4__Q22cf13CfGameManagerFv();
@@ -752,7 +687,6 @@ extern u16 gmGlobalFlag42;
 extern u16 gmGlobalFlag44;
 
 // applyEnemyReward bdat file pointer (.sbss).
-extern void* lbl_eu_806640D4;   // unified pointer form (was u8*)
 
 // initEnemyBattleState func_804B0AD4 float args (.sdata2).
 extern float lbl_eu_8066696C;
@@ -773,7 +707,6 @@ extern float lbl_eu_806669B4;   // 166 0xFF arts-gauge fallback
 // CfObjectModel.hpp (in the CfObjectActor.hpp chain) - reuse those.
 
 // .sbss bdat table pointers used by CObjectParam_UnkVirtualFunc4.
-extern u8* lbl_eu_80664094;
 extern u8* lbl_eu_8066409C;
 
 #endif

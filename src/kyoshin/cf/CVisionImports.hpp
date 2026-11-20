@@ -9,14 +9,14 @@ extern "C" int Counter_TestBit(void* data, u32 mode);
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 #include "kyoshin/cf/CfSoundMan.hpp"
 #include "kyoshin/CUICfManager.hpp"
-#include "kyoshin/cf/CfMapItemManager.hpp" // requestItemLoad owner declaration
+
 
 // ---------------------------------------------------------------------------
 // C-linkage imports: retail symbol names relocated from CVision.cpp.
 // Keep `extern "C"` and the exact symbol names -- they ARE the retail names.
 // ---------------------------------------------------------------------------
 extern "C" void setChildF50G_(void* self, float v);
-// CSchedule::Update is a member now; declared in monolib/core/CSchedule.hpp.
+// CSchedule::Update
 
 // Same-TU siblings (defined in CVision.cpp; C linkage keeps the call relocs
 // and definitions at the unmangled retail names - CSuddenCommu.hpp idiom).
@@ -58,6 +58,7 @@ extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv();
 // CTaskGame_openVision is owned by kyoshin/CTaskGame.hpp (single unified decl).
 extern "C" void aiRebootAction(void* obj);
 extern "C" int findObjectById__Fi(int id);
+
 // ScMain_* / Sc4798_* exports are declared once in kyoshin/cf/code_800F42AC.hpp.
 // Character-data lookup + row predicate pair used by CVision.cpp's
 // movie-gate checks (defined in CtrlObjectParam.cpp). Declared here because
@@ -67,8 +68,9 @@ extern "C" int findObjectById__Fi(int id);
 extern "C" bool CtrlObjectParam_FindSlotTypeIndex(int* a, u32 b, int* outA, int* outB);
 extern "C" u8 CtrlObjectParam_GetRowColumnByte(void* row);
 extern "C" void* CtrlObjectParam_GetCharEntry(u32 index);
-extern "C" void* getPlayer__Q22cf13CfGameManagerFi(int idx);
-extern "C" u8* getGlobalSda(void);
+// getPlayer__Q22cf13CfGameManagerFi is declared TU-locally in CVision.cpp:
+// CMainMenu.hpp declares the same retail symbol with a different return type.
+extern "C" u8* getGlobalSda();
 extern "C" void cfCam_copySavedState(int id);
 extern u8 visionSharedStateFlags;
 extern "C" void* __dynamic_cast(void* src, long offset, const void* src_type,
@@ -177,4 +179,3 @@ extern "C" void __ct__Q22cf12CBattleStateFv(void* self);
 extern "C" void __ct__Q22cf9_sArtsSetFv(void* self);
 extern "C" void __ct__Q22cf10CArtsParamFv(void* self);
 extern "C" void __ct__Q22cf12CAttackParamFv(void* self);
-

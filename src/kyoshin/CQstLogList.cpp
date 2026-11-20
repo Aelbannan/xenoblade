@@ -3,6 +3,7 @@
 // Auto-scaffolded catalog TU for kyoshin/CQstLogList
 // Replace stubs with high-level C/C++ during decomp.
 
+#include "kyoshin/cf/CfBdat.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/CScrollBar.hpp"
@@ -293,9 +294,9 @@ void CQstLogList::DrawRow(const char* name, int questId, int index,
     // Detail text: BDAT lookup chain (name -> column A -> column B -> row
     // string) formatted into the second pane.
     u16 a = BdatGetU16Direct(name, &lbl_eu_80509AB4[0x54], questId);
-    u16 b = BdatGetU16Direct((const char*)lbl_eu_80664098, &lbl_eu_80509AB4[0x5b], a);
+    u16 b = BdatGetU16Direct((const char*)::cf::CfBdat::spFldNpcListFileData, &lbl_eu_80509AB4[0x5b], a);
     u8 c = BdatGetU8ByTableKey(&lbl_eu_80509AB4[0x63], &lbl_eu_80509AB4[0x70], b);
-    const char* str2 = BdatGetPtrDirect(lbl_eu_806640A8, &lbl_eu_80509AB4[0x76], c);
+    const char* str2 = BdatGetPtrDirect(::cf::CfBdat::spFldMapListFileData, &lbl_eu_80509AB4[0x76], c);
     sprintf(buf, &lbl_eu_80509AB4[0x7b], index);
     LayoutSetTextBoxFmtValue(mpLayout, buf, (char*)str2, 0);
     PaneSetVtxColorByName(mpLayout, buf,
@@ -585,7 +586,7 @@ bool CQstLogList::OnFileEvent(CEventFile* event) {
     // Collect every quest type (2..0x1c) that has at least one active,
     // uncompleted quest in the BDAT quest table. Types 6..0x1c dispatch
     // through the retail jump table into the shared quest scan below.
-    s32 numQuests = (s32)Bdat_GetMaxRow_B1EC(lbl_eu_806640A0);
+    s32 numQuests = (s32)Bdat_GetMaxRow_B1EC(::cf::CfBdat::spLandmarkListFileData);
     u8 count = 0;
     for (u8 i = 2; i <= 0x1c; i++) {
         switch (i) {
@@ -594,8 +595,8 @@ bool CQstLogList::OnFileEvent(CEventFile* event) {
         case 0x15: case 0x16: case 0x17: case 0x18: case 0x19: case 0x1A: case 0x1B:
         case 0x1C:
             for (s32 j = 1; j <= numQuests; j++) {
-                if (BdatGetU8Direct((const void*)lbl_eu_806640A0, &s[0x70], j) == i &&
-                    BdatGetU8Direct((const void*)lbl_eu_806640A0, &s[0x170], j) == 0 &&
+                if (BdatGetU8Direct((const void*)::cf::CfBdat::spLandmarkListFileData, &s[0x70], j) == i &&
+                    BdatGetU8Direct((const void*)::cf::CfBdat::spLandmarkListFileData, &s[0x170], j) == 0 &&
                     CtrlRemote_TouchBitByArg((u32)(j + 0x20c8)) != 0) {
                     indices[count++] = i;
                     break;
@@ -614,8 +615,8 @@ bool CQstLogList::OnFileEvent(CEventFile* event) {
         for (s8 inner = 0; inner < (s8)(last - outer); inner++) {
             u8 a = indices[inner];
             u8 b = indices[inner + 1];
-            if (BdatGetU8Direct((const void*)lbl_eu_806640A8, &s[0xa], a) >
-                BdatGetU8Direct((const void*)lbl_eu_806640A8, &s[0xa], b)) {
+            if (BdatGetU8Direct((const void*)::cf::CfBdat::spFldMapListFileData, &s[0xa], a) >
+                BdatGetU8Direct((const void*)::cf::CfBdat::spFldMapListFileData, &s[0xa], b)) {
                 u8 tmpSwap = a;
                 indices[inner] = b;
                 indices[inner + 1] = tmpSwap;
@@ -628,7 +629,7 @@ bool CQstLogList::OnFileEvent(CEventFile* event) {
     // Append the sorted quest types as rows 5+ (byte1 = 4) with their names.
     for (u8 k = 0; k < count; k++) {
         u8 idx = indices[k];
-        char* text = BdatGetPtrDirect(lbl_eu_806640A8, &s[0x76], idx);
+        char* text = BdatGetPtrDirect(::cf::CfBdat::spFldMapListFileData, &s[0x76], idx);
         rowSort.mField0 = idx;
         rowSort.mField1 = 4;
         sprintf((char*)&rowSort.mData[0], &s[0x10], text);

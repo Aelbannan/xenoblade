@@ -6,12 +6,8 @@
 // Global scope: MWCC does not mangle file-scope names, so plain extern emits
 // the exact retail symbols.
 //
-// FxDelayDpl2 vtable (shared data pool, nw4r_data.s lbl_eu_8056A7C0). The
-// slot type is only forward-declared: this TU never indexes the table, it
-// just stores the label's address into the object's vptr.
-struct FxDelayDpl2Vtbl;
-extern FxDelayDpl2Vtbl lbl_eu_8056A7C0[];
-extern const f32 lbl_eu_80669F8C; // minDelay clamp bound
+// FxDelayDpl2's vtable is emitted by MWCC from the real class below.
+
 extern const f32 lbl_eu_80669F90; // feedback clamp bound
 
 namespace nw4r {
@@ -29,10 +25,7 @@ struct FxDelayParam {
 
 } // namespace detail
 
-// __declspec(novtable): retail's link merged the vtable elsewhere
-// (lbl_eu_8056A7C0) and keeps no bodies here; the ctor stores the extern
-// vtable address explicitly (retail's vptr store is in the ctor body).
-class __declspec(novtable) FxDelayDpl2 : public FxBase {
+class FxDelayDpl2 : public FxBase {
 public:
     FxDelayDpl2();
 
@@ -78,11 +71,6 @@ private:
 };
 
 FxDelayDpl2::FxDelayDpl2() {
-    // FxBase's implicit ctor zeroes the link node at 0x4/0x8 first; the
-    // manual vptr store lands between that and the member stores, matching
-    // the retail store order (0x4, 0x8, vptr 0x0, 0xc, 0x14, 0x18, floats).
-    *(FxDelayDpl2Vtbl**)this = lbl_eu_8056A7C0;
-
     mIsActive = false;    // 0xc
     mHeap = NULL;         // 0x14
     mAllocCount = 0;      // 0x18

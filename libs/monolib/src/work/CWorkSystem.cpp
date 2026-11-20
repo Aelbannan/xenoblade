@@ -2,7 +2,6 @@
 #include "monolib/device.hpp"
 #include "monolib/lib.hpp"
 #include "monolib/work.hpp"
-#include "monolib/data_vtables.hpp"
 #include <revolution/BASE.h>
 #include <revolution/OS.h>
 #include <revolution/VI.h>
@@ -13,91 +12,48 @@ extern UNKTYPE* getScnHandle();
 extern void resetScnData(UNKTYPE* scn);
 extern void Coli_ParseChunks(UNKTYPE* scn, u32 flags);
 
-// ==== blob monolibdata1/1d dissolve: retail data owned by this TU ====
-// rodata 0x80522790 (0xC): RTTI class-name string. rodata 0x8052279C (0x7C):
-// the pooled string block; code references it by offset below so no local
-// @NNNN pool entries are emitted (retail relocs name lbl_eu_8052279C).
-const char lbl_eu_80522790[] = "CWorkSystem";
-const char lbl_eu_8052279C[0x7C] =
-    "exit wii power off\n\0exit wii reset\n\0CWorkSystemMem\0CWorkSystemCache\0"
-    "CWorkSystemPack\0\x83\x8d\x83\x4f\x83\x41\x83\x45\x83\x67\x82\xc9\x8e\xb8\x94\x73\x82\xb5"
-    "\x82\xdc\x82\xb5\x82\xbd\0CWorkSystem\0\0\0";
-// data 0x8056B9F0 (0xA0): CWorkSystem vtable; data 0x8056BA90 (0x18): RTTI
-// cast table {IWorkEvent,0},{CWorkThread,0},{0,0}.
-IWorkEventVtbl lbl_eu_8056B9F0 = {
-    (u32)&lbl_eu_806635C8, 0, (u32)&__dt__11CWorkSystemFv,
-    (u32)&WorkEvent1__10IWorkEventFPvPCc, (u32)&OnFileEvent__10IWorkEventFP10CEventFile,
-    (u32)&WorkEvent3__10IWorkEventFPv, (u32)&WorkEvent4__10IWorkEventFv,
-    (u32)&OnPauseTrigger__10IWorkEventFb,
-    (u32)&WorkEvent6__10IWorkEventFv, (u32)&WorkEvent7__10IWorkEventFv,
-    (u32)&WorkEvent8__10IWorkEventFv, (u32)&WorkEvent9__10IWorkEventFv,
-    (u32)&WorkEvent10__10IWorkEventFv, (u32)&WorkEvent11__10IWorkEventFv,
-    (u32)&WorkEvent12__10IWorkEventFv, (u32)&WorkEvent13__10IWorkEventFv,
-    (u32)&WorkEvent14__10IWorkEventFv, (u32)&WorkEvent15__10IWorkEventFv,
-    (u32)&WorkEvent16__10IWorkEventFv, (u32)&WorkEvent17__10IWorkEventFv,
-    (u32)&WorkEvent18__10IWorkEventFv, (u32)&WorkEvent19__10IWorkEventFv,
-    (u32)&WorkEvent20__10IWorkEventFv, (u32)&WorkEvent21__10IWorkEventFv,
-    (u32)&WorkEvent22__10IWorkEventFv, (u32)&WorkEvent23__10IWorkEventFv,
-    (u32)&WorkEvent24__10IWorkEventFv, (u32)&WorkEvent25__10IWorkEventFv,
-    (u32)&WorkEvent26__10IWorkEventFv, (u32)&WorkEvent27__10IWorkEventFv,
-    (u32)&WorkEvent28__10IWorkEventFv, (u32)&WorkEvent29__10IWorkEventFv,
-    (u32)&WorkEvent30__10IWorkEventFv, (u32)&WorkEvent31__10IWorkEventFv,
-    (u32)&wkUpdate__11CWorkSystemFv, (u32)&wkRender__11CWorkThreadFv,
-    (u32)&wkRenderAfter__11CWorkThreadFv, (u32)&wkStandbyLogin__11CWorkSystemFv,
-    (u32)&wkStandbyLogout__11CWorkSystemFv, (u32)&wkStandbyExceptionRetry__11CWorkThreadFUl,
-};
-RttiBaseList2 lbl_eu_8056BA90 = {
-    (u32)&__RTTI__10IWorkEvent, 0, (u32)&__RTTI__11CWorkThread, 0, 0, 0,
-};
-// sdata 0x806635C8 (0x8): RTTI typeinfo { class-name, cast-table }.
-u32 lbl_eu_806635C8[2] = { (u32)&lbl_eu_80522790, (u32)&lbl_eu_8056BA90 };
 
 // sbss data owned by this TU (blob monolibdata1d dissolve):
-//   lbl_eu_80665618 (4 bytes) = sExitFunc (ExitFunc)
-//   lbl_eu_8066561C (4 bytes) = spInstance (CWorkSystem*)
-CWorkSystem::ExitFunc lbl_eu_80665618;
-CWorkSystem* lbl_eu_8066561C;
+CWorkSystem::ExitFunc CWorkSystem::sExitFunc;
+CWorkSystem* CWorkSystem::spInstance;
 
 CWorkSystem::CWorkSystem(const char *pName, CWorkThread *pParent) : CWorkThread(pName, pParent, 32) {
-    // novtable: write the retail vptr (0x8056B9F0) first so the stores land in
-    // retail order (vptr, then the member inits).
-    *(void**)this = (void*)&lbl_eu_8056B9F0;
     mMemHandle = mtl::INVALID_HANDLE;
     mPowerOff = false;
     mReset = false;
     mSaveLoadInvalidReset = false;
-    lbl_eu_8066561C = this;
+    spInstance = this;
     mType = THREAD_CWORKSYSTEM;
 }
 
 CWorkSystem::~CWorkSystem(){
-    lbl_eu_8066561C = nullptr;
+    spInstance = nullptr;
 }
 
 CWorkSystem* CWorkSystem::getInstance(){
-    return lbl_eu_8066561C;
+    return spInstance;
 }
 
 bool CWorkSystem::isOff(){
-    if(lbl_eu_8066561C == nullptr) return false;
+    if(spInstance == nullptr) return false;
     return isPowerOff() || isReset();
 }
 
 mtl::ALLOC_HANDLE CWorkSystem::getMem(){
-    return lbl_eu_8066561C->mMemHandle;
+    return spInstance->mMemHandle;
 }
 
 bool CWorkSystem::isPowerOff() {
-    return lbl_eu_8066561C->mPowerOff;
+    return spInstance->mPowerOff;
 }
 
 bool CWorkSystem::isReset() {
-    return lbl_eu_8066561C->mReset;
+    return spInstance->mReset;
 }
 
 
 void CWorkSystem::setSaveLoadInvalidReset(bool state){
-    CWorkSystem* instance = lbl_eu_8066561C;
+    CWorkSystem* instance = spInstance;
     if(instance != nullptr){
         instance->mSaveLoadInvalidReset = state;
     }
@@ -118,7 +74,7 @@ void CWorkSystem::wkUpdate(){
         VIWaitForRetrace();
         VIWaitForRetrace();
         VIWaitForRetrace();
-        OSReport(&lbl_eu_8052279C[0x00]); // "exit wii power off\n"
+        OSReport("exit wii power off\n");
         OSShutdownSystem();
     }
 
@@ -134,7 +90,7 @@ void CWorkSystem::wkUpdate(){
         VIWaitForRetrace();
         VIWaitForRetrace();
         VIWaitForRetrace();
-        OSReport(&lbl_eu_8052279C[0x14]); // "exit wii reset\n"
+        OSReport("exit wii reset\n");
         OSRestart(0);
     }
 }
@@ -145,16 +101,16 @@ bool CWorkSystem::wkStandbyLogin(){
 
     // Named locals force MWCC to evaluate each name pointer before the create()
     // call's getWorkMem and keep it live across the inlined body (retail r31).
-    const char* memName = &lbl_eu_8052279C[0x24];   // "CWorkSystemMem"
+    const char* memName = "CWorkSystemMem";
     CWorkSystemMem* systemMem = CWorkSystemMem::create(memName, this);
     (void)systemMem;
     mMemHandle = CWorkSystemMem::getHandle();
 
-    const char* cacheName = &lbl_eu_8052279C[0x33]; // "CWorkSystemCache"
+    const char* cacheName = "CWorkSystemCache";
     CWorkSystemCache* systemCache = CWorkSystemCache::create(cacheName, this);
     (void)systemCache;
 
-    const char* packName = &lbl_eu_8052279C[0x44];  // "CWorkSystemPack"
+    const char* packName = "CWorkSystemPack";
     CWorkSystemPack* systemPack = CWorkSystemPack::create(packName, this);
     (void)systemPack;
     CScriptCode::create(this);
@@ -178,7 +134,8 @@ bool CWorkSystem::wkStandbyLogin(){
 
 bool CWorkSystem::wkStandbyLogout(){
     //"Failed to log out"
-    wkCheckTimeout(30000, !hasChild(this), &lbl_eu_8052279C[0x54]); // "ログアウトに失敗しました"
+    wkCheckTimeout(30000, !hasChild(this),
+                   "\x83\x8d\x83\x4f\x83\x41\x83\x45\x83\x67\x82\xc9\x8e\xb8\x94\x73\x82\xb5\x82\xdc\x82\xb5\x82\xbd");
 
     if(CScriptCode::getInstance() != nullptr){
         resetScriptCode();
@@ -199,7 +156,7 @@ bool CWorkSystem::wkStandbyLogout(){
 }
 
 // Retail Fv create: getInstance -> getWorkMem -> placement-new (the name
-// string "CWorkSystem" is pooled at lbl_eu_8052279C+109) -> entryWork.
+// string "CWorkSystem" is pooled at @stringBase0+109) -> entryWork.
 //
 // OPEN ITEM (best: 0 structural / 6 reg-swap / size 120==120):
 // - retail prologue stmw/lmw r29 comes from the -O4,s unit flag.
@@ -226,7 +183,7 @@ bool CWorkSystem::wkStandbyLogout(){
 // only merges consecutive saves into stmw under optimize-for-size.
 CWorkSystem* CWorkSystem::create() {
     CWorkThread* parent = CWorkControl::getInstance();
-    const char* pName = &lbl_eu_8052279C[0x6D]; // "CWorkSystem"
+    const char* pName = "CWorkSystem";
     CWorkSystem* obj = static_cast<CWorkSystem*>(
         mtl::MemManager::allocate(0x1D0, CWorkThreadSystem::getWorkMem()));
     obj = new (obj) CWorkSystem(pName, parent);
@@ -235,12 +192,12 @@ CWorkSystem* CWorkSystem::create() {
 }
 
 void CWorkSystem::setExitFunc(ExitFunc func){
-    lbl_eu_80665618 = func;
+    sExitFunc = func;
 }
 
 void CWorkSystem::callExitFunc(){
-    if(lbl_eu_80665618 != nullptr){
-        lbl_eu_80665618();
+    if(sExitFunc != nullptr){
+        sExitFunc();
         CLibCri::stopAllStreams();
         CDeviceFileCri::closeAdxfHandle();
         CPadManager::destroy();

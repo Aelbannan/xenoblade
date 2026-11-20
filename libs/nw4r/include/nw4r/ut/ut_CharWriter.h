@@ -108,6 +108,7 @@ public:
     u8 GetAlpha() const {
         return mAlpha;
     }
+    Color GetTextColor() const { return mTextColor.start; }
 
     void EnableFixedWidth(bool enable) {
         mIsWidthFixed = enable;

@@ -1,5 +1,6 @@
 // CfGimmickSaveOff - save point gimmick
 
+#include "kyoshin/cf/CfBdat.hpp"
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/cf/CfGimmickSaveOff.hpp"
 
@@ -8,7 +9,7 @@ cf::CfGimmickSaveOff::CfGimmickSaveOff(s32 row) {
     field_82 = 8;
 
     UnkClass_8003AA34* mgr = (UnkClass_8003AA34*)Bdat_GetTable_AA34();
-    void* holder = (void*)lbl_eu_80664140;
+    void* holder = ::cf::CfBdat::spCurGimSvOffFileData;
     field_64 = (u16)row;
 
     CfGimmick_LoadBdatAreaPos(this, &field_04.x, mgr, &holder);

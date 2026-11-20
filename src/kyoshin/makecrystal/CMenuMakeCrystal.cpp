@@ -7,7 +7,7 @@
 #include "monolib/work/CWorkThreadSystem.hpp"
 #include "monolib/core/CPadManager.hpp"
 #include <nw4r/lyt/lyt_drawInfo.h>
-
+#include "kyoshin/cf/CtrlRemoteApi.hpp"
 #include "kyoshin/CTaskGame.hpp"
 #include "kyoshin/code_80135FDC_State.hpp"
 
@@ -56,7 +56,7 @@ void MakeCrystalCopyBox(void* dst, const void* src);                  // crystal
 extern "C" void __as__11CTitleAHelpFRC11CTitleAHelp(void* dst, void* src);
 void MakeCrystalCopyStateRecord(void* dst, const void* src);            // state record copy
 void addRenderCB__4CScnFP10IScnRenderUlUl(void* scn, void* render, u32 a, u32 b);
-int  CtrlRemote_TouchBitByArg(int id);
+
 void CCharVoiceMan_FlushAll();
 void MenuSnd_StopAllSlots_89C88();
 void CTaskGame_stopVision();

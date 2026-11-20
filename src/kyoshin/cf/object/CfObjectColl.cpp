@@ -567,7 +567,7 @@ unsigned long CollObjSetResIdReady(void* self) {
 }
 
 // Sign test on a call through the u16 index at +0x9C (offset 0x20C8 table).
-extern "C" int CtrlRemote_TouchBitByArg(u32 resourceId);
+#include "kyoshin/cf/CtrlRemoteApi.hpp"
 extern "C" bool CollObjTestResIdReady(void* self) {
     return CtrlRemote_TouchBitByArg((((cf::CfObjectColl*)self)->field_0x9C >> 16) + 0x20C8) != 0;
 }

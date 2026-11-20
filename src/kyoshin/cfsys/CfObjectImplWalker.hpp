@@ -1,6 +1,8 @@
 #pragma once
+#include "kyoshin/cf/CtrlRemoteApi.hpp"
+#include "kyoshin/cf/CfBdat.hpp"
 #include "kyoshin/code_8025FB10.hpp"  // Counter_TestBit (owner)
-
+#include "kyoshin/cf/CfCamSymbols.hpp"
 #include <types.h>
 #include "kyoshin/CTaskGameEff.hpp"
 #include <monolib/math/CVec3.hpp>
@@ -908,7 +910,7 @@ public:
 extern void* findObjectById(int id);
 
 // isGlobalCamFlagSet__Fi: presentation/event flag-bit probe (mangled C++ match).
-extern bool isGlobalCamFlagSet(int mask);
+
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" {
@@ -958,7 +960,7 @@ void ObjPc_BattleEventDispatch_819C();
 void ObjPc_BattleActorScan_86E8(void* self);
 void registerBattleActor(void* mgr, void* obj);
 void cfCam_setClear04(void* obj, u32 mask, int flag);
-u32 CtrlRemote_TouchBitByArg(u32 resourceId);
+
 void simSetLeafAnimTag(void* obj, u32 flags);
 void CItem_openAreaEventBox(u32 a, u32 b);
 u32 getEventValue40__Q22cf13CfGameManagerFv(u32 id);
@@ -1050,8 +1052,6 @@ extern const f32 lbl_eu_80666B88;  // sdata2 constant (0.5f)
 extern const f32 lbl_eu_80666B90;  // sdata2 constant
 extern const f64 lbl_eu_80666B98;  // sdata2 int->float magic (0x4330000080000000)
 extern const f64 lbl_eu_80666BA8;  // sdata2 int->float magic (0x4330000080000000)
-extern void* lbl_eu_80664098; // sdata pointer (bdat table handle)
-extern void* lbl_eu_806640C4; // sdata pointer (bdat table handle)
 extern char lbl_eu_804FC694[];  // .rodata string/buffer
 extern u32 lbl_eu_804FC670[3];  // .data table (player-slot effect ids)
 // RTTI typeinfo labels for the move sub-object dynamic_cast. Declared as

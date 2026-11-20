@@ -14,7 +14,13 @@ A unit is **faithful** when all of these are zero:
   section       ``__declspec(section ...)`` hand-placed data
   offset_cast   ``(u8*)p + 0x..`` raw offset arithmetic
   view_struct   offset "view" structs (``...View``, ``...At3E9C``, ``...Off``);
-                classes retail names via a ctor/dtor/vtable symbol (``CView``) are exempt
+                classes retail names via a ctor/dtor/vtable symbol (``CView``) are exempt.
+                A whole-file structural pass also counts the *definitions* of
+                pad overlays (byte-array padding positioning a few fields at
+                large offsets) and pad-positioned union views, which the name
+                regex cannot see.  No ``// faithful-ok:`` marker exempts them.
+                One hit per definition, attributed to the source/header that
+                defines it exactly like the regex hits.
   rule          the unit has a tools/postprocess_reloc_names.py UNIT_RULES entry
   rtti_off      configure.py compiles the unit with ``-RTTI off`` (retail has
                 RTTI; the flag exists to make room for hand-built typeinfo)
@@ -45,6 +51,16 @@ Soft report-only gaps (never scored):
                 source spelled the string as a literal.
   sdata2_extern scalar float/double constant declared ``extern`` instead of
                 being written as a source literal.
+  type_pun_union plain unions of differently typed scalar/array arms (e.g.
+                ``union { u32 w[2]; u8 b[8]; }``).  One hit per definition.
+                These are compiler-shape tricks but have no offset-padding
+                debt, so they are report-only; pad-positioned union views are
+                hard ``view_struct`` hits instead.  Never ``faithful-ok``-able.
+  packed_string string literal with an explicit NUL escape used to pad or
+                pack data: ``"thread\0"``, ``"x\0\0\0"``, ``"a\0b"``.
+                Adjacent literals are treated as one expression (one hit), and
+                single-character ``'\0'`` / NUL-free strings are not counted.
+                Never ``faithful-ok``-able.
 
 Hard smells (scored):
 
@@ -81,10 +97,14 @@ existing baseline entry untouched.
 the PLAN_TO_DONE §1 table: current count / target / status per category, plus
 the separate ``// faithful-ok:`` exception list and ``// name-guess:`` count.
 It uses its own marker-aware counters and never reads or writes the baseline.
+Structural overlay hits (hard ``view_struct`` definitions and soft
+``type_pun_union``) are added after the per-line marker exemptions, so neither
+``// faithful-ok:`` nor ``// name-guess:`` can hide them.
 """
 from __future__ import annotations
 
 import argparse
+import ast
 import collections
 import functools
 import json
@@ -114,7 +134,9 @@ HARD = {
         r"[ \t]*(?:\\?[ \t]*)\r?\n"
         r"(?P=indent)(?P=type)\s*&\s*[A-Za-z_]\w*\s*=\s*(?P=name)\s*;"),
     "volatile": re.compile(
-        r"\(\s*(?:const\s+)?volatile\s+[\w:]+(?:\s+\w+)?\s*\*\s*\)\s*&\s*(?!WGPIPE\b|GXWGFifo\b|__)"),
+        r"\(\s*(?:const\s+)?volatile\s+[\w:]+(?:\s+\w+)?\s*\*\s*\)\s*&\s*(?!WGPIPE\b|GXWGFifo\b|__)"),    # Counted by the whole-file string-literal pass (adjacent concatenation
+    # and char-vs-string discrimination cannot be done with one line regex).
+    "packed_string": re.compile(r"(?!)"),
 }
 VOLATILE_TOKEN = re.compile(r"\bvolatile\b")
 HW_REG_LINE = re.compile(r"\b(?:WGPIPE|GXWGFifo|DECL_HW_REGS|DECL_ADDRESS)\b|0xCC0[0-9A-Fa-f]{5}")
@@ -128,6 +150,8 @@ FLOAT_EXTERN_DECL = re.compile(
     r"\b(?:const\s+)?(?:float|double|f32|f64)\s+(?:const\s+)?(?P<name>[A-Za-z_]\w*)\s*;")
 LINKAGE_OPEN = re.compile(r'\bextern\s+"C"\s*\{')
 
+# ``type_pun_union`` (plain type-punning unions) is added by count_smells()
+# from the structural pass below; there is no single-line regex for it.
 SOFT = {
     "field_0x": re.compile(r"\bfield_0x[0-9A-Fa-f]+\b"),
     "unk_name": re.compile(r"\bUnk(?:Class|VirtualFunc|Struct)?_?[0-9A-Fa-f]+\b"),
@@ -182,8 +206,10 @@ FINISH_CATEGORIES = (
     ("foreign_data", "hard", "hard/foreign_data"),
     ("noinline", "hard", "hard/noinline"),
     ("volatile", "hard", "hard/volatile"),
+    ("packed_string", "hard", "hard/packed_string"),
     ("volatile (all spellings)", "soft", "soft/volatile"),
     ("blob_offset", "soft", "soft/blob_offset"),
+    ("type_pun_union", "soft", "soft/type_pun_union"),
     ("sdata2_extern", "soft", "soft/sdata2_extern"),
     ("addr_func", "soft", "soft/addr_func"),
     ("unk_name", "soft", "soft/unk_name"),
@@ -198,6 +224,526 @@ def strip_comments(text: str) -> str:
 def strip_comments_keep_lines(text: str) -> str:
     """Blank out comments while keeping line numbers (and offsets) intact."""
     return COMMENT.sub(lambda m: re.sub(r"[^\n]", " ", m.group(0)), text)
+
+
+# --- Structural offset-overlay definitions ---------------------------------
+# HARD['view_struct'] only sees a *use* of a ``...View*`` / ``...Off*`` type.
+# A second, whole-file pass counts the definitions that the regex cannot see:
+#   * pad overlay: a struct/class that exists to place a few named fields at
+#     large offsets with byte arrays named pad_/blob_/unk_/...;
+#   * union view:  a union with an arm that is such an offset-positioned
+#     struct (usually alongside a raw array arm);
+#   * type pun:    a plain array/scalar union, report-only (soft), because it
+#     is still a compiler-shape trick but has no offset-padding debt.
+# The pass is deliberately syntactic and conservative: a class with many real
+# members and a few unk_ gaps is a recovered layout, not an overlay.  Nothing
+# here honours ``// faithful-ok:``: the finish line allows that marker for
+# other categories, but not for view overlays in disguise.
+
+# Plain classes, not dataclasses: callers may import this file through
+# importlib.spec_from_file_location without registering it in sys.modules,
+# which would make @dataclass fail at import time.
+class OverlayHit:
+    __slots__ = ("kind", "name", "line", "start", "end")
+
+    def __init__(self, kind: str, name: str, line: int, start: int, end: int):
+        self.kind = kind          # pad_struct | union_view | type_pun_union
+        self.name = name
+        self.line = line
+        self.start = start
+        self.end = end
+
+    def __repr__(self) -> str:
+        return (f"OverlayHit({self.kind!r}, {self.name!r}, {self.line}, "
+                f"{self.start}, {self.end})")
+
+
+class _Field:
+    __slots__ = ("name", "type_text", "size", "is_pad", "is_byte_array")
+
+    def __init__(self, name: str, type_text: str, size: int | None,
+                 is_pad: bool, is_byte_array: bool = False):
+        self.name = name
+        self.type_text = type_text
+        self.size = size
+        self.is_pad = is_pad
+        self.is_byte_array = is_byte_array
+
+    @property
+    def type_key(self) -> str:
+        return re.sub(r"\s+", " ", re.sub(r"[*&\s]+", " ", self.type_text)).strip()
+
+
+class _Record:
+    __slots__ = ("kind", "name", "line", "start", "body_start", "end",
+                 "fields", "arms")
+
+    def __init__(self, kind: str, name: str | None, line: int, start: int,
+                 body_start: int, end: int):
+        self.kind = kind
+        self.name = name
+        self.line = line
+        self.start = start
+        self.body_start = body_start
+        self.end = end
+        self.fields: list[_Field] = []
+        self.arms: list[_Record] = []
+
+
+# An explicit pad/blob name is unambiguous.  ``unk_`` only counts as
+# padding when it is a sizeable byte array: unk-named scalars are recovered
+# fields of a real class (``u8 unk0; u32 unk4; ...``), not offset fillers.
+PAD_FIELD_NAME = re.compile(
+    r"^_?(?:pad|padding|filler|fill|blob|reserved|reserve|spare|gap|dummy)"
+    r"(?:[_\da-fA-FxX]*)?$")
+UNK_PAD_NAME = re.compile(r"^_?(?:unk|unused)(?:[_\da-fA-FxX]*)?$")
+
+VIEW_HINT = re.compile(r"\b(?:view|overlay|mirror)\b", re.I)
+RECORD_KEYWORD = re.compile(r"\b(struct|class|union)\b")
+ACCESS_PREFIX = re.compile(r"^\s*(?:public|private|protected)\s*:\s*")
+DECL_QUALIFIERS = re.compile(
+    r"\b(?:const|volatile|static|mutable|inline|virtual|explicit|typename|struct|class)\b")
+TYPE_SIZE = {
+    "u8": 1, "s8": 1, "char": 1, "uchar": 1, "schar": 1, "bool": 1,
+    "unsigned char": 1, "signed char": 1,
+    "u16": 2, "s16": 2, "short": 2, "ushort": 2, "wchar_t": 2,
+    "unsigned short": 2, "signed short": 2,
+    "u32": 4, "s32": 4, "int": 4, "uint": 4, "f32": 4, "float": 4,
+    "long": 4, "unsigned": 4, "signed": 4, "unsigned int": 4,
+    "signed int": 4, "unsigned long": 4, "signed long": 4,
+    "u64": 8, "s64": 8, "f64": 8, "double": 8, "long long": 8,
+    "unsigned long long": 8, "signed long long": 8,
+}
+INT_EXPR = re.compile(r"^[0-9A-Fa-fxX+\-*/()<>&|\s]+$")
+
+
+def _eval_int(expr: str) -> int | None:
+    """Evaluate a C array bound (``0x3F00 - 0xA2``); None if not a constant."""
+    expr = expr.strip()
+    if not expr or not INT_EXPR.fullmatch(expr):
+        return None
+    try:
+        node = ast.parse(expr, mode="eval").body
+    except (SyntaxError, ValueError):
+        return None
+
+    def walk(n: ast.AST) -> int | None:
+        if isinstance(n, ast.Constant) and isinstance(n.value, int):
+            return n.value
+        if isinstance(n, ast.UnaryOp) and isinstance(n.op, (ast.UAdd, ast.USub)):
+            v = walk(n.operand)
+            return None if v is None else (v if isinstance(n.op, ast.UAdd) else -v)
+        if isinstance(n, ast.BinOp) and isinstance(
+                n.op, (ast.Add, ast.Sub, ast.Mult, ast.FloorDiv, ast.LShift, ast.RShift)):
+            a, b = walk(n.left), walk(n.right)
+            if a is None or b is None or (isinstance(n.op, (ast.FloorDiv, ast.LShift, ast.RShift)) and b == 0):
+                return None
+            try:
+                return {
+                    ast.Add: lambda: a + b, ast.Sub: lambda: a - b,
+                    ast.Mult: lambda: a * b, ast.FloorDiv: lambda: a // b,
+                    ast.LShift: lambda: a << b, ast.RShift: lambda: a >> b,
+                }[type(n.op)]()
+            except (OverflowError, ValueError):
+                return None
+        return None
+
+    return walk(node)
+
+
+def _blank_preprocessor(code: str) -> str:
+    """Drop #directives (and their continuations) without moving offsets."""
+    out: list[str] = []
+    continued = False
+    for line in code.splitlines(keepends=True):
+        if continued or line.lstrip().startswith("#"):
+            out.append(re.sub(r"[^\r\n]", " ", line))
+            continued = line.rstrip("\r\n").rstrip().endswith("\\")
+        else:
+            out.append(line)
+    return "".join(out)
+
+
+def _skip_quoted(code: str, i: int) -> int:
+    quote = code[i]
+    i += 1
+    while i < len(code):
+        if code[i] == "\\":
+            i += 2
+        elif code[i] == quote:
+            return i + 1
+        else:
+            i += 1
+    return i
+
+
+def _record_body(code: str, pos: int, limit: int) -> int | None:
+    """Index of the definition's '{', or None for a forward declaration."""
+    par = brk = 0
+    i = pos
+    while i < limit:
+        c = code[i]
+        if c in "\"'":
+            i = _skip_quoted(code, i)
+            continue
+        if c == "(":
+            par += 1
+        elif c == ")":
+            par = max(0, par - 1)
+        elif c == "[":
+            brk += 1
+        elif c == "]":
+            brk = max(0, brk - 1)
+        elif c == "{" and par == brk == 0:
+            return i
+        elif c == ";" and par == brk == 0:
+            return None
+        i += 1
+    return None
+
+
+def _close_brace(code: str, open_at: int, limit: int) -> int:
+    depth = 0
+    i = open_at
+    while i < limit:
+        c = code[i]
+        if c in "\"'":
+            i = _skip_quoted(code, i)
+            continue
+        if c == "{":
+            depth += 1
+        elif c == "}":
+            depth -= 1
+            if depth == 0:
+                return i
+        i += 1
+    return limit - 1
+
+
+def _split_chunks(code: str, start: int, end: int, sep: str = ";") -> list[str]:
+    """Split on a separator at bracket depth zero (nested bodies stay opaque)."""
+    chunks: list[str] = []
+    depth = 0
+    buf: list[str] = []
+    i = start
+    while i < end:
+        c = code[i]
+        if c in "\"'":
+            j = _skip_quoted(code, i)
+            buf.append(code[i:j])
+            i = j
+            continue
+        if c in "([{":
+            depth += 1
+        elif c in ")]}":
+            depth -= 1
+        if c == sep and depth == 0:
+            chunks.append("".join(buf))
+            buf = []
+        elif c != ";" or depth != 0:
+            buf.append(c)
+        i += 1
+    tail = "".join(buf)
+    if tail.strip():
+        chunks.append(tail)
+    return chunks
+
+
+def _parse_field(chunk: str) -> list[_Field]:
+    """Best-effort declarators of one member declaration (methods -> [])."""
+    text = ACCESS_PREFIX.sub("", chunk).strip()
+    if not text or "typedef" in text.split() or "friend" in text.split():
+        return []
+    if RECORD_KEYWORD.search(text):
+        return []  # nested record arm, handled by _parse_records
+    text = text.split("=", 1)[0]
+    # A (member) function pointer is a real positioned field; retain it with
+    # pointer width so vtable/hook overlay structs keep their named member.
+    fnptr = re.search(r"\(\s*(?:[\w:]+\s*::\s*)?\*\s*([A-Za-z_]\w*)\s*\)\s*\(", text)
+    if fnptr:
+        return [_Field(fnptr.group(1), "void*", 4, False)]
+    if "(" in text or ")" in text:
+        return []  # method, constructor or other function type
+    out: list[_Field] = []
+    for part in _split_chunks(text + ";", 0, len(text) + 1, ","):
+        head = part.strip()
+        arrays = []
+        while True:
+            m = re.search(r"\[([^\[\]]*)\]\s*$", head)
+            if not m:
+                break
+            arrays.insert(0, m.group(1))
+            head = head[:m.start()].rstrip()
+        m = re.search(r"([A-Za-z_]\w*)\s*$", head)
+        if not m:
+            continue
+        name = m.group(1)
+        type_text = head[:m.start()].strip()
+        if not type_text or name in {"public", "private", "protected"}:
+            continue
+        bare = DECL_QUALIFIERS.sub(" ", type_text)
+        bare = re.sub(r"\s+", " ", bare.replace("*", " ").replace("&", " ")).strip()
+        base_size = 4 if "*" in type_text else TYPE_SIZE.get(bare)
+        size = base_size
+        if size is not None:
+            for bound in arrays:
+                n = _eval_int(bound)
+                size = None if n is None else size * n
+                if size is None:
+                    break
+        byte_array = bool(arrays) and base_size == 1 and (size or 0) >= 4
+        is_pad = bool(PAD_FIELD_NAME.match(name)) or (
+            byte_array and bool(UNK_PAD_NAME.match(name)))
+        out.append(_Field(name, type_text, size, is_pad, byte_array))
+    return out
+
+
+def _parse_records(code: str, start: int, end: int) -> list[_Record]:
+    """Find struct/class/union definitions and their direct data members."""
+    records: list[_Record] = []
+    i = start
+    while i < end:
+        m = RECORD_KEYWORD.search(code, i, end)
+        if not m:
+            break
+        body = _record_body(code, m.end(), end)
+        if body is None:
+            i = m.end()
+            continue
+        close = _close_brace(code, body, end)
+        name_m = re.search(r"\b([A-Za-z_]\w*)\b", code[m.end():body])
+        name = None if not name_m or name_m.group(1) == "final" else name_m.group(1)
+        rec = _Record(m.group(1), name, code.count("\n", 0, m.start()) + 1,
+                      m.start(), body, close + 1)
+        for chunk in _split_chunks(code, body + 1, close):
+            rec.fields.extend(_parse_field(chunk))
+        rec.arms = _parse_records(code, body + 1, close)
+        records.append(rec)
+        i = close + 1
+    return records
+
+
+def _has_view_hint(rec: _Record, raw_lines: list[str] | None) -> bool:
+    """Did the author call this record a view/overlay/mirror?"""
+    if rec.name and VIEW_HINT.search(rec.name):
+        return True
+    if raw_lines and rec.line <= len(raw_lines):
+        lo = max(0, rec.line - 3)
+        return bool(VIEW_HINT.search("\n".join(raw_lines[lo:rec.line])))
+    return False
+
+
+def _pad_positioned(rec: _Record, raw_lines: list[str] | None = None,
+                    *, arm: bool = False) -> bool:
+    """Does this record exist solely to locate a few fields at offsets?"""
+    data = rec.fields
+    pads = [f for f in data if f.is_pad and f.size is not None]
+    named = [f for f in data if not f.is_pad]
+    if not pads or not named:
+        return False
+    # Padding at the very end is plain storage, not offset positioning
+    # (``struct Init { s16 ids[6]; u8 blob[192]; };``).
+    last_pad = max(i for i, f in enumerate(data) if f.is_pad)
+    if not any(i > last_pad and not f.is_pad for i, f in enumerate(data)):
+        return False
+    hinted = _has_view_hint(rec, raw_lines)
+    # A named field of 0x80+ bytes is real array storage (a vertex table, a
+    # record array...), not one of the few scalars an overlay positions.
+    if any((f.size or 0) >= 0x80 for f in named) and not hinted:
+        return False
+    pad_bytes = sum(f.size or 0 for f in pads)
+    if arm:
+        return (data[0].is_pad and data[0].size is not None and data[0].size >= 4
+                and len(named) <= 3)
+    if data[0].is_pad and data[0].size is not None and data[0].size >= 0x10:
+        if len(named) <= 4:
+            return True
+    known = pad_bytes + sum(f.size or 0 for f in named)
+    if pad_bytes >= 0x10 and known and pad_bytes * 4 > known * 3 and len(named) <= 6:
+        return True
+    # The author's own words count when there is real padding to go with them.
+    if pad_bytes >= 0x10 and len(named) <= 8 and hinted:
+        return True
+    return False
+
+
+def _type_pun_union(rec: _Record) -> bool:
+    """Union of differently typed scalar/array views, with no offset pads."""
+    arms = [f for f in rec.fields if not f.is_pad]
+    if len(arms) + len(rec.arms) < 2:
+        return False
+    keys = {f.type_key for f in arms} | {arm.name or arm.kind for arm in rec.arms}
+    return len(keys) >= 2
+
+
+def detect_pad_overlays(text: str) -> list[OverlayHit]:
+    """Structural overlay hits in one file (comment-stripped for parsing).
+
+    Each definition counts once.  A union counted as a view swallows its
+    anonymous pad-positioned arms so one pattern is not charged twice.
+    ``kind`` is ``pad_struct``/``union_view`` (hard) or ``type_pun_union``
+    (soft); ``line`` is 1-based for reporting.
+    """
+    raw_lines = text.split("\n")
+    code = _blank_preprocessor(strip_comments_keep_lines(text))
+    records = _parse_records(code, 0, len(code))
+    hits: list[OverlayHit] = []
+    for rec in records:
+        if rec.kind == "union":
+            pad_arms = [a for a in rec.arms if _pad_positioned(a, raw_lines, arm=True)]
+            if pad_arms and len(rec.arms) + len(rec.fields) >= 2:
+                hits.append(OverlayHit("union_view", rec.name or "<anonymous>",
+                                       rec.line, rec.start, rec.end))
+                continue
+            if not pad_arms and _type_pun_union(rec):
+                hits.append(OverlayHit("type_pun_union", rec.name or "<anonymous>",
+                                       rec.line, rec.start, rec.end))
+        elif _pad_positioned(rec, raw_lines):
+            hits.append(OverlayHit("pad_struct", rec.name or "<anonymous>",
+                                   rec.line, rec.start, rec.end))
+    hard = [(i, h.start, h.end) for i, h in enumerate(hits)
+            if h.kind != "type_pun_union"]
+    return [h for i, h in enumerate(hits)
+            if h.kind == "type_pun_union"
+            or not any(j != i and s <= h.start < e for j, s, e in hard)]
+
+
+def count_pad_overlays(text: str) -> tuple[int, int]:
+    """Return (hard view_struct additions, soft type_pun_union count)."""
+    hits = detect_pad_overlays(text)
+    return (sum(h.kind != "type_pun_union" for h in hits),
+            sum(h.kind == "type_pun_union" for h in hits))
+
+
+# --- Packed string literals ------------------------------------------------
+# A string that writes its own NUL bytes (``"thread\0"``, ``"x\0\0\0"``,
+# ``"name\0value"``) is another way of spelling a struct overlay/padding in
+# the source: the original would have used a char array or a named string.
+# Count one hit per literal *expression*, including adjacent-literal
+# concatenation.  ``'\0'`` is a char constant, not a string, and ``"\\0"``
+# is a backslash plus '0', so neither counts.
+
+NUL_ESCAPE = re.compile(r"\\(?:0(?![1-7])|x0*0(?![0-9A-Fa-f]))")
+STRING_START = re.compile(r"(?:u8|[uUL])?\"")
+class PackedLiteral:
+    __slots__ = ("line", "text")
+
+    def __init__(self, line: int, text: str):
+        self.line = line
+        self.text = text
+
+    def __repr__(self) -> str:
+        return f"PackedLiteral({self.line}, {self.text!r})"
+
+
+def strip_comments_respecting_strings(text: str) -> str:
+    """Blank out comments but never a ``//`` or ``/*`` inside a literal."""
+    out = list(text)
+    i, n = 0, len(text)
+    while i < n:
+        c = text[i]
+        if text.startswith("//", i):
+            j = text.find("\n", i)
+            j = n if j < 0 else j
+            for k in range(i, j):
+                out[k] = " "
+            i = j
+            continue
+        if text.startswith("/*", i):
+            end = text.find("*/", i + 2)
+            j = n if end < 0 else end + 2
+            for k in range(i, j):
+                if out[k] != "\n":
+                    out[k] = " "
+            i = j
+            continue
+        if c in "\"'":
+            quote = c
+            i += 1
+            while i < n:
+                if text[i] == "\\":
+                    i += 2
+                elif text[i] == quote:
+                    i += 1
+                    break
+                elif text[i] == "\n":
+                    break
+                else:
+                    i += 1
+            continue
+        i += 1
+    return "".join(out)
+
+
+def _string_literal_end(code: str, quote: int) -> tuple[int, bool]:
+    """Index just after a double-quoted literal and whether it spells NUL."""
+    i, nul = quote + 1, False
+    while i < len(code):
+        c = code[i]
+        if c == "\\":
+            if NUL_ESCAPE.match(code, i):
+                nul = True
+            i += 2
+        elif c == "\"":
+            return i + 1, nul
+        elif c == "\n":
+            return i, nul  # unterminated: stop before the newline
+        else:
+            i += 1
+    return i, nul
+
+
+def detect_packed_strings(text: str) -> list[PackedLiteral]:
+    """Every literal expression that explicitly writes a NUL byte."""
+    code = strip_comments_respecting_strings(text)
+    hits: list[PackedLiteral] = []
+    i = 0
+    while i < len(code):
+        c = code[i]
+        if c == "'":  # char literal: skip as a whole
+            j = i + 1
+            while j < len(code):
+                if code[j] == "\\":
+                    j += 2
+                elif code[j] == "'":
+                    j += 1
+                    break
+                else:
+                    j += 1
+            i = j
+            continue
+        m = STRING_START.match(code, i)
+        if not m or (i and (code[i - 1].isalnum() or code[i - 1] == "_")):
+            i += 1
+            continue
+        line = code.count("\n", 0, i) + 1
+        start = i
+        has_nul = False
+        while True:
+            quote = m.end() - 1
+            end, nul = _string_literal_end(code, quote)
+            has_nul |= nul
+            i = end
+            k = end
+            while k < len(code):
+                if code[k] in " \t\r\n":
+                    k += 1
+                elif code[k] == "\\" and k + 1 < len(code) and code[k + 1] == "\n":
+                    k += 2  # backslash-newline inside a macro
+                else:
+                    break
+            nxt = STRING_START.match(code, k)
+            if not nxt:
+                break
+            m = nxt
+        if has_nul:
+            hits.append(PackedLiteral(line, code[start:i].strip()))
+    return hits
+
+
+def count_packed_strings(text: str) -> int:
+    """One hard ``packed_string`` hit per packed literal expression."""
+    return len(detect_packed_strings(text))
 
 
 NOINLINE_OK = re.compile(r"//\s*noinline-ok:\s*\S")
@@ -294,10 +840,22 @@ def _count_soft(key: str, pat: re.Pattern, code: str) -> int:
     return len(pat.findall(code))
 
 
-def count_smells(text: str) -> tuple[dict[str, int], dict[str, int]]:
+def count_smells(text: str, *, structural: bool = True) -> tuple[dict[str, int], dict[str, int]]:
+    """Line-regex smells plus (unless disabled) whole-file overlay definitions.
+
+    ``structural=False`` is used by the finish-line census, which calls this
+    once per line and adds the whole-file overlay result itself so that a
+    ``// faithful-ok:`` marker cannot exempt a pad overlay.
+    """
     code = strip_comments(exempt_justified_noinline(text))
-    return ({k: _count(k, p, code) for k, p in HARD.items()},
-            {k: _count_soft(k, p, code) for k, p in SOFT.items()})
+    hard = {k: _count(k, p, code) for k, p in HARD.items()}
+    soft = {k: _count_soft(k, p, code) for k, p in SOFT.items()}
+    if structural:
+        n_hard, n_soft = count_pad_overlays(text)
+        hard["view_struct"] += n_hard
+        soft["type_pun_union"] = n_soft
+        hard["packed_string"] = count_packed_strings(text)
+    return hard, soft
 
 
 def is_addr_func_name(name: str) -> bool:
@@ -364,19 +922,25 @@ def count_finish_line_file(
         if vok:
             line = HARD["volatile"].sub(" ", line)
             line = VOLATILE_TOKEN.sub(" ", line)
-        hard, soft = count_smells(line)
+        hard, soft = count_smells(line, structural=False)
         values = {"hard/" + k: v for k, v in hard.items()}
         values.update({"soft/" + k: v for k, v in soft.items()})
         values["soft/addr_func"] = count_addr_func_defs(line)
         values["soft/unk_name"] = len(UNK_NAME.findall(line))
         values["soft/field_0x"] = len(FIELD_0X.findall(line))
-        values["soft/sdata2_extern"] = sdata_lines[i] if i < len(sdata_lines) else 0
+
         if ok:
             values = dict.fromkeys(values, 0)
         elif guess:
             values["soft/unk_name"] = 0
             values["soft/field_0x"] = 0
         totals.update(values)
+    # Whole-file structural hits are added after the per-line exemptions:
+    # // faithful-ok: never suppresses a view overlay in disguise.
+    n_hard, n_soft = count_pad_overlays(text)
+    totals["hard/view_struct"] += n_hard
+    totals["soft/type_pun_union"] += n_soft
+    totals["hard/packed_string"] += count_packed_strings(text)
     return totals, exceptions, guesses, volatile_exempt
 
 
@@ -494,7 +1058,7 @@ def measure(region: str = "us") -> dict[str, dict]:
     out: dict[str, dict] = {}
     for u in json.loads((ROOT / "objdiff.json").read_text())["units"]:
         sp = (u.get("metadata") or {}).get("source_path")
-        if not sp or not (ROOT / sp).is_file():
+        if not sp or sp.endswith(".ctx.c") or not (ROOT / sp).is_file():
             continue
         src = ROOT / sp
         hard, soft = count_smells(src.read_text(errors="replace"))

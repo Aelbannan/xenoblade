@@ -23,9 +23,9 @@ static inline f32 s32ToF_678(s32 v) {
 extern const f32 lbl_eu_8066A6B8;    // 2.0f, shared pool constant used by initLodState
 
 // .sdata constants (defined below in the data block).
-extern f32 lbl_eu_80663818;    // 0.005f
-extern f32 lbl_eu_8066381C;    // 0.005f
-extern f32 lbl_eu_80663820[2]; // 0.005f (updateLodBatch2 velocity constant)
+extern f32 sLodBatch0VelocityScale;    // 0.005f
+extern f32 sLodBatch1VelocityScale;    // 0.005f
+extern f32 sLodBatch2VelocityScales[2]; // 0.005f (updateLodBatch2 velocity constant)
 
 // Warning() file / format rodata strings (nw4r db assert).
 extern const char lbl_eu_80526324[];
@@ -478,9 +478,9 @@ extern "C" void updateLodBatch0__Q23LOD17UnkClass_8046A530Fv(LOD::UnkClass_8046A
     // slot - retail allocates 9 vector temps, not 10).
     nw4r::math::VEC3Scale(tmp, dir, 0.033333335f * f31);
     nw4r::math::VEC3Add(e->v[5], e->v[5], tmp);
-    tmp.x *= lbl_eu_80663818 * s32ToF_678((rand() % 100) + 100);
-    tmp.y *= lbl_eu_80663818 * s32ToF_678((rand() % 100) + 100);
-    tmp.z *= lbl_eu_80663818 * s32ToF_678((rand() % 100) + 100);
+tmp.x *= sLodBatch0VelocityScale * s32ToF_678((rand() % 100) + 100);
+    tmp.y *= sLodBatch0VelocityScale * s32ToF_678((rand() % 100) + 100);
+    tmp.z *= sLodBatch0VelocityScale * s32ToF_678((rand() % 100) + 100);
 
     // Integrate vel into v[4]/v[5] and damp both, clamping to +/- 0.3.
     nw4r::math::VEC3Add(e->v[4], e->v[4], tmp);
@@ -650,9 +650,9 @@ extern "C" void updateLodBatch1__Q23LOD17UnkClass_8046A530Fv(LOD::UnkClass_8046A
     // slot - retail allocates 9 vector temps, not 10).
     nw4r::math::VEC3Scale(tmp, dir, 0.033333335f * f31);
     nw4r::math::VEC3Add(e->v[5], e->v[5], tmp);
-    tmp.x *= lbl_eu_8066381C * s32ToF_678((rand() % 100) + 100);
-    tmp.y *= lbl_eu_8066381C * s32ToF_678((rand() % 100) + 100);
-    tmp.z *= lbl_eu_8066381C * s32ToF_678((rand() % 100) + 100);
+tmp.x *= sLodBatch1VelocityScale * s32ToF_678((rand() % 100) + 100);
+    tmp.y *= sLodBatch1VelocityScale * s32ToF_678((rand() % 100) + 100);
+    tmp.z *= sLodBatch1VelocityScale * s32ToF_678((rand() % 100) + 100);
 
     nw4r::math::VEC3Add(e->v[4], e->v[4], tmp);
     nw4r::math::VEC3Scale(e->v[4], e->v[4], 1.0f - 0.02f * f31);
@@ -818,9 +818,9 @@ extern "C" void updateLodBatch2__Q23LOD17UnkClass_8046A530Fv(LOD::UnkClass_8046A
     // slot - retail allocates 9 vector temps, not 10).
     nw4r::math::VEC3Scale(tmp, dir, 0.033333335f * f31);
     nw4r::math::VEC3Add(e->v[5], e->v[5], tmp);
-    tmp.x *= lbl_eu_80663820[0] * s32ToF_678((rand() % 100) + 100);
-    tmp.y *= lbl_eu_80663820[0] * s32ToF_678((rand() % 100) + 100);
-    tmp.z *= lbl_eu_80663820[0] * s32ToF_678((rand() % 100) + 100);
+tmp.x *= sLodBatch2VelocityScales[0] * s32ToF_678((rand() % 100) + 100);
+    tmp.y *= sLodBatch2VelocityScales[0] * s32ToF_678((rand() % 100) + 100);
+    tmp.z *= sLodBatch2VelocityScales[0] * s32ToF_678((rand() % 100) + 100);
 
     nw4r::math::VEC3Add(e->v[4], e->v[4], tmp);
     nw4r::math::VEC3Scale(e->v[4], e->v[4], 1.0f - 0.02f * f31);
@@ -917,6 +917,12 @@ extern "C" void updateLodBatch2__Q23LOD17UnkClass_8046A530Fv(LOD::UnkClass_8046A
 // ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
 // [.sdata] 0x80663818-0x80663828 (16B): three 0.005f velocity constants +
 // trailing pad word (non-const so MWCC places them in .sdata, not .sdata2).
-f32 lbl_eu_80663818 = 0.005f;
-f32 lbl_eu_8066381C = 0.005f;
-f32 lbl_eu_80663820[2] = { 0.005f, 0.0f };
+// name-guess: .sdata 0x80663818, read only by updateLodBatch0 as its random
+// velocity scale.
+f32 sLodBatch0VelocityScale = 0.005f;
+// name-guess: .sdata 0x8066381C, read only by updateLodBatch1 as its random
+// velocity scale.
+f32 sLodBatch1VelocityScale = 0.005f;
+// name-guess: .sdata 0x80663820 (2 words), read only by updateLodBatch2 for
+// its random velocity scale; the trailing word is the retail slot tail.
+f32 sLodBatch2VelocityScales[2] = { 0.005f, 0.0f };

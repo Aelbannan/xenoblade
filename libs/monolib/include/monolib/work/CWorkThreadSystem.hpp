@@ -20,10 +20,13 @@ public:
     static WORK_ID allocWID(CWorkThread* thread);
     static void freeWID(WORK_ID wid){
         sAllocFlags[wid / 32] &= ~(1 << wid % 32);
-        sWorkThreads[wid] = nullptr;
+        sWorkThreads[0][wid] = nullptr;
     }
 
     static mtl::ALLOC_HANDLE getWorkMem();
+
+    // Handle for all work memory allocations (read by CWorkThread's flat ctor).
+    static mtl::ALLOC_HANDLE sAllocHandle;
 
 private:
     static const u32 REGION_SIZE = 0x70000 - sizeof(mtl::MemBlock);
@@ -36,12 +39,9 @@ private:
     static const char* scRegionName;
     static BOOL sMemAvailable;
 
-    //Handle for all work memory allocations
-    static mtl::ALLOC_HANDLE sAllocHandle;
-
     //Work thread registration flags, by ID
     static u32* sAllocFlags;
 
     //Registered work threads, by ID
-    static CWorkThread** sWorkThreads;
+    static CWorkThread** sWorkThreads[2];
 };

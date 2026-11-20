@@ -1,5 +1,5 @@
 #include <harness_catalog.h>
-__declspec(section ".rodata") __attribute__((aligned(8))) u32 lbl_eu_8051BFC0[48] = {
+__declspec(section ".rodata") __attribute__((aligned(8))) u32 sMpvBdecRefTables[48] = { // name-guess: .rodata 8051BFC0 0xC0, only MPVBDEC_Init indexes it
     0xFFFF7FFF,0x3FFF1FFF,0x0FFF07FF,0x03FF01FF,0x00FF007F,0x003F001F,0x000F0007,0x00030001,0x00010810,0x0902030A,0x11182019,0x120B0405,
     0x0C131A21,0x28302922,0x1B140D06,0x070E151C,0x232A3138,0x39322B24,0x1D160F17,0x1E252C33,0x3A3B342D,0x261F272E,0x353C3D36,0x2F373E3F,
     0x08101316,0x1A1B1D22,0x10101618,0x1B1D2225,0x13161A1B,0x1D222226,0x16161A1B,0x1D222528,0x161A1B1D,0x20232830,0x1A1B1D20,0x2328303A,
@@ -32,12 +32,12 @@ extern int UTY_MemcpyDword(u32 *, const u32 *, int);
 extern void MPVABDEC_Init(void);
 
 extern u32 lbl_eu_80602A10[];  /* work area */
-extern u32 lbl_eu_80604660[];
-extern u32 lbl_eu_8060465C[];
-extern u32 lbl_eu_80604658[];
-extern u32 lbl_eu_80604654[];
-extern u32 lbl_eu_80604650[];
-extern u32 lbl_eu_8060464C[];
+extern u32 sVlcTablePtr15[];
+extern u32 sVlcTablePtr13[];
+extern u32 sVlcTablePtr12[];
+extern u32 sVlcTablePtr11[];
+extern u32 sVlcTablePtr10[];
+extern u32 sVlcTablePtr0F[];
 
 extern u32 lbl_eu_806046A8[];
 extern u32 lbl_eu_806033F8[];
@@ -51,7 +51,7 @@ extern u32 lbl_eu_80604648[];
    reference tables and decoder parameters. */
 void MPVBDEC_Init(MPVBDEC_CTX *ctx) {
     u8 table[0x40];
-    u8 *tbl = (u8 *)lbl_eu_8051BFC0;     /* reference tables (live across calls) */
+    u8 *tbl = (u8 *)sMpvBdecRefTables;     /* reference tables (live across calls) */
     MPVBDEC_WORK *work = (MPVBDEC_WORK *)lbl_eu_80602A10;
     int i, j;
     int k;   /* identity-fill cursor; dead after the fill loop */
@@ -94,17 +94,17 @@ void MPVBDEC_Init(MPVBDEC_CTX *ctx) {
     memcpy(ctx->clip_tbl, tbl + 0xa0, 0x20);
 
     /* Decoder parameter pairs: (table pointer loaded from data, table size). */
-    ctx->vlc_param[0] = lbl_eu_80604660[0] - 0x10;
+    ctx->vlc_param[0] = sVlcTablePtr15[0] - 0x10;
     ctx->vlc_param[1] = 0x15;
-    ctx->vlc_param[2] = lbl_eu_8060465C[0] - 0x20;
+    ctx->vlc_param[2] = sVlcTablePtr13[0] - 0x20;
     ctx->vlc_param[3] = 0x13;
-    ctx->vlc_param[4] = lbl_eu_80604658[0] - 0x20;
+    ctx->vlc_param[4] = sVlcTablePtr12[0] - 0x20;
     ctx->vlc_param[5] = 0x12;
-    ctx->vlc_param[6] = lbl_eu_80604654[0] - 0x20;
+    ctx->vlc_param[6] = sVlcTablePtr11[0] - 0x20;
     ctx->vlc_param[7] = 0x11;
-    ctx->vlc_param[8] = lbl_eu_80604650[0] - 0x20;
+    ctx->vlc_param[8] = sVlcTablePtr10[0] - 0x20;
     ctx->vlc_param[9] = 0x10;
-    ctx->vlc_param[10] = lbl_eu_8060464C[0] - 0x20;
+    ctx->vlc_param[10] = sVlcTablePtr0F[0] - 0x20;
     ctx->vlc_param[11] = 0x0f;
 }
 

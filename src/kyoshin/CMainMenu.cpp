@@ -81,7 +81,7 @@ extern f32 lbl_eu_80666F1C;   // 0x80666F1C - HP death threshold (0.0f)
 extern u32 gmPauseFlags;
 
 // Resource/flag getter (resource id -> value; defined in CMiniMap.cpp).
-extern "C" u32 CtrlRemote_TouchBitByArg(u32 resourceId);
+#include "kyoshin/cf/CtrlRemoteApi.hpp"
 
 // UnkClass_8045F564 embedded-object lifecycle (defined in split1; normally
 // declared via kyoshin/CArtsInfo.hpp, which this TU cannot include).

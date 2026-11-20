@@ -79,7 +79,6 @@ extern u32 gmPauseFlags;
 // Column-name pool for the map-object spawn table (.rodata, other split).
 extern u8 lbl_eu_805038C8[];
 // Bdat table pointer singleton (.sbss, set up by the bdat manager).
-extern void* lbl_eu_806640B0;
 
 struct Vec3f {
     f32 x;

@@ -2,17 +2,17 @@
 
 #include <types.h>
 
+#include "monolib/mpfsys/MPFDrawBillboard.hpp"
+
 namespace mpfsys {
 
-class MPFDrawBillLayTex {
+// Draw dispatcher for texture-layered billboards; overrides both billboard slots.
+class MPFDrawBillLayTex : public MPFDrawBillboard {
 public:
     static MPFDrawBillLayTex* getInstance();
-    void drawIndexed();
-    void drawPaired();
 
-private:
-    // The retail singleton occupies sixteen bytes.
-    u8 mData[0x10];
+    virtual void drawIndexed(MPFDrawBillData* billboard, MPFDrawBillIndexList* list);
+    virtual void drawPaired(MPFDrawBillData* billboard, MPFDrawBillPairList* list);
 };
 
 } // namespace mpfsys

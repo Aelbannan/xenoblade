@@ -256,13 +256,13 @@ void* MPV_Create(void* pool) {
     return NULL;
 }
 
-extern u32 lbl_eu_8060464C;
-extern u32 lbl_eu_80604650;
-extern u32 lbl_eu_80604654;
-extern u32 lbl_eu_80604658;
-extern u32 lbl_eu_8060465C;
-extern u32 lbl_eu_80604660;
-extern u32 lbl_eu_80604664;
+extern u32 sVlcTablePtr0F;
+extern u32 sVlcTablePtr10;
+extern u32 sVlcTablePtr11;
+extern u32 sVlcTablePtr12;
+extern u32 sVlcTablePtr13;
+extern u32 sVlcTablePtr15;
+extern u32 sVlcTablePtrExtra;
 
 void MEM_Copy(void* d, const void* s, u32 n);
 void MPVERR_InitErrInf(void* self);
@@ -283,16 +283,16 @@ void* mpvlib_InitHn(void* self) {
     u32 blk1100 = base + 0x1100;
     u32 j;
 
-    *(u32*)(b + 0x990) = lbl_eu_80604664;
-    *(u32*)(b + 0x994) = lbl_eu_80604660 - 16;
-    *(u32*)(b + 0x998) = lbl_eu_8060465C - 32;
-    *(u32*)(b + 0x99C) = lbl_eu_80604658 - 32;
+    *(u32*)(b + 0x990) = sVlcTablePtrExtra;
+    *(u32*)(b + 0x994) = sVlcTablePtr15 - 16;
+    *(u32*)(b + 0x998) = sVlcTablePtr13 - 32;
+    *(u32*)(b + 0x99C) = sVlcTablePtr12 - 32;
     /* j doubles as the 4654-load temp and later the SetUsrSj loop counter,
      * keeping it to a single live range/register (matches retail). */
-    j = lbl_eu_80604654;
+    j = sVlcTablePtr11;
     *(u32*)(b + 0x9A0) = j;
-    *(u32*)(b + 0x9A4) = lbl_eu_80604650;
-    *(u32*)(b + 0x9A8) = lbl_eu_8060464C;
+    *(u32*)(b + 0x9A4) = sVlcTablePtr10;
+    *(u32*)(b + 0x9A8) = sVlcTablePtr0F;
     *(u32*)(b + 0x9B8) = blk11e0;
     *(u32*)(b + 0x9BC) = blk1200;
     *(u32*)(b + 0x9B0) = blk1100;

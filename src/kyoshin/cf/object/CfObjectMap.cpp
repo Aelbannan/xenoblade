@@ -1,6 +1,7 @@
 // Auto-scaffolded catalog TU for kyoshin/cf/object/CfObjectMap
 // Replace stubs with high-level C/C++ during decomp.
 
+#include "kyoshin/cf/CfBdat.hpp"
 #include "monolib/scn/CScn.hpp"
 #include "kyoshin/code_800AA008_Tok.hpp"
 #include "kyoshin/cf/object/CfObjectMap.hpp"
@@ -298,7 +299,7 @@ extern "C" void CfObjectMap_updateEvents(cf::CfObjectMap* self) {
                 ml::CVec3 scale2(0.5f, 0.5f, 0.5f);
                 fx->v32(1, 1, &dir2, &scale2);
 
-                u32 bdat = getBdatStringColumnValue(lbl_eu_806640A8, &lbl_eu_804FC538[5], lbl_eu_80664184);
+                u32 bdat = getBdatStringColumnValue(::cf::CfBdat::spFldMapListFileData, &lbl_eu_804FC538[5], lbl_eu_80664184);
                 if ((bdat & 1) == 0) {
                     fx->v31(1, 0);
                     ml::CVec3 dir3(0.15f, 46.0f, 0.15f);

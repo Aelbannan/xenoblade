@@ -268,10 +268,12 @@ extern "C" void zeroFirstWord(void* self);
 extern "C" void* Scn_CallUnk8C_V8(CScn* scene);
 extern "C" u32 lbl_eu_8056EB78[4];
 
+extern "C" u32 __vt__13CScnFilterMan[];
+
 extern "C" CScnFilterMan* __ct__CScnFilterMan(CScnFilterMan* self, CScn* scene) {
     __ct__IScnRender(self);
     self->mScene = scene;
-    *(void**)self = (void*)lbl_eu_8056EB78;
+    *(void**)self = (void*)__vt__13CScnFilterMan;
     __ct__reslist_CScnFilter(&self->field_08);
     __ct__8049CBD4((CScnFilterReslist*)&self->field_28);
     ScnFilterZeroWord(&self->field_48);
@@ -283,7 +285,6 @@ extern "C" CScnFilterMan* __ct__CScnFilterMan(CScnFilterMan* self, CScn* scene) 
 }
 
 CScnFilterMan::~CScnFilterMan() {
-    *(void**)this = (void*)lbl_eu_8056EB78;
     mScene->removeRenderCB((IScnRender*)this);
     ScnFilterList_destroy(&field_08);
     (&field_28)->IterList_destroy();
@@ -825,15 +826,11 @@ extern "C" void __dt___reslist_base__reslist_iterator_CScnFilter_CScnFilter_CScn
 extern "C" void __dt__reslist_CScnFilter();
 extern "C" void __dt___reslist_base_CScnFilter();
 }
-extern "C" u32 __RTTI__13CScnFilterMan; extern "C" u32 lbl_eu_80663A48;
+extern "C" u32 lbl_eu_80663A48;
 extern "C" u32 lbl_eu_80663A50; extern "C" u32 lbl_eu_80663A58;
 extern "C" u32 lbl_eu_80663A60;
 
 // [.data] 0x8056EB78-0x8056EBD0 (88B): 7 vtable sub-objects
-extern "C" u32 lbl_eu_8056EB78[4] = {
-    (u32)&__RTTI__13CScnFilterMan, 0x00000000,
-    (u32)&FMBlob::__dt__13CScnFilterManFv, (u32)&FMBlob::cbRenderBefore__13CScnFilterManFv,
-};
 extern "C" u32 lbl_eu_8056EB88[3] = { (u32)&lbl_eu_80663A48, 0x00000000,
     (u32)&FMBlob::__dt__reslist__reslist_iterator_CScnFilter_CScnFilter_CScnFilter };
 extern "C" u32 lbl_eu_8056EB94[3] = { (u32)&lbl_eu_80663A50, 0x00000000, 0x00000000 };

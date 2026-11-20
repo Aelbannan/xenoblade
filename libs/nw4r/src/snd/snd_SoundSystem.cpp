@@ -24,7 +24,8 @@ char lbl_eu_80638900[0x10];
 char lbl_eu_80638C40[0x16E00];
 bool lbl_eu_80665508;
 int lbl_eu_8066550C;
-detail::TaskThread lbl_eu_80638910;
+// Real name from the owning header: SoundSystem::sTaskThread.
+detail::TaskThread sTaskThread;
 }
 
 void SoundSystem::InitSoundSystem(s32 soundThreadPriority,
@@ -118,7 +119,7 @@ void SoundSystem::InitSoundSystem(const SoundSystemParam& rParam, void* pWork,
     // Initialize the sequence player subsystem before creating threads
     detail::SeqPlayer::InitSeqPlayer();
 
-    lbl_eu_80638910.Create(rParam.dvdThreadPriority, pWork,
+    sTaskThread.Create(rParam.dvdThreadPriority, pWork,
                        rParam.dvdThreadStackSize);
 
     detail::SoundThread::GetInstance().Create(rParam.soundThreadPriority,
@@ -133,7 +134,7 @@ void SoundSystem::ShutdownSoundSystem() {
 
     detail::SoundThread::GetInstance().Shutdown();
     detail::TaskManager::GetInstance().CancelAllTask();
-    lbl_eu_80638910.Destroy();
+    sTaskThread.Destroy();
 
     detail::RemoteSpeakerManager::GetInstance().Shutdown();
     detail::ChannelManager::GetInstance().Shutdown();

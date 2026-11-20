@@ -2,6 +2,7 @@
 // ~IScnRender stays out of line here: retail's ~CMenuUpdate calls
 // __dt__10IScnRenderFv (the inline-empty header form would elide it).
 #define ISCN_RENDER_OUT_OF_LINE_DTOR
+#include "kyoshin/cf/CfBdat.hpp"
 #include <string.h>
 #include <types.h>
 #include "kyoshin/menu/CMenuUpdate.hpp"
@@ -31,7 +32,6 @@ extern "C" void* Scn_QueryUnk80State();
 #include "monolib/util/MemManager.hpp"  // canonical mtl::MemManager::allocate
 
 extern u32 lbl_eu_80664198;
-extern u32 lbl_eu_806640E0;
 // Out-of-line accessor helpers (defined further down; retail calls them via bl)
 extern "C" u32 getField10(u8* self);
 extern "C" void setField67(u8* self, u8 val);
@@ -184,7 +184,7 @@ extern "C" void setField64(u8* self, u8 val) { self[0x64] = val; }
 extern "C" u8 func_80143F4C(u8* self) { return self[0x64]; }
 extern "C" int getField64(u8* self) { return self[0x64]; }
 extern "C" void* getGlobalA10() { return (void*)lbl_eu_80664A10; }
-extern "C" int getGlobal0E0() { return lbl_eu_806640E0; }
+extern "C" int getGlobal0E0() { return (u32)::cf::CfBdat::spBtlBuffListFileData; }
 extern "C" void MenuUpdate_MarkByte15Ready(void* self) { ((u8*)self)[0x15] = 1; }
 extern "C" void MenuUpdate_SignalGlobalField64() { if (lbl_eu_80664198) { ((void(*)(void*, u8))setField64)((void*)(u32)lbl_eu_80664198, 1); } }
 extern "C" void* noop_80142D5C(void* self) { return self; }
@@ -677,8 +677,8 @@ void CMenuUpdate::UpsertEntry(int type, u32 arg1, u32 arg2, u32 arg3) {
 // MenuUpdate_CheckBootGates - pause/transition guard; decrements a fade timer in 0x12C
 extern "C" int MenuUpdate_CheckBootGates(void* self) {
     CMenuUpdate* obj = (CMenuUpdate*)self;
-    if (!code80135FDC_getByte_64059() && !isGlobalCamFlagSet__Fi(0x1000000) &&
-        isGlobalCamFlagSet__Fi((int)0xBFE40000)) {
+    if (!code80135FDC_getByte_64059() && !isGlobalCamFlagSet(0x1000000) &&
+        isGlobalCamFlagSet((int)0xBFE40000)) {
         return 1;
     }
     if (MenuTutorialIsCreated()) obj->mFloat12C = 4.0f;
@@ -708,7 +708,7 @@ extern "C" void MenuUpdate_EnterMode1Chime(void* self) {
 extern "C" void MenuUpdate_MaintainActive(void* self) {
     CMenuUpdate* obj = (CMenuUpdate*)self;
 
-    if (isGlobalCamFlagSet__Fi(0x1000000) && obj->mState != 4 && obj->mState != 5) {
+    if (isGlobalCamFlagSet(0x1000000) && obj->mState != 4 && obj->mState != 5) {
         // Active-window maintenance: compact the table around the active
         // entries (types 4/5) and re-file the saved header block after them.
         obj->mMode = 2;
@@ -808,7 +808,7 @@ extern "C" f32 MenuUpdate_QueryUnk80Float() {
 // compacts the remaining non-empty entries toward the front.
 extern "C" void MenuUpdate_GuardFirstEntry(void* self) {
     CMenuUpdate* obj = (CMenuUpdate*)self;
-    if (isGlobalCamFlagSet__Fi(0x1000000) && obj->mEntries[0].field_0 != 4 &&
+    if (isGlobalCamFlagSet(0x1000000) && obj->mEntries[0].field_0 != 4 &&
         obj->mEntries[0].field_0 != 5)
         return;
     if (CUICfManager_hasInUseSlot() || hasQuestWindow() || QstCnt_HasInstance_6B94())

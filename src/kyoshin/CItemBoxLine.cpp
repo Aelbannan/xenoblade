@@ -3,6 +3,7 @@
 
 #define IWORK_EVENT_INLINE_DTOR // ~CItemBoxLine elides the empty base dtor (retail)
 
+#include "kyoshin/cf/CfBdat.hpp"
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/code_8025FB10.hpp"
 #include "kyoshin/CSysWin.hpp"
@@ -119,15 +120,15 @@ void ItemBoxLine_BuildTabEntries(CIBLTab* self, u8 arg2, u16 arg3, u8 arg4) {
             if (entry->f4 > cur) entry->f8 = 1;
             if (arg4 != 0) {
                 if (self->field92 == 0xd) {
-                    if (BdatGetU8Direct((const void*)lbl_eu_80664110, "pc_type",
+                    if (BdatGetU8Direct((const void*)::cf::CfBdat::spItmArtsListFileData, "pc_type",
                                       (u16)BdatGetItemId(result)) != 0) {
                         entry->f9 = 1;
                     }
                 } else {
                     u32 t = 0;
                     switch (self->field92) {
-                    case 2: t = (u32)lbl_eu_806640F4; break;
-                    case 4: case 5: case 6: case 7: case 8: t = (u32)lbl_eu_806640F8; break;
+                    case 2: t = (u32)::cf::CfBdat::spItmWpnListFileData; break;
+                    case 4: case 5: case 6: case 7: case 8: t = (u32)::cf::CfBdat::spItmEquipListFileData; break;
                     }
                     if (self->field92 == 2) {
                         str.format("equip_pc%d", arg4);
@@ -138,7 +139,7 @@ void ItemBoxLine_BuildTabEntries(CIBLTab* self, u8 arg2, u16 arg3, u8 arg4) {
                         entry->f9 = 1;
                     }
                     if (self->field92 != 2) {
-                        u8 v = (u8)BdatGetU8Direct((const void*)lbl_eu_806640F8, "arm_type",
+                        u8 v = (u8)BdatGetU8Direct((const void*)::cf::CfBdat::spItmEquipListFileData, "arm_type",
                                                  BdatGetItemId(result));
                         u32 base = (u32)CtrlObjectParam_GetCharEntry(arg4) + 0x3534;
                         if (v == 3) {
@@ -162,15 +163,15 @@ void ItemBoxLine_BuildTabEntries(CIBLTab* self, u8 arg2, u16 arg3, u8 arg4) {
         u16 id = CtrlRemote_TouchBitByArg(v + 0x21);
         u8 rowIdx;
         if (id >= 0x1f40) {
-            rowIdx = (u8)BdatGetU8Direct((const void*)lbl_eu_80664098, "exc_id5", arg3);
+            rowIdx = (u8)BdatGetU8Direct((const void*)::cf::CfBdat::spFldNpcListFileData, "exc_id5", arg3);
         } else if (id >= 0x1770) {
-            rowIdx = (u8)BdatGetU8Direct((const void*)lbl_eu_80664098, "exc_id4", arg3);
+            rowIdx = (u8)BdatGetU8Direct((const void*)::cf::CfBdat::spFldNpcListFileData, "exc_id4", arg3);
         } else if (id >= 0xfa0) {
-            rowIdx = (u8)BdatGetU8Direct((const void*)lbl_eu_80664098, "exc_id3", arg3);
+            rowIdx = (u8)BdatGetU8Direct((const void*)::cf::CfBdat::spFldNpcListFileData, "exc_id3", arg3);
         } else if (id >= 0x7d0) {
-            rowIdx = (u8)BdatGetU8Direct((const void*)lbl_eu_80664098, "exc_id2", arg3);
+            rowIdx = (u8)BdatGetU8Direct((const void*)::cf::CfBdat::spFldNpcListFileData, "exc_id2", arg3);
         } else {
-            rowIdx = (u8)BdatGetU8Direct((const void*)lbl_eu_80664098, "exc_id1", arg3);
+            rowIdx = (u8)BdatGetU8Direct((const void*)::cf::CfBdat::spFldNpcListFileData, "exc_id1", arg3);
         }
         struct TabKindTable { const char* v[28]; };
         TabKindTable kinds = *(const TabKindTable*)&lbl_eu_80506D90[0x2f8];
@@ -191,8 +192,8 @@ void ItemBoxLine_BuildTabEntries(CIBLTab* self, u8 arg2, u16 arg3, u8 arg4) {
                 } else if (self->field92 <= 8) {
                     u32 t = 0;
                     switch (self->field92) {
-                    case 2: t = (u32)lbl_eu_806640F4; break;
-                    case 4: case 5: case 6: case 7: case 8: t = (u32)lbl_eu_806640F8; break;
+                    case 2: t = (u32)::cf::CfBdat::spItmWpnListFileData; break;
+                    case 4: case 5: case 6: case 7: case 8: t = (u32)::cf::CfBdat::spItmEquipListFileData; break;
                     }
                     if (self->field92 == 2) {
                         str.format("equip_pc%d", arg4);
@@ -203,7 +204,7 @@ void ItemBoxLine_BuildTabEntries(CIBLTab* self, u8 arg2, u16 arg3, u8 arg4) {
                         entry->f9 = 1;
                     }
                     if (self->field92 != 2) {
-                        u8 w = (u8)BdatGetU8Direct((const void*)lbl_eu_806640F8, "arm_type",
+                        u8 w = (u8)BdatGetU8Direct((const void*)::cf::CfBdat::spItmEquipListFileData, "arm_type",
                                                  BdatGetItemId(result));
                         u32 base = (u32)CtrlObjectParam_GetCharEntry(arg4) + 0x3534;
                         if (w == 3) {
@@ -325,11 +326,11 @@ extern "C" char* ItemBoxLine_FormatDisplayName(CIBLTabFull* self, u16 index) {
     if (sel == 3) {
         BdatGetItemType(f0);
         u16 kind = BdatGetItemId(f0);
-        u8 n = BdatGetU8Direct((const void*)lbl_eu_806640EC, "rankType", f0);
+        u8 n = BdatGetU8Direct((const void*)::cf::CfBdat::spItmItemListFileData, "rankType", f0);
         ml::FixStr<32> partName(true);
         partName.format("%s", BdatTouchStringCell("MNU_shop", "name", n));
-        u8 sub = BdatGetU8Direct((const void*)lbl_eu_806640D8, "rvs_type", kind);
-        char* base = BdatGetPtrDirect((const void*)lbl_eu_806640D8, "rvs_caption", kind);
+        u8 sub = BdatGetU8Direct((const void*)::cf::CfBdat::spBtlSkillListFileData, "rvs_type", kind);
+        char* base = BdatGetPtrDirect((const void*)::cf::CfBdat::spBtlSkillListFileData, "rvs_caption", kind);
         self->strB8.format("%s", base);
         // Only some languages keep the full-width decoration around $-parts.
         int full = 1;
@@ -382,7 +383,7 @@ extern "C" char* ItemBoxLine_FormatDisplayName(CIBLTabFull* self, u16 index) {
         if ((u8)(sel + 0xfc) > 5 && sel != 2) {
             table = gItemBoxLineMnuItemMesATable;
         }
-        u16 v = BdatGetU16Direct((const void*)lbl_eu_806640EC, "comment", f0);
+        u16 v = BdatGetU16Direct((const void*)::cf::CfBdat::spItmItemListFileData, "comment", f0);
         char* name = BdatGetPtrDirect((const void*)table, "comment", v);
         self->strB8.format("%s", name);
     }
@@ -407,8 +408,8 @@ void ItemBoxLine_AllocEntryStock(CIBLTabFull* self, u32 index, u32 count) {
 
 // ============================================================================
 // ItemBoxLine_ProbeNameSlot: name-dispatch lookup. Bounds-check the tab entry, then by the
-// selector byte search the kind-owner table (lbl_eu_806640F4 for selector 2,
-// lbl_eu_806640F8 otherwise) for the entry's category key: probe slot names
+// selector byte search the kind-owner table (::cf::CfBdat::spItmWpnListFileData for selector 2,
+// ::cf::CfBdat::spItmEquipListFileData otherwise) for the entry's category key: probe slot names
 // "%s%u" until BdatGetU16Direct finds a match (0xFD), exhaust the count (0xFE),
 // or bail with 0. Selector 0xD (name-format mode) returns 0 via its own tail.
 // The goto chain reproduces retail's test ladder: the search body sits in the
@@ -431,9 +432,9 @@ search:
     {
         u32 obj;
         if ((u32)sel == 2) {
-            obj = (u32)lbl_eu_806640F4;
+            obj = (u32)::cf::CfBdat::spItmWpnListFileData;
         } else {
-            obj = (u32)lbl_eu_806640F8;
+            obj = (u32)::cf::CfBdat::spItmEquipListFileData;
         }
         u8 n = BdatGetU8Direct((const void*)obj, &lbl_eu_805071B0[0x106], (u16)v);
         if (n == 0) goto ret0;
@@ -473,7 +474,7 @@ extern "C" u32 ItemBoxLine_CalcCountKey(void* self, unsigned int itemData) {
     char* pool = lbl_eu_805071B0;
     u32 result = 0;
     if ((u16)kind == 3) {
-        u8 v = BdatGetU8Direct((const void*)lbl_eu_806640EC, "rankType", itemData);
+        u8 v = BdatGetU8Direct((const void*)::cf::CfBdat::spItmItemListFileData, "rankType", itemData);
         u16 count = BdatGetU16Direct((const void*)itemId, "money", cat);
         CIBLF32Rec rec = sItemBoxLineRankMultipliers;
         result = __cvt_fp2unsigned((double)((float)count * rec.f[v & 0xFF]));
@@ -655,11 +656,10 @@ void CItemBoxLine::UnloadFiles() {
         delete layout40;
         field40 = 0;
     }
-    releaseArcResourceAccessor(reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(field38));
-    releaseArcResourceAccessor(reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(field3C));
-    void* obj54 = field54;
-    if (obj54 != 0) {
-        delete (nw4r::ut::TagProcessorBase<wchar_t>*)obj54;
+    releaseArcResourceAccessor(field38);
+    releaseArcResourceAccessor(field3C);
+    if (field54 != 0) {
+        delete field54;
         field54 = 0;
     }
     (&mRegion04)->deleteRegion();
@@ -1564,7 +1564,7 @@ void CItemBoxLine::CompactTabList() {
 
 // ============================================================================
 // ItemBoxLine_DrawTabRowText: refresh a tab pane's texture. When a key id is given, resolve
-// its texture name via the shared table (lbl_eu_806640EC), try object A
+// its texture name via the shared table (::cf::CfBdat::spItmItemListFileData), try object A
 // (+0x3C) first and fall back to object B (+0x38) with the default name; with
 // no key id, B is used directly. If a resource was found, format the pane
 // name from arg3 and bind the resource to the active layout.
@@ -1572,7 +1572,7 @@ void CItemBoxLine::CompactTabList() {
 void CItemBoxLine::DrawTabRowText(u32 arg2, u32 arg3) {
     u32 result;
     if (arg2 != 0) {
-        u32 v = BdatGetU16Direct((const void*)lbl_eu_806640EC, &lbl_eu_805071B0[0x1ff], arg2);
+        u32 v = BdatGetU16Direct((const void*)::cf::CfBdat::spItmItemListFileData, &lbl_eu_805071B0[0x1ff], arg2);
         result = (u32)((nw4r::lyt::ArcResourceAccessor*)field3C)->GetResource(0x74696d67, MakeTplNameSysFile((u16)v), 0);
         if (result == 0) {
             result = (u32)((nw4r::lyt::ArcResourceAccessor*)field38)->GetResource(0x74696d67, &lbl_eu_805071B0[0x209], 0);
@@ -1590,7 +1590,7 @@ void CItemBoxLine::DrawTabRowText(u32 arg2, u32 arg3) {
 void CItemBoxLine::DrawTabRowIcon(u32 arg2, u32 arg3) {
     u32 result;
     if (arg2 != 0) {
-        u32 v = BdatGetU16Direct((const void*)lbl_eu_806640EC, &lbl_eu_805071B0[0x22a], arg2);
+        u32 v = BdatGetU16Direct((const void*)::cf::CfBdat::spItmItemListFileData, &lbl_eu_805071B0[0x22a], arg2);
         result = (u32)((nw4r::lyt::ArcResourceAccessor*)field3C)->GetResource(0x74696d67, MakeTplNameSysFile((u16)v), 0);
         if (result == 0) {
             result = (u32)((nw4r::lyt::ArcResourceAccessor*)field38)->GetResource(0x74696d67, &lbl_eu_805071B0[0x209], 0);
@@ -1618,7 +1618,7 @@ void CItemBoxLine::FormatName(u32 arg4, s8 arg5, u32 arg6) {
     str.clear();
     u8 sel = (u8)BdatGetItemType(arg4);
     if (sel == 3 || sel == 9) {
-        u8 v = BdatGetU8Direct((const void*)lbl_eu_806640EC, "rankType", arg4);
+        u8 v = BdatGetU8Direct((const void*)::cf::CfBdat::spItmItemListFileData, "rankType", arg4);
         char* name = BdatTouchStringCell("MNU_item", "name", 0x1e - (v - 1));
         str.format("%s", name);
         PaneMatSetTevColorsByName(field40, buf, &itemBoxLine_pageLabelNeutralTop, &itemBoxLine_pageLabelNeutralBottom);
@@ -1649,7 +1649,7 @@ void CItemBoxLine::FormatName(u32 arg4, s8 arg5, u32 arg6) {
 void CItemBoxLine::SetPaneVisible(u32 index, bool visible) {
     char buf[0x20];
     sprintf(buf, &lbl_eu_805071B0[0x35d], index + 1);
-    nw4r::lyt::Pane* root = *(nw4r::lyt::Pane**)((u8*)field40 + 0x10);
+    nw4r::lyt::Pane* root = field40->GetRootPane();
     nw4r::lyt::Pane* pane = root->FindPaneByName(buf, true);
     setPaneVisible(pane, !visible);
 }
@@ -1955,8 +1955,8 @@ void CItemBoxLine::ShowSlotCounts(u32 itemData) {
     setPaneVisible(field40->GetRootPane()->FindPaneByName("txt_eth02", true), 1);
     setPaneVisible(field40->GetRootPane()->FindPaneByName("txt_eth03", true), 1);
 
-    // Per-kind slot lookups from the kind-owner table (lbl_eu_806640F4).
-    u32 table = (u32)lbl_eu_806640F4;
+    // Per-kind slot lookups from the kind-owner table (::cf::CfBdat::spItmWpnListFileData).
+    u32 table = (u32)::cf::CfBdat::spItmWpnListFileData;
     BdatGetItemType(itemData);
     u16 kind = BdatGetItemId(itemData);
     u16 a = BdatGetU16Direct((const void*)table, "dmg_low", kind);
@@ -2057,7 +2057,7 @@ void CItemBoxLine::ShowSlotCounters(u32 itemData) {
     setPaneVisible(field40->GetRootPane()->FindPaneByName(&lbl_eu_805071B0[0x529], true), 1);
 
     // Kind-based counter text into the three slots.
-    u32 table = (u32)lbl_eu_806640F8;
+    u32 table = (u32)::cf::CfBdat::spItmEquipListFileData;
     BdatGetItemType(itemData);
     u16 kind = BdatGetItemId(itemData);
     u8 a = BdatGetU8Direct((const void*)table, &lbl_eu_805071B0[0x59e], kind);
@@ -2070,7 +2070,7 @@ void CItemBoxLine::ShowSlotCounters(u32 itemData) {
     // Slot-name format ladder (kind selector). The range check and the three
     // equality tests each branch to their case body; the bodies sit after the
     // tests in retail order (0x32, 0x31, 0x30, 0x2e) with the default last.
-    u32 selTable = (u32)lbl_eu_806640F8;
+    u32 selTable = (u32)::cf::CfBdat::spItmEquipListFileData;
     u8 sel = BdatGetU8Direct((const void*)selTable, &lbl_eu_805071B0[0x26],
                            BdatGetItemId(itemData));
     char* name;
@@ -2181,7 +2181,7 @@ void CItemBoxLine::ShowPageTabs(u32 itemData) {
     setPaneVisible(field40->GetRootPane()->FindPaneByName(&lbl_eu_805071B0[0x56c], true), 1);
     setPaneVisible(field40->GetRootPane()->FindPaneByName(&lbl_eu_805071B0[0x577], true), 1);
     setPaneVisible(field40->GetRootPane()->FindPaneByName(&lbl_eu_805071B0[0x583], true), 1);
-    u32 owner = (u32)lbl_eu_80664104;
+    u32 owner = (u32)::cf::CfBdat::spItmCollectListFileData;
     BdatGetItemType(itemData);
     u16 cat = BdatGetItemId(itemData);
     u8 v = BdatGetU8Direct((const void*)owner, &lbl_eu_805071B0[0x5ff], cat);
@@ -2191,7 +2191,7 @@ void CItemBoxLine::ShowPageTabs(u32 itemData) {
     char* name2;
     if (0x1a == v2) {        name2 = BdatTouchStringCell(&lbl_eu_805071B0[0x604], &lbl_eu_805071B0[0x6c], 0x14);
     } else {
-        name2 = BdatGetPtrDirect((const void*)lbl_eu_806640A8, &lbl_eu_805071B0[0x6c], v2);
+        name2 = BdatGetPtrDirect((const void*)::cf::CfBdat::spFldMapListFileData, &lbl_eu_805071B0[0x6c], v2);
     }
     LayoutSetTextBoxFmtValue(field40, &lbl_eu_805071B0[0x583], name2, 0);
 }
@@ -2213,21 +2213,21 @@ void CItemBoxLine::FormatGemName(u32 itemData) {
     setPaneVisible(field40->GetRootPane()->FindPaneByName("txt_value51", true), 1);
     BdatGetItemType(itemData);
     u16 cat = BdatGetItemId(itemData);
-    u32 vEC = BdatGetU8Direct((const void*)lbl_eu_806640EC, "rankType", itemData);
+    u32 vEC = BdatGetU8Direct((const void*)::cf::CfBdat::spItmItemListFileData, "rankType", itemData);
     char* name = BdatTouchStringCell("MNU_item", "name", 30 - ((u8)vEC - 1));
     LayoutSetTextBoxFmtValue(field40, "txt_value50", name, 0);
-    u16 id = BdatGetU16Direct((const void*)lbl_eu_806640D8, "max", cat);
+    u16 id = BdatGetU16Direct((const void*)::cf::CfBdat::spBtlSkillListFileData, "max", cat);
     char* txt = BdatTouchStringCell("MNU_shop", "name", 15);
     if (id == 1) {
         txt = "";
         LayoutSetTextBoxFmtValue(field40, "txt_value51", txt, 0);
     }
     char* pool2 = lbl_eu_805071B0;
-    char* gemName = BdatGetPtrDirect((const void*)lbl_eu_806640D8, "name", cat);
+    char* gemName = BdatGetPtrDirect((const void*)::cf::CfBdat::spBtlSkillListFileData, "name", cat);
     LayoutSetTextBoxFmtValue(field40, "txt_para51", gemName, 0);
     char* lvlName = BdatTouchStringCell(
         "MNU_item", "name",
-        (u8)BdatGetU8Direct((const void*)lbl_eu_806640D8, "attach", cat) + 21);
+        (u8)BdatGetU8Direct((const void*)::cf::CfBdat::spBtlSkillListFileData, "attach", cat) + 21);
     LayoutSetTextBoxFmtValue(field40, "txt_para52", lvlName, 0);
     nw4r::lyt::Pane* anchor =
         field40->GetRootPane()->FindPaneByName("txt_para51", true);
@@ -2235,10 +2235,10 @@ void CItemBoxLine::FormatGemName(u32 itemData) {
         field40->GetRootPane()->FindPaneByName("nul_proportion", true);
     nw4r::math::VEC3 pos;
     ScalePaneWorldPos(&pos, anchor, ref, field40->GetRootPane());
-    *(s16*)((u8*)this + 0x4f0) = cat;
-    *((u8*)this + 0x590) = 9;
+    mPage.mItemIds[8] = cat;
+    mPage.mBytesA8[8] = 9;
     nw4r::math::VEC3 pos2 = pos;
-    copyVEC3((nw4r::math::VEC3*)((u8*)this + 0x558), &pos2);
+    copyVEC3((nw4r::math::VEC3*)&mPage.mPos[8], &pos2);
 }
 
 
@@ -2251,7 +2251,7 @@ void CItemBoxLine::FormatGemName(u32 itemData) {
 // ============================================================================
 void CItemBoxLine::FormatKindDName(u32 itemData) {
     setPaneVisible(field40->GetRootPane()->FindPaneByName("nul_para_80", true), 1);
-    u32 owner = (u32)lbl_eu_80664110;
+    u32 owner = (u32)::cf::CfBdat::spItmArtsListFileData;
     BdatGetItemType(itemData);
     u16 cat = BdatGetItemId(itemData);
     u8 vA = BdatGetU8Direct((const void*)owner, "memory_type", cat);
@@ -2307,9 +2307,9 @@ void CItemBoxLine::BuildPageData(u32 itemData) {
             buf.format("jwl_skill%d", i + 1);
             u16 v = BdatGetU16Direct((const void*)itemId, (const char*)buf.mString, (u16)kind);
             if (v != 0) {
-                a = (u8)BdatGetU8Direct((const void*)lbl_eu_806640EC, "percent", (u16)v);
-                b = (u8)BdatGetU8Direct((const void*)lbl_eu_806640EC, "rankType", (u16)v);
-                u8 sel = (u8)BdatGetU8Direct((const void*)lbl_eu_806640D8, "atr_type",
+                a = (u8)BdatGetU8Direct((const void*)::cf::CfBdat::spItmItemListFileData, "percent", (u16)v);
+                b = (u8)BdatGetU8Direct((const void*)::cf::CfBdat::spItmItemListFileData, "rankType", (u16)v);
+                u8 sel = (u8)BdatGetU8Direct((const void*)::cf::CfBdat::spBtlSkillListFileData, "atr_type",
                                           BdatGetItemId(v));
                 if (sel == 0) {
                     tex = (u32)((nw4r::lyt::ArcResourceAccessor*)field3C)->GetResource(0x74696d67, "mf00_reg30_crys00.tpl", 0);
@@ -2378,7 +2378,7 @@ void CItemBoxLine::BuildPageData(u32 itemData) {
 // it in r3 and works from r4).
 // ============================================================================
 int CItemBoxLine::ProbeAvailability(u32 key) {
-    u32 table = (u32)lbl_eu_80664110;
+    u32 table = (u32)::cf::CfBdat::spItmArtsListFileData;
     BdatGetItemType(key);
     // No named pool local: retail CSEs the lbl_eu_805071B0 base into a
     // temp register that is later reused for the BdatGetU8ByTableKey result.
@@ -2425,10 +2425,10 @@ bool CItemBoxLine::OnFileEvent(CEventFile* evt) {
                                                 CLibLayout::getAllocHandle());
         // The ctor returns self in r3, so the store can reuse r3 after the call
         // (retail: cmpwi/beq/bl __ct__CTagProcessor; stw r3).
-        this->field54 = (CItemBoxLineDtorView*)(tpMem != 0 ? __ct__CTagProcessor(tpMem) : tpMem);
+        this->field54 = (nw4r::ut::WideTagProcessor*)(tpMem != 0 ? __ct__CTagProcessor(tpMem) : tpMem);
         nw4r::lyt::ArcResourceAccessor* acc =
             CLibLayout::createArcResourceAccessor();
-        this->field38 = (CItemBoxLineResView*)acc;
+        this->field38 = acc;
         acc->Attach(data, "arc");
         buildLayout(&this->field40, (nw4r::lyt::ArcResourceAccessor*)this->field38,
                       "mf02_box01_boxsh.brlyt");
@@ -2455,11 +2455,11 @@ bool CItemBoxLine::OnFileEvent(CEventFile* evt) {
         this->field40->Animate(0);
 
         // Bind the tag processor to the text pane, seed the nameplate colour.
-        nw4r::lyt::TextBox* tagPane =
-            (nw4r::lyt::TextBox*)this->field40->GetRootPane()->
-                FindPaneByName("txt_comment", true);
+    nw4r::lyt::TextBox* tagPane =
+        (nw4r::lyt::TextBox*)this->field40->GetRootPane()->
+            FindPaneByName("txt_comment", true);
         if (tagPane != 0) {
-            tagPane->SetTagProcessor((nw4r::ut::WideTagProcessor*)this->field54);
+            tagPane->SetTagProcessor(this->field54);
         }
         nw4r::lyt::Pane* namePane = this->field40->GetRootPane()->
                                         FindPaneByName("pic_cat01", true);
@@ -2584,7 +2584,7 @@ bool CItemBoxLine::OnFileEvent(CEventFile* evt) {
         mtl::MemManager::setMemInitFlag(false);
         nw4r::lyt::ArcResourceAccessor* acc2 =
             CLibLayout::createArcResourceAccessor();
-        this->field3C = (CItemBoxLineResView*)acc2;
+        this->field3C = acc2;
         acc2->Attach(data28, "arc");
         CompactTabList();
         this->field28 = 0;

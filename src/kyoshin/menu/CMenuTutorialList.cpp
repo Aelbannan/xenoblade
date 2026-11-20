@@ -17,7 +17,6 @@
 #include <types.h>
 #include "kyoshin/CTitleAHelp.hpp"
 #include "kyoshin/CTitleAHelpImports.hpp"
-#include "kyoshin/CTutorialImports.hpp"
 #include "kyoshin/cf/CfPadData.hpp"
 #include "kyoshin/code_80135FDC_State.hpp"
 

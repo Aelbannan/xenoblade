@@ -1,18 +1,17 @@
 // monolib model draw dispatchers (with and without vertex colors).
 //
-// The four draw routines are referenced from the draw-object tables in
-// monolibdata2 and dispatched through cast function pointers, so the retail
-// binary mangles them `Fv` (void parameters) even though the dispatcher
-// passes (data, list) in r4/r5.  They are reconstructed here as extern "C"
-// definitions carrying the retail symbol names with their real signatures,
-// the same technique nw4r uses for e.g. GetTypeName__Q34nw4r3g3d6ScnObjCFv.
+// The four draw routines are the two virtual slots of the MPFDraw-derived
+// dispatchers.  The retail symbol map still spells them `Fv` while their
+// bodies consume (data, list) in r4/r5; the real member signatures are
+// canonical here and the configuration names were renamed to match their
+// emitted C++ manglings.  MWCC emits the vtables, base lists and RTTI.
 //
 // Local variables are declared (uninitialized) at the top of each function
 // in the order the retail register allocation implies: MWCC hands out
 // callee-saved GPRs from r31 downwards in declaration order.
 
-#include "monolib/mpfsys/MPFDrawMdlColor.hpp"
 #include "monolib/mpfsys/MPFDrawMdlNoColor.hpp"
+#include "monolib/mpfsys/MPFDrawMdlColor.hpp"
 #include "monolib/mpfsys/UnkClass_80471EC8.hpp"
 
 #include <revolution/GX.h>
@@ -76,8 +75,8 @@ struct MPFDrawMdlGroupPairList {
 
 extern "C" {
 
-extern s8 lbl_eu_80665898;                       // MPFDrawMdlColor singleton init flag
-extern mpfsys::MPFDrawMdlColor* lbl_eu_8066589C; // MPFDrawMdlColor singleton slot
+extern s8 sMpfDrawMdlColorInitialized;                       // MPFDrawMdlColor singleton init flag
+extern mpfsys::MPFDrawMdlColor* spMpfDrawMdlColorInstance; // MPFDrawMdlColor singleton slot
 extern u8* lbl_eu_80665840;                      // model data arena base
 extern MPFDrawMdlData* sLastBillDrawData;          // last draw data handed to the unit
 
@@ -103,70 +102,31 @@ void enableZMode__Q26mpfsys17UnkClass_80471EC8Fv(void);
 
 } // extern "C"
 
-// Foreign base-list label referenced by both param blocks (MPFDrawBillboard).
-extern "C" u32 __RTTI__Q26mpfsys7MPFDraw;
-// Forward decls of the in-TU draw helpers referenced by the dispatch tables.
-extern "C" void drawAllNoColor__Q26mpfsys17MPFDrawMdlNoColorFv(mpfsys::MPFDrawMdlNoColor* self, MPFDrawMdlData* data, const MPFDrawMdlGroupList* list);
-extern "C" void drawHalfNoColor__Q26mpfsys17MPFDrawMdlNoColorFv(mpfsys::MPFDrawMdlNoColor* self, MPFDrawMdlData* data, const MPFDrawMdlGroupPairList* list);
-extern "C" void drawAllWithColor__Q26mpfsys15MPFDrawMdlColorFv(mpfsys::MPFDrawMdlColor* self, MPFDrawMdlData* data, const MPFDrawMdlGroupList* list);
-extern "C" void drawHalfWithColor__Q26mpfsys15MPFDrawMdlColorFv(mpfsys::MPFDrawMdlColor* self, MPFDrawMdlData* data, const MPFDrawMdlGroupPairList* list);
-
-// === .rodata size=0x38 align=8 ===
-extern "C" __declspec(align(8)) const char lbl_eu_80523DC8[24] = {
-    0x6D,0x70,0x66,0x73,0x79,0x73,0x3A,0x3A,0x4D,0x50,0x46,0x44,0x72,0x61,0x77,0x4D,
-    0x64,0x6C,0x43,0x6F,0x6C,0x6F,0x72,0x00,
-};
-extern "C" __declspec(align(8)) const char lbl_eu_80523DE0[32] = {
-    0x6D,0x70,0x66,0x73,0x79,0x73,0x3A,0x3A,0x4D,0x50,0x46,0x44,0x72,0x61,0x77,0x4D,
-    0x64,0x6C,0x4E,0x6F,0x43,0x6F,0x6C,0x6F,0x72,0x00, 0x00,0x00,0x00,0x00,0x00,0x00,
-};
-
-// === .sdata size=0x10 align=8 ===
-// RTTI locators: {name-ptr, base-list-in-data}.
-extern "C" u32 lbl_eu_8056DBD0[4];
-extern "C" u32 lbl_eu_8056DBF0[4];
-extern "C" u32 __RTTI__Q26mpfsys15MPFDrawMdlColor[2] = { (u32)&lbl_eu_80523DC8, (u32)&lbl_eu_8056DBD0 };
-extern "C" u32 __RTTI__Q26mpfsys17MPFDrawMdlNoColor[2] = { (u32)&lbl_eu_80523DE0, (u32)&lbl_eu_8056DBF0 };
-
-// === .data size=0x40 align=8 ===
-// MPFDrawMdlColor dispatch table (16B).
-extern "C" u32 lbl_eu_8056DBC0[4] = {
-    (u32)&__RTTI__Q26mpfsys15MPFDrawMdlColor, 0x00000000, (u32)&drawAllWithColor__Q26mpfsys15MPFDrawMdlColorFv, (u32)&drawHalfWithColor__Q26mpfsys15MPFDrawMdlColorFv,
-};
-// MPFDrawMdlColor base-list tail (16B).
-extern "C" u32 lbl_eu_8056DBD0[4] = {
-    (u32)&__RTTI__Q26mpfsys7MPFDraw, 0x00000000, 0x00000000, 0x00000000,
-};
-// MPFDrawMdlNoColor dispatch table (16B).
-extern "C" u32 lbl_eu_8056DBE0[4] = {
-    (u32)&__RTTI__Q26mpfsys17MPFDrawMdlNoColor, 0x00000000, (u32)&drawAllNoColor__Q26mpfsys17MPFDrawMdlNoColorFv, (u32)&drawHalfNoColor__Q26mpfsys17MPFDrawMdlNoColorFv,
-};
-// MPFDrawMdlNoColor base-list tail (16B).
-extern "C" u32 lbl_eu_8056DBF0[4] = {
-    (u32)&__RTTI__Q26mpfsys7MPFDraw, 0x00000000, 0x00000000, 0x00000000,
-};
+// The retail prototype slots point at the compiler-emitted vtables.
+extern "C" u32 __vt__Q26mpfsys15MPFDrawMdlColor[4];
+extern "C" u32 __vt__Q26mpfsys17MPFDrawMdlNoColor[4];
 
 // === .sbss size=0x8 align=8 (zero-fill) ===
-extern "C" s8 lbl_eu_80665898 = 0;
-extern "C" mpfsys::MPFDrawMdlColor* lbl_eu_8066589C = 0;
+extern "C" s8 sMpfDrawMdlColorInitialized = 0; // name-guess: TU-only .sbss guard read/written by MPFDrawMdlColor::getInstance
+extern "C" mpfsys::MPFDrawMdlColor* spMpfDrawMdlColorInstance = 0; // name-guess: TU-only .sbss slot returned by MPFDrawMdlColor::getInstance
 
 // Instance body, defined by monolibdata2 (.data, 0x10 bytes).
 
 namespace mpfsys {
 
 MPFDrawMdlColor* MPFDrawMdlColor::getInstance(){
-    if(!lbl_eu_80665898){
-        lbl_eu_8066589C = (mpfsys::MPFDrawMdlColor*)lbl_eu_8056DBC0;
-        lbl_eu_80665898 = 1;
+    if(!sMpfDrawMdlColorInitialized){
+        spMpfDrawMdlColorInstance = (mpfsys::MPFDrawMdlColor*)&__vt__Q26mpfsys15MPFDrawMdlColor;
+        sMpfDrawMdlColorInitialized = 1;
     }
-    return (mpfsys::MPFDrawMdlColor*)&lbl_eu_8066589C;
+    return (mpfsys::MPFDrawMdlColor*)&spMpfDrawMdlColorInstance;
 }
 
 } // namespace mpfsys
 
 // mpfsys::MPFDrawMdlNoColor::drawAllNoColor() - draw every group, no vertex
 // colors.
-extern "C" void drawAllNoColor__Q26mpfsys17MPFDrawMdlNoColorFv(mpfsys::MPFDrawMdlNoColor* self, MPFDrawMdlData* data, const MPFDrawMdlGroupList* list) {
+void mpfsys::MPFDrawMdlNoColor::drawAllNoColor(MPFDrawMdlData* data, const MPFDrawMdlGroupList* list) {
     mpfsys::UnkClass_80471EC8* const* slot;
     const MPFDrawMdlPolyNoColor* poly;
     const MPFDrawMdlPolyNoColor* polys;
@@ -221,7 +181,7 @@ extern "C" void drawAllNoColor__Q26mpfsys17MPFDrawMdlNoColorFv(mpfsys::MPFDrawMd
 
 // mpfsys::MPFDrawMdlNoColor::drawHalfNoColor() - draw the first half of the
 // groups (pair list), no vertex colors.
-extern "C" void drawHalfNoColor__Q26mpfsys17MPFDrawMdlNoColorFv(mpfsys::MPFDrawMdlNoColor* self, MPFDrawMdlData* data, const MPFDrawMdlGroupPairList* list) {
+void mpfsys::MPFDrawMdlNoColor::drawHalfNoColor(MPFDrawMdlData* data, const MPFDrawMdlGroupPairList* list) {
     const MPFDrawMdlPolyNoColor* poly;
     const MPFDrawMdlPolyNoColor* polys;
     const MPFDrawMdlMat* mats;
@@ -275,7 +235,7 @@ extern "C" void drawHalfNoColor__Q26mpfsys17MPFDrawMdlNoColorFv(mpfsys::MPFDrawM
 
 // mpfsys::MPFDrawMdlColor::drawAllWithColor() - draw every group with vertex
 // colors.
-extern "C" void drawAllWithColor__Q26mpfsys15MPFDrawMdlColorFv(mpfsys::MPFDrawMdlColor* self, MPFDrawMdlData* data, const MPFDrawMdlGroupList* list) {
+void mpfsys::MPFDrawMdlColor::drawAllWithColor(MPFDrawMdlData* data, const MPFDrawMdlGroupList* list) {
     mpfsys::UnkClass_80471EC8* const* slot;
     const MPFDrawMdlPolyColor* poly;
     const MPFDrawMdlPolyColor* polys;
@@ -331,7 +291,7 @@ extern "C" void drawAllWithColor__Q26mpfsys15MPFDrawMdlColorFv(mpfsys::MPFDrawMd
 
 // mpfsys::MPFDrawMdlColor::drawHalfWithColor() - draw the first half of the
 // groups (pair list) with vertex colors.
-extern "C" void drawHalfWithColor__Q26mpfsys15MPFDrawMdlColorFv(mpfsys::MPFDrawMdlColor* self, MPFDrawMdlData* data, const MPFDrawMdlGroupPairList* list) {
+void mpfsys::MPFDrawMdlColor::drawHalfWithColor(MPFDrawMdlData* data, const MPFDrawMdlGroupPairList* list) {
     const MPFDrawMdlPolyColor* poly;
     const MPFDrawMdlPolyColor* polys;
     const MPFDrawMdlMat* mats;

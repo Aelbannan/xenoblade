@@ -1,6 +1,7 @@
 // Auto-scaffolded catalog TU for kyoshin/CCol6System
 // Cleaned-up C++ for CCol6CheckBat; other stubs pending decomp.
 
+#include "kyoshin/cf/CfBdat.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/cf/CItem.hpp"  // canonical CItemImpl instances accessor
 #include "kyoshin/CCol6CheckBat.hpp"
@@ -3289,7 +3290,7 @@ extern "C" void* __dt__11CCol6InviteFv(CCol6Invite* self, int flags) {
 // strings, bump the two invite counters in the global flag memory by the
 // instance's byte args, then format the banner message and post it.
 void CCol6Invite::Init() {
-    char* str0 = BdatGetPtrDirect((const void*)lbl_eu_80664098,
+    char* str0 = BdatGetPtrDirect((const void*)::cf::CfBdat::spFldNpcListFileData,
                                &lbl_eu_80502050[0x9], mArg2);
 
     // Compound assignment keeps the running value in one register: mask,

@@ -3,6 +3,7 @@
 #include <types.h>
 
 #include "monolib/util/reslist.hpp"
+#include "monolib/device/CDeviceFont.hpp"
 
 class CDeviceFontLayer;
 class CException;
@@ -17,72 +18,18 @@ class Layout;
 }
 } // namespace nw4r
 
-// IDeviceFontInfo - font-info provider interface (impls: CDeviceFontInfoRom /
-// CDeviceFontInfoExt). Retail vtable (e.g. lbl_eu_8056C740 for Ext) is the
-// RTTI layout: RTTI ptr @0x0, 0 @0x4, virtual dtor @0x8, then the user
-// virtuals in declaration order (0xC identity, ... 0x34 availability).
-class IDeviceFontInfo {
-public:
-    virtual ~IDeviceFontInfo();  // 0x8
-    virtual s32 getFlags(); // 0xC (identity/query)
-    virtual u32 getState(); // 0x10
-    virtual u32 getMode(); // 0x14
-    virtual u32 getBufferSize(); // 0x18
-    virtual u16 getLineHeight(); // 0x1C
-    virtual void getCharGlyph();// 0x20
-    virtual void* getFont(); // 0x24
-    virtual void* getFontConst(); // 0x28
-    virtual void advanceState();// 0x2C
-    virtual void initState();// 0x30
-    virtual u32 isStateNonZero(); // 0x34 (availability: returns v != 0)
-    virtual u32 isStateReady();// 0x38
-};
-
-// reslist<IDeviceFontInfo> node layout (12 bytes): mNext@0, mPrev@4, item@8.
-struct CDeviceFontInfoListNode {
-    CDeviceFontInfoListNode* mNext;  // 0x0
-    CDeviceFontInfoListNode* mPrev;  // 0x4
-    IDeviceFontInfo* mItem;          // 0x8
-};
-
-// _reslist_base<IDeviceFontInfo> layout (0x20 bytes).
-struct CDeviceFontInfoReslist {
-    u32* m_vtable;                          // 0x0 (points at lbl_eu_8056C734)
-    CDeviceFontInfoListNode* mStartNodePtr; // 0x4
-    CDeviceFontInfoListNode mStartNode;     // 0x8 (embedded sentinel node)
-    CDeviceFontInfoListNode* mList;         // 0x14
-    int mCapacity;                          // 0x18
-    u8 field_0x1C;                          // 0x1C (externally-owned flag)
-};
+typedef _reslist_node<IDeviceFontInfo*> CDeviceFontInfoListNode;
 
 // Font-info provider impls (typing only; the real layouts live in their own
 // units). Both share the IDeviceFontInfo vtable layout.
-class CDeviceFontInfoExt : public IDeviceFontInfo {
+class CDeviceFontInfoExt : public CDeviceFontInfo {
 public:
     static CDeviceFontInfoExt* create();  // static factory (retail name)
 };
 
-class CDeviceFontInfoRom : public IDeviceFontInfo {
+class CDeviceFontInfoRom : public CDeviceFontInfo {
 public:
     static CDeviceFontInfoRom* create();  // static factory (retail name)
-};
-
-// Minimal CWorkThread view (CDeviceFileDvd.hpp pattern): same class name and
-// same-signature methods so the base ctor/dtor/login/logout calls resolve to
-// the retail symbols. Declared non-virtual here so MWCC emits no vtable of
-// its own, and the ctor can store the retail vtable manually.
-class CWorkThread {
-public:
-    CWorkThread(const char* pName, CWorkThread* pParent, int capacity);
-    ~CWorkThread();
-    bool wkStandbyLogin();
-    bool wkStandbyLogout();
-
-    u8 field_0x0[0x54];                    // 0x0 (vtable + name + state/id/type)
-    mtl::ALLOC_HANDLE mAllocHandle;        // 0x54
-    CWorkThread* mParent;                  // 0x58
-    reslist<CDeviceFontLayer*> mChildren;  // 0x5C (child work threads)
-    u8 field_0x7C[0x1C4 - 0x7C];           // 0x7C (flags/msgqueue/base tail)
 };
 
 // Minimal singletons used by wkStandbyLogout (work/CLib systems).
@@ -109,21 +56,6 @@ public:
     static CException* getException();
 };
 
-// CDeviceBase - intermediate base (CDeviceFile.cpp pattern). The inline
-// ctor forwards to CWorkThread and clears mFlags (0x1C4); the inline empty
-// dtor, when inlined into the derived dtor, contributes the redundant
-// null-check before the CWorkThread dtor call that retail keeps.
-class CDeviceBase : public CWorkThread {
-public:
-    CDeviceBase(const char* pName, CWorkThread* pParent, int capacity)
-        : CWorkThread(pName, pParent, capacity) {
-        mFlags = 0;
-    }
-    ~CDeviceBase() {}
-
-    u32 mFlags; // 0x1C4
-};
-
 // Minimal CDeviceFile view: wkUpdate only needs the singleton and its init
 // state. (The full header cannot be included here - it would clash with this
 // TU's minimal CWorkThread/CDeviceBase views.)
@@ -143,36 +75,6 @@ class CDeviceFontLoader;
 // lbl_eu_806636FC -> "font/MenuFont.brfna".
 extern const char* lbl_eu_806636F8;
 extern const char* lbl_eu_806636FC;
-
-// Minimal layout view of CDeviceFont for the catalog TU
-// (libs/monolib/src/device/CDeviceFont.cpp).
-//
-// The retail class derives from CDeviceBase (CWorkThread, 0x0-0x1C4) and
-// carries its own state at 0x1C4-0x1F0: the font-info list (0x1C8) and the
-// current font layer/id (0x1E8). The retail singleton lives at
-// spDeviceFont (sdata2).
-class CDeviceFont : public CDeviceBase {
-public:
-    CDeviceFont(const char* pName, CWorkThread* pParent);
-    ~CDeviceFont();
-
-    static CDeviceFont* getInstance();
-
-    u32 getFontId();
-    u32 func_804525F0();
-    IDeviceFontInfo* getFontInfo(u32 fontId, nw4r::lyt::Layout* layout);
-    IDeviceFontInfo* findFontByDevice();
-    u32 createFontInfo();
-    void wkUpdate();
-    void wkRender();
-    bool wkStandbyLogin();
-    bool wkStandbyLogout();
-
-    // 0x0-0x1C8: CWorkThread + CDeviceBase base
-    CDeviceFontInfoReslist mInfoList;      // 0x1C8 (font-info list)
-    u32 mFontId;                           // 0x1E8 (current font layer/id)
-    s32 field_0x1EC;                       // 0x1EC (signed: retail switch emits cmpi, not cmpli)
-};
 
 // Minimal view of a child font-layer work thread (CDeviceFontLayer). This TU
 // only searches the children list for a layer and tail-calls one of its
@@ -202,24 +104,9 @@ public:
     static void freeFontHeap();  // font-layer unit helper (standby logout)
 };
 
-class CDeviceFontInfo {
-public:
-    ~CDeviceFontInfo();
-};
-
 // Retail singleton pointer (sdata2). Declared here so the catalog TU's
 // global references emit the retail spDeviceFont reloc name.
 extern CDeviceFont* spDeviceFont;
-
-// Retail font-info reslist vtables (.data). The base/derived dtors store
-// them into the reslist's vtable slot; declared here so the store emits the
-// retail lbl reloc names.
-extern u32 lbl_eu_8056C734[];
-extern u32 lbl_eu_8056C71C[];
-
-// Retail CDeviceFont vtable (.data) - stored manually in the ctor (the
-// class is non-virtual, so MWCC emits no vtable of its own).
-extern u32 lbl_eu_8056C660[];
 
 // Retail rodata string passed as the font-layer work-thread name.
 extern const char lbl_eu_80522DDC[];

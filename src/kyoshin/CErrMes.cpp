@@ -4,8 +4,8 @@
 #include "kyoshin/plugin/ocBdat.hpp"
 #include "monolib/device/CDeviceSC.hpp"
 
-extern u32 lbl_eu_80664BF8;
-extern u8 lbl_eu_80513420[];
+void* sErrMesBdatData;  // name-guess: only CErrMes.cpp reads/writes this .sbss slot as the cached error-message bdat entry
+extern u8 lbl_eu_80513420[];  // string pool kept: literals lose getErrMesText01 100%->81.67% (+4B) and loadErrMesTable reloc pairing
 
 // Loads the error-screen bdat table for the current (clamped) language, adds
 // it to CBdat index 6, and caches the table pointer for the column getters.
@@ -15,39 +15,39 @@ void loadErrMesTable() {
         lang = 1;
     }
     CBdat::setBdatEntry(6, (void*)lbl_eu_8053A420[lang]);
-    lbl_eu_80664BF8 = (u32)CBdat::getFP((const char*)lbl_eu_80513420);
+    sErrMesBdatData = CBdat::getFP((const char*)lbl_eu_80513420);
 }
 
 extern "C" void touchErrMesEntry() { CBdat::getEntry(6); }
 
 // Error-screen bdat string getters: forward the column index to the shared
-// bdat helper (bdat data from lbl_eu_80664BF8, column "???" at +9 of 0x80513420).
+// bdat helper (bdat data from sErrMesBdatData, column "???" at +9 of 0x80513420).
 extern "C" void getErrMesText02() {
-    getBdatStringColumnValue((void*)lbl_eu_80664BF8, (char*)&lbl_eu_80513420[9], 2);
+    getBdatStringColumnValue(sErrMesBdatData, (char*)&lbl_eu_80513420[9], 2);
 }
 
 extern "C" void getErrMesText03() {
-    getBdatStringColumnValue((void*)lbl_eu_80664BF8, (char*)&lbl_eu_80513420[9], 3);
+    getBdatStringColumnValue(sErrMesBdatData, (char*)&lbl_eu_80513420[9], 3);
 }
 
 extern "C" void getErrMesText04() {
-    getBdatStringColumnValue((void*)lbl_eu_80664BF8, (char*)&lbl_eu_80513420[9], 4);
+    getBdatStringColumnValue(sErrMesBdatData, (char*)&lbl_eu_80513420[9], 4);
 }
 
 extern "C" void getErrMesText05() {
-    getBdatStringColumnValue((void*)lbl_eu_80664BF8, (char*)&lbl_eu_80513420[9], 5);
+    getBdatStringColumnValue(sErrMesBdatData, (char*)&lbl_eu_80513420[9], 5);
 }
 
 extern "C" void getErrMesText06() {
-    getBdatStringColumnValue((void*)lbl_eu_80664BF8, (char*)&lbl_eu_80513420[9], 6);
+    getBdatStringColumnValue(sErrMesBdatData, (char*)&lbl_eu_80513420[9], 6);
 }
 
 extern "C" void getErrMesText07() {
-    getBdatStringColumnValue((void*)lbl_eu_80664BF8, (char*)&lbl_eu_80513420[9], 7);
+    getBdatStringColumnValue(sErrMesBdatData, (char*)&lbl_eu_80513420[9], 7);
 }
 
 extern "C" void getErrMesText08() {
-    getBdatStringColumnValue((void*)lbl_eu_80664BF8, (char*)&lbl_eu_80513420[9], 8);
+    getBdatStringColumnValue(sErrMesBdatData, (char*)&lbl_eu_80513420[9], 8);
 }
 
 
@@ -59,39 +59,39 @@ extern "C" void getErrMesText08() {
 
 
 extern "C" void getErrMesText09() {
-    getBdatStringColumnValue((void*)lbl_eu_80664BF8, (char*)&lbl_eu_80513420[9], 9);
+    getBdatStringColumnValue(sErrMesBdatData, (char*)&lbl_eu_80513420[9], 9);
 }
 
 extern "C" void getErrMesText10() {
-    getBdatStringColumnValue((void*)lbl_eu_80664BF8, (char*)&lbl_eu_80513420[9], 10);
+    getBdatStringColumnValue(sErrMesBdatData, (char*)&lbl_eu_80513420[9], 10);
 }
 
 extern "C" void getErrMesText12() {
-    getBdatStringColumnValue((void*)lbl_eu_80664BF8, (char*)&lbl_eu_80513420[9], 12);
+    getBdatStringColumnValue(sErrMesBdatData, (char*)&lbl_eu_80513420[9], 12);
 }
 
 extern "C" void getErrMesText13() {
-    getBdatStringColumnValue((void*)lbl_eu_80664BF8, (char*)&lbl_eu_80513420[9], 13);
+    getBdatStringColumnValue(sErrMesBdatData, (char*)&lbl_eu_80513420[9], 13);
 }
 
 extern "C" void getErrMesText14() {
-    getBdatStringColumnValue((void*)lbl_eu_80664BF8, (char*)&lbl_eu_80513420[9], 14);
+    getBdatStringColumnValue(sErrMesBdatData, (char*)&lbl_eu_80513420[9], 14);
 }
 
 extern "C" void getErrMesText15() {
-    getBdatStringColumnValue((void*)lbl_eu_80664BF8, (char*)&lbl_eu_80513420[9], 15);
+    getBdatStringColumnValue(sErrMesBdatData, (char*)&lbl_eu_80513420[9], 15);
 }
 
 extern "C" void getErrMesText16() {
-    getBdatStringColumnValue((void*)lbl_eu_80664BF8, (char*)&lbl_eu_80513420[9], 16);
+    getBdatStringColumnValue(sErrMesBdatData, (char*)&lbl_eu_80513420[9], 16);
 }
 
 extern "C" void getErrMesText19() {
-    getBdatStringColumnValue((void*)lbl_eu_80664BF8, (char*)&lbl_eu_80513420[9], 19);
+    getBdatStringColumnValue(sErrMesBdatData, (char*)&lbl_eu_80513420[9], 19);
 }
 
 extern "C" void getErrMesText20() {
-    getBdatStringColumnValue((void*)lbl_eu_80664BF8, (char*)&lbl_eu_80513420[9], 20);
+    getBdatStringColumnValue(sErrMesBdatData, (char*)&lbl_eu_80513420[9], 20);
 }
 
 extern "C" void* getErrMesLangTable0(void) { return (void*)lbl_eu_8053A438; }
@@ -136,15 +136,14 @@ void setErrMesLanguage(s32 lang) {
     }
 
     if (changed) {
-        char* pStr = (char*)lbl_eu_80513420;
-        removePackFile(pStr + 0xe);
-        removePackFile(pStr + 0x12);
+        removePackFile("ahx/jp/ahx.pkh");
+        removePackFile("jp/ahx.pkh");
         s32 flag = lang == 0 ? 1 : 0;
-        registerPackFile(pStr + 0x16, flag);
-        registerPackFile(pStr + 0x25, flag);
+        registerPackFile("ahx.pkh", flag);
+        registerPackFile("chr.pkh", flag);
     }
 }
 
 extern "C" void getErrMesText01() {
-    getBdatStringColumnValue((void*)lbl_eu_80664BF8, (char*)&lbl_eu_80513420[9], 1);
+    getBdatStringColumnValue(sErrMesBdatData, (char*)&lbl_eu_80513420[9], 1);
 }

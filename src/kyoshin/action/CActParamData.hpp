@@ -176,11 +176,13 @@ struct CActParamCopySrc080C {
     u8 mByte0C;           // 0x0C
 };
 
-// Global table referenced by findParamEntry (entry-count guard at +0x5C).
+// Global entry table: pointer-sized entries followed by the two count
+// words read by findParamEntry / findParamWide. // name-guess: the entries
+// are the table's real slots; their individual roles are not yet recovered.
 struct ActParamGlobalTable {
-    u8 _pad00[0x5C];
-    u32 mCount5C;         // 0x5C
-    u32 mCount60;         // 0x60: entry-count guard used by findParamWide
+    void* mEntries[0x17];         // name-guess: entry role/stride from the +0x5C/0x60 guards
+    u32 mCount5C;                 // 0x5C
+    u32 mCount60;
 };
 // Node in the linked chain at CActParamData+0x0C.
 struct ActParamNode94 {
@@ -193,36 +195,25 @@ struct ActParamNode94 {
     u8 mBytes20;                   // 0x20: payload passed to linkParamNameRec
 };
 
-// Context record walked by walkParamContext.
-struct ActParamCtx94 {
-    u8 _pad00[0x14];
-    void* mRec14;                  // 0x14: record-chain head
-    u8 _pad18[0x1C - 0x18];
-    u32 mField1C;                  // 0x1C: first gate value
-    u32 mField20;                  // 0x20: fallback gate value
-    u8 _pad24[0x74 - 0x24];
-    u32 mField74;                  // 0x74: final gate value
-};
-
-// Callback interface stored at CActParamData+0x10.
-struct ActParamObjView {
-    virtual void dummy00(); virtual void dummy04(); virtual void dummy08(); virtual void dummy0C();
-    virtual void dummy10(); virtual void dummy14(); virtual void dummy18();
-    virtual int invoke1C(int sel, u32 val);   // vt+0x1C (sel: ctx-is-own-block flag)
-    virtual void dummy20(); virtual void dummy24(); virtual void dummy28(); virtual void dummy2C();
-    virtual void dummy30(); virtual void dummy34(); virtual void dummy38(); virtual void dummy3C();
-    virtual void dummy40(); virtual void dummy44(); virtual void dummy48(); virtual void dummy4C();
-    virtual void dummy50(); virtual void dummy54(); virtual void dummy58(); virtual void dummy5C();
-    virtual void dummy60(); virtual void dummy64(); virtual void dummy68(); virtual void dummy6C();
-    virtual void dummy70(); virtual void dummy74();
-    virtual int check80(int sel);    // vt+0x80
-    virtual void dummy084(); virtual void dummy088(); virtual void dummy08C();
-    virtual void dummy090(); virtual void dummy094(); virtual void dummy098(); virtual void dummy09C();
-    virtual void dummy0A0(); virtual void dummy0A4(); virtual void dummy0A8(); virtual void dummy0AC();
-    virtual void dummy0B0(); virtual void dummy0B4(); virtual void dummy0B8(); virtual void dummy0BC();
-    virtual void dummy0C0();
-    virtual int invokeC4();          // vt+0xC4
-};
+// The callback object stored at CActParamData+0x10 is the real
+// CActParamAnim. Its retail virtual slots are declared on that class:
+//   vt+0x1C  dispatchAnimSlot(u32 sel, u32 val) - gate callback,
+//            sel distinguishes the A/B parameter block,
+//   vt+0x80  calcAnimBlendWeight(u32 sel) - counted gate result,
+//   vt+0xC4  func_8004DAE0() - final gate result.
+// The former ActParamObjView duplicated those three slots over a fake
+// vtable with dummy entries; callers now name the real class members.
+// Cf. src/kyoshin/action/CActParamAnim.hpp for the declared slot order.
+// No extra data members live in the callback interface itself: the
+// CActParamData object owns the pointer and the CActParamAnim object owns
+// the state those virtuals inspect. This comment keeps the header's
+// declaration line positions stable for -ipa-file includers.
+// The three slots are all non-const and return int in the retail ABI.
+// Their names in the hand-built CActParamAnim vtable use the Fv linker
+// spelling, which is why the definitions are forced-name functions.
+// Only the declaration site changed here; no code was reordered.
+// Any future slot additions belong on CActParamAnim, not on this view.
+// The former ActParamObjView declaration occupied these same line positions.
 
 // Retail EU-side helper (unmangled symbol).
 extern "C" void setAnimGate();
@@ -232,8 +223,7 @@ extern "C" int walkParamContext(CActParamData* self, void* ctx);
 extern "C" int lookupParamByKey(CActParamData* self, void* key);
 extern "C" void initActParamData(CActParamData* self, void* entry, void* obj, void* nodeA, void* nodeB);
 
-// Slot table addressed relative to spActParamGlobalTable, indexed directly by a
-// record's base offset (byte-granular indexing, hence the pointer-view decl).
+// Slot table addressed by the record guard words at +0x5C/+0x60.
 extern ActParamGlobalTable* spActParamGlobalTable;
 
 void* getNonNullPtr(void* param);
@@ -475,12 +465,6 @@ struct ActParamWalkView {
     virtual void vf08(u32 a, u8 b, u8 c);
     virtual void vf0C(u32 a, u8 b, u8 c);
 };
-// Type-punned view used only so the null-check load cannot be merged with
-// the pointer reload below (retail loads offset 0x278 twice).
-struct ActParamWalkHostRaw {
-    u8 _pad00[0x278];
-    u32 mRaw278;
-};
 struct ActParamWalkHost {
     u8 _pad00[0x04];
     u32 mField04;                  // 0x04: first callback arg
@@ -666,7 +650,7 @@ struct ActParamCbViewD3C {
 };
 extern "C" void walkParamRecords(CActParamData* self, ActParamD3CMember* member);
 extern "C" void walkParamBlkB(void* self);
-int evalParamTiming(CActParamData* self,
+extern "C" int evalParamTiming(CActParamData* self,
                                        ActParamD3CMember* member,
                                        ActParamD3CTimeRec* rec, int gate);
 // ---- initParamBlock ----

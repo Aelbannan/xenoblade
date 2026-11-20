@@ -3,8 +3,7 @@
 // High-level C++ reconstruction
 
 #include "kyoshin/menu/CMenuSymbolMark.hpp"
-#include "kyoshin/menu/CMenuSymbolMarkImports.hpp"
-#include "monolib/util/MemManager.hpp"
+
 #include "monolib/work/CWorkThreadSystem.hpp"
 #include "monolib/core/CViewRoot.hpp"
 #include "monolib/device/CGXCache.hpp"
@@ -31,12 +30,14 @@
 #include "kyoshin/CUICfManager_Res.hpp"
 
 // Retail helper imports (unmangled retail symbol names).
-extern "C" u8 CtrlRemote_TouchBitByArg(u32);
+#include "kyoshin/cf/CtrlRemoteApi.hpp"
 // Naturally-mangled retail import (findObjectById__Fi).
 void* findObjectById(int id);
 extern u32 sSymbolMarkStrings[];
 extern u32 lbl_eu_8052CCA8[];
 extern u32 lbl_eu_80573D18[];
+extern "C" void* Bdat_GetTable_AA34();
+extern "C" u32 Bdat_GetMaxRow_B1EC(void* bdat);
 
 extern "C" void* getReslistB68();
 extern "C" void* getReslistBC8();

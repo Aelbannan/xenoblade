@@ -58,7 +58,7 @@ struct MPFDrawSingletonTable {
     mpfsys::MPFDrawMdlColor* mdlColor;       // +0x10
     mpfsys::MPFDrawBillLayTex* billLayTex;   // +0x14
 };
-extern MPFDrawSingletonTable lbl_eu_806584E8;
+extern MPFDrawSingletonTable sMpfDrawObjects;
 
 // Global scratch draw context returned by getMpfStatus (retail .bss
 // 0x80658500, 0x18 bytes). mpfDrawLayerOpa / mpfDrawLayerXlu fill it from the
@@ -294,8 +294,8 @@ extern "C" void __dt__8047BDA8(UnkClass_8047BB54* obj) {
     }
 }
 
-extern UnkDrawObj lbl_eu_80658500;
-void* UnkClass_8047BB54::getMpfStatus(void) { return &lbl_eu_80658500; }
+extern UnkDrawObj sMpfDrawScratch;
+void* UnkClass_8047BB54::getMpfStatus(void) { return &sMpfDrawScratch; }
 
 // ---------------------------------------------------------------------------
 // mpfCullMarkLayers helpers (retail keeps the Fv mangling but the function
@@ -341,7 +341,7 @@ extern const f32 lbl_eu_8066A864;
 extern const f32 lbl_eu_8066A868;
 extern f32 lbl_eu_80665880;
 extern f32 lbl_eu_80665884;
-extern f32 lbl_eu_806638A0[2];  // defined in this TU (.sdata, dissolved monolibdata2)
+extern f32 sMpfCullHeightScale[2];  // defined in this TU (.sdata, dissolved monolibdata2)
 extern u32* lbl_eu_80665864;
 extern const char lbl_eu_80526324[];
 extern const char lbl_eu_80526300[];
@@ -427,7 +427,7 @@ extern "C" void mpfCullMarkLayers__17UnkClass_8047BB54Fv(void* self, void* ptr,
                     mark->height = f26 * (distance - f27v);
                     slot[0] += 2;
                     if (slot[0] >= obj->field_0x4[0] - 2) {
-                        void* draw = ((void**)&lbl_eu_806584E8)[sub->field_0x2];
+                        void* draw = ((void**)&sMpfDrawObjects)[sub->field_0x2];
                         ((MPFDrawVtC_2*)draw)->vf1(
                             (u8*)obj->field_0x0 + sub->field_0x18, slot);
                         slot[0] = 1;
@@ -448,10 +448,10 @@ extern "C" void mpfCullMarkLayers__17UnkClass_8047BB54Fv(void* self, void* ptr,
                         MpfCullMark* mark = (MpfCullMark*)&slot[slot[0]];
                         mark->element = view->field_0x4 + j;
                         mark->height = (sub->field_0x4 - distance) *
-                                       lbl_eu_806638A0[0];
+                                       sMpfCullHeightScale[0];
                         slot[0] += 2;
                         if (slot[0] >= obj->field_0x4[0] - 2) {
-                            void* draw = ((void**)&lbl_eu_806584E8)[sub->field_0x2];
+                            void* draw = ((void**)&sMpfDrawObjects)[sub->field_0x2];
                             ((MPFDrawVtC_2*)draw)->vf1(
                                 (u8*)obj->field_0x0 + sub->field_0x18, slot);
                             slot[0] = 1;
@@ -462,7 +462,7 @@ extern "C" void mpfCullMarkLayers__17UnkClass_8047BB54Fv(void* self, void* ptr,
                         slot[slot[0]] = view->field_0x4 + j;
                         slot[0] += 1;
                         if (slot[0] >= obj->field_0x4[0]) {
-                            void* draw = ((void**)&lbl_eu_806584E8)[sub->field_0x2];
+                            void* draw = ((void**)&sMpfDrawObjects)[sub->field_0x2];
                             ((MPFDrawVt8_2*)draw)->vf0(
                                 (u8*)obj->field_0x0 + sub->field_0x18, slot);
                             slot[0] = 1;
@@ -598,7 +598,7 @@ extern "C" void mpfDrawLayerXlu__17UnkClass_8047BB54Fv(
         for (int i = 0; i < count; i++) {
             if (obj->field_0x4[obj->field_0x4[0] * (i + count) + 1] > 1) {
                 UnkDrawEntry* e = &obj->field_0x10[i];
-                void* draw = ((void**)&lbl_eu_806584E8)[e->field_0x2];
+                void* draw = ((void**)&sMpfDrawObjects)[e->field_0x2];
                 ((MPFDrawVtC*)draw)->vf1((u8*)obj->field_0x0 + e->field_0x18);
             }
         }
@@ -647,7 +647,7 @@ extern "C" void mpfDrawLayerOpa__17UnkClass_8047BB54Fv(
             if (obj->field_0x4[obj->field_0x4[0] * i + 1] > 1) {
                 UnkDrawEntry* e = &obj->field_0x10[i];
                 if (e->field_0x1E & 1) {
-                    void* draw = ((void**)&lbl_eu_806584E8)[e->field_0x2];
+                    void* draw = ((void**)&sMpfDrawObjects)[e->field_0x2];
                     ((MPFDrawVt8*)draw)->vf0((u8*)obj->field_0x0 + e->field_0x18);
                 }
             }
@@ -658,22 +658,27 @@ extern "C" void mpfDrawLayerOpa__17UnkClass_8047BB54Fv(
 // --- Target 4: us-804809fc ---------------------------------------------------
 // Static-init: populate the singleton draw-object table.
 void sinit_8047CA2C() {
-    lbl_eu_806584E8.billboard = mpfsys::MPFDrawBillboard::getInstance();
-    lbl_eu_806584E8.cross = mpfsys::MPFDrawCross::getInstance();
-    lbl_eu_806584E8.displayList = mpfsys::MPFDrawDisplayList::getInstance();
-    lbl_eu_806584E8.mdlNoColor = mpfsys::MPFDrawMdlNoColor::getInstance();
-    lbl_eu_806584E8.mdlColor = mpfsys::MPFDrawMdlColor::getInstance();
-    lbl_eu_806584E8.billLayTex = mpfsys::MPFDrawBillLayTex::getInstance();
+    sMpfDrawObjects.billboard = mpfsys::MPFDrawBillboard::getInstance();
+    sMpfDrawObjects.cross = mpfsys::MPFDrawCross::getInstance();
+    sMpfDrawObjects.displayList = mpfsys::MPFDrawDisplayList::getInstance();
+    sMpfDrawObjects.mdlNoColor = mpfsys::MPFDrawMdlNoColor::getInstance();
+    sMpfDrawObjects.mdlColor = mpfsys::MPFDrawMdlColor::getInstance();
+    sMpfDrawObjects.billLayTex = mpfsys::MPFDrawBillLayTex::getInstance();
 }
 
 // ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
 // [.bss] 0x806584E8-0x80658518 (0x30 = 48B): singleton draw-object table
 // (6 pointers) + scratch draw context (0x18).
-MPFDrawSingletonTable lbl_eu_806584E8;
-UnkDrawObj lbl_eu_80658500;
+// name-guess: six singleton MPF draw objects installed by sinit_8047CA2C and
+// indexed by each layer entry's field_0x2.
+MPFDrawSingletonTable sMpfDrawObjects;
+// name-guess: scratch draw context returned by getMpfStatus and filled from
+// the map descriptor before the per-layer draw calls.
+UnkDrawObj sMpfDrawScratch;
 
 // [.sdata] 0x806638A0-0x806638A8 (8B): 1/3.0f + zero pad (retail raw words).
-extern "C" f32 lbl_eu_806638A0[2] = { 0.33333334f, 0.0f };
+// name-guess: 1/3 scale applied to the culling height delta in mpfCullMarkLayers.
+extern "C" f32 sMpfCullHeightScale[2] = { 0.33333334f, 0.0f };
 
 // [.sbss] 0x806658B8-0x806658C0 (8B): singleton slot (4B used) + pad.
 UnkSceneDataObj* UnkClass_8047BB54::spInstance;

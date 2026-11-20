@@ -1,5 +1,7 @@
 #pragma once
 
+#include "kyoshin/cf/CfBdat.hpp"
+
 #include <types.h>
 #include "kyoshin/CPresentWinApi.hpp"
 #include "monolib/device/CDeviceFontInfo.hpp"
@@ -34,10 +36,8 @@ extern char CPresentStringPool[]; // layout path + pane-name + message string po
 extern const float CPresentAnimStepDelta;    // animation advance delta (const -> sdata2 pool, lfs hoist)
 extern f64 CPresentU32ToFloatMagic;    // 2^52 double used by the u32->float conversion
 extern f32 CPresentFrameResetValue;    // frame reset value written into animTrans1
-extern u32 lbl_eu_80664104;    // BDAT table handle used by the time/rank lookup
 
 // BDAT table handle (sda21) used by the item-name/message lookups
-extern void* lbl_eu_80664090;
 
 // Retail symbols that ARE the Itanium-mangled C++ names: declare under C
 // linkage so calls bind to the literal mangled identifier.

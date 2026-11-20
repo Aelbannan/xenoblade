@@ -4,16 +4,7 @@
 #include <harness_catalog.h>
 #include <string.h>
 #include "libs/CriWare/src/sofdec/sfdcore/sfd/sfd_types.h"
-
-/* SFH runtime context - 0x18 bytes (created over a header image) */
-typedef struct SFHContext {
-    s32 active;       /* 0x00 */
-    u32 field_0x04;   /* 0x04: header base */
-    u32 field_0x08;   /* 0x08: header size */
-    u32 field_0x0C;   /* 0x0C */
-    u32 field_0x10;   /* 0x10 */
-    u32 field_0x14;   /* 0x14 */
-} SFHContext;
+#include "libs/CriWare/src/sofdec/sfdcore/sfh/sfh_types.h"
 
 extern SFHContext* SFH_Create(u32 base, s32 size, SFHContext* ctx);
 extern s32 SFH_Destroy(SFHContext* ctx);

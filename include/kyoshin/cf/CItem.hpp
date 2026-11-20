@@ -1,11 +1,13 @@
 #pragma once
 
+#include "kyoshin/cf/CfBdat.hpp"
+
 #include "kyoshin/cf/CItemBlockApi.hpp"
 #include <types.h>
 #include "kyoshin/plugin/ocBdat.hpp"  // getBdatStringColumnValue (owner)
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
-extern "C" u32 CtrlRemote_TouchBitByArg(u32 resourceId);
+#include "kyoshin/cf/CtrlRemoteApi.hpp"
 
 // BDAT row base/count helpers (used by CItem_createBoxContents's item-box scan).
 extern "C" u32 Bdat_GetRowBase_B41C(void* bdat);
@@ -19,43 +21,25 @@ extern "C" void func_8013E424(void* self, int a);
 extern "C" int sprintf(char*, const char*, ...);
 
 // Global BDAT handles used by CItemRec_packFromBdat's lookups.
-extern void* lbl_eu_806640D8;
-extern void* lbl_eu_806640EC;
 
 // BDAT handle used by CItem_rollBoxEntry's item-box creation lookups.
-extern void* lbl_eu_806640CC;
 
 // BDAT handle used by CItem_createBoxContents's item-box creation lookups.
-extern void* lbl_eu_806640E8;
 
 // BDAT handle used by CItem_rollWeighted4B's random-roll lookups.
-extern void* lbl_eu_80664154;
 
 // BDAT handles used by CItem_buildSortName's per-family item-name lookups (a==2
 // path picks one of the three by the c argument).
-extern void* lbl_eu_80664170;
-extern void* lbl_eu_80664094;
-extern void* lbl_eu_8066416C;
 
 // BDAT handle used by CItem_rollForced's item-roll loop.
-extern void* lbl_eu_8066414C;
 
 // BDAT handles selected by CItem_reCount's category dispatch (cat==2 picks
-// lbl_eu_806640F4, cat in [4,8] picks lbl_eu_806640F8).
-extern void* lbl_eu_806640F4;
-extern void* lbl_eu_806640F8;
+// ::cf::CfBdat::spItmWpnListFileData, cat in [4,8] picks ::cf::CfBdat::spItmEquipListFileData).
 // BDAT handles selected by CItem_resolveFamilyBdat's category dispatch (cases 2..7).
-extern void* lbl_eu_806640FC;
-extern void* lbl_eu_80664104;
-extern void* lbl_eu_80664108;
-extern void* lbl_eu_8066410C;
-extern void* lbl_eu_80664110;
 
 // BDAT handle used by CItem_refRow2's slot refresh lookups.
-extern void* lbl_eu_80664100;
 
 // BDAT handle used by CItem_rollWeighted4's weighted random-roll lookups.
-extern void* lbl_eu_80664150;
 
 // Item-name string pool (also the +0x42 column-name argument in CItemRec_packFromBdat).
 extern char lbl_eu_80501C58[];

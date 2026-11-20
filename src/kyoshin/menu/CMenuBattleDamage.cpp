@@ -1,6 +1,7 @@
 // Auto-scaffolded catalog TU for kyoshin/menu/CMenuBattleDamage
 // Replace stubs with high-level C/C++ during decomp.
 
+#include "kyoshin/cf/CfBdat.hpp"
 #include "kyoshin/menu/CMenuBattleDamage.hpp"
 
 #include "monolib/device/CDeviceVI.hpp"
@@ -511,7 +512,7 @@ extern "C" void BtlDmg_FilterNotifyDamage(int actorId, int value, u32 flags) {
         return;
     }
     if (flags & 0x8) {
-        char* s = BdatGetPtrDirect(reinterpret_cast<const void*>(lbl_eu_80664160),
+        char* s = BdatGetPtrDirect(::cf::CfBdat::spBtlPssListFileData,
                                 lbl_eu_804FD524 + 0xc4, value);
         if (strcmp(s, lbl_eu_804FD524 + 0xc9) == 0) {
             return;
@@ -909,11 +910,11 @@ void CMenuBattleDamage::BtlDmg_SpawnPopup(int actorId, int value, u32 flags) {
         const char* text = getTelopString(value);
         if (flags & 0x8) {
             text = BdatGetPtrDirect(
-                reinterpret_cast<const void*>(lbl_eu_806640E0),
+                reinterpret_cast<const void*>(::cf::CfBdat::spBtlBuffListFileData),
                 lbl_eu_804FD524 + 0xc4, value);
         } else if (flags & 0x10) {
             text = BdatGetPtrDirect(
-                reinterpret_cast<const void*>(lbl_eu_80664160),
+                ::cf::CfBdat::spBtlPssListFileData,
                 lbl_eu_804FD524 + 0xc4, value);
         } else if (flags & 0x20) {
             switch (value) {

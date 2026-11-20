@@ -37,40 +37,9 @@ char lbl_eu_80532FA0[0x40] = {
 // .sdata typeinfo pair (RTTI name + dispatch block).
 __declspec(section ".sdata") __attribute__((used, aligned(8)))
 const void* __RTTI__17CSimpleEveTalkWin[2] = { lbl_eu_80503E00, lbl_eu_80532FA0 };
-// .sdata2 float pool in retail order, frozen in a struct (CfGimmickElv
-// recipe): MWCC merges same-valued individual scalars (dedup) and exiles
-// zero-valued mutable scalars to .sbss2, but struct members keep exact
-// offsets/bytes. Only this TU references these labels (verified), so the
-// retail names are struct-member macros (no ELF symbols needed).
-struct Sdata2_EveTalkWin {
-    float a0;   // 80667CA0 38.0f tag-proc message scales
-    float a4;   // 80667CA4 -1.0f early-init float
-    float a8;   // 80667CA8 0.0f anim frame
-    float ac;   // 80667CAC 193.0f translate Y
-    float b0;   // 80667CB0 1.0f anim frame target
-    float pad;  // +0x14 0.0f (no retail label)
-    float b8;   // 80667CB8 5.0f
-    float bc;   // 80667CBC 30.0f
-    float c0;   // 80667CC0 50.0f
-    float c4;   // 80667CC4 0.0f
-    float c8;   // 80667CC8 1.0f
-    float cc;   // 80667CCC 0.2f
-};
-__declspec(section ".sdata2") __attribute__((used, aligned(8)))
-const Sdata2_EveTalkWin sdata2_EveTalkWin = {
-    38.0f, -1.0f, 0.0f, 193.0f, 1.0f, 0.0f, 5.0f, 30.0f, 50.0f, 0.0f, 1.0f, 0.2f
-};
-#define lbl_eu_80667CA8 sdata2_EveTalkWin.a8
-#define lbl_eu_80667CB0 sdata2_EveTalkWin.b0
-// .sbss singletons (MWCC auto-routes zero-init small data here; explicit
-// section names are rejected by this TU's MWCC, code_80135FDC recipe).
-// The trailing 3 bytes are retail section padding (hidden gap object).
-// Three scalars (an array would 4-align to offset 8 and bloat to 0xB).
+// .sbss singletons (MWCC auto-routes zero-init small data here).
 CSimpleEveTalkWin* spEveTalkWinInstance = 0;
 u8 sEveTalkWinTerminated = 0;
-u8 eve_sbss_pad0;
-u8 eve_sbss_pad1;
-u8 eve_sbss_pad2;
 // ----- end typified retail data -----
 
 // Retail declares the constructor as a C-ABI global `__ct__CSimpleEveTalkWin`
@@ -260,7 +229,7 @@ void CSimpleEveTalkWin::Init() {
     // position.
     if (field_68 == 0) {
         mpLayout->GetRootPane()->SetTranslate(nw4r::math::VEC3(
-            lbl_eu_80667CA8, 193.0f, lbl_eu_80667CA8));
+            0.0f, 193.0f, 0.0f));
     }
 
     // No ctor-flag: start with the cursor animation disabled and the intro
@@ -269,7 +238,7 @@ void CSimpleEveTalkWin::Init() {
         mpLayout->SetAnimationEnable(field_90, 0);
         mpLayout->SetAnimationEnable(field_94, 0);
         mpLayout->SetAnimationEnable(field_8C, 1);
-        field_8C->SetFrame(lbl_eu_80667CA8);
+        field_8C->SetFrame(0.0f);
     }
 
     mpLayout->Animate(0);
@@ -293,7 +262,7 @@ void CSimpleEveTalkWin::Move() {
     case 1:
         // Intro animation finished: play the message voice, then cross-fade
         // to the cursor animation set and enter the advance state.
-        if (advanceAnimTransform(field_8C, lbl_eu_80667CB0) != 0) {
+        if (advanceAnimTransform(field_8C, 1.0f) != 0) {
             void* src = findObjectById(field_68);
             if (src != 0) {
                 reinterpret_cast<CSimpleTalkFields*>(src)->voice98->play(1, 0);
@@ -311,7 +280,7 @@ void CSimpleEveTalkWin::Move() {
     case 3:
         // Closing animation finished: unregister the render callback and hand
         // control back to the caller.
-        if (AnimRewindFrame(field_8C, lbl_eu_80667CB0) != 0) {
+        if (AnimRewindFrame(field_8C, 1.0f) != 0) {
             CDeviceVI::waitForDrawDone();
             IScnRender* render = reinterpret_cast<IScnRender*>(this);
             if (this != 0) {
@@ -469,7 +438,7 @@ extern "C" __declspec(noinline) void eveTalkWinSetReuseText(CSimpleEveTalkWin* o
     owner->mpLayout->SetAnimationEnable(owner->field_8C, 0);
     owner->mpLayout->SetAnimationEnable(owner->field_94, 0);
     owner->mpLayout->SetAnimationEnable(owner->field_90, 1);
-    owner->field_90->SetFrame(lbl_eu_80667CA8);
+    owner->field_90->SetFrame(0.0f);
     owner->field_AE = 4;
 
     // Co-op mode uses the 2P button texture.
@@ -527,7 +496,7 @@ extern "C" __declspec(noinline) void eveTalkWinSetReuseText(CSimpleEveTalkWin* o
     // position.
     if (owner->field_68 == 0) {
         owner->mpLayout->GetRootPane()->SetTranslate(nw4r::math::VEC3(
-            lbl_eu_80667CA8, 193.0f, lbl_eu_80667CA8));
+            0.0f, 193.0f, 0.0f));
     }
 
     ((UnkClass_8045F564*)owner->mMemRegion)->validateHeap();
@@ -572,27 +541,27 @@ extern "C" void eveTalkWinAdvancePage(CSimpleEveTalkWin* self) {
             self->mpLayout->SetAnimationEnable(self->field_8C, 0);
             self->mpLayout->SetAnimationEnable(self->field_94, 0);
             self->mpLayout->SetAnimationEnable(self->field_90, 1);
-            self->field_90->SetFrame(lbl_eu_80667CA8);
+            self->field_90->SetFrame(0.0f);
             self->field_AE = 5;
             break;
         case 5:
-            if (advanceAnimTransform(self->field_90, lbl_eu_80667CB0) != 0) {
+            if (advanceAnimTransform(self->field_90, 1.0f) != 0) {
                 self->mpLayout->SetAnimationEnable(self->field_8C, 0);
                 self->mpLayout->SetAnimationEnable(self->field_90, 0);
                 self->mpLayout->SetAnimationEnable(self->field_94, 1);
-                self->field_94->SetFrame(lbl_eu_80667CA8);
+                self->field_94->SetFrame(0.0f);
                 self->field_AE = 6;
             }
             break;
         case 6:
-            advanceAnimTransform(self->field_94, lbl_eu_80667CB0);
+            advanceAnimTransform(self->field_94, 1.0f);
             break;
         case 7:
-            if (AnimRewindFrame(self->field_90, lbl_eu_80667CB0) != 0) {
+            if (AnimRewindFrame(self->field_90, 1.0f) != 0) {
                 self->mpLayout->SetAnimationEnable(self->field_8C, 0);
                 self->mpLayout->SetAnimationEnable(self->field_94, 0);
                 self->mpLayout->SetAnimationEnable(self->field_90, 1);
-                self->field_90->SetFrame(lbl_eu_80667CA8);
+                self->field_90->SetFrame(0.0f);
                 self->field_AE = 4;
             }
             break;

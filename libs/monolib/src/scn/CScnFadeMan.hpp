@@ -16,20 +16,15 @@ public:
     static void fitRectToView(ml::CRect& rect, CView* view);
 };
 
-// Non-virtual reconstruction of CScnFadeMan. Retail CScnFadeMan inherits
-// IScnRender (vptr at 0x0), but modeling that inheritance makes MWCC emit its
-// own __vt__11CScnFadeMan / RTTI symbols and reference __vt__11CScnFadeMan in
-// the ctor/dtor vptr stores, whereas the retail relocs name the .data blob
-// lbl_eu_8056EB50. The vtable slot is therefore stored manually from the
-// retail blob (same trick as CDeviceFontLoader) so the ctor/dtor relocs carry
-// the retail name and no extra vtable/RTTI data is emitted.
+// Scene fade manager. Retail vtable (0x8056EB50): [RTTI, 0, dtor,
+// cbRenderBefore] - a plain polymorphic class with those two virtuals.
 class CScnFadeMan {
 public:
     CScnFadeMan(CScn* scene);
-    ~CScnFadeMan();
+    virtual ~CScnFadeMan();
+    virtual void cbRenderBefore();
     void update();
 
-    u8* m_vtable;             //0x0 retail vtable pointer (lbl_eu_8056EB50)
     CScn* mScene;             //0x4
     ml::CCol4 mCurrentColor;  //0x8
     ml::CCol4 mStartColor;    //0x18
@@ -47,6 +42,3 @@ extern float lbl_eu_8066AB80; // 1.0f
 extern float lbl_eu_8066AB78; // 0.0f
 extern float lbl_eu_8066AB90; // 1.2f
 
-// Retail CScnFadeMan vtable blob (.data:0x8056EB50, 16B) owned by this TU:
-// [RTTI locator lbl_eu_80663A38, 0, dtor, cbRenderBefore].
-extern "C" u32 lbl_eu_8056EB50[4];

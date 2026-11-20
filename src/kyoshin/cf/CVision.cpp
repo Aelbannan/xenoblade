@@ -47,8 +47,16 @@ extern "C" void UIWin_FlagBufClear();
 // one extern "C" form per symbol (BFC38 unified on the u16-returning
 // flat-name form; BFE8C on void(u32,u32,u32)).
 
+#include "kyoshin/CUICfManager.hpp"
+#include "kyoshin/cf/CVision.hpp"
 #include "kyoshin/cf/CVisionImports.hpp"
 #include "kyoshin/cf/code_800F42AC.hpp"  // ScMain_* typed exports
+
+extern "C" void aiRebootAction(void* obj);
+extern "C" void aiRingPrepend(void* a, void* b);
+extern "C" void setChildF50G_(void* self, float v);
+// findObjectById(int) comes from kyoshin/cf/CfSoundMan.hpp.
+
 #include "kyoshin/cf/CArtsSet.hpp"
 #include "kyoshin/cf/object/CBattleState.hpp"
 
@@ -73,7 +81,7 @@ extern "C" void* __dt__801A36D0(cf::CVisionSlot* self, int deleting);
 // from CAIAction.hpp / CChainTimer.hpp (identical copies); this TU no longer
 // pre-includes them under a rename nor keeps a divergent (int id)
 // redeclaration -- id-passing call sites cast to (void*) at the call.
-#include "kyoshin/cf/CSuddenCommu.hpp"
+#include "kyoshin/cf/CSuddenCommuImports.hpp"
 #include "kyoshin/cf/object/CAIActionApi.hpp"
 // The former CtrlObjectParam_GetCharEntry / getBdatStringColumnValue / getArtsSlotRC /
 // getArtsParamRC2 renames are gone: CAIAction.hpp no longer redeclares
@@ -93,7 +101,6 @@ extern "C" void* __dt__801A36D0(cf::CVisionSlot* self, int deleting);
 // epilogue after this include is gone entirely.
 #include "kyoshin/cf/CBattleManager.hpp"
 #include "kyoshin/cf/chain/CChainImports.hpp"  // TU imports formerly reached via the fat CBattleManager/chain headers
-#include "kyoshin/cf/CSuddenCommuImports.hpp"  // TU imports formerly reached via the fat CBattleManager/chain headers
 #include "kyoshin/cf/CfSoundMan.hpp"
 // The explicit extern "C" declarations below stay: they are identical
 // duplicates of the chain-header forms (legal redeclaration) and act as
@@ -219,7 +226,7 @@ struct CVisionRefObj {
     u32 w_78;        // 0x78
 };
 // Kept inline (not moved to CVision.hpp): sibling TUs declare these.
-extern "C" bool isGlobalCamFlagSet__Fi(int mask);
+
 
 // Object passed to installVisionStateCallback / initVisionSlots-family (battle object).
 struct CVisionObj {
@@ -844,7 +851,7 @@ extern "C" void driveVisionRingFx(CVision* self) {
         return;
     }
     getInstance__Q22cf13CfGameManagerFv();
-    if (isGlobalCamFlagSet__Fi(0x40000) != 0) {
+    if (isGlobalCamFlagSet(0x40000) != 0) {
         return;
     }
     getInstance__Q22cf13CfGameManagerFv();
@@ -947,8 +954,8 @@ extern "C" void openVisionPairEngage(CVision* self) {
     } else {
         sub = &self->sub;
     }
-    CVisionFusion* p1 = (CVisionFusion*)MapFx_ResolveOwner((void*)findObjectById__Fi(sub->field_00));
-    CVisionFusion* p2 = (CVisionFusion*)MapFx_ResolveOwner((void*)findObjectById__Fi(sub->field_04));
+    CVisionFusion* p1 = (CVisionFusion*)MapFx_ResolveOwner((void*)findObjectById(sub->field_00));
+    CVisionFusion* p2 = (CVisionFusion*)MapFx_ResolveOwner((void*)findObjectById(sub->field_04));
     if (p1 == 0 || p2 == 0) {
         self->vt_20(1);
         return;
@@ -1055,8 +1062,8 @@ extern "C" void manageVisionPlayerCallbacks(CVision* self) {
         sub = &self->sub;
     }
     if (sub->field_824 & 0x40000) {
-        p1 = (CVisionFusion*)MapFx_ResolveOwner((void*)findObjectById__Fi(sub->field_00));
-        p2 = (CVisionFusion*)MapFx_ResolveOwner((void*)findObjectById__Fi(sub->field_04));
+        p1 = (CVisionFusion*)MapFx_ResolveOwner((void*)findObjectById(sub->field_00));
+        p2 = (CVisionFusion*)MapFx_ResolveOwner((void*)findObjectById(sub->field_04));
         if (p1 == 0 || p2 == 0) {
             self->vt_20(1);
             return;
@@ -1140,8 +1147,8 @@ extern "C" void openVisionForPairs(CVision* self) {
     } else {
         sub = &self->sub;
     }
-    p1 = (CVisionFusion*)MapFx_ResolveOwner((void*)findObjectById__Fi(sub->field_00));
-    p2 = (CVisionFusion*)MapFx_ResolveOwner((void*)findObjectById__Fi(sub->field_04));
+    p1 = (CVisionFusion*)MapFx_ResolveOwner((void*)findObjectById(sub->field_00));
+    p2 = (CVisionFusion*)MapFx_ResolveOwner((void*)findObjectById(sub->field_04));
     if (p1 == 0 || p2 == 0) {
         self->vt_20(1);
         return;
@@ -1286,8 +1293,8 @@ extern "C" void resumeVisionFromFader(CVision* self) {
         self->vt_20(1);
         return;
     }
-    CVisionFusion* p1 = (CVisionFusion*)MapFx_ResolveOwner((void*)findObjectById__Fi(sub->field_00));
-    CVisionFusion* p2 = (CVisionFusion*)MapFx_ResolveOwner((void*)findObjectById__Fi(sub->field_04));
+    CVisionFusion* p1 = (CVisionFusion*)MapFx_ResolveOwner((void*)findObjectById(sub->field_00));
+    CVisionFusion* p2 = (CVisionFusion*)MapFx_ResolveOwner((void*)findObjectById(sub->field_04));
     if (p1 == 0 || p2 == 0) {
         self->vt_20(1);
         return;
@@ -1390,7 +1397,7 @@ extern "C" void checkSecondFusionVision(CVision* self) {
     } else {
         sub = &self->sub;
     }
-    CVisionFusion* p2 = (CVisionFusion*)MapFx_ResolveOwner((void*)findObjectById__Fi(sub->field_04));
+    CVisionFusion* p2 = (CVisionFusion*)MapFx_ResolveOwner((void*)findObjectById(sub->field_04));
     if (p2->field_3F00 & 0x2) {
         bool cancel;
         if (p2 == 0 || p2->field_3F60 == 0) {
@@ -1551,7 +1558,7 @@ extern "C" void matchVisionModelCallback(CVision* self, CVisionBattleObj* obj, C
     } else {
         sub = &self->sub;
     }
-    CVisionBattleObj* fu = (CVisionBattleObj*)MapFx_ResolveOwner((void*)findObjectById__Fi(sub->field_00));
+    CVisionBattleObj* fu = (CVisionBattleObj*)MapFx_ResolveOwner((void*)findObjectById(sub->field_00));
     if (fu == 0) {
         self->vt_20(1);
         return;
@@ -1697,7 +1704,7 @@ extern "C" void gateVisionByFusionParam(CVision* self) {
     }
     // Retail dereferences the conditional sub pointer unconditionally
     // (field_00 != 0 guarantees it is valid in practice).
-    p = (CVisionFusion*)MapFx_ResolveOwner((void*)findObjectById__Fi(sub->field_00));
+    p = (CVisionFusion*)MapFx_ResolveOwner((void*)findObjectById(sub->field_00));
     cv = self;
     if (p == 0) {
         cv->vt_20(1);
@@ -1959,8 +1966,8 @@ extern "C" void runVisionResetWindows(CVision* self) {
 
 extern "C" void evalVisionTrigger(CVision* self) {
     CVisionSub* sub = (self->sub.field_00 == 0) ? 0 : &self->sub;
-    CVisionFusion* fr = (CVisionFusion*)MapFx_ResolveOwner((void*)findObjectById__Fi(sub->field_00));
-    CVisionFusion* fr2 = (CVisionFusion*)MapFx_ResolveOwner((void*)findObjectById__Fi(sub->field_04));
+    CVisionFusion* fr = (CVisionFusion*)MapFx_ResolveOwner((void*)findObjectById(sub->field_00));
+    CVisionFusion* fr2 = (CVisionFusion*)MapFx_ResolveOwner((void*)findObjectById(sub->field_04));
     // Retail materializes the equality test via mfcr/extrwi (value context).
     bool atBase = (lbl_eu_80667CD4 == self->field_2619C);
     if (atBase) {
@@ -2025,7 +2032,7 @@ extern "C" void driveSubVisionFx(CVision* self) {
         self->vt_20(1);
         return;
     }
-    CVisionBattleObj* fu = (CVisionBattleObj*)MapFx_ResolveOwner((void*)findObjectById__Fi(sub->field_00));
+    CVisionBattleObj* fu = (CVisionBattleObj*)MapFx_ResolveOwner((void*)findObjectById(sub->field_00));
     if (fu == 0) {
         self->vt_20(1);
         return;
@@ -2213,7 +2220,7 @@ extern "C" int tryEngageVisionCutscene(CVision* self, CVisionObjV* obj, CVisionO
         return 0;
     }
     getInstance__Q22cf13CfGameManagerFv();
-    if (isGlobalCamFlagSet__Fi(0x40000)) {
+    if (isGlobalCamFlagSet(0x40000)) {
         return 0;
     }
     getInstance__Q22cf13CfGameManagerFv();
@@ -2221,7 +2228,7 @@ extern "C" int tryEngageVisionCutscene(CVision* self, CVisionObjV* obj, CVisionO
         return 0;
     }
     getInstance__Q22cf13CfGameManagerFv();
-    if (isGlobalCamFlagSet__Fi(0x200) != 0) {
+    if (isGlobalCamFlagSet(0x200) != 0) {
         return 0;
     }
     if (CBattleManager::getInstance()->CheckUnk84Flag(0x200) != 0) {
@@ -2266,7 +2273,7 @@ extern "C" int tryEngageVisionCutscene(CVision* self, CVisionObjV* obj, CVisionO
 
     // Target fusion from `r5` (+4 id, +0x50 actor requirement).
     CVisionActor50* actor = targetObj->field_50;
-    CVisionFusionV* target = (CVisionFusionV*)MapFx_ResolveOwner((void*)findObjectById__Fi(targetObj->field_04));
+    CVisionFusionV* target = (CVisionFusionV*)MapFx_ResolveOwner((void*)findObjectById(targetObj->field_04));
     if (target == NULL || actor == NULL) {
         return 0;
     }
@@ -2604,8 +2611,8 @@ extern "C" void driveVisionFxUpdates(CVision* self) {
     } else {
         sub = &self->sub;
     }
-    CVisionBattleObj* p1 = (CVisionBattleObj*)MapFx_ResolveOwner((void*)findObjectById__Fi(sub->field_00));
-    CVisionBattleObj* p2 = (CVisionBattleObj*)MapFx_ResolveOwner((void*)findObjectById__Fi(sub->field_04));
+    CVisionBattleObj* p1 = (CVisionBattleObj*)MapFx_ResolveOwner((void*)findObjectById(sub->field_00));
+    CVisionBattleObj* p2 = (CVisionBattleObj*)MapFx_ResolveOwner((void*)findObjectById(sub->field_04));
     if (p1 == 0) {
         self->vt_20(1);
         return;
@@ -2710,8 +2717,8 @@ extern "C" void teardownVisionFx(CVision* self, void* releaseFx) {
     refreshBattleActors(CBattleManager::getInstance(), lbl_eu_80667CF0, 0x13);
     resetVisionSlots(0);
     if (sub != 0) {
-        CVisionFusion* p1 = (CVisionFusion*)MapFx_ResolveOwner((void*)findObjectById__Fi(sub->field_00));
-        CVisionFusion* p2 = (CVisionFusion*)MapFx_ResolveOwner((void*)findObjectById__Fi(sub->field_04));
+        CVisionFusion* p1 = (CVisionFusion*)MapFx_ResolveOwner((void*)findObjectById(sub->field_00));
+        CVisionFusion* p2 = (CVisionFusion*)MapFx_ResolveOwner((void*)findObjectById(sub->field_04));
         if (p1 != 0) {
             p1->field_3388 &= 0xFFFD;
             p1->field_04->v20(0x4000);
@@ -2830,8 +2837,8 @@ extern "C" void detachVisionEffect(CVision* self, u32 value) {
 // many element-array pushes have happened so far; each push appends a
 // {tag, scaled stage, 0} entry to the ring at unk261C4.w60.
 void routeVisionSlotFx(CVision* self, void* slotPtr, int mode, int voiceEnabled, int voiceArg) {
-    CVisionBattleObj* fu = (CVisionBattleObj*)MapFx_ResolveOwner((void*)findObjectById__Fi(((CVisionBtlSlot*)slotPtr)->w_00));
-    MapFx_ResolveOwner((void*)findObjectById__Fi(((CVisionBtlSlot*)slotPtr)->w_04));
+    CVisionBattleObj* fu = (CVisionBattleObj*)MapFx_ResolveOwner((void*)findObjectById(((CVisionBtlSlot*)slotPtr)->w_00));
+    MapFx_ResolveOwner((void*)findObjectById(((CVisionBtlSlot*)slotPtr)->w_04));
     if (fu == 0) {
         self->vt_20(1);
         return;
@@ -3048,7 +3055,7 @@ void releaseVisionSlot(void* a, int b) {
 extern "C" void manageVisionSlotFx(CVision* self, void* slot, void* dataArg) {
     if (slot != 0) {
         getInstance__Q22cf13CfGameManagerFv();
-        if (isGlobalCamFlagSet__Fi(0x4000000) != 0) {
+        if (isGlobalCamFlagSet(0x4000000) != 0) {
             return;
         }
         CVisionBtlSlot* bs = (CVisionBtlSlot*)cf::CBattleManager::getInstance()->CBattleMan_FetchVisionObj();
@@ -3065,7 +3072,7 @@ extern "C" void manageVisionSlotFx(CVision* self, void* slot, void* dataArg) {
         if (bs->w_00 != x && bs->w_04 != x) {
             return;
         }
-        CVisionBattleObj* fu = (CVisionBattleObj*)MapFx_ResolveOwner((void*)findObjectById__Fi(bs->w_00));
+        CVisionBattleObj* fu = (CVisionBattleObj*)MapFx_ResolveOwner((void*)findObjectById(bs->w_00));
         if (fu == 0) {
             return;
         }
@@ -3129,9 +3136,9 @@ extern "C" void manageVisionSlotFx(CVision* self, void* slot, void* dataArg) {
 #define VISION_VT30(subPtr) (*(u32*)((void* (*)(void*))(*(void***)(void*)(subPtr))[0x30 / 4])((void*)(subPtr)))
         // Retail reuses the incoming argument registers for the per-slot
         // working values (slot -> object, r28 -> effect kind).
-        slot = MapFx_ResolveOwner((void*)findObjectById__Fi(p->w_00));
+        slot = MapFx_ResolveOwner((void*)findObjectById(p->w_00));
         // Second id lookup result is discarded (presence check only).
-        MapFx_ResolveOwner((void*)findObjectById__Fi(p->w_04));
+        MapFx_ResolveOwner((void*)findObjectById(p->w_04));
         if (slot == 0) {
             self->vt_20(1);
             continue;

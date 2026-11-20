@@ -2,13 +2,13 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
-#include "kyoshin/CSysWin.hpp"
+#include "kyoshin/CPartyStateWin.hpp"
+
 #include "kyoshin/CTitleAHelp.hpp"
 #include <revolution/GX.h>
 #include "monolib/util/MemManager.hpp"
 #include "monolib/core/CTaskManager.hpp"
 #include "functions.hpp"
-#include "kyoshin/CPartyStateWinImports.hpp"
 #include "kyoshin/CModelDisp.hpp"
 #include "kyoshin/CPartyState.hpp"
 #include "kyoshin/CEquipChange.hpp"

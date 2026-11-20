@@ -250,9 +250,8 @@ extern "C" __declspec(noinline) void ModelDispDriveFadeIn(CModelDisp* self) {
 // controller vtable chain, (re)builds the display model + two animation
 // objects, applies per-slot colors, and rearms the slot timer (150 frames).
 extern "C" __declspec(noinline) void ModelDispUpdateSlots(CModelDisp* self) {
-    // Declaration order steers MWCC's callee-saved allocation (retail:
-    // nameBase pair above the names-array base).
-    char* nameBase = lbl_eu_80507CF4; // NUL-separated name strings at +0/+4/+8/+C
+    // The four slot names are adjacent NUL-terminated literals in retail
+    // .rodata, in BBB / FFF / AAA / core order.
     u32 names[3];
     // Post-increment loads fold the base materialization into the first
     // access (retail: lis + lwzu + +4/+8 displacements).
@@ -326,10 +325,10 @@ extern "C" __declspec(noinline) void ModelDispUpdateSlots(CModelDisp* self) {
                 }
             }
             h->field_0x04 = initMcaFile((u32)self->mInitParam, actor->field_3F30,
-                                          (char*)lbl_eu_80507CF4);
+                                          (char*)"BBB");
             h->field_0x08 = initMcaFile(
                 (u32)self->mInitParam,
-                reinterpret_cast<u32>(reinterpret_cast<cf::CfObjectModel*>(&actor->move[0])->CfObjectModel_getAnimState()), nameBase + 4);
+                reinterpret_cast<u32>(reinterpret_cast<cf::CfObjectModel*>(&actor->move[0])->CfObjectModel_getAnimState()), (char*)"FFF");
             reinterpret_cast<CActParamAnim*>(&h->actParam)->initAnimState();
             attachAnimObj(&h->actParam, (CScnItemModel*)h->field_0x00,
                           h->field_0x08,
@@ -344,27 +343,27 @@ extern "C" __declspec(noinline) void ModelDispUpdateSlots(CModelDisp* self) {
             f32 f2 = lbl_eu_806681EC;
             switch (i) {
             case 0:
-                f0 = lbl_eu_806681FC;
+                f0 = -0.7f;
                 break;
             case 1:
-                f0 = lbl_eu_80668200;
-                f2 = lbl_eu_80668204;
+                f0 = -2.0f;
+                f2 = -1.0f;
                 break;
             case 2:
-                f0 = lbl_eu_80668208;
-                f2 = lbl_eu_80668204;
+                f0 = 0.3f;
+                f2 = -1.0f;
                 break;
             }
             if (actor->field_3F28 == 6) {
                 switch (i) {
                 case 0:
-                    f1 = lbl_eu_8066820C;
+                    f1 = 0.25f;
                     break;
                 case 1:
-                    f1 = lbl_eu_80668210;
+                    f1 = 0.1f;
                     break;
                 case 2:
-                    f1 = lbl_eu_80668210;
+                    f1 = 0.1f;
                     break;
                 }
             }
@@ -403,7 +402,7 @@ extern "C" __declspec(noinline) void ModelDispUpdateSlots(CModelDisp* self) {
                 __ct__CMcaFile(
                     &mca, reinterpret_cast<cf::CfObjectModel*>(&actor->move[0])->CfObjectModel_getAnimFlags());
                 h->unk_55C = (CModelDispObj*)Scn_InitGlobalA((u32)self->mInitParam, mca.mDataAdj,
-                                           nameBase + 8);
+                                           (char*)"AAA");
                 for (u8 j = 0; j < 2; j++) {
                     CScnItemModel* mp = (CScnItemModel*)h->animModelPtrs[j];
                     if (mp != NULL && h->unk_55C != NULL) {
@@ -420,7 +419,7 @@ extern "C" __declspec(noinline) void ModelDispUpdateSlots(CModelDisp* self) {
             // Weapon-id-8 gate: announce via the actor's battle sub-object.
             if (actor->field_3F28 == 8 &&
                 getQueuedFileEventCount__Q22cf13CfGameManagerFv() >= 0x168) {
-                reinterpret_cast<CScnItemModel*>(actor->field_3F34)->vfunc28(reinterpret_cast<u32>(nameBase + 0xC), 0);
+                reinterpret_cast<CScnItemModel*>(actor->field_3F34)->vfunc28(reinterpret_cast<u32>("core"), 0);
             }
             h->timer = 150;
             ((CScnItemModel*)h->field_0x00)->vfunc48(self->field_2FDC);

@@ -5,7 +5,7 @@
 //         Remaining functions are NOT_STARTED stubs.
 
 #include <monolib/scn/CScnItemCamera.hpp>
-#include "monolib/src/scn/CScnItemPool.hpp"
+#include "monolib/scn/CScnItemPool.hpp"
 #include <monolib/device/CDeviceGX.hpp>
 #include <monolib/device/CDeviceVI.hpp>
 #include <monolib/util/FixStr.hpp>

@@ -239,11 +239,66 @@ class WeakDedupTest(unittest.TestCase):
                     sdata_relocs=[])
         self.assertEqual(self.view(obj, {}).excluded, [])
 
-    def test_string_only_an_excluded_symbol_references_is_stripped(self):
+    def test_no_retail_evidence_keeps_locals_referenced_only_by_weak_copy(self):
         obj = unit_object(self.d / "u.o")
         v = self.view(obj, {"__RTTI__4Base": 0x80600004})
+        # The weak locator's own bytes go; the name string stays until retail
+        # evidence says mwld did not keep it.
         self.assertEqual(v.removed.get(".sdata"), 4)
-        self.assertEqual(v.removed.get(".rodata"), 8)  # "Base" + its padding
+        self.assertNotIn(".rodata", v.removed)
+
+    def test_local_rtti_name_stays_when_retail_carries_its_bytes(self):
+        obj = unit_object(self.d / "u.o")
+        retail = build(self.d / "r.o",
+                       text=b"\x60\0\0\0" * 4 + b"\x4e\x80\x00\x20" * 4,
+                       rodata=b"Unit\0\0\0\0Base\0\0\0\0", sdata=b"\0" * 4,
+                       symbols=[("f", ".text", 0, 0x10, GLOBAL, FUNC),
+                                ("__dt__4BaseFv", ".text", 0x10, 0x10, WEAK, FUNC),
+                                ("@1", ".rodata", 0, 5, LOCAL, OBJECT),
+                                ("@2", ".rodata", 8, 5, LOCAL, OBJECT),
+                                ("__RTTI__4Unit", ".sdata", 0, 4, GLOBAL, OBJECT)],
+                       sdata_relocs=[(0, "@1")])
+        v = linked_view_for(obj, RANGES, {**self.OWN, "__RTTI__4Base": 0x80600004},
+                            "this/Unit.cpp", retail_sections=W._retail_sections(retail))
+        self.assertEqual(v.removed.get(".sdata"), 4)
+        self.assertNotIn(".rodata", v.removed)
+        self.assertTrue(check_data_sections(retail, v.path).ok)
+
+    def test_local_data_dropped_only_where_retail_lacks_its_bytes(self):
+        # Two deduplicated RTTIs name two adjacent locals; retail kept the
+        # first name and the pool after the second one, but not the second
+        # name.  Only the second local may be cascaded away.
+        obj = build(self.d / "u.o", text=b"\x60\0\0\0" * 4,
+                    rodata=b"First\0\0\0Second\0\0POOL", sdata=b"\0" * 12,
+                    symbols=[("f", ".text", 0, 0x10, GLOBAL, FUNC),
+                             ("keep", ".sdata", 0, 4, GLOBAL, OBJECT),
+                             ("@1", ".rodata", 0, 8, LOCAL, OBJECT),
+                             ("@2", ".rodata", 8, 8, LOCAL, OBJECT),
+                             ("@pool", ".rodata", 0x10, 4, LOCAL, OBJECT),
+                             ("__RTTI__4First", ".sdata", 4, 4, WEAK, OBJECT),
+                             ("__RTTI__4Second", ".sdata", 8, 4, WEAK, OBJECT)],
+                    sdata_relocs=[(4, "@1"), (8, "@2")])
+        retail = build(self.d / "r.o", text=b"\x60\0\0\0" * 4,
+                       rodata=b"First\0\0\0POOL", sdata=b"\0" * 4,
+                       symbols=[("f", ".text", 0, 0x10, GLOBAL, FUNC),
+                                ("keep", ".sdata", 0, 4, GLOBAL, OBJECT),
+                                ("@1", ".rodata", 0, 8, LOCAL, OBJECT),
+                                ("@pool", ".rodata", 8, 4, LOCAL, OBJECT)],
+                       sdata_relocs=[])
+        v = linked_view_for(obj, RANGES,
+                            {**self.OWN,
+                             "__RTTI__4First": 0x80600000,
+                             "__RTTI__4Second": 0x80600004},
+                            "this/Unit.cpp", retail_sections=W._retail_sections(retail))
+        self.assertEqual(v.removed.get(".sdata"), 8)
+        self.assertEqual(v.removed.get(".rodata"), 8)
+        self.assertFalse(any("@1" in n for n in v.excluded))
+        self.assertTrue(any("@2" in n and "retail lacks those bytes at +0x8" in n
+                            for n in v.excluded))
+        self.assertTrue(check_data_sections(retail, v.path).ok)
+
+    def test_string_only_an_excluded_symbol_references_is_stripped(self):
+        obj = unit_object(self.d / "u.o")
         # This unit's own string (referenced by a kept global) stays.
         retail = build(self.d / "r.o", text=b"\x60\0\0\0" * 4 + b"\x4e\x80\x00\x20" * 4,
                        rodata=b"Unit\0\0\0\0", sdata=b"\0" * 4,
@@ -252,6 +307,10 @@ class WeakDedupTest(unittest.TestCase):
                                 ("lbl_1", ".rodata", 0, 5, GLOBAL, OBJECT),
                                 ("__RTTI__4Unit", ".sdata", 0, 4, GLOBAL, OBJECT)],
                        sdata_relocs=[(0, "lbl_1")])
+        v = linked_view_for(obj, RANGES, {**self.OWN, "__RTTI__4Base": 0x80600004},
+                            "this/Unit.cpp", retail_sections=W._retail_sections(retail))
+        self.assertEqual(v.removed.get(".sdata"), 4)
+        self.assertEqual(v.removed.get(".rodata"), 8)  # "Base" + its padding
         self.assertFalse(check_data_sections(retail, obj).ok)
         self.assertTrue(check_data_sections(retail, v.path).ok)
 

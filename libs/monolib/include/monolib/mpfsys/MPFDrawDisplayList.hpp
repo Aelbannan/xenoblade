@@ -2,10 +2,12 @@
 
 #include <types.h>
 
+#include "monolib/mpfsys/MPFDraw.hpp"
+
 namespace mpfsys {
 
 // Unofficial name
-class MPFDrawDisplayList {
+class MPFDrawDisplayList : public MPFDraw {
 public:
     static MPFDrawDisplayList* getInstance();
 
@@ -29,8 +31,9 @@ public:
     void setColorDrawNode();
     void func_804795BC();
     void drawColoredList();
-    void destroy();
-    void deallocate();
+
+    virtual void deallocate();
+    virtual void destroy();
 };
 
 } // namespace mpfsys

@@ -169,7 +169,7 @@ struct CfPlayerIdView {
 // Cross-TU callees (resolved via the retail symbol map).
 class UnkClass_805764CC;
 extern "C" void removeManagedObject(UnkClass_805764CC* self, void* target);
-extern "C" u32 CtrlRemote_TouchBitByArg(u32 resourceId);
+#include "kyoshin/cf/CtrlRemoteApi.hpp"
 
 // Small-data globals accessed by CfGimmick-region helpers (@sda21 loads/stores).
 extern "C" u32 gGimmickPartyId;

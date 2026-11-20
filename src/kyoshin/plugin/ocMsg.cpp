@@ -225,71 +225,59 @@ s32 OcLogRingPopThree(s32 ret, OcMsgRingHdr* list) {
 // Plugin registration
 // ---------------------------------------------------------------------------
 
-void ocMsgRegist() {
-    vmOCRegist(lbl_eu_80524CE8);
-    vmOCRegist(lbl_eu_80524D80);
-}
+// ----- Retail data tables (all defined by this TU) -----
+// name-guess: VM "OcMsg" property table registered by ocMsgRegist; retail
+// .data object 0x80524C70 (two entries plus a null terminator).
+static OCProperty sOcMsgProperties[3] = {
+    { "atr", (OCGetSetFunc)OcMsgGetValue0, (OCGetSetFunc)OcMsgSetValue0, 0 },
+    { "no", (OCGetSetFunc)OcMsgGetValue1, (OCGetSetFunc)OcMsgSetValue1, 0 },
+    { 0, 0, 0, 0 },
+};
 
-// ----- Retail data sections (all defined by this TU) -----
-// .sdata2 entry names (each sized to its retail slot for a deterministic
-// 0x50), .data OC property/selector tables + the two OCData roots (80524CE8
-// "msgYuka", 80524D80 "msgNpc", the frontier labels). Length words are 0
-// in retail; null entries terminate each table. .data pieces after the first
-// land on 8-byte boundaries (retail layout; MWCC places them so). Casts
-// bridge the VM table types and the concrete handlers; only addresses emit.
-__declspec(section ".sdata2") __attribute__((used))
-char lbl_eu_80665BD0[] = "atr";
-__declspec(section ".sdata2") __attribute__((used))
-char lbl_eu_80665BD4[] = "no";
-__declspec(section ".sdata2") __attribute__((used))
-char lbl_eu_80665BD8[] = "send";
-__declspec(section ".sdata2") __attribute__((used))
-char lbl_eu_80665BE0[] = "receive";
-__declspec(section ".sdata2") __attribute__((used))
-char lbl_eu_80665BE8[] = "init";
-__declspec(section ".sdata2") __attribute__((used))
-char lbl_eu_80665BF0[] = "isFull";
-__declspec(section ".sdata2") __attribute__((used))
-char lbl_eu_80665BF8[] = "isEmpty";
-__declspec(section ".sdata2") __attribute__((used))
-char lbl_eu_80665C00[] = "msgYuka";
-__declspec(section ".sdata2") __attribute__((used))
-char lbl_eu_80665C08[] = "id";
-__declspec(section ".sdata2") __attribute__((used))
-char lbl_eu_80665C0C[] = "talk";
-__declspec(section ".sdata2") __attribute__((used))
-char lbl_eu_80665C14[] = "dir";
-__declspec(section ".sdata2") __attribute__((used)) char lbl_eu_80665C18[8] = "msgNpc";
-__declspec(section ".data") __attribute__((used)) OCProperty lbl_eu_80524C70[3] = {
-    { lbl_eu_80665BD0, (OCGetSetFunc)OcMsgGetValue0, (OCGetSetFunc)OcMsgSetValue0, 0 },
-    { lbl_eu_80665BD4, (OCGetSetFunc)OcMsgGetValue1, (OCGetSetFunc)OcMsgSetValue1, 0 },
-    { 0, 0, 0, 0 },
-};
-__declspec(section ".data") __attribute__((used)) OCSelector lbl_eu_80524CA0[6] = {
-    { lbl_eu_80665BD8, (OCSelectorFunc)OcMsgRingPushTwo, 0 },
-    { lbl_eu_80665BE0, (OCSelectorFunc)OcMsgRingPopTwo, 0 },
-    { lbl_eu_80665BE8, (OCSelectorFunc)OcMsgRingReset, 0 },
-    { lbl_eu_80665BF0, (OCSelectorFunc)OcMsgRingProbeOverflow, 0 },
-    { lbl_eu_80665BF8, (OCSelectorFunc)OcMsgRingProbeIsPow2, 0 },
+// name-guess: VM "OcMsg" selector table registered by ocMsgRegist; retail
+// .data object 0x80524CA0 (five entries plus a null terminator).
+static OCSelector sOcMsgSelectors[6] = {
+    { "send", (OCSelectorFunc)OcMsgRingPushTwo, 0 },
+    { "receive", (OCSelectorFunc)OcMsgRingPopTwo, 0 },
+    { "init", (OCSelectorFunc)OcMsgRingReset, 0 },
+    { "isFull", (OCSelectorFunc)OcMsgRingProbeOverflow, 0 },
+    { "isEmpty", (OCSelectorFunc)OcMsgRingProbeIsPow2, 0 },
     { 0, 0, 0 },
 };
-__declspec(section ".data") __attribute__((used)) OCData lbl_eu_80524CE8[1] = {
-    { lbl_eu_80665C00, (OCCtorFunc)OcMsgMakeListValue, lbl_eu_80524C70, lbl_eu_80524CA0 },
+
+// name-guess: root OCData for the script-facing "msgYuka" list; retail
+// .data object 0x80524CE8.
+static OCData sOcMsgData[1] = {
+    { "msgYuka", (OCCtorFunc)OcMsgMakeListValue, sOcMsgProperties, sOcMsgSelectors },
 };
-__declspec(section ".data") __attribute__((used)) OCProperty lbl_eu_80524CF8[4] = {
-    { lbl_eu_80665C08, (OCGetSetFunc)OcLogGetValue0, (OCGetSetFunc)OcLogSetValue0, 0 },
-    { lbl_eu_80665C0C, (OCGetSetFunc)OcLogGetValue1, (OCGetSetFunc)OcLogSetValue1, 0 },
-    { lbl_eu_80665C14, (OCGetSetFunc)OcLogGetValue2, (OCGetSetFunc)OcLogSetValue2, 0 },
+
+// name-guess: VM "OcLog" property table registered by ocMsgRegist; retail
+// .data object 0x80524CF8 (three entries plus a null terminator).
+static OCProperty sOcLogProperties[4] = {
+    { "id", (OCGetSetFunc)OcLogGetValue0, (OCGetSetFunc)OcLogSetValue0, 0 },
+    { "talk", (OCGetSetFunc)OcLogGetValue1, (OCGetSetFunc)OcLogSetValue1, 0 },
+    { "dir", (OCGetSetFunc)OcLogGetValue2, (OCGetSetFunc)OcLogSetValue2, 0 },
     { 0, 0, 0, 0 },
 };
-__declspec(section ".data") __attribute__((used)) OCSelector lbl_eu_80524D38[6] = {
-    { lbl_eu_80665BD8, (OCSelectorFunc)OcLogRingPushThree, 0 },
-    { lbl_eu_80665BE0, (OCSelectorFunc)OcLogRingPopThree, 0 },
-    { lbl_eu_80665BE8, (OCSelectorFunc)OcMsgRingReset, 0 },
-    { lbl_eu_80665BF0, (OCSelectorFunc)OcMsgRingProbeOverflow, 0 },
-    { lbl_eu_80665BF8, (OCSelectorFunc)OcMsgRingProbeIsPow2, 0 },
+
+// name-guess: VM "OcLog" selector table registered by ocMsgRegist; retail
+// .data object 0x80524D38 (five entries plus a null terminator).
+static OCSelector sOcLogSelectors[6] = {
+    { "send", (OCSelectorFunc)OcLogRingPushThree, 0 },
+    { "receive", (OCSelectorFunc)OcLogRingPopThree, 0 },
+    { "init", (OCSelectorFunc)OcMsgRingReset, 0 },
+    { "isFull", (OCSelectorFunc)OcMsgRingProbeOverflow, 0 },
+    { "isEmpty", (OCSelectorFunc)OcMsgRingProbeIsPow2, 0 },
     { 0, 0, 0 },
 };
-__declspec(section ".data") __attribute__((used)) OCData lbl_eu_80524D80[1] = {
-    { lbl_eu_80665C18, (OCCtorFunc)OcLogMakeListValue, lbl_eu_80524CF8, lbl_eu_80524D38 },
+
+// name-guess: root OCData for the script-facing "msgNpc" list; retail
+// .data object 0x80524D80.
+static OCData sOcLogData[1] = {
+    { "msgNpc", (OCCtorFunc)OcLogMakeListValue, sOcLogProperties, sOcLogSelectors },
 };
+
+void ocMsgRegist() {
+    vmOCRegist(sOcMsgData);
+    vmOCRegist(sOcLogData);
+}

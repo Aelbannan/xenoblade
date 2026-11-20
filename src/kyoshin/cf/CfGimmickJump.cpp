@@ -1,5 +1,6 @@
 extern const char lbl_eu_80526324[];
 extern const char lbl_eu_80526300[];
+#include "kyoshin/cf/CfBdat.hpp"
 #include "kyoshin/cf/CfGimmickJump.hpp"
 extern const char lbl_eu_80508728[];
 #include "monolib/scn/CScn.hpp"
@@ -40,17 +41,6 @@ const Sdata2_Jump sdata2_Jump = {
     4503601774854144.0, 4503599627370496.0,
     5.0f, 0.3f, 0.1f, -0.1f, 150.0f, 0.0f
 };
-#define lbl_eu_80668400 sdata2_Jump.f0
-#define lbl_eu_80668404 sdata2_Jump.f1
-#define lbl_eu_80668408 sdata2_Jump.f2
-#define lbl_eu_8066840C sdata2_Jump.f3
-#define lbl_eu_80668410 sdata2_Jump.d0
-#define lbl_eu_80668418 sdata2_Jump.d1
-#define lbl_eu_80668420 sdata2_Jump.f4
-#define lbl_eu_80668424 sdata2_Jump.f5
-#define lbl_eu_80668428 sdata2_Jump.f6
-#define lbl_eu_8066842C sdata2_Jump.f7
-#define lbl_eu_80668430 sdata2_Jump.f8
 
 
 
@@ -65,7 +55,6 @@ extern "C" {
 extern char lbl_eu_80535A18[];
 extern char lbl_eu_8050873C[];
 extern char gGimmickBdatColumns[];
-extern char lbl_eu_80664138[];
 
 extern void __ct__cf_CfGimmick(void* self);
 extern void __dt__Q22cf9CfGimmickFv(void* self, int deleting);
@@ -191,7 +180,7 @@ extern "C" CfGimmickJump* __ct__cf_CfGimmickJump(CfGimmickJump* self,
     self->gimmickType = 5;
 
     void* bdat = Bdat_GetTable_AA34();
-    void* table = lbl_eu_80664138;
+    void* table = ::cf::CfBdat::spCurJumpGmFileData;
     self->bdatRow = row;
 
     CfGimmick_LoadBdatAreaPos(self, &self->position, bdat, &table);
@@ -290,7 +279,7 @@ extern "C" void CfGimmickJump_MoveRiders(CfGimmickJump* self) {
 }
 
 extern "C" void CfGimmickJump_TryFire(CfGimmickJump* self) {
-    self->timer = lbl_eu_80668404;
+    self->timer = 0.0f;
     if ((self->flags66 & 1) != 0) {
         if ((self->flags & 0x800) != 0) {
             if (CfGimmick_IsMessageSystemBusy(self) != 0) {

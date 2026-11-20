@@ -7,7 +7,6 @@
 #include "kyoshin/CTagProcessor.hpp"
 
 #include <wchar.h>  // wcstol (MSL, C-linkage)
-namespace nw4r { namespace db { void Panic(const char* file, int line, const char* fmt, ...); } }
 
 /* Tag-code handler hierarchy.
  *
@@ -496,9 +495,9 @@ u16* TagProcPreprocessMessage(CTagProcessorBase* self, const void* src, f32 a, f
 // solved. 3. Jump table: ours anchors a local object 32B below retail's
 // jumptable_eu_8052D5A4 despite equal size; likely follows from .data layout, may
 // resolve once (1) is fixed.
-void TagProcMeasureText(f32* out, CTagMsgView* msg, wchar_t* buf) {
+void TagProcMeasureText(f32* out, nw4r::lyt::TextBox* msg, wchar_t* buf) {
     u32 vals[16];
-    nw4r::lyt::Font* font = ((nw4r::lyt::TextBox*)msg)->GetFont();
+    const nw4r::ut::Font* font = msg->GetFont();
     f32 lineH = 1.0f;
     f32 width = 0.0f;
     f32 lineStep = lineH;
@@ -537,8 +536,8 @@ void TagProcMeasureText(f32* out, CTagMsgView* msg, wchar_t* buf) {
             i += 2 + skip;
             const u16* p = (const u16*)buf + i;
             for (int j = 0; j < cnt; j++) {
-                f32 sp = msg->field_F4;
-                width += sp + (f32)font->v48(p[j]);
+                f32 sp = msg->GetCharSpace();
+                width += sp + (f32)font->GetCharWidth(p[j]);
             }
             i += cnt - 1;
             break;
@@ -577,8 +576,8 @@ void TagProcMeasureText(f32* out, CTagMsgView* msg, wchar_t* buf) {
                 int n = vals[row];
                 const u16* q = (const u16*)buf + i;
                 for (int k = 0; k < n; k++) {
-                    f32 sp = msg->field_F4;
-                    width += sp + (f32)font->v48(q[k]);
+                    f32 sp = msg->GetCharSpace();
+                    width += sp + (f32)font->GetCharWidth(q[k]);
                 }
                 if (row < cnt - 1) {
                     lineH += lineStep;
@@ -602,10 +601,10 @@ void TagProcMeasureText(f32* out, CTagMsgView* msg, wchar_t* buf) {
             break;
         case 0xD:
             // Full-width marker: width += speed * (glyph(0x2500) + spacing).
-            width += speed * (msg->field_F4 + (f32)font->v48(0x2500));
+            width += speed * (msg->GetCharSpace() + (f32)font->GetCharWidth(0x2500));
             break;
         default:
-            width += msg->field_F4 + (f32)font->v48(ch);
+            width += msg->GetCharSpace() + (f32)font->GetCharWidth(ch);
             break;
         }
         i++;
@@ -987,15 +986,15 @@ int TagProcStepMessage(nw4r::lyt::AnimTransform* tag,
                     namebuf[charIdx] = 0;
                     pane->v78();
                     pane->v74(0x40);
-                    TagProcRenderPage(msg, (TalkPaneView*)pane, (TalkPaneView*)b,
-                                   (TalkPaneView*)c, (const wchar_t*)namebuf);
+                    TagProcRenderPage(msg, (nw4r::lyt::TextBox*)pane, (nw4r::lyt::TextBox*)b,
+                                   (nw4r::lyt::TextBox*)c, (const wchar_t*)namebuf);
                     u8* ctxBase = (u8*)pane->field_0C + 0x10;
                     // walk 1: find the context node matching the current text
                     ctxA = (u32*)getContextStr(ctxBase);
                     for (;;) {
                         u8* node = (u8*)TagCtxGetNodeHeader(&ctxA);
-                        if (strcmp((char*)(node + 0xbc),
-                                   (char*)pane->field_BC) == 0)
+                        if (strcmp(((nw4r::lyt::Pane*)node)->GetName(),
+                                   ((nw4r::lyt::Pane*)pane)->GetName()) == 0)
                             break;
                         ctxA = (u32*)*ctxA;
                         pair1[0] = (u32)getContextStrPtr(ctxBase);
@@ -1020,8 +1019,8 @@ int TagProcStepMessage(nw4r::lyt::AnimTransform* tag,
                         np->v78();
                         np->v74(0x20);
                         np->v7C((const u16*)&rows[paneIdx * 0x20], 0);
-                        cW2a.v = 0x5a5a5aff;
-                        cW2b.v = 0x5a5a5aff;
+                        cW2a = nw4r::ut::Color(0x5a5a5aff);
+                        cW2b = nw4r::ut::Color(0x5a5a5aff);
                         np->field_DC = cW2a;
                         np->field_E0 = cW2b;
                         paneIdx++;
@@ -1037,8 +1036,8 @@ int TagProcStepMessage(nw4r::lyt::AnimTransform* tag,
                         ctxB = (u32*)getContextStr(ctxBase);
                         for (;;) {
                             u8* node = (u8*)TagCtxGetNodeHeader(&ctxB);
-                            if (strcmp((char*)(node + 0xbc),
-                                       (char*)pane->field_BC) == 0)
+                            if (strcmp(((nw4r::lyt::Pane*)node)->GetName(),
+                                       ((nw4r::lyt::Pane*)pane)->GetName()) == 0)
                                 break;
                             ctxB = (u32*)*ctxB;
                             pair3[0] = (u32)getContextStrPtr(ctxBase);
@@ -1061,13 +1060,13 @@ int TagProcStepMessage(nw4r::lyt::AnimTransform* tag,
                                                  0xbc),
                                 1);
                             if (paneIdx == msg->field_834) {
-                                cW4a1.v = 0x006400ff;
-                                cW4a2.v = 0x006400ff;
+                                cW4a1 = nw4r::ut::Color(0x006400ff);
+                                cW4a2 = nw4r::ut::Color(0x006400ff);
                                 np->field_DC = cW4a1;
                                 np->field_E0 = cW4a2;
                             } else {
-                                cW4b1.v = 0x5a5a5aff;
-                                cW4b2.v = 0x5a5a5aff;
+                                cW4b1 = nw4r::ut::Color(0x5a5a5aff);
+                                cW4b2 = nw4r::ut::Color(0x5a5a5aff);
                                 np->field_DC = cW4b1;
                                 np->field_E0 = cW4b2;
                             }
@@ -1107,8 +1106,8 @@ int TagProcStepMessage(nw4r::lyt::AnimTransform* tag,
                             ctxD = (u32*)getContextStr(ctxBase2);
                             for (;;) {
                                 u8* node = (u8*)TagCtxGetNodeHeader(&ctxD);
-                                if (strcmp((char*)(node + 0xbc),
-                                           (char*)pane->field_BC) == 0)
+                                if (strcmp(((nw4r::lyt::Pane*)node)->GetName(),
+                                           ((nw4r::lyt::Pane*)pane)->GetName()) == 0)
                                     break;
                                 ctxD = (u32*)*ctxD;
                                 pair5p[0] = (u32)getContextStrPtr(ctxBase2);
@@ -1131,13 +1130,13 @@ int TagProcStepMessage(nw4r::lyt::AnimTransform* tag,
                                                      0xbc),
                                     1);
                                 if (paneIdx2 == msg->field_834) {
-                                    cW6pa1.v = 0x006400ff;
-                                    cW6pa2.v = 0x006400ff;
+                                    cW6pa1 = nw4r::ut::Color(0x006400ff);
+                                    cW6pa2 = nw4r::ut::Color(0x006400ff);
                                     np->field_DC = cW6pa1;
                                     np->field_E0 = cW6pa2;
                                 } else {
-                                    cW6pb1.v = 0x5a5a5aff;
-                                    cW6pb2.v = 0x5a5a5aff;
+                                    cW6pb1 = nw4r::ut::Color(0x5a5a5aff);
+                                    cW6pb2 = nw4r::ut::Color(0x5a5a5aff);
                                     np->field_DC = cW6pb1;
                                     np->field_E0 = cW6pb2;
                                 }
@@ -1153,8 +1152,8 @@ int TagProcStepMessage(nw4r::lyt::AnimTransform* tag,
                         ctxC = (u32*)getContextStr(ctxBase3);
                         for (;;) {
                             u8* node = (u8*)TagCtxGetNodeHeader(&ctxC);
-                            if (strcmp((char*)(node + 0xbc),
-                                       (char*)pane->field_BC) == 0)
+                            if (strcmp(((nw4r::lyt::Pane*)node)->GetName(),
+                                       ((nw4r::lyt::Pane*)pane)->GetName()) == 0)
                                 break;
                             ctxC = (u32*)*ctxC;
                             pair5[0] = (u32)getContextStrPtr(ctxBase3);
@@ -1178,8 +1177,8 @@ int TagProcStepMessage(nw4r::lyt::AnimTransform* tag,
                                 1);
                             np->v78();
                             np->v74(0x20);
-                            cW6a.v = 0x483a21ff;
-                            cW6b.v = 0x483a21ff;
+                            cW6a = nw4r::ut::Color(0x483a21ff);
+                            cW6b = nw4r::ut::Color(0x483a21ff);
                             np->field_DC = cW6a;
                             np->field_E0 = cW6b;
                             paneIdx3++;
@@ -1213,8 +1212,8 @@ int TagProcStepMessage(nw4r::lyt::AnimTransform* tag,
                     ctxE = (u32*)getContextStr(ctxBase4);
                     for (;;) {
                         u8* node = (u8*)TagCtxGetNodeHeader(&ctxE);
-                        if (strcmp((char*)(node + 0xbc),
-                                   (char*)pane->field_BC) == 0)
+                        if (strcmp(((nw4r::lyt::Pane*)node)->GetName(),
+                                   ((nw4r::lyt::Pane*)pane)->GetName()) == 0)
                             break;
                         ctxE = (u32*)*ctxE;
                         pair7[0] = (u32)getContextStrPtr(ctxBase4);
@@ -1236,13 +1235,13 @@ int TagProcStepMessage(nw4r::lyt::AnimTransform* tag,
                             (const wchar_t*)((u8*)TagCtxGetNodeHeader(&ctxE) + 0xbc),
                             1);
                         if (paneIdx4 == msg->field_834) {
-                            cW8a1.v = 0x006400ff;
-                            cW8a2.v = 0x006400ff;
+                            cW8a1 = nw4r::ut::Color(0x006400ff);
+                            cW8a2 = nw4r::ut::Color(0x006400ff);
                             np->field_DC = cW8a1;
                             np->field_E0 = cW8a2;
                         } else {
-                            cW8b1.v = 0x5a5a5aff;
-                            cW8b2.v = 0x5a5a5aff;
+                            cW8b1 = nw4r::ut::Color(0x5a5a5aff);
+                            cW8b2 = nw4r::ut::Color(0x5a5a5aff);
                             np->field_DC = cW8b1;
                             np->field_E0 = cW8b2;
                         }
@@ -1261,8 +1260,8 @@ int TagProcStepMessage(nw4r::lyt::AnimTransform* tag,
                     ctxF = (u32*)getContextStr(ctxBase5);
                     for (;;) {
                         u8* node = (u8*)TagCtxGetNodeHeader(&ctxF);
-                        if (strcmp((char*)(node + 0xbc),
-                                   (char*)pane->field_BC) == 0)
+                        if (strcmp(((nw4r::lyt::Pane*)node)->GetName(),
+                                   ((nw4r::lyt::Pane*)pane)->GetName()) == 0)
                             break;
                         ctxF = (u32*)*ctxF;
                         pair9[0] = (u32)getContextStrPtr(ctxBase5);
@@ -1284,13 +1283,13 @@ int TagProcStepMessage(nw4r::lyt::AnimTransform* tag,
                             (const wchar_t*)((u8*)TagCtxGetNodeHeader(&ctxF) + 0xbc),
                             1);
                         if (paneIdx5 == msg->field_834) {
-                            cW10a1.v = 0x006400ff;
-                            cW10a2.v = 0x006400ff;
+                    cW10a1 = nw4r::ut::Color(0x006400ff);
+                    cW10a2 = nw4r::ut::Color(0x006400ff);
                             np->field_DC = cW10a1;
                             np->field_E0 = cW10a2;
                         } else {
-                            cW10b1.v = 0x5a5a5aff;
-                            cW10b2.v = 0x5a5a5aff;
+                    cW10b1 = nw4r::ut::Color(0x5a5a5aff);
+                    cW10b2 = nw4r::ut::Color(0x5a5a5aff);
                             np->field_DC = cW10b1;
                             np->field_E0 = cW10b2;
                         }
@@ -1375,16 +1374,7 @@ extern "C" void copyVEC2(float *dst, const float *src) {
 // (each store emits a bl to __as__Q34nw4r2ut5ColorFRCQ34nw4r2ut5Color and
 // the RHS color is materialized on the stack) - -ipa would otherwise fold
 // the 4-byte copy into the call sites and drop the color temps.
-nw4r::ut::Color& nw4r::ut::Color::operator=(
-    const nw4r::ut::Color& rhs) {
-    comp.r = rhs.comp.r;
-    comp.g = rhs.comp.g;
-    comp.b = rhs.comp.b;
-    comp.a = rhs.comp.a;
-    return *this;
-}
 
-// (each store emits a bl to __as__Q34nw4r2ut5ColorFRCQ34nw4r2ut5Color and
 // the RHS color is materialized on the stack) - -ipa would otherwise fold
 // the 4-byte copy into the call sites and drop the color temps.
 
@@ -1468,8 +1458,8 @@ extern "C" void copyVEC3(float* dst, const float* src) {
 // (`pos2[0] < lbl`, current form, -1 insn) or two extra insns
 // (`!(x >= lbl)` / flipped-operand forms). Fix that one cror shape and the
 // whole tail should realign byte-for-byte.
-void TagProcRenderPage(CTagProcMsg* msg, TalkPaneView* a, TalkPaneView* b,
-                   TalkPaneView* c, const wchar_t* text) {
+void TagProcRenderPage(CTagProcMsg* msg, nw4r::lyt::TextBox* a, nw4r::lyt::TextBox* b,
+                   nw4r::lyt::TextBox* c, const wchar_t* text) {
     wchar_t buf[0x400];   // page scratch (+0x190)
     u32 counts[0x10];     // ruby per-entry char counts (+0x50)
     wchar_t str[0x80];    // name string scratch (+0x90)
@@ -1534,11 +1524,11 @@ void TagProcRenderPage(CTagProcMsg* msg, TalkPaneView* a, TalkPaneView* b,
         wcscpy(buf, text);
     }
 
-    a->v7C((const u16*)buf, 0);
-    a->field_F0 = 2.0f;
+    a->SetString((const wchar_t*)buf, 0);
+    a->SetLineSpace(2.0f);
 
     f32 meas[2];  // +0x30 measured {x, y} from the layout step
-    TagProcMeasureText(meas, (CTagMsgView*)a, buf);
+    TagProcMeasureText(meas, (nw4r::lyt::TextBox*)a, buf);
     meas[1] = 16.0f * meas[1];
     f32 pos2[2];  // +0x28 clamped cursor position
     pos2[0] = meas[0];
@@ -1548,7 +1538,7 @@ void TagProcRenderPage(CTagProcMsg* msg, TalkPaneView* a, TalkPaneView* b,
     dim[1] = 0.0f;
     if (c != NULL) {
         memset(str, 0, sizeof(str));
-        wcscpy(str, c->field_D8);
+        wcscpy(str, c->GetStringBuffer());
         f32 size[2];  // +0x10 measured name width/height
         TagMeasureTextWidth(size, msg, (nw4r::lyt::TextBox*)c, str);
         dim[0] = size[0];
@@ -1563,39 +1553,45 @@ void TagProcRenderPage(CTagProcMsg* msg, TalkPaneView* a, TalkPaneView* b,
     } else if (pos2[0] < 432.0f) {
         pos2[0] = 440.0f;
     }
-    copyVEC2(b->field_4C, pos2);
+    b->SetSize(*(const nw4r::lyt::Size*)pos2);
 
-    TagVec3 t = b->vec_2C;
-    t.v[1] -= 6.0f;
-    copyVEC3(&a->vec_2C.v[0], &t.v[0]);
-    copyVEC2(a->field_4C, meas);
-    a->v78();
-    a->v74(0x400);
+    nw4r::math::VEC3 t = b->GetTranslate();
+    t.y -= 6.0f;
+    a->SetTranslate(t);
+    a->SetSize(*(const nw4r::lyt::Size*)meas);
+    a->FreeStringBuffer();
+    a->AllocStringBuffer(0x400);
 
     if (c != NULL) {
         f32 w[2];                  // +0x18 corner xy scratch
-        TagVec3 s = a->vec_2C;     // dead in retail too; kept across the
-                                   // opaque helper calls below
-        TagCopyVec2f(w, a->field_4C);
-        copyVEC3(&s.v[0], b->vec_2C.v);
-        copyVEC2(w, b->field_4C);
-        copyVEC3(c->vec_2C.v, &s.v[0]);
-        copyVEC3(&s.v[0], c->vec_2C.v);
-        copyVEC2(w, c->field_4C);
+        nw4r::math::VEC3 s = a->GetTranslate();  // dead in retail too; kept across the
+                                                // opaque helper calls below
+        nw4r::lyt::Size aSize = a->GetSize();
+        TagCopyVec2f(w, (f32*)&aSize);
+        nw4r::math::VEC3 bVec = b->GetTranslate();
+        nw4r::lyt::Size bSize = b->GetSize();
+        copyVEC3((f32*)&s, (f32*)&bVec);
+        copyVEC2(w, (f32*)&bSize);
+        c->SetTranslate(s);
+        nw4r::math::VEC3 cVec = c->GetTranslate();
+        copyVEC3((f32*)&s, (f32*)&cVec);
+        nw4r::lyt::Size cSize = c->GetSize();
+        TagCopyVec2f(w, (f32*)&cSize);
         f32 u[2];                  // +0x08
         u[0] = dim[0];
         u[1] = w[1];
-        copyVEC2(c->field_4C, u);
-        copyVEC2(dim, c->field_4C);
-        copyVEC3(&s.v[0], b->vec_2C.v);
-        copyVEC2(pos2, b->field_4C);
+        c->SetSize(*(const nw4r::lyt::Size*)u);
+        cSize = c->GetSize();
+        copyVEC2(dim, (f32*)&cSize);
+        copyVEC3((f32*)&s, (f32*)&bVec);
+        copyVEC2(pos2, (f32*)&bSize);
         // blend the b/c corners toward the measured box
         const f32 kBlend = 0.5f;
-        f32 nx = dim[0] * kBlend + (s.v[0] - pos2[0] * kBlend);
-        f32 ny = (s.v[1] + pos2[1] * kBlend) - dim[1] * kBlend;
-        s.v[0] = nx + 46.0f;
-        s.v[1] = ny - 44.0f;
-        copyVEC3(c->vec_2C.v, &s.v[0]);
+        f32 nx = dim[0] * kBlend + (s.x - pos2[0] * kBlend);
+        f32 ny = (s.y + pos2[1] * kBlend) - dim[1] * kBlend;
+        s.x = nx + 46.0f;
+        s.y = ny - 44.0f;
+        c->SetTranslate(s);
     }
 }
 
@@ -1606,10 +1602,10 @@ void TagProcRenderPage(CTagProcMsg* msg, TalkPaneView* a, TalkPaneView* b,
 // The y-transform and clamp must be written with the constants INLINE (no
 // f32 temps): named temps shift MWCC's FPR birth order and swap c34/c30
 // between f2/f3 (6 reg_swap).
-void TagProcCalcPageLayout(void* unused, CTagMsgView* msg, CTagOutView* out) {
+void TagProcCalcPageLayout(void* unused, nw4r::lyt::TextBox* msg, nw4r::lyt::Pane* out) {
     wchar_t buf[0x400];
     f32 xy[2];
-    wcscpy(buf, msg->field_D8);
+    wcscpy(buf, msg->GetStringBuffer());
     TagProcMeasureText(xy, msg, buf);
     xy[1] = lbl_eu_80667234 * (xy[1] - lbl_eu_806671F4) + lbl_eu_80667230;
     xy[0] += lbl_eu_80667238;
@@ -1628,7 +1624,7 @@ void TagProcCalcPageLayout(void* unused, CTagMsgView* msg, CTagOutView* out) {
         xy[1] = lbl_eu_8066724C;
     else if (y >= lbl_eu_80667230)
         xy[1] = lbl_eu_80667230;
-    copyVEC2(&out->field_4C, xy);
+    out->SetSize(*(const nw4r::lyt::Size*)xy);
 }
 
 // Tag-writer accessor: set CharWriter::mCursorPos (+0x2C/+0x30) with the
@@ -1664,8 +1660,8 @@ void TagWriterSetCursorPos(nw4r::ut::TextWriterBase<wchar_t>* tw, float x, float
     if (!validRegs2) {
         nw4r::db::Panic(lbl_eu_8052DE50, 0xf9, lbl_eu_8052DE1C, tw);
     }
-    tw->cursorX = x;
-    tw->cursorY = y;
+    tw->SetCursorX(x);
+    tw->SetCursorY(y);
 }
 
 // Tag-writer helper: measure a string's max line width and the font height. The string
@@ -1680,7 +1676,7 @@ void TagMeasureTextWidth(f32* out, void* unused,
     wchar_t buf[0x400];
     memset(buf, 0, sizeof(buf));
     wcscpy(buf, str);
-    nw4r::lyt::Font* font = textbox->GetFont();
+    const nw4r::ut::Font* font = textbox->GetFont();
     f32 sum = lbl_eu_806671F0;
     u32 i = 0;
     // Separate init from the same constant: retail materializes max via fmr
@@ -1693,7 +1689,7 @@ void TagMeasureTextWidth(f32* out, void* unused,
     // lbl_eu_80667200 would name the sdata2 reloc but adds a rounding insn
     // and shifts regalloc - the builtin is the closest byte-identical state
     // (see TagWriterParseColonParam note / MWCC_CASES 7i).
-    f32 height = (f32)font->v34();
+    f32 height = (f32)font->GetLineFeed();
     for (;;) {
         u16 c = str[i];
         if (c == 0) {
@@ -1701,7 +1697,7 @@ void TagMeasureTextWidth(f32* out, void* unused,
                 max = sum;
             break;
         }
-        sum += (f32)(font->v48(c) + 2);
+        sum += (f32)(font->GetCharWidth(c) + 2);
         i++;
     }
     out[0] = max;
@@ -1719,7 +1715,7 @@ void TagProcResetPage(nw4r::lyt::AnimTransform* tag, nw4r::lyt::Pane* a,
     tb->v74(0x400);     // AllocStringBuffer(0x400)
     CTagProcMsg* msg = (CTagProcMsg*)tag;
     msg->field_810++;
-    TagProcRenderPage(msg, (TalkPaneView*)a, (TalkPaneView*)b, (TalkPaneView*)c,
+    TagProcRenderPage(msg, (nw4r::lyt::TextBox*)a, (nw4r::lyt::TextBox*)b, (nw4r::lyt::TextBox*)c,
                   0);
     msg->field_820 = 0;
 }
@@ -2031,19 +2027,20 @@ extern "C" void TagProcBuildOpenText(CTagProcessorBase* msg, nw4r::lyt::Pane* pa
     } else {
         wcscpy(buf2, str);
     }
-    TalkPaneView* pv = (TalkPaneView*)pane;
-    pv->v7C((const u16*)buf2, 0);
+    nw4r::lyt::TextBox* pv = (nw4r::lyt::TextBox*)pane;
+    pv->SetString((const wchar_t*)buf2, 0);
     if (newline)
-        pv->field_F0 = 15.0f;
+        pv->SetLineSpace(15.0f);
     else
-        pv->field_F0 = 2.0f;
-    TagProcMeasureText(out, (CTagMsgView*)pane, buf2);
+        pv->SetLineSpace(2.0f);
+    TagProcMeasureText(out, (nw4r::lyt::TextBox*)pane, buf2);
     if (newline)
         out[1] = 16.0f * out[1] + 15.0f;
     else
         out[1] = 16.0f * out[1];
     AccumPaneWorldPos((nw4r::math::VEC3*)out2, pane);
-    TagCopyVec2f(v3, pv->field_4C);
+    nw4r::lyt::Size pvSize = pv->GetSize();
+    TagCopyVec2f(v3, (f32*)&pvSize);
     // Retail computes BOTH differences first, then both products; out2
     // entries forward the stored v3 values.
     f32 dy = v3[1] - out[1];
@@ -2052,9 +2049,9 @@ extern "C" void TagProcBuildOpenText(CTagProcessorBase* msg, nw4r::lyt::Pane* pa
     v3[0] = dx * 0.5f;
     out2[0] = v3[0];
     out2[1] = -193.0f - v3[1];
-    copyVEC3(pv->vec_2C.v, out2);
-    pv->v78();
-    pv->v74(0x400);
+    pv->SetTranslate(*(const nw4r::math::VEC3*)out2);
+    pv->FreeStringBuffer();
+    pv->AllocStringBuffer(0x400);
 }
 
 u16* CTagCodeMakeCrystal::v14(u16* buf, const wchar_t* arg, TagParam* prm) {
@@ -2310,7 +2307,7 @@ inline float TagWriterGetWidthLimit(nw4r::ut::TextWriterBase<wchar_t>* tw) {
     if (!validRegs2) {
         nw4r::db::Panic(lbl_eu_8052DBE0, 0x84, lbl_eu_8052DBAC, tw);
     }
-    return tw->widthLimit;
+    return tw->GetWidthLimit();
 }
 
 // Tag-writer accessor: TextWriterBase::SetWidthLimit (+0x4C) with the same
@@ -2346,7 +2343,7 @@ inline void TagWriterSetWidthLimit(nw4r::ut::TextWriterBase<wchar_t>* tw, float 
     if (!validRegs2) {
         nw4r::db::Panic(lbl_eu_8052DB50, 0x7b, lbl_eu_8052DB1C, tw);
     }
-    tw->widthLimit = v;
+    tw->SetWidthLimit(v);
 }
 
 // Tag-writer accessor: add to CharWriter::mCursorPos.x (+0x2C) with the same
@@ -2380,7 +2377,7 @@ inline void TagWriterAdvanceCursorX(nw4r::ut::TextWriterBase<wchar_t>* tw, float
     if (!validRegs2) {
         nw4r::db::Panic(lbl_eu_8052DED8, 0x12d, lbl_eu_8052DEA4, tw);
     }
-    tw->cursorX += v;
+    tw->MoveCursorX(v);
 }
 
 // Tag-writer accessor: CharWriter::GetCursorY (+0x30) with the same pointer
@@ -2416,7 +2413,7 @@ inline float TagWriterGetCursorY(nw4r::ut::TextWriterBase<wchar_t>* tw) {
     if (!validRegs2) {
         nw4r::db::Panic(lbl_eu_8052DF60, 0x141, lbl_eu_8052DF2C, tw);
     }
-    return tw->cursorY;
+    return tw->GetCursorY();
 }
 
 // Converted to TagContext::addToCharSpace
@@ -2485,7 +2482,7 @@ nw4r::ut::TagProcessorBase<wchar_t>::Operation CTagCodeLine::Process(u16 tag, nw
         validRegs2 = false;
     if (!validRegs2)
         nw4r::db::Panic(lbl_eu_8052DCB8, 0x47, lbl_eu_8052DC84, &local);
-    int fw = local.mFont->v48(0x2500);
+    int fw = local.GetFont()->GetCharWidth(0x2500);
     f32 conv = (f32)(fw << 1);
     TagWriterSetCursorPos(&local, x + conv, y);
     f32 cx = TagWriterGetCursorX(&local);
@@ -2510,7 +2507,7 @@ nw4r::ut::TagProcessorBase<wchar_t>::Operation CTagCodeLine::Process(u16 tag, nw
         validRegs2b = false;
     if (!validRegs2b)
         nw4r::db::Panic(lbl_eu_8052DE94, 0x11e, lbl_eu_8052DE60, tw);
-    tw->cursorX = cx;
+    tw->SetCursorX(cx);
     return nw4r::ut::TagProcessorBase<wchar_t>::OPERATION_CHAR_SPACE;
 }
 
@@ -2547,7 +2544,7 @@ inline float TagWriterGetCursorX(nw4r::ut::TextWriterBase<wchar_t>* tw) {
     if (!validRegs2) {
         nw4r::db::Panic(lbl_eu_8052DF1C, 0x13c, lbl_eu_8052DEE8, tw);
     }
-    return tw->cursorX;
+    return tw->GetCursorX();
 }
 
 // Tag-writer accessor: CharWriter scale-x (+0x24) with the same nw4r
@@ -2583,7 +2580,7 @@ inline float TagWriterGetScaleX(nw4r::ut::TextWriterBase<wchar_t>* tw) {
     if (!validRegs2) {
         nw4r::db::Panic(lbl_eu_8052DDC8, 0xb8, lbl_eu_8052DD94, tw);
     }
-    return tw->field_24;
+    return tw->GetScaleH();
 }
 
 // Tag-writer accessor: CharWriter scale-y (+0x28) with the same nw4r
@@ -2617,7 +2614,7 @@ inline float TagWriterGetScaleY(nw4r::ut::TextWriterBase<wchar_t>* tw) {
     if (!validRegs2) {
         nw4r::db::Panic(lbl_eu_8052DE0C, 0xbd, lbl_eu_8052DDD8, tw);
     }
-    return tw->field_28;
+    return tw->GetScaleV();
 }
 
 extern "C" void TagWriterCopyBlock(TagCopyBlock* dst, const TagCopyBlock* src) {
@@ -2657,7 +2654,7 @@ inline void TagWriterSetFontSize(nw4r::ut::TextWriterBase<wchar_t>* tw, u32 valu
     if (!validRegs2) {
         nw4r::db::Panic(lbl_eu_8052DC70, 0x8b, lbl_eu_8052DC3C, tw);
     }
-    tw->field_5C = value;
+    tw->SetDrawFlag(value);
 }
 
 // Tag-writer accessor: CharWriter scale set (+0x24/+0x28, mScale region)
@@ -2692,8 +2689,7 @@ inline void TagWriterSetScale(nw4r::ut::TextWriterBase<wchar_t>* tw, float x, fl
     if (!validRegs2) {
         nw4r::db::Panic(lbl_eu_8052DD84, 0xab, lbl_eu_8052DD50, tw);
     }
-    tw->field_24 = x;
-    tw->field_28 = y;
+    tw->SetScale(x, y);
 }
 
 // Tag-code writer (code 9): uppercase the arg string, compare it against the
@@ -2947,6 +2943,7 @@ inline nw4r::ut::TagProcessorBase<wchar_t>::Operation CTagCodeCol::Process(u16 t
     // Retail keeps the context in its own callee-saved register (r31) ahead
     // of the writer; binding it through the writer/color arg view reproduces
     // that colouring (direct ctx-> accesses swap r30/r31, 85%).
+    nw4r::ut::CharWriter* w = ((TagColorArg*)ctx)->field_00;
     TagColorArg* arg = (TagColorArg*)ctx;
     bool validRegs2 = true;
     bool validRegs = true;
@@ -2954,9 +2951,8 @@ inline nw4r::ut::TagProcessorBase<wchar_t>::Operation CTagCodeCol::Process(u16 t
     bool validIo = true;
     bool validMem2 = true;
     bool validMem1 = true;
+    u32 hi = (u32)w & 0xFF000000;
     nw4r::ut::Color c = *arg->field_04;
-    u32 hi = (u32)arg->field_00 & 0xFF000000;
-    nw4r::ut::CharWriter* w = arg->field_00;
     if (hi != 0x80000000 && ((u32)w & 0xFF800000) != 0x81000000)
         validMem1 = false;
     if (!validMem1 && ((u32)w & 0xF8000000) != 0x90000000)
@@ -2971,17 +2967,14 @@ inline nw4r::ut::TagProcessorBase<wchar_t>::Operation CTagCodeCol::Process(u16 t
         validRegs2 = false;
     if (!validRegs2)
         nw4r::db::Panic(lbl_eu_8052DD40, 0x98, lbl_eu_8052DD0C, w);
-    nw4r::ut::Color cur = w->mVertexColor;
-    c.comp.a = cur.comp.a;
-    nw4r::ut::Color merged = c;
+    c.a = w->GetTextColor().a;
     validRegs2 = true;
     validRegs = true;
     validIo2 = true;
     validIo = true;
     validMem2 = true;
     validMem1 = true;
-    w = arg->field_00;
-    hi = (u32)arg->field_00 & 0xFF000000;
+    hi = (u32)w & 0xFF000000;
     if (hi != 0x80000000 && ((u32)w & 0xFF800000) != 0x81000000)
         validMem1 = false;
     if (!validMem1 && ((u32)w & 0xF8000000) != 0x90000000)
@@ -2996,8 +2989,7 @@ inline nw4r::ut::TagProcessorBase<wchar_t>::Operation CTagCodeCol::Process(u16 t
         validRegs2 = false;
     if (!validRegs2)
         nw4r::db::Panic(lbl_eu_8052DCFC, 0x87, lbl_eu_8052DCC8, w);
-    w->mVertexColor = merged;
-    w->UpdateVertexColor();
+    w->SetTextColor(c);
     arg->field_04++;
     return nw4r::ut::TagProcessorBase<wchar_t>::OPERATION_DEFAULT;
 }
@@ -3101,7 +3093,7 @@ inline void TagWriterSetCharSpace(nw4r::ut::TextWriterBase<wchar_t>* tw, float v
     if (!validRegs2) {
         nw4r::db::Panic(lbl_eu_8052DC28, 0x62, lbl_eu_8052DBF4, tw);
     }
-    tw->charSpace = v;
+    tw->SetCharSpace(v);
 }
 
 // Tag-writer accessor: TextWriterBase::GetCharSpace (+0x50) with the same
@@ -3135,7 +3127,7 @@ inline float TagWriterGetCharSpace(nw4r::ut::TextWriterBase<wchar_t>* tw) {
     if (!validRegs2) {
         nw4r::db::Panic(lbl_eu_8052DB98, 0x6c, lbl_eu_8052DB64, tw);
     }
-    return tw->charSpace;
+    return tw->GetCharSpace();
 }
 
 // Tag-writer two-string layout: read the <lenHi|lenLo> header, validate the
@@ -3203,7 +3195,7 @@ inline nw4r::ut::TagProcessorBase<wchar_t>::Operation CTagCodeRuby::Process(u16 
         nw4r::db::Panic(lbl_eu_8052DB08, 0x90, lbl_eu_8052DAD4, msg);
     }
 
-    savedFontSize = msg->field_5C;
+    savedFontSize = msg->GetDrawFlag();
     f32 cursorX = TagWriterGetCursorX(msg);
     f32 cursorY = TagWriterGetCursorY(msg);
     if (lenHi == 0) {
@@ -3245,7 +3237,7 @@ inline nw4r::ut::TagProcessorBase<wchar_t>::Operation CTagCodeRuby::Process(u16 
         nw4r::db::Panic(lbl_eu_8052DAC0, 0x5d, lbl_eu_8052DA8C, &local);
     }
 
-    local.field_5Cf = 0.0f;
+    local.SetDrawFlag(0);
     f32 yscale = 0.6f * TagWriterGetScaleY(&local);
     f32 xscale = TagWriterGetScaleX(&local);
     TagWriterSetScale(&local, 0.6f * xscale, yscale);

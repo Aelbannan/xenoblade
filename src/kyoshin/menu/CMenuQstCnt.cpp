@@ -5,6 +5,7 @@
 // record and the "CMenuQstCnt" type-name string are compiler output.
 
 #define IWORK_EVENT_INLINE_DTOR
+#include "kyoshin/cf/CfBdat.hpp"
 #include <types.h>
 
 #include "kyoshin/code_80135FDC.hpp"
@@ -50,10 +51,10 @@ void QstCnt_FinishAnim(CMenuQstCnt* self);
 
 // --- OOL base/subobject + helper/data imports are declared in CMenuQstCnt.hpp ---
 
-CMenuQstCnt* sInstance__11CMenuQstCnt;  // name-guess: only unnamed 8-byte quest sbss slot; neighbours use sInstance__<class>
+CMenuQstCnt* CMenuQstCnt::sInstance;
 
-// (sInstance__11CMenuQstCnt != 0) - retail lwz sda21; subic; subfe
-extern "C" int QstCnt_HasInstance_6B94() { return sInstance__11CMenuQstCnt != 0; }
+// (sInstance != 0) - retail lwz sda21; subic; subfe
+extern "C" int QstCnt_HasInstance_6B94() { return CMenuQstCnt::sInstance != 0; }
 
 
 // ---------------------------------------------------------------------------
@@ -161,7 +162,7 @@ void CMenuQstCnt::Term() {
         mLayout = 0;
     }
     mMemRegion.deleteRegion();
-    sInstance__11CMenuQstCnt = 0;
+    CMenuQstCnt::sInstance = 0;
 }
 
 void CMenuQstCnt::Move() {
@@ -239,7 +240,7 @@ void CMenuQstCnt::cbRenderBefore() {
 // active, only sync the new selection into it (returning 0); otherwise
 // allocate + construct + register a fresh menu (returning the object).
 CMenuQstCnt* QstCnt_GetOrCreate(CProcess* parent, CScn* scene, u16 a, u16 b, unsigned char c, unsigned char d, unsigned char e) {
-    CMenuQstCnt* g = sInstance__11CMenuQstCnt;
+    CMenuQstCnt* g = CMenuQstCnt::sInstance;
     if (g != 0 && g->mField64 == 0) {
         int changed = 0;
         if (g->mSelEntry.f0 == a) {
@@ -250,16 +251,16 @@ CMenuQstCnt* QstCnt_GetOrCreate(CProcess* parent, CScn* scene, u16 a, u16 b, uns
                 switch (g->mState8C) {
                 case 0:
                     g->mSelEntry.f4 = c;
-                    if (sInstance__11CMenuQstCnt->mField19C) sInstance__11CMenuQstCnt->RefreshDisplay();
+                    if (CMenuQstCnt::sInstance->mField19C) CMenuQstCnt::sInstance->RefreshDisplay();
                     break;
                 case 1:
                     g->mSelEntry.f4 = c;
-                    sInstance__11CMenuQstCnt->RefreshDisplay();
+                    CMenuQstCnt::sInstance->RefreshDisplay();
                     break;
                 case 2:
                     g->mSelEntry.f4 = c;
-                    sInstance__11CMenuQstCnt->mValue90 = 0.0f;
-                    sInstance__11CMenuQstCnt->RefreshDisplay();
+                    CMenuQstCnt::sInstance->mValue90 = 0.0f;
+                    CMenuQstCnt::sInstance->RefreshDisplay();
                     break;
                 default:
                     changed = 1;
@@ -271,8 +272,8 @@ CMenuQstCnt* QstCnt_GetOrCreate(CProcess* parent, CScn* scene, u16 a, u16 b, uns
         }
         if (changed) {
             for (u8 i = 0; i < 0x20; i++) {
-                if (sInstance__11CMenuQstCnt->mEntries[i].f0 == 0) {
-                    sInstance__11CMenuQstCnt->mEntries[i] = QstEntry(a, b, c, d, e);
+                if (CMenuQstCnt::sInstance->mEntries[i].f0 == 0) {
+                    CMenuQstCnt::sInstance->mEntries[i] = QstEntry(a, b, c, d, e);
                     break;
                 }
             }
@@ -280,15 +281,15 @@ CMenuQstCnt* QstCnt_GetOrCreate(CProcess* parent, CScn* scene, u16 a, u16 b, uns
         return 0;
     }
     CMenuQstCnt* obj = new (CWorkThreadSystem::getWorkMem()) CMenuQstCnt(scene, a, b, c, d, e);
-    sInstance__11CMenuQstCnt = obj;
+    CMenuQstCnt::sInstance = obj;
     Regist__8CProcessFP8CProcessb(obj, parent, 0);
-    return sInstance__11CMenuQstCnt;
+    return CMenuQstCnt::sInstance;
 }
 
 
 void invalidateQstFlag() {
-    if (sInstance__11CMenuQstCnt != 0) {
-        sInstance__11CMenuQstCnt->mField64 = 1;
+    if (CMenuQstCnt::sInstance != 0) {
+        CMenuQstCnt::sInstance->mField64 = 1;
     }
 }
 
@@ -366,7 +367,7 @@ void CMenuQstCnt::RefreshDisplay() {
     char* s = BdatGetPtrDirect((void*)lbl_eu_80573D18[v], "title", this->mSelEntry.f0);
     LayoutSetTextBoxFmtValue(this->mLayout, "txt_questtitle", s, 0);
     if (this->mSelEntry.f6 == 0) {
-        s = BdatGetPtrDirect(lbl_eu_80664094, "name", this->mSelEntry.f2);
+        s = BdatGetPtrDirect(::cf::CfBdat::spBtlEneListFileData, "name", this->mSelEntry.f2);
     } else {
         s = BuildItemNameStr(this->mSelEntry.f2);
     }

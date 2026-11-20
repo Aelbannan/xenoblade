@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #define IWORK_EVENT_INLINE_DTOR // ~CMCCrystalList elides the empty base dtor (retail)
+#include "kyoshin/cf/CfBdat.hpp"
 #include "kyoshin/makecrystal/CMCCrystalList.hpp"
 
 #include <cstdio>
@@ -20,7 +21,6 @@
 #include "kyoshin/code_80135FDC_State.hpp"
 
 // Local imports. Linkage/signatures mirror the retail symbols exactly.
-extern u32 lbl_eu_806640D8;
 // Retail symbols for these layout builders are unmangled - C linkage keeps
 // the call relocs bound to the retail names.
 // Retail symbol for this helper is the unmangled name - keep C linkage.
@@ -205,7 +205,7 @@ void crystalListState3To4(CMCCrystalList* self)
 void func_80222B14(CMCCrystalList* self, u32 idx, u32 id, u8 countArg) {
     char buf[0x20];
     // BDAT name lookup happens BEFORE the slot number is computed.
-    char* name = BdatGetPtrDirect((const void*)lbl_eu_806640D8, "name", id);
+    char* name = BdatGetPtrDirect((const void*)::cf::CfBdat::spBtlSkillListFileData, "name", id);
     u32 slot = idx + 1;
     sprintf(buf, "txt_listname%02d", slot);
     LayoutSetTextBoxFmtValue(self->mLayout, buf, name, 0);
@@ -216,7 +216,7 @@ void func_80222B14(CMCCrystalList* self, u32 idx, u32 id, u8 countArg) {
     LayoutSetTextBoxFmtValue(self->mLayout, buf, desc, 0);
 
     void* tex = NULL;
-    switch (BdatGetU8Direct((const void*)lbl_eu_806640D8, "atr_type", id)) {
+    switch (BdatGetU8Direct((const void*)::cf::CfBdat::spBtlSkillListFileData, "atr_type", id)) {
     case 0:
         tex = self->mArcResAccessor2->GetResource(
             nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE,

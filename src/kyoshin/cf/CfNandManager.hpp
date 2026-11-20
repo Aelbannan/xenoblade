@@ -1,5 +1,6 @@
 #pragma once
 
+
 #include "kyoshin/menu/MenuSndApi.hpp"
 
 #include <types.h>
@@ -257,10 +258,9 @@ struct CfNandPartySnapshot {
 
 // --- imports used by the CfNandManager TU (declared here so the .cpp stays
 // free of local extern "C" scaffolding) ---
-extern "C" u32 CtrlRemote_TouchBitByArg(u32 resourceId);   // message-count lookup - (u32) form must match CUICfManager.hpp (10197)
+#include "kyoshin/cf/CtrlRemoteApi.hpp"   // message-count lookup - (u32) form must match CUICfManager.hpp (10197)
 
 
-extern void* lbl_eu_80664090;                   // bdat table object
 extern f32 lbl_eu_806686E0;
 // Scale-offset doubles used by the capture downsampler (NandDownsample).
 extern double lbl_eu_806686E8;                  // offset added past threshold
@@ -348,7 +348,7 @@ extern u8 lbl_eu_80576AC0[];
 // --- imports used only by NandPackEntry ---
 extern "C" void KizunagramPackChart(u8* dst, const u8* src);   // kizuna compaction
 struct CfNandSub14;
-extern "C" void initItemWorkState(CfNandSub14* state);        // scratch initializer
+extern "C" void initItemWorkState(void* state);               // scratch initializer (CVision.hpp owner decl)
 
 // Clamp bounds fetched through the per-entry virtual call in NandPackEntry.
 struct CfNandClampView {

@@ -3,6 +3,8 @@
 
 #include <harness_catalog.h>
 
+#include "libs/CriWare/src/sofdec/sfdcore/sfh/sfh_types.h"
+
 extern int SFHLOCAL_GetSizeofMember(int, int);
 extern int SFHLOCAL_GetNbyteL(const void *, int);
 extern int SFHLOCAL_GetNbyteB(const void *, int);
@@ -15,30 +17,30 @@ __declspec(section ".rodata") __attribute__((aligned(8))) const char lbl_eu_8051
     0x20,0x20,0x20,0x20,0x20,0x20,0x20,0x20,0x00,0x56,0x65,0x72,0x2E,0x00,0x00,0x00
 };
 
-int VER1_AnlyHdrToolVer(void *work, u32 *out1, u32 *out2);
+int VER1_AnlyHdrToolVer(SFHContext *work, u32 *out1, u32 *out2);
 int criware_803D2C98(u32 pic_rate_code);
 
-int VER1_IsSfdHeader(void *work, int *out) {
+int VER1_IsSfdHeader(SFHContext *work, int *out) {
     u8 *src;
     u32 tool_ver;
     u32 tool_sub;
 
     *out = 0;
-    src = ((u8 **)work)[1] + 0x20;
+    src = work->header + 0x20;
     if (memcmp(src, lbl_eu_8051CEE0, 0x18) != 0) {
-        *(s32 *)work = -1;
+        work->state = -1;
         return 0;
     }
-    *(u32 *)((u8 *)work + 0x10) = 0x100;
+    work->sfhVer = 0x100;
     if (VER1_AnlyHdrToolVer(work, &tool_ver, &tool_sub)) {
-        *(u32 *)((u8 *)work + 0xC) = (tool_ver << 8) | tool_sub;
+        work->toolVer = (tool_ver << 8) | tool_sub;
     }
-    *(u32 *)work = 2;
+    work->state = 2;
     *out = 1;
     return 1;
 }
 
-int VER1_IsExistStmId(void *work, u32 stm_id, u32 *out) {
+int VER1_IsExistStmId(SFHContext *work, u32 stm_id, u32 *out) {
     u8 *found;
     u8 *cur;
     int i;
@@ -47,7 +49,7 @@ int VER1_IsExistStmId(void *work, u32 stm_id, u32 *out) {
     *out = 0;
     found = NULL;
     i = 0;
-    cur = ((u8 **)work)[1] + 0x180;
+    cur = work->header + 0x180;
     do {
         v = (u32)SFHLOCAL_GetNbyteL(cur + 0x18, SFHLOCAL_GetSizeofMember(0x18, 0x19));
         if (v == stm_id) {
@@ -65,7 +67,7 @@ int VER1_IsExistStmId(void *work, u32 stm_id, u32 *out) {
     return *out;
 }
 
-int VER1_IsEffFtrInf(void *work, u32 stm_id, u32 *out) {
+int VER1_IsEffFtrInf(SFHContext *work, u32 stm_id, u32 *out) {
     u32 kind;
     u32 v;
     u32 cond;
@@ -92,7 +94,7 @@ int VER1_IsEffFtrInf(void *work, u32 stm_id, u32 *out) {
     if (kind != 0xC0 && kind != 0xE0) {
         return 0;
     }
-    v = *(u32 *)work + 1;
+    v = (u32)work->state + 1;
     if ((v << __cntlzw(v ^ 2)) >> 31 == 0) {
         ok = 0;
     } else {
@@ -105,7 +107,7 @@ int VER1_IsEffFtrInf(void *work, u32 stm_id, u32 *out) {
     } else {
         found = NULL;
         i = 0;
-        cur = ((u8 **)work)[1] + 0x180;
+        cur = work->header + 0x180;
         do {
             v = (u32)SFHLOCAL_GetNbyteL(cur + 0x18, SFHLOCAL_GetSizeofMember(0x18, 0x19));
             if (v == stm_id) {
@@ -155,7 +157,7 @@ static inline void VER1_ParseVerNum(char **pp, u32 *out) {
     *pp = zz_ptr + 1;
 }
 
-int VER1_AnlyHdrToolVer(void *work, u32 *out1, u32 *out2) {
+int VER1_AnlyHdrToolVer(SFHContext *work, u32 *out1, u32 *out2) {
     u32 hdr_minor;
     u32 hdr_major;
     u32 t2;
@@ -167,10 +169,10 @@ int VER1_AnlyHdrToolVer(void *work, u32 *out1, u32 *out2) {
 
     *out1 = 0;
     *out2 = 0;
-    hdr_major = SFHLOCAL_GetNbyteL(((u8 **)work)[1] + 0x38, SFHLOCAL_GetSizeofMember(0x38, 0x39));
-    hdr_minor = SFHLOCAL_GetNbyteL(((u8 **)work)[1] + 0x39, SFHLOCAL_GetSizeofMember(0x39, 0x3A));
+    hdr_major = SFHLOCAL_GetNbyteL(work->header + 0x38, SFHLOCAL_GetSizeofMember(0x38, 0x39));
+    hdr_minor = SFHLOCAL_GetNbyteL(work->header + 0x39, SFHLOCAL_GetSizeofMember(0x39, 0x3A));
     memset(buf, 0, 0x20);
-    memcpy(buf, ((u8 **)work)[1] + 0x60, 0x20);
+    memcpy(buf, work->header + 0x60, 0x20);
     t1 = 0;
     t2 = 0;
     p = strstr(buf, lbl_eu_8051CEE0 + 0x19);
@@ -209,23 +211,23 @@ u32 VER1_AnlyHdrModuleVer(void* self, u32* out1, u32* out2) {
     return 0;
 }
 
-int VER1_AnlyHdrSiz(void *obj, int *out_siz) {
+int VER1_AnlyHdrSiz(SFHContext *obj, int *out_siz) {
     int sz;
     *out_siz = 0;
     sz = SFHLOCAL_GetSizeofMember(0x80, 0x84);
-    *out_siz = SFHLOCAL_GetNbyteL((const char *)((void **)obj)[1] + 0x80, sz);
+    *out_siz = SFHLOCAL_GetNbyteL((const char *)obj->header + 0x80, sz);
     return 1;
 }
 
-int VER1_AnlyPackType(void *work, int *out) {
+int VER1_AnlyPackType(SFHContext *work, int *out) {
     *out = -1;
-    *out = SFHLOCAL_GetNbyteL(((u8 **)work)[1] + 0x84, SFHLOCAL_GetSizeofMember(0x84, 0x85));
+    *out = SFHLOCAL_GetNbyteL(work->header + 0x84, SFHLOCAL_GetSizeofMember(0x84, 0x85));
     return 1;
 }
 
-int VER1_AnlyPketSizLen(void *work, int *out) {
+int VER1_AnlyPketSizLen(SFHContext *work, int *out) {
     *out = 0;
-    *out = SFHLOCAL_GetNbyteL(((u8 **)work)[1] + 0x88, SFHLOCAL_GetSizeofMember(0x88, 0x8A));
+    *out = SFHLOCAL_GetNbyteL(work->header + 0x88, SFHLOCAL_GetSizeofMember(0x88, 0x8A));
     return 1;
 }
 
@@ -235,15 +237,15 @@ int VER1_AnlyPackSiz(const unsigned char **work, int *out_size) {
     return 1;
 }
 
-int VER1_AnlyNumElemTot(void *work, int *out) {
+int VER1_AnlyNumElemTot(SFHContext *work, int *out) {
     *out = 0;
-    *out = SFHLOCAL_GetNbyteL(((u8 **)work)[1] + 0xB0, SFHLOCAL_GetSizeofMember(0xB0, 0xB1));
+    *out = SFHLOCAL_GetNbyteL(work->header + 0xB0, SFHLOCAL_GetSizeofMember(0xB0, 0xB1));
     return 1;
 }
 
-int VER1_AnlyNumElemAud(void *work, int *out) {
+int VER1_AnlyNumElemAud(SFHContext *work, int *out) {
     *out = 0;
-    *out = SFHLOCAL_GetNbyteL(((u8 **)work)[1] + 0xB1, SFHLOCAL_GetSizeofMember(0xB1, 0xB2));
+    *out = SFHLOCAL_GetNbyteL(work->header + 0xB1, SFHLOCAL_GetSizeofMember(0xB1, 0xB2));
     return 1;
 }
 
@@ -254,18 +256,18 @@ int VER1_AnlyNumElemVid(unsigned char **h, int *num) {
     return 1;
 }
 
-int VER1_AnlyNumElemPrv(void *work, int *out) {
+int VER1_AnlyNumElemPrv(SFHContext *work, int *out) {
     *out = 0;
-    *out = SFHLOCAL_GetNbyteL(((u8 **)work)[1] + 0xB3, SFHLOCAL_GetSizeofMember(0xB3, 0xB4));
+    *out = SFHLOCAL_GetNbyteL(work->header + 0xB3, SFHLOCAL_GetSizeofMember(0xB3, 0xB4));
     return 1;
 }
 
-int VER1_AnlyByteRate(void *work, int *out) {
+int VER1_AnlyByteRate(SFHContext *work, int *out) {
     *out = 0;
-    if (*(s32 *)((u8 *)work + 0xC) < 0x6E) {
+    if ((s32)work->toolVer < 0x6E) {
         return 0;
     }
-    *out = SFHLOCAL_GetNbyteL(((u8 **)work)[1] + 0xB4, SFHLOCAL_GetSizeofMember(0xB4, 0xB8));
+    *out = SFHLOCAL_GetNbyteL(work->header + 0xB4, SFHLOCAL_GetSizeofMember(0xB4, 0xB8));
     return 1;
 }
 
@@ -277,28 +279,28 @@ int VER1_AnlyMaxPlyLenAud(const unsigned char **work, unsigned int *out_len) {
     return 1;
 }
 
-int VER1_AnlyMaxPlyLenVid(void *work, int *out) {
+int VER1_AnlyMaxPlyLenVid(SFHContext *work, int *out) {
     *out = 0;
-    *out = SFHLOCAL_GetNbyteL(((u8 **)work)[1] + 0xBC, SFHLOCAL_GetSizeofMember(0xBC, 0xC0));
+    *out = SFHLOCAL_GetNbyteL(work->header + 0xBC, SFHLOCAL_GetSizeofMember(0xBC, 0xC0));
     return 1;
 }
 
-int VER1_AnlyMaxFrmNum(void *work, int *out) {
+int VER1_AnlyMaxFrmNum(SFHContext *work, int *out) {
     *out = 0;
-    *out = SFHLOCAL_GetNbyteL(((u8 **)work)[1] + 0xC0, SFHLOCAL_GetSizeofMember(0xC0, 0xC4));
+    *out = SFHLOCAL_GetNbyteL(work->header + 0xC0, SFHLOCAL_GetSizeofMember(0xC0, 0xC4));
     return 1;
 }
 
-int VER1_AnlyMaxPicSiz(void *work, int *out) {
+int VER1_AnlyMaxPicSiz(SFHContext *work, int *out) {
     *out = 0;
-    if (*(s32 *)((u8 *)work + 0xC) < 0xE1) {
+    if ((s32)work->toolVer < 0xE1) {
         return 0;
     }
-    *out = SFHLOCAL_GetNbyteL(((u8 **)work)[1] + 0xC4, SFHLOCAL_GetSizeofMember(0xC4, 0xC8));
+    *out = SFHLOCAL_GetNbyteL(work->header + 0xC4, SFHLOCAL_GetSizeofMember(0xC4, 0xC8));
     return 1;
 }
 
-int VER1_AnlyElemCodecAud(void *work, u32 stm_id, u32 *out) {
+int VER1_AnlyElemCodecAud(SFHContext *work, u32 stm_id, u32 *out) {
     int i;
     u8 *cur;
     u8 *found;
@@ -308,11 +310,11 @@ int VER1_AnlyElemCodecAud(void *work, u32 stm_id, u32 *out) {
     u32 r;
 
     *out = 0;
-    v = *(u32 *)work + 1;
+    v = (u32)work->state + 1;
     if ((v << __cntlzw(v ^ 2)) >> 31 == 0) {
         bit = 0;
     } else {
-        v = *(u32 *)((u8 *)work + 0xC);
+        v = work->toolVer;
         ok = ((int)v == 0x6B || (int)v >= 0x6E);
         bit = ok != 0;
     }
@@ -321,7 +323,7 @@ int VER1_AnlyElemCodecAud(void *work, u32 stm_id, u32 *out) {
     } else {
         found = NULL;
         i = 0;
-        cur = ((u8 **)work)[1] + 0x180;
+        cur = work->header + 0x180;
         do {
             v = (u32)SFHLOCAL_GetNbyteL(cur + 0x18, SFHLOCAL_GetSizeofMember(0x18, 0x19));
             if (v == stm_id) {
@@ -367,7 +369,7 @@ store:
     return 1;
 }
 
-int VER1_AnlyElemLayer(void *work, u32 stm_id, u32 *out) {
+int VER1_AnlyElemLayer(SFHContext *work, u32 stm_id, u32 *out) {
     int i;
     u8 *cur;
     u8 *found;
@@ -378,11 +380,11 @@ int VER1_AnlyElemLayer(void *work, u32 stm_id, u32 *out) {
     u32 codec;
 
     *out = 0;
-    x = *(u32 *)work + 1;
+    x = (u32)work->state + 1;
     if ((x << __cntlzw(x ^ 2)) >> 31 == 0) {
         bit = 0;
     } else {
-        flag = *(u32 *)((u8 *)work + 0xC);
+        flag = work->toolVer;
         ok = ((int)flag == 0x6B || (int)flag >= 0x6E);
         bit = ok != 0;
     }
@@ -391,7 +393,7 @@ int VER1_AnlyElemLayer(void *work, u32 stm_id, u32 *out) {
     } else {
         found = NULL;
         i = 0;
-        cur = ((u8 **)work)[1] + 0x180;
+        cur = work->header + 0x180;
         do {
             x = (u32)SFHLOCAL_GetNbyteL(cur + 0x18, SFHLOCAL_GetSizeofMember(0x18, 0x19));
             if (x == stm_id) {
@@ -415,7 +417,7 @@ int VER1_AnlyElemLayer(void *work, u32 stm_id, u32 *out) {
     return 1;
 }
 
-int VER1_AnlyElemChNum(void *work, u32 stm_id, u32 *out) {
+int VER1_AnlyElemChNum(SFHContext *work, u32 stm_id, u32 *out) {
     int i;
     u8 *cur;
     u8 *found;
@@ -424,11 +426,11 @@ int VER1_AnlyElemChNum(void *work, u32 stm_id, u32 *out) {
     u32 ok;
 
     *out = 0;
-    v = *(u32 *)work + 1;
+    v = (u32)work->state + 1;
     if ((v << __cntlzw(v ^ 2)) >> 31 == 0) {
         bit = 0;
     } else {
-        v = *(u32 *)((u8 *)work + 0xC);
+        v = work->toolVer;
         ok = ((int)v == 0x6B || (int)v >= 0x6E);
         bit = ok != 0;
     }
@@ -437,7 +439,7 @@ int VER1_AnlyElemChNum(void *work, u32 stm_id, u32 *out) {
     } else {
         found = NULL;
         i = 0;
-        cur = ((u8 **)work)[1] + 0x180;
+        cur = work->header + 0x180;
         do {
             v = (u32)SFHLOCAL_GetNbyteL(cur + 0x18, SFHLOCAL_GetSizeofMember(0x18, 0x19));
             if (v == stm_id) {
@@ -455,7 +457,7 @@ int VER1_AnlyElemChNum(void *work, u32 stm_id, u32 *out) {
     return 1;
 }
 
-int VER1_AnlyElemSmpHz(void *work, u32 stm_id, u32 *out) {
+int VER1_AnlyElemSmpHz(SFHContext *work, u32 stm_id, u32 *out) {
     int i;
     u8 *cur;
     u8 *found;
@@ -464,11 +466,11 @@ int VER1_AnlyElemSmpHz(void *work, u32 stm_id, u32 *out) {
     u32 ok;
 
     *out = 0;
-    v = *(u32 *)work + 1;
+    v = (u32)work->state + 1;
     if ((v << __cntlzw(v ^ 2)) >> 31 == 0) {
         bit = 0;
     } else {
-        v = *(u32 *)((u8 *)work + 0xC);
+        v = work->toolVer;
         ok = ((int)v == 0x6B || (int)v >= 0x6E);
         bit = ok != 0;
     }
@@ -477,7 +479,7 @@ int VER1_AnlyElemSmpHz(void *work, u32 stm_id, u32 *out) {
     } else {
         found = NULL;
         i = 0;
-        cur = ((u8 **)work)[1] + 0x180;
+        cur = work->header + 0x180;
         do {
             v = (u32)SFHLOCAL_GetNbyteL(cur + 0x18, SFHLOCAL_GetSizeofMember(0x18, 0x19));
             if (v == stm_id) {
@@ -495,7 +497,7 @@ int VER1_AnlyElemSmpHz(void *work, u32 stm_id, u32 *out) {
     return 1;
 }
 
-int VER1_AnlyElemCodecVid(void *work, u32 stm_id, u32 *out) {
+int VER1_AnlyElemCodecVid(SFHContext *work, u32 stm_id, u32 *out) {
     int i;
     u8 *cur;
     u8 *found;
@@ -505,11 +507,11 @@ int VER1_AnlyElemCodecVid(void *work, u32 stm_id, u32 *out) {
     u32 r;
 
     *out = 0;
-    v = *(u32 *)work + 1;
+    v = (u32)work->state + 1;
     if ((v << __cntlzw(v ^ 2)) >> 31 == 0) {
         bit = 0;
     } else {
-        v = *(u32 *)((u8 *)work + 0xC);
+        v = work->toolVer;
         ok = ((int)v == 0x6B || (int)v >= 0x6E);
         bit = ok != 0;
     }
@@ -518,7 +520,7 @@ int VER1_AnlyElemCodecVid(void *work, u32 stm_id, u32 *out) {
     } else {
         found = NULL;
         i = 0;
-        cur = ((u8 **)work)[1] + 0x180;
+        cur = work->header + 0x180;
         do {
             v = (u32)SFHLOCAL_GetNbyteL(cur + 0x18, SFHLOCAL_GetSizeofMember(0x18, 0x19));
             if (v == stm_id) {
@@ -572,7 +574,7 @@ store:
     return 1;
 }
 
-int VER1_AnlyElemBitRate(void *work, u32 stm_id, u32 *out) {
+int VER1_AnlyElemBitRate(SFHContext *work, u32 stm_id, u32 *out) {
     int i;
     u8 *cur;
     u8 *found;
@@ -581,11 +583,11 @@ int VER1_AnlyElemBitRate(void *work, u32 stm_id, u32 *out) {
     u32 ok;
 
     *out = 0;
-    v = *(u32 *)work + 1;
+    v = (u32)work->state + 1;
     if ((v << __cntlzw(v ^ 2)) >> 31 == 0) {
         bit = 0;
     } else {
-        v = *(u32 *)((u8 *)work + 0xC);
+        v = work->toolVer;
         ok = ((int)v == 0x6B || (int)v >= 0x6E);
         bit = ok != 0;
     }
@@ -594,7 +596,7 @@ int VER1_AnlyElemBitRate(void *work, u32 stm_id, u32 *out) {
     } else {
         found = NULL;
         i = 0;
-        cur = ((u8 **)work)[1] + 0x180;
+        cur = work->header + 0x180;
         do {
             v = (u32)SFHLOCAL_GetNbyteL(cur + 0x18, SFHLOCAL_GetSizeofMember(0x18, 0x19));
             if (v == stm_id) {
@@ -616,7 +618,7 @@ int VER1_AnlyElemBitRate(void *work, u32 stm_id, u32 *out) {
     return 1;
 }
 
-int VER1_AnlyElemPicSz(void *work, u32 stm_id, u32 *out_w, u32 *out_h) {
+int VER1_AnlyElemPicSz(SFHContext *work, u32 stm_id, u32 *out_w, u32 *out_h) {
     int i;
     u8 *cur;
     u8 *found;
@@ -626,11 +628,11 @@ int VER1_AnlyElemPicSz(void *work, u32 stm_id, u32 *out_w, u32 *out_h) {
 
     *out_w = 0;
     *out_h = 0;
-    v = *(u32 *)work + 1;
+    v = (u32)work->state + 1;
     if ((v << __cntlzw(v ^ 2)) >> 31 == 0) {
         bit = 0;
     } else {
-        v = *(u32 *)((u8 *)work + 0xC);
+        v = work->toolVer;
         ok = ((int)v == 0x6B || (int)v >= 0x6E);
         bit = ok != 0;
     }
@@ -639,7 +641,7 @@ int VER1_AnlyElemPicSz(void *work, u32 stm_id, u32 *out_w, u32 *out_h) {
     } else {
         found = NULL;
         i = 0;
-        cur = ((u8 **)work)[1] + 0x180;
+        cur = work->header + 0x180;
         do {
             v = (u32)SFHLOCAL_GetNbyteL(cur + 0x18, SFHLOCAL_GetSizeofMember(0x18, 0x19));
             if (v == stm_id) {
@@ -659,7 +661,7 @@ int VER1_AnlyElemPicSz(void *work, u32 stm_id, u32 *out_w, u32 *out_h) {
     return 1;
 }
 
-int VER1_AnlyElemPicRate(void *work, u32 stm_id, u32 *out) {
+int VER1_AnlyElemPicRate(SFHContext *work, u32 stm_id, u32 *out) {
     int i;
     u8 *cur;
     u8 *found;
@@ -668,11 +670,11 @@ int VER1_AnlyElemPicRate(void *work, u32 stm_id, u32 *out) {
     u32 ok;
 
     *out = 0;
-    v = *(u32 *)work + 1;
+    v = (u32)work->state + 1;
     if ((v << __cntlzw(v ^ 2)) >> 31 == 0) {
         bit = 0;
     } else {
-        v = *(u32 *)((u8 *)work + 0xC);
+        v = work->toolVer;
         ok = ((int)v == 0x6B || (int)v >= 0x6E);
         bit = ok != 0;
     }
@@ -681,7 +683,7 @@ int VER1_AnlyElemPicRate(void *work, u32 stm_id, u32 *out) {
     } else {
         found = NULL;
         i = 0;
-        cur = ((u8 **)work)[1] + 0x180;
+        cur = work->header + 0x180;
         do {
             v = (u32)SFHLOCAL_GetNbyteL(cur + 0x18, SFHLOCAL_GetSizeofMember(0x18, 0x19));
             if (v == stm_id) {
@@ -700,7 +702,7 @@ int VER1_AnlyElemPicRate(void *work, u32 stm_id, u32 *out) {
     return 1;
 }
 
-int VER1_AnlyFtrColType(void *work, u32 stm_id, u32 *out) {
+int VER1_AnlyFtrColType(SFHContext *work, u32 stm_id, u32 *out) {
     int i;
     u8 *cur;
     u8 *found;
@@ -709,11 +711,11 @@ int VER1_AnlyFtrColType(void *work, u32 stm_id, u32 *out) {
     u32 ok;
 
     *out = 0;
-    v = *(u32 *)work + 1;
+    v = (u32)work->state + 1;
     if ((v << __cntlzw(v ^ 2)) >> 31 == 0) {
         bit = 0;
     } else {
-        v = *(u32 *)((u8 *)work + 0xC);
+        v = work->toolVer;
         ok = ((int)v == 0x6B || (int)v >= 0x6E);
         bit = ok != 0;
     }
@@ -722,7 +724,7 @@ int VER1_AnlyFtrColType(void *work, u32 stm_id, u32 *out) {
     } else {
         found = NULL;
         i = 0;
-        cur = ((u8 **)work)[1] + 0x180;
+        cur = work->header + 0x180;
         do {
             v = (u32)SFHLOCAL_GetNbyteL(cur + 0x18, SFHLOCAL_GetSizeofMember(0x18, 0x19));
             if (v == stm_id) {
@@ -740,7 +742,7 @@ int VER1_AnlyFtrColType(void *work, u32 stm_id, u32 *out) {
     return 1;
 }
 
-int VER1_AnlyFtrPicType(void *work, u32 stm_id, u32 *out) {
+int VER1_AnlyFtrPicType(SFHContext *work, u32 stm_id, u32 *out) {
     int i;
     u8 *cur;
     u8 *found;
@@ -749,11 +751,11 @@ int VER1_AnlyFtrPicType(void *work, u32 stm_id, u32 *out) {
     u32 ok;
 
     *out = 0;
-    v = *(u32 *)work + 1;
+    v = (u32)work->state + 1;
     if ((v << __cntlzw(v ^ 2)) >> 31 == 0) {
         bit = 0;
     } else {
-        v = *(u32 *)((u8 *)work + 0xC);
+        v = work->toolVer;
         ok = ((int)v == 0x6B || (int)v >= 0x6E);
         bit = ok != 0;
     }
@@ -762,7 +764,7 @@ int VER1_AnlyFtrPicType(void *work, u32 stm_id, u32 *out) {
     } else {
         found = NULL;
         i = 0;
-        cur = ((u8 **)work)[1] + 0x180;
+        cur = work->header + 0x180;
         do {
             v = (u32)SFHLOCAL_GetNbyteL(cur + 0x18, SFHLOCAL_GetSizeofMember(0x18, 0x19));
             if (v == stm_id) {
@@ -780,7 +782,7 @@ int VER1_AnlyFtrPicType(void *work, u32 stm_id, u32 *out) {
     return 1;
 }
 
-int VER1_AnlyFtrFixFlg(void *work, u32 stm_id, u32 *out) {
+int VER1_AnlyFtrFixFlg(SFHContext *work, u32 stm_id, u32 *out) {
     int i;
     u8 *cur;
     u8 *found;
@@ -789,11 +791,11 @@ int VER1_AnlyFtrFixFlg(void *work, u32 stm_id, u32 *out) {
     u32 ok;
 
     *out = 0;
-    v = *(u32 *)work + 1;
+    v = (u32)work->state + 1;
     if ((v << __cntlzw(v ^ 2)) >> 31 == 0) {
         bit = 0;
     } else {
-        v = *(u32 *)((u8 *)work + 0xC);
+        v = work->toolVer;
         ok = ((int)v == 0x6B || (int)v >= 0x6E);
         bit = ok != 0;
     }
@@ -802,7 +804,7 @@ int VER1_AnlyFtrFixFlg(void *work, u32 stm_id, u32 *out) {
     } else {
         found = NULL;
         i = 0;
-        cur = ((u8 **)work)[1] + 0x180;
+        cur = work->header + 0x180;
         do {
             v = (u32)SFHLOCAL_GetNbyteL(cur + 0x18, SFHLOCAL_GetSizeofMember(0x18, 0x19));
             if (v == stm_id) {
@@ -822,7 +824,7 @@ int VER1_AnlyFtrFixFlg(void *work, u32 stm_id, u32 *out) {
     return 1;
 }
 
-int VER1_AnlyFtrShcFixFlg(void *work, u32 stm_id, u32 *out) {
+int VER1_AnlyFtrShcFixFlg(SFHContext *work, u32 stm_id, u32 *out) {
     int i;
     u8 *cur;
     u8 *found;
@@ -831,11 +833,11 @@ int VER1_AnlyFtrShcFixFlg(void *work, u32 stm_id, u32 *out) {
     u32 ok;
 
     *out = 0;
-    v = *(u32 *)work + 1;
+    v = (u32)work->state + 1;
     if ((v << __cntlzw(v ^ 2)) >> 31 == 0) {
         bit = 0;
     } else {
-        v = *(u32 *)((u8 *)work + 0xC);
+        v = work->toolVer;
         ok = ((int)v == 0x6B || (int)v >= 0x6E);
         bit = ok != 0;
     }
@@ -844,7 +846,7 @@ int VER1_AnlyFtrShcFixFlg(void *work, u32 stm_id, u32 *out) {
     } else {
         found = NULL;
         i = 0;
-        cur = ((u8 **)work)[1] + 0x180;
+        cur = work->header + 0x180;
         do {
             v = (u32)SFHLOCAL_GetNbyteL(cur + 0x18, SFHLOCAL_GetSizeofMember(0x18, 0x19));
             if (v == stm_id) {
@@ -864,7 +866,7 @@ int VER1_AnlyFtrShcFixFlg(void *work, u32 stm_id, u32 *out) {
     return 1;
 }
 
-int VER1_AnlyFtrExpand(void *work, u32 stm_id, u32 *out) {
+int VER1_AnlyFtrExpand(SFHContext *work, u32 stm_id, u32 *out) {
     int i;
     u8 *cur;
     u8 *found;
@@ -873,11 +875,11 @@ int VER1_AnlyFtrExpand(void *work, u32 stm_id, u32 *out) {
     u32 ok;
 
     *out = 0;
-    v = *(u32 *)work + 1;
+    v = (u32)work->state + 1;
     if ((v << __cntlzw(v ^ 2)) >> 31 == 0) {
         bit = 0;
     } else {
-        v = *(u32 *)((u8 *)work + 0xC);
+        v = work->toolVer;
         ok = ((int)v == 0x6B || (int)v >= 0x6E);
         bit = ok != 0;
     }
@@ -886,7 +888,7 @@ int VER1_AnlyFtrExpand(void *work, u32 stm_id, u32 *out) {
     } else {
         found = NULL;
         i = 0;
-        cur = ((u8 **)work)[1] + 0x180;
+        cur = work->header + 0x180;
         do {
             v = (u32)SFHLOCAL_GetNbyteL(cur + 0x18, SFHLOCAL_GetSizeofMember(0x18, 0x19));
             if (v == stm_id) {
@@ -904,7 +906,7 @@ int VER1_AnlyFtrExpand(void *work, u32 stm_id, u32 *out) {
     return 1;
 }
 
-int VER1_AnlyFtrGopN(void *work, u32 stm_id, u32 *out) {
+int VER1_AnlyFtrGopN(SFHContext *work, u32 stm_id, u32 *out) {
     int i;
     u8 *cur;
     u8 *found;
@@ -913,11 +915,11 @@ int VER1_AnlyFtrGopN(void *work, u32 stm_id, u32 *out) {
     u32 ok;
 
     *out = 0;
-    v = *(u32 *)work + 1;
+    v = (u32)work->state + 1;
     if ((v << __cntlzw(v ^ 2)) >> 31 == 0) {
         bit = 0;
     } else {
-        v = *(u32 *)((u8 *)work + 0xC);
+        v = work->toolVer;
         ok = ((int)v == 0x6B || (int)v >= 0x6E);
         bit = ok != 0;
     }
@@ -926,7 +928,7 @@ int VER1_AnlyFtrGopN(void *work, u32 stm_id, u32 *out) {
     } else {
         found = NULL;
         i = 0;
-        cur = ((u8 **)work)[1] + 0x180;
+        cur = work->header + 0x180;
         do {
             v = (u32)SFHLOCAL_GetNbyteL(cur + 0x18, SFHLOCAL_GetSizeofMember(0x18, 0x19));
             if (v == stm_id) {
@@ -948,7 +950,7 @@ int VER1_AnlyFtrGopN(void *work, u32 stm_id, u32 *out) {
     return 1;
 }
 
-int VER1_AnlyFtrGopM(void *work, u32 stm_id, u32 *out) {
+int VER1_AnlyFtrGopM(SFHContext *work, u32 stm_id, u32 *out) {
     int i;
     u8 *cur;
     u8 *found;
@@ -957,11 +959,11 @@ int VER1_AnlyFtrGopM(void *work, u32 stm_id, u32 *out) {
     u32 ok;
 
     *out = 0;
-    v = *(u32 *)work + 1;
+    v = (u32)work->state + 1;
     if ((v << __cntlzw(v ^ 2)) >> 31 == 0) {
         bit = 0;
     } else {
-        v = *(u32 *)((u8 *)work + 0xC);
+        v = work->toolVer;
         ok = ((int)v == 0x6B || (int)v >= 0x6E);
         bit = ok != 0;
     }
@@ -970,7 +972,7 @@ int VER1_AnlyFtrGopM(void *work, u32 stm_id, u32 *out) {
     } else {
         found = NULL;
         i = 0;
-        cur = ((u8 **)work)[1] + 0x180;
+        cur = work->header + 0x180;
         do {
             v = (u32)SFHLOCAL_GetNbyteL(cur + 0x18, SFHLOCAL_GetSizeofMember(0x18, 0x19));
             if (v == stm_id) {
@@ -992,7 +994,7 @@ int VER1_AnlyFtrGopM(void *work, u32 stm_id, u32 *out) {
     return 1;
 }
 
-int VER1_AnlyFtrFxType(void *work, u32 stm_id, u32 *out) {
+int VER1_AnlyFtrFxType(SFHContext *work, u32 stm_id, u32 *out) {
     int i;
     u8 *cur;
     u8 *found;
@@ -1001,11 +1003,11 @@ int VER1_AnlyFtrFxType(void *work, u32 stm_id, u32 *out) {
     u32 ok;
 
     *out = 0;
-    v = *(u32 *)work + 1;
+    v = (u32)work->state + 1;
     if ((v << __cntlzw(v ^ 2)) >> 31 == 0) {
         bit = 0;
     } else {
-        v = *(u32 *)((u8 *)work + 0xC);
+        v = work->toolVer;
         ok = ((int)v == 0x6B || (int)v >= 0x6E);
         bit = ok != 0;
     }
@@ -1014,7 +1016,7 @@ int VER1_AnlyFtrFxType(void *work, u32 stm_id, u32 *out) {
     } else {
         found = NULL;
         i = 0;
-        cur = ((u8 **)work)[1] + 0x180;
+        cur = work->header + 0x180;
         do {
             v = (u32)SFHLOCAL_GetNbyteL(cur + 0x18, SFHLOCAL_GetSizeofMember(0x18, 0x19));
             if (v == stm_id) {
@@ -1028,14 +1030,14 @@ int VER1_AnlyFtrFxType(void *work, u32 stm_id, u32 *out) {
     if (found == NULL) {
         return 0;
     }
-    if (*(s32 *)((u8 *)work + 0xC) < 0xD2) {
+    if ((s32)work->toolVer < 0xD2) {
         return 0;
     }
     *out = (u32)SFHLOCAL_GetNbyteL(found + 0x27, SFHLOCAL_GetSizeofMember(0x27, 0x28));
     return 1;
 }
 
-int VER1_AnlyFtrNetWidth(void *work, u32 stm_id, u32 *out) {
+int VER1_AnlyFtrNetWidth(SFHContext *work, u32 stm_id, u32 *out) {
     int i;
     u8 *cur;
     u8 *found;
@@ -1044,11 +1046,11 @@ int VER1_AnlyFtrNetWidth(void *work, u32 stm_id, u32 *out) {
     u32 ok;
 
     *out = 0;
-    v = *(u32 *)work + 1;
+    v = (u32)work->state + 1;
     if ((v << __cntlzw(v ^ 2)) >> 31 == 0) {
         bit = 0;
     } else {
-        v = *(u32 *)((u8 *)work + 0xC);
+        v = work->toolVer;
         ok = ((int)v == 0x6B || (int)v >= 0x6E);
         bit = ok != 0;
     }
@@ -1057,7 +1059,7 @@ int VER1_AnlyFtrNetWidth(void *work, u32 stm_id, u32 *out) {
     } else {
         found = NULL;
         i = 0;
-        cur = ((u8 **)work)[1] + 0x180;
+        cur = work->header + 0x180;
         do {
             v = (u32)SFHLOCAL_GetNbyteL(cur + 0x18, SFHLOCAL_GetSizeofMember(0x18, 0x19));
             if (v == stm_id) {
@@ -1080,7 +1082,7 @@ int VER1_AnlyFtrNetWidth(void *work, u32 stm_id, u32 *out) {
     return 1;
 }
 
-int VER1_AnlyFtrNetHeight(void *work, u32 stm_id, u32 *out) {
+int VER1_AnlyFtrNetHeight(SFHContext *work, u32 stm_id, u32 *out) {
     int i;
     u8 *cur;
     u8 *found;
@@ -1089,11 +1091,11 @@ int VER1_AnlyFtrNetHeight(void *work, u32 stm_id, u32 *out) {
     u32 ok;
 
     *out = 0;
-    v = *(u32 *)work + 1;
+    v = (u32)work->state + 1;
     if ((v << __cntlzw(v ^ 2)) >> 31 == 0) {
         bit = 0;
     } else {
-        v = *(u32 *)((u8 *)work + 0xC);
+        v = work->toolVer;
         ok = ((int)v == 0x6B || (int)v >= 0x6E);
         bit = ok != 0;
     }
@@ -1102,7 +1104,7 @@ int VER1_AnlyFtrNetHeight(void *work, u32 stm_id, u32 *out) {
     } else {
         found = NULL;
         i = 0;
-        cur = ((u8 **)work)[1] + 0x180;
+        cur = work->header + 0x180;
         do {
             v = (u32)SFHLOCAL_GetNbyteL(cur + 0x18, SFHLOCAL_GetSizeofMember(0x18, 0x19));
             if (v == stm_id) {

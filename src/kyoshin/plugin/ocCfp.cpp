@@ -93,38 +93,31 @@ extern "C" int getTimeIdxMax(VMThread* ths){
 extern "C" {
 BOOL vmOCRegist(OCData* pOC);
 }
-extern OCData lbl_eu_80525D58[];
-void ocCfpRegist() {
-    vmOCRegist(lbl_eu_80525D58);
-}
 
-// ----- Retail data sections (all defined by this TU) -----
-// .rodata time-selector names (unsized; MWCC 4-packs them to 0x20),
-// .sdata2 property/entry names (each sized to its 8-byte retail slot for a
-// deterministic 0x20), .data OC property/selector tables + the OCData root
-// (80525D58, the frontier label). Property/selector length words are 0 in
-// retail; null entries terminate each table. The .data pieces after the
-// first land on 8-byte boundaries (retail layout; MWCC places them so).
-// Function-pointer casts bridge the VM table types (OCGetSetFunc et al.)
-// and the plain (VMThread*) handlers; only addresses are emitted.
-__declspec(section ".rodata") __attribute__((used))
-char lbl_eu_804FA9D0[] = "getTimeIdxMin";
-__declspec(section ".rodata") __attribute__((used)) char lbl_eu_804FA9E0[0x10] = "getTimeIdxMax";
-__declspec(section ".sdata2") __attribute__((used)) char lbl_eu_80665D98[8] = "hour";
-__declspec(section ".sdata2") __attribute__((used)) char lbl_eu_80665DA0[8] = "min";
-__declspec(section ".sdata2") __attribute__((used)) char lbl_eu_80665DA8[8] = "timeIdx";
-__declspec(section ".sdata2") __attribute__((used)) char lbl_eu_80665DB0[8] = "cfp";
-__declspec(section ".data") __attribute__((used)) OCProperty lbl_eu_80525CF0[4] = {
-    { lbl_eu_80665D98, (OCGetSetFunc)getCtrlWordA33C, (OCGetSetFunc)setCtrlConfigA, 0 },
-    { lbl_eu_80665DA0, (OCGetSetFunc)getCtrlWordA37C, (OCGetSetFunc)setCtrlConfigB, 0 },
-    { lbl_eu_80665DA8, (OCGetSetFunc)getCtrlWordDiv3, 0, 0 },
+// ----- Retail data tables (all defined by this TU) -----
+// name-guess: VM "cfp" property table registered by ocCfpRegist; retail
+// .data object 0x80525CF0 (three entries plus a null terminator).
+static OCProperty sCfpProperties[4] = {
+    { "hour", (OCGetSetFunc)getCtrlWordA33C, (OCGetSetFunc)setCtrlConfigA, 0 },
+    { "min", (OCGetSetFunc)getCtrlWordA37C, (OCGetSetFunc)setCtrlConfigB, 0 },
+    { "timeIdx", (OCGetSetFunc)getCtrlWordDiv3, 0, 0 },
     { 0, 0, 0, 0 },
 };
-__declspec(section ".data") __attribute__((used)) OCSelector lbl_eu_80525D30[3] = {
-    { lbl_eu_804FA9D0, (OCSelectorFunc)getTimeIdxMin, 0 },
-    { lbl_eu_804FA9E0, (OCSelectorFunc)getTimeIdxMax, 0 },
+
+// name-guess: VM "cfp" selector table registered by ocCfpRegist; retail
+// .data object 0x80525D30 (two entries plus a null terminator).
+static OCSelector sCfpSelectors[3] = {
+    { "getTimeIdxMin", (OCSelectorFunc)getTimeIdxMin, 0 },
+    { "getTimeIdxMax", (OCSelectorFunc)getTimeIdxMax, 0 },
     { 0, 0, 0 },
 };
-__declspec(section ".data") __attribute__((used)) OCData lbl_eu_80525D58[1] = {
-    { lbl_eu_80665DB0, (OCCtorFunc)getType9Value, lbl_eu_80525CF0, lbl_eu_80525D30 },
+
+// name-guess: root OCData for the script-facing "cfp" object; retail
+// .data object 0x80525D58.
+static OCData sCfpData[1] = {
+    { "cfp", (OCCtorFunc)getType9Value, sCfpProperties, sCfpSelectors },
 };
+
+void ocCfpRegist() {
+    vmOCRegist(sCfpData);
+}

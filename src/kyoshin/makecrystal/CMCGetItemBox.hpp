@@ -1,5 +1,7 @@
 #pragma once
 
+#include "kyoshin/cf/CfBdat.hpp"
+
 #include <types.h>
 #include "kyoshin/CBaseCur.hpp"
 #include "kyoshin/CSysWin.hpp"
@@ -176,9 +178,6 @@ extern "C" __declspec(noinline) u32 getMCItemSubItemId(CMCItemBoxSub*, u32);
 extern "C" __declspec(noinline) s8 getMCItemSubKind(CMCItemBoxSub*, u32);
 // Retail mangled names kept as source names so the reloc matches exactly.
 extern "C" char lbl_eu_8050FF8C[];
-extern "C" void* lbl_eu_806640D8;  // declared void* in CMCEffStart.hpp/CItemBoxLine.hpp -> kept void*
-extern char* lbl_eu_806640EC;  // canonical decl: CMCCrystalBox.hpp
-extern "C" void* lbl_eu_80664100;  // unused address anchor - kept void*
 extern "C" void* sCrystalItemTable;  // unused address anchor - kept void*
 extern "C" void* sCrystalMesTable;  // unused address anchor - kept void*
 extern "C" void* sItemMesTable;  // unused address anchor - kept void*

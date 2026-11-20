@@ -1,4 +1,5 @@
 // CfMapMineManager - mine-point management (field collection points)
+#include "kyoshin/cf/CfBdat.hpp"
 #include "kyoshin/cf/CfMapMineManager.hpp"
 #include "kyoshin/cf/object/CfObjectEffSymbols.hpp"
 #include "kyoshin/cf/object/CfObjectSelectorObj.hpp"
@@ -497,7 +498,7 @@ extern "C" void mineReleasePoints(CfMapMineManager* self) {
 
 extern "C" int mineFillPointFromRow(CfMapMineManager* self, u32 rowId, MinePoint* pt,
                              int isNew) {
-    BdatFilePointer* file = lbl_eu_806640C8;
+    BdatFilePointer* file = (BdatFilePointer*)::cf::CfBdat::spCurMineListFileData;
     const char* cols = lbl_eu_80508424;
 
     // Row scratch: retail keeps every bdat-derived value memory-resident.
@@ -549,7 +550,7 @@ extern "C" int mineFillPointFromRow(CfMapMineManager* self, u32 rowId, MinePoint
         pt->mCounter1A = 0;
         if (isNew != 0) {
             // Retail re-reads the bdat handle global into a fresh local here.
-            BdatFilePointer* file2 = lbl_eu_806640C8;
+            BdatFilePointer* file2 = (BdatFilePointer*)::cf::CfBdat::spCurMineListFileData;
             u8 lo = (u8)getBdatStringColumnValue(file2, cols + 0x00, rowId);
             u8 hi = (u8)getBdatStringColumnValue(file2, cols + 0x08, rowId);
             int r = mtRand__Q22ml4mathFi((hi - lo) + 1);
@@ -588,7 +589,7 @@ extern "C" int mineRespawnPoint(CfMapMineManager* self, MinePoint* pt) {
         void* fp = getFP(cols + 0x37);
         u32 id = pt->mFlags >> 22;
         u32 resId = getBdatStringColumnValue(
-            lbl_eu_806640C8, cols + 0x45, id);
+            ::cf::CfBdat::spCurMineListFileData, cols + 0x45, id);
         name.mText[0] = 0;
         const char* nm = (const char*)getBdatStringColumnValue(
             (BdatFilePointer*)fp, cols + 0x4E, (u16)resId);
@@ -695,7 +696,7 @@ extern "C" void mineUpdatePoint(CfMapMineManager* self, MinePoint* pt) {
     if (area != pt->mArea1E) return;
     if (sub != pt->mAreaSub1F) return;
 
-    BdatFilePointer* file = lbl_eu_806640C8;
+    BdatFilePointer* file = (BdatFilePointer*)::cf::CfBdat::spCurMineListFileData;
     const char* cols = lbl_eu_80508424;
     u32 id = fl >> 22;
     u8 lo = (u8)getBdatStringColumnValue(file, cols, id);
@@ -777,7 +778,7 @@ extern "C" void mineUpdateMsgRing(CfMapMineManager* self) {
 // an absolute threshold of 50).
 extern "C" void mineFindNearestPoint(MineNode** out, CfMapMineManager* mgr,
                               CfMapMineManager* list, f32* pos) {
-    BdatFilePointer* file = lbl_eu_806640C8;
+    BdatFilePointer* file = (BdatFilePointer*)::cf::CfBdat::spCurMineListFileData;
     u16 area = gmGlobalFlag42;
     u16 sub = gmGlobalFlag44;
     u32 playerId = cf::CfGameManager::getQueuedFileEventCount();
@@ -850,7 +851,7 @@ extern "C" void mineFindNearestPoint(MineNode** out, CfMapMineManager* mgr,
 // mineScanPoints - main per-frame point scan: spawn/despawn and insert new.
 // ---------------------------------------------------------------------------
 void CfMapMineManager::ScanPoints() {
-    BdatFilePointer* file = lbl_eu_806640C8;
+    BdatFilePointer* file = (BdatFilePointer*)::cf::CfBdat::spCurMineListFileData;
     u32 rowBegin = Bdat_GetRowBase_B41C(file);
     u32 rowEnd = rowBegin + Bdat_GetMaxRow_B1EC(file);
     u16 area = gmGlobalFlag42;
@@ -982,7 +983,7 @@ extern "C" int mineDropItem(CfMapMineManager* self, MinePoint* pt,
         sMineNameInitialized = 1;
     }
 
-    BdatFilePointer* file = lbl_eu_806640C8;
+    BdatFilePointer* file = (BdatFilePointer*)::cf::CfBdat::spCurMineListFileData;
     *outFlag = 0;
     memset(item, 0, 0x34);
     const char* cols = lbl_eu_80508424;
@@ -1229,7 +1230,7 @@ extern "C" void mineUpdateAll(CfMapMineManager* self) {
             // Respawn delay derived from the bdat kind byte.
             u32 id3 = nearest->mItem.mFlags >> 22;
             const char* colsb = lbl_eu_80508424;
-            u8 kindCh = (u8)getBdatStringColumnValue(lbl_eu_806640C8,
+            u8 kindCh = (u8)getBdatStringColumnValue(::cf::CfBdat::spCurMineListFileData,
                                                      colsb + 0x6C, id3);
             f32 delay = 60.0f *
                         (30.0f *

@@ -1,12 +1,12 @@
 // Decompiled adx_stmc.c - ADX stream management (CriWare)
 #include <harness_catalog.h>
 
-extern volatile s32 lbl_eu_805E3E98;
-extern u8 lbl_eu_805E3EA8[0x1040];
-extern volatile s32 lbl_eu_805E3E9C;
-extern volatile s32 lbl_eu_805E3EA0;
-extern volatile s32 lbl_eu_805E3EA4;
-extern volatile s32 lbl_eu_805E4EE8[2];
+extern volatile s32 sStmInitCount;
+extern u8 sStmHandles[0x1040];
+extern volatile s32 sStmDefaultIndex;
+extern volatile s32 sStmServerBusy;
+extern volatile s32 sStmMaxRetry;
+extern volatile s32 sStmEmptyErrorCount[2];
 
 /* Retail error-string pool (lbl_eu_80516148): both cvFsOpen failure paths
  * pass the same "E02110501 adxstmf_stat_exec: can't open " message. */
@@ -55,7 +55,7 @@ typedef struct {
     /* 0x08 */ s32 extCount;
 } ADXSTMConfig;
 
-__declspec(section ".data") __attribute__((aligned(8))) u32 lbl_eu_80560030[4] = {24,24,16,0};
+__declspec(section ".data") __attribute__((aligned(8))) u32 sStmHandleCounts[4] = {24,24,16,0}; // name-guess: ADXSTM_Create reads [0] as the default handle count, [1] as the extended-pool start index and [2] as its count
 
 static inline s32 div_s2048(u32 val) {
     return (s32)val >> 11;
@@ -66,16 +66,16 @@ static inline u32 ceil_div2048(u32 size) {
 }
 
 s32 ADXSTM_Init(void) {
-    s32 tmp = ++lbl_eu_805E3E98;
+    s32 tmp = ++sStmInitCount;
     if (tmp == 1) {
-        memset(lbl_eu_805E3EA8, 0, 0x1040);
+        memset(sStmHandles, 0, 0x1040);
     }
     return 1;
 }
 
 void ADXSTM_Finish(void) {
-    if (--lbl_eu_805E3E98 != 0) return;
-    memset(lbl_eu_805E3EA8, 0, 0x1040);
+    if (--sStmInitCount != 0) return;
+    memset(sStmHandles, 0, 0x1040);
 }
 
 void ADXSTMF_SetupHandleMember(ADXSTMHndl* h, void* fileName, u32 fileSizeParam,
@@ -126,12 +126,12 @@ void* ADXSTM_Create(void* fileName, int type) {
     ADXCRS_Enter();
 
     if (type < 0x100) {
-        count = lbl_eu_80560030[0];
-        pool = (ADXSTMHndl*)lbl_eu_805E3EA8;
-        start = lbl_eu_805E3E9C * 0x68;
+        count = sStmHandleCounts[0];
+        pool = (ADXSTMHndl*)sStmHandles;
+        start = sStmDefaultIndex * 0x68;
         h = NULL;
         for (i = 0; i < count; i++) {
-            h = (ADXSTMHndl*)(lbl_eu_805E3EA8 + start);
+            h = (ADXSTMHndl*)(sStmHandles + start);
             if ((s8)h->active == 0) break;
             start += 0x68;
         }
@@ -142,11 +142,11 @@ void* ADXSTM_Create(void* fileName, int type) {
             h->slotType = 1;
         }
     } else {
-        start = lbl_eu_80560030[1] * 0x68;
-        count = lbl_eu_80560030[2];
+        start = sStmHandleCounts[1] * 0x68;
+        count = sStmHandleCounts[2];
         h = NULL;
         for (i = 0; i < count; i++) {
-            h = (ADXSTMHndl*)(lbl_eu_805E3EA8 + start);
+            h = (ADXSTMHndl*)(sStmHandles + start);
             if ((s8)h->active == 0) break;
             start += 0x68;
         }
@@ -589,7 +589,7 @@ void adxstmf_stat_exec(ADXSTMHndl* h) {
             goto epilogue;
         }
 
-        s32 maxRetry = lbl_eu_805E3EA4;
+        s32 maxRetry = sStmMaxRetry;
         if (maxRetry >= 0 && h->retryCount >= maxRetry) {
             h->stat = 4;
             goto epilogue;
@@ -624,7 +624,7 @@ epilogue:
     if (h->fileSectors == 0) {
         h->subState = 0;
         h->stat = 3;
-        lbl_eu_805E4EE8[0]++;
+        sStmEmptyErrorCount[0]++;
         return;
     }
 
@@ -678,7 +678,7 @@ epilogue:
             if (!cvFsIsAvailableRetry(h->fileHandle)) {
                 h->stat = 4;
             } else {
-                s32 maxRetry = lbl_eu_805E3EA4;
+                s32 maxRetry = sStmMaxRetry;
                 if (maxRetry >= 0 && h->retryCount >= maxRetry) {
                     h->stat = 4;
                 } else if (h->retryCount < 0x7FFFFFFF) {
@@ -831,16 +831,16 @@ unlock_and_return:
 
 void ADXSTM_ExecServer(void) {
     ADXCRS_Enter();
-    if (SVM_TestAndSet(&lbl_eu_805E3EA0)) {
+    if (SVM_TestAndSet(&sStmServerBusy)) {
         s32 i;
-        ADXSTMHndl* h = (ADXSTMHndl*)lbl_eu_805E3EA8;
+        ADXSTMHndl* h = (ADXSTMHndl*)sStmHandles;
         for (i = 0; i < 40; i++) {
             if ((s32)h->active == 1) {
                 ADXSTMF_ExecHndl(h);
             }
             h++;
         }
-        lbl_eu_805E3EA0 = 0;
+        sStmServerBusy = 0;
     }
     ADXCRS_Leave();
 }
@@ -926,9 +926,9 @@ int ADXSTM_IsOpenedFile(ADXSTMHndl* h) {
 }
 
 /* .bss: reverse retail order for MWCC emission. */
-volatile s32 lbl_eu_805E4EE8[2];
-u8 lbl_eu_805E3EA8[0x1040];
-volatile s32 lbl_eu_805E3EA4;
-volatile s32 lbl_eu_805E3EA0;
-volatile s32 lbl_eu_805E3E9C;
-volatile s32 lbl_eu_805E3E98;
+volatile s32 sStmEmptyErrorCount[2]; // name-guess: incremented by adxstmf_stat_exec when h->fileSectors == 0
+u8 sStmHandles[0x1040];
+volatile s32 sStmMaxRetry; // name-guess: compared with h->retryCount on cvFs read failures in adxstmf_stat_exec
+volatile s32 sStmServerBusy; // name-guess: SVM_TestAndSet/clear guard around ADXSTM_ExecServer's handle walk
+volatile s32 sStmDefaultIndex; // name-guess: multiplied by 0x68 to choose the first default handle in ADXSTM_Create
+volatile s32 sStmInitCount; // name-guess: incremented/decremented by ADXSTM_Init/Finish; first init clears the handle pool

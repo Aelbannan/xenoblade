@@ -5,7 +5,7 @@
 // clobber. Functions marked REBUILD-STUB are compilable placeholders whose
 // original drafts must be re-derived; their bodies may regress prior
 // non-target matches.
-
+#include "kyoshin/cf/CfCamSymbols.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/cf/CtrlMoveBase.hpp"
 #include "kyoshin/cf/object/CfObjectEffSymbols.hpp"
@@ -21,7 +21,7 @@
 // Imports from code_800F42AC.cpp (TU-local, as in the other callers).
 extern "C" int findObjectById__Fi(int id);
 extern "C" int isBattleStatusActive(void* self, int id);
-extern "C" bool isGlobalCamFlagSet__Fi(int mask);
+
 
 // Retail __ct__cf_CtrlPad (0x80097274): base-constructs CtrlRemote (passing
 // posObj through, arg5 = 0), stores the CtrlPad vtable manually (novtable),
@@ -239,7 +239,7 @@ probe100:
             }
         } else {
             cf::CfGameManager::getInstance();
-            if (isGlobalCamFlagSet__Fi(0x400000) == 0) {
+            if (isGlobalCamFlagSet(0x400000) == 0) {
                 // Clear the lock-on bit when both target words agree it is
                 // stale (rlwinm keep-range with wraparound == clearing one
                 // bit).
@@ -268,7 +268,7 @@ probe100:
     movePcTopTickDispatch((cf::CCtrlMovePC*)(void*)self->mSubObj8C);
     self->mField10 = self->mFieldC;
     if (isBattleStatusActive(&self->mField5C->mField8, 6) != 0 ||
-        (cf::CfGameManager::getInstance(), isGlobalCamFlagSet__Fi(0x400000) != 0)) {
+        (cf::CfGameManager::getInstance(), isGlobalCamFlagSet(0x400000) != 0)) {
         self->mField14 = lbl_eu_80666720;
     }
 tail:
@@ -289,7 +289,7 @@ void dispatchCtrlPcActions(cf::CtrlPc* self) {
     CtrlPlayerObj* obj;
 
     cf::CfGameManager::getInstance();
-    if (isGlobalCamFlagSet__Fi(0x1000000) != 0) {
+    if (isGlobalCamFlagSet(0x1000000) != 0) {
         goto fail;
     }
     p = self->mField5C;
@@ -384,7 +384,7 @@ void CtrlPc_HandleMenuSelect(cf::CtrlPc* self) {
     if (CtrlPc_IsPadIdle(self) == 0) {
         return;
     }
-    Fd44State* h = GetZealObjPtr();
+    Fd44State* h = reinterpret_cast<Fd44State*>(GetZealObjPtr());
     if (h != 0 && h->mFieldB8 == 4) {
         // Battle-menu open: gate the action on the pad bit mask.
         mask = getPadConfigEntry(0x16);
@@ -525,7 +525,7 @@ extern "C" int CtrlPc_IsPadIdle(cf::CtrlPc* self) {
     }
     chainActive = (((CBattleManagerViewPc*)getInstance__Q22cf14CBattleManagerFv())->mField20C8 != 0);
     cf::CfGameManager::getInstance();
-    if (isGlobalCamFlagSet__Fi(0x4000000) != 0) {
+    if (isGlobalCamFlagSet(0x4000000) != 0) {
         return 0;
     }
     CVoiceOwnerIntfPc* owner = (CVoiceOwnerIntfPc*)self->mField5C;
@@ -685,7 +685,7 @@ extern "C" int CtrlPad_ReturnTrue() { return 1; }
 // REBUILD-STUB: body lost in the accidental clobber; re-derive from retail
 // ASM (uses isGlobalCamFlagSet__Fi(0x10000000) gate).
 void CtrlPc_UpdatePadTriState(cf::CtrlPc* self) {
-    if (isGlobalCamFlagSet__Fi(0x10000000) != 0) {
+    if (isGlobalCamFlagSet(0x10000000) != 0) {
         self->mField24 = -1;
         return;
     }

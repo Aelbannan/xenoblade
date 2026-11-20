@@ -1,10 +1,14 @@
 // Auto-scaffolded catalog TU for kyoshin/cf/CPartsChange
+#include "kyoshin/cf/CfBdat.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"  // canonical isResourceFlagSet decl
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
 
 #include "kyoshin/cf/CPartsChange.hpp"
+#include "kyoshin/cf/object/CActorParam.hpp"  // real CActorParam virtuals at primary-vtable slots
+#include "kyoshin/cf/object/CfObjectMove.hpp"  // real +0x60C collision-region member
+#include "monolib/util/reslist.hpp"  // real _reslist_base layout for the manager list
 #include "monolib/util/CPathUtil.hpp"
 #include <string.h>
 namespace nw4r { namespace math { f32 FrSqrt(f32 x); } }
@@ -13,6 +17,33 @@ using cf::CfPartyInfo;
 using cf::CfPartyInfoSortKey;
 using cf::CfActorAccessors;
 using cf::CfObjectPcExt;
+
+// Real owning classes for the embedded move object at actor+0x3E9C. The
+// hierarchy cannot be spelled with static_cast here: CfObjectActor.hpp pulls
+// CAIAction.hpp, whose CPartsChange imports clash with this TU's definitions.
+static inline cf::CfObjectMove* actorMoveBase(void* p) {
+    return reinterpret_cast<cf::CfObjectMove*>((u8*)p + 0x3E9C);
+}
+static inline cf::CfObject* actorMove(void* p) {
+    return reinterpret_cast<cf::CfObject*>((u8*)p + 0x3E9C);
+}
+static inline cf::CfObjectModel* actorModel(void* p) {
+    return reinterpret_cast<cf::CfObjectModel*>((u8*)p + 0x3E9C);
+}
+// Counted view debt for the two tail regions whose real owner header clashes
+// with this TU (VS-OBJ CfObjectPc / CfObjectMove): keep them explicit.
+struct CfObjectPcTailView {
+    u8 _pad[0x45C0];
+    u16 field_45C0;
+    u16 field_45C2;
+    u16 field_45C4;
+    u16 field_45C6;
+    u16 field_45C8;
+};
+struct PcExt60CView {
+    u8 _pad[0x60C];
+    void* slot;
+};
 
 struct CfPartsElem4C {
     u8 pad_00[0x10];
@@ -31,28 +62,15 @@ struct CfPartsElem4C {
     u8 field_39[9];  // 0x39
     u8 field_42[9];  // 0x42
 };
-// Manager element table: 512 CfPartsElem4C entries (0x4C stride) filling
-// +0x00..+0x9800, with the live count at +0x9800 and the +0xA808 list head
-// (sentinel at +0xA80C) after the middle block.
-struct PartsListA808 {
-    u8 _pad[4];
-    void* sentinel;
+// The manager's element table is its first sub-object: a 0x200-entry array
+// followed by the live count. A 16-slot actor table and the party-info
+// reslist follow at higher offsets in the manager object.
+struct CfPartsElemArray {
+    CfPartsElem4C mElems[0x200];
+    u32 mCount;
 };
-struct PartsMgrView {
-    CfPartsElem4C entries[512];
-    u32 count9800;
-    u8 _mid[0x1004];
-    PartsListA808 listA808;
-};
-// Flag words of the battle-actor object (+0x3F00 / +0x3F08), plus the
-// 0x3F10 id word read by FindFreeSlot/UnregisterEntry.
-struct ActorFlagWords {
-    u8 _pad[0x3F00];
-    u32 f3F00;
-    u8 _pad04[4];
-    u32 f3F08;
-    u8 _pad0C[4];
-    u32 f3F10;    // +0x3F10 id word
+struct CfPartsManager {
+    CfPartsElemArray mElems;
 };
 // Load-flag halfwords of the manager object reached through spPartsActorTable
 // (+0xB276 cleared when a load starts, +0xB278 set to the load flag).
@@ -62,10 +80,6 @@ struct PartsLoadFlags {
     u16 setB278;    // +0xB278
 };
 
-struct ActorKeyView {
-    u8 _pad[0x456C];
-    u16 key456C;
-};
 // 8-byte slot pair (id + payload), e.g. the FindFreeSlot table.
 struct SlotPair8 {
     u32 id;
@@ -76,12 +90,6 @@ struct SlotPair8 {
 struct SlotPtr8 {
     void* ptr;  // 0x00
     u32 data;   // 0x04
-};
-// TU-local view of the +0x60C object slot read by CfObjectPcExt::GetField60C
-// (exact layout; replaces the raw offset deref).
-struct PcExt60CView {
-    u8 _pad[0x60C];
-    void* slot;  // 0x60C
 };
 // Actor slot table: 16 SlotPair8 entries, live-count words at +0x94/+0xA0/+0xA2.
 struct ActorSlotTable {
@@ -109,7 +117,6 @@ extern int (cf::CfPartyInfo::*const lbl_eu_80532AF0)(void*);
 void __ptmf_scall();
 
 // BDAT name-table handle and its column-name string block.
-extern void* lbl_eu_806640CC;
 extern const char lbl_eu_80503C48[];
 u32 getBdatStringColumnValue(void* bdat, const char* col, s32 index);
 
@@ -151,17 +158,17 @@ extern const f32 lbl_eu_80667AD4;
 
 // Same-TU helpers referenced before their definitions below. noinline keeps
 // MWCC from inlining the (stub) bodies and collapsing retail's bl sites.
-void* CPartsChange_FindActorById(u8* self, u32 id);
+void* CPartsChange_FindActorById(void* self, u32 id);
 void* CPartsChange_FindEntryById(u8* self, u32 id);
 
 // Same lookup, but TU-local so MWCC inlines it at the FireIdEffect site
 // (retail inlines the scan there and keeps a bl at ResolveActorEntry).
 static inline CfPartsElem4C* FindEntryByIdInline(u8* self, u32 id) {
     if (id != 0) {
-        u32 n = reinterpret_cast<PartsMgrView*>(self)->count9800;
-        CfPartsElem4C* p = reinterpret_cast<PartsMgrView*>(self)->entries;
+        u32 n = reinterpret_cast<CfPartsManager*>(self)->mElems.mCount;
+        CfPartsElem4C* p = reinterpret_cast<CfPartsManager*>(self)->mElems.mElems;
         for (u32 i = 0; i < n; i++) {
-            if (id == p->field_1C) return &reinterpret_cast<PartsMgrView*>(self)->entries[i];
+            if (id == p->field_1C) return &reinterpret_cast<CfPartsManager*>(self)->mElems.mElems[i];
             p++;
         }
     }
@@ -233,6 +240,7 @@ struct SlotNameState {
 // index and look it up in the suffix-name source at +8; store the matching
 // index in the 0xC..0x2B byte array and flag the record dirty at +0x2C.
 extern "C" void CPartsChange_ResolveSlotNames(u8* self, u8 flag, CNameSource* src) {
+    cf::CPartsChange* rec = reinterpret_cast<cf::CPartsChange*>(self);
     if (src == 0) return;
     *(void**)(self + 8) = src;
     *(u8*)(self + 4) = flag;
@@ -253,8 +261,8 @@ extern "C" void CPartsChange_ResolveSlotNames(u8* self, u8 flag, CNameSource* sr
             if ((u32)idx >= n) idx = -1;
         }
         if (idx >= 0) {
-            *(u8*)(self + 0xC + i) = (u8)idx;
-            *(u8*)(self + 0x2C) = 1;
+            rec->mData[i] = (u8)idx;
+            rec->mField2C = 1;
         }
     }
     CPartsChange_NotifySlotStates(self);
@@ -338,7 +346,7 @@ extern "C" void* __dt___reslist_base_cf_CfPartyInfo(u8* self, int flags) {
     *sentinel = (u32)sentinel;
     sentinel = *(u32**)(self + 4);
     sentinel[1] = (u32)sentinel;
-    if (*(u8*)(self + 0x1C) == 0) {
+    if (reinterpret_cast<reslist<CfPartyInfo*>*>(self)->unk1C == 0) {
         void* mem = *(void**)(self + 0x14);
         if (mem != 0) {
             operator delete[](mem);
@@ -406,7 +414,7 @@ extern "C" void* __dt__reslist_cf_CfPartyInfo(u8* self, int flags) {
             *sentinel = (u32)sentinel;
             sentinel = *(u32**)(self + 4);
             sentinel[1] = (u32)sentinel;
-            if (*(u8*)(self + 0x1C) == 0) {
+            if (reinterpret_cast<reslist<CfPartyInfo*>*>(self)->unk1C == 0) {
                 void* mem = *(void**)(self + 0x14);
                 if (mem != 0) {
                     operator delete[](mem);
@@ -459,7 +467,7 @@ extern "C" void* __dt__80193538(u8* self, int flags) {
         *sentinel = (u32)sentinel;
         sentinel = *(u32**)(list + 4);
         sentinel[1] = (u32)sentinel;
-        if (*(u8*)(list + 0x1C) == 0) {
+        if (reinterpret_cast<reslist<CfPartyInfo*>*>(list)->unk1C == 0) {
             void* mem2 = *(void**)(list + 0x14);
             if (mem2 != 0) {
                 operator delete[](mem2);
@@ -507,9 +515,9 @@ extern "C" void CPartsChange_ClearElemTimerForObj(u8* obj) {
     u8* mgr = (u8*)spPartsActorTable;
     if (mgr == 0) return;
     if ((*(u32*)(obj + 0x3F00) & 0x4) == 0) return;
-    if (*(u16*)(obj + 0x45C0) == 0) return;
+    if (reinterpret_cast<CfObjectPcTailView*>(obj)->field_45C0 == 0) return;
     key = (u16)((s32)*(u16*)(obj + 0x456C) >> 4);
-    ((cf::CPartsChangeDevView*)obj)->mAtA8(1);
+    reinterpret_cast<cf::CActorParam*>(obj)->CActorParam_commitArtsStatus(1);
     CfPartsElem4C* found;
     if (key != 0) {
         CfPartsElem4C* p = (CfPartsElem4C*)mgr;
@@ -563,7 +571,7 @@ extern "C" void CPartsChange_FlushChangeList(u8* self) {
 
     while (node != sentinel) {
         Slot* slots = node->slots;
-        if ((*(u16*)((u8*)slots + 0xA0) & 1) != 0) {
+        if ((reinterpret_cast<cf::CActorParam*>(slots)->mFieldA0 & 1) != 0) {
             int i;
             for (i = 0; i < 16; i++, slots++) {
                 void* p = findObjectById(slots->id);
@@ -614,9 +622,9 @@ extern "C" void* Bdat_GetTable_AA34();
 extern "C" void CPartsChange_InitChangeRecord(u8* self, u32 id) {
     Bdat_GetTable_AA34();
     if (id == 0) return;
-    PartsMgrView* mgr = (PartsMgrView*)self;
-    CfPartsElem4C* p = mgr->entries;
-    CfPartsElem4C* end = mgr->entries + mgr->count9800;
+    CfPartsManager* mgr = reinterpret_cast<CfPartsManager*>(self);
+    CfPartsElem4C* p = mgr->mElems.mElems;
+    CfPartsElem4C* end = mgr->mElems.mElems + mgr->mElems.mCount;
     while (p != end) {
         if (id == p->field_1C) return;
         p++;
@@ -635,25 +643,25 @@ extern "C" void CPartsChange_InitChangeRecord(u8* self, u32 id) {
     memset(rec.field_39, 0, 9);
     memset(rec.field_42, 0, 9);
     rec.field_1E &= (u16)~0x400u;
-    u32 n = mgr->count9800;
-    mgr->count9800 = n + 1;
-    memcpy(mgr->entries + n, &rec, 0x4C);
+    u32 n = mgr->mElems.mCount;
+    mgr->mElems.mCount = n + 1;
+    memcpy(mgr->mElems.mElems + n, &rec, 0x4C);
 }
 
-void CfActorAccessors::SetFlag400(int enable) { if (enable) mFlags1E |= 0x400; else mFlags1E &= ~0x400; }
+void CfActorAccessors::SetFlag400(int enable) { cf::CActorParam* a = reinterpret_cast<cf::CActorParam*>(this); if (enable) a->mFlags1E |= 0x400; else a->mFlags1E &= ~0x400; }
 
-u32 CfActorAccessors::GetField94() { return mField94; }
+u32 CfActorAccessors::GetField94() { return reinterpret_cast<cf::CActorParam*>(this)->mField94; }
 
 // Scan 16 actor slots at self+0xA828 (stride 0xA4); match word at +0xA8BC.
-extern "C" void* CPartsChange_FindActorById(u8* self, u32 id) {
+extern "C" void* CPartsChange_FindActorById(void* self, u32 id) {
     // Shared null epilogue (retail or r3,r7). Pure reg_swap vs retail p/result
     // colours is accepted via witness when FULL is not reached.
     void* result = 0;
     if (id != 0) {
-        u8* p = self;
+        u8* p = (u8*)self;
         for (u32 i = 0; i < 16; i++) {
             if (id == *(u32*)(p + 0xA8BC)) {
-                result = self + 0xA828 + i * 0xA4;
+                result = (u8*)self + 0xA828 + i * 0xA4;
                 break;
             }
             p += 0xA4;
@@ -675,7 +683,7 @@ extern "C" void CPartsChange_InitActorEntry(u8* self) {
     *(u16*)(self + 0x9A) = 0;
 }
 
-u16 CfActorAccessors::GetField9E() { return mField9E; }
+u16 CfActorAccessors::GetField9E() { return reinterpret_cast<cf::CActorParam*>(this)->mField9E; }
 
 // 0x180: sum the per-item offsets the B48 gimmick list reports and average
 // them (falling back to the second argument's vector when nothing matched).
@@ -745,22 +753,12 @@ void CPartsChange_FindActorForFileEvent(){}
 
 void CPartsChange_CheckPlayerReload(){}
 
-// 0x4C-stride party-change element + manager view for CPartsChange_UpdateElemSpeeds
-// (layout from CPartsChange.ctx.c).
-struct CfPartsElemArray {
-    CfPartsElem4C mElems[0x200];
-    u32 mCount;
-};
-struct CfPartsManager {
-    CfPartsElemArray mElems;
-};
 extern "C" int CfRes_getD80Flag();
 f32 Scn_GetFrameDelta(void* view);
 extern const f32 lbl_eu_80667AC0;
 extern const f32 lbl_eu_80667AD4;
 extern const f32 lbl_eu_80667AB8;
 extern const f32 lbl_eu_80667ABC;
-extern u8* lbl_eu_806640A8;
 extern u32 lbl_eu_80664184;
 
 // 0xA0: re-seed one party-change element: clear flag 0x4, read the BDAT row
@@ -768,14 +766,14 @@ extern u32 lbl_eu_80664184;
 // (float)row, then wipe the 9-byte name at +0x42.
 extern "C" void CPartsChange_ReseedElemTimer(CfPartsElem4C* self) {
     self->field_1E &= (u16)~0x4u;
-    u32 val = getBdatStringColumnValue(lbl_eu_806640A8, lbl_eu_80503C48,
+    u32 val = getBdatStringColumnValue(::cf::CfBdat::spFldMapListFileData, lbl_eu_80503C48,
                                        (s32)lbl_eu_80664184);
     u8 row = *(u8*)&val;
     if (row == 0) row = 1;
     f32 v = 60.0f * (30.0f * (f32)row);
     self->field_10 = v;
     self->field_14 = 1800.0f;
-    memset((u8*)self + 0x42, 0, 9);
+    memset(self->field_42, 0, 9);
 }
 
 // Per-frame speed decay across the party-change element array.
@@ -805,9 +803,9 @@ extern "C" void CPartsChange_UpdateElemSpeeds(CfPartsManager* self) {
     }
 }
 
-u32 CfActorAccessors::TestFlag400() { return (mFlags1E >> 10) & 0x1u; }
+u32 CfActorAccessors::TestFlag400() { return (reinterpret_cast<cf::CActorParam*>(this)->mFlags1E >> 10) & 0x1u; }
 
-extern "C" u32 CtrlRemote_TouchBitByArg(u32 arg);
+#include "kyoshin/cf/CtrlRemoteApi.hpp"
 
 // Retail bl's CtrlRemote_TouchBitByArg(self+0x1D44), then cntlzw/rlwinm bool coerce.
 extern "C" int CPartsChange_IsSubStateClear(u8* self) {
@@ -818,10 +816,6 @@ extern "C" int CPartsChange_IsSubStateClear(u8* self) {
 // 0xB8: one-shot collection bookkeeping when the 0x400000 gate is clear:
 // set the shared bit, award the collect count, then (when the id is a
 // collepedia id) flip every set resource flag and fire the player level-up
-// Player sub-field pointer at +0x74 (same slot as the ocUnit talk-target).
-// Per-statement use only.
-struct PartsPlayer74View { u8 _00[0x74]; void* p74; };
-
 // callback for the first three players.
 extern "C" void CPartsChange_UpdateCollectionState(u8* self) {
     if (self == 0) return;
@@ -837,7 +831,7 @@ extern "C" void CPartsChange_UpdateCollectionState(u8* self) {
     for (s32 j = 0; j < 3; j++) {
         u8* player = (u8*)getPlayer__Q22cf13CfGameManagerFi(j);
         if (player != 0) {
-            fireLvUpMode2(((PartsPlayer74View*)player)->p74);
+            fireLvUpMode2(reinterpret_cast<cf::CActorParam*>(player)->mField74);
         }
     }
 }
@@ -846,10 +840,10 @@ extern "C" void CPartsChange_UpdateCollectionState(u8* self) {
 extern "C" int CPartsChange_CheckNameEntry(u32 row, void* unused1, void* unused2,
                             cf::CfActorAccessors* actor) {
     int ok = 1;
-    if ((actor->mFlags1E & 0x20) != 0) {
+    if ((reinterpret_cast<cf::CActorParam*>(actor)->mFlags1E & 0x20) != 0) {
         // Retail keeps the raw u32 result in a stack slot and reads its
         // first byte (big-endian stw+lbz), i.e. a byte view of the value.
-        u32 val = getBdatStringColumnValue(lbl_eu_806640CC, lbl_eu_80503C48 + 0x40,
+        u32 val = getBdatStringColumnValue(::cf::CfBdat::spCurBtlEneListFileData, lbl_eu_80503C48 + 0x40,
                                            (s32)row);
         u8 v = *(u8*)&val;
         if (v > 3) ok = 0;
@@ -874,9 +868,9 @@ extern "C" void* CPartsChange_FindActorByObj(u8* self, u8* obj) {
     Entry* e;
     Node* node;
     void* result = 0;
-    u32 id = reinterpret_cast<cf::CfObjectPcExt*>(obj)->mField45C0;
+    u32 id = reinterpret_cast<CfObjectPcTailView*>(obj)->field_45C0;
     if (id != 0) {
-        sentinel = (Node*)((PartsMgrView*)self)->listA808.sentinel;
+        sentinel = (Node*)reinterpret_cast<reslist<CfPartyInfo*>*>(self + 0xA808)->mStartNodePtr;
         node = sentinel->next;
         while (node != sentinel) {
             e = node->entry;
@@ -890,19 +884,19 @@ extern "C" void* CPartsChange_FindActorByObj(u8* self, u8* obj) {
     return result;
 }
 
-u32 CfActorAccessors::TestFlag8() { return (mFlags1E >> 3) & 0x1u; }
+u32 CfActorAccessors::TestFlag8() { return (reinterpret_cast<cf::CActorParam*>(this)->mFlags1E >> 3) & 0x1u; }
 
-void CfActorAccessors::SetField8C(float val) { mField8C = val; }
+void CfActorAccessors::SetField8C(float val) { reinterpret_cast<cf::CActorParam*>(this)->mField8C = val; }
 
-void CfObjectPcExt::SetField45C4(u16 val) { mField45C4 = val; }
+void CfObjectPcExt::SetField45C4(u16 val) { reinterpret_cast<CfObjectPcTailView*>(this)->field_45C4 = val; }
 
-void CfObjectPcExt::SetField45C8(u16 val) { mField45C8 = val; }
+void CfObjectPcExt::SetField45C8(u16 val) { reinterpret_cast<CfObjectPcTailView*>(this)->field_45C8 = val; }
 
-u16 CfObjectPcExt::GetField45C6() { return mField45C6; }
+u16 CfObjectPcExt::GetField45C6() { return reinterpret_cast<CfObjectPcTailView*>(this)->field_45C6; }
 
-void* CfActorAccessors::GetField30() { return &mField30; }
+void* CfActorAccessors::GetField30() { return &reinterpret_cast<cf::CActorParam*>(this)->mField30; }
 
-void* CfObjectPcExt::GetField60C() { return (void*)&((PcExt60CView*)this)->slot; }
+void* CfObjectPcExt::GetField60C() { return &reinterpret_cast<PcExt60CView*>(this)->slot; }
 
 void CfPartyInfo::SetField2D(u8 val) { field_2D = val; }
 
@@ -916,7 +910,7 @@ extern "C" int CPartsChange_SpawnById(u32 id) {
     CfPartsElem4C* found;
     if (key != 0) {
         CfPartsElem4C* p = (CfPartsElem4C*)mgr;
-        u32 n = reinterpret_cast<PartsMgrView*>(mgr)->count9800;
+        u32 n = reinterpret_cast<CfPartsManager*>(mgr)->mElems.mCount;
         for (u32 i = 0; i < n; i++) {
             if (key == p->field_1C) {
                 found = (CfPartsElem4C*)(mgr + i * 0x4C);
@@ -997,11 +991,11 @@ void CPartsChange_RebuildPartyTable(){}
 extern "C" void* CPartsChange_FindEntryById(u8* self, u32 id) {
     // Ascending i < n → mtctr + cmpli/ble (PATTERNS); shared null epilogue.
     if (id != 0) {
-        u32 n = reinterpret_cast<PartsMgrView*>(self)->count9800;
-        CfPartsElem4C* p = reinterpret_cast<PartsMgrView*>(self)->entries;
+        u32 n = reinterpret_cast<CfPartsManager*>(self)->mElems.mCount;
+        CfPartsElem4C* p = reinterpret_cast<CfPartsManager*>(self)->mElems.mElems;
         for (u32 i = 0; i < n; i++) {
             if (id == p->field_1C) {
-                return &reinterpret_cast<PartsMgrView*>(self)->entries[i];
+                return &reinterpret_cast<CfPartsManager*>(self)->mElems.mElems[i];
             }
             p++;
         }
@@ -1010,15 +1004,15 @@ extern "C" void* CPartsChange_FindEntryById(u8* self, u32 id) {
 }
 
 extern "C" void* CPartsChange_FindPartsElem(u8* self, u8* obj) {
-    if ((reinterpret_cast<ActorFlagWords*>(obj)->f3F00 & 0x4) != 0) {
-        u16 raw = reinterpret_cast<ActorKeyView*>(obj)->key456C;
+    if ((actorMove(obj)->unk64 & 0x4) != 0) {
+        u16 raw = *(u16*)&actorMoveBase(obj)->_6D0;
         u32 idx = (u32)((s32)raw >> 4);
         if (idx != 0) {
-            CfPartsElem4C* p = reinterpret_cast<PartsMgrView*>(self)->entries;
+            CfPartsElem4C* p = reinterpret_cast<CfPartsManager*>(self)->mElems.mElems;
             u32 id = (u32)(u16)idx;
-            for (u32 i = 0; i < reinterpret_cast<PartsMgrView*>(self)->count9800; i++) {
+            for (u32 i = 0; i < reinterpret_cast<CfPartsManager*>(self)->mElems.mCount; i++) {
                 if (id == p->field_1C) {
-                    return (void*)&reinterpret_cast<PartsMgrView*>(self)->entries[i];
+                    return (void*)&reinterpret_cast<CfPartsManager*>(self)->mElems.mElems[i];
                 }
                 p++;
             }
@@ -1051,7 +1045,7 @@ extern "C" int CPartsChange_CountListNodes(u8* self) {
     void* cur;
     void* end;
     int n;
-    end = reinterpret_cast<PartsListA808*>(self)->sentinel;
+    end = reinterpret_cast<reslist<CfPartyInfo*>*>(self)->mStartNodePtr;
     n = 0;
     cur = *(void**)end;
     goto check;
@@ -1078,15 +1072,15 @@ extern "C" void CPartsChange_ResetBattleEntry(u8* self, u32 a, u32 b) {
     if (self == 0) return;
     if (spPartsActorTable == 0) return;
     bool flag = false;
-    if (((cf::CPartsChangeDevView*)self)->mAt2BC() != 0 ||
-        (reinterpret_cast<ActorFlagWords*>(self)->f3F08 & 0x08000000) != 0) {
+    if (reinterpret_cast<cf::CActorParam*>(self)->CActorParam_isBattleLocked() ||
+        (actorMove(self)->field_0x6C & 0x08000000) != 0) {
         flag = true;
     }
     if (flag) {
-        u16 v = reinterpret_cast<cf::CfObjectPcExt*>(self)->mField45C8;
+        u16 v = reinterpret_cast<CfObjectPcTailView*>(self)->field_45C8;
         if (v != 0) {
             CPartsChange_UpdateCollectionState((u8*)(u32)v);
-            reinterpret_cast<cf::CfObjectPcExt*>(self)->mField45C8 = 0;
+            reinterpret_cast<CfObjectPcTailView*>(self)->field_45C8 = 0;
         }
     }
     CPartsChange_RemoveBattleEntry((void*)spPartsActorTable, self);
@@ -1147,7 +1141,7 @@ extern "C" void CPartsChange_SpawnItemDrop(u32 id, u8* obj, f32* pos, u8* arg4, 
     vec[2] = pos[2];
     ((cf::CPartsChangeDevView*)actor)->mAt9C(vec);
     ((cf::CPartsChangeDevView*)actor)->mAtC4(ang);
-    ((cf::CPartsChangeDevView*)actor)->mAtDC(1.5f);
+    reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_setStatScale(1.5f);
     *(u32*)(actor + 0x73C) = id;
     copyTboxFromObj(actor);
     playActorSound__Q22cf10CfSoundManFUlUlUlUlf(0, sPartsChangeDropSoundIds[n], 0, 0, lbl_eu_80667AD0);
@@ -1189,10 +1183,10 @@ extern "C" int CPartsChange_FindFreeSlot(u8* self, u8* obj, u32 arg3, u32 flags)
         slots[idx + 1] = slots[1];
     }
     u32 idx2 = (u32)slot * 2;
-    slots[idx2] = reinterpret_cast<ActorFlagWords*>(obj)->f3F10;
+    slots[idx2] = actorModel(obj)->field_0x74;
     slots[idx2 + 1] = 0;
-    reinterpret_cast<cf::CfObjectPcExt*>(obj)->mField45C0 = (u16)reinterpret_cast<ActorSlotTable*>(self)->f94;
-    reinterpret_cast<cf::CfObjectPcExt*>(obj)->mField45C6 = (u16)slot;
+    reinterpret_cast<CfObjectPcTailView*>(obj)->field_45C0 = (u16)reinterpret_cast<ActorSlotTable*>(self)->f94;
+    reinterpret_cast<CfObjectPcTailView*>(obj)->field_45C6 = (u16)slot;
     reinterpret_cast<ActorSlotTable*>(self)->fA2 = (s16)(reinterpret_cast<ActorSlotTable*>(self)->fA2 + 1);
     return 1;
     }
@@ -1204,12 +1198,12 @@ extern "C" int CPartsChange_FindFreeSlot(u8* self, u8* obj, u32 arg3, u32 flags)
 extern "C" int CPartsChange_UnregisterEntry(u8* actor, u8* obj) {
     // One combined guard keeps a single shared `li r3,0` epilogue (retail jumps
     // both early-outs and the loop fall-through to the same block).
-    if (obj != 0 && reinterpret_cast<ActorFlagWords*>(obj)->f3F10 != 0) {
+    if (obj != 0 && actorModel(obj)->field_0x74 != 0) {
         u8* p = actor;
         for (u32 i = 0; i < 16; i++) {
             // Retail re-reads the 0x3F10 id every iteration (the slot
             // stores may alias obj), so the id load must stay in the loop.
-            if (*(u32*)p == *(u32*)(obj + 0x3F10)) {
+            if (*(u32*)p == actorModel(obj)->field_0x74) {
                 u32* slots = (u32*)actor;
                 slots[i * 2] = 0;
                 slots[i * 2 + 1] = 0;
@@ -1292,7 +1286,7 @@ extern "C" void CPartsChange_ResolveSlotReplayIds(u8* self) {
     for (s32 i = 0; i < 16; i++) {
         u8* act = PcActorOf(*(u32*)(self + i * 8));
         if (act != 0) {
-            *(u32*)(act + 0x3F00) &= ~0x04000000u;
+            actorMove(act)->unk64 &= ~0x04000000u;
         } else if (PcActorOf(*(u32*)(self + i * 8)) != 0) {
             *(u32*)(self + i * 8) = 0;
         }
@@ -1308,7 +1302,7 @@ extern "C" void CPartsChange_ResolveSlotReplayIds(u8* self) {
         *(u16*)(self + 0x98) = 0;
     }
     u16 replay = 0;
-    void* bdat = lbl_eu_806640CC;
+    void* bdat = ::cf::CfBdat::spCurBtlEneListFileData;
     const char* col = lbl_eu_80503C48;
     for (s32 i = 0; i < 16; i++) {
         u8* act = PcActorOf(*(u32*)(self + i * 8));
@@ -1336,7 +1330,7 @@ extern "C" void CPartsChange_ResolveSlotReplayIds(u8* self) {
 extern "C" void CPartsChange_RemoveListNode(u8* self, void** key) {
     // Same shape as matched unlinkNodesByKey (code_800B06A4): next before
     // cur, next loaded first in the loop body → cur r8 / next r7.
-    PartsRNode* sentinel = static_cast<PartsRNode*>(reinterpret_cast<PartsListA808*>(self)->sentinel);
+    PartsRNode* sentinel = (PartsRNode*)reinterpret_cast<reslist<CfPartyInfo*>*>(self)->mStartNodePtr;
     PartsRNode* next;
     PartsRNode* cur = sentinel->next;
     while (cur != sentinel) {

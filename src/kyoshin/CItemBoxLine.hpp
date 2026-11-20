@@ -43,23 +43,7 @@ struct CIBLVec3 {
     float z;   // +0x8
 };
 
-/* Vtable view for the texture-resource objects at +0x38/+0x3C: the tab-pane
- * refresh (ItemBoxLine_DrawTabRowText) dispatches through virtual index 1 (vtable+0x0C)
- * with a 'timg' fourcc, a texture name/handle and a flag. */
-class CItemBoxLineResView {
-public:
-    virtual void vf00() = 0;                       // index 0 -> +0x08
-    virtual u32 vf01(u32 fourcc, const char* name, u32 flag) = 0; // index 1 -> +0x0C
-};
 
-/* Minimal vtable view of the owned heap objects deleted by ItemBoxLine_UnloadFiles
- * (deleting dtor at vtable+0x08, virtual index 0). */
-class CItemBoxLineDtorView {
-public:
-    virtual void vfdtor(int flags) = 0;   // index 0 -> +0x08
-};
-
-// Tab cursor at CItemBoxLine+0xA0 (retail RTTI name "CIBLTabCur", base list
 // CBaseCur). Its vtable has no destructor slot: ~CBaseCur is non-virtual.
 class CIBLTabCur : public CBaseCur {
 public:
@@ -139,15 +123,15 @@ public:
     u32 field2C;                                // +0x2C: common-archive file handle
     u32 field30;                                // +0x30: loaded file handle
     u8* field34;                                // +0x34: owned scratch buffer (MemManager::deallocate)
-    CItemBoxLineResView* field38;       // +0x38: texture resource object B (fallback)
-    CItemBoxLineResView* field3C;       // +0x3C: texture resource object A
+    nw4r::lyt::ArcResourceAccessor* field38; // +0x38: common-archive resource accessor
+    nw4r::lyt::ArcResourceAccessor* field3C; // +0x3C: item-line archive resource accessor
     nw4r::lyt::Layout* field40;         // +0x40: active layout
     nw4r::lyt::AnimTransform* field44;  // +0x44: animation transform 1
     nw4r::lyt::AnimTransform* field48;  // +0x48: animation transform 2
     u8 field4C;                         // +0x4C
     u8 pad_4D[0x50 - 0x4D];             // 0x4D..0x4F
     int field50;                        // +0x50: navigation state machine
-    CItemBoxLineDtorView* field54;      // +0x54: owned object (deleted by ItemBoxLine_UnloadFiles)
+    nw4r::ut::WideTagProcessor* field54; // +0x54: owned tag processor (ctored by __ct__CTagProcessor)
     u8 field58;                 // +0x58
     u8 unk59;               // +0x59: read by ItemBoxLine_IsReadyFlag
     u8 tabEntries[9];           // 0x5A..0x62: entry bytes, cleared by ItemBoxLine_ResetTabBytes

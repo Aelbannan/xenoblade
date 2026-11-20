@@ -177,7 +177,7 @@ unsigned char CMenuGetItem_GetField90();
 
 void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32,
                                                          nw4r::lyt::Layout*);
-u32 PTNotice_IsActive_3C10();                      // party-change notice gate
+extern "C" u32 PTNotice_IsActive_3C10();                      // party-change notice gate
 s32 MenuTutorialIsCreated();                      // party-change notice gate
 u32 GetItemMulti_IsActiveFlag();                      // block-condition gate
 u32 hasQuestWindow();                      // quest-menu gate
@@ -187,7 +187,6 @@ u32 hasQuestWindow();                      // quest-menu gate
 
 // Global data imports (sbss/rodata; MWCC does not mangle global-scope data).
 extern CLandTelopGlobal* landTelopInstance;
-extern u8* lbl_eu_806640E0;
 extern char lbl_eu_805018A8[];
 extern u32 gmPauseFlags;      // render-gate mode bitfield (.sbss; bit 21 = busy)
 extern f32 lbl_eu_806673C8;      // layout reset frame constant

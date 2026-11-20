@@ -7,7 +7,7 @@
 // CtrlRemote_TouchBitByArg, which would win the C-name resolution and emit a byte-masked
 // return; CTaskGame.hpp is therefore not included here and the two CTaskGame
 // statics are addressed by their literal retail names instead.
-extern "C" u32 CtrlRemote_TouchBitByArg(u32);
+#include "kyoshin/cf/CtrlRemoteApi.hpp"
 class CTaskGame;
 
 #include "kyoshin/IUICf.hpp"

@@ -21,9 +21,7 @@
 extern const float lbl_eu_80668600;
 // u32->float cast-magic constant (2^52) shared with the retail sdata2 pool.
 extern const double lbl_eu_80668608;
-// Shop window arc file path string (split1 .rodata).
-extern "C" char lbl_eu_8050A62C[];
-// Animate the attached anim-transform forward to a frame (returns true when done).
+
 // Animate the attached anim-transform in reverse (returns true when done).
 // Retail symbol is unmangled (C linkage).
 // Draw a nw4r layout with the given draw info.

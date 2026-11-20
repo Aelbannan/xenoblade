@@ -1,13 +1,15 @@
 #pragma once
-
 // TU-private imports and layout views for kyoshin/cf/CSuddenCommu.cpp (moved
 // out of the public CSuddenCommu.hpp, which keeps only the class).
 
 #include "kyoshin/cf/CSuddenCommu.hpp"
 #include "kyoshin/cf/CBattleManager.hpp"
+#include "kyoshin/cf/CfCamSymbols.hpp"
+#include "kyoshin/menu/CMenuZeal.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 #include "kyoshin/cf/object/CfObject.hpp"
 #include "kyoshin/cf/object/CActorParam.hpp"
+#include "kyoshin/cf/CtrlRemoteApi.hpp"
 
 // Battle-actor base pointer: CfGameManager::getPlayer(i) returns the embedded
 // CfObjectMove at base+0x3E9C; subtracting 0x3E9C recovers the base used by
@@ -75,7 +77,7 @@ struct CSuddenCommuActBody;
 
 #include "kyoshin/cfsys/CfObjectImplMove.hpp"
 #include "kyoshin/CUICfManager.hpp"
-// View of the CBattleManager actor list: the reslist sentinel pointer
+
 // (mActorList3.mHead) sits at +0x48.
 struct CSuddenCommuBmList {
     u8 pad_00[0x48];
@@ -165,10 +167,10 @@ extern "C" {
     // kyoshin/cf/CBattleManager.hpp (included at the top of this header).
     // Voice/help imports used by the sudden-commu triggers (unmangled retail
     // names - C linkage keeps the call relocs verbatim).
-    u32 CtrlRemote_TouchBitByArg(u32 resourceId);
-    // No-arg form: retail callers never materialize r3 before this call
+
+
     // (stale-r3 pattern - the callee ignores any incoming argument).
-    int GetZealObjPtr(void);
+
 }
 
 // Retail CSuddenCommu vtable (.data, split unit). The class is
@@ -215,7 +217,7 @@ extern "C" {
     void addTableValueWithClamp__Q22cf13CfGameManagerFv(int a, int b, int c);
     // CfGameManager gate used by the commu re-arm: call
     // cf::CfGameManager::isTimerActive() from the canonical class header.
-    bool isGlobalCamFlagSet__Fi(int mask);
+
     // Commu camera/trigger helpers (retail pre-mangled names; the Fv suffix
     // does not reflect the actual argument counts - see addTableValueWithClamp).
     void clearPlayerEffect__Q22cf13CfGameManagerFv(void* obj);

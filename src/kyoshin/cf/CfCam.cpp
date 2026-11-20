@@ -65,7 +65,7 @@ extern "C" void* __dynamic_cast(void* obj, long offset, const void* src_type,
 extern const void* __RTTI__Q22cf11CfCamFollow[2];
 extern const void* lbl_eu_80661B30[2];
 // C++-linkage global; MWCC mangles it to isGlobalCamFlagSet__Fi (the retail name).
-int isGlobalCamFlagSet(int gate);
+
 // Cross-TU imports (flat retail names).
 // ScnRes_VertRayForward_E398's retail ABI passes two FP args after the four GPR args
 // (same shape as CtrlMoveBase.hpp / CfCamEvent.hpp).
@@ -679,7 +679,7 @@ extern "C" int cfCam_getBit19_0x0C(void* _this) {
 }
 // isGlobalCamFlagSet__Fi: flag-bit probe.  Retail codegen is the branchless idiom
 // r0 = flag; r3 = r0 & mask; r3 = -r3; r0 = r0 | r3; return r0 & 1.
-extern "C" bool isGlobalCamFlagSet__Fi(s32 mask) {
+bool isGlobalCamFlagSet(int mask) {
     unsigned int flag = gmGameFlags;
     unsigned int x = flag & (unsigned int)mask;
     return ((((unsigned int)-(int)x | x) >> 31) & 1) != 0;
@@ -2612,7 +2612,7 @@ int cfCam_selectCamTarget(cf::CfCamFollow* self, void* arg, float* out1, float* 
             }
         }
     }
-    int flags2 = CfRes_getE24Bit22() | (int)isGlobalCamFlagSet__Fi(0xABA40000) |
+    int flags2 = CfRes_getE24Bit22() | (int)isGlobalCamFlagSet(0xABA40000) |
                  (int)cfCam_getE28Bit24();
     if (cfCam_testUnk04M(reinterpret_cast<int>(self), 0xC10) == 0 && uiBusy == 0) {
         if (self->unk254 != 0) {

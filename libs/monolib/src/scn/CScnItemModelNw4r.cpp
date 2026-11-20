@@ -2,7 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include <harness_catalog.h>
-#include "monolib/src/scn/CScnItemPool.hpp"
+#include "monolib/scn/CScnItemPool.hpp"
 #include "monolib/scn/CScn.hpp"
 #include <monolib/scn/CScn.hpp>
 

@@ -6569,12 +6569,13 @@ monolib/src/scn/CScnEffectActNw4r.cpp:
 	.rodata	start:0x80524108 end:0x80524128
 	.text	start:0x8049FA78 end:0x804A051C
 	.sdata2     start:0x8066ab74 end:0x8066ab78
-	.sdata        start:0x80663A30 end:0x80663A38
+	.sdata        start:0x80663A20 end:0x80663A38
 monolib/src/scn/CScnFadeMan.cpp:
 	.data	start:0x8056EB50 end:0x8056EB60
 	.rodata	start:0x80524128 end:0x80524138
 	.text	start:0x804A051C end:0x804A0954
 	.sdata2     start:0x8066ab78 end:0x8066aba0
+	.sdata      start:0x80663A38 end:0x80663A40
 monolib/src/scn/CScnFilter.cpp:
 	.sdata2     start:0x8066ABA0 end:0x8066ABB0
 	.data	start:0x8056EB60 end:0x8056EB78

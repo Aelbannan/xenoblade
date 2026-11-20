@@ -1,3 +1,4 @@
+#include "kyoshin/cf/CfBdat.hpp"
 #include "kyoshin/CUIWindowManager.hpp"
 #include "kyoshin/CQuestWindowApi.hpp"
 #include "kyoshin/CCol6SystemApi.hpp"
@@ -2487,7 +2488,7 @@ int UIWin_FlagBufCanShow(CFlagBuffer* flagBuf) {
 
     int v60 = flagBuf->field_0x60;
     if (v60 != 0) {
-        colA.w = getBdatStringColumnValue(lbl_eu_80664098, sBdatColumnNames,
+        colA.w = getBdatStringColumnValue(::cf::CfBdat::spFldNpcListFileData, sBdatColumnNames,
                                           v60);
         id = -1;
         if ((int)(u16)colA.h < 0x12C) {
@@ -2503,7 +2504,7 @@ int UIWin_FlagBufCanShow(CFlagBuffer* flagBuf) {
 
     int v62 = flagBuf->field_0x62;
     if (v62 != 0) {
-        colB.w = getBdatStringColumnValue(lbl_eu_80664098, sBdatColumnNames,
+        colB.w = getBdatStringColumnValue(::cf::CfBdat::spFldNpcListFileData, sBdatColumnNames,
                                           v62);
         id = -1;
         if ((int)(u16)colB.h < 0x12C) {
@@ -2680,7 +2681,7 @@ int UIWin_UpdateItemAvail(CFlagBuffer* self, u32 arg1, u32 arg2, u32 arg3, u32 a
                             }
                             if (stored) {
                                 u32 col = getBdatStringColumnValue(
-                                    lbl_eu_806640EC, &sBdatColumnNames[9],
+                                    ::cf::CfBdat::spItmItemListFileData, &sBdatColumnNames[9],
                                     (u32)(u16)arg2);
                                 if ((u32)((u16)col - 0xA) <= 1) {
                                     CItem_consumeFamilyCnt((u32)(u16)arg2,
@@ -2737,7 +2738,7 @@ int UIWin_UpdateItemAvail(CFlagBuffer* self, u32 arg1, u32 arg2, u32 arg3, u32 a
                                                     row->field_0x12[j]);
                                             }
                                             u32 col = getBdatStringColumnValue(
-                                                lbl_eu_806640EC,
+                                                ::cf::CfBdat::spItmItemListFileData,
                                                 &sBdatColumnNames[9], val);
                                             if ((u32)((u16)col - 0xA) <= 1) {
                                                 CItem_consumeFamilyCnt(
@@ -2769,7 +2770,7 @@ int UIWin_UpdateItemAvail(CFlagBuffer* self, u32 arg1, u32 arg2, u32 arg3, u32 a
                                                 row->field_0x12[j]);
                                         }
                                         u32 col = getBdatStringColumnValue(
-                                            lbl_eu_806640EC,
+                                            ::cf::CfBdat::spItmItemListFileData,
                                             &sBdatColumnNames[9], val);
                                         if ((u32)((u16)col - 0xA) <= 1) {
                                             CItem_consumeFamilyCnt(

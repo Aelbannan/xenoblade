@@ -1,10 +1,11 @@
 // Auto-scaffolded catalog TU for kyoshin/CFloorMap
 // Replace stubs with high-level C/C++ during decomp.
 
+#include "kyoshin/cf/CfBdat.hpp"
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/CFloorMap.hpp"
 #include <cstdio>
-#include "monolib/util/MemManager.hpp"
+
 #include "monolib/work/CEventFile.hpp"
 #include "monolib/device/CFileHandle.hpp"
 #include "monolib/lib/CLibLayout.hpp"
@@ -19,8 +20,14 @@
 #include "kyoshin/code_80135FDC_Lyt.hpp"
 namespace nw4r { namespace db { void Panic(const char* file, int line, const char* fmt, ...); } }
 #include "kyoshin/plugin/ocBdat.hpp"
-#include "kyoshin/CFloorMapImports.hpp"
 #include "kyoshin/code_80135FDC_State.hpp"
+
+// Retail-unmangled accessor; the shared owner header uses a different
+// (C++-linkage) return type, so this TU keeps its typed C declaration.
+extern "C" CFloorMapGimmickGlobal* getUnk80664658();
+extern "C" CFloorMapVec3* GimFindPosByRow(void* mgr, u32 id);
+extern "C" int atoi(const char* str);
+extern "C" double atof(const char* str);
 
 // Map-coordinate widening uses ordinary C casts; MWCC emits the corresponding
 // 0x4330 conversion literals in first-use order, matching the retail pool.
@@ -375,8 +382,8 @@ void FloorMap_RefreshFloorRows(void* self) {
     CFloorMapFloorNameEntry* eSel =
         (CFloorMapFloorNameEntry*)((u8*)self + cur->field_09 * 0x30C);
     LayoutSetTextBoxFmtValue(cur->field_30D8, "txt_flr", *(char**)&eSel->field_14, 0);
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)lbl_eu_806640A8, "txt_tit",
-                  BdatGetPtrDirect((const void*)lbl_eu_806640A8, (const char*)"name", sCurrentMapId), 0);
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)::cf::CfBdat::spFldMapListFileData, "txt_tit",
+                  BdatGetPtrDirect((const void*)::cf::CfBdat::spFldMapListFileData, (const char*)"name", sCurrentMapId), 0);
 
     // Second position target (cursor-position pane) when the current floor
     // flag is set.
@@ -650,12 +657,12 @@ void FloorMap_RefreshLayoutBlock(CFloorMapLayoutBlock* self) {
 
         // Project this row's scroll range onto the map plane for the current
         // region.
-        s16 vx = BdatGetS16Direct((const void*)lbl_eu_806640A8, "minimap_painx", sCurrentMapId);
-        s16 vy = BdatGetS16Direct((const void*)lbl_eu_806640A8, "minimap_painy", sCurrentMapId);
+        s16 vx = BdatGetS16Direct((const void*)::cf::CfBdat::spFldMapListFileData, "minimap_painx", sCurrentMapId);
+        s16 vy = BdatGetS16Direct((const void*)::cf::CfBdat::spFldMapListFileData, "minimap_painy", sCurrentMapId);
         fvx = (f32)(s16)vx;
         fvy = (f32)(s16)vy;
 
-        u8 region = BdatGetU8Direct((const void*)lbl_eu_806640A8, "minimap_rate", sCurrentMapId);
+        u8 region = BdatGetU8Direct((const void*)::cf::CfBdat::spFldMapListFileData, "minimap_rate", sCurrentMapId);
         f32 denom = ((f32)(u8)region) * regionScale;
 
         rx = fvx + (pos.x / denom) * projScale;
@@ -1030,11 +1037,11 @@ void FloorMap_PlaceFloorMarker(CFloorMapFull* self, u32 idx) {
     if (!found) return;
 
     // Project onto the map pane coordinate system for the current world.
-    s16 vx = BdatGetS16Direct((const void*)lbl_eu_806640A8, "minimap_painx", sCurrentMapId);
-    s16 vy = BdatGetS16Direct((const void*)lbl_eu_806640A8, "minimap_painy", sCurrentMapId);
+    s16 vx = BdatGetS16Direct((const void*)::cf::CfBdat::spFldMapListFileData, "minimap_painx", sCurrentMapId);
+    s16 vy = BdatGetS16Direct((const void*)::cf::CfBdat::spFldMapListFileData, "minimap_painy", sCurrentMapId);
     fy = (f32)(s16)vy;
     fx = (f32)(s16)vx;
-    u8 region = (u8)BdatGetU8Direct((const void*)lbl_eu_806640A8, "minimap_rate", sCurrentMapId);
+    u8 region = (u8)BdatGetU8Direct((const void*)::cf::CfBdat::spFldMapListFileData, "minimap_rate", sCurrentMapId);
     f32 denom = ((f32)(u8)region) * 0.1f;
 
     work = pos;
@@ -1082,8 +1089,8 @@ void FloorMap_ResolveMapPos(void* self, void* arg2) {
         }
     }
 
-    s16 val1 = BdatGetS16Direct((const void*)lbl_eu_806640A8, "minimap_painx", sCurrentMapId);
-    s16 val2 = BdatGetS16Direct((const void*)lbl_eu_806640A8, "minimap_painy", sCurrentMapId);
+    s16 val1 = BdatGetS16Direct((const void*)::cf::CfBdat::spFldMapListFileData, "minimap_painx", sCurrentMapId);
+    s16 val2 = BdatGetS16Direct((const void*)::cf::CfBdat::spFldMapListFileData, "minimap_painy", sCurrentMapId);
 
     // Coordinates are widened with plain casts; the projected values
     // are kept in an array local so they spill to the stack
@@ -1093,7 +1100,7 @@ void FloorMap_ResolveMapPos(void* self, void* arg2) {
     vals[1] = (f32)(s16)val2;
     vals[2] = 0.0f;
 
-    u8 region = (u8)BdatGetU8Direct((const void*)lbl_eu_806640A8, "minimap_rate", sCurrentMapId);
+    u8 region = (u8)BdatGetU8Direct((const void*)::cf::CfBdat::spFldMapListFileData, "minimap_rate", sCurrentMapId);
     f32 denom = ((f32)(u8)region) * 0.1f;
 
     // Word-wise snapshot of the current position so the divisions read the
@@ -1131,8 +1138,10 @@ u32 FloorMap_PickMarkerRow(void* self) {
 
     nw4r::lyt::Pane* pane = slots->pane->FindPaneByName("ico_land", 1);
 
-    CFloorMapChildNode* node = *(CFloorMapChildNode**)((u8*)pane + 0x14);
-    CFloorMapChildNode* end = (CFloorMapChildNode*)((u8*)pane + 0x14);
+    CFloorMapChildNode* node =
+        (CFloorMapChildNode*)pane->GetChildList().GetBeginIter().operator->();
+    CFloorMapChildNode* end =
+        (CFloorMapChildNode*)pane->GetChildList().GetEndIter().operator->();
 
     // Cached float locals: retail keeps these in f31/f30 across every call
     // in the loop (hence the nonvolatile-float prologue).
@@ -1250,17 +1259,18 @@ void* FloorMap_CreateMarkerPicture(void* self, const char* name, f32 x, f32 y, v
 
     nw4r::math::_VEC3 vec = { x, y, 0.0f };
 
-    *(float*)((u8*)pic + 0x2C) = x;
-    *(float*)((u8*)pic + 0x30) = y;
-    *(float*)((u8*)pic + 0x34) = 0.0f;
+    nw4r::lyt::Pane* pane = (nw4r::lyt::Pane*)pic;
+    pane->SetSRTElement(0, x);
+    pane->SetSRTElement(1, y);
+    pane->SetSRTElement(2, 0.0f);
 
-    PaneSetVtxColorAll((nw4r::lyt::Pane*)pic, (unsigned long)arg5);
+    PaneSetVtxColorAll(pane, (unsigned long)arg5);
 
     u8* byte = (u8*)pic + 0xBB;
     *byte = (*byte & 0x7F) | 0x01;
 
-    *(float*)((u8*)pic + 0x44) = 0.8f;
-    *(float*)((u8*)pic + 0x48) = 0.8f;
+    pane->SetSRTElement(6, 0.8f);
+    pane->SetSRTElement(7, 0.8f);
 
     return pic;
 }
@@ -1332,13 +1342,13 @@ void FloorMap_PlaceMarkersB(CFloorMapLayoutSlots* slots) {
         sprintf(buf, "pic_mapjump%d", i);
         if (slots->layout->GetRootPane()->FindPaneByName(buf, 1)) continue;
 
-        s16 vx = BdatGetS16Direct((const void*)lbl_eu_806640A8, "minimap_painx", sCurrentMapId);
-        s16 vy = BdatGetS16Direct((const void*)lbl_eu_806640A8, "minimap_painy", sCurrentMapId);
+        s16 vx = BdatGetS16Direct((const void*)::cf::CfBdat::spFldMapListFileData, "minimap_painx", sCurrentMapId);
+        s16 vy = BdatGetS16Direct((const void*)::cf::CfBdat::spFldMapListFileData, "minimap_painy", sCurrentMapId);
 
         f32 rvx = (f32)(s16)vx;
         f32 rvy = (f32)(s16)vy;
         f32 coords[3] = { rvx, rvy, zero };
-        u8 region = BdatGetU8Direct((const void*)lbl_eu_806640A8, "minimap_rate", sCurrentMapId);
+        u8 region = BdatGetU8Direct((const void*)::cf::CfBdat::spFldMapListFileData, "minimap_rate", sCurrentMapId);
 
         f32 scale = (f32)(u8)(u32)region * regionScale;
         nw4r::math::_VEC3 result = pos;
@@ -1426,13 +1436,13 @@ void FloorMap_PlaceMarkersC(CFloorMapLayoutSlots* slots) {
         sprintf(buf, "pic_mine%d", i);
         if (slots->layout->GetRootPane()->FindPaneByName(buf, 1)) continue;
 
-        s16 vx = BdatGetS16Direct((const void*)lbl_eu_806640A8, "minimap_painx", sCurrentMapId);
-        s16 vy = BdatGetS16Direct((const void*)lbl_eu_806640A8, "minimap_painy", sCurrentMapId);
+        s16 vx = BdatGetS16Direct((const void*)::cf::CfBdat::spFldMapListFileData, "minimap_painx", sCurrentMapId);
+        s16 vy = BdatGetS16Direct((const void*)::cf::CfBdat::spFldMapListFileData, "minimap_painy", sCurrentMapId);
 
         coords[2] = zero;
         coords[0] = (f32)(s16)vx;
         coords[1] = (f32)(s16)vy;
-        u8 region = BdatGetU8Direct((const void*)lbl_eu_806640A8, "minimap_rate", sCurrentMapId);
+        u8 region = BdatGetU8Direct((const void*)::cf::CfBdat::spFldMapListFileData, "minimap_rate", sCurrentMapId);
 
         f32 scale = (f32)(u8)(u32)region * regionScale;
         result = pos;
@@ -1526,8 +1536,8 @@ void FloorMap_PlaceMarkersD(CFloorMapLayoutSlots* slots) {
                 ->FindPaneByName(buf, 1))
             continue;
 
-        s16 vx = BdatGetS16Direct((const void*)lbl_eu_806640A8, "minimap_painx", sCurrentMapId);
-        s16 vy = BdatGetS16Direct((const void*)lbl_eu_806640A8, "minimap_painy", sCurrentMapId);
+        s16 vx = BdatGetS16Direct((const void*)::cf::CfBdat::spFldMapListFileData, "minimap_painx", sCurrentMapId);
+        s16 vy = BdatGetS16Direct((const void*)::cf::CfBdat::spFldMapListFileData, "minimap_painy", sCurrentMapId);
 
         // The region lookup happens between the coordinate conversions; the
         // projected coordinates remain live in a local array.
@@ -1535,7 +1545,7 @@ void FloorMap_PlaceMarkersD(CFloorMapLayoutSlots* slots) {
         coords[2] = zero;
         coords[0] = (f32)(s16)vx;
         coords[1] = (f32)(s16)vy;
-        u8 region = (u8)BdatGetU8Direct((const void*)lbl_eu_806640A8, "minimap_rate", sCurrentMapId);
+        u8 region = (u8)BdatGetU8Direct((const void*)::cf::CfBdat::spFldMapListFileData, "minimap_rate", sCurrentMapId);
 
         f32 scale = (f32)(u8)region * regionScale;
 
@@ -1637,15 +1647,15 @@ void FloorMap_PlaceMarkers(void* self) {
         sprintf(buf, "pic_elevator%d", i);
         if (slots->layout->GetRootPane()->FindPaneByName(buf, 1)) continue;
 
-        s16 vx = BdatGetS16Direct((const void*)lbl_eu_806640A8, "minimap_painx", sCurrentMapId);
-        s16 vy = BdatGetS16Direct((const void*)lbl_eu_806640A8, "minimap_painy", sCurrentMapId);
+        s16 vx = BdatGetS16Direct((const void*)::cf::CfBdat::spFldMapListFileData, "minimap_painx", sCurrentMapId);
+        s16 vy = BdatGetS16Direct((const void*)::cf::CfBdat::spFldMapListFileData, "minimap_painy", sCurrentMapId);
 
         // The region lookup happens between the coordinate conversions;
         // the row id is widened afterwards.
         coords[2] = zero;
         coords[0] = (f32)(s16)vx;
         coords[1] = (f32)(s16)vy;
-        u8 region = (u8)BdatGetU8Direct((const void*)lbl_eu_806640A8, "minimap_rate", sCurrentMapId);
+        u8 region = (u8)BdatGetU8Direct((const void*)::cf::CfBdat::spFldMapListFileData, "minimap_rate", sCurrentMapId);
 
         f32 scale = (f32)(u8)region * regionScale;
 
@@ -1767,10 +1777,10 @@ void FloorMap_PlaceTypedMarkers(CFloorMapLayoutSlots* slots) {
         }
         case 3: {
             // Landmark table: scan the 0x4C-byte rows for the row id.
-            CFloorMapCase2Elem* arr = (CFloorMapCase2Elem*)CPartsChange_GetLandmarkTable();
-            s32 cnt = *(s32*)((u8*)arr + 0x9800);
-            CFloorMapCase2Elem* end = arr + cnt;
-            for (CFloorMapCase2Elem* e = arr; e != end; e++) {
+            CFloorMapLandmarkTable* table = (CFloorMapLandmarkTable*)CPartsChange_GetLandmarkTable();
+            s32 cnt = (s32)table->mCount;
+            CFloorMapCase2Elem* end = table->entries + cnt;
+            for (CFloorMapCase2Elem* e = table->entries; e != end; e++) {
                 if (e->m1C != rowId) continue;
                 foundPos.x = e->x;
                 foundPos.y = e->y;
@@ -1844,13 +1854,13 @@ void FloorMap_PlaceTypedMarkers(CFloorMapLayoutSlots* slots) {
         // Region projection onto the map plane. The converted coordinates
         // live in a contiguous array so they spill to stack slots across the
         // region lookup, as in retail.
-        s16 vx = BdatGetS16Direct((const void*)lbl_eu_806640A8, "minimap_painx", sCurrentMapId);
-        s16 vy = BdatGetS16Direct((const void*)lbl_eu_806640A8, "minimap_painy", sCurrentMapId);
+        s16 vx = BdatGetS16Direct((const void*)::cf::CfBdat::spFldMapListFileData, "minimap_painx", sCurrentMapId);
+        s16 vy = BdatGetS16Direct((const void*)::cf::CfBdat::spFldMapListFileData, "minimap_painy", sCurrentMapId);
         f32 fv[3];
         fv[0] = (f32)(s16)vx;
         fv[1] = (f32)(s16)vy;
         fv[2] = zero;
-        u8 region = BdatGetU8Direct((const void*)lbl_eu_806640A8, "minimap_rate", sCurrentMapId);
+        u8 region = BdatGetU8Direct((const void*)::cf::CfBdat::spFldMapListFileData, "minimap_rate", sCurrentMapId);
         f32 denom = ((f32)(u8)region) * regionScale;
 
         // Word-wise copy of the found position; retail reads z back before
@@ -1932,12 +1942,12 @@ void FloorMap_PlaceLandmarks(void* self) {
         char buf[0x20];
         sprintf(buf, "pic_point%d", g->m74);
 
-        s16 vx = BdatGetS16Direct((const void*)lbl_eu_806640A8, "minimap_painx", sCurrentMapId);
-        s16 vy = BdatGetS16Direct((const void*)lbl_eu_806640A8, "minimap_painy", sCurrentMapId);
+        s16 vx = BdatGetS16Direct((const void*)::cf::CfBdat::spFldMapListFileData, "minimap_painx", sCurrentMapId);
+        s16 vy = BdatGetS16Direct((const void*)::cf::CfBdat::spFldMapListFileData, "minimap_painy", sCurrentMapId);
 
         f32 fvx = (f32)(s16)vx;
         f32 fvy = (f32)(s16)vy;
-        u8 region = (u8)BdatGetU8Direct((const void*)lbl_eu_806640A8, "minimap_rate", sCurrentMapId);
+        u8 region = (u8)BdatGetU8Direct((const void*)::cf::CfBdat::spFldMapListFileData, "minimap_rate", sCurrentMapId);
 
         // Word-wise copy of the position into a scratch vector; retail reads
         // x/z back through the copy, zeroes z mid-computation, then stores the
@@ -2006,10 +2016,10 @@ void FloorMap_PlaceWorldMarker(void* self) {
         switch ((u8)id) {
         case 2: {
             // Landmark-table entry: scan the 0x4C-byte rows for the id.
-            CFloorMapCase2Elem* arr = (CFloorMapCase2Elem*)CPartsChange_GetLandmarkTable();
-            s32 count = *(s32*)((u8*)arr + 0x9800);
-            CFloorMapCase2Elem* end = arr + count;
-            for (CFloorMapCase2Elem* el = arr; el != end; el++) {
+            CFloorMapLandmarkTable* table = (CFloorMapLandmarkTable*)CPartsChange_GetLandmarkTable();
+            s32 count = (s32)table->mCount;
+            CFloorMapCase2Elem* end = table->entries + count;
+            for (CFloorMapCase2Elem* el = table->entries; el != end; el++) {
                 if (el->m1C != (u16)type) continue;
                 vec.x = el->x;
                 vec.y = el->y;
@@ -2155,13 +2165,13 @@ void FloorMap_PlaceWorldMarker(void* self) {
             // Map the marker position onto the floor-map pane coordinates.
             // Retail divides work.z (the pre-projection z snapshot) here even
             // though a projected-z of 0 is also computed afterwards.
-            s16 vx = BdatGetS16Direct((const void*)lbl_eu_806640A8, "minimap_painx", sCurrentMapId);
-            s16 vy = BdatGetS16Direct((const void*)lbl_eu_806640A8, "minimap_painy", sCurrentMapId);
+            s16 vx = BdatGetS16Direct((const void*)::cf::CfBdat::spFldMapListFileData, "minimap_painx", sCurrentMapId);
+            s16 vy = BdatGetS16Direct((const void*)::cf::CfBdat::spFldMapListFileData, "minimap_painy", sCurrentMapId);
             nw4r::math::VEC3 pos;
             pos.z = 0.0f;
             pos.x = (f32)(s16)vx;
             pos.y = (f32)(s16)vy;
-            u8 region = BdatGetU8Direct((const void*)lbl_eu_806640A8, "minimap_rate", sCurrentMapId);
+            u8 region = BdatGetU8Direct((const void*)::cf::CfBdat::spFldMapListFileData, "minimap_rate", sCurrentMapId);
             f32 denom = ((f32)(u8)region) * 0.1f;
 
             // Word-wise copy of the marker position so the projection reads
@@ -2212,15 +2222,15 @@ void FloorMap_PlacePlayerMarker(void* self) {
     if (!found) return;
 
     // Project onto the current world's map pane coordinate system.
-    u16 vx = (u16)BdatGetS16Direct((const void*)lbl_eu_806640A8, "minimap_painx", (u32)sCurrentMapId);
-    u16 vy = (u16)BdatGetS16Direct((const void*)lbl_eu_806640A8, "minimap_painy", (u32)sCurrentMapId);
+    u16 vx = (u16)BdatGetS16Direct((const void*)::cf::CfBdat::spFldMapListFileData, "minimap_painx", (u32)sCurrentMapId);
+    u16 vy = (u16)BdatGetS16Direct((const void*)::cf::CfBdat::spFldMapListFileData, "minimap_painy", (u32)sCurrentMapId);
     // Second vector local so MWCC spills the projected bases to frame
     // slots (retail 0x34/0x38/0x3c) instead of burning a nonvolatile FPR.
     nw4r::math::_VEC3 work;
     work.z = 0.0f;
     work.x = (f32)(s16)vx;
     work.y = (f32)(s16)vy;
-    u8 region = (u8)BdatGetU8Direct((const void*)lbl_eu_806640A8, "minimap_rate", (u32)sCurrentMapId);
+    u8 region = (u8)BdatGetU8Direct((const void*)::cf::CfBdat::spFldMapListFileData, "minimap_rate", (u32)sCurrentMapId);
     f32 denom = (f32)(u8)region * 0.1f;
 
     // Snapshot through a vector local so the pre-projection z feeds the
@@ -2312,8 +2322,8 @@ void FloorMap_PlacePlayerMarkerScaled(CFloorMapFull* self) {
     if (!found) return;
 
     // Project the world position onto the floor-map pane coordinates.
-    s16 vx = BdatGetS16Direct((const void*)lbl_eu_806640A8, "minimap_painx", sCurrentMapId);
-    s16 vy = BdatGetS16Direct((const void*)lbl_eu_806640A8, "minimap_painy", sCurrentMapId);
+    s16 vx = BdatGetS16Direct((const void*)::cf::CfBdat::spFldMapListFileData, "minimap_painx", sCurrentMapId);
+    s16 vy = BdatGetS16Direct((const void*)::cf::CfBdat::spFldMapListFileData, "minimap_painy", sCurrentMapId);
     f32 fx = (f32)(s16)vx;
     f32 fy = (f32)(s16)vy;
 
@@ -2321,7 +2331,7 @@ void FloorMap_PlacePlayerMarkerScaled(CFloorMapFull* self) {
     work.y = fy;
     work.z = 0.0f;
 
-    u8 region = (u8)BdatGetU8Direct((const void*)lbl_eu_806640A8, "minimap_rate", sCurrentMapId);
+    u8 region = (u8)BdatGetU8Direct((const void*)::cf::CfBdat::spFldMapListFileData, "minimap_rate", sCurrentMapId);
     f32 denom = (f32)(u8)region * 0.1f;
 
     tmp = *(nw4r::math::_VEC3*)&ppos;
@@ -2340,10 +2350,11 @@ void FloorMap_PlacePlayerMarkerScaled(CFloorMapFull* self) {
     // ppos's address was taken for the word-wise copy above.
     ppos.y = 0.0f;
     ppos.x = 0.0f;
-    *(f32*)((u8*)pic + 0x38) = 0.0f;
-    *(f32*)((u8*)pic + 0x3C) = 0.0f;
-    *(f32*)((u8*)pic + 0x40) =
-        180.0f + 180.0f * zoom / ml::pi;
+    nw4r::lyt::Pane* marker = (nw4r::lyt::Pane*)pic;
+    marker->SetSRTElement(3, 0.0f);
+    marker->SetSRTElement(4, 0.0f);
+    marker->SetSRTElement(5,
+        180.0f + 180.0f * zoom / ml::pi);
 }
 
 // Accumulate the parent-chain translate of `node` up to (excluding) the
@@ -2674,7 +2685,7 @@ void FloorMap_LoadStageLayout(CFloorMap* self) {
     // Install the staged image into the resident cursor at this+0x1FC. The
     // 5-byte state run is copied byte-wise; its last byte aliases the first
     // byte of the 0x618 entry-block chunk that follows it.
-    #define FM_DST (((CFloorMapStage*)((u8*)self + 0x1FC)))
+    #define FM_DST (((CFloorMapStage*)&self->layout_1FC))
     FM_DST->mData = stage.mData;
     FM_DST->accessor = stage.accessor;
     *(CFloorMapHeadFlags*)&FM_DST->headFlags = *(CFloorMapHeadFlags*)&stage.headFlags;
@@ -2921,9 +2932,9 @@ void FloorMap_Draw(void* self, void* drawInfo) {
                 cond = 0;
             } else {
                 nw4r::lyt::Pane* result =
-                    ((nw4r::lyt::Pane*)*(void**)((u8*)p->mLayout32D4 + 0x10))
+                    ((nw4r::lyt::Layout*)p->mLayout32D4)->GetRootPane()
                         ->FindPaneByName("nul_arw00", 1);
-                cond = (*(u8*)((u8*)result + 0xBB)) & 1;
+                cond = result->IsVisible() ? 1 : 0;
             }
             if (!cond) {
                 s8 idx = (s8)p->field_205;
@@ -3033,8 +3044,9 @@ void FloorMap_Teardown(CFloorMapFull* p) {
 }
 
 extern "C" u8 FloorMap_GetField42Gated(void* self) {
-    if (reinterpret_cast<CScrollBar*>((u8*)self + 0x60)->isVisible()) {
-        return *(u8*)((u8*)self + 0x42);
+    CFloorMapFull* fm = static_cast<CFloorMapFull*>(self);
+    if (reinterpret_cast<CScrollBar*>(&fm->mScrollBar)->isVisible()) {
+        return fm->field_42;
     }
     return 0;
 }
@@ -3076,7 +3088,7 @@ void FloorMap_UpdateRowPanePos(void* self) {
     }
 
     LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)p->mLayout32D4, "txt_flr", FM_FLOOR(p)->name_210, 0);
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)p->mLayout1FC, "txt_tit", BdatGetPtrDirect((const void*)lbl_eu_806640A8, "name", sCurrentMapId), 0);
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)p->mLayout1FC, "txt_tit", BdatGetPtrDirect((const void*)::cf::CfBdat::spFldMapListFileData, "name", sCurrentMapId), 0);
     FloorMap_RefreshCursorRows(&p->mLayout1FC);
 
     if (p->field_3330) {
@@ -3184,7 +3196,7 @@ void FloorMap_CursorNextFloor(void* self) {
     LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)p->mLayout32D4, "txt_flr",
                   ((CFloorMapFloorBlock*)((u8*)p + (s8)p->field_205 * 0x30C))->name_210, 0);
     LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)p->mLayout1FC, "txt_tit",
-                  BdatGetPtrDirect((const void*)lbl_eu_806640A8, "name", sCurrentMapId), 0);
+                  BdatGetPtrDirect((const void*)::cf::CfBdat::spFldMapListFileData, "name", sCurrentMapId), 0);
     FloorMap_RefreshCursorRows(&p->mLayout1FC);
 
     if (p->field_3330) {
@@ -4127,10 +4139,10 @@ void FloorMap_LoadMapFiles(void* self) {
 
 
 extern "C" void FloorMap_SetPaneFlag(void* self, u32 arg2) {
-    void* ptr = *(void**)((u8*)self + 0x32D4);
+    u32 ptr = ((CFloorMapFull*)self)->mLayout32D4;
     if (!ptr) return;
-    void* obj = *(void**)((u8*)ptr + 0x10);
-    nw4r::lyt::Pane* result = ((nw4r::lyt::Pane*)obj)->FindPaneByName(
+    nw4r::lyt::Pane* result =
+        ((nw4r::lyt::Layout*)ptr)->GetRootPane()->FindPaneByName(
         (char*)&lbl_eu_8050BEA8 + 0xEE, 1);
     {
         *(u8*)((u8*)result + 0xBB) = (*(u8*)((u8*)result + 0xBB) & 0xFE) | (u8)arg2;
@@ -4651,21 +4663,21 @@ u32 CFloorMap::OnFileEvent(CEventFile* event) {
 }
 
 extern "C" void* __ct__80244F50(void* self, int a, int b, u8 c) {
-    u8* p = (u8*)self;
+    CFloorMapStage* p = (CFloorMapStage*)self;
 
-    *(u32*)(p + 0x00) = 0;
-    *(u32*)(p + 0x04) = b;
-    *(u8*)(p + 0x08) = c;
-    *(u8*)(p + 0x09) = 0;
-    *(s8*)(p + 0x0A) = -1;
-    *(u8*)(p + 0x0B) = 0;
-    *(u8*)(p + 0x0C) = 1;
+    p->mData = 0;
+    p->accessor = b;
+    p->headFlags[0] = c;
+    p->headFlags[1] = 0;
+    p->headFlags[2] = (s8)-1;
+    p->headFlags[3] = 0;
+    p->blocks.data[0] = 1;
 
     // Tautological range test over the object's own storage (retail emits
     // both compare results as separate branches off one cmpl; MWCC keeps
     // the dead computation and the flag ends up 1 either way).
-    const u8* lo = p + 0x31C;
-    const u8* hi = p + 0x30D0;
+    const u8* lo = &p->blocks.data[0x310];
+    const u8* hi = &p->floorCount;
     u8 flag = 1;
     if (lo < hi) flag = 0;
     if (lo <= hi) flag = 1;
@@ -4677,40 +4689,40 @@ extern "C" void* __ct__80244F50(void* self, int a, int b, u8 c) {
 
     // Four consecutive 0x18-byte row records: default name string, five
     // zero words, a zero byte and the shared flag byte.
-    *(u8*)(p + 0x30D0) = 0;
-    *(const void**)(p + 0x30D4) = n0;
-    *(u32*)(p + 0x30D8) = 0;
-    *(u32*)(p + 0x30DC) = 0;
-    *(u32*)(p + 0x30E0) = 0;
-    *(u32*)(p + 0x30E4) = 0;
-    *(u8*)(p + 0x30E8) = 0;
-    *(u8*)(p + 0x30E9) = flag;
+    p->floorCount = 0;
+    p->slots[0].name = (void*)n0;
+    p->slots[0].body.words[0] = 0;
+    p->slots[0].body.words[1] = 0;
+    p->slots[0].body.words[2] = 0;
+    p->slots[0].body.words[3] = 0;
+    p->slots[0].body.flagA = 0;
+    p->slots[0].body.flagB = flag;
 
-    *(const void**)(p + 0x30EC) = n1;
-    *(u32*)(p + 0x30F0) = 0;
-    *(u32*)(p + 0x30F4) = 0;
-    *(u32*)(p + 0x30F8) = 0;
-    *(u32*)(p + 0x30FC) = 0;
-    *(u8*)(p + 0x3100) = 0;
-    *(u8*)(p + 0x3101) = flag;
+    p->slots[1].name = (void*)n1;
+    p->slots[1].body.words[0] = 0;
+    p->slots[1].body.words[1] = 0;
+    p->slots[1].body.words[2] = 0;
+    p->slots[1].body.words[3] = 0;
+    p->slots[1].body.flagA = 0;
+    p->slots[1].body.flagB = flag;
 
-    *(const void**)(p + 0x3104) = n2;
-    *(u32*)(p + 0x3108) = 0;
-    *(u32*)(p + 0x310C) = 0;
-    *(u32*)(p + 0x3110) = 0;
-    *(u32*)(p + 0x3114) = 0;
-    *(u8*)(p + 0x3118) = 0;
-    *(u8*)(p + 0x3119) = flag;
+    p->slots[2].name = (void*)n2;
+    p->slots[2].body.words[0] = 0;
+    p->slots[2].body.words[1] = 0;
+    p->slots[2].body.words[2] = 0;
+    p->slots[2].body.words[3] = 0;
+    p->slots[2].body.flagA = 0;
+    p->slots[2].body.flagB = flag;
 
-    *(const void**)(p + 0x311C) = n3;
-    *(u32*)(p + 0x3120) = 0;
-    *(u32*)(p + 0x3124) = 0;
-    *(u32*)(p + 0x3128) = 0;
-    *(u32*)(p + 0x312C) = 0;
-    *(u8*)(p + 0x3130) = 0;
-    *(u8*)(p + 0x3131) = flag;
+    p->slots[3].name = (void*)n3;
+    p->slots[3].body.words[0] = 0;
+    p->slots[3].body.words[1] = 0;
+    p->slots[3].body.words[2] = 0;
+    p->slots[3].body.words[3] = 0;
+    p->slots[3].body.flagA = 0;
+    p->slots[3].body.flagB = flag;
 
-    *(u32*)(p + 0x3134) = (u32)a;
+    p->scrollBarPtr = (u32)a;
     return self;
 }
 // Constructor decoded from retail __ct__8024507C (us-80247234): layout load +

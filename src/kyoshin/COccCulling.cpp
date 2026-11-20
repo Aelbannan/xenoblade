@@ -74,13 +74,13 @@ int COccCulling::addFrustum(const CVec3& pos, const CVec3& rot, const CVec3& sca
 
 void COccCulling::setFrustum(CCullFrustum* pFrustum){
     // Scale matrix (z fixed to the SDA 1.0f constant), then rotation via the
-    // explicit FIdx variant with lbl_eu_80667C90 as radians->FIdx scale.
+    // explicit FIdx variant with 40.7436637878418f as radians->FIdx scale.
     CMat34 rotMat;
     pFrustum->mMat.setScale(CVec3(pFrustum->mScale.x, pFrustum->mScale.y, lbl_eu_80667C88));
     nw4r::math::MTX34RotXYZFIdx(rotMat,
-        pFrustum->mRot.x * lbl_eu_80667C90,
-        pFrustum->mRot.y * lbl_eu_80667C90,
-        pFrustum->mRot.z * lbl_eu_80667C90);
+        pFrustum->mRot.x * 40.7436637878418f,
+        pFrustum->mRot.y * 40.7436637878418f,
+        pFrustum->mRot.z * 40.7436637878418f);
 
     // PSMTXConcat(m2, m1, out) inside CMat34::mul -- retail concats (rot, scale, scale).
     CMat34::mul(pFrustum->mMat, pFrustum->mMat, rotMat);

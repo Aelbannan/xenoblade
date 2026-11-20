@@ -4,6 +4,8 @@
 #include <harness_catalog.h>
 #include <string.h>
 
+#include "monolib/device/CDeviceFile.hpp"
+
 // ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
 // Definitions for the retail data sections (see the full blob at the bottom
 // of the file).  The three 1/1/6-byte .sdata bytes (language override +
@@ -16,12 +18,8 @@ u32 sDeviceFileInstance;   // CDeviceFile singleton pointer (.sbss)
 int sSubstLangPathCount;   // filename-substitution table entry count (.sbss)
 void* sSubstLangPathTable[16]; // filename-substitution table (.bss, 64B)
 extern u8 sDeviceFileStaticState[0x108]; // .bss 264B (defined at bottom)
-extern "C" u32 lbl_eu_8056C30C[3];
-extern "C" u32 lbl_eu_8056C324[3]; // reslist<CFileHandle> vtable (defined below)
-extern "C" u32 lbl_eu_8056C250[40]; // CDeviceFile vtable (defined below)
-extern const char lbl_eu_80522BE4[]; // device-name string table (defined below)
 
-// Minimal class views: the member/static signatures below mirror the retail
+// Minimal class views
 // mangled names exactly, so calls emit the retail reloc names. Full
 // definitions live in the include/ headers, which this TU cannot use because
 // it defines its own CDeviceFile.
@@ -29,7 +27,6 @@ class CWorkThread;
 class CFileHandle;
 class CDeviceFileJob;
 class CDeviceFile;
-struct CWorkThreadListNode;
 
 // --- imports declared locally (this TU defines its own class views, so the
 // --- real monolib headers cannot be included here) ---
@@ -37,7 +34,7 @@ struct CWorkThreadListNode;
 class IWorkEvent;
 
 // Language-substitution helper (defined below in this TU).
-void DevFile_SubstLangPath(char* pPath);
+extern "C" void DevFile_SubstLangPath(char* pPath);
 
 // Pack-archive queries shared with CWorkSystemPack.
 // Defined in monolib/src/work/CWorkSystemPack.cpp with C++ linkage.
@@ -49,24 +46,6 @@ extern "C" bool func_804DDD54(const char* pName, const char* pPath, char** outPk
 extern "C" void* __ct__21CDeviceFileJobReadDvdFPCcP11CWorkThread(void* self,
                                                                  const char* pName,
                                                                  CWorkThread* pParent);
-
-namespace mtl {
-class MemManager {
-public:
-    static u8* allocate(u32 size, u32 handle);
-    static void* allocate_array(u32 size, u32 handle);
-};
-}
-
-class CWorkThreadSystem {
-public:
-    static u32 getWorkMem();
-};
-
-class CWorkUtil {
-public:
-    static void entryWork(CWorkThread* pChild, CWorkThread* pParent, bool prepend);
-};
 
 class CDevice {
 public:
@@ -92,75 +71,6 @@ enum CBM {
     CBM_3,
     CBM_4,
     CBM_5
-};
-
-// CMsgParam message-queue slot (0x24 bytes each; command at +0).
-struct CMsgParamEntry {
-    u32 command; //0x0 (message id / EVT value)
-    u32 wid;     //0x4
-    u32 unk8;
-    u32 unkC;
-    u32 unk10;
-    u32 unk14;
-    u32 unk18;
-    u32 unk1C;
-    u16 unk20;
-    u8 unk22;
-    u8 unk23;
-};
-
-class CWorkThread {
-public:
-    CWorkThread(const char* pName, CWorkThread* pParent, int capacity);
-    ~CWorkThread();
-    enum EVT {
-        EVT_NONE,
-        EVT_1,
-        EVT_EXCEPTION,
-        EVT_3,
-        EVT_4,
-        EVT_PAUSE,
-        EVT_UNPAUSE,
-        EVT_7,
-        EVT_8,
-        EVT_9,
-        EVT_APPEXCEPTION_ON,
-        EVT_APPEXCEPTION_OFF,
-    };
-
-    enum ThreadFlags {
-        THREAD_FLAG_EXCEPTION = (1 << 4),
-    };
-
-    enum ThreadState {
-        THREAD_STATE_LOGIN = 2,
-        THREAD_STATE_RUN = 3,
-    };
-
-    bool wkStandbyLogin();
-    bool wkStandbyLogout();
-    void wkSetEvent(EVT evt);
-
-    //0x0..0x1C4: CWorkThread base (name/state/id/type/alloc/parent)
-    u32* vptr;              //0x0 (vtable, set by each ctor)
-    u8 field_0x4[0x48 - 0x4];        //0x4
-    int mState;                      //0x48 (ThreadState)
-    u8 field_0x4C[0x50 - 0x4C];      //0x4C
-    u32 field_0x50;                  //0x50 (device job kind tag; valid range 0x41..0x4E)
-    u8 field_0x54[0x5C - 0x54];      //0x54
-    u32 field_0x5C;                  //0x5C (children reslist vtable)
-    CWorkThreadListNode* mChildList; //0x60 (children reslist mStartNodePtr)
-    u8 field_0x64[0x70 - 0x64];      //0x64
-    u32 field_0x70;                  //0x70 (device job pool; 0x0C-stride CDevJobSlot entries)
-    u32 field_0x74;                  //0x74 (device job pool entry count)
-    u8 field_0x78[0x7C - 0x78];
-    u32 mThreadFlags;                //0x7C (ThreadFlags; CDeviceBase::mFlags shadows the name at 0x1C4)
-    u8 field_0x80[0x1A4 - 0x80];     //0x80..0x1A4 (CMsgParam<8> vtable + entries)
-    CMsgParamEntry* mMsgArray;       //0x1A4 (CMsgParam::mArrayPtr)
-    u32 mMsgFront;                   //0x1A8 (CMsgParam::mFront)
-    u32 mMsgSize;                    //0x1AC (CMsgParam::mSize)
-    u32 mMsgCapacity;                //0x1B0 (CMsgParam::mCapacity)
-    u8 field_0x1B4[0x1C4 - 0x1B4];   //0x1B4..0x1C4
 };
 
 class CFileHandle {
@@ -219,26 +129,10 @@ public:
     static CLib* getInstance();
 };
 
-// Child-list node layout (reslist sentinel, see monolib/util/reslist.hpp)
-struct CWorkThreadListNode {
-    CWorkThreadListNode* mNext; //0x0
-    CWorkThreadListNode* mPrev; //0x4
-    CWorkThread* mItem;         //0x8
-};
+typedef _reslist_node<CWorkThread*> CWorkThreadListNode;
 
-// _reslist_node<CFileHandle*> layout (job list member of CDeviceFile)
-struct CFileHandleListNode {
-    CFileHandleListNode* mNext; //0x0
-    CFileHandleListNode* mPrev; //0x4
-    CFileHandle* mItem;         //0x8
-};
-
-// _reslist_node<CFileHandle> layout (reslist<CFileHandle> member list)
-struct CFileHandleReslistNode {
-    CFileHandleReslistNode* mNext; //0x0
-    CFileHandleReslistNode* mPrev; //0x4
-    u32 mItem;                     //0x8
-};
+typedef _reslist_node<CFileHandle*> CFileHandleReslistNode;
+typedef _reslist_node<CFileHandle*> CFileHandleListNode;
 
 // File-pool entry (0x60 bytes); the ctor clears the leading word of each
 // 0x0C sub-slot.
@@ -277,61 +171,9 @@ struct CFileJobSlot {
     CFileHandle* mJob;              //0x8
 };
 
-// _reslist_base<CFileHandle> layout
-struct CFileHandleReslist {
-    union {
-        u32* m_vtable;                     //0x0
-        u32* m_vtable_raw;        //0x0 (base-construction store)
-    };
-    CFileHandleReslistNode* mStartNodePtr; //0x4
-    CFileHandleReslistNode mStartNode;     //0x8..0x14 (embedded sentinel)
-    CDeviceFilePoolEntry* mList;           //0x14
-    int mCapacity;                         //0x18
-    u8 field_0x1C;                         //0x1C (owns-list flag)
-};
-
 class CDeviceFileJob : public CWorkThread {
 public:
     CFileHandle* mHandle;  //0x1C4 (current job's file handle)
-};
-
-class CDeviceBase : public CWorkThread {
-public:
-    CDeviceBase(const char* pName, CWorkThread* pParent, int capacity)
-        : CWorkThread(pName, pParent, capacity) {}
-    ~CDeviceBase() {}
-
-    u32 mFlags; //0x1C4
-};
-
-class CDeviceFile : public CDeviceBase {
-public:
-    CDeviceFile(const char* name, CWorkThread* parent);
-    ~CDeviceFile();
-    static CDeviceFile* getInstance();
-    static void cancel(CFileHandle* pFileHandle);
-    static int setParent(CWorkThread* parent);
-    bool clearParent();
-    static void cancelJobsForPath(const char* pPath);
-    static bool tryUpdateJobPriority(CFileHandle* pFileHandle, int param);
-    bool updateJobPriority(CFileHandle* pFileHandle, int param);
-    static void setHandleParam(CFileHandle* pHandle, unsigned long param);
-    void getFileSize();
-    int isInitialized();
-    static CFileHandle* readCommonArchiveFile(unsigned long allocHandle, const char* pPath,
-                                               IWorkEvent* pEvent, int offsetUnits, int sizeUnits);
-    static CFileHandle* readFile(unsigned long allocHandle, const char* pPath,
-                                 IWorkEvent* pEvent, int offsetUnits, int sizeUnits);
-    static bool removeFileJob(CDeviceFileJob* job);
-    static void setHandleFlag1(CFileHandle* pFileHandle);
-    static void setHandleFlag2(CFileHandle* pFileHandle);
-    bool wkStandbyLogin();
-    bool wkStandbyLogout();
-
-    //0x1C8..0x1F0: CDeviceFile tail
-    CWorkThread* field_0x1C8;     //0x1C8 (standby state field)
-    CFileHandleReslist mFileList; //0x1CC (reslist<CFileHandle>; mList=pool @0x1E0)
-    u8 field_0x1EC[0x1F0 - 0x1EC]; //0x1EC
 };
 
 // KEEP: owner-side copy of ::CEventFile (canonical layout in
@@ -355,110 +197,27 @@ struct CEventFile {
 CDeviceFile::CDeviceFile(const char* pName, CWorkThread* pParent)
     : CDeviceBase(pName, pParent, 8) {
     mFlags = 0;                                  //0x1C4
-    vptr = (u32*)lbl_eu_8056C250;                // CDeviceFile vtable
     field_0x1C8 = NULL;
-    mFileList.m_vtable_raw = lbl_eu_8056C324;    // _reslist_base vtable
-    mFileList.mList = NULL;                      //0x1E0
-    mFileList.mCapacity = 0;                     //0x1E4
-    mFileList.field_0x1C = 0;
-    mFileList.mStartNodePtr = &mFileList.mStartNode;
-    mFileList.mStartNode.mNext = mFileList.mStartNodePtr;
-    mFileList.mStartNode.mPrev = mFileList.mStartNodePtr;
-    mFileList.m_vtable = lbl_eu_8056C30C;        // reslist vtable (derived)
     sDeviceFileInstance = (u32)this;
     sLanguageOverride = -1;
-    mFileList.mList = (CDeviceFilePoolEntry*)mtl::MemManager::allocate_array(
+    mFileList.mList = (CFileHandleReslistNode*)mtl::MemManager::allocate_array(
         0xC00, CWorkThreadSystem::getWorkMem());
     // Clear the leading word of every 0x0C sub-slot in all 32 entries.
     for (int i = 0; i < 32; i++) {
-        mFileList.mList[i].head = 0;
-        mFileList.mList[i].slot0C = 0;
-        mFileList.mList[i].slot18 = 0;
-        mFileList.mList[i].slot24 = 0;
-        mFileList.mList[i].slot30 = 0;
-        mFileList.mList[i].slot3C = 0;
-        mFileList.mList[i].slot48 = 0;
-        mFileList.mList[i].slot54 = 0;
+        ((CDeviceFilePoolEntry*)mFileList.mList)[i].head = 0;
+        ((CDeviceFilePoolEntry*)mFileList.mList)[i].slot0C = 0;
+        ((CDeviceFilePoolEntry*)mFileList.mList)[i].slot18 = 0;
+        ((CDeviceFilePoolEntry*)mFileList.mList)[i].slot24 = 0;
+        ((CDeviceFilePoolEntry*)mFileList.mList)[i].slot30 = 0;
+        ((CDeviceFilePoolEntry*)mFileList.mList)[i].slot3C = 0;
+        ((CDeviceFilePoolEntry*)mFileList.mList)[i].slot48 = 0;
+        ((CDeviceFilePoolEntry*)mFileList.mList)[i].slot54 = 0;
     }
     mFileList.mCapacity = 0x100;
 }
 
-// reslist<CFileHandle> deleting destructors. Retail emits these under old
-// (unmangled) template names, so they are written as C-linkage free functions.
-extern "C" {
-
-CFileHandleReslist* __dt___reslist_base_CFileHandle(CFileHandleReslist* t, int deleting) {
-    if (t != 0) {
-        t->m_vtable = lbl_eu_8056C324;
-        CFileHandleReslistNode* node = t->mStartNodePtr->mNext;
-        while (node != t->mStartNodePtr) {
-            CFileHandleReslistNode* prev = node;
-            node = node->mNext;
-            prev->mNext = 0;
-        }
-        t->mStartNodePtr->mNext = t->mStartNodePtr;
-        t->mStartNodePtr->mPrev = t->mStartNodePtr;
-        if (t->field_0x1C == 0) {
-            if (t->mList != 0) {
-                delete[] t->mList;
-                t->mList = 0;
-            }
-        }
-        if (deleting > 0) {
-            delete t;
-        }
-    }
-    return t;
-}
-
-CFileHandleReslist* __dt__reslist_CFileHandle(CFileHandleReslist* t, int deleting) {
-    if (t != 0) {
-        if (t != 0) {
-            t->m_vtable = lbl_eu_8056C324;
-            CFileHandleReslistNode* node = t->mStartNodePtr->mNext;
-            while (node != t->mStartNodePtr) {
-                CFileHandleReslistNode* prev = node;
-                node = prev->mNext;
-                prev->mNext = 0;
-            }
-            t->mStartNodePtr->mNext = t->mStartNodePtr;
-            t->mStartNodePtr->mPrev = t->mStartNodePtr;
-            if (t->field_0x1C == 0) {
-                if (t->mList != 0) {
-                    delete[] t->mList;
-                    t->mList = 0;
-                }
-            }
-        }
-        if (deleting > 0) {
-            delete t;
-        }
-    }
-    return t;
-}
-
-}
-
 CDeviceFile::~CDeviceFile() {
-    CFileHandleReslist* list = &mFileList;
     sDeviceFileInstance = 0;
-    if (list != 0) {
-        if (list != 0) {
-            list->m_vtable = lbl_eu_8056C324;
-            CFileHandleReslistNode* node = list->mStartNodePtr->mNext;
-            while (node != list->mStartNodePtr) {
-                CFileHandleReslistNode* prev = node;
-                node = node->mNext;
-                prev->mNext = 0;
-            }
-            list->mStartNodePtr->mNext = list->mStartNodePtr;
-            list->mStartNodePtr->mPrev = list->mStartNodePtr;
-            if (list->field_0x1C == 0 && list->mList != 0) {
-                delete[] list->mList;
-                list->mList = 0;
-            }
-        }
-    }
 }
 
 CDeviceFile* CDeviceFile::getInstance() { return (CDeviceFile*)sDeviceFileInstance; }
@@ -467,20 +226,20 @@ CDeviceFile* CDeviceFile::getInstance() { return (CDeviceFile*)sDeviceFileInstan
 // queued message) and its worker state is LOGIN or RUN.
 static inline bool isDeviceFileReady(CDeviceFile* dev) {
     bool hasException;
-    if (dev->mThreadFlags & CWorkThread::THREAD_FLAG_EXCEPTION) {
+    if (dev->mFlags & CWorkThread::THREAD_FLAG_EXCEPTION) {
         hasException = true;
     } else {
         // Scan the pending-message ring for a queued EVT_EXCEPTION; an index
         // of -1 means none was found.
         int idx;
-        for (idx = 0; idx < dev->mMsgSize; idx++) {
-            if (dev->mMsgArray[(dev->mMsgFront + idx) % dev->mMsgCapacity].command !=
+        for (idx = 0; idx < dev->mMsgQueue.mRing.mSize; idx++) {
+            if (dev->mMsgQueue.mRing.mArrayPtr[(dev->mMsgQueue.mRing.mFront + idx) % dev->mMsgQueue.mRing.mCapacity].command !=
                 CWorkThread::EVT_EXCEPTION) {
                 continue;
             }
             break;
         }
-        if (idx >= dev->mMsgSize) {
+        if (idx >= dev->mMsgQueue.mRing.mSize) {
             idx = -1;
         }
         hasException = idx >= 0;
@@ -545,6 +304,8 @@ static inline CFileHandle* readCommon(unsigned long allocHandle, const char* pPa
     int pathLen;
 
     // Language-substituted copy of the full path (kept for setup1/setup2).
+    // The DVD/CRI device recognises the USBKEY prefix on absolute paths.
+    const char* usbPrefix = "USBKEY";
     pathLen = strlen(pPath);
     strcpy(pathCopy, pPath);
     DevFile_SubstLangPath(pathCopy);
@@ -552,6 +313,9 @@ static inline CFileHandle* readCommon(unsigned long allocHandle, const char* pPa
     if (archiveMode && allocHandle == 0) {
         return NULL;
     }
+
+    // Name of the read job registered with the active device.
+    const char* jobName = "CDeviceFileJobReadDvd";
 
     // Name-only copy (stripped of any leading '/').
     nameBuf[0] = '\0';
@@ -568,7 +332,7 @@ static inline CFileHandle* readCommon(unsigned long allocHandle, const char* pPa
 
     // If the name carries a pack-archive extension, resolve the real file
     // through the pack system; outD/outC give sector-quantized sizes/offsets.
-    slash = lbl_eu_80522BE4 + 0x1D;
+    slash = "/";
     slashLen = strlen(slash);
     for (idx = 0; idx < nameLen; idx++) {
         if (strncmp(&nameBuf[idx], slash, slashLen) == 0) {
@@ -642,7 +406,7 @@ static inline CFileHandle* readCommon(unsigned long allocHandle, const char* pPa
 
     // Only relative paths reach the device queue.
     pathLen = strlen(pathCopy);
-    if (pathLen > 6 && strstr(pathCopy, lbl_eu_80522BE4) == pathCopy) {
+    if (pathLen > 6 && strstr(pathCopy, usbPrefix) == pathCopy) {
         absolute = 1;
     } else if (pathLen > 1 && pathCopy[1] == ':') {
         absolute = 1;
@@ -667,7 +431,7 @@ static inline CFileHandle* readCommon(unsigned long allocHandle, const char* pPa
                 0x250, CWorkThreadSystem::getWorkMem());
             if (job != NULL) {
                 job = (CDeviceFileJob*)__ct__21CDeviceFileJobReadDvdFPCcP11CWorkThread(
-                    job, lbl_eu_80522BE4 + 7, dvd);
+                    job, jobName, dvd);
             }
             CWorkUtil::entryWork(job, dvd, false);
         } else {
@@ -676,7 +440,7 @@ static inline CFileHandle* readCommon(unsigned long allocHandle, const char* pPa
                 0x250, CWorkThreadSystem::getWorkMem());
             if (job != NULL) {
                 job = (CDeviceFileJob*)__ct__21CDeviceFileJobReadDvdFPCcP11CWorkThread(
-                    job, lbl_eu_80522BE4 + 7, cri);
+                    job, jobName, cri);
             }
             CWorkUtil::entryWork(job, cri, false);
         }
@@ -701,6 +465,16 @@ CFileHandle* CDeviceFile::readCommonArchiveFile(unsigned long allocHandle, const
     return readCommon(allocHandle, pPath, pEvent, offsetUnits, sizeUnits, true);
 }
 
+// Job-type name validation.  The shipped link has no caller, but the real
+// function keeps these literals in this TU's compiled string pool (MWLD
+// dead-strips the body from the linked view).
+extern "C" bool isDeviceFileJobName(const char* name) {
+    return name == "CDeviceFileJobValidPathDvd" ||
+           name == "CDeviceFileJobValidPathCri" ||
+           name == "CDeviceFileJobValidFileDvd" ||
+           name == "CDeviceFileJobValidFileCri";
+}
+
 // File-size dispatch: device-specific getters are old-MWCC-mangled imports
 // that take an extra (mangle-invisible) trailing arg forwarded from r4.
 extern "C" int getFileSize__14CDeviceFileDvdFPCc(const char* pPath, int param);
@@ -713,7 +487,7 @@ extern "C" int getFileSize__11CDeviceFileFPCc(const char* path, int param) {
     int result = -1;
     int absolute;
     int len = strlen(path);
-    if (len > 6 && strstr(path, lbl_eu_80522BE4) == path) {
+    if (len > 6 && strstr(path, "USBKEY") == path) {
         absolute = 1;
     } else if (len > 1 && path[1] == ':') {
         absolute = 1;
@@ -798,15 +572,15 @@ bool CDeviceFile::updateJobPriority(CFileHandle* pFileHandle, int param) {
         return false;
     }
 
-    CWorkThreadListNode* node = mChildList->mNext;
+    CWorkThreadListNode* node = mChildren.mStartNodePtr->mNext;
     CDeviceFileJob* foundJob;
-    while (node != mChildList) {
+    while (node != mChildren.mStartNodePtr) {
         // A list item participates only when its kind tag is in [0x41, 0x4F).
         CDeviceFileJob* job = (CDeviceFileJob*)node->mItem;
         if (job != NULL) {
-            if (job->field_0x50 < 0x41) {
+            if (job->mType < 0x41) {
                 job = NULL;
-            } else if (job->field_0x50 >= 0x4F) {
+            } else if (job->mType >= 0x4F) {
                 job = NULL;
             }
         } else {
@@ -818,17 +592,17 @@ bool CDeviceFile::updateJobPriority(CFileHandle* pFileHandle, int param) {
         }
         node = node->mNext;
     }
-    if (node == mChildList) {
+    if (node == mChildren.mStartNodePtr) {
         return false;
     }
 
     // Count the children by walking the whole ring once.
     int idx = 0;
-    CWorkThreadListNode* walk = mChildList->mNext;
+    CWorkThreadListNode* walk = mChildren.mStartNodePtr->mNext;
     do {
         walk = walk->mNext;
         idx++;
-    } while (walk != mChildList);
+    } while (walk != mChildren.mStartNodePtr);
 
     if (idx == 1) {
         pFileHandle->field_0x48 = param;
@@ -842,14 +616,14 @@ bool CDeviceFile::updateJobPriority(CFileHandle* pFileHandle, int param) {
     next->mPrev = prev;
     node->mNext = NULL;
 
-    if (mChildList->mNext != mChildList) {
-        for (CWorkThreadListNode* scan = mChildList->mNext; scan != mChildList;
+    if (mChildren.mStartNodePtr->mNext != mChildren.mStartNodePtr) {
+        for (CWorkThreadListNode* scan = mChildren.mStartNodePtr->mNext; scan != mChildren.mStartNodePtr;
              scan = scan->mNext) {
             CDeviceFileJob* job = (CDeviceFileJob*)scan->mItem;
             if (job != NULL) {
-                if (job->field_0x50 < 0x41) {
+                if (job->mType < 0x41) {
                     job = NULL;
-                } else if (job->field_0x50 >= 0x4F) {
+                } else if (job->mType >= 0x4F) {
                     job = NULL;
                 }
             } else {
@@ -860,13 +634,13 @@ bool CDeviceFile::updateJobPriority(CFileHandle* pFileHandle, int param) {
                 // Preempt the lower-priority job: park its node in the pool.
                 pFileHandle->field_0x48 = param;
                 u32 freeIdx;
-                for (freeIdx = 0; freeIdx < field_0x74; freeIdx++) {
-                    if (((CDevJobSlot*)field_0x70)[freeIdx].mNode == NULL) break;
+                for (freeIdx = 0; freeIdx < mChildren.mCapacity; freeIdx++) {
+                    if (((CDevJobSlot*)mChildren.mList)[freeIdx].mNode == NULL) break;
                 }
                 CWorkThreadListNode* slotNode =
-                    (CWorkThreadListNode*)&((CDevJobSlot*)field_0x70)[freeIdx];
-                if (&((CDevJobSlot*)field_0x70)[freeIdx].mJob != NULL) {
-                    ((CDevJobSlot*)field_0x70)[freeIdx].mJob = foundJob;
+                    (CWorkThreadListNode*)&((CDevJobSlot*)mChildren.mList)[freeIdx];
+                if (&((CDevJobSlot*)mChildren.mList)[freeIdx].mJob != NULL) {
+                    ((CDevJobSlot*)mChildren.mList)[freeIdx].mJob = foundJob;
                 }
                 slotNode->mNext = scan;
                 slotNode->mPrev = scan->mPrev;
@@ -880,18 +654,18 @@ bool CDeviceFile::updateJobPriority(CFileHandle* pFileHandle, int param) {
     // No preemption target: park against the ring sentinel itself.
     pFileHandle->field_0x48 = param;
     u32 freeIdx2;
-    for (freeIdx2 = 0; freeIdx2 < field_0x74; freeIdx2++) {
-        if (((CDevJobSlot*)field_0x70)[freeIdx2].mNode == NULL) break;
+    for (freeIdx2 = 0; freeIdx2 < mChildren.mCapacity; freeIdx2++) {
+        if (((CDevJobSlot*)mChildren.mList)[freeIdx2].mNode == NULL) break;
     }
     CWorkThreadListNode* slotNode2 =
-        (CWorkThreadListNode*)&((CDevJobSlot*)field_0x70)[freeIdx2];
-    if (&((CDevJobSlot*)field_0x70)[freeIdx2].mJob != NULL) {
-        ((CDevJobSlot*)field_0x70)[freeIdx2].mJob = foundJob;
+        (CWorkThreadListNode*)&((CDevJobSlot*)mChildren.mList)[freeIdx2];
+    if (&((CDevJobSlot*)mChildren.mList)[freeIdx2].mJob != NULL) {
+        ((CDevJobSlot*)mChildren.mList)[freeIdx2].mJob = foundJob;
     }
-    slotNode2->mNext = (CWorkThreadListNode*)mChildList;
-    slotNode2->mPrev = ((CWorkThreadListNode*)mChildList)->mPrev;
-    ((CWorkThreadListNode*)mChildList)->mPrev->mNext = slotNode2;
-    ((CWorkThreadListNode*)mChildList)->mPrev = slotNode2;
+    slotNode2->mNext = (CWorkThreadListNode*)mChildren.mStartNodePtr;
+    slotNode2->mPrev = ((CWorkThreadListNode*)mChildren.mStartNodePtr)->mPrev;
+    ((CWorkThreadListNode*)mChildren.mStartNodePtr)->mPrev->mNext = slotNode2;
+    ((CWorkThreadListNode*)mChildren.mStartNodePtr)->mPrev = slotNode2;
     return true;
 }
 
@@ -909,14 +683,14 @@ void CDeviceFile::setHandleFlag2(CFileHandle* pFileHandle) {
 
 bool CDeviceFile::wkStandbyLogin() {
     if (CDevice::isColdStartReady()) {
-        const char* dvdName = lbl_eu_80522BE4 + 0x8B;
+        const char* dvdName = "CDeviceFileDvd";
         CWorkThread* dvd = (CWorkThread*)mtl::MemManager::allocate(0x1D8, CWorkThreadSystem::getWorkMem());
         if (dvd != NULL) {
             dvd = (CWorkThread*)__ct__CDeviceFileDvd(dvd, dvdName, this);
         }
         CWorkUtil::entryWork(dvd, this, false);
 
-        const char* criName = lbl_eu_80522BE4 + 0x9A;
+        const char* criName = "CDeviceFileCri";
         CWorkThread* cri = (CWorkThread*)mtl::MemManager::allocate(0x1F0, CWorkThreadSystem::getWorkMem());
         if (cri != NULL) {
             cri = (CWorkThread*)__ct__CDeviceFileCri(cri, criName, this);
@@ -932,10 +706,10 @@ bool CDeviceFile::wkStandbyLogin() {
 bool CDeviceFile::wkStandbyLogout() {
     // Log out only when the child list is empty and the work-system/lib
     // singletons have been released.
-    if (mChildList->mNext == mChildList &&
+    if (mChildren.mStartNodePtr->mNext == mChildren.mStartNodePtr &&
         CWorkSystem::getInstance() == NULL &&
         CLib::getInstance() == NULL) {
-        return ((CWorkThread*)this)->wkStandbyLogout();
+        return CWorkThread::wkStandbyLogout();
     }
     return false;
 }
@@ -1027,143 +801,6 @@ extern "C" void sinit_eu_80452248() {
     sDeviceFileStaticState[0] = 0;
     *(unsigned int*)(sDeviceFileStaticState + 0x100) = 0;
 }
-
-// ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
-// [.data] 0x8056C250-0x8056C330 (224B): CDeviceFile vtable (160B) + RTTI
-// chain (28B) + reslist<CFileHandle>/_reslist_base<CFileHandle> vtables.
-namespace DeviceFileBlob {
-extern "C" void WorkEvent1__10IWorkEventFPvPCc();
-extern "C" void OnFileEvent__10IWorkEventFP10CEventFile();
-extern "C" void WorkEvent3__10IWorkEventFPv();
-extern "C" void WorkEvent4__10IWorkEventFv();
-extern "C" void OnPauseTrigger__10IWorkEventFb();
-extern "C" void WorkEvent6__10IWorkEventFv();
-extern "C" void WorkEvent7__10IWorkEventFv();
-extern "C" void WorkEvent8__10IWorkEventFv();
-extern "C" void WorkEvent9__10IWorkEventFv();
-extern "C" void WorkEvent10__10IWorkEventFv();
-extern "C" void WorkEvent11__10IWorkEventFv();
-extern "C" void WorkEvent12__10IWorkEventFv();
-extern "C" void WorkEvent13__10IWorkEventFv();
-extern "C" void WorkEvent14__10IWorkEventFv();
-extern "C" void WorkEvent15__10IWorkEventFv();
-extern "C" void WorkEvent16__10IWorkEventFv();
-extern "C" void WorkEvent17__10IWorkEventFv();
-extern "C" void WorkEvent18__10IWorkEventFv();
-extern "C" void WorkEvent19__10IWorkEventFv();
-extern "C" void WorkEvent20__10IWorkEventFv();
-extern "C" void WorkEvent21__10IWorkEventFv();
-extern "C" void WorkEvent22__10IWorkEventFv();
-extern "C" void WorkEvent23__10IWorkEventFv();
-extern "C" void WorkEvent24__10IWorkEventFv();
-extern "C" void WorkEvent25__10IWorkEventFv();
-extern "C" void WorkEvent26__10IWorkEventFv();
-extern "C" void WorkEvent27__10IWorkEventFv();
-extern "C" void WorkEvent28__10IWorkEventFv();
-extern "C" void WorkEvent29__10IWorkEventFv();
-extern "C" void WorkEvent30__10IWorkEventFv();
-extern "C" void WorkEvent31__10IWorkEventFv();
-extern "C" void wkUpdate__11CWorkThreadFv();
-extern "C" void wkRender__11CWorkThreadFv();
-extern "C" void wkRenderAfter__11CWorkThreadFv();
-extern "C" void wkStandbyExceptionRetry__11CWorkThreadFUl();
-extern "C" void __dt__11CDeviceFileFv();       // defined below (member dtor)
-extern "C" bool wkStandbyLogin__11CDeviceFileFv();  // defined below
-extern "C" bool wkStandbyLogout__11CDeviceFileFv(); // defined below
-extern "C" u32 __RTTI__10IWorkEvent;
-extern "C" u32 __RTTI__11CWorkThread;
-extern "C" u32 lbl_eu_806635F0;  // CFileHandle RTTI locator (foreign TU)
-}
-extern "C" u32 __RTTI__11CDeviceFile[2]; // .sdata RTTI locator (defined below)
-extern "C" u32 lbl_eu_806636B8[2];
-extern "C" u32 lbl_eu_806636C0[2];
-extern "C" u32 lbl_eu_8056C2F0[7];
-extern "C" u32 lbl_eu_8056C30C[3];
-extern "C" u32 lbl_eu_8056C318[3];
-
-extern "C" u32 lbl_eu_8056C250[40] = {
-    (u32)&__RTTI__11CDeviceFile, 0x00000000, (u32)&DeviceFileBlob::__dt__11CDeviceFileFv,
-    (u32)&DeviceFileBlob::WorkEvent1__10IWorkEventFPvPCc,
-    (u32)&DeviceFileBlob::OnFileEvent__10IWorkEventFP10CEventFile,
-    (u32)&DeviceFileBlob::WorkEvent3__10IWorkEventFPv,
-    (u32)&DeviceFileBlob::WorkEvent4__10IWorkEventFv,
-    (u32)&DeviceFileBlob::OnPauseTrigger__10IWorkEventFb,
-    (u32)&DeviceFileBlob::WorkEvent6__10IWorkEventFv,
-    (u32)&DeviceFileBlob::WorkEvent7__10IWorkEventFv,
-    (u32)&DeviceFileBlob::WorkEvent8__10IWorkEventFv,
-    (u32)&DeviceFileBlob::WorkEvent9__10IWorkEventFv,
-    (u32)&DeviceFileBlob::WorkEvent10__10IWorkEventFv,
-    (u32)&DeviceFileBlob::WorkEvent11__10IWorkEventFv,
-    (u32)&DeviceFileBlob::WorkEvent12__10IWorkEventFv,
-    (u32)&DeviceFileBlob::WorkEvent13__10IWorkEventFv,
-    (u32)&DeviceFileBlob::WorkEvent14__10IWorkEventFv,
-    (u32)&DeviceFileBlob::WorkEvent15__10IWorkEventFv,
-    (u32)&DeviceFileBlob::WorkEvent16__10IWorkEventFv,
-    (u32)&DeviceFileBlob::WorkEvent17__10IWorkEventFv,
-    (u32)&DeviceFileBlob::WorkEvent18__10IWorkEventFv,
-    (u32)&DeviceFileBlob::WorkEvent19__10IWorkEventFv,
-    (u32)&DeviceFileBlob::WorkEvent20__10IWorkEventFv,
-    (u32)&DeviceFileBlob::WorkEvent21__10IWorkEventFv,
-    (u32)&DeviceFileBlob::WorkEvent22__10IWorkEventFv,
-    (u32)&DeviceFileBlob::WorkEvent23__10IWorkEventFv,
-    (u32)&DeviceFileBlob::WorkEvent24__10IWorkEventFv,
-    (u32)&DeviceFileBlob::WorkEvent25__10IWorkEventFv,
-    (u32)&DeviceFileBlob::WorkEvent26__10IWorkEventFv,
-    (u32)&DeviceFileBlob::WorkEvent27__10IWorkEventFv,
-    (u32)&DeviceFileBlob::WorkEvent28__10IWorkEventFv,
-    (u32)&DeviceFileBlob::WorkEvent29__10IWorkEventFv,
-    (u32)&DeviceFileBlob::WorkEvent30__10IWorkEventFv,
-    (u32)&DeviceFileBlob::WorkEvent31__10IWorkEventFv,
-    (u32)&DeviceFileBlob::wkUpdate__11CWorkThreadFv,
-    (u32)&DeviceFileBlob::wkRender__11CWorkThreadFv,
-    (u32)&DeviceFileBlob::wkRenderAfter__11CWorkThreadFv,
-    (u32)&DeviceFileBlob::wkStandbyLogin__11CDeviceFileFv,
-    (u32)&DeviceFileBlob::wkStandbyLogout__11CDeviceFileFv,
-    (u32)&DeviceFileBlob::wkStandbyExceptionRetry__11CWorkThreadFUl,
-};
-extern "C" u32 lbl_eu_8056C2F0[7] = {
-    (u32)&DeviceFileBlob::__RTTI__10IWorkEvent, 0x00000000,
-    (u32)&DeviceFileBlob::__RTTI__11CWorkThread, 0x00000000,
-    (u32)&DeviceFileBlob::lbl_eu_806635F0, 0x00000000, 0x00000000,
-};
-extern "C" u32 lbl_eu_8056C30C[3] = {
-    (u32)&lbl_eu_806636B8, 0x00000000, (u32)&__dt__reslist_CFileHandle,
-};
-extern "C" u32 lbl_eu_8056C318[3] = {
-    (u32)&lbl_eu_806636C0, 0x00000000, 0x00000000,
-};
-extern "C" u32 lbl_eu_8056C324[3] = {
-    (u32)&lbl_eu_806636C0, 0x00000000, (u32)&__dt___reslist_base_CFileHandle,
-};
-
-// [.rodata] 0x80522BA0-0x80522C90 (240B): RTTI names + device-name table.
-extern "C" __declspec(align(4)) const char lbl_eu_80522BA0[12] = {
-    0x43,0x44,0x65,0x76,0x69,0x63,0x65,0x46,0x69,0x6C,0x65,0x00,
-};
-extern "C" __declspec(align(4)) const char lbl_eu_80522BAC[23] = {
-    0x72,0x65,0x73,0x6C,0x69,0x73,0x74,0x3C,0x43,0x46,0x69,0x6C,0x65,0x48,0x61,0x6E,
-    0x64,0x6C,0x65,0x20,0x2A,0x3E,0x00,
-};
-extern "C" __declspec(align(4)) const char lbl_eu_80522BC4[29] = {
-    0x5F,0x72,0x65,0x73,0x6C,0x69,0x73,0x74,0x5F,0x62,0x61,0x73,0x65,0x3C,0x43,0x46,
-    0x69,0x6C,0x65,0x48,0x61,0x6E,0x64,0x6C,0x65,0x20,0x2A,0x3E,0x00,
-};
-extern "C" const char lbl_eu_80522BE4[172] = {
-    'U','S','B','K','E','Y',0x00,
-    0x43,0x44,0x65,0x76,0x69,0x63,0x65,0x46,0x69,0x6C,0x65,0x4A,0x6F,0x62,0x52,0x65,0x61,0x64,0x44,0x76,0x64,0x00,
-    0x2F,0x00,
-    0x43,0x44,0x65,0x76,0x69,0x63,0x65,0x46,0x69,0x6C,0x65,0x4A,0x6F,0x62,0x56,0x61,0x6C,0x69,0x64,0x50,0x61,0x74,0x68,0x44,0x76,0x64,0x00,
-    0x43,0x44,0x65,0x76,0x69,0x63,0x65,0x46,0x69,0x6C,0x65,0x4A,0x6F,0x62,0x56,0x61,0x6C,0x69,0x64,0x50,0x61,0x74,0x68,0x43,0x72,0x69,0x00,
-    0x43,0x44,0x65,0x76,0x69,0x63,0x65,0x46,0x69,0x6C,0x65,0x4A,0x6F,0x62,0x56,0x61,0x6C,0x69,0x64,0x46,0x69,0x6C,0x65,0x44,0x76,0x64,0x00,
-    0x43,0x44,0x65,0x76,0x69,0x63,0x65,0x46,0x69,0x6C,0x65,0x4A,0x6F,0x62,0x56,0x61,0x6C,0x69,0x64,0x46,0x69,0x6C,0x65,0x43,0x72,0x69,0x00,
-    0x43,0x44,0x65,0x76,0x69,0x63,0x65,0x46,0x69,0x6C,0x65,0x44,0x76,0x64,0x00,
-    0x43,0x44,0x65,0x76,0x69,0x63,0x65,0x46,0x69,0x6C,0x65,0x43,0x72,0x69,0x00,0x00,0x00,0x00,
-};
-
-// [.sdata] 0x806636A8-0x806636C8 (32B): flags + RTTI locators.
-extern "C" u32 __RTTI__11CDeviceFile[2] = { (u32)&lbl_eu_80522BA0, (u32)&lbl_eu_8056C2F0 };
-extern "C" u32 lbl_eu_806636B8[2] = { (u32)&lbl_eu_80522BAC, (u32)&lbl_eu_8056C318 };
-extern "C" u32 lbl_eu_806636C0[2] = { (u32)&lbl_eu_80522BC4, 0x00000000 };
 
 // [.bss] 0x806575C0-0x806576C8 (264B).
 u8 sDeviceFileStaticState[0x108];

@@ -313,7 +313,13 @@ struct CScnEnvLgtCtrlFogData {
 // 0x40-byte light-command rows indexed from CScnEnvLgtCtrl+0x20 by
 // scnLgtApplyLightCmdScaled (index = the control's u16 at +0x1E).
 struct CScnEnvLgtCtrlLgtEntry40 {
-    u8 _00[0x18];      // +0x00
+    union {
+        u8 field_0x00[0x18];  // +0x00 .. +0x18
+        struct {
+            u8 _00[0x0C];
+            f32 field_0x0C[3];  // +0x0C direction triple passed to LightCtlSetDir
+        };
+    };
     f32 field_0x18;    // +0x18
     f32 field_0x1C;    // +0x1C
     f32 field_0x20;    // +0x20
@@ -465,10 +471,7 @@ struct CScnEnvLgtOwnerLgt {
     u8* field_0x70;   // +0x70
 };
 
-// Opaque render-view passed by scnLgtApplyLightCmdScaled to the light helpers.
-struct CScnEnvLgtLightView;
 
-// Scene environment light controller.
 // vtable pointer at +0x00 (the retail dtor installs it), followed by the
 // light-state arrays: field_0x38/0x58 hold the previous frame and
 // field_0x78/0x98 the current frame (scnLgtCopyPrevRows copies previous -> current).
@@ -585,6 +588,7 @@ public:
                 f32 lgtColors64[4];
                 CScnEnvLgtPairU lgtPairs64[2];
             };
+            f32 mFlashWeights[7];  // +0x74 initialized to 1.0f by the ctor
         } lgtRows;
         struct {
             u8 pad_0x38[0x04];              // +0x38 /* 0x38 */
@@ -597,7 +601,7 @@ public:
         struct {
             u8 pad_0x40[0x08];              // +0x38..+0x40 /* 0x38 */
             CScnEnvLgtCtrlFogGate* field_0x40;  // +0x40 fog-enable gate (scnLgtPushFogView0 / scnLgtPushFogView1) /* 0x40 */
-            u8 _44[0x04];                   // +0x44 /* 0x44 */
+            void* field_0x44;               // +0x44 ctor sub-blob pointer /* 0x44 */
             CScnEnvLgtCtrlLgtCtl* field_0x48;  // +0x48 light-count control /* 0x48 */
             CScnEnvLgtCtrlLgtLimit* field_0x4C;  // +0x4C light limit object /* 0x4C */
             f32* field_0x50;                // +0x50 light-row array (scnLgtBlendRow5) /* 0x50 */
@@ -729,9 +733,8 @@ extern u8 lbl_eu_8056F960[];
 // per-slot CLight pointers (+0x1140) and the parallel u32 slot fields
 // (+0x1160) refreshed by scnLgtRecomputeSlotField. Mirrors CLightEnv in
 // CVirtualLightObj.hpp, which this TU cannot include yet: its
-// LightCtlSetAttnMode(u8*,int) declaration clashes with the
-// LightCtlSetAttnMode(CScnEnvLgtLightView*,u32) import below (four different
-// spellings across the tree).
+// LightCtlSetAttnMode(u8*,int) declaration clashes with the four different
+// spellings of the LightCtlSet* imports across the tree).
 struct CScnEnvLgtCtrlLightEnvView {
     u8 _00[0x1140];          // +0x00
     CLight* mSlotPtrs[4];    // +0x1140
@@ -1043,29 +1046,7 @@ struct CScnEnvLgtCtrlFadeList {
     CScnEnvLgtCtrlFadeCurve mEntries[1];   // +0x30
 };
 
-// One row of the color-row tables at entry+0x24 (+ idx*4 + layer*8):
-// rows are addressed by the matched curve-entry position.
-struct CScnEnvLgtCtrlFadeRows {
-    f32 mRow[10];
-};
 
-// View of the 0xd8-byte light-type entry processed by scnLgtEvalSlotFade:
-// float-row length at +0x12, control flags at +0x14 (bits 0x10/0x20 enable
-// layers 0/1, bit 0x8000 marks the fade active), per-layer curve counts at
-// +0x18 and curve lists at +0x20, the two destination float rows at +0x38
-// and their mirror rows at +0x78.
-struct CScnEnvLgtCtrlFadeView {
-    u8 _00[0x12];
-    u16 mCount;                          // +0x12 float-row length
-    u16 mFlags;                          // +0x14
-    u32 mCurveCount[2];                  // +0x18 per-layer curve-entry counts
-    CScnEnvLgtCtrlFadeList* mLists[2];   // +0x20 per-layer curve lists
-    u8 _28[0x10];                        // +0x28 .. +0x38 (color-row slots)
-    f32 mRows[2][10];                    // +0x38 destination rows (stride 0x20)
-    f32 mMirror[2][10];                  // +0x78 mirror rows (stride 0x20)
-};
-
-// .sdata2 constants used by scnLgtBlendCurveSlots / scnLgtResetLightState / scnLgtPushFogSlot0 /
 // scnLgtPushControlRows (int->float magics, clamps and blend weights).
 extern const f64 kSignedIntToF64Magic;   // 2^52+2^31 (slot-blend signed magic, scnLgtPushSlotBlend)
 extern const f64 kCurveIntToF64Magic;   // 2^52 (curve-window conversion)
@@ -1566,13 +1547,13 @@ extern "C" void ScnFilterMan_appendFilter(u8* man, CScnEnvLgtBlend* filter);
 extern "C" void ScnFilterMan_toggleFilter(u8* man, CScnEnvLgtBlend* filter);
 
 // Light-render helpers called by scnLgtApplyLightCmdScaled / scnLgtApplyLightCmd /
-// scnLgtApplyLightCmdEx (defined in the TU before this one; only the call-site ABI
-// is needed here).
-extern "C" void LightCtlSetAttnMode(CScnEnvLgtLightView* view, u32 flag);
-extern "C" void LightCtlSetPos(CScnEnvLgtLightView* view, const u8* p);
-extern "C" void LightCtlSetDir(CScnEnvLgtLightView* view, const u8* p);
-extern "C" void LightCtlSetColor(CScnEnvLgtLightView* view, CScnEnvLgtCtrlLgtVec4* out);
-extern "C" void LightCtlInitDistAttn(CScnEnvLgtLightView* view, u32 a, f32 b, f32 c);
+// scnLgtApplyLightCmdEx (defined in CLight.cpp; C linkage keeps the flat retail
+// names). The lights are real CLight objects (0x40-byte stride in the light bank).
+extern "C" void LightCtlSetAttnMode(CLight* light, u32 flag);
+extern "C" void LightCtlSetPos(CLight* light, const u8* p);
+extern "C" void LightCtlSetDir(CLight* light, const u8* p);
+extern "C" void LightCtlSetColor(CLight* light, CScnEnvLgtCtrlLgtVec4* out);
+extern "C" void LightCtlInitDistAttn(CLight* light, u32 a, f32 b, f32 c);
 
 // 16-byte light-data block copied by scnLgtReadLightDataWords (self+0x54 -> out).
 // Kept as a named struct so the copy sites use typed pointers: MWCC only
@@ -1584,27 +1565,6 @@ struct CScnEnvLgtCtrlLgtData {
     u32 field_0x08;   // +0x08
     u32 field_0x0C;   // +0x0c
 };
-
-// Typed view over the CScnEnvLgtCtrl layout used by scnLgtReadLightDataWords (u32 copy
-// of the +0x54 block) and scnLgtCopyAmbBase (float copy of +0x54 or +0x64 into
-// CScnEnvLgtData::mAmbColorBase, selected by flags bits 0x200 / 0x400).
-struct CScnEnvLgtCtrlLgtView {
-    u8 _pad[0x04];                     // +0x00
-    u32 flags;                         // +0x04 (bit 0x200 = light data at 0x54; bit 0x400 = data at 0x64)
-    u8 _pad2[0x4C];                    // +0x08
-    union {
-        CScnEnvLgtCtrlLgtData data;    // +0x54 (u32 view, scnLgtReadLightDataWords)
-        f32 field_0x54[4];             // +0x54 (float view, scnLgtCopyAmbBase)
-        CScnEnvLgtPairU field_0x54_pairs[2];  // +0x54 (pair view, scnLgtRebuildSlotColors)
-    };
-    union {
-        f32 field_0x64[4];             // +0x64 (float view, scnLgtCopyAmbBase)
-        CScnEnvLgtPairU field_0x64_pairs[2];  // +0x64 (pair view, scnLgtRebuildSlotColors)
-    };
-    f32 field_0x68;
-    f32 field_0x6C;
-};
-
 
 // --- __ct__CScnEnvLgtCtrl ctor helper types ---
 // 3-word .bss blob copied by the ctor into +0x90..0x98 and +0x9C..0xA4.
@@ -1746,43 +1706,4 @@ struct CScnEnvLgtCtrlRowsView {
     f32 field_0xC4;
     f32 field_0xC8;
     f32 field_0xCC;
-};
-
-// Constructor-only view of the CScnEnvLgtCtrl fields written by
-// __ct__CScnEnvLgtCtrl (the shared header models the post-init layout where
-// +0x10/+0x18 are scalars, but the ctor installs item-array pointers there).
-struct CScnEnvLgtCtrlCtorView {
-    void* mVtable;                        // +0x00
-    u32 field_0x04;                       // +0x04
-    void* field_0x08;                     // +0x08 (allocated work buffer)
-    void* field_0x0C;                     // +0x0C (0x14-stride item array)
-    void* field_0x10;                     // +0x10 (0x1C-stride item array)
-    void* field_0x14;                     // +0x14 (0xD8-stride item array)
-    void* field_0x18;                     // +0x18 (0x14-stride item array)
-    void* field_0x1C;                     // +0x1C (0x1C-stride item array)
-    void* field_0x20;                     // +0x20 (0x40-stride item array)
-    void* field_0x24;                     // +0x24 (0x30-stride array)
-    void* field_0x28;                     // +0x28 (bit array / memset target)
-    u8* field_0x2C;                       // +0x2C (resource blob base)
-    CScnEnvLgtCtrlCtorCtl* field_0x30;    // +0x30 (light-param control)
-    void* field_0x34;                     // +0x34
-    void* field_0x38;                     // +0x38
-    void* field_0x3C;                     // +0x3C
-    CScnEnvLgtCtrlCtorElem2* field_0x40;  // +0x40 (type-2 element)
-    void* field_0x44;                     // +0x44
-    CScnEnvLgtCtrlCtorElem5* field_0x48;  // +0x48 (type-5 element)
-    void* field_0x4C;                     // +0x4C (type-3 element)
-    void* field_0x50;                     // +0x50 (type-6 element)
-    u8 _54[0x20];                         // +0x54 .. +0x74
-    f32 field_0x74[7];                    // +0x74 (zeroed to B014)
-    u8 _8C[0x04];                         // +0x8C
-    CScnEnvLgtCtrlCtorCopy ctor90;        // +0x90 .. +0xA8
-    u32 field_0xA8;                       // +0xA8
-    void* field_0xAC;                     // +0xAC (arg)
-    s16 field_0xBC;                       // +0xBC (slot index, -1)
-    s16 field_0xBE;                       // +0xBE
-    f32 field_0xC0;                       // +0xC0
-    f32 field_0xC4;                       // +0xC4
-    f32 field_0xC8;                       // +0xC8
-    f32 field_0xCC;                       // +0xCC
 };

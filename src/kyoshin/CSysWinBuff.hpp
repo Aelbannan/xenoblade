@@ -1,5 +1,7 @@
 #pragma once
 
+#include "kyoshin/cf/CfBdat.hpp"
+
 #include <types.h>
 #include "kyoshin/cf/CfGameManager.hpp"  // canonical setPresentationFlag decl
 #include "kyoshin/CSysWin.hpp"
@@ -21,7 +23,6 @@ class CSysWinBuff;
 // Global data imports (MWCC does not mangle global-scope data names).
 // (singleton/word moved to CSysWinBuff.cpp as single global defs to dodge
 // a MWCC-1.1 decl-merging fault (10322) on these two.)
-extern u32 lbl_eu_806640E0;           // message-table word read by Move's label lookup
 
 // C-ABI helper imports with retail verbatim (unmangled) names; the defining
 // TUs (CSysWin.cpp / monolib / code_80135FDC.cpp) emit these flat symbols.

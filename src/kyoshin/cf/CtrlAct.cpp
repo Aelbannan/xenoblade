@@ -119,12 +119,12 @@ extern "C" void updateActMain(cf::CtrlAct* self) {
     // player pointer into r27 at each testActorStatus probe site (lwz r27,
     // 0x5c(r28)) and uses a fresh self->mPlayer for the arts probes.
     {
-        CtrlActPlayerView* player = self->mPlayer;
+        CtrlPlayerObj* player = (CtrlPlayerObj*)self->mPlayer;
         u32 local18 = *player->mField4->vf30();
         if (testActorStatus(player, &local18, 0x4000) != 0) {
             stuckFlag = 1;
         } else {
-            CtrlActPlayerView* player2 = self->mPlayer;
+            CtrlPlayerObj* player2 = (CtrlPlayerObj*)self->mPlayer;
             u32 local14 = *player2->mField4->vf30();
             if (testActorStatus(player2, &local14, 0xa) != 0) {
                 stuckFlag = 1;
@@ -435,7 +435,7 @@ void aimVoiceOwner(cf::CtrlAct* self) {
         return;
     }
     {
-        CtrlActPlayerView* player = self->mPlayer;
+        CtrlPlayerObj* player = (CtrlPlayerObj*)self->mPlayer;
         u32 localC = *player->mField4->vf30();
         if (testActorStatus(player, &localC, 0x1000) != 0) {
             return;
@@ -469,7 +469,7 @@ void aimVoiceOwner(cf::CtrlAct* self) {
         }
     }
     {
-        CtrlActPlayerView* player = self->mPlayer;
+        CtrlPlayerObj* player = (CtrlPlayerObj*)self->mPlayer;
         u32 local8 = *player->mField4->vf30();
         if (testActorStatus(player, &local8, 0x1000) != 0) {
             return;
@@ -950,16 +950,16 @@ extern "C" int runArtsAttack(cf::CtrlAct* self, CtrlActAtkArg* arg) {
     }
     void* bm = getInstance__Q22cf14CBattleManagerFv();
     if (((cf::CBattleManager*)bm)->CBattleMan_FetchVisionObj() != 0) {
-        CtrlActBattleSubView* bs = (CtrlActBattleSubView*)((cf::CBattleManager*)bm)->CBattleMan_FetchVisionObj();
-        if ((bs->mField824 & 0x100000) == 0
-            && installVisionStateCallback(&bs->mField219C, self->mPlayer) != 0) {
+        cf::CVisionSub* bs = (cf::CVisionSub*)((cf::CBattleManager*)bm)->CBattleMan_FetchVisionObj();
+        if ((bs->field_824 & 0x100000) == 0
+            && installVisionStateCallback(&((CtrlActBattleSubView*)bs)->mField219C, self->mPlayer) != 0) {
             return 0;
         }
     }
     CtrlActSub2A4* sub = self->mPlayer->table->method2A4(self->mPlayer);
     bm = getInstance__Q22cf14CBattleManagerFv();
     if (((cf::CBattleManager*)bm)->CBattleMan_FetchVisionObj() != 0
-        && ((CtrlActBattleSubView*)((cf::CBattleManager*)bm)->CBattleMan_FetchVisionObj())->mField0
+        && ((cf::CVisionSub*)((cf::CBattleManager*)bm)->CBattleMan_FetchVisionObj())->field_00
                == self->mPlayer->mField3F10) {
         // battle target matches: keep the existing block
     } else if ((sub->mField78 & 0x10000000) == 0) {
@@ -985,7 +985,7 @@ extern "C" int runArtsAttack(cf::CtrlAct* self, CtrlActAtkArg* arg) {
         sub->mField70 = 0;
         sub->mField72 = 0;
         memset((u8*)sub + 8, 0, 0x40);
-        memset((u8*)sub + 0x84, 0, 0x34);
+        memset(&sub->_84[2], 0, 0x34);
         sub->mField74 = 0;
         sub->mField78 = 0;
     }
@@ -1140,7 +1140,7 @@ extern "C" int handleActKind(cf::CtrlAct* self) {
     {
         // Retail colors this gate's player cache into r30 (or r3,r30,r30
         // move before the call).
-        CtrlActPlayerView* player = self->mPlayer;
+        CtrlPlayerObj* player = (CtrlPlayerObj*)self->mPlayer;
         u32 local = *player->mField4->vf30();
         if (testActorStatus(player, &local, 0x1000) != 0) {
             return 0;
@@ -1281,7 +1281,7 @@ extern "C" void setupActTimer(cf::CtrlAct* self) {
     // re-read s->mPlayer after memset (retail reloads 0x5c(r30) there).
     CtrlActSrc* src;
     cf::CtrlAct* s = self;
-    CtrlActPlayerView* player = s->mPlayer;
+    CtrlPlayerObj* player = (CtrlPlayerObj*)s->mPlayer;
     u32 local = *player->mField4->vf30();
     if (testActorStatus(player, &local, 0x807) == 0) {
         memset(&s->mPos30, 0, 0x2c);
@@ -1377,7 +1377,7 @@ extern "C" void setupActTimer(cf::CtrlAct* self) {
 extern "C" void progressPhase(cf::CtrlAct* self) {
     // Cached player pointer: MWCC keeps it in a saved register across the
     // state gate.
-    CtrlActPlayerView* player = self->mPlayer;
+    CtrlPlayerObj* player = (CtrlPlayerObj*)self->mPlayer;
     u32 local = *player->mField4->vf30();
     if (testActorStatus(player, &local, 0x807) == 0) {
         memset(&self->mPos30, 0, 0x2c);
@@ -1618,7 +1618,7 @@ extern "C" void ctrlActState4Handler(cf::CtrlAct* self) {
     ml::CVec3 vec1c;
     ml::CVec3 vec10;
     f32 x8;
-    CtrlActPlayerView* player = self->mPlayer;
+    CtrlPlayerObj* player = (CtrlPlayerObj*)self->mPlayer;
     {
         u32 local = *player->mField4->vf30();
         if (testActorStatus(player, &local, 0x807) == 0) {
@@ -1643,7 +1643,7 @@ extern "C" void ctrlActState4Handler(cf::CtrlAct* self) {
     self->mField54 -= lbl_eu_80666D58 * dt;
     if (self->mField54 > lbl_eu_80666CF8) {
         CVoicePos* p2 =
-            ((CVoiceOwnerIntfPc*)&((CtrlActSweepView*)other)->mOwner3E9C)->getPosition();
+            ((CtrlPlayerObj*)other)->mSub3E9C.getPosition();
         if (self->ctrlActAimAtTarget(&vec1c, p2) != 0) {
             f32 x8;
             self->ctrlActComputeAimVec(&vec10, &x8, &vec1c, 1, 0);
@@ -1677,7 +1677,7 @@ int ctrlActComputeAimVec(void* self) { return 0; }
 // otherwise the shared facing helper re-aims.
 extern "C" void testAimWobble(cf::CtrlAct* self) {
     {
-        CtrlActPlayerView* player = self->mPlayer;
+        CtrlPlayerObj* player = (CtrlPlayerObj*)self->mPlayer;
         u32 local = *player->mField4->vf30();
         if (testActorStatus(player, &local, 0x807) == 0) {
             memset(&self->mPos30, 0, 0x2c);
@@ -1815,7 +1815,7 @@ extern "C" void testAimWobble(cf::CtrlAct* self) {
 
 extern "C" void stepActMotion(cf::CtrlAct* self) {
     {
-        CtrlActPlayerView* player = self->mPlayer;
+        CtrlPlayerObj* player = (CtrlPlayerObj*)self->mPlayer;
         u32 local = *player->mField4->vf30();
         if (testActorStatus(player, &local, 0x807) == 0) {
             memset(&self->mPos30, 0, 0x2c);
@@ -2009,7 +2009,7 @@ void loadActionSrc(cf::CtrlAct* self) {
 // with the aim/fx state value written from either the success or failure
 // path.
 extern "C" void ctrlActHandleCase4Move(cf::CtrlAct* self) {
-    CtrlActPlayerView* player = self->mPlayer;
+    CtrlPlayerObj* player = (CtrlPlayerObj*)self->mPlayer;
     u32 id = *player->mField4->vf30();
     u32 local = id;
     if (testActorStatus(player, &local, 0x807) == 0) {
@@ -2156,9 +2156,7 @@ extern "C" void aimNearestFoe(cf::CtrlAct* self) {
                 list[count] = candidate;
                 CVoicePos* playerPos = player->mSub3E9C.getPosition();
                 CVoicePos* candPos =
-                    ((CVoiceOwnerIntfPc*)&((CtrlActSweepView*)candidate)
-                         ->mOwner3E9C)
-                        ->getPosition();
+                    ((CtrlPlayerObj*)candidate)->mSub3E9C.getPosition();
                 ml::CVec3 diff;
                 nw4r::math::VEC3Sub((nw4r::math::VEC3*)&diff,
                                     (const nw4r::math::VEC3*)candPos,

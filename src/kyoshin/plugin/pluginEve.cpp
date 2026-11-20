@@ -10,7 +10,7 @@
 // Event/presentation flag bitfields (.sbss)
 extern u32 gmPauseFlags; // secondary mode bitfield (fade/skip status bits)
 
-extern "C" u32 CtrlRemote_TouchBitByArg(u32 addr); // global data/flag memory reader
+#include "kyoshin/cf/CtrlRemoteApi.hpp" // global data/flag memory reader
 
 extern "C" void checkAvailableValue__Q22cf13CfGameManagerFv(int id);
 extern "C" int processBattleQueue__Q22cf13CfGameManagerFv(u32 mode);
@@ -22,11 +22,6 @@ extern "C" void awardQuestFlags();
 extern "C" void* __dynamic_cast(void* obj, long offset, const void* src_type,
                                 const void* dst_type, void* src2dst);
 extern u32 __RTTI__Q22cf12CfObjectMove; // RTTI typeinfo (src type) for actor dynamic_cast
-// sdata2 head floats (defined at EOF in retail order 0.0, 1.0): the fade
-// color stores below use these instead of literals so no compiler pool
-// remains and the section lands byte-exact.
-extern f32 eve_sdata2_zero;
-extern f32 eve_sdata2_one;
 
 extern "C" int getFlag(VMThread* pThread) {
     // flags packs a base offset (high 16 bits) and a length (low 16 bits).
@@ -262,18 +257,18 @@ extern "C" int fadeIn(VMThread* pThread) {
     checkAvailableValue__Q22cf13CfGameManagerFv(0x10);
     float color[4];
     if (c == 0) {
-        color[0] = eve_sdata2_zero;
-        color[1] = eve_sdata2_zero;
-        color[2] = eve_sdata2_zero;
-        color[3] = eve_sdata2_one;
+        color[0] = 0.0f;
+        color[1] = 0.0f;
+        color[2] = 0.0f;
+        color[3] = 1.0f;
     } else {
-        color[0] = eve_sdata2_one;
-        color[1] = eve_sdata2_one;
-        color[2] = eve_sdata2_one;
-        color[3] = eve_sdata2_one;
+        color[0] = 1.0f;
+        color[1] = 1.0f;
+        color[2] = 1.0f;
+        color[3] = 1.0f;
     }
     func_8008566C__Q22cf13CfGameManagerFv(0, color, 1);
-    color[3] = eve_sdata2_zero;
+    color[3] = 0.0f;
     func_8008566C__Q22cf13CfGameManagerFv(mode & 0xffff, color, 1);
     if ((gmGameFlags & 0x80) == 0) {
         gmPauseFlags |= 0x2;
@@ -297,15 +292,15 @@ extern "C" int fadeOut(VMThread* pThread) {
     int fadeActive = processBattleQueue__Q22cf13CfGameManagerFv(0x19);
     float color[4];
     if (c == 0) {
-        color[0] = eve_sdata2_zero;
-        color[1] = eve_sdata2_zero;
-        color[2] = eve_sdata2_zero;
-        color[3] = eve_sdata2_one;
+        color[0] = 0.0f;
+        color[1] = 0.0f;
+        color[2] = 0.0f;
+        color[3] = 1.0f;
     } else {
-        color[0] = eve_sdata2_one;
-        color[1] = eve_sdata2_one;
-        color[2] = eve_sdata2_one;
-        color[3] = eve_sdata2_one;
+        color[0] = 1.0f;
+        color[1] = 1.0f;
+        color[2] = 1.0f;
+        color[3] = 1.0f;
     }
     func_8008566C__Q22cf13CfGameManagerFv(mode & 0xffff, color, 1);
     if ((gmGameFlags & 0x80) == 0 || fadeActive) {
@@ -356,51 +351,12 @@ extern "C" int isVisionEvent(VMThread* pThread) {
     return eventFlagBool(pThread, 26);
 }
 
-// Command-table name/data labels for the "eve" plugin (retail data symbols).
-// .rodata entry names below (unsized, 4-packed) + "eve" plugin name.
-extern char lbl_eu_804FACF0[];
-extern PluginFuncData lbl_eu_80525EF8[];
+// Command table for the "eve" plugin.
+extern PluginFuncData sEveCommands[];
 
-// ----- Retail data sections defined by this TU (subset) -----
-// .rodata long entry names (unsized, 4-packed) + "eve" plugin name + .data
-// type-ref block (80525E98) + .sdata2 strings/floats + the PluginFuncData
-// table (80525EF8), all landed byte-exact (wave DL-r4; the frozen UNIT_RULE
-// strip/pool block is removed). The fade stores read the head float pair
-// (eve_sdata2_zero/one, retail pool order) instead of literals so no
-// compiler pool remains.
-__declspec(section ".rodata") __attribute__((used))
-char lbl_eu_804FAC20[] = "getAwardFlagF16";
-__declspec(section ".rodata") __attribute__((used))
-char lbl_eu_804FAC30[] = "addAwardFlagF16";
-__declspec(section ".rodata") __attribute__((used))
-char lbl_eu_804FAC40[] = "setAwardFlagF1";
-__declspec(section ".rodata") __attribute__((used))
-char lbl_eu_804FAC50[] = "realtimeEventStart";
-__declspec(section ".rodata") __attribute__((used))
-char lbl_eu_804FAC64[] = "realtimeEventPlay";
-__declspec(section ".rodata") __attribute__((used))
-char lbl_eu_804FAC78[] = "realtimeEventEnd";
-__declspec(section ".rodata") __attribute__((used))
-char lbl_eu_804FAC8C[] = "waitRealtimeEvent";
-__declspec(section ".rodata") __attribute__((used))
-char lbl_eu_804FACA0[] = "checkEvent";
-__declspec(section ".rodata") __attribute__((used))
-char lbl_eu_804FACAC[] = "clearEventSkip";
-__declspec(section ".rodata") __attribute__((used))
-char lbl_eu_804FACBC[] = "isTalkEvent";
-__declspec(section ".rodata") __attribute__((used))
-char lbl_eu_804FACC8[] = "isVisionEvent";
-__declspec(section ".rodata") __attribute__((used))
-char lbl_eu_804FACD8[] = "onTalkEnd";
-__declspec(section ".rodata") __attribute__((used))
-char lbl_eu_804FACE4[] = "fadeWait";
-__declspec(section ".rodata") __attribute__((used)) char lbl_eu_804FACF0[8] = "eve";
-// Type-reference block (80525E98, frontier label): 10 external typeinfo
-// pointers (ocUnit's .sdata, another unit defines them) + the CfObjectActor
-// RTTI, each paired with a subobject offset (mostly 0x3E9C, the embedded
-// CfObjectMove offset; a few differ), ending with a null pair. This is a
-// dynamic-cast dispatch table (type -> subobject offset). RESIDUAL: exact
-// source shape unknown; reproduced byte-faithfully.
+// Dynamic-cast dispatch table: each RTTI pointer is paired with the offset
+// of its subobject inside the actor (mostly 0x3E9C, the embedded
+// CfObjectMove), terminated by a null pair.
 extern u32 __RTTI__Q22cf11CActorParam[];
 extern u32 __RTTI__Q22cf11CDebugState[];
 extern u32 __RTTI__Q22cf11CActorState[];
@@ -409,7 +365,8 @@ extern u32 __RTTI__Q22cf9CAIAction[];
 extern u32 __RTTI__Q22cf12CObjectParam[];
 extern u32 __RTTI__Q22cf12CObjectState[];
 struct EveTypeRef { const void* type; u32 subobjOff; };
-__declspec(section ".data") __attribute__((used)) EveTypeRef lbl_eu_80525E98[12] = {
+// name-guess: RTTI/subobject pairs decoded from the retail .data object at 0x80525E98.
+EveTypeRef sEveCastSubobjectTable[12] = {
     { __RTTI__Q22cf12CObjectState, 0x3E9C }, { __RTTI__Q22cf12CObjectParam, 0x3E9C },
     { &__RTTI__Q22cf8CfObject, 0x3E9C }, { &__RTTI__Q22cf13CfObjectModel, 0x3E9C },
     { &__RTTI__Q22cf12CfObjectMove, 0x3E9C }, { __RTTI__Q22cf9CAIAction, 0x3380 },
@@ -417,61 +374,32 @@ __declspec(section ".data") __attribute__((used)) EveTypeRef lbl_eu_80525E98[12]
     { __RTTI__Q22cf11CActorState, 0 }, { __RTTI__Q22cf11CActorParam, 0 },
     { &__RTTI__Q22cf13CfObjectActor, 0 }, { 0, 0 },
 };
-// Note: the eve function table (80525EF8) uses the region-name string
-// scRegionNameMEM1 (retail 8-byte string at sdata2+0x30, defined below)
-// as its "fadeOut" entry name.
-
 extern "C" void pluginEveRegist() {
-    vmPluginRegist(lbl_eu_804FACF0, lbl_eu_80525EF8);
+    vmPluginRegist("eve", sEveCommands);
 }
 
-// [.sdata2] 0x80665DF8-0x80665E38 (0x40): head float pair (retail order 0.0,
-// 1.0; the fade stores above read these, so no compiler pool remains),
-// method-name strings, the MEM1 region-name string (retail symbol
-// scRegionNameMEM1, "fadeOut"), and the two pluginCfs-read floats
-// (4096.0 divider, 360.0). Emitted in declaration order after the code pool
-// (pool-first, CMenuBattleChain precedent); offsets verified byte-exact.
-#pragma section data_type ".sdata2" ".sdata2"
-extern __declspec(section ".sdata2") f32 eve_sdata2_zero = 0.0f;
-extern __declspec(section ".sdata2") f32 eve_sdata2_one = 1.0f;
-__declspec(section ".sdata2") __attribute__((used, aligned(8)))
-char lbl_eu_80665E00[8] = "getFlag";
-__declspec(section ".sdata2") __attribute__((used, aligned(8)))
-char lbl_eu_80665E08[8] = "setFlag";
-__declspec(section ".sdata2") __attribute__((used, aligned(8)))
-char lbl_eu_80665E10[8] = "isEvent";
-__declspec(section ".sdata2") __attribute__((used, aligned(1)))
-char lbl_eu_80665E18[7] = "onTalk";
-__declspec(section ".sdata2") __attribute__((used, aligned(2)))
-char lbl_eu_80665E20[7] = "fadeIn";
-__declspec(section ".sdata2") __attribute__((used, aligned(2)))
-char scRegionNameMEM1__Q23mtl10MemManager[8] = "fadeOut";
-#pragma section data_type ".data" ".data"
-
-// [.data] PluginFuncData table (80525EF8, 20 entries): method-name /
-// function pairs in retail order, null-terminated. clearEventSkip takes no
-// args, so its slot carries an explicit PluginFunc cast (address only).
-__declspec(section ".data") __attribute__((used, aligned(8)))
-PluginFuncData lbl_eu_80525EF8[20] = {
-    { lbl_eu_80665E00, getFlag },
-    { lbl_eu_80665E08, setFlag },
-    { lbl_eu_804FAC20, getAwardFlagF16 },
-    { lbl_eu_804FAC30, addAwardFlagF16 },
-    { lbl_eu_804FAC40, setAwardFlagF1 },
-    { lbl_eu_804FAC50, realtimeEventStart },
-    { lbl_eu_804FAC64, realtimeEventPlay },
-    { lbl_eu_804FAC78, realtimeEventEnd },
-    { lbl_eu_804FAC8C, waitRealtimeEvent },
-    { lbl_eu_804FACA0, checkEvent },
-    { lbl_eu_804FACAC, (PluginFunc)clearEventSkip },
-    { lbl_eu_80665E10, isEvent },
-    { lbl_eu_804FACBC, isTalkEvent },
-    { lbl_eu_804FACC8, isVisionEvent },
-    { lbl_eu_80665E18, onTalk },
-    { lbl_eu_804FACD8, onTalkEnd },
-    { lbl_eu_80665E20, fadeIn },
-    { scRegionNameMEM1__Q23mtl10MemManager, fadeOut },
-    { lbl_eu_804FACE4, fadeWait },
+// name-guess: method/function pairs passed to vmPluginRegist (retail .data
+// object at 0x80525EF8). clearEventSkip takes no args, so its slot carries
+// an explicit PluginFunc cast (address only).
+PluginFuncData sEveCommands[20] = {
+    { "getFlag", getFlag },
+    { "setFlag", setFlag },
+    { "getAwardFlagF16", getAwardFlagF16 },
+    { "addAwardFlagF16", addAwardFlagF16 },
+    { "setAwardFlagF1", setAwardFlagF1 },
+    { "realtimeEventStart", realtimeEventStart },
+    { "realtimeEventPlay", realtimeEventPlay },
+    { "realtimeEventEnd", realtimeEventEnd },
+    { "waitRealtimeEvent", waitRealtimeEvent },
+    { "checkEvent", checkEvent },
+    { "clearEventSkip", (PluginFunc)clearEventSkip },
+    { "isEvent", isEvent },
+    { "isTalkEvent", isTalkEvent },
+    { "isVisionEvent", isVisionEvent },
+    { "onTalk", onTalk },
+    { "onTalkEnd", onTalkEnd },
+    { "fadeIn", fadeIn },
+    { "fadeOut", fadeOut },
+    { "fadeWait", fadeWait },
     { nullptr, nullptr },
 };
-#pragma section data_type ".data" ".data"

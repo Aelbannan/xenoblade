@@ -3,7 +3,7 @@
 #include "kyoshin/cf/object/CfObjectPc.hpp"
 
 extern cf::CfObjectPc* getCfObjectPc(cf::CfObjectMove* objMove);
-extern int isGlobalCamFlagSet(int mask);
+
 // Retail linker name getEffOwner____FPv (not getEffOwner__FPv).
 extern "C" void* getEffOwner____FPv(void* obj);
 

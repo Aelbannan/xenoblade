@@ -12,8 +12,14 @@
 #include "monolib/device/CDeviceFile.hpp"
 
 #include <cstdio>
-#include "kyoshin/CSkipTimerImports.hpp"
-#include "kyoshin/code_80135FDC_State.hpp"
+#include "kyoshin/CArtsInfo.hpp"
+#include "kyoshin/CMainMenu.hpp"
+
+// Defined in cf/CfGameManager.cpp; CGame.hpp declares the same retail symbol
+// with a two-argument view, so this caller keeps its typed three-argument form.
+extern "C" void func_80086B5C__Q22cf13CfGameManagerFv(int arg1, int arg2,
+                                                        int flag);
+
 #include "kyoshin/CUICfManager_Res.hpp"
 
 // ============================================================================
@@ -36,21 +42,21 @@ CSkipTimer2::~CSkipTimer2() {
 
 extern "C" void CSkipTimer2RebuildLayout(CSkipTimer2* self) {
     self->mMemRegion.createRegion(mtl::MemManager::getHandleMEM2(), 0x10000,
-                                  lbl_eu_80510568, 0);
+                                  "CSkipTimer2", 0);
     Class_8045F858 regionHost(&self->mMemRegion);
     buildLayout(reinterpret_cast<nw4r::lyt::Layout**>(&self->mField18),
                   reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mParent),
-                  &lbl_eu_80510568[0xc]);
+                  "mf85_opt00_clock01.brlyt");
     bindLayoutAnimTransform(reinterpret_cast<nw4r::lyt::Layout*>(self->mField18),
                   &self->mAnimTransform,
                   reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mParent),
-                  &lbl_eu_80510568[0x25]);
+                  "mf85_opt00_clock01_in.brlan");
     CSkipTimer2RebindAnim(self);
     setLayoutTextBoxFont(reinterpret_cast<nw4r::lyt::Layout*>(self->mField18),
-                  &lbl_eu_80510568[0x41], (u32)CUICfManager_getPackedFontD8());
+                  "txt_time", (u32)CUICfManager_getPackedFontD8());
     nw4r::lyt::Pane* pane = reinterpret_cast<nw4r::lyt::Layout*>(self->mField18)
                                 ->GetRootPane()
-                                ->FindPaneByName(&lbl_eu_80510568[0x41], true);
+                                ->FindPaneByName("txt_time", true);
     setPaneVisible(pane, 0);
     CSkipTimer2MarkActive(self);
     self->mMemRegion.validateHeap();
@@ -84,7 +90,7 @@ extern "C" void CSkipTimer2Start(CSkipTimer2* self, u8 arg) {
     self->mField24 = arg;
     self->mField23 = 0;
     nw4r::lyt::Layout* layout = reinterpret_cast<nw4r::lyt::Layout*>(self->mField18);
-    nw4r::lyt::Pane* pane = layout->GetRootPane()->FindPaneByName(&lbl_eu_80510568[0x41], true);
+    nw4r::lyt::Pane* pane = layout->GetRootPane()->FindPaneByName("txt_time", true);
     setPaneVisible(pane, 1);
     CSkipTimer2SelectSlotPane(self, self->mField24);
 }
@@ -99,9 +105,9 @@ extern "C" void CSkipTimer2HoldRelease(CSkipTimer2* self, u8 arg) {
 
 extern "C" void CSkipTimerStampSlotText(CSkipTimer2* self, int arg1, int arg2) {
     char buf[0x20];
-    sprintf(buf, &lbl_eu_80510568[0x4a], arg1, arg2);
+    sprintf(buf, "%d:%02d", arg1, arg2);
     LayoutSetTextBoxText(reinterpret_cast<nw4r::lyt::Layout*>(self->mField18),
-                         &lbl_eu_80510568[0x41], buf, 0);
+                         "txt_time", buf, 0);
 }
 
 extern "C" void CSkipTimer2OnFwdDone(CSkipTimer2* self) {
@@ -111,9 +117,9 @@ extern "C" void CSkipTimer2OnFwdDone(CSkipTimer2* self) {
     }
     nw4r::lyt::Pane* pan52 =
         reinterpret_cast<nw4r::lyt::Layout*>(self->mField18)
-            ->GetRootPane()->FindPaneByName(&lbl_eu_80510568[0x52], true);
+            ->GetRootPane()->FindPaneByName("nul_all", true);
     reinterpret_cast<PaneAlphaB8*>(reinterpret_cast<nw4r::lyt::Layout*>(self->mField18)
-                                       ->GetRootPane()->FindPaneByName(&lbl_eu_80510568[0x41], true))
+                                       ->GetRootPane()->FindPaneByName("txt_time", true))
         ->field_0xB8 =
         reinterpret_cast<PaneAlphaB8*>(pan52)->field_0xB8;
 }
@@ -123,14 +129,14 @@ extern "C" void CSkipTimer2OnRewindDone(CSkipTimer2* self) {
         self->mField21 = 0;
         self->mField23 = 1;
         setPaneVisible(reinterpret_cast<nw4r::lyt::Layout*>(self->mField18)
-                          ->GetRootPane()->FindPaneByName(&lbl_eu_80510568[0x41], true),
+                          ->GetRootPane()->FindPaneByName("txt_time", true),
                       0);
     }
     nw4r::lyt::Pane* pan52 =
         reinterpret_cast<nw4r::lyt::Layout*>(self->mField18)
-            ->GetRootPane()->FindPaneByName(&lbl_eu_80510568[0x52], true);
+            ->GetRootPane()->FindPaneByName("nul_all", true);
     reinterpret_cast<PaneAlphaB8*>(reinterpret_cast<nw4r::lyt::Layout*>(self->mField18)
-                                       ->GetRootPane()->FindPaneByName(&lbl_eu_80510568[0x41], true))
+                                       ->GetRootPane()->FindPaneByName("txt_time", true))
         ->field_0xB8 =
         reinterpret_cast<PaneAlphaB8*>(pan52)->field_0xB8;
 }
@@ -165,47 +171,47 @@ extern "C" void CSkipTimer2RebindAnim(CSkipTimer2* self) {
 
 extern "C" void CSkipTimer2SelectSlotPane(CSkipTimer2* self, u8 arg) {
     setPaneVisible(reinterpret_cast<nw4r::lyt::Layout*>(self->mField18)
-                      ->GetRootPane()->FindPaneByName(&lbl_eu_80510568[0x5a], true), 0);
+                      ->GetRootPane()->FindPaneByName("nul_bg00", true), 0);
     setPaneVisible(reinterpret_cast<nw4r::lyt::Layout*>(self->mField18)
-                      ->GetRootPane()->FindPaneByName(&lbl_eu_80510568[0x63], true), 0);
+                      ->GetRootPane()->FindPaneByName("nul_bg01", true), 0);
     setPaneVisible(reinterpret_cast<nw4r::lyt::Layout*>(self->mField18)
-                      ->GetRootPane()->FindPaneByName(&lbl_eu_80510568[0x6c], true), 0);
+                      ->GetRootPane()->FindPaneByName("nul_bg02", true), 0);
     setPaneVisible(reinterpret_cast<nw4r::lyt::Layout*>(self->mField18)
-                      ->GetRootPane()->FindPaneByName(&lbl_eu_80510568[0x75], true), 0);
+                      ->GetRootPane()->FindPaneByName("nul_bg03", true), 0);
     setPaneVisible(reinterpret_cast<nw4r::lyt::Layout*>(self->mField18)
-                      ->GetRootPane()->FindPaneByName(&lbl_eu_80510568[0x7e], true), 0);
+                      ->GetRootPane()->FindPaneByName("nul_bg04", true), 0);
     setPaneVisible(reinterpret_cast<nw4r::lyt::Layout*>(self->mField18)
-                      ->GetRootPane()->FindPaneByName(&lbl_eu_80510568[0x87], true), 0);
+                      ->GetRootPane()->FindPaneByName("nul_bg05", true), 0);
     setPaneVisible(reinterpret_cast<nw4r::lyt::Layout*>(self->mField18)
-                      ->GetRootPane()->FindPaneByName(&lbl_eu_80510568[0x90], true), 0);
+                      ->GetRootPane()->FindPaneByName("nul_bg06", true), 0);
     switch (arg) {
     case 1:
         setPaneVisible(reinterpret_cast<nw4r::lyt::Layout*>(self->mField18)
-                          ->GetRootPane()->FindPaneByName(&lbl_eu_80510568[0x5a], true), 1);
+                          ->GetRootPane()->FindPaneByName("nul_bg00", true), 1);
         break;
     case 2:
         setPaneVisible(reinterpret_cast<nw4r::lyt::Layout*>(self->mField18)
-                          ->GetRootPane()->FindPaneByName(&lbl_eu_80510568[0x63], true), 1);
+                          ->GetRootPane()->FindPaneByName("nul_bg01", true), 1);
         break;
     case 3:
         setPaneVisible(reinterpret_cast<nw4r::lyt::Layout*>(self->mField18)
-                          ->GetRootPane()->FindPaneByName(&lbl_eu_80510568[0x6c], true), 1);
+                          ->GetRootPane()->FindPaneByName("nul_bg02", true), 1);
         break;
     case 4:
         setPaneVisible(reinterpret_cast<nw4r::lyt::Layout*>(self->mField18)
-                          ->GetRootPane()->FindPaneByName(&lbl_eu_80510568[0x75], true), 1);
+                          ->GetRootPane()->FindPaneByName("nul_bg03", true), 1);
         break;
     case 5:
         setPaneVisible(reinterpret_cast<nw4r::lyt::Layout*>(self->mField18)
-                          ->GetRootPane()->FindPaneByName(&lbl_eu_80510568[0x7e], true), 1);
+                          ->GetRootPane()->FindPaneByName("nul_bg04", true), 1);
         break;
     case 6:
         setPaneVisible(reinterpret_cast<nw4r::lyt::Layout*>(self->mField18)
-                          ->GetRootPane()->FindPaneByName(&lbl_eu_80510568[0x87], true), 1);
+                          ->GetRootPane()->FindPaneByName("nul_bg05", true), 1);
         break;
     case 7:
         setPaneVisible(reinterpret_cast<nw4r::lyt::Layout*>(self->mField18)
-                          ->GetRootPane()->FindPaneByName(&lbl_eu_80510568[0x90], true), 1);
+                          ->GetRootPane()->FindPaneByName("nul_bg06", true), 1);
         break;
     }
 }
@@ -234,7 +240,7 @@ CSkipTimer::~CSkipTimer() {}
 
 extern "C" void CSkipTimer_BeginLoad(CSkipTimer* self) {
     self->mFileHandle = CDeviceFile::readFile(
-        mtl::MemManager::getHandleMEM2(), &lbl_eu_80510568[0x99],
+        mtl::MemManager::getHandleMEM2(), "menu/jp/SkipTimer.arc",
         reinterpret_cast<IWorkEvent*>(self), 0, 0);
     self->mSysWin = CSysWin(0);
     self->mSysWin.loadSystemArc();
@@ -370,7 +376,7 @@ extern "C" void CSkipTimerConfirmSkip(CSkipTimer* self) {
     } else {
         self->mField29 = 6;
         self->mField2B = 0;
-        char* msg = BdatTouchStringCell(&lbl_eu_80510568[0xaf], &lbl_eu_80510568[0xb8], 0x3a);
+        char* msg = BdatTouchStringCell("MNU_main", "name", 0x3a);
         reinterpret_cast<CSysWin*>(&self->mSysWin)->setKindContent(reinterpret_cast<char*>(msg), 0);
         reinterpret_cast<CSysWin*>(&self->mSysWin)->applyKind(1);
         reinterpret_cast<CSysWin*>(&self->mSysWin)->openPhase1();
@@ -459,10 +465,13 @@ extern "C" void CSkipTimerActivateTimer(CSkipTimer* self) {
     self->mField28 = 1;
 }
 
+float sSkipTimerFrameScale = 0.2f; // name-guess: frame step used by CSkipTimer_UpdateSlotFrame
+float sSkipTimerFrameOffset; // name-guess: sinit 11.0f*(60.0f*0.2f) frame bias
+
 extern "C" void CSkipTimer_UpdateSlotFrame(CSkipTimer* self) {
     float cur;
     int total = (int)self->mField2C * 0x3c + (int)(s16)self->mField2E;
-    cur = lbl_eu_80662C78 * (float)total + lbl_eu_80664A50;
+    cur = sSkipTimerFrameScale * (float)total + sSkipTimerFrameOffset;
     float max = (float)(u16)self->mAnimTransform24->GetFrameSize();
     if (cur > max) {
         cur -= max;
@@ -500,21 +509,21 @@ extern "C" void CSkipTimerBindAnim24(CSkipTimer* self) {
 bool CSkipTimer::OnFileEvent(CEventFile* pEventFile) {
     if (mFileHandle == pEventFile->mFileHandle) {
         mtl::ALLOC_HANDLE mem2 = mtl::MemManager::getHandleMEM2();
-        mMemRegion.createRegion(mem2, 0x10000, &lbl_eu_80510568[0xbd], 0);
+        mMemRegion.createRegion(mem2, 0x10000, "CSkipTimer", 0);
         Class_8045F858 memHost(&mMemRegion);
         void* fileData = mFileHandle->getData();
         mtl::MemManager::setMemInitFlag(false);
         mLayout = reinterpret_cast<nw4r::lyt::Layout*>(CLibLayout::createArcResourceAccessor());
         reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(mLayout)
-            ->Attach(fileData, &lbl_eu_80510568[0xc8]);
+            ->Attach(fileData, "arc");
         buildLayout(&mLayout2, reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(mLayout),
-                    &lbl_eu_80510568[0xcc]);
+                    "mf85_opt00_clock00.brlyt");
         bindLayoutAnimTransform(mLayout2, &mAnimTransform20,
                     reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(mLayout),
-                    &lbl_eu_80510568[0xe5]);
+                    "mf85_opt00_clock00_in.brlan");
         bindLayoutAnimTransform(mLayout2, &mAnimTransform24,
                     reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(mLayout),
-                    &lbl_eu_80510568[0x101]);
+                    "mf85_opt00_clock00_time_all.brlan");
         CSkipTimerBindAnim20(this);
 
         mSkipTimer2 = CSkipTimer2(mLayout);
@@ -528,5 +537,5 @@ bool CSkipTimer::OnFileEvent(CEventFile* pEventFile) {
 }
 
 extern "C" void sinit_802A07D8() {
-    lbl_eu_80664A50 = lbl_eu_80668C48 * (lbl_eu_80668C4C * lbl_eu_80662C78);
+    sSkipTimerFrameOffset = 11.0f * (60.0f * sSkipTimerFrameScale);
 }

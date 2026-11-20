@@ -1,6 +1,7 @@
 // Auto-scaffolded catalog TU for kyoshin/CKizunagram
 // Replace stubs with high-level C/C++ during decomp.
 
+#include "kyoshin/cf/CfBdat.hpp"
 #include "kyoshin/harness_catalog.hpp"
 #include "monolib/lib/CLibLayout.hpp"
 #include "kyoshin/CKizunagram.hpp"
@@ -281,7 +282,7 @@ extern "C" void buildKizLineLayout(UnkKizunaLineBuild* self) {
 
     if (id != 0) {
         self->field26 = id;
-        UnkKizunaMgr* mgr = reinterpret_cast<UnkKizunaMgr*>(lbl_eu_80664098);
+        UnkKizunaMgr* mgr = reinterpret_cast<UnkKizunaMgr*>(::cf::CfBdat::spFldNpcListFileData);
         UnkKizunaObj59344* rootP =
             ((UnkKizunaMid59344*)self->layout)->field10;
 
@@ -409,7 +410,7 @@ extern "C" void buildKizLineLayout(UnkKizunaLineBuild* self) {
     }
 
     // Fixed per-layout color/tag overrides, then per-row entries.
-    UnkKizunaMgr* mgr = reinterpret_cast<UnkKizunaMgr*>(lbl_eu_80664098);
+    UnkKizunaMgr* mgr = reinterpret_cast<UnkKizunaMgr*>(::cf::CfBdat::spFldNpcListFileData);
     nw4r::lyt::Layout* lytL = (nw4r::lyt::Layout*)self->layout;
     u32 rowCount = Bdat_GetMaxRow_B1EC(mgr);
     LayoutSetTextBoxFmtValue(lytL, "txt_area01_00", "", 0);
@@ -805,7 +806,7 @@ void refreshKizEntryPanes(UnkKizunaSelf9820* self) {
             (int)("txt_relate01"), 1),
         1);
 
-    UnkKizunaMgr* mgr = reinterpret_cast<UnkKizunaMgr*>(lbl_eu_80664098);
+    UnkKizunaMgr* mgr = reinterpret_cast<UnkKizunaMgr*>(::cf::CfBdat::spFldNpcListFileData);
     char* curName = BdatGetPtrDirect(mgr, "rlt_face", self->field26);
 
     // 4-byte (3 chars + NUL) name copies compared as words
@@ -955,7 +956,7 @@ extern "C" void buildRadarLayout(UnkKizunaSelfAFC* self) {
 // heap), position/name it, attach it to the current-line parent pane, and
 // tint it when appropriate. Returns true once the cursor passes the row limit.
 extern "C" bool buildKizEntryPanes(UnkKizunaSelf59DE8* self) {
-    UnkKizunaMgr* mgr = reinterpret_cast<UnkKizunaMgr*>(lbl_eu_80664098);
+    UnkKizunaMgr* mgr = reinterpret_cast<UnkKizunaMgr*>(::cf::CfBdat::spFldNpcListFileData);
     u16 limit = (u16)(Bdat_GetMaxRow_B1EC(mgr) - 0x64);
     // Unsigned 64-bit subtract; its high word gates the legacy tint below.
     u64 sub = 0x155;
@@ -1063,7 +1064,7 @@ extern "C" void __ct__CKizunaCur(CKizunaCur* self,
 // return the first row id whose unlock progress flag (row value + 0xa20) is set.
 extern "C" u16 findKizByName(UnkKizunaSelf5949C* self,
                                                   const char* name) {
-    UnkKizunaMgr* mgr = reinterpret_cast<UnkKizunaMgr*>(lbl_eu_80664098);
+    UnkKizunaMgr* mgr = reinterpret_cast<UnkKizunaMgr*>(::cf::CfBdat::spFldNpcListFileData);
     u16 count = (u16)Bdat_GetMaxRow_B1EC(mgr);
     for (u16 id = 1; (u32)id <= count; id++) {
         if (strcmp(BdatGetPtrDirect(mgr, lbl_eu_8050CB20 + 0xca, id),
@@ -1136,7 +1137,7 @@ void rewriteKizEntryText(UnkKizunaSelfAB* self, u32 a) {
         return;
     }
 
-    UnkKizunaMgr* mgr = reinterpret_cast<UnkKizunaMgr*>(lbl_eu_80664098);
+    UnkKizunaMgr* mgr = reinterpret_cast<UnkKizunaMgr*>(::cf::CfBdat::spFldNpcListFileData);
     char* curName = BdatGetPtrDirect(mgr, "rlt_face", self->field36);
 
     // 4-byte (3 chars + NUL) name copies compared as words
@@ -1405,7 +1406,7 @@ extern "C" void refreshKizLineDisplay(UnkKizunaSelf57D90* selfArg,
         return;
     }
 
-    UnkKizunaMgr* mgr = reinterpret_cast<UnkKizunaMgr*>(lbl_eu_80664098);
+    UnkKizunaMgr* mgr = reinterpret_cast<UnkKizunaMgr*>(::cf::CfBdat::spFldNpcListFileData);
 
     // Progress-column color selector: look up the row value then map it to a
     // color index; the low byte picks which timg texture tag to bind.
@@ -1446,7 +1447,7 @@ extern "C" void refreshKizLineDisplay(UnkKizunaSelf57D90* selfArg,
 
     // Progress color name for this save column and the kizuna's own color.
     LayoutSetTextBoxFmtValue(self->field8, "txt_info07",
-                  BdatGetPtrDirect(lbl_eu_806640A8, "name", colIdx), 0);
+                  BdatGetPtrDirect(::cf::CfBdat::spFldMapListFileData, "name", colIdx), 0);
     LayoutSetTextBoxFmtValue(self->field8, "txt_info01",
                   BdatGetPtrDirect(mgr, "name", v), 0);
 
@@ -1911,7 +1912,7 @@ extern "C" void publishKizScaledVals(UnkKizunaSelfCE00* self) {
         u32 raw[3];
         raw[0] = self->field80;
         raw[1] = self->field84;
-        f32 denom = lbl_eu_80668870;
+        f32 denom = 3.0f;
         // retail computes the +0x44 division before the dead +0x88 store
         f32 v44 = *(f32*)&raw[1] / denom;
         raw[2] = self->field88;   // dead store (never read) - retail keeps it

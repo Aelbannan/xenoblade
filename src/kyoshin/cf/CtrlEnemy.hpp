@@ -1,5 +1,5 @@
 #pragma once
-
+#include "kyoshin/cf/CfCamSymbols.hpp"
 #include <types.h>
 #include <nw4r/math/math_types.h>
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
@@ -434,7 +434,7 @@ extern f64 lbl_eu_80666588;    // 2^52 + 2^31 (signed int -> double magic)
 
 // C++-linkage imports (mangle to the retail __Fi forms).
 void* findObjectById(int id);       // findObjectById__Fi
-bool  isGlobalCamFlagSet(int mask);     // isGlobalCamFlagSet__Fi
+
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" {

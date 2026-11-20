@@ -704,11 +704,8 @@ void MoveImplDriveRequest(CfObjectImplMoveObj* self, u32 id, CfMoveParam* param)
         }
     }
     if (param->field_0xF != 0 && obj != 0 && obj->field_0x94 != 0) {
-        // u8 count -> f32 via the shared 0x43300000 magic double.
-        CfMoveF64Conv conv;
-        conv.w[1] = (u32)param->field_0xF;
-        conv.w[0] = 0x43300000;
-        schedSetStepIntervals(obj->field_0x94, (f32)(conv.d - lbl_eu_80666C90), 1.0f);
+        // u8 count -> f32: MWCC emits the int->float conversion sequence.
+        schedSetStepIntervals(obj->field_0x94, (f32)param->field_0xF, 1.0f);
     }
 }
 

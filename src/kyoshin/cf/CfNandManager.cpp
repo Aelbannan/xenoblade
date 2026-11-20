@@ -1,4 +1,5 @@
 #define IWORK_EVENT_INLINE_DTOR
+#include "kyoshin/cf/CfBdat.hpp"
 #include <types.h>
 #include "kyoshin/cf/CtrlRemoteApi.hpp"
 #include <cstring>
@@ -216,7 +217,7 @@ extern "C" void mineLoadFromSave(u8* rec);
 extern "C" void rebuildTboxPool();
 extern "C" CfNandNameRoot* getReslistC48();
 extern "C" void updateConfig__FPUc(u8* src, int mode);
-extern "C" u32 CtrlRemote_TouchBitByArg(u32 resourceId);
+#include "kyoshin/cf/CtrlRemoteApi.hpp"
 extern "C" void setMasterVolume__Fff(f32 a, f32 b);
 extern "C" void MenuSnd_SetSeVolPush_95F4(f32 v);
 extern "C" void MenuSnd_SetMasterAndPush_9510(f32 v);
@@ -584,16 +585,7 @@ extern "C" int __dt__8023E448() {
 }
 
 
-// (IWorkEvent / 10322). Offsets match GXRenderModeObj (fbWidth@+4, efbHeight@+6).
-struct NandGXRenderMode {
-    u32 viTVmode;
-    u16 fbWidth;
-    u16 efbHeight;
-};
-class CDeviceVI {
-public:
-    static NandGXRenderMode* getRenderModeObj();
-};
+// GX framebuffer geometry comes from the canonical CDeviceVI declaration.
 // GX / cache entry points come from the SDK headers pulled in by CScn.hpp.
 
 // While the counter is armed (1), copy the EFB into the shared texture
@@ -839,7 +831,7 @@ extern "C" u16 NandSaveBuild(CfNandSaveSource* source, CfNandSaveBuf* buf, u8 sl
     buf->field64 = (u16)CtrlObjectParam_GetArtsDataWord(charEntry);
     buf->field66 = slot;
     const char* col = lbl_eu_8050B470 + 0x12;
-    const u8* name = (const u8*)getBdatStringColumnValue(lbl_eu_80664090, col, buf->mRecord[0].w[0]);
+    const u8* name = (const u8*)getBdatStringColumnValue(::cf::CfBdat::spBtlPcListFileData, col, buf->mRecord[0].w[0]);
     std::memcpy(buf->mName, name, 0x20);
     NandTileDescr(&buf->tex, slot != 0);
     return OSCalcCRC16((const u8*)buf, 0x9C80);
@@ -1473,14 +1465,14 @@ extern "C" void NandAllocBufs() {
         gpCfNandCaptureBufTail = (u8*)gpCfNandCaptureBuf + size1;
     }
     gCfNandCaptureState = 1;
-    CScn* scn = (CScn*)CfRes_getD80Flag();
+    ::CScn* scn = (::CScn*)CfRes_getD80Flag();
     scn->addRenderCB(gpCfNandManager, 4, 0);
 }
 
 // Release the capture state: unregister the render callback from the D80
 // scene, free the shared texture buffer, drop the capture counter.
 extern "C" void NandTeardown() {
-    CScn* scn = (CScn*)CfRes_getD80Flag();
+    ::CScn* scn = (::CScn*)CfRes_getD80Flag();
     if (scn != 0) {
         scn->removeRenderCB(gpCfNandManager);
     }
@@ -1538,7 +1530,7 @@ cf::CfNandManager::CfNandManager(void* arg)
 // capture buffer and clears the manager's global state before the base-class
 // teardown emitted by the compiler runs.
 cf::CfNandManager::~CfNandManager() {
-    CScn* scn = (CScn*)CfRes_getD80Flag();
+    ::CScn* scn = (::CScn*)CfRes_getD80Flag();
     if (scn != 0) {
         scn->removeRenderCB(gpCfNandManager);
     }

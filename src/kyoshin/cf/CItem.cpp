@@ -1,6 +1,7 @@
 // Auto-scaffolded catalog TU for kyoshin/cf/CItem
 // Replace stubs with high-level C/C++ during decomp.
 
+#include "kyoshin/cf/CfBdat.hpp"
 #include "kyoshin/cf/CItem.hpp"
 #include "monolib/device/CDeviceSC.hpp" // CDeviceSC::getLanguage
 
@@ -13,7 +14,7 @@ struct CItemData;
 struct CItemParam;
 struct CItemExt;
 
-extern "C" u32 CtrlRemote_TouchBitByArg(u32); extern "C" void* CtrlObjectParam_GetCharEntry(u32); extern "C" void CtrlObjectParam_WriteEquipSlotValue(void*, unsigned long, void*); extern "C" u32 CtrlObjectParam_FindCharByItemInst(void*); extern "C" void CtrlObjectParam_RecollectArtsRows(void*); // zero-line fix: decls w/o shifting -ipa line numbers
+extern "C" void* CtrlObjectParam_GetCharEntry(u32); extern "C" void CtrlObjectParam_WriteEquipSlotValue(void*, unsigned long, void*); extern "C" u32 CtrlObjectParam_FindCharByItemInst(void*); extern "C" void CtrlObjectParam_RecollectArtsRows(void*); // zero-line fix: decls w/o shifting -ipa line numbers
 extern "C" void UIWin_CreateB4790Win(void* box, int flags);
 
 // Sum the party inventory counts for two item kinds, read six BDAT
@@ -33,7 +34,7 @@ extern "C" s32 CItem_rollBoxContents(u32 row, u32 flag) {
             sum2 += isEffectListEmpty__Q22cf13CfGameManagerFv(i, 0x94);
         }
     }
-    void* handle = lbl_eu_806640CC;
+    void* handle = ::cf::CfBdat::spCurBtlEneListFileData;
     s32 weights[4];
     u16 entries[4];
     union {
@@ -152,12 +153,12 @@ extern "C" void CItemRec_packFromBdat(CItemRec* rec, u32 a, u32 b, u32 c, u32 d)
     // (retail stores each result and re-reads its high byte). The D8 handle
     // is loaded into a saved register before the first call (retail hoists
     // the load into r29, reusing the dead d parameter slot).
-    void* hD8 = lbl_eu_806640D8;
+    void* hD8 = ::cf::CfBdat::spBtlSkillListFileData;
     union {
         u32 v;
         u8 b[4];
     } t0;
-    t0.v = getBdatStringColumnValue(lbl_eu_806640EC, lbl_eu_80501C58 + 0x42, a);
+    t0.v = getBdatStringColumnValue(::cf::CfBdat::spItmItemListFileData, lbl_eu_80501C58 + 0x42, a);
     u32 val = t0.b[0];
     if (val == 0) {
         union {
@@ -196,11 +197,11 @@ extern "C" void CItem_reCount(CItemExt* self) {
         u32 cat = (word >> 16) & 0xF;
         void* h = 0;
         if (cat == 2) {
-            h = lbl_eu_806640F4;
+            h = ::cf::CfBdat::spItmWpnListFileData;
         } else {
             u32 b = cat >= 4 && cat <= 8;
             if (b) {
-                h = lbl_eu_806640F8;
+                h = ::cf::CfBdat::spItmEquipListFileData;
             }
         }
         if (h != 0) {
@@ -509,7 +510,7 @@ extern "C" void CItem_RebuildEntries(u32 unused, CItemExt* self) {
         u32 kind = (w1 >> 16) & 0xF;
         s32 flag = 0;
         if (kind == 2) {
-            h = lbl_eu_806640F4;
+            h = ::cf::CfBdat::spItmWpnListFileData;
         } else {
             // Materialized boolean keeps the retail's two separate cmplwi
             // compares.
@@ -520,7 +521,7 @@ extern "C" void CItem_RebuildEntries(u32 unused, CItemExt* self) {
             }
         }
         if (flag != 0) {
-            h = lbl_eu_806640F8;
+            h = ::cf::CfBdat::spItmEquipListFileData;
         }
         if (h != 0) {
             union {
@@ -545,7 +546,7 @@ extern "C" void CItem_RebuildEntries(u32 unused, CItemExt* self) {
         s32 bound = 0;
         s32 flag = 0;
         if (kind == 2) {
-            handle = lbl_eu_806640F4;
+            handle = ::cf::CfBdat::spItmWpnListFileData;
             bound = 3;
         } else {
             if (kind >= 4) {
@@ -555,7 +556,7 @@ extern "C" void CItem_RebuildEntries(u32 unused, CItemExt* self) {
             }
         }
         if (flag != 0) {
-            handle = lbl_eu_806640F8;
+            handle = ::cf::CfBdat::spItmEquipListFileData;
             bound = 1;
         }
         if (bound != 0) {
@@ -577,7 +578,7 @@ extern "C" void CItem_RebuildEntries(u32 unused, CItemExt* self) {
                             u32 v;
                             u16 h[2];
                         } t3;
-                        t3.v = getBdatStringColumnValue(lbl_eu_806640EC,
+                        t3.v = getBdatStringColumnValue(::cf::CfBdat::spItmItemListFileData,
                                                         lbl_eu_80501C58 + 0x4a,
                                                         t.h[0]);
                         v2 = t3.h[0];
@@ -586,7 +587,7 @@ extern "C" void CItem_RebuildEntries(u32 unused, CItemExt* self) {
                         u32 v;
                         u8 b[4];
                     } t4;
-                    t4.v = getBdatStringColumnValue(lbl_eu_806640EC,
+                    t4.v = getBdatStringColumnValue(::cf::CfBdat::spItmItemListFileData,
                                                     lbl_eu_80501C58 + 0x51,
                                                     t.h[0]);
                     CItemRec_packFromBdat(rec, v, v2, 1, t4.b[0]);
@@ -727,7 +728,7 @@ extern "C" void CItem_refRow2(u32 unused, CItemData* self) {
     u32 row;
     u8 min;
     u32 word = self->field_00;
-    handle = lbl_eu_80664100;
+    handle = ::cf::CfBdat::spItmDropCrystalListFileData;
     row = (word >> 5) & 0x7FF;
     n = CItem_initItemImplInstances(self)->vf78(self);
     *(u16*)&self->field_08[8] = 0;
@@ -747,7 +748,7 @@ extern "C" void CItem_refRow2(u32 unused, CItemData* self) {
     halfs[0] = (u16)t4.b[0];
     t5.v = getBdatStringColumnValue(handle, lbl_eu_80501C58 + 0xb0, row);
     halfs[1] = (u16)t5.b[0];
-    t6.v = getBdatStringColumnValue(lbl_eu_806640CC, lbl_eu_80501C58 + 0xb7, (u16)n);
+    t6.v = getBdatStringColumnValue(::cf::CfBdat::spCurBtlEneListFileData, lbl_eu_80501C58 + 0xb7, (u16)n);
     // Branchless boolean scaled by 2, computed before the rand call
     // (retail: neg/or/srawi then rlwinm extracting bit 30 -> 0 or 2).
     // One variable chains count -> roll index -> max.
@@ -788,7 +789,7 @@ u8 CItemInfo_getByte22_dup1(u32, CItemInfo* obj) { return ((CItemInfoByte22*)obj
 // CItem_rankVal rank).
 extern "C" void CItem_rerank4(u32 unused, CItemData* self) {
     u32 word = self->field_00;
-    void* handle = lbl_eu_806640D8;
+    void* handle = ::cf::CfBdat::spBtlSkillListFileData;
     u32 v = (word >> 5) & 0x7FF;
     if (v == 0) v = 1;
     *(u16*)&self->field_08[8] = 0;
@@ -835,7 +836,7 @@ void CItemData_setSlotFamily(u32 unused, CItemData* obj, int index, int value) {
         // Read the MSB of the BDAT result; the union keeps the call result
         // on the stack (big-endian b[0] is the high byte).
         union { u32 value; u8 b[4]; } tmp;
-        tmp.value = getBdatStringColumnValue(lbl_eu_806640D8, lbl_eu_80501C58 + 0x6d, value);
+        tmp.value = getBdatStringColumnValue(::cf::CfBdat::spBtlSkillListFileData, lbl_eu_80501C58 + 0x6d, value);
         u32 f7 = obj->field_07;
         f7 = __rlwimi(f7, tmp.b[0], 2, 24, 29);
         obj->field_07 = (u8)f7;
@@ -861,7 +862,7 @@ extern "C" void CItem_wordRef(u32 unused, CItemData* self) {
     u16 val;
     if ((word >> 20) != 0) {
         union { u32 v; u16 h[2]; } tmp;
-        tmp.v = getBdatStringColumnValue(lbl_eu_806640EC, lbl_eu_80501C58 + 0x4a, word >> 20);
+        tmp.v = getBdatStringColumnValue(::cf::CfBdat::spItmItemListFileData, lbl_eu_80501C58 + 0x4a, word >> 20);
         val = tmp.h[0];
     } else {
         val = 0;
@@ -870,13 +871,13 @@ extern "C" void CItem_wordRef(u32 unused, CItemData* self) {
     word = __rlwimi(word, val, 5, 16, 26);
     self->field_00 = word;
     union { u32 v; u8 b[4]; } t2;
-    t2.v = getBdatStringColumnValue(lbl_eu_806640EC, lbl_eu_80501C58 + 0x51, word >> 20);
+    t2.v = getBdatStringColumnValue(::cf::CfBdat::spItmItemListFileData, lbl_eu_80501C58 + 0x51, word >> 20);
     CItem_initItemImplInstances(self)->vf0C(self, t2.b[0]);
     u32 family = self->field_00 >> 20;
     if (family == 0) {
         memset(&self->field_08, 0, 8);
     } else {
-        void* handle = lbl_eu_806640EC;
+        void* handle = ::cf::CfBdat::spItmItemListFileData;
         u16 v2 = 0;
         if (family != 0) {
             union { u32 v; u16 h[2]; } t3;
@@ -1476,7 +1477,7 @@ CItemExt* CItem_freeRec(u32 arg, s16* pOut, u32 family) {
 // the header declaration (plain-name reloc). The first param is u32 so call
 // sites pass the id unmasked (retail mr, not clrlwi).
 extern "C" __declspec(noinline) void* CItem_resolveFamilyBdat(u32 v, void* outA, void* outB) {
-    void* handle = lbl_eu_806640EC;
+    void* handle = ::cf::CfBdat::spItmItemListFileData;
     union { u32 v; u16 h[2]; } t1, t2;
     t1.v = getBdatStringColumnValue(handle, lbl_eu_80501C58 + 0xbd, v);
     *(u16*)outA = t1.h[0];
@@ -1486,13 +1487,13 @@ extern "C" __declspec(noinline) void* CItem_resolveFamilyBdat(u32 v, void* outA,
     // the intervening call may alias it).
     void* result = 0;
     switch (*(u16*)outA) {
-    case 0: result = lbl_eu_806640F4; break;
-    case 1: result = lbl_eu_806640F8; break;
-    case 2: result = lbl_eu_806640FC; break;
-    case 3: result = lbl_eu_806640D8; break;
-    case 4: result = lbl_eu_80664104; break;
-    case 5: result = lbl_eu_80664108; break;
-    case 6: result = lbl_eu_8066410C; break;
+    case 0: result = ::cf::CfBdat::spItmWpnListFileData; break;
+    case 1: result = ::cf::CfBdat::spItmEquipListFileData; break;
+    case 2: result = ::cf::CfBdat::spItmCrystalListFileData; break;
+    case 3: result = ::cf::CfBdat::spBtlSkillListFileData; break;
+    case 4: result = ::cf::CfBdat::spItmCollectListFileData; break;
+    case 5: result = ::cf::CfBdat::spItmMaterialListFileData; break;
+    case 6: result = ::cf::CfBdat::spItmValuableListFileData; break;
     // Categories 7-13 share one BDAT handle (retail jumptable has 14 entries
     // whose tails all point at this body).
     case 7:
@@ -1501,7 +1502,7 @@ extern "C" __declspec(noinline) void* CItem_resolveFamilyBdat(u32 v, void* outA,
     case 10:
     case 11:
     case 12:
-    case 13: result = lbl_eu_80664110; break;
+    case 13: result = ::cf::CfBdat::spItmArtsListFileData; break;
     }
     return result;
 }
@@ -1514,7 +1515,7 @@ u16 CItem_getKindFromFamily(int param) {
         u32 value;
         u16 half[2];
     } tmp;
-    tmp.value = getBdatStringColumnValue(lbl_eu_806640EC, lbl_eu_80501C58 + 0xbd, param);
+    tmp.value = getBdatStringColumnValue(::cf::CfBdat::spItmItemListFileData, lbl_eu_80501C58 + 0xbd, param);
     return tmp.half[0];
 }
 
@@ -1523,7 +1524,7 @@ u16 CItem_getKindFromFamily(int param) {
 // result in a stack slot (retail stw + lhz round-trip).
 extern "C" u16 CItem_getNameIdFromFam(u16 value) {
     // Retail loads the BDAT handle before the zero-check branch.
-    void* handle = lbl_eu_806640EC;
+    void* handle = ::cf::CfBdat::spItmItemListFileData;
     if (value != 0) {
         union {
             u32 v;
@@ -1546,7 +1547,7 @@ extern "C" u32 CItem_sumFamilyByte6(u32 family) {
             u32 v;
             u16 h[2];
         } tmp;
-        tmp.v = getBdatStringColumnValue(lbl_eu_806640EC, lbl_eu_80501C58 + 0xbd, family);
+        tmp.v = getBdatStringColumnValue(::cf::CfBdat::spItmItemListFileData, lbl_eu_80501C58 + 0xbd, family);
         CItemExt* list = (CItemExt*)CItemBlock_getKindList(tmp.h[0], &count, &stride);
         if (list != 0) {
             u8* base = (u8*)list;
@@ -1670,13 +1671,13 @@ extern "C" __declspec(noinline) CItemExt* CItem_findOrCreateRec(u32 a, s16* pOut
         u32 v;
         u16 h[2];
     } t2;
-    t1.v = getBdatStringColumnValue(lbl_eu_806640EC, lbl_eu_80501C58 + 0xbd, a);
+    t1.v = getBdatStringColumnValue(::cf::CfBdat::spItmItemListFileData, lbl_eu_80501C58 + 0xbd, a);
     u32 flag = 0;
     if ((u32)(t1.h[0] - 10) <= 3) flag = 1;
     CItemExt* result;
     if (flag) {
         // Duplicate lookup kept: retail calls the +0xBD column twice.
-        t2.v = getBdatStringColumnValue(lbl_eu_806640EC, lbl_eu_80501C58 + 0xbd, a);
+        t2.v = getBdatStringColumnValue(::cf::CfBdat::spItmItemListFileData, lbl_eu_80501C58 + 0xbd, a);
         result = 0;
         if (t2.h[0] != 0) {
             // Declaration order pins the stack slots: n@0x10, stride@0x14.
@@ -1737,7 +1738,7 @@ extern "C" __declspec(noinline) CItemExt* CItem_findOrCreateRec(u32 a, s16* pOut
     if (result != 0) {
         CItem_initItemImplInstances((CItemData*)result)->vf1C((CItemData*)result);
         if (((result->field_00 >> 16) & 0xF) == 3) {
-            t3.v = getBdatStringColumnValue(lbl_eu_806640EC, lbl_eu_80501C58 + 0x42, a);
+            t3.v = getBdatStringColumnValue(::cf::CfBdat::spItmItemListFileData, lbl_eu_80501C58 + 0x42, a);
             if (t3.b[0] != 0) {
                 CItem_initItemImplInstances((CItemData*)result)->vf94((CItemData*)result, t3.b[0]);
             }
@@ -1789,7 +1790,7 @@ extern "C" CItemExt* CItem_findRecByFamily(u32 family) {
         u32 v;
         u16 h[2];
     } tmp;
-    tmp.v = getBdatStringColumnValue(lbl_eu_806640EC, lbl_eu_80501C58 + 0xbd, family);
+    tmp.v = getBdatStringColumnValue(::cf::CfBdat::spItmItemListFileData, lbl_eu_80501C58 + 0xbd, family);
     if (tmp.h[0] == 0) return 0;
     CItemExt* list = (CItemExt*)CItemBlock_getKindList(tmp.h[0], &count, &stride);
     if (list != 0) {
@@ -2388,7 +2389,7 @@ extern "C" CItemExt* CItemData_lookupOrAlloc(CItemData* self, s16* pOut) {
     s32 count;  // 0x10
     s32 stride2;// 0x0C
     s16 out1;   // 0x08
-    t.v = getBdatStringColumnValue(lbl_eu_806640EC, lbl_eu_80501C58 + 0xbd, self->field_00 >> 20);
+    t.v = getBdatStringColumnValue(::cf::CfBdat::spItmItemListFileData, lbl_eu_80501C58 + 0xbd, self->field_00 >> 20);
     u32 flag = 0;
     if ((u32)(t.h[0] - 10) <= 3) flag = 1;
     // Saved-register order matters: declared first -> highest (i->r31,
@@ -2463,11 +2464,11 @@ extern "C" s32 CItem_consumeFamilyCnt(u32 family, s32 count) {
     } t2;    // 0x10
     s32 stride; // 0x0C
     s32 n;   // 0x08
-    t.v = getBdatStringColumnValue(lbl_eu_806640EC, lbl_eu_80501C58 + 0xbd, family);
+    t.v = getBdatStringColumnValue(::cf::CfBdat::spItmItemListFileData, lbl_eu_80501C58 + 0xbd, family);
     u32 flag = 0;
     if ((u32)(t.h[0] - 10) <= 3) flag = 1;
     while (count > 0) {
-        t2.v = getBdatStringColumnValue(lbl_eu_806640EC, lbl_eu_80501C58 + 0xbd, family);
+        t2.v = getBdatStringColumnValue(::cf::CfBdat::spItmItemListFileData, lbl_eu_80501C58 + 0xbd, family);
         CItemExt* rec;
         if (t2.h[0] == 0) {
             rec = 0;
@@ -2536,17 +2537,17 @@ extern "C" __declspec(noinline) void CItem_buildSortName(CItemSortBuf* buf, u32 
     strcpy(prefix.mStr, sItemSortNamePrefix);
     if (b - 1 > 5) b = 1;
     if (d < 4 || b >= 11) d = 4;
-    void* h170 = lbl_eu_80664170;
+    void* h170 = ::cf::CfBdat::spMnuItemFileData;
     const char* base = lbl_eu_80501C58;
     const char* s = (const char*)getBdatStringColumnValue(h170, base + 0xd3, b + 0x94);
     s1.mLen = (s32)strlen(s);
     strcpy(s1.mStr, s);
     if (a == 2) {
         if (c != 0) {
-            s = (const char*)getBdatStringColumnValue(lbl_eu_806640D8, base + 0xe1, f);
+            s = (const char*)getBdatStringColumnValue(::cf::CfBdat::spBtlSkillListFileData, base + 0xe1, f);
         } else {
-            tmp.v = getBdatStringColumnValue(lbl_eu_80664094, base + 0xef, c);
-            s = (const char*)getBdatStringColumnValue(lbl_eu_8066416C, base + 0xd3, tmp.b[0]);
+            tmp.v = getBdatStringColumnValue(::cf::CfBdat::spBtlEneListFileData, base + 0xef, c);
+            s = (const char*)getBdatStringColumnValue(::cf::CfBdat::spBtlCrystalNameListFileData, base + 0xd3, tmp.b[0]);
         }
         s2.mLen = (s32)strlen(s);
         strcpy(s2.mStr, s);
@@ -3032,7 +3033,7 @@ extern "C" __declspec(noinline) s32 CItem_rollSubColumns(CItemFour* self, u32 it
 // forceA/forceB and the second-iteration guarantee force a 100% roll.
 extern "C" void CItem_rollForced(CItemFour* self, u32 row, s32 maxCount,
                               u32 forceA, u32 randomize, u32 forceB) {
-    void* handle = lbl_eu_8066414C;
+    void* handle = ::cf::CfBdat::spCurDropNmlListFileData;
     s32 len = strlen(sForcedColumnA) - 1;
     CItemScratch local;   // 0x10
     union {
@@ -3083,7 +3084,7 @@ extern "C" void CItem_rollForced(CItemFour* self, u32 row, s32 maxCount,
 // (CItem_rollThreeColAlt / CItem_rollThreeCol / CItem_rollTwoColPick / CItem_rollSubColumns), and
 // dedupe the last two records when they share the same family id.
 extern "C" void __declspec(noinline) CItem_rollWeighted4(CItemFour* self, u32 item, u32 count, u32 row) {
-    void* handle = lbl_eu_80664150;
+    void* handle = ::cf::CfBdat::spCurDropRarListFileData;
     union {
         u32 v;
         u8 b[4];
@@ -3164,7 +3165,7 @@ extern "C" void __declspec(noinline) CItem_rollWeighted4(CItemFour* self, u32 it
 // records when they share the same family id.
 extern "C" void CItem_rollWeighted4B(CItemFour* self, u32 item, u32 count) {
     const char* base = lbl_eu_80501C58;
-    void* handle = lbl_eu_80664154;
+    void* handle = ::cf::CfBdat::spCurDropSprListFileData;
     u16 probs[4];
     union {
         u32 v;
@@ -3265,7 +3266,7 @@ static u32 ItemColByte(void* handle, const char* col, u32 row) {
 // dispatch on the event kind (1: roll up to 2 items; 2: roll 1 + one more;
 // 3: roll 1 + one more + a third item).
 extern "C" void CItem_openAreaEventBox(s32 kind, u32 row) {
-    void* handle = lbl_eu_806640CC;
+    void* handle = ::cf::CfBdat::spCurBtlEneListFileData;
     u32 item1 = ItemColByte(handle, lbl_eu_80501C58, row);
     u32 item2 = ItemColByte(handle, lbl_eu_80501C58 + 0x9, row);
     u32 item3 = ItemColByte(handle, lbl_eu_80501C58 + 0x12, row);
@@ -3299,7 +3300,7 @@ extern "C" s32 CItem_rollBoxEntry(s32 type, u32 row) {
     CItemFour* blk = &lbl_eu_80573EEC;
     u32 oldCount = blk->mCount;
     if (oldCount >= 4) return 0;
-    void* handle = lbl_eu_806640CC;
+    void* handle = ::cf::CfBdat::spCurBtlEneListFileData;
     char* cols = lbl_eu_80501C58;
     union { u32 v; u8 b[4]; } t0;   // 0x10
     union { u32 v; u8 b[4]; } t1;   // 0x0c
@@ -3342,7 +3343,7 @@ extern "C" s32 CItem_createBoxContents(u32 id) {
     scratch.field_04 = 0;
     scratch.field_00 = 0;
     memset(&scratch, 0, 0x34);
-    void* handle = lbl_eu_806640E8;
+    void* handle = ::cf::CfBdat::spFldTboxListFileData;
     s32 base = (s32)Bdat_GetRowBase_B41C(handle);
     s32 total = (s32)Bdat_GetMaxRow_B1EC(handle);
     for (s32 i = 0; i < total; i++) {
@@ -3613,3 +3614,21 @@ CItemFour::CItemFour() {
         *(u16*)&mItems[i].field_04 = 0;
     }
 }
+
+// cf::CfBdat file-data statics live in this unit's .sbss slice (retail ownership).
+void* cf::CfBdat::spCurGimListFileData;
+void* cf::CfBdat::spCurElvGmFileData;
+void* cf::CfBdat::spCurWarpGmFileData;
+void* cf::CfBdat::spCurJumpGmFileData;
+void* cf::CfBdat::spCurItemGmFileData;
+void* cf::CfBdat::spCurGimSvOffFileData;
+void* cf::CfBdat::spCurGimEneFileData;
+void* cf::CfBdat::spCurDropNmlListFileData;
+void* cf::CfBdat::spCurDropRarListFileData;
+void* cf::CfBdat::spCurDropSprListFileData;
+void* cf::CfBdat::spBtlPsvSkillFileData;
+void* cf::CfBdat::spBtlPssListFileData;
+void* cf::CfBdat::spBtlCrystalNameListFileData;
+void* cf::CfBdat::spMnuItemFileData;
+void* cf::CfBdat::spMnuEveStartFileData;
+void* cf::CfBdat::spMnuEveTableFileData;

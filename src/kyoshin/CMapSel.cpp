@@ -2,8 +2,9 @@
 // Auto-scaffolded catalog TU for kyoshin/CMapSel
 // Replace stubs with high-level C/C++ during decomp.
 
-#include "kyoshin/harness_catalog.hpp"
-#include "kyoshin/CMapSelImports.hpp"
+#include "kyoshin/CMapSel.hpp"
+#include "kyoshin/cf/CfBdat.hpp"
+
 #include "kyoshin/CScrollBar.hpp"
 #include "kyoshin/code_80135FDC_State.hpp"
 #include "kyoshin/code_80135FDC_Lyt.hpp"
@@ -44,8 +45,8 @@ CMapSel::CMapSel()
     }
 
     // --- Build the map grid ---------------------------------------------
-    void* mapTable = lbl_eu_806640A0;    // BDAT table for map ids
-    void* orderTable = lbl_eu_806640A8;  // BDAT table for sort keys
+    void* mapTable = ::cf::CfBdat::spLandmarkListFileData;    // BDAT table for map ids
+    void* orderTable = ::cf::CfBdat::spFldMapListFileData;  // BDAT table for sort keys
     s32 mapCount = (s32)Bdat_GetMaxRow_B1EC(mapTable);
     u8 curMap = (u8)lbl_eu_80664184;     // current map id -> initial selection
 
@@ -432,11 +433,11 @@ void CMapSel::refreshGridText() {
         sprintf(buf, base + 0x1f, (u8)i + 1);
         if ((s8)mSelX + (u8)i < mCount) {
             u8 g = mGrid[(s8)mSelX + (u8)i];
-            char* res = BdatGetPtrDirect(lbl_eu_806640A8, base + 0x2b, g);
+            char* res = BdatGetPtrDirect(::cf::CfBdat::spFldMapListFileData, base + 0x2b, g);
             LayoutSetTextBoxFmtValue(mLayout, buf, res, 0);
             if ((s8)mSelY == (u8)i) {
                 LayoutSetTextBoxFmtValue(mLayout, base + 0x30, res, 0);
-                char* res2 = BdatGetPtrDirect(lbl_eu_806640A8, base + 0x3a, g);
+                char* res2 = BdatGetPtrDirect(::cf::CfBdat::spFldMapListFileData, base + 0x3a, g);
                 LayoutSetTextBoxFmtValue(mLayout, base + 0x46, res2, 0);
             }
         } else {
@@ -488,7 +489,7 @@ void CMapSel::loadSelectedMapResource() {
     char buf[64];
     char* base = lbl_eu_8050B4A8;
     u8 idx = mGrid[(s8)mSelX + (s8)mSelY];
-    u16 res = BdatGetU16Direct(lbl_eu_806640A8, base + 0x6e, idx);
+    u16 res = BdatGetU16Direct(::cf::CfBdat::spFldMapListFileData, base + 0x6e, idx);
     char* name = MakeTplNameSysFile(res);
     sprintf(buf, base + 0x79, name);
     mFileHandle2 = CDeviceFile::readFile(

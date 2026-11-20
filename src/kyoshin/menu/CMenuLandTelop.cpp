@@ -3,6 +3,7 @@
 // Matching session: Term / cbRenderBefore / consumeTelopEntry / createLandTelop /
 // constructor (the retail ctor is the unmangled global __ct__CMenuLandTelop).
 
+#include "kyoshin/cf/CfBdat.hpp"
 #include "kyoshin/cf/CBattleManager.hpp"
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/code_8025FB10.hpp"
@@ -77,7 +78,7 @@ extern "C" CMenuLandTelop* __ct__CMenuLandTelop(CMenuLandTelop* self,
     self->field_8C = opt;
     self->field_8E = param;
     self->field_90 = 0;
-    self->field_94 = lbl_eu_806673C8;
+    self->field_94 = 0.0f;
     self->field_98 = 0;
     self->mEntries[0].f0 = 0;
     self->mEntries[0].f2 = 0;
@@ -91,7 +92,7 @@ extern "C" CMenuLandTelop* __ct__CMenuLandTelop(CMenuLandTelop* self,
         e->f2 = 0;
     }
     self->field_DA = 0;
-    self->field_DC = lbl_eu_806673C8;
+    self->field_DC = 0.0f;
     self->field_E0 = 0;
     return self;
 }
@@ -166,15 +167,15 @@ void CMenuLandTelop::Move() {
             MenuTutorialIsCreated() || GetItemMulti_IsActiveFlag() || hasQuestWindow() ||
             (SysWinGetSingleton() != 0)) {
             field_DA = 1;
-            field_DC = lbl_eu_806673C8;
+            field_DC = 0.0f;
             return;
         }
         if (field_DA != 0) {
             // Banner visible: run its hold timer, then hide it again.
-            field_DC = field_DC + lbl_eu_806673CC;
+            field_DC = field_DC + 1.0f;
             if (3.0f < field_DC) {
                 field_DA = 0;
-                field_DC = lbl_eu_806673C8;
+                field_DC = 0.0f;
             }
             return;
         }
@@ -201,9 +202,8 @@ void CMenuLandTelop::Move() {
 
                 // Loop-hoisted constants (retail parks these in f29/f30/f31
                 // for the whole landmark scan).
-                f64 bias = lbl_eu_806673F8;
                 f32 scale = 0.01f;
-                f32 reset = lbl_eu_806673C8;
+                f32 reset = 0.0f;
 
                 // Per-landmark completion: scale the message id by the entry's
                 // weight (bdat column 0x8a, default 100) into a frame count,
@@ -221,14 +221,14 @@ void CMenuLandTelop::Move() {
                     if (Counter_TestBit((void*)rec, 0x8a) != 0) {
                         weight = IdTable_SumValues((CUnkObj8025FB10*)(void*)rec, 0x8a) + 100;
                     }
-                    f64 frac = ((f64)(u32)(msgId * weight) - bias) * scale;
+                    f64 frac = (f64)(u32)(msgId * weight) * scale;
                     f64 limit =
                         (reset < frac) ? 0.5 : -0.5;
                     // Retail re-converts the SAME (msgId*weight) product here
                     // (second stw-pair + magic-subtract block), not a literal
                     // 100.0 - a pooled {100.0} double would have no blob home.
                     s32 frames =
-                        (s32)(((f64)(u32)(msgId * weight) - bias) * scale + limit);
+                        (s32)((f64)(u32)(msgId * weight) * scale + limit);
                     switch (kind) {
                     case 0:
                         CtrlObjectParam_ApplyArtsRankUp((void*)data, (u16)frames, col0, col1);
@@ -266,7 +266,7 @@ void CMenuLandTelop::Move() {
         }
         case 3:
             // Banner finished animating in: consume the next queued entry.
-            if (advanceAnimTransform(field_88, lbl_eu_806673CC)) {
+            if (advanceAnimTransform(field_88, 1.0f)) {
                 if (consumeTelopEntry(this) != 0) return;
                 field_64 = 1;
             }
@@ -286,14 +286,14 @@ void CMenuLandTelop::Move() {
             field_90 = 1;
             break;
         case 1:
-            if (advanceAnimTransform(field_88, lbl_eu_806673CC)) field_90 = 2;
+            if (advanceAnimTransform(field_88, 1.0f)) field_90 = 2;
             break;
         case 2:
-            field_94 = field_94 + lbl_eu_806673CC;
+            field_94 = field_94 + 1.0f;
             if (90.0f <= field_94) field_90 = 3;
             break;
         case 3:
-            if (AnimRewindFrame(field_88, lbl_eu_806673CC)) {
+            if (AnimRewindFrame(field_88, 1.0f)) {
                 if (consumeTelopEntry(this) != 0) return;
                 field_64 = 1;
             }
@@ -418,7 +418,7 @@ int consumeTelopEntry(CMenuLandTelop* self) {
         delete self->field_54;
         self->field_54 = 0;
     }
-    f32 v = lbl_eu_806673C8;
+    f32 v = 0.0f;
     self->field_88 = 0;
     UnkClass_8045F564* mem = &self->mMemRegion;
     self->field_94 = v;
@@ -595,7 +595,7 @@ void buildTelopLayout(CMenuLandTelop* self) {
                        getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
                            1, self->field_54))->getFont()));
 
-    self->field_88->SetFrame(lbl_eu_806673C8);
+    self->field_88->SetFrame(0.0f);
     self->field_54->Animate();
 
     // Flush the scratch region (regionGuard's destructor frees it).
@@ -609,15 +609,14 @@ void CMenuLandTelop_renderBeforeAdj70(void* self) { ((void(*)(void*))cbRenderBef
 
 void CMenuLandTelop_dtorAdj70(void* self) { ((void(*)(void*))__dt__14CMenuLandTelopFv)((char*)self - 0x70); }
 
-// Resolve the bdat string for the given row: read the column named by the
-// string at lbl_eu_805018A8[9]; when it is missing or identical to the
-// fallback name at [0xE], return the fallback name.
+// Resolve the bdat string for the given row: read the "name" column; when
+// it is missing or empty, return the empty string.
 const char* getTelopString(int index) {
     const char* s =
-        (const char*)getBdatStringColumnValue(lbl_eu_806640E0,
-                                              lbl_eu_805018A8 + 9, index);
-    if (s != 0 && std::strcmp(s, lbl_eu_805018A8 + 0xe) != 0) {
+        (const char*)getBdatStringColumnValue(::cf::CfBdat::spBtlBuffListFileData,
+                                              "name", index);
+    if (s != 0 && std::strcmp(s, "") != 0) {
         return s;
     }
-    return lbl_eu_805018A8 + 0xe;
+    return "";
 }

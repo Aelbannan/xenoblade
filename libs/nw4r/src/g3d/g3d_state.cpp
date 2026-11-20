@@ -197,8 +197,8 @@ extern const float lbl_eu_80669BFC;  // 0.5f (ind normal-map scale)
 extern const float lbl_eu_80669C00;  // 1.0f/255.0f (channel-color scale)
 extern const double lbl_eu_80669C08; // 2^52 + 2^31 (u32 -> double magic)
 
-// Cull-mode -> genMode bit remap table (retail .sdata2 at 80669BE8).
-extern const float lbl_eu_80669BE8;
+extern "C" u32 sIndMtxOp; // .sdata pointer at 8066346C, read by GetIndMtxOp
+extern const float lbl_eu_80669BE8; // cull-mode -> genMode bit remap table
 
 // Camera matrix state blob layout (retail .bss at 8061DFA0).
 struct CameraMtxStateData {
@@ -270,9 +270,9 @@ void G3DState::IndMtxOpStd::SetNrmMapMtx(GXIndTexMtxID id,
 
     if (pLightVec != NULL) {
         // Row 0 = negated light vector scaled into texture space.
-        mIndMtx[i].m[0][0] = lbl_eu_80669BFC * -pLightVec->x;
-        mIndMtx[i].m[0][1] = lbl_eu_80669BFC * -pLightVec->y;
-        mIndMtx[i].m[0][2] = lbl_eu_80669BFC * -pLightVec->z;
+        mIndMtx[i].m[0][0] = 0.5f * -pLightVec->x;
+        mIndMtx[i].m[0][1] = 0.5f * -pLightVec->y;
+        mIndMtx[i].m[0][2] = 0.5f * -pLightVec->z;
 
         if (method == ResMatMiscData::NORMAL_MAP_SPECULAR) {
             // Row 1 = normalized (x, y, z - 1) light vector.
@@ -281,9 +281,9 @@ void G3DState::IndMtxOpStd::SetNrmMapMtx(GXIndTexMtxID id,
             v.y = pLightVec->y;
             v.z = pLightVec->z - lbl_eu_80669BF8;
             PSVECNormalize(v, v);
-            mIndMtx[i].m[1][0] = lbl_eu_80669BFC * -v.x;
-            mIndMtx[i].m[1][1] = lbl_eu_80669BFC * -v.y;
-            mIndMtx[i].m[1][2] = lbl_eu_80669BFC * -v.z;
+            mIndMtx[i].m[1][0] = 0.5f * -v.x;
+            mIndMtx[i].m[1][1] = 0.5f * -v.y;
+            mIndMtx[i].m[1][2] = 0.5f * -v.z;
         } else {
             mIndMtx[i].m[1][2] = lbl_eu_80669BEC;
             mIndMtx[i].m[1][1] = lbl_eu_80669BEC;
@@ -706,8 +706,8 @@ void G3DState::LoadResTlutObj(const ResTlutObj tlutObj) {
 
 
 // Static projection/texmtx blob folded into environment matrices by
-// ScnDependentMtxFunc::EnvironmentMapping (retail .data at 8051D660).
-extern const unsigned char lbl_eu_8051D660[];
+// ScnDependentMtxFunc::EnvironmentMapping (retail .rodata at 8051D660).
+extern const unsigned char sEnvMapMtx[];
 
 namespace nw4r {
 namespace g3d {
@@ -968,18 +968,18 @@ void G3DState::LoadResMatChan(const ResMatChan chan, u32 maskDiffColor,
     // f64 cast makes MWCC emit its shared 2^52 magic-double conversion
     // (xoris/stw/lfd/fsub vs the pooled magic constant, retail .sdata2
     // lbl_eu_80669C08).
-    scaled.r = (u8)(lbl_eu_80669BFC +
+    scaled.r = (u8)(0.5f +
                     (f32)((f64)(u32)((u32)amb.r * (u32)pData->chan[0].ambColor.r)) *
-                        lbl_eu_80669C00);
-    scaled.g = (u8)(lbl_eu_80669BFC +
+                        0.003921569f);
+    scaled.g = (u8)(0.5f +
                     (f32)((f64)(u32)((u32)amb.g * (u32)pData->chan[0].ambColor.g)) *
-                        lbl_eu_80669C00);
-    scaled.b = (u8)(lbl_eu_80669BFC +
+                        0.003921569f);
+    scaled.b = (u8)(0.5f +
                     (f32)((f64)(u32)((u32)amb.b * (u32)pData->chan[0].ambColor.b)) *
-                        lbl_eu_80669C00);
-    scaled.a = (u8)(lbl_eu_80669BFC +
+                        0.003921569f);
+    scaled.a = (u8)(0.5f +
                     (f32)((f64)(u32)((u32)amb.a * (u32)pData->chan[0].ambColor.a)) *
-                        lbl_eu_80669C00);
+                        0.003921569f);
 
     if (ambFlag & Chan::FLAG_AMB_COLOR_ENABLE) {
         if (ambFlag & Chan::FLAG_AMB_ALPHA_ENABLE) {
@@ -1471,8 +1471,7 @@ void G3DState::SetAmbLightObj(const AmbLightObj& rObj, int idx) {
 // Keeps the GX z-comploc in sync with the material resource through the
 // one-entry cache at sZCompLocCache.
 nw4r::g3d::G3DState::IndMtxOp* nw4r::g3d::G3DState::GetIndMtxOp() {
-    extern u32 lbl_eu_8066346C;
-    return reinterpret_cast<IndMtxOp*>(lbl_eu_8066346C);
+    return reinterpret_cast<IndMtxOp*>(sIndMtxOp);
 }
 
 void nw4r::g3d::G3DState::LoadResMatMisc(const nw4r::g3d::ResMatMisc misc) {
@@ -1967,7 +1966,7 @@ void EnvironmentMapping(math::MTX34* pMtx, s8 camRef, s8 lightRef) {
                         VEC3TransformNormal(&dir, &sCameraMtxState.mViewMtx,
                                             &dir);
                     } else {
-                        dir.y = lbl_eu_80669BF0;
+                        dir.y = -1.0f;
                     }
                 } else {
                     VEC3TransformNormal(&dir, &sCameraMtxState.mViewMtx,
@@ -1977,8 +1976,8 @@ void EnvironmentMapping(math::MTX34* pMtx, s8 camRef, s8 lightRef) {
             // Orthonormal basis: pick an up vector not parallel to the
             // direction and cross out sideways/vertical axes.
             math::VEC3 up;
-            if (__fabs(dir.x) >= lbl_eu_80669BF4 ||
-                __fabs(dir.z) >= lbl_eu_80669BF4) {
+            if (__fabs(dir.x) >= 1e-06f ||
+                __fabs(dir.z) >= 1e-06f) {
                 up.z = lbl_eu_80669BEC;
                 up.x = lbl_eu_80669BEC;
                 up.y = lbl_eu_80669BF8;
@@ -1986,7 +1985,7 @@ void EnvironmentMapping(math::MTX34* pMtx, s8 camRef, s8 lightRef) {
                 up.x = lbl_eu_80669BEC;
                 up.y = lbl_eu_80669BEC;
                 up.z =
-                    (dir.y <= lbl_eu_80669BEC) ? lbl_eu_80669BF0 : lbl_eu_80669BF8;
+                    (dir.y <= lbl_eu_80669BEC) ? -1.0f : lbl_eu_80669BF8;
             }
 
             math::VEC3 side;
@@ -2012,7 +2011,7 @@ void EnvironmentMapping(math::MTX34* pMtx, s8 camRef, s8 lightRef) {
             rMtx.m[0][3] = rMtx.m[1][3] = rMtx.m[2][3] = zero;
 
             PSMTXConcat(
-                *reinterpret_cast<const math::MTX34*>(lbl_eu_8051D660),
+                *reinterpret_cast<const math::MTX34*>(sEnvMapMtx),
                 *pMtx, *pMtx);
             return;
         }
@@ -2088,7 +2087,7 @@ void EnvironmentSpecularMapping(math::MTX34* pMtx, s8 camRef, s8 lightRef) {
             if (negPos.x == lbl_eu_80669BEC &&
                 negPos.y == lbl_eu_80669BEC &&
                 negPos.z == lbl_eu_80669BEC) {
-                dir.y = lbl_eu_80669BF0;
+                dir.y = -1.0f;
             }
         } else {
             VEC3TransformNormal(&dir, &sCameraMtxState.mViewMtx, &dir);
@@ -2111,8 +2110,8 @@ void EnvironmentSpecularMapping(math::MTX34* pMtx, s8 camRef, s8 lightRef) {
         }
 
         // Pick an up vector not parallel to the half vector.
-        if (__fabs(half.x) >= lbl_eu_80669BF4 ||
-            __fabs(half.z) >= lbl_eu_80669BF4) {
+        if (__fabs(half.x) >= 1e-06f ||
+            __fabs(half.z) >= 1e-06f) {
             up.x = lbl_eu_80669BEC;
             up.y = lbl_eu_80669BF8;
             up.z = lbl_eu_80669BEC;
@@ -2120,7 +2119,7 @@ void EnvironmentSpecularMapping(math::MTX34* pMtx, s8 camRef, s8 lightRef) {
             up.x = lbl_eu_80669BEC;
             up.y = lbl_eu_80669BEC;
             up.z = (half.y <= lbl_eu_80669BEC) ? lbl_eu_80669BF8
-                                               : lbl_eu_80669BF0;
+                                               : -1.0f;
         }
     } else if (camRef >= 0 && camRef < 0x20) {
         const math::MTX34& rView = sCameraMtxState.mViewMtxArray[camRef];
@@ -2180,8 +2179,12 @@ void EnvironmentSpecularMapping(math::MTX34* pMtx, s8 camRef, s8 lightRef) {
 // sdata 0x80663468 (8) + rodata 0x8051D660 (48) + bss/sbss pads to reach retail sizes
 extern "C" const char sIndMtxOpStdInstance[];
 extern "C" __declspec(section ".sdata") u32 lbl_eu_80663468 = 0xFFFFFFFF;
-extern "C" __declspec(section ".sdata") u32 lbl_eu_8066346C = (u32)sIndMtxOpStdInstance;
-extern "C" __declspec(section ".rodata") const unsigned char lbl_eu_8051D660[48] = {0x3F,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x3F,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0xBF,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x3F,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x3F,0x80,0x00,0x00};
+// name-guess: .sdata pointer at 0x8066346C, loaded by G3DState::GetIndMtxOp
+// and initialized with sIndMtxOpStdInstance.
+extern "C" __declspec(section ".sdata") u32 sIndMtxOp = (u32)sIndMtxOpStdInstance;
+// name-guess: 0x30-byte .rodata matrix concatenated after the environment
+// transform in ScnDependentMtxFunc::EnvironmentMapping.
+extern "C" __declspec(section ".rodata") const unsigned char sEnvMapMtx[48] = {0x3F,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x3F,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0xBF,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x3F,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x3F,0x80,0x00,0x00};
 // Retail bss 0x55E0 (21984) -- pad from end of actual bss symbols
 // (0x44D8) to reach retail size; sbss 0x20 via 8 small u32s.
 __declspec(align(8)) unsigned char bss_pad_g3d_state_bss[0x1108];

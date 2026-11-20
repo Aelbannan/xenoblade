@@ -2,15 +2,14 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
-extern char lbl_eu_80668FC8[];
-extern char lbl_eu_80668FC4[];
-extern char lbl_eu_80668FC0[];
-extern char lbl_eu_80668FBC[];
-extern char lbl_eu_80668FB8[];
-extern char lbl_eu_8053AEA0[];
+extern unsigned long sHikariQuadCount0;
+extern unsigned long sHikariQuadCount1;
+extern unsigned long sHikariSparkleCount;
+extern unsigned long sHikariGradQuadCount;
+extern u32 sHikariStateData[0xD0 / 4];
+extern f32 sHikariGradientRows[0x40 / 4];
 extern char lbl_eu_8053AE90[];
 extern const char lbl_eu_80513580[];
-extern char lbl_eu_80513568[];
 #include "monolib/scn/CScn.hpp"
 #include "monolib/util/MemManager.hpp"  // canonical mtl::MemManager::allocate
 
@@ -68,8 +67,8 @@ cf::CfHikariItemManager::CfHikariItemManager() {
             // (a call could modify it), so MWCC schedules it at first use and
             // fmr's the other two LOD args - exactly the retail lfs/fmr run.
             GXInitTexObjLOD((GXTexObj*)&this->unk1114[off], GX_LINEAR,
-                            GX_LINEAR, lbl_eu_80668EC8, lbl_eu_80668EC8,
-                            lbl_eu_80668EC8, GX_FALSE, GX_FALSE, GX_ANISO_1);
+                            GX_LINEAR, 0.0f, 0.0f,
+                            0.0f, GX_FALSE, GX_FALSE, GX_ANISO_1);
         }
     }
 
@@ -244,26 +243,26 @@ void cf::CfHikariItemManager::cbRenderBefore() {
     // Second copy with the translation column zeroed: the two camera axes
     // (x/y rows of the rotation part) are transformed by it, then normalized.
     rotMtx = viewFrame->mtx;
-    rotMtx.m[0][3] = lbl_eu_80668EC8;
-    rotMtx.m[1][3] = lbl_eu_80668EC8;
-    rotMtx.m[2][3] = lbl_eu_80668EC8;
+    rotMtx.m[0][3] = 0.0f;
+    rotMtx.m[1][3] = 0.0f;
+    rotMtx.m[2][3] = 0.0f;
     vec1.x = lbl_eu_80668ED0;
-    vec1.y = lbl_eu_80668EC8;
-    vec1.z = lbl_eu_80668EC8;
-    vec2.x = lbl_eu_80668EC8;
+    vec1.y = 0.0f;
+    vec1.z = 0.0f;
+    vec2.x = 0.0f;
     vec2.y = lbl_eu_80668ED0;
-    vec2.z = lbl_eu_80668EC8;
+    vec2.z = 0.0f;
     PSMTXMultVec(rotMtx.m, vec1, vec1);
     PSMTXMultVec(rotMtx.m, vec2, vec2);
 
     f32 len1 = vec1.x * vec1.x + vec1.y * vec1.y + vec1.z * vec1.z;
-    if (len1 == lbl_eu_80668EC8) {
+    if (len1 == 0.0f) {
         vec1 = ml::CVec3::zero;
     } else {
         PSVECNormalize(vec1, vec1);
     }
     f32 len2 = vec2.x * vec2.x + vec2.y * vec2.y + vec2.z * vec2.z;
-    if (len2 == lbl_eu_80668EC8) {
+    if (len2 == 0.0f) {
         vec2 = ml::CVec3::zero;
     } else {
         PSVECNormalize(vec2, vec2);
@@ -313,17 +312,17 @@ void cf::CfHikariItemManager::cbRenderBefore() {
     // menu/fade state or when the manager's bit-1 toggle was already set.
     f32 fade = Scn_GetFrameDelta(gmScene);
     if (cf::CfGameManager::isSceneLoading()) {
-        fade = lbl_eu_80668EC8;
+        fade = 0.0f;
     }
     if (this->field_1194 & 2) {
         this->field_1194 &= ~2;
     } else {
-        fade = lbl_eu_80668EC8;
+        fade = 0.0f;
     }
     func_802B371C((CfHikariItemRecord*)&viewFrame->rec[0]);
     GXSetBlendMode(GX_BM_BLEND, GX_BL_SRCALPHA, GX_BL_INVSRCALPHA, GX_LO_CLEAR);
 
-    if (fade == lbl_eu_80668EC8) {
+    if (fade == 0.0f) {
         // Full update of every live record, then a pass over the pool slots
         // bumping the C24 counter for still-active entries.
         for (u32 i = 0; i < this->field_1198; i++) {
@@ -386,7 +385,7 @@ void cf::CfHikariItemManager::cbRenderBefore() {
     // Draw passes: each quad corner combines the two normalized camera axes
     // scaled by the pass-specific constants (retail vectorises the x/y pairs
     // into ps_muls0/ps_add runs).
-    if (lbl_eu_80664C18 != 0) {
+    if (sHikariQuadCount0 != 0) {
         corners.v[0][0] = vec1.x * 0.4f + vec2.x * 0.5f;
         corners.v[0][1] = vec1.y * 0.4f + vec2.y * 0.5f;
         corners.v[0][2] = vec1.z * 0.4f + vec2.z * 0.5f;
@@ -400,12 +399,12 @@ void cf::CfHikariItemManager::cbRenderBefore() {
         corners.v[3][1] = vec1.y * -0.4f + vec2.y * 0.5f;
         corners.v[3][2] = vec1.z * -0.4f + vec2.z * 0.5f;
         GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXMAP1, GX_COLOR0A0);
-        GXBegin(GX_QUADS, GX_VTXFMT0, lbl_eu_80664C18 * 4);
+        GXBegin(GX_QUADS, GX_VTXFMT0, sHikariQuadCount0 * 4);
         for (u32 i = 0; i < this->field_1198; i++) {
             hikariEmitQuad0(this->records[i], &corners);
         }
     }
-    if (lbl_eu_80664C1C != 0) {
+    if (sHikariQuadCount1 != 0) {
         corners.v[0][0] = vec1.x * 0.125f + vec2.x * 0.125f;
         corners.v[0][1] = vec1.y * 0.125f + vec2.y * 0.125f;
         corners.v[0][2] = vec1.z * 0.125f + vec2.z * 0.125f;
@@ -419,7 +418,7 @@ void cf::CfHikariItemManager::cbRenderBefore() {
         corners.v[3][1] = vec1.y * -0.125f + vec2.y * 0.125f;
         corners.v[3][2] = vec1.z * -0.125f + vec2.z * 0.125f;
         GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXMAP3, GX_COLOR0A0);
-        GXBegin(GX_QUADS, GX_VTXFMT0, lbl_eu_80664C1C * 4);
+        GXBegin(GX_QUADS, GX_VTXFMT0, sHikariQuadCount1 * 4);
         for (u32 i = 0; i < this->field_1198; i++) {
             hikariEmitQuad1(this->records[i], &corners);
         }
@@ -427,17 +426,17 @@ void cf::CfHikariItemManager::cbRenderBefore() {
 
     nw4r::g3d::G3DState::LoadFog(0x40);
     GXSetBlendMode(GX_BM_BLEND, GX_BL_SRCALPHA, GX_BL_ONE, GX_LO_CLEAR);
-    if (lbl_eu_80664C20 != 0) {
+    if (sHikariSparkleCount != 0) {
         corners.v[0][0] = vec1.x * 0.5f;
         corners.v[0][1] = vec1.y * 0.5f;
         corners.v[0][2] = vec1.z * 0.5f;
         GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXMAP0, GX_COLOR0A0);
-        GXBegin(GX_QUADS, GX_VTXFMT0, lbl_eu_80664C20 * 4);
+        GXBegin(GX_QUADS, GX_VTXFMT0, sHikariSparkleCount * 4);
         for (u32 i = 0; i < this->field_1198; i++) {
             hikariEmitSparkle(this->records[i], &corners);
         }
     }
-    if (lbl_eu_80664C24 != 0) {
+    if (sHikariGradQuadCount != 0) {
         corners.v[0][0] = vec1.x * 0.5f + vec2.x * 0.5f;
         corners.v[0][1] = vec1.y * 0.5f + vec2.y * 0.5f;
         corners.v[0][2] = vec1.z * 0.5f + vec2.z * 0.5f;
@@ -451,7 +450,7 @@ void cf::CfHikariItemManager::cbRenderBefore() {
         corners.v[3][1] = vec1.y * -0.5f + vec2.y * 0.5f;
         corners.v[3][2] = vec1.z * -0.5f + vec2.z * 0.5f;
         GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXMAP2, GX_COLOR0A0);
-        GXBegin(GX_QUADS, GX_VTXFMT0, lbl_eu_80664C24 * 4);
+        GXBegin(GX_QUADS, GX_VTXFMT0, sHikariGradQuadCount * 4);
         u32 slot = this->field_11A0;
         for (u32 iter = 0; iter < 0x80; iter++) {
             if (this->field_119C == slot) {
@@ -531,16 +530,16 @@ extern "C" void hikariSpawnSlot(cf::CfHikariItemManager* self, const f32* src,
 
 // (us-802b618c): publish the record's first three words into the
 // .bss global state block and reset the four sbss counters (retail emits
-// four SDA-relocated word stores to lbl_eu_80664C18..24).
+// four SDA-relocated word stores to sHikariQuadCount0..24).
 // (us-802b618c): publish the record's first three words into the
 // .bss global state block and reset the four sbss counters (retail emits
-// four SDA-relocated word stores to lbl_eu_80664C18..24).
+// four SDA-relocated word stores to sHikariQuadCount0..24).
 extern "C" void func_802B371C(const CfHikariItemRecord* self) {
-    u32* dst = (u32*)&lbl_eu_80577680[0];
-    lbl_eu_80664C18 = 0;
-    lbl_eu_80664C1C = 0;
-    lbl_eu_80664C20 = 0;
-    lbl_eu_80664C24 = 0;
+    u32* dst = (u32*)&sHikariStateData[0];
+    sHikariQuadCount0 = 0;
+    sHikariQuadCount1 = 0;
+    sHikariSparkleCount = 0;
+    sHikariGradQuadCount = 0;
     dst[0] = self->field_00;
     dst[1] = self->field_04;
     dst[2] = self->field_08;
@@ -603,12 +602,12 @@ extern "C" s32 hikariTickRecord(CfHikariItemRecord* self, f32 delta) {
     CfHikariItemRecord* rec = self;
     s32 ret = 1;
     bool countersOn = !(flags & 0x80); // gates the sbss counters
-    const u32* g = lbl_eu_80577680;
+    const u32* g = sHikariStateData;
     rec->field_42 = flags & 0xFFF0;
 
     if (flags & 0x40) {
         // Spawn trail: burst a fan of 8 particles when the 0x1C timer resets.
-        if (rec->field_1C == lbl_eu_80668EF8) {
+        if (rec->field_1C == 0.0f) {
             for (int i = 0; i < 8; i++) {
                 cf::CfHikariItemManager* mgr = ClearMenu_GetGlobal10();
                 hikariSpawnSlot(mgr, (const f32*)rec, rec->field_40,
@@ -622,7 +621,7 @@ extern "C" s32 hikariTickRecord(CfHikariItemRecord* self, f32 delta) {
             ret = 0;
             rec->field_14 += delta;
             if (rec->field_14 < 2.0f) {
-                rec->field_14 = lbl_eu_80668EF8;
+                rec->field_14 = 0.0f;
                 cf::CfHikariItemManager* mgr = ClearMenu_GetGlobal10();
                 hikariSpawnSlot(mgr, (const f32*)rec, rec->field_40,
                               0.1f, 1.5f);
@@ -665,8 +664,8 @@ extern "C" s32 hikariTickRecord(CfHikariItemRecord* self, f32 delta) {
 
         if (countersOn) {
             rec->field_42 |= 0x3;
-            lbl_eu_80664C18++;
-            lbl_eu_80664C1C++;
+            sHikariQuadCount0++;
+            sHikariQuadCount1++;
         }
 
         // Accumulator: advance it, wrapping at the gradient table's second
@@ -675,18 +674,18 @@ extern "C" s32 hikariTickRecord(CfHikariItemRecord* self, f32 delta) {
         f32 old18 = rec->field_18;
         rec->field_18 = old18 + delta;
         if (rec->field_18 >= sHikariSparkleColorStops[1]) {
-            rec->field_18 = lbl_eu_80668EF8;
+            rec->field_18 = 0.0f;
         }
 
         if (dist2 <= 4225.0f) {
             f32 new18 = rec->field_18;
-            if (new18 <= lbl_eu_80668EF8) {
-                rec->field_20 = lbl_eu_80668EF8;
+            if (new18 <= 0.0f) {
+                rec->field_20 = 0.0f;
                 rec->field_42 |= 0x10;
                 rec->field_28 = 0.75f +
                                 0.005f * (f32)ml::math::mtRand(0, 100);
             } else if (old18 < 20.0f && new18 <= 20.0) {
-                rec->field_24 = lbl_eu_80668EF8;
+                rec->field_24 = 0.0f;
                 rec->field_42 |= 0x20;
                 rec->field_2C = 0.75f +
                                 0.005f * (f32)ml::math::mtRand(0, 100);
@@ -694,7 +693,7 @@ extern "C" s32 hikariTickRecord(CfHikariItemRecord* self, f32 delta) {
             if ((s16)rec->field_40 == 0 && dist2 <= 225.0f) {
                 rec->field_14 += delta;
                 if (rec->field_14 >= 10.0f) {
-                    rec->field_14 = lbl_eu_80668EF8;
+                    rec->field_14 = 0.0f;
                     cf::CfHikariItemManager* mgr = ClearMenu_GetGlobal10();
                     hikariSpawnSlot(mgr, (const f32*)rec, rec->field_40,
                                   0.2f, 2.0f);
@@ -712,11 +711,11 @@ extern "C" s32 hikariTickRecord(CfHikariItemRecord* self, f32 delta) {
             rec->colors[2 + i] = hikariGradColor(
                 fp, (const f32*)&g[0x24 + (s16)rec->field_40 * 8],
                 sHikariSparkleColorStops, 2);
-            if (*fp == lbl_eu_80668EF8) {
+            if (*fp == 0.0f) {
                 rec->field_42 &= ~(0x10 << i);
             } else if (countersOn) {
                 rec->field_42 |= (0x4 << i);
-                lbl_eu_80664C20++;
+                sHikariSparkleCount++;
             }
         }
         fp++;
@@ -731,7 +730,7 @@ extern "C" s32 hikariTickRecord(CfHikariItemRecord* self, f32 delta) {
 // the sbss counters and the 0x3/0x4<<i flag bits.
 extern "C" void hikariUpdateRecord(CfHikariItemRecord* self) {
     // Hoisted base pointers mirror the retail prologue (lis/addi up front).
-    u32* g = lbl_eu_80577680;
+    u32* g = sHikariStateData;
     u16 flags = self->field_42;
     int flagClear = (flags & 0x40) != 0; // spawn flag gates the sbss counters
     self->field_42 = flags & 0xFFF0; // retail mask 16,27 = clear low 4 bits
@@ -750,8 +749,8 @@ extern "C" void hikariUpdateRecord(CfHikariItemRecord* self) {
         }
         if (flagClear != 0) {
             self->field_42 |= 0x3;
-            lbl_eu_80664C18++;
-            lbl_eu_80664C1C++;
+            sHikariQuadCount0++;
+            sHikariQuadCount1++;
         }
     }
 
@@ -766,7 +765,7 @@ extern "C" void hikariUpdateRecord(CfHikariItemRecord* self) {
                 sHikariSparkleColorStops, 2);
             if (flagClear != 0) {
                 self->field_42 = (u16)(self->field_42 | (0x4 << i));
-                lbl_eu_80664C20++;
+                sHikariSparkleCount++;
             }
         }
         src += 1;
@@ -957,14 +956,14 @@ extern "C" __declspec(noinline) u32 hikariGradColor(f32* self, const f32* rows, 
     const f32* end = table + count;
 
     if (self[0] >= end[-1]) {
-        self[0] = lbl_eu_80668EF8;
+        self[0] = 0.0f;
         out[0] = rows[0];
         out[1] = rows[1];
         out[2] = rows[2];
         out[3] = rows[3];
     } else {
         const f32* t = table;
-        f32 prev = lbl_eu_80668EF8; // zero constant loaded via lfs like retail
+        f32 prev = 0.0f; // zero constant loaded via lfs like retail
         for (int i = 0; i < count; i++) {
             if (self[0] <= *t) {
                 f32 inv = lbl_eu_80668F54 - (self[0] - prev) * table[i + count];
@@ -1003,11 +1002,11 @@ extern "C" __declspec(noinline) void hikariInitRandomEntry(CfHikariItemRecord* s
     self->field_0C = (f32)ml::math::mtRand(-10, 10) * 0.001f;
     self->field_10 = (f32)ml::math::mtRand(3, 8) * 0.002f * scale;
     self->field_14 = 0.001f * (f32)ml::math::mtRand(-10, 10);
-    self->field_18 = lbl_eu_80668EF8;
+    self->field_18 = 0.0f;
 }
 
 extern "C" void hikariUpdateFadeRecord(CfHikariItemRecord* self) {
-    ++lbl_eu_80664C24;
+    ++sHikariGradQuadCount;
 }
 
 // (us-802b6ee0): accumulate delta into +0x18; once it reaches the
@@ -1024,7 +1023,7 @@ extern "C" __declspec(noinline) s32 hikariUpdateSlotRecord(CfHikariItemRecord* s
     nw4r::math::VEC3Add((nw4r::math::VEC3*)&self->field_00,
                         (nw4r::math::VEC3*)&self->field_00,
                         (nw4r::math::VEC3*)&self->field_0C);
-    ++lbl_eu_80664C24;
+    ++sHikariGradQuadCount;
     return 0;
 }
 
@@ -1035,7 +1034,7 @@ extern "C" __declspec(noinline) s32 hikariUpdateSlotRecord(CfHikariItemRecord* s
 extern "C" void hikariEmitGradQuad(CfHikariItemRecord* self, const CfHikariQuadCorners* corners) {
     u32 color = hikariGradColor(
         &self->field_18,
-        (const f32*)&lbl_eu_80577750[(s16)self->field_1C_h[1] * 8],
+        (const f32*)&sHikariGradientRows[(s16)self->field_1C_h[1] * 8],
         sHikariGradQuadColorStops, 2);
 
     // Gradient-driven size: linear ramp up to table[0], ramp down after.
@@ -1105,14 +1104,14 @@ extern "C" void hikariEmitGradQuad(CfHikariItemRecord* self, const CfHikariQuadC
 }
 
 // (us-802b7150): static-init the .bss gradient table.  Four
-// 16-float rows at +0x10/+0x50/+0x90/+0xd0 of lbl_eu_80577680 (hikariUpdateRecord
+// 16-float rows at +0x10/+0x50/+0x90/+0xd0 of sHikariStateData (hikariUpdateRecord
 // reads the first three rows indexed by field_40).  Constants are read
 // directly from sdata2 so MWCC CSEs one lfs per value up-front and colours
 // them exactly like retail (f27-f31 for {F70,F74,F78,F7C,F80}, volatiles
 // f13..f0 descending by first use).  Row bases are declared in the retail
 // addi order; element 0 of each row goes through the block base.
 void sinit_802B46E0() {
-    f32* t = (f32*)lbl_eu_80577680;
+    f32* t = (f32*)sHikariStateData;
 
     f32* row50 = t + 0x50 / 4;
     f32* rowD0 = t + 0xD0 / 4;
@@ -1156,7 +1155,7 @@ void sinit_802B46E0() {
     t[0x90 / 4] = 255.0f;
     row90[1] = 102.0f;
     row90[2] = 114.0f;
-    row90[3] = lbl_eu_80668EF8;
+    row90[3] = 0.0f;
     row90[4] = 255.0f;
     row90[5] = 102.0f;
     row90[6] = 114.0f;
@@ -1164,7 +1163,7 @@ void sinit_802B46E0() {
     row90[8] = 32.0f;
     row90[9] = 170.0f;
     row90[10] = 255.0f;
-    row90[11] = lbl_eu_80668EF8;
+    row90[11] = 0.0f;
     row90[12] = 32.0f;
     row90[13] = 170.0f;
     row90[14] = 255.0f;
@@ -1173,7 +1172,7 @@ void sinit_802B46E0() {
     t[0xD0 / 4] = 255.0f;
     rowD0[1] = 96.0f;
     rowD0[2] = 100.0f;
-    rowD0[3] = lbl_eu_80668EF8;
+    rowD0[3] = 0.0f;
     rowD0[4] = 255.0f;
     rowD0[5] = 215.0f;
     rowD0[6] = 218.0f;
@@ -1181,7 +1180,7 @@ void sinit_802B46E0() {
     rowD0[8] = 32.0f;
     rowD0[9] = 190.0f;
     rowD0[10] = 255.0f;
-    rowD0[11] = lbl_eu_80668EF8;
+    rowD0[11] = 0.0f;
     rowD0[12] = 200.0f;
     rowD0[13] = 250.0f;
     rowD0[14] = 255.0f;
@@ -1196,7 +1195,6 @@ __declspec(section ".rodata") const float sHikariSparkleColorStops[4] = {10.0f, 
 __declspec(section ".rodata") float sHikariGradQuadColorStops[4] = {10.0f, 40.0f, 0.1f, 0.0333333351f};
 __declspec(section ".data") char lbl_eu_8053AE90[0x10] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 __declspec(section ".data") char lbl_eu_8053AEA0[0x10] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-__declspec(section ".sdata2") float lbl_eu_80668EC8 = 0.0f;
 const float lbl_eu_80668ED0 = 1.0f;
 __declspec(section ".sdata2") double lbl_eu_80668EF0 = 4503601774854144;
 const float lbl_eu_80668EF8 = 0.0f;
@@ -1204,10 +1202,10 @@ const float lbl_eu_80668F54 = 1.0f;
 const float lbl_eu_80668F60 = 40.0f;
 // .sbss counters (MWCC rejects __declspec(section ".sbss") (33044); plain
 // zero-init tentatives auto-route to .sbss).
-unsigned long lbl_eu_80664C18 = 0;
-unsigned long lbl_eu_80664C1C = 0;
-unsigned long lbl_eu_80664C20 = 0;
-unsigned long lbl_eu_80664C24 = 0;
+unsigned long sHikariQuadCount0 = 0;
+unsigned long sHikariQuadCount1 = 0;
+unsigned long sHikariSparkleCount = 0;
+unsigned long sHikariGradQuadCount = 0;
 // .bss scratch buffers (plain zero-init; MWCC auto-routes large arrays to .bss).
-u32 lbl_eu_80577680[0xD0 / 4];
-f32 lbl_eu_80577750[0x40 / 4];
+u32 sHikariStateData[0xD0 / 4];
+f32 sHikariGradientRows[0x40 / 4];

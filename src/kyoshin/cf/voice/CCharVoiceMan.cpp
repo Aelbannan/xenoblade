@@ -78,9 +78,9 @@ void registerFactoryEvent(void* self, cf::IFactoryEvent* event);
 extern UnkClass_805764CC* getInstance();
 
 // include chain; C++ linkage mangles to the retail names).
-u32 CtrlRemote_TouchBitByArg(u32 resourceId);
+#include "kyoshin/cf/CtrlRemoteApi.hpp"
 void CtrlRemote_SetSharedBit(u32 owner, u32 flag);
-bool isGlobalCamFlagSet(int mask);                // isGlobalCamFlagSet__Fi
+#include "kyoshin/cf/CfCamSymbols.hpp"
 
 namespace cf{
     CCharVoiceMan::CCharVoiceMan(){

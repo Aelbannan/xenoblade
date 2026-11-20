@@ -1,6 +1,7 @@
 // Auto-scaffolded catalog TU for kyoshin/cf/CfResReloadImpl
 // Replace stubs with high-level C/C++ during decomp.
 
+#include "kyoshin/cf/CfBdat.hpp"
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/cf/object/CfObjectEffSymbols.hpp"
 #include "kyoshin/cf/object/CfObjectMoveApi.hpp"
@@ -854,7 +855,7 @@ struct ReloadPosVec {
 // worse here); the cast constants land as TU-local @N pool labels - known
 // §7i residual.
 extern "C" int reloadInRange(cf::CfResReloadImpl* self, u32 arg2, int arg3) {
-    void* bdat = lbl_eu_806640A8;
+    void* bdat = ::cf::CfBdat::spFldMapListFileData;
     u16 row = (u16)lbl_eu_80664184;
     f32 vals[3];
     f32 radius;
@@ -907,7 +908,7 @@ extern "C" int reloadInRange(cf::CfResReloadImpl* self, u32 arg2, int arg3) {
 // reports whether the current flag byte matches the type's expected bit
 // mask (4 for type 1, 0x10 otherwise). Returns 2 on out-of-range.
 extern "C" int isReloadReady(u32 type) {
-    void* bdat = lbl_eu_806640A8;
+    void* bdat = ::cf::CfBdat::spFldMapListFileData;
     u16 row = (u16)lbl_eu_80664184;
     u16 gm = (u16)cf::CfGameManager::getQueuedFileEventCount();
     u16 a;
@@ -939,7 +940,7 @@ extern "C" int isReloadReady(u32 type) {
     return (v & mask) == 0 ? 1 : 0;
 }
 
-// Reads a BDAT column (table lbl_eu_806640A8, row (u16)lbl_eu_80664184) and
+// Reads a BDAT column (table ::cf::CfBdat::spFldMapListFileData, row (u16)lbl_eu_80664184) and
 // returns whether the low byte's bit pattern matches the given sub-type:
 // bit 0 -> 1, bit pair 1-2 -> sub 1, 3-4 -> sub 2, 5-6 -> sub 3, 7-8 -> sub 4.
 // The column name depends on the type field (2 picks a different column).
@@ -951,7 +952,7 @@ extern "C" int testReloadSub(u32 type, int sub) {
     } else {
         col = tbl + 0x94;
     }
-    u16 v = (u16)getBdatStringColumnValue(lbl_eu_806640A8, col, (u16)lbl_eu_80664184);
+    u16 v = (u16)getBdatStringColumnValue(::cf::CfBdat::spFldMapListFileData, col, (u16)lbl_eu_80664184);
     if (v & 1) {
         return 1;
     }
@@ -981,7 +982,7 @@ extern "C" int testReloadSub(u32 type, int sub) {
 // reload); the halfword view of slot 3 is re-read per test because the
 // *out1/*out2 pointer stores may alias it, so MWCC cannot cache it.
 extern "C" int calcReloadPrm(u32 type, u32 arg2, int arg3, u16* out1, u16* out2) {
-    void* bdat = lbl_eu_806640A8;
+    void* bdat = ::cf::CfBdat::spFldMapListFileData;
     u16 row = (u16)lbl_eu_80664184;
     char* c1;
     if (type == 2) {
@@ -1075,7 +1076,7 @@ extern "C" u16 getReloadCand(cf::CfResReloadImpl* self, u16* out1, u16* counter,
                   u16* out3) {
     u16 f0;
     u16 initial = *counter;
-    if (lbl_eu_806640A8 != 0) {
+    if (::cf::CfBdat::spFldMapListFileData != 0) {
         u16 rnd = (u16)CfT_DispatchFrameCounts();
         // Two separate reads: retail keeps both SDA loads back to back
         // (first feeds the odd-bit test, second the even-mask clear).
@@ -1186,7 +1187,7 @@ extern "C" void runReloadMain(cf::CfResReloadImpl* self) {
         u16 p = sReloadType;
         u16 row = (u16)lbl_eu_80664184;
         char* tbl = lbl_eu_80503140;
-        void* bdat = lbl_eu_806640A8;
+        void* bdat = ::cf::CfBdat::spFldMapListFileData;
         char* col = tbl + 0xd4;
         if (p == 2) {
             col = tbl + 0xcc;
@@ -1259,7 +1260,7 @@ extern "C" void runReloadMain(cf::CfResReloadImpl* self) {
 // (0 -> table lbl_eu_80531068 indexed by CfT_DispatchFrameCounts, 1 -> +0xDC string,
 // 2 -> +0xE4 string). Then forwards the object to runReloadMain.
 void updateReloadP1(cf::CfResReloadImpl* self) {
-    void* bdat = lbl_eu_806640A8;
+    void* bdat = ::cf::CfBdat::spFldMapListFileData;
     u16 row = (u16)lbl_eu_80664184;
     if (bdat != 0) {
         u16 p = sReloadType;

@@ -1,117 +1,13 @@
+#define IWORK_EVENT_INLINE_DTOR
 #include "decomp.h"
+#include "kyoshin/cf/CfBdat.hpp"
 #include "types.h"
 
 // Typed .data (retail 0xC0): quest pointer table + IWorkEvent vtable block + RTTI tail.
 // Uses u32 + (u32)& casts so function relocs emit as ADDR32 with zero file bytes (retail shape).
-extern "C" void __dt__Q22cf6CfBdatFv();
-extern "C" void WorkEvent1__10IWorkEventFPvPCc();
-extern "C" void OnFileEvent__Q22cf6CfBdatFP10CEventFile();
-extern "C" void WorkEvent3__10IWorkEventFPv();
-extern "C" void WorkEvent4__10IWorkEventFv();
-extern "C" void OnPauseTrigger__10IWorkEventFb();
-extern "C" void WorkEvent6__10IWorkEventFv();
-extern "C" void WorkEvent7__10IWorkEventFv();
-extern "C" void WorkEvent8__10IWorkEventFv();
-extern "C" void WorkEvent9__10IWorkEventFv();
-extern "C" void WorkEvent10__10IWorkEventFv();
-extern "C" void WorkEvent11__10IWorkEventFv();
-extern "C" void WorkEvent12__10IWorkEventFv();
-extern "C" void WorkEvent13__10IWorkEventFv();
-extern "C" void WorkEvent14__10IWorkEventFv();
-extern "C" void WorkEvent15__10IWorkEventFv();
-extern "C" void WorkEvent16__10IWorkEventFv();
-extern "C" void WorkEvent17__10IWorkEventFv();
-extern "C" void WorkEvent18__10IWorkEventFv();
-extern "C" void WorkEvent19__10IWorkEventFv();
-extern "C" void WorkEvent20__10IWorkEventFv();
-extern "C" void WorkEvent21__10IWorkEventFv();
-extern "C" void WorkEvent22__10IWorkEventFv();
-extern "C" void WorkEvent23__10IWorkEventFv();
-extern "C" void WorkEvent24__10IWorkEventFv();
-extern "C" void WorkEvent25__10IWorkEventFv();
-extern "C" void WorkEvent26__10IWorkEventFv();
-extern "C" void WorkEvent27__10IWorkEventFv();
-extern "C" void WorkEvent28__10IWorkEventFv();
-extern "C" void WorkEvent29__10IWorkEventFv();
-extern "C" void WorkEvent30__10IWorkEventFv();
-extern "C" void WorkEvent31__10IWorkEventFv();
-extern "C" u32 __RTTI__10IWorkEvent;
-extern "C" char __RTTI__Q22cf6CfBdat[];
-
 // Typed .rodata (retail 0x420): type name + bdat table-name pool + face names.
 // Sizes are retail gaps so the section packs exactly.
-__declspec(section ".rodata") __attribute__((used)) const char lbl_eu_80500F98[0x0C] = "cf::CfBdat";
-__declspec(section ".rodata") __attribute__((used)) const char lbl_eu_80500FA4[0x3E4] =
-    "BTL_pclist\0"
-    "BTL_enelist\0"
-    "BTL_skilllist\0"
-    "BTL_growlist\0"
-    "BTL_bufflist\0"
-    "FLD_pointlist\0"
-    "FLD_tboxlist\0"
-    "BTL_camlist\0"
-    "BTL_camdatalist\0"
-    "BTL_crystalnamelist\0"
-    "MNU_item\0"
-    "FLD_npclist\0"
-    "FLD_maplist\0"
-    "landmarklist\0"
-    "FLD_valpoplist\0"
-    "FLD_dmobjlist\0"
-    "ITM_itemlist\0"
-    "ITM_wpnlist\0"
-    "ITM_equiplist\0"
-    "ITM_crystallist\0"
-    "ITM_dropcrystallist\0"
-    "ITM_collectlist\0"
-    "ITM_materiallist\0"
-    "ITM_valuablelist\0"
-    "ITM_artslist\0"
-    "ITM_headlist\0"
-    "ITM_bodylist\0"
-    "ITM_armlist\0"
-    "ITM_waistlist\0"
-    "ITM_legglist\0"
-    "BTL_PSVskill\0"
-    "BTL_PSVlink\0"
-    "BTL_PSSlist\0"
-    "routelist%02d%02d\0"
-    "mapefflist%02d%02d\0"
-    "mapobjlist%02d%02d\0"
-    "maplodlist%02d%02d\0"
-    "mapselist%02d%02d\0"
-    "FLD_GimCamList%02d%02d\0"
-    "Litemlist%02d%02d\0"
-    "extalklist%02d%02d\0"
-    "minelist%02d%02d\0"
-    "BTL_enelist%02d%02d\0"
-    "Gimlist%02d%02d\0"
-    "FieldLock%02d%02d\0"
-    "ElvGm%02d%02d\0"
-    "WarpGm%02d%02d\0"
-    "JumpGm%02d%02d\0"
-    "ItemGm%02d%02d\0"
-    "GimSVoff%02d%02d\0"
-    "GimEne%02d%02d\0"
-    "GimMess%02d%02d\0"
-    "drop_nmllist%02d%02d\0"
-    "drop_rarlist%02d%02d\0"
-    "drop_sprlist%02d%02d\0"
-    "resource\0"
-    "posX\0"
-    "posY\0"
-    "posZ\0"
-    "pc%d\0"
-    "parts\0"
-    "bat_mount\0"
-    "def_mount\0"
-    "name\0"
-    "itemType\0"
-    "itemID\0"
-    "\x96\xA2\x92\xE8\x8B\x60\x83\x41\x83\x43\x83\x65\x83\x80\0"
-    "common/jp/bdat_eve.bin\0"
-    "MNU_eve_start\0"
-    "MNU_eve_table";
+
 
 // Typed .sdata (retail 0x8): "pc1" + pad to section size.
 __declspec(section ".sdata") __attribute__((used, aligned(8))) char lbl_eu_80662228[8] = "pc1";
@@ -145,69 +41,125 @@ extern "C" u32 lbl_eu_8052E6F0[10] = {
     (u32)&sdata2_CfBdat.exR, (u32)&sdata2_CfBdat.exS, (u32)&sdata2_CfBdat.exH,
     (u32)&sdata2_CfBdat.exHL, (u32)&sdata2_CfBdat.exHR, (u32)&sdata2_CfBdat.exHR, 0x00000000,
 };
-extern "C" u32 lbl_eu_8052E718[34] = {
-    (u32)&__RTTI__Q22cf6CfBdat, 0x00000000, (u32)&__dt__Q22cf6CfBdatFv, (u32)&WorkEvent1__10IWorkEventFPvPCc,
-    (u32)&OnFileEvent__Q22cf6CfBdatFP10CEventFile, (u32)&WorkEvent3__10IWorkEventFPv,
-    (u32)&WorkEvent4__10IWorkEventFv, (u32)&OnPauseTrigger__10IWorkEventFb,
-    (u32)&WorkEvent6__10IWorkEventFv, (u32)&WorkEvent7__10IWorkEventFv,
-    (u32)&WorkEvent8__10IWorkEventFv, (u32)&WorkEvent9__10IWorkEventFv,
-    (u32)&WorkEvent10__10IWorkEventFv, (u32)&WorkEvent11__10IWorkEventFv,
-    (u32)&WorkEvent12__10IWorkEventFv, (u32)&WorkEvent13__10IWorkEventFv,
-    (u32)&WorkEvent14__10IWorkEventFv, (u32)&WorkEvent15__10IWorkEventFv,
-    (u32)&WorkEvent16__10IWorkEventFv, (u32)&WorkEvent17__10IWorkEventFv,
-    (u32)&WorkEvent18__10IWorkEventFv, (u32)&WorkEvent19__10IWorkEventFv,
-    (u32)&WorkEvent20__10IWorkEventFv, (u32)&WorkEvent21__10IWorkEventFv,
-    (u32)&WorkEvent22__10IWorkEventFv, (u32)&WorkEvent23__10IWorkEventFv,
-    (u32)&WorkEvent24__10IWorkEventFv, (u32)&WorkEvent25__10IWorkEventFv,
-    (u32)&WorkEvent26__10IWorkEventFv, (u32)&WorkEvent27__10IWorkEventFv,
-    (u32)&WorkEvent28__10IWorkEventFv, (u32)&WorkEvent29__10IWorkEventFv,
-    (u32)&WorkEvent30__10IWorkEventFv, (u32)&WorkEvent31__10IWorkEventFv,
-};
-extern "C" u32 lbl_eu_8052E7A0[4] = {
-    (u32)&__RTTI__10IWorkEvent, 0x00000000, 0x00000000, 0x00000000,
-};
+// Plain BDAT file-name literals at their real getFP/format use sites.
+extern "C" void Bdat_GetTable_AA34();
+extern "C" u32 getBdatStringColumnValue(void* b, const char* c, s32 i);
+extern "C" void *cfCamEventBdatTableA, *cfCamEventBdatTableB, *gGimmickBdatFile;
+extern "C" u32 gKizunagramBdatTableId; extern void* gpBattleCtrlBdatTable;
+static void* mapName(void*& dst, const char* fmt, int m, int a) { char n[0x40]; snprintf(n, sizeof(n), fmt, m, a); return dst = getFP(n); }
+void cf::CfBdat::loadBdatFileTable() { Bdat_GetTable_AA34();
+    ::cf::CfBdat::spBtlPcListFileData = getFP("BTL_pclist");
+    ::cf::CfBdat::spBtlEneListFileData = getFP("BTL_enelist");
+    ::cf::CfBdat::spBtlSkillListFileData = getFP("BTL_skilllist");
+    ::cf::CfBdat::spBtlGrowListFileData = getFP("BTL_growlist");
+    ::cf::CfBdat::spBtlBuffListFileData = getFP("BTL_bufflist");
+    ::cf::CfBdat::spFldPointListFileData = getFP("FLD_pointlist");
+    ::cf::CfBdat::spFldTboxListFileData = getFP("FLD_tboxlist");
+    ::cfCamEventBdatTableA = getFP("BTL_camlist");
+    ::cfCamEventBdatTableB = getFP("BTL_camdatalist");
+    ::cf::CfBdat::spBtlCrystalNameListFileData = getFP("BTL_crystalnamelist");
+    ::cf::CfBdat::spMnuItemFileData = getFP("MNU_item");
+    ::cf::CfBdat::spFldNpcListFileData = getFP("FLD_npclist");
+    ::cf::CfBdat::spFldMapListFileData = getFP("FLD_maplist");
+    ::cf::CfBdat::spLandmarkListFileData = getFP("landmarklist");
+    ::cf::CfBdat::spFldValPopListFileData = getFP("FLD_valpoplist");
+    ::cf::CfBdat::spFldDmObjListFileData = getFP("FLD_dmobjlist");
+    ::cf::CfBdat::spItmItemListFileData = getFP("ITM_itemlist");
+    ::cf::CfBdat::spItmWpnListFileData = getFP("ITM_wpnlist");
+    ::cf::CfBdat::spItmEquipListFileData = getFP("ITM_equiplist");
+    ::cf::CfBdat::spItmCrystalListFileData = getFP("ITM_crystallist");
+    ::cf::CfBdat::spItmDropCrystalListFileData = getFP("ITM_dropcrystallist");
+    ::cf::CfBdat::spItmCollectListFileData = getFP("ITM_collectlist");
+    ::cf::CfBdat::spItmMaterialListFileData = getFP("ITM_materiallist");
+    ::cf::CfBdat::spItmValuableListFileData = getFP("ITM_valuablelist");
+    ::cf::CfBdat::spItmArtsListFileData = getFP("ITM_artslist");
+    ::cf::CfBdat::spItmHeadListFileData = getFP("ITM_headlist");
+    ::cf::CfBdat::spItmBodyListFileData = getFP("ITM_bodylist");
+    ::cf::CfBdat::spItmArmListFileData = getFP("ITM_armlist");
+    ::cf::CfBdat::spItmWaistListFileData = getFP("ITM_waistlist");
+    ::cf::CfBdat::spItmLeggListFileData = getFP("ITM_legglist");
+    ::cf::CfBdat::spBtlPsvSkillFileData = getFP("BTL_PSVskill");
+    ::gKizunagramBdatTableId = (u32)getFP("BTL_PSVlink");
+    ::cf::CfBdat::spBtlPssListFileData = getFP("BTL_PSSlist");
+}
+void cf::CfBdat::loadMapBdatFileDataPointers(int mapId, int areaId) {
+    mapName(::cf::CfBdat::spCurRouteListFileData, "routelist%02d%02d", mapId, areaId);
+    mapName(::cf::CfBdat::spCurMapEffListFileData, "mapefflist%02d%02d", mapId, areaId);
+    mapName(::cf::CfBdat::spCurMapObjListFileData, "mapobjlist%02d%02d", mapId, areaId);
+    mapName(::cf::CfBdat::spCurMapLodListFileData, "maplodlist%02d%02d", mapId, areaId);
+    mapName(::gpBattleCtrlBdatTable, "mapselist%02d%02d", mapId, areaId);
+    mapName(::cf::CfBdat::spCurFldGimCamListFileData, "FLD_GimCamList%02d%02d", mapId, areaId);
+    mapName(::cf::CfBdat::spCurLItemListFileData, "Litemlist%02d%02d", mapId, areaId);
+    mapName(::cf::CfBdat::spCurExTalkListFileData, "extalklist%02d%02d", mapId, areaId);
+    mapName(::cf::CfBdat::spCurMineListFileData, "minelist%02d%02d", mapId, areaId);
+    mapName(::cf::CfBdat::spCurBtlEneListFileData, "BTL_enelist%02d%02d", mapId, areaId);
+    mapName(::cf::CfBdat::spCurGimListFileData, "Gimlist%02d%02d", mapId, areaId);
+    mapName((void*&)::gLockBdatTable, "FieldLock%02d%02d", mapId, areaId);
+    mapName(::cf::CfBdat::spCurElvGmFileData, "ElvGm%02d%02d", mapId, areaId);
+    mapName(::cf::CfBdat::spCurWarpGmFileData, "WarpGm%02d%02d", mapId, areaId);
+    mapName(::cf::CfBdat::spCurJumpGmFileData, "JumpGm%02d%02d", mapId, areaId);
+    mapName(::cf::CfBdat::spCurItemGmFileData, "ItemGm%02d%02d", mapId, areaId);
+    mapName(::cf::CfBdat::spCurGimSvOffFileData, "GimSVoff%02d%02d", mapId, areaId);
+    mapName(::cf::CfBdat::spCurGimEneFileData, "GimEne%02d%02d", mapId, areaId);
+    mapName(::gGimmickBdatFile, "GimMess%02d%02d", mapId, areaId);
+    mapName(::cf::CfBdat::spCurDropNmlListFileData, "drop_nmllist%02d%02d", mapId, areaId);
+    mapName(::cf::CfBdat::spCurDropRarListFileData, "drop_rarlist%02d%02d", mapId, areaId);
+    mapName(::cf::CfBdat::spCurDropSprListFileData, "drop_sprlist%02d%02d", mapId, areaId);
+}
+void cf::CfBdat::resetMapBdatFileDataPointers() { void* b = ::cf::CfBdat::spFldMapListFileData;
+    getBdatStringColumnValue(b, "resource", 0);
+    getBdatStringColumnValue(b, "posX", 0);
+    getBdatStringColumnValue(b, "posY", 0);
+    getBdatStringColumnValue(b, "posZ", 0);
+    getBdatStringColumnValue(b, "pc%d", 0);
+    getBdatStringColumnValue(b, "parts", 0);
+}
 
-// Typed .sbss (retail 0x98 = 38 words): bdat file-data pointers 80664090..8124.
+// compiler-owned virtual definitions
+cf::CfBdat::CfBdat() {}
+cf::CfBdat::~CfBdat() {}
+
+// Typed .sbss
 // Zero-fill section: only size (0x98) and align (8) are compared.
 // First object carries aligned(8) so the section keeps retail align 8.
-void* lbl_eu_80664090 __attribute__((aligned(8)));
-void* lbl_eu_80664094;
-void* lbl_eu_80664098;
+void* cf::CfBdat::spBtlPcListFileData __attribute__((aligned(8)));
+void* cf::CfBdat::spBtlEneListFileData;
+void* cf::CfBdat::spFldNpcListFileData;
 void* lbl_eu_8066409C;
-void* lbl_eu_806640A0;
-void* lbl_eu_806640A4;
-void* lbl_eu_806640A8;
-void* lbl_eu_806640AC;
-void* lbl_eu_806640B0;
-void* lbl_eu_806640B4;
+void* cf::CfBdat::spLandmarkListFileData;
+void* cf::CfBdat::spCurRouteListFileData;
+void* cf::CfBdat::spFldMapListFileData;
+void* cf::CfBdat::spCurMapEffListFileData;
+void* cf::CfBdat::spCurMapObjListFileData;
+void* cf::CfBdat::spCurMapLodListFileData;
 void* gpBattleCtrlBdatTable;
-void* lbl_eu_806640BC;
-void* lbl_eu_806640C0;
-void* lbl_eu_806640C4;
-void* lbl_eu_806640C8;
-void* lbl_eu_806640CC;
-void* lbl_eu_806640D0;
-void* lbl_eu_806640D4;
-void* lbl_eu_806640D8;
-void* lbl_eu_806640DC;
-void* lbl_eu_806640E0;
-void* lbl_eu_806640E4;
-void* lbl_eu_806640E8;
-void* lbl_eu_806640EC;
+void* cf::CfBdat::spCurFldGimCamListFileData;
+void* cf::CfBdat::spCurLItemListFileData;
+void* cf::CfBdat::spCurExTalkListFileData;
+void* cf::CfBdat::spCurMineListFileData;
+void* cf::CfBdat::spCurBtlEneListFileData;
+void* cf::CfBdat::spFldValPopListFileData;
+void* cf::CfBdat::spFldDmObjListFileData;
+void* cf::CfBdat::spBtlSkillListFileData;
+void* cf::CfBdat::spBtlGrowListFileData;
+void* cf::CfBdat::spBtlBuffListFileData;
+void* cf::CfBdat::spFldPointListFileData;
+void* cf::CfBdat::spFldTboxListFileData;
+void* cf::CfBdat::spItmItemListFileData;
 void* lbl_eu_806640F0;
-void* lbl_eu_806640F4;
-void* lbl_eu_806640F8;
-void* lbl_eu_806640FC;
-void* lbl_eu_80664100;
-void* lbl_eu_80664104;
-void* lbl_eu_80664108;
-void* lbl_eu_8066410C;
-void* lbl_eu_80664110;
-void* lbl_eu_80664114;
-void* lbl_eu_80664118;
-void* lbl_eu_8066411C;
-void* lbl_eu_80664120;
-void* lbl_eu_80664124;
+void* cf::CfBdat::spItmWpnListFileData;
+void* cf::CfBdat::spItmEquipListFileData;
+void* cf::CfBdat::spItmCrystalListFileData;
+void* cf::CfBdat::spItmDropCrystalListFileData;
+void* cf::CfBdat::spItmCollectListFileData;
+void* cf::CfBdat::spItmMaterialListFileData;
+void* cf::CfBdat::spItmValuableListFileData;
+void* cf::CfBdat::spItmArtsListFileData;
+void* cf::CfBdat::spItmHeadListFileData;
+void* cf::CfBdat::spItmBodyListFileData;
+void* cf::CfBdat::spItmArmListFileData;
+void* cf::CfBdat::spItmWaistListFileData;
+void* cf::CfBdat::spItmLeggListFileData;
 
 extern "C" u32 Bdat_GetMaxRow_B1EC(void* bdat);
 extern "C" u32 Bdat_GetRowBase_B41C(void* bdat);
@@ -216,13 +168,6 @@ extern "C" u32 getBdatStringColumnValue(void* bdat, const char* col, s32 index);
 extern "C" void* CItem_resolveFamilyBdat(u32 v, void* outA, void* outB);
 extern "C" u32 bdatPcPartsRes(u32 param1, s16 param2, u32 param3, u32 param4);
 
-namespace cf {
-class CfBdat {
-public:
-    static u32 resolveWpnTok(u32 param1);
-    static const char* getBdatStringEntry(u16 index);
-};
-}
 
 // us-80142a78 - resolve a family/item id into an equip/resource handle.
 // Category 2 reads the ITM_wpnlist name column; 4..8 map onto bdatPcPartsRes slots.
@@ -235,7 +180,7 @@ extern "C" u32 bdatResolveItem(u32 owner, u32 itemId, u32 flags) {
     CItem_resolveFamilyBdat(itemId, &category, &index);
     if (category == 2) {
         return Tok_ParseFile((const char*)getBdatStringColumnValue(
-            lbl_eu_806640F4, &lbl_eu_80500FA4[0x34f], (s32)index));
+            ::cf::CfBdat::spItmWpnListFileData, "resource", (s32)index));
     }
     u32 slot = 0;
     if (category == 4) {
@@ -263,11 +208,11 @@ u32 cf::CfBdat::resolveWpnTok(u32 param1) {
         }
         result = 0;
         if (param1 & 0xFFFF) {
-            data = lbl_eu_806640F4;
+            data = ::cf::CfBdat::spItmWpnListFileData;
             int total = (int)(Bdat_GetMaxRow_B1EC(data) + Bdat_GetRowBase_B41C(data));
             if ((u16)param1 < total) {
                 result = Tok_ParseFile((const char*)getBdatStringColumnValue(
-                    data, &lbl_eu_80500FA4[0x34f], (u16)param1));
+                    data, "resource", (u16)param1));
             }
         }
         return result;
@@ -277,4 +222,27 @@ u32 cf::CfBdat::resolveWpnTok(u32 param1) {
 
 const char* cf::CfBdat::getBdatStringEntry(u16 index) {
     return (const char*)lbl_eu_8052E6F0[index];
+}
+
+// Remaining table-name literals at their real lookup sites.
+extern "C" void* bdatLookupRes(void* bdat, int index) { return (void*)getBdatStringColumnValue(bdat, "resource", index); }
+extern "C" void* bdatSetResRow(void* bdat, int index) { return (void*)getBdatStringColumnValue(bdat, "resource", index); }
+extern "C" void* bdatUnpackRes(void* bdat, int index) { return (void*)getBdatStringColumnValue(bdat, "resource", index); }
+extern "C" void* bdatResByIndex(void* bdat, int index) { return (void*)getBdatStringColumnValue(bdat, "resource", index); }
+extern "C" u32 bdatMountValue(void* bdat, int index, int which) {
+    const char* col = which ? "bat_mount" : "def_mount";
+    return getBdatStringColumnValue(bdat, col, index);
+}
+extern "C" const char* bdatGetItemName(u16 index) {
+    void* items = ::cf::CfBdat::spItmItemListFileData;
+    getBdatStringColumnValue(items, "name", index);
+    getBdatStringColumnValue(items, "itemType", index);
+    getBdatStringColumnValue(items, "itemID", index);
+    return "\x96\xA2\x92\xE8\x8B\x60\x83\x41\x83\x43\x83\x65\x83\x80";
+}
+bool cf::CfBdat::OnFileEvent(CEventFile*) {
+    ::cf::CfBdat::spMnuEveStartFileData = getFP("common/jp/bdat_eve.bin");
+    ::cf::CfBdat::spMnuEveStartFileData = getFP("MNU_eve_start");
+    ::cf::CfBdat::spMnuEveTableFileData = getFP("MNU_eve_table");
+    return false;
 }

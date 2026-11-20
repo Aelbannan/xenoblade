@@ -101,7 +101,6 @@ extern f32 lbl_eu_8066844C;            // spawn distance constant (sdata2)
 // constructed from free functions, so the table is a byte blob with the
 // (0, -1, func) immediates spelled out. The cast is codegen-neutral.
 extern char lbl_eu_80535A50[];         // 6-entry PTMF state table bytes
-extern u32 lbl_eu_8066413C;            // bdat table pointer (sdata)
 extern char* lbl_eu_806627B8[2];       // { "A_Item", "A_Lost" } name ptrs (sdata)
 // (lbl_eu_805087AC retired: the column names are plain literals pooled by
 // MWCC; no synthetic reference remains.)

@@ -28,7 +28,8 @@ class SmellCounts(unittest.TestCase):
         )
         hard, _ = faithful.count_smells(src)
         self.assertEqual(hard, {"label": 1, "mangled_c": 1, "section": 1, "offset_cast": 1, "view_struct": 1,
-                               "noinline": 0, "decl_shield": 0, "self_alias": 0, "volatile": 0})
+                               "noinline": 0, "decl_shield": 0, "self_alias": 0, "volatile": 0,
+                               "packed_string": 0})
 
     def test_view_struct_ignores_real_retail_classes(self):
         src = "CView* v = getView();\nActParamCallView* a = (ActParamCallView*)p;\n"
@@ -138,7 +139,7 @@ class ReportOnlyGaps(unittest.TestCase):
         self.assertEqual(soft["volatile"], 4)
         self.assertEqual(sorted(faithful.HARD), sorted([
             "label", "mangled_c", "section", "offset_cast", "view_struct",
-            "noinline", "decl_shield", "self_alias", "volatile"]))
+            "noinline", "decl_shield", "self_alias", "volatile", "packed_string"]))
 
     def test_hard_volatile_still_sees_cast_rereads(self):
         hard, soft = faithful.count_smells(

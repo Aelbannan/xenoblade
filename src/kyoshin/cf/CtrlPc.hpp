@@ -1,5 +1,5 @@
 #pragma once
-
+#include "kyoshin/menu/CMenuZeal.hpp"
 #include <types.h>
 #include "kyoshin/cf/CtrlMoveBase.hpp"
 #include "kyoshin/cf/voice/CCharVoice.hpp"
@@ -369,7 +369,7 @@ struct Fd44State {
     u8 _00[0xB8];
     u32 mFieldB8;
 };
-extern "C" Fd44State* GetZealObjPtr(void);
+
 extern "C" int GetZealResult(Fd44State* state);
 struct ArtsSelStateViewPc {
     s8 byte0;   // 0x00

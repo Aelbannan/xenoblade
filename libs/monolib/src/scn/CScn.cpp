@@ -19,7 +19,7 @@ struct VTarget {
 // call in CScn::~CScn (retail shape; see IWorkEvent.hpp note).
 #define IWORK_EVENT_INLINE_DTOR
 #include "monolib/work.hpp"
-#include "monolib/src/scn/CScnItemPool.hpp"
+#include "monolib/scn/CScnItemPool.hpp"
 #include "libs/monolib/src/scn/CScn.hpp"
 #include "libs/monolib/src/scn/CScnCameraMan.hpp"
 #include "monolib/scn/CScnItemCamera.hpp"

@@ -1,6 +1,14 @@
 #pragma once
 
+// Real base classes for the retail composite vtable.  Their inline-empty
+// destructors keep the derived cleanup list in retail order.
+#define IUIWINDOW_INLINE_DTOR
+#define IWORK_EVENT_INLINE_DTOR
+
 #include <types.h>
+#include "kyoshin/IUIWindow.hpp"
+#include "monolib/work/IWorkEvent.hpp"
+#include "monolib/scn/IScnRender.hpp"
 #include <revolution/gx/GXTypes.h>
 
 #include "kyoshin/CBaseCur.hpp"
@@ -18,7 +26,6 @@ class DrawInfo;
 
 class CFileHandle;
 class CScn;
-class IUIWindow;
 
 struct CMenuGetItemMultiEntry {
     u32 packed;
@@ -40,35 +47,21 @@ struct CMenuGetItemPaneView {
 
 class CEventFile;
 
-class CMenuGetItemMulti {
+class CMenuGetItemMulti : public IUIWindow,
+                          public IWorkEvent,
+                          public IScnRender {
 public:
-    CMenuGetItemMulti();
-    ~CMenuGetItemMulti();
-    void Init();
-    void Term();
-    void Move();
-    void cbRenderBefore();
-    void OnFileEvent(CEventFile* pEvent);
+    CMenuGetItemMulti(CScn* scn, u32 item0, u32 item1, u32 item2, u32 item3,
+                      u32 argF6, u32 arg201, u8 argSpecial);
+    virtual ~CMenuGetItemMulti();
+    virtual void Init();
+    virtual void Term();
+    virtual void Move();
+    virtual void cbRenderBefore();
+    virtual bool OnFileEvent(CEventFile* pEvent);
 
-    // Deliberately NON-polymorphic (CMenuGetItem idiom): the CProcess base
-    // region (incl. composite vtable at +0x10) is opaque storage; the
-    // IWorkEvent/IScnRender subobject vtable slots are explicit fields below.
-    u8 _00[0x10];
-    u32 field_10;            // composite vtable (interim -> final)
-    u8 _14[0x28];            // 0x14-0x3B rest of the CProcess base region
-    u32 mPtmfSlot3C[3];      // 0x3C null PTMF callback slot (__ptmf_null)
-    u32 mPtmfSlot48[3];      // 0x48 null PTMF callback slot (__ptmf_null)
-    nw4r::lyt::Layout* mLayout;              // +0x54
-    u32 field_58;
-    u32 field_5C;
-    s32 field_60;
-    u8 field_64;
-    u8 field_65;
-    u8 field_66;
-    u8 field_67;
-    u32 field_68;
-    u32 mIWorkEventVtable;                   // +0x6C
-    u32 mIScnRenderVtable;                   // +0x70
+    // IUIWindow (+0x00..+0x6B), IWorkEvent (+0x6C) and IScnRender (+0x70)
+    // are real bases; MWCC emits their vptrs and the composite vtable.
     CScn* mScn;                              // +0x74
     u8 mRegion[0x10];                        // +0x78
     nw4r::lyt::AnimTransform* mAnim;         // +0x88
@@ -112,6 +105,7 @@ public:
     u8 mRankSlotFlag2[12];            // +0x2C4
     u16 mRankSlotIds2[12];            // +0x2D0
     u8 field_2E8;                     // +0x2E8 slot-window selection (A-press scan)
+    u8 unk2EC[0x80];                  // +0x2EC unknown; retail sizeof is 0x36C (CreateInstance/CreateSimple alloc), no access in this TU
 };
 
 // Vtable-dispatch view of the per-category item impl (the +0x4C/+0x54/+0x64/
@@ -166,7 +160,6 @@ extern u32 gpItemMultiInstance;
 extern u32 gpItemMultiSkillBdat;
 
 // Item-name font pointer (.sbss, read by GetItemMulti_FillEntryRankPane's item-name lookup).
-extern void* lbl_eu_806640D8;
 
 // Pane colour/position defaults (.sbss, written by sinit_801B9FC8).
 extern GXColorS10 gItemMultiPaneColor00;
@@ -214,13 +207,9 @@ extern f64 lbl_eu_80667E08;
 
 // Item-window font/table pointers (.sbss) used by the category-4/8 item
 // handlers (GetItemMulti_ShowEquipped / GetItemMulti_ShowEntryDetailPanes) and GetItemMulti_FillRankSlots.
-extern void* lbl_eu_806640F4;
-extern void* lbl_eu_806640F8;
 
 // Item-table pointer + fallback name-table font pointer used by
 // GetItemMulti_ShowIdCategoryPanes's description/rank text lookups (.sbss).
-extern void* lbl_eu_80664104;
-extern void* lbl_eu_806640A8;
 
 #include "kyoshin/CTaskGame.hpp"
 

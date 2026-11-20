@@ -10,6 +10,7 @@
 // (CTaskGame_openVision now has a single unified decl.)
 // The battle-manager singleton getter has ONE canonical declaration in
 // kyoshin/cf/CBattleManager.hpp; no rename guards are needed anymore.
+#include "kyoshin/cf/CfBdat.hpp"
 #include "kyoshin/CTaskGame.hpp"
 #include "kyoshin/menu/CMenuBattleDamageSymbols.hpp"
 #include "monolib/lib/CLibLayout.hpp"
@@ -18,12 +19,12 @@
 #include "kyoshin/code_801F3BE0.hpp"
 #include "kyoshin/cf/CfMapItemManager.hpp"
 #include "monolib/util/MemManager.hpp"  // canonical mtl::MemManager::allocate
-
+#include "kyoshin/menu/CMenuZeal.hpp"
 #include "kyoshin/menu/CMenuArtsSelect.hpp"
 #include "kyoshin/CQuestWindowApi.hpp"
 #include "kyoshin/cf/CPcEffect07.hpp"
 #include "kyoshin/menu/CMenuEnemyState.hpp"
-
+#include "kyoshin/cf/CfCamSymbols.hpp"
 #include "monolib/device/CDeviceVI.hpp"
 #include "monolib/core/CPadManager.hpp"
 #include "monolib/work/CProcess.hpp"
@@ -404,33 +405,33 @@ extern "C" CMenuArtsSelect* __ct__CMenuArtsSelect(CMenuArtsSelect* self, CScn* s
     // before the ptr clears by MWCC.
     {
         u32 clear = 0;
-        p->unk200[0] = (UnkArtsSelectEntry*)clear;
-        p->unk224[0] = (UnkArtsSelectEntry*)clear;
-        p->unk248[0] = (UnkArtsSelectEntry*)clear;
-        p->unk200[1] = (UnkArtsSelectEntry*)clear;
-        p->unk224[1] = (UnkArtsSelectEntry*)clear;
-        p->unk248[1] = (UnkArtsSelectEntry*)clear;
-        p->unk200[2] = (UnkArtsSelectEntry*)clear;
-        p->unk224[2] = (UnkArtsSelectEntry*)clear;
-        p->unk248[2] = (UnkArtsSelectEntry*)clear;
-        p->unk200[3] = (UnkArtsSelectEntry*)clear;
-        p->unk224[3] = (UnkArtsSelectEntry*)clear;
-        p->unk248[3] = (UnkArtsSelectEntry*)clear;
-        p->unk200[4] = (UnkArtsSelectEntry*)clear;
-        p->unk224[4] = (UnkArtsSelectEntry*)clear;
-        p->unk248[4] = (UnkArtsSelectEntry*)clear;
-        p->unk200[5] = (UnkArtsSelectEntry*)clear;
-        p->unk224[5] = (UnkArtsSelectEntry*)clear;
-        p->unk248[5] = (UnkArtsSelectEntry*)clear;
-        p->unk200[6] = (UnkArtsSelectEntry*)clear;
-        p->unk224[6] = (UnkArtsSelectEntry*)clear;
-        p->unk248[6] = (UnkArtsSelectEntry*)clear;
-        p->unk200[7] = (UnkArtsSelectEntry*)clear;
-        p->unk224[7] = (UnkArtsSelectEntry*)clear;
-        p->unk248[7] = (UnkArtsSelectEntry*)clear;
-        p->unk200[8] = (UnkArtsSelectEntry*)clear;
-        p->unk224[8] = (UnkArtsSelectEntry*)clear;
-        p->unk248[8] = (UnkArtsSelectEntry*)clear;
+        p->unk200[0] = (nw4r::lyt::Pane*)clear;
+        p->unk224[0] = (nw4r::lyt::Pane*)clear;
+        p->unk248[0] = (nw4r::lyt::Pane*)clear;
+        p->unk200[1] = (nw4r::lyt::Pane*)clear;
+        p->unk224[1] = (nw4r::lyt::Pane*)clear;
+        p->unk248[1] = (nw4r::lyt::Pane*)clear;
+        p->unk200[2] = (nw4r::lyt::Pane*)clear;
+        p->unk224[2] = (nw4r::lyt::Pane*)clear;
+        p->unk248[2] = (nw4r::lyt::Pane*)clear;
+        p->unk200[3] = (nw4r::lyt::Pane*)clear;
+        p->unk224[3] = (nw4r::lyt::Pane*)clear;
+        p->unk248[3] = (nw4r::lyt::Pane*)clear;
+        p->unk200[4] = (nw4r::lyt::Pane*)clear;
+        p->unk224[4] = (nw4r::lyt::Pane*)clear;
+        p->unk248[4] = (nw4r::lyt::Pane*)clear;
+        p->unk200[5] = (nw4r::lyt::Pane*)clear;
+        p->unk224[5] = (nw4r::lyt::Pane*)clear;
+        p->unk248[5] = (nw4r::lyt::Pane*)clear;
+        p->unk200[6] = (nw4r::lyt::Pane*)clear;
+        p->unk224[6] = (nw4r::lyt::Pane*)clear;
+        p->unk248[6] = (nw4r::lyt::Pane*)clear;
+        p->unk200[7] = (nw4r::lyt::Pane*)clear;
+        p->unk224[7] = (nw4r::lyt::Pane*)clear;
+        p->unk248[7] = (nw4r::lyt::Pane*)clear;
+        p->unk200[8] = (nw4r::lyt::Pane*)clear;
+        p->unk224[8] = (nw4r::lyt::Pane*)clear;
+        p->unk248[8] = (nw4r::lyt::Pane*)clear;
         neg1 = -1;
         p->unk7C = neg1;
         p->unk7D = neg1;
@@ -834,22 +835,14 @@ void CMenuArtsSelect::Move() {
     ::updateSlotStates(this);
 
     {
-        u32 flag = GetSysStateFlag21();
-        u8* b;
-        b = &unk26C[0]->unkBB;
-        *b = static_cast<u8>((*b & 0xFEu) | flag);
-        b = &unk26C[1]->unkBB;
-        *b = static_cast<u8>((*b & 0xFEu) | flag);
-        b = &unk26C[2]->unkBB;
-        *b = static_cast<u8>((*b & 0xFEu) | flag);
-        b = &unk26C[3]->unkBB;
-        *b = static_cast<u8>((*b & 0xFEu) | flag);
-        b = &unk26C[4]->unkBB;
-        *b = static_cast<u8>((*b & 0xFEu) | flag);
-        b = &unk26C[5]->unkBB;
-        *b = static_cast<u8>((*b & 0xFEu) | flag);
-        b = &unk26C[6]->unkBB;
-        *b = static_cast<u8>((*b & 0xFEu) | flag);
+        bool visible = GetSysStateFlag21() != 0;
+        unk26C[0]->SetVisible(visible);
+        unk26C[1]->SetVisible(visible);
+        unk26C[2]->SetVisible(visible);
+        unk26C[3]->SetVisible(visible);
+        unk26C[4]->SetVisible(visible);
+        unk26C[5]->SetVisible(visible);
+        unk26C[6]->SetVisible(visible);
     }
 
     if (unk298 >= 2) {
@@ -1071,7 +1064,7 @@ void CMenuArtsSelect::Move() {
                     s32 nextIdx = (i >= 8) ? 0 : (i + 1);
                     u32 mask = (one << i) | (one << (i + 9));
                     unk310 &= ~mask;
-                    if (unk200[nextIdx]->unkBB & 1) {
+                    if (unk200[nextIdx]->IsVisible()) {
                         if (::checkSlotUsable(this, i) != 0) {
                             unk104[i]->SetAnimationEnable(unk14C[i], false);
                             unk104[i]->SetAnimationEnable(unk128[i], true);
@@ -1084,7 +1077,7 @@ void CMenuArtsSelect::Move() {
                 }
                 case 0xd: {
                     s32 nextIdx = (i >= 8) ? 0 : (i + 1);
-                    if (unk200[nextIdx]->unkBB & 1) {
+                    if (unk200[nextIdx]->IsVisible()) {
                         unk310 |= (one << i) | (one << (i + 9));
                         if (advanceAnimTransform(unk128[i], 1.0f) != 0) {
                             unk2C0[i] = 0xe;
@@ -1269,7 +1262,7 @@ void CMenuArtsSelect::cbRenderBefore() {
 
                 for (s32 j = 0; j < 9; j++) {
                     s32 nextIdx = (j == 8) ? 0 : (j + 1);
-                    if (unk200[nextIdx]->unkBB & 1) {
+                    if (unk200[nextIdx]->IsVisible()) {
                         u32 v = unk310;
                         u32 bitI = 1u << j;
                         u32 bit18;
@@ -1437,10 +1430,10 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
     bool battle = false;
     {
         cf::CBattleManager* bm = cf::CBattleManager::getInstance();
-        if (*(s16*)((char*)bm + 0x20C8) != 0) {
+        if ((s16)bm->unk20C8.unk0 != 0) {
             battle = true;
         } else {
-            u32 bmv = *(u8*)((char*)cf::CBattleManager::getInstance() + 0x1AA);
+            u32 bmv = cf::CBattleManager::getInstance()->mChain.mHead.field_2;
             bool b2 = false;
             if (bmv >= 1) {
                 if (bmv <= 24) b2 = true;
@@ -1478,8 +1471,9 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
         if (pl != NULL) adj = (char*)pl - 0x3e9c;
         if (reinterpret_cast<cf::CfObjectModel*>(adj)->unk8C_3 == 1) {
             for (s32 i = 0; i < 104; i++) {
-                void* el = reinterpret_cast<cf::CBattleState*>((char*)adj + 8)->CBattleState_getEntryByIndex(i);
-                if (*(u16*)((char*)el + 0xC) == 0xEA) {
+                cf::CBattleStateEntry* el = reinterpret_cast<cf::CBattleStateEntry*>(
+                    reinterpret_cast<cf::CBattleState*>((char*)adj + 8)->CBattleState_getEntryByIndex(i));
+                if (el->unk0C == 0xEA) {
                     found = true;
                     break;
                 }
@@ -1493,8 +1487,9 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
         if (pl != NULL) adj = (char*)pl - 0x3e9c;
         if (reinterpret_cast<cf::CfObjectModel*>(adj)->unk8C_3 == 1) {
             for (s32 i = 0; i < 104; i++) {
-                void* el = reinterpret_cast<cf::CBattleState*>((char*)adj + 8)->CBattleState_getEntryByIndex(i);
-                if (*(u16*)((char*)el + 0xC) == 0xEA) {
+                cf::CBattleStateEntry* el = reinterpret_cast<cf::CBattleStateEntry*>(
+                    reinterpret_cast<cf::CBattleState*>((char*)adj + 8)->CBattleState_getEntryByIndex(i));
+                if (el->unk0C == 0xEA) {
                     found = true;
                     break;
                 }
@@ -1570,10 +1565,10 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
         bool battle2 = false;
         {
             cf::CBattleManager* bm = cf::CBattleManager::getInstance();
-            if (*(s16*)((char*)bm + 0x20C8) != 0) {
+            if ((s16)bm->unk20C8.unk0 != 0) {
                 battle2 = true;
             } else {
-                u32 bmv = *(u8*)((char*)cf::CBattleManager::getInstance() + 0x1AA);
+                u32 bmv = cf::CBattleManager::getInstance()->mChain.mHead.field_2;
                 bool b22 = false;
                 if (bmv >= 1) {
                     if (bmv <= 24) b22 = true;
@@ -1693,10 +1688,10 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
         bool battle3 = false;
         {
             cf::CBattleManager* bm = cf::CBattleManager::getInstance();
-            if (*(s16*)((char*)bm + 0x20C8) != 0) {
+            if ((s16)bm->unk20C8.unk0 != 0) {
                 battle3 = true;
             } else {
-                u32 bmv = *(u8*)((char*)cf::CBattleManager::getInstance() + 0x1AA);
+                u32 bmv = cf::CBattleManager::getInstance()->mChain.mHead.field_2;
                 bool b23 = false;
                 if (bmv >= 1) {
                     if (bmv <= 24) b23 = true;
@@ -2156,9 +2151,7 @@ extern "C" void handleConfirm(CMenuArtsSelect* self) {
     f32 dist[3];            // candidate distances (retail +0x38)
 
     if (CMenuArtsSelect_ShouldStayOpen(self) != 0) {
-        UnkArtsSelectEntry* e =
-            reinterpret_cast<UnkArtsSelectEntry*>(self->unk8C->GetRootPane());
-        e->unkBB = static_cast<u8>((e->unkBB & 0xFEu) | 1);
+        self->unk8C->GetRootPane()->SetVisible(true);
         setEffectEnabled__FUl(6);
         self->unk298 = 7;
         if (EneSt_GetSingleton() != NULL) {
@@ -2176,9 +2169,7 @@ extern "C" void handleConfirm(CMenuArtsSelect* self) {
         probeIdx = probeIdx - 1;
     }
     if (checkSlotUsable(self, probeIdx) != 0) {
-        UnkArtsSelectEntry* e =
-            reinterpret_cast<UnkArtsSelectEntry*>(self->unk8C->GetRootPane());
-        e->unkBB = static_cast<u8>((e->unkBB & 0xFEu) | 1);
+        self->unk8C->GetRootPane()->SetVisible(true);
         setEffectEnabled__FUl(6);
         self->unk298 = 7;
         if (EneSt_GetSingleton() != NULL) {
@@ -2783,7 +2774,7 @@ void CMenuArtsSelect::updateSlotHighlight(s32 index) {
 // ---------------------------------------------------------------------------
 void CMenuArtsSelect::advanceSlotToggle(s32 index) {
     s32 nextIdx = (index == 8) ? 0 : (index + 1);
-    if (unk200[nextIdx]->unkBB & 1) {
+    if (unk200[nextIdx]->IsVisible()) {
         // Compound form makes MWCC reuse r0 for the final andc + store.
         unk310 |= 1u << index;
         unk310 &= ~(1u << (index + 9));
@@ -2855,7 +2846,7 @@ void CMenuArtsSelect::refreshHelpText() {
                 break;
             }
             u16 cat = BdatGetItemId(*reinterpret_cast<u32*>(rec) >> 20);
-            switch (BdatGetU8Direct((const void*)lbl_eu_806640F8, "arm_type", cat)) {
+            switch (BdatGetU8Direct((const void*)::cf::CfBdat::spItmEquipListFileData, "arm_type", cat)) {
             case 4:  code = 0x77; break;
             case 5:  code = 0x78; break;
             case 6:  code = 0x79; break;
@@ -2948,7 +2939,7 @@ void CMenuArtsSelect::refreshPaneTextures() {
                 break;
             }
             u16 cat = BdatGetItemId(*reinterpret_cast<u32*>(rec) >> 20);
-            switch (BdatGetU8Direct((const void*)lbl_eu_806640F8, "arm_type", cat)) {
+            switch (BdatGetU8Direct((const void*)::cf::CfBdat::spItmEquipListFileData, "arm_type", cat)) {
             case 4:  code = 0x77; break;
             case 5:  code = 0x78; break;
             case 6:  code = 0x79; break;
@@ -2999,7 +2990,7 @@ extern "C" int CMenuArtsSelect_ShouldStayOpen(CMenuArtsSelect* self) {
     typedef void* (*GetPtrFn)(void*);
 
     cf::CfGameManager::getInstance();
-    if (isGlobalCamFlagSet__Fi(0x10000000) != 0) return 1;
+    if (isGlobalCamFlagSet(0x10000000) != 0) return 1;
 
     cf::CfObjectMove* move = cf::CfGameManager::getPlayer(0);
     BattleActor* actor = reinterpret_cast<BattleActor*>(move);
@@ -3298,8 +3289,7 @@ void CMenuArtsSelect::updateSlotStates() {
                     if (BpsStateSingletonToInt() != NULL) {
                         BtlDmg_CursorReset(reinterpret_cast<u8*>(BpsStateSingletonToInt()) + 0x7cc);
                     }
-                    reinterpret_cast<UnkArtsSelectEntry*>(unk8C->GetRootPane())->unkBB =
-                        static_cast<u8>((reinterpret_cast<UnkArtsSelectEntry*>(unk8C->GetRootPane())->unkBB & 0xFEu) | 1);
+                    unk8C->GetRootPane()->SetVisible(true);
                     unk298 = 2;
                     unk8C->SetAnimationEnable(unk90, false);
                     unk8C->SetAnimationEnable(unk94, true);
@@ -3313,8 +3303,7 @@ void CMenuArtsSelect::updateSlotStates() {
                 if (BpsStateSingletonToInt() != NULL) {
                     BtlDmg_CursorReset(reinterpret_cast<u8*>(BpsStateSingletonToInt()) + 0x7cc);
                 }
-                reinterpret_cast<UnkArtsSelectEntry*>(unk8C->GetRootPane())->unkBB =
-                    static_cast<u8>((reinterpret_cast<UnkArtsSelectEntry*>(unk8C->GetRootPane())->unkBB & 0xFEu) | 1);
+                unk8C->GetRootPane()->SetVisible(true);
                 unk8C->SetAnimationEnable(unk90, false);
                 unk8C->SetAnimationEnable(unk94, true);
                 unk94->SetFrame(zeroF);
@@ -3345,14 +3334,8 @@ void CMenuArtsSelect::updateSlotStates() {
                     LayoutSetTextBoxFmtValue(unk80, "txt_helpmess", help,
                                   reinterpret_cast<u32>(unk294));
                 }
-                reinterpret_cast<UnkArtsSelectEntry*>(
-                    unk8C->GetRootPane()->FindPaneByName("pic_arrow_o00", true))->unkBB =
-                    static_cast<u8>((reinterpret_cast<UnkArtsSelectEntry*>(
-                                         unk8C->GetRootPane()->FindPaneByName("pic_arrow_o00", true))->unkBB & 0xFEu) | 1);
-                reinterpret_cast<UnkArtsSelectEntry*>(
-                    unk8C->GetRootPane()->FindPaneByName("pic_arrow_u00", true))->unkBB =
-                    static_cast<u8>((reinterpret_cast<UnkArtsSelectEntry*>(
-                                         unk8C->GetRootPane()->FindPaneByName("pic_arrow_u00", true))->unkBB & 0xFEu) | 1);
+                unk8C->GetRootPane()->FindPaneByName("pic_arrow_o00", true)->SetVisible(true);
+                unk8C->GetRootPane()->FindPaneByName("pic_arrow_u00", true)->SetVisible(true);
             }
         }
 
@@ -3361,12 +3344,9 @@ void CMenuArtsSelect::updateSlotStates() {
         // textures from the arts-elem / arts-pc arcs.
         u32 t = (u32)-(s32)param->mField72 | param->mField72;
         u32 b = t >> 31;
-        UnkArtsSelectEntry* e1 = unk200[i];
-        e1->unkBB = static_cast<u8>((e1->unkBB & 0xFEu) | ((t >> 30) & 1));
-        UnkArtsSelectEntry* e2 = unk224[i];
-        e2->unkBB = static_cast<u8>(b | ((e2->unkBB & 0x7Fu) << 24));
-        UnkArtsSelectEntry* e3 = unk248[i];
-        e3->unkBB = static_cast<u8>(b | ((e3->unkBB & 0x7Fu) << 24));
+        unk200[i]->SetVisible((t >> 30) & 1);
+        unk224[i]->SetVisible(b != 0);
+        unk248[i]->SetVisible(b != 0);
         u32 mask = 1u << (i + 8);
         if (b != 0) {
             if (!(unk308 & mask)) {
@@ -3514,28 +3494,28 @@ void CMenuArtsSelect::bindEntryPanes() {
     char buf[0x28];
     for (s32 i = 0; i < 9; i++) {
         sprintf(buf, lbl_eu_804FD1E0 + 0x2c4, i);
-        unk200[i] = reinterpret_cast<UnkArtsSelectEntry*>(
+        unk200[i] = reinterpret_cast<nw4r::lyt::Pane*>(
             unk80->GetRootPane()->FindPaneByName(buf, true));
         sprintf(buf, lbl_eu_804FD1E0 + 0x2d1, i);
-        unk224[i] = reinterpret_cast<UnkArtsSelectEntry*>(
+        unk224[i] = reinterpret_cast<nw4r::lyt::Pane*>(
             unk80->GetRootPane()->FindPaneByName(buf, true));
         sprintf(buf, lbl_eu_804FD1E0 + 0x2de, i);
-        unk248[i] = reinterpret_cast<UnkArtsSelectEntry*>(
+        unk248[i] = reinterpret_cast<nw4r::lyt::Pane*>(
             unk80->GetRootPane()->FindPaneByName(buf, true));
     }
-    unk26C[0] = reinterpret_cast<UnkArtsSelectEntry*>(
+    unk26C[0] = reinterpret_cast<nw4r::lyt::Pane*>(
         unk80->GetRootPane()->FindPaneByName(lbl_eu_804FD1E0 + 0x2ea, true));
-    unk26C[1] = reinterpret_cast<UnkArtsSelectEntry*>(
+    unk26C[1] = reinterpret_cast<nw4r::lyt::Pane*>(
         unk80->GetRootPane()->FindPaneByName(lbl_eu_804FD1E0 + 0x2f8, true));
-    unk26C[2] = reinterpret_cast<UnkArtsSelectEntry*>(
+    unk26C[2] = reinterpret_cast<nw4r::lyt::Pane*>(
         unk80->GetRootPane()->FindPaneByName(lbl_eu_804FD1E0 + 0x306, true));
-    unk26C[3] = reinterpret_cast<UnkArtsSelectEntry*>(
+    unk26C[3] = reinterpret_cast<nw4r::lyt::Pane*>(
         unk80->GetRootPane()->FindPaneByName(lbl_eu_804FD1E0 + 0x314, true));
-    unk26C[4] = reinterpret_cast<UnkArtsSelectEntry*>(
+    unk26C[4] = reinterpret_cast<nw4r::lyt::Pane*>(
         unk80->GetRootPane()->FindPaneByName(lbl_eu_804FD1E0 + 0x322, true));
-    unk26C[5] = reinterpret_cast<UnkArtsSelectEntry*>(
+    unk26C[5] = reinterpret_cast<nw4r::lyt::Pane*>(
         unk80->GetRootPane()->FindPaneByName(lbl_eu_804FD1E0 + 0x69, true));
-    unk26C[6] = reinterpret_cast<UnkArtsSelectEntry*>(
+    unk26C[6] = reinterpret_cast<nw4r::lyt::Pane*>(
         unk80->GetRootPane()->FindPaneByName(lbl_eu_804FD1E0 + 0x5c, true));
 }
 

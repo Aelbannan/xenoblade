@@ -1,5 +1,7 @@
 #pragma once
 
+#include "kyoshin/cf/CfBdat.hpp"
+
 #include <types.h>
 #include "kyoshin/menu/MenuSndApi.hpp"
 
@@ -214,8 +216,6 @@ void clpSetPageVis(CCollepedia* self);
 extern "C" u32 GetItemMulti_IsActiveFlag();
 extern "C" u32 CItem_sumFamilyByte6(u16);
 extern "C" char lbl_eu_8050C6E8[];
-extern "C" void* lbl_eu_806640A8;
-extern "C" void* lbl_eu_80664104;
 extern "C" const float lbl_eu_80668800;
 extern "C" const float lbl_eu_806687F0;
 extern "C" const float lbl_eu_806687F4;
@@ -231,7 +231,6 @@ extern "C" void* gpClpItemMsgTable;
 extern "C" u32 CtrlObjectParam_GetStateBitFlag(u16);
 extern "C" u16 lbl_eu_8050C6A0[];
 // CCur per-frame update
-extern "C" u32 lbl_eu_806640EC;
 extern "C" void __dt__7CSysWinFv(void*, int);
 extern "C" void __dt__6CCur07Fv(void*, int);
 extern "C" void deleteRegion__17UnkClass_8045F564Fv(void*);
@@ -252,8 +251,7 @@ extern "C" void __ct__7CSysWinFUc(CSysWin* self, int arg);   // CSysWin ctor
 
 // Imports used by OnFileEvent / clpBuildPages
 extern "C" u32 Bdat_GetMaxRow_B1EC(void*);                     // bdat row count
-extern "C" u32 CtrlRemote_TouchBitByArg(u32);                       // unlock-flag lookup
-extern "C" void* lbl_eu_806640A0;                        // bdat table A
+#include "kyoshin/cf/CtrlRemoteApi.hpp"                       // unlock-flag lookup
 extern "C" u32 lbl_eu_80664184;                          // default category id
 extern "C" void* Bdat_GetTable_AA34();                        // BDAT table unload
 extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32,

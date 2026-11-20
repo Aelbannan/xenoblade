@@ -1,6 +1,7 @@
 // Auto-scaffolded catalog TU for kyoshin/cf/object/CfObjectMove
 // Replace stubs with high-level C/C++ during decomp.
 
+#include "kyoshin/cf/CfBdat.hpp"
 #include "nw4r/g3d/res/g3d_resfile.h"
 #include "kyoshin/harness_catalog.hpp"
 #include "monolib/coli/code_804B2FF0.hpp"
@@ -21,6 +22,8 @@
 // no declaration is renamed around this include any more.
 // Canonical declarations live with their owning headers only.
 #include "kyoshin/action/CActParamAnim.hpp"
+#include "kyoshin/cf/CActParamAnimGame.hpp"
+#include "kyoshin/cf/CtrlNpc.hpp"
 
 #include "monolib/math.hpp"
 #include <nw4r/math.h>
@@ -141,7 +144,7 @@ cf::CfObjectMove::~CfObjectMove() {
         Coli_ListRemoveNode(sEneColiProbe, (void*)this->_60C_region);
     }
     __dt__804B095C((void*)this->_60C_region, -1);
-    __dt__Q22cf17CActParamAnimGameFv((void*)((u8*)this + 0xD0), -1);
+    __dt__Q22cf17CActParamAnimGameFv((void*)_D0, -1);
 }
 
 // Wave-63: override of CfObject_runMoveUpdate (+0x60). Free-function Fv
@@ -371,8 +374,7 @@ extern "C" void CfObjectMove_resetMoveSpeed(cf::CfObjectMove* self) {
 // reference; the renamed member decl serves call-site codegen.
 void cf::CfObjectMove::CfObject_updateMoveRate() {
     float v = Scn_GetFrameDelta(gmScene);
-    cf::CfObjectMoveA8View* view = (cf::CfObjectMoveA8View*)this;
-    // The flag word is read once for the direction tests (kept in a local)
+
     // while the clamp-path clears re-read the member - retail reloads
     // mFlags68 (lwz r0,0x68) at each clear, so keep the test value separate.
     // :: on the constants avoids the namespace-cf copy (mangled
@@ -380,13 +382,11 @@ void cf::CfObjectMove::CfObject_updateMoveRate() {
     u32 flags = this->mFlags68;
     if ((flags & 0x4000) != 0) {
         // Decreasing state: step the +0xA4 rate down toward the low clamp.
-        // The clamp-path clears go through a separate view type so MWCC
-        // reloads mFlags68 (retail lwz r0,0x68) instead of reusing the test
-        // register. :: on the constants avoids the namespace-cf copy.
-        float f = view->field_A4 - 0.05f * v;
-        view->field_A4 = f;
+        // mFlags68 is reloaded at each clamp path, matching retail.
+        float f = this->mMoveRates.x - 0.05f * v;
+        this->mMoveRates.x = f;
         if (f <= 0.0f) {
-            view->field_A4 = 0.0f;
+            this->mMoveRates.x = 0.0f;
             this->mFlags68 &= ~0x4000;
             if (sEneColiProbe != 0) {
                 Coli_ListRemoveNode(sEneColiProbe, this->_60C_region);
@@ -394,10 +394,10 @@ void cf::CfObjectMove::CfObject_updateMoveRate() {
         }
     } else if ((flags & 0x2000) != 0) {
         // Increasing state: step the +0xA4 rate up toward the high clamp.
-        float f = view->field_A4 + 0.05f * v;
-        view->field_A4 = f;
+        float f = this->mMoveRates.x + 0.05f * v;
+        this->mMoveRates.x = f;
         if (f >= 1.0f) {
-            view->field_A4 = 1.0f;
+            this->mMoveRates.x = 1.0f;
             this->mFlags68 &= ~0x2000;
             if (sEneColiProbe != 0) {
                 ColiListAppend(sEneColiProbe, this->_60C_region);
@@ -463,12 +463,12 @@ void CfObject_setMoveTargetPtr__Q22cf12CfObjectMoveFPv(cf::CfObjectMove* self, v
         setAnimOwner(self->mTargetC4, arg);
         self->mTarget6C0 = arg;
         float x = *(float*)self->CfObject_getMoveRateScale();
-        cf::CfObjectMoveTargetC4* c4 = (cf::CfObjectMoveTargetC4*)self->mTargetC4;
-        c4->field_430 = x;
-        c4->field_43C = c4->field_438 * x;
+        ::CActParamAnim* c4 = (::CActParamAnim*)self->mTargetC4;
+        c4->field430 = x;
+        c4->field43C = c4->field438 * x;
         float y = *(float*)self->CfObject_getMoveRateScale();
-        cf::CfObjectMoveTargetC4* c4b = (cf::CfObjectMoveTargetC4*)self->mTargetC4;
-        c4b->field_434 = lbl_eu_80666AD0 * y;
+        ::CActParamAnim* c4b = (::CActParamAnim*)self->mTargetC4;
+        c4b->field434 = lbl_eu_80666AD0 * y;
     } else {
         self->mTarget6C0 = arg;
     }
@@ -538,7 +538,7 @@ void cf::CfObjectMove::CfObject_createMoveTarget(int arg) {
 void cf::CfObjectMove::CfObject_forwardNpcAction(int arg) {
     cf::CtrlNpc* target = (cf::CtrlNpc*)this->mTarget6C0;
     if (target != 0) {
-        this->field_6CF = (u8)((cf::CfObjectMoveNpcView*)target)->field_C0;
+        this->field_6CF = (u8)target->field_C0;
         this->field_6CE = (u8)arg;
         if (arg == 1) {
             CtrlNpcSetAction(target, 1);
@@ -706,8 +706,8 @@ ml::CVec3* cf::CfObjectMove::CfObject_getPosVector() {
     // Both sub-objects present + busy flag bit 2 (mFlags68 & 4) -> return a
     // pointer into the C4 target; otherwise defer to the base implementation.
     if (mSubObj98 != 0 && field_0x9C != 0 && (mFlags68 & 0x4) != 0) {
-        cf::CfObjectMoveTargetC4* target = (cf::CfObjectMoveTargetC4*)mTargetC4;
-        return (ml::CVec3*)&target->field_3A8;
+        ::CActParamAnim* target = (::CActParamAnim*)mTargetC4;
+        return (ml::CVec3*)&target->field3A8;
     }
     return CfObjectModel::CfObject_getPosVector();
 }
@@ -723,13 +723,13 @@ void cf::CfObjectMove::CfObject_setRotVec(void* src) {
     if ((this->unk64 & 0x80) != 0) {
         if (ml::math::abs(vec->x) > ml::epsilon ||
             ml::math::abs(vec->z) > ml::epsilon) {
-            CfObjectMoveC4FlagsView* c4 = (CfObjectMoveC4FlagsView*)this->mTargetC4;
+            ::CActParamAnim* c4 = (::CActParamAnim*)this->mTargetC4;
             if (c4 != 0) {
-                c4->flags |= 0x20;
+                c4->field0C |= 0x20;
             }
         }
     }
-    CfObjectMoveTargetC4* target = (cf::CfObjectMoveTargetC4*)this->mTargetC4;
+    ::CActParamAnim* target = (::CActParamAnim*)this->mTargetC4;
     if (target != 0 && (this->mFlags68 & 0x4) != 0) {
         setTurnAngle(target, vec->y);
     }
@@ -748,11 +748,11 @@ void CfObject_setMoveHeadAngle__Q22cf12CfObjectMoveFf(cf::CfObjectMove* self, fl
     }
     target = self->mTarget6C0;
     if (target != 0) {
-        *(float*)((char*)target + 0xC) = value;
+        ((cf::CtrlNpc*)target)->field_0C = value;
     }
 }
 
-// Wave-64: override of CfObject_setMoveYaw (+0xC8). Fv keeps Unk linker
+// Wave-64: override of CfObject_setMoveYaw
 // name (hand-built tables / CREvtModel). Retail symbol is Fv but the body
 // consumes f1 - forced-name form carrying the hidden float arg (same scheme
 // as CfObject_setMoveHeadAngle). Base call, then the C4 target's busy flag
@@ -763,16 +763,15 @@ void CfObject_setMoveYaw__Q22cf12CfObjectMoveFf(cf::CfObjectMove* self, float va
     void* target = self->mTargetC4;
     if (target != 0 && ((self->mFlags68 & 0x4) != 0)) {
         setTurnScale((CActParamAnim*)target, value);
-        CfObjectMoveC4Flags* view = (CfObjectMoveC4Flags*)self->mTargetC4;
-        view->flags |= 0x400;
+        ((::CActParamAnim*)self->mTargetC4)->field0C |= 0x400;
     }
     target = self->mTarget6C0;
     if (target != 0) {
-        *(float*)((char*)target + 0xC) = value;
+        ((cf::CtrlNpc*)target)->field_0C = value;
     }
 }
 
-// Empty Ff stub removed (Wave-62): retail only exports the Fv scaled
+// Empty Ff stub removed
 // applyMoveYaw body below; the prior member def emitted a dead Ff symbol.
 
 // Retail symbol is Fv but the body returns 1 on the null path and tail-calls
@@ -796,11 +795,11 @@ extern "C" void* CfObjectMove_getSubObj54(CfObjectMove* self) { return &self->mS
 // the C4 target) - forced-name form with the hidden float arg (same scheme as
 // CfObjectMove_recordMoveValue).
 extern "C" void CfObject_setMoveValue__Q22cf12CfObjectMoveFf(cf::CfObjectMove* self, float value) {
-    cf::CfObjectMoveTargetC4* target = (cf::CfObjectMoveTargetC4*)self->mTargetC4;
+    ::CActParamAnim* target = (::CActParamAnim*)self->mTargetC4;
     self->mField6E4 = value;
     if (target != 0) {
-        target->field_430 = value;
-        target->field_43C = target->field_438 * value;
+        target->field430 = value;
+        target->field43C = target->field438 * value;
     }
 }
 
@@ -808,10 +807,10 @@ extern "C" void CfObject_setMoveValue__Q22cf12CfObjectMoveFf(cf::CfObjectMove* s
 // C4 target) - forced-name form with the hidden float arg (same scheme as
 // CfObject_UnkVirtualFunc32/33 below).
 void cf::CfObjectMove::CfObjectMove_recordMoveValue(float value) {
-    void* target = this->mTargetC4;
+    ::CActParamAnim* target = (::CActParamAnim*)this->mTargetC4;
     this->mField6E8 = value;
     if (target != 0) {
-        *(float*)((char*)target + 0x434) = value;
+        target->field434 = value;
     }
 }
 
@@ -829,17 +828,17 @@ void* cf::CfObjectMove::CObjectParam_getParamPtr() {
 // for all three (3 reg_swap, 0 structural). Witness rejects the r4<->r3 ABI
 // permutation. Separated locals + (void)this invariant.
 void* cf::CfObjectMove::CfObject_pushRefreshValue(float value) {
-    void* target = this->mTargetC4;
+    ::CActParamAnim* target = (::CActParamAnim*)this->mTargetC4;
     if (target != 0) {
-        *(float*)((char*)target + 0x388) = value;
+        target->field388 = value;
     }
-    target = this->mTargetC8;
+    target = (::CActParamAnim*)this->mTargetC8;
     if (target != 0) {
-        *(float*)((char*)target + 0x388) = value;
+        target->field388 = value;
     }
-    target = this->mTargetCC;
+    target = (::CActParamAnim*)this->mTargetCC;
     if (target != 0) {
-        *(float*)((char*)target + 0x388) = value;
+        target->field388 = value;
     }
     return this;
 }
@@ -850,15 +849,15 @@ void* cf::CfObjectMove::CfObject_pushRefreshValue(float value) {
 // Unk linker name CfObjectMove_setNpcMoveRange__Q22cf12CfObjectMoveFf with
 // the hidden float arg (same scheme as the writeTargetField sibling below).
 void cf::CfObjectMove::CfObjectMove_setNpcMoveRange(float value) {
-    void* o = this->mTarget6C0;
+    cf::CtrlNpc* o = (cf::CtrlNpc*)this->mTarget6C0;
     if (o != 0) {
-        *(float*)((u8*)o + 0xd4) = value;
+        o->field_D4 = value;
     }
 }
 
 void cf::CfObjectMove::CfObjectMove_writeTargetField(int v) {
-    void* o = this->mTarget6C0;
-    if (o) *(u16*)((u8*)o + 0xde) = v;
+    cf::CtrlNpc* o = (cf::CtrlNpc*)this->mTarget6C0;
+    if (o) o->field_DE = v;
 }
 
 // Retail symbols are Fv but both bodies return a float (load from the C4
@@ -868,17 +867,17 @@ float cf::CfObjectMove::CfObject_getMoveSpeedRate() {
     // Getter for the value CfObject_pushRefreshValue's target writes at
     // +0x388; falls back to the shared time source when no target. The
     // CfT_PlayRateGet is declared with its real float return in CfTFile.hpp.
-    void* target = this->mTargetC4;
+    ::CActParamAnim* target = (::CActParamAnim*)this->mTargetC4;
     if (target != 0) {
-        return *(float*)((char*)target + 0x388);
+        return target->field388;
     }
     return CfT_PlayRateGet();
 }
 
 float cf::CfObjectMove::CfObject_readRefreshValue() {
-    void* target = this->mTargetC4;
+    ::CActParamAnim* target = (::CActParamAnim*)this->mTargetC4;
     if (target != 0) {
-        return *(float*)((char*)target + 0x38C);
+        return target->field38C;
     }
     return CfT_PlayRateGet();
 }
@@ -959,17 +958,17 @@ extern "C" int CfObjectMove_queryNpcAdvance__Q22cf12CfObjectMoveFv(const cf::CfO
 // +0x38C of the C4/C8/CC targets) - forced-name form with the hidden float
 // arg (same scheme as CfObjectMove_recordMoveValue).
 void* cf::CfObjectMove::CfObject_pushRefreshExtra(float value) {
-    void* target = this->mTargetC4;
+    ::CActParamAnim* target = (::CActParamAnim*)this->mTargetC4;
     if (target != 0) {
-        *(float*)((char*)target + 0x38C) = value;
+        target->field38C = value;
     }
-    target = this->mTargetC8;
+    target = (::CActParamAnim*)this->mTargetC8;
     if (target != 0) {
-        *(float*)((char*)target + 0x38C) = value;
+        target->field38C = value;
     }
-    target = this->mTargetCC;
+    target = (::CActParamAnim*)this->mTargetCC;
     if (target != 0) {
-        *(float*)((char*)target + 0x38C) = value;
+        target->field38C = value;
     }
     return this;
 }
@@ -1562,7 +1561,7 @@ void CfObjectMove_detachMoveRegion(cf::CfObjectMove* self) {
         // store and keeps the stw/stfs order, matching retail exactly.
         float v = 0.0f;
         self->mFlags68 = flags & ~0x4000u;
-        *(float*)self->field_0xA4 = v;
+        self->mMoveRates.x = v;
     }
     if (sEneColiProbe != 0) {
         Coli_ListRemoveNode(sEneColiProbe, self->_60C_region);
@@ -1585,11 +1584,10 @@ extern "C" int CfObjectMove_testMoveProximity(cf::CfObjectMove* self) {
         cf::CfResScene10C* scene = (cf::CfResScene10C*)res;
         u32 flags = self->unk64;
         if (((u32)__cntlzw((u32)__cntlzw(flags & 0x4) >> 5) >> 5) != 0) {
-            cf::CfObjectMove6B4View* v = (cf::CfObjectMove6B4View*)self;
-            u32 w = v->field_6B4;
-            v->field_6B4 = w | 0x1000;
+            u32 w = self->mField6B4;
+            self->mField6B4 = w | 0x1000;
             result = ColiCheckMoveRadius(self->_60C_region, &scene->x, 0, 0, 1.0f);
-            v->field_6B4 &= ~0x1000;
+            self->mField6B4 &= ~0x1000;
         } else {
             if (((u32)__cntlzw((u32)__cntlzw(flags & 0x100) >> 5) >> 5) != 0) {
                 const nw4r::math::VEC3* pos =
@@ -1636,37 +1634,36 @@ extern "C" int CfObjectMove_testMoveProximity(cf::CfObjectMove* self) {
 // lbl_eu_80666AAC or up by lbl_eu_80666AB0, clamped at the target) or a
 // plain increase clamped at lbl_eu_80666A94.
 void CfObjectMove_updateSpeedA8(cf::CfObjectMove* self, u32 arg) {
-    cf::CfObjectMoveA8View* view = (cf::CfObjectMoveA8View*)self;
     if (arg != 0) {
-        float v = view->field_A8 - lbl_eu_80666AA4;
-        view->field_A8 = v;
+        float v = self->mMoveRates.y - lbl_eu_80666AA4;
+        self->mMoveRates.y = v;
         if (v < 0.0f) {
-            view->field_A8 = 0.0f;
+            self->mMoveRates.y = 0.0f;
         }
         return;
     }
     if ((self->mFlags68 & 0x00800000) != 0) {
-        if (ml::math::abs(view->field_A8 - lbl_eu_80666AA8) <= ml::epsilon) {
-            view->field_A8 = lbl_eu_80666AA8;
+        if (ml::math::abs(self->mMoveRates.y - lbl_eu_80666AA8) <= ml::epsilon) {
+            self->mMoveRates.y = lbl_eu_80666AA8;
         }
-        if (view->field_A8 > lbl_eu_80666AA8) {
-            float v = view->field_A8 - lbl_eu_80666AAC;
-            view->field_A8 = v;
+        if (self->mMoveRates.y > lbl_eu_80666AA8) {
+            float v = self->mMoveRates.y - lbl_eu_80666AAC;
+            self->mMoveRates.y = v;
             if (v < lbl_eu_80666AA8) {
-                view->field_A8 = lbl_eu_80666AA8;
+                self->mMoveRates.y = lbl_eu_80666AA8;
             }
         } else {
-            float v = view->field_A8 + lbl_eu_80666AB0;
-            view->field_A8 = v;
+            float v = self->mMoveRates.y + lbl_eu_80666AB0;
+            self->mMoveRates.y = v;
             if (v > lbl_eu_80666AA8) {
-                view->field_A8 = lbl_eu_80666AA8;
+                self->mMoveRates.y = lbl_eu_80666AA8;
             }
         }
     } else {
-        float v = view->field_A8 + lbl_eu_80666AB0;
-        view->field_A8 = v;
+        float v = self->mMoveRates.y + lbl_eu_80666AB0;
+        self->mMoveRates.y = v;
         if (v > 1.0f) {
-            view->field_A8 = 1.0f;
+            self->mMoveRates.y = 1.0f;
         }
     }
 }
@@ -1687,9 +1684,8 @@ extern "C" void CfObjectMove_tickSpeed(cf::CfObjectMove* self) {
             CfObjectMove_updateSpeedA8(self, r);
         }
     }
-    cf::CfObjectMoveA8View* view = (cf::CfObjectMoveA8View*)self;
-    float v = 1.0f - view->field_AC * (view->field_A8 *
-              ((1.0f - self->field_A0) * view->field_A4));
+    float v = 1.0f - self->mMoveRates.z * (self->mMoveRates.y *
+              ((1.0f - self->field_A0) * self->mMoveRates.x));
     if (v > 0.0f) {
         if ((self->mFlags68 & 0x100000) != 0) {
             CfModel_SyncVisFlag(self, 1);
@@ -1712,7 +1708,7 @@ extern "C" void CfObjectMove_refreshPosition(cf::CfObjectMove* self) {
     // re-sync the position region against the model sub-object's movement
     // query. Without the model sub-object the +0x6C0 movement target drives
     // the position difference instead.
-    if (self->mSubObj98 != 0 && ((cf::CfObjectMove94View*)self)->field_9C != 0 && (self->mFlags68 & 0x4) != 0) {
+    if (self->mSubObj98 != 0 && self->field_0x9C != 0 && (self->mFlags68 & 0x4) != 0) {
         // Snapshot the C4 position once (kept on the stack; retail reloads
         // self->mTargetC4 at every later use instead of caching the pointer).
         cf::CfObjectMoveTargetC4* c4 = (cf::CfObjectMoveTargetC4*)self->mTargetC4;
@@ -1742,7 +1738,9 @@ if (self->CfObject_checkSubReady() != 0) {
             // Struct-returning operator- keeps MWCC's return-slot + copy
             // sequence (retail routes the delta through a second stack copy).
             ml::CVec3 delta = *reinterpret_cast<ml::CVec3*>(&self->mPos3C) - targetPos;
-            *reinterpret_cast<ml::CVec3*>(&((cf::CfObjectMove54View*)self)->field_54) = delta;
+            self->mSubObj54.mPos.x = delta.x;
+            self->mSubObj54.mPos.y = delta.y;
+            self->mSubObj54.mPos.z = delta.z;
             self->mField4C = ((cf::CfObjectMoveTargetC4*)self->mTargetC4)->field_444;
         } else {
             CfObjectMove_resetMoveTarget(self);
@@ -1769,11 +1767,15 @@ done_flags:
             saved.z = self->mPos44;
             CfObjectMove_resetMoveTarget(self);
             ml::CVec3 delta = *reinterpret_cast<ml::CVec3*>(&self->mPos3C) - saved;
-            *reinterpret_cast<ml::CVec3*>(&((cf::CfObjectMove54View*)self)->field_54) = delta;
-            self->mField4C = ((cf::CfObjectMove6C0View*)self->mTarget6C0)->field_C;
+            self->mSubObj54.mPos.x = delta.x;
+            self->mSubObj54.mPos.y = delta.y;
+            self->mSubObj54.mPos.z = delta.z;
+            self->mField4C = ((cf::CtrlNpc*)self->mTarget6C0)->field_0C;
         } else {
             // Zero the +0x54 area and reattach the position region.
-            *reinterpret_cast<ml::CVec3*>(&((cf::CfObjectMove54View*)self)->field_54) = ml::CVec3::zero;
+            self->mSubObj54.mPos.x = 0.0f;
+            self->mSubObj54.mPos.y = 0.0f;
+            self->mSubObj54.mPos.z = 0.0f;
             ColiSetAxisBlockInverse(self->_60C_region, &self->mPos3C);
         }
     }
@@ -1789,11 +1791,11 @@ extern "C" void CfObjectMove_resetMoveTarget(cf::CfObjectMove* self) {
     origPos.x = pos->x;
     origPos.y = pos->y;
     origPos.z = pos->z;
-    cf::CfObjectMove6C0View* tgt = (cf::CfObjectMove6C0View*)self->mTarget6C0;
+    cf::CtrlNpc* tgt = (cf::CtrlNpc*)self->mTarget6C0;
     tgt->field_14 = 0.0f;
     ((cf::CtrlMoveTarget*)tgt)->resetMoveTarget();
     // Declared angle-first so MWCC colours rate into f30 (retail order).
-    f32 angle = tgt->field_C;
+    f32 angle = tgt->field_0C;
     f32 rate = tgt->field_14;
     if (getPlayer__Q22cf13CfGameManagerFi(0) == (void*)self && self->CfObject_isMoveActiveNow() == 0) {
         rate = 0.0f;
@@ -1843,7 +1845,9 @@ extern "C" void CfObjectMove_resetMoveTarget(cf::CfObjectMove* self) {
     diff.x = self->mPos3C - origPos.x;
     diff.y = self->mPos40 - origPos.y;
     diff.z = self->mPos44 - origPos.z;
-    *reinterpret_cast<ml::CVec3*>(&((cf::CfObjectMove54View*)self)->field_54) = diff;
+    self->mSubObj54.mPos.x = diff.x;
+    self->mSubObj54.mPos.y = diff.y;
+    self->mSubObj54.mPos.z = diff.z;
 }
 
 extern "C" void CfObjectMove_initAnimTarget(cf::CfObjectMove* self) {
@@ -1852,25 +1856,24 @@ extern "C" void CfObjectMove_initAnimTarget(cf::CfObjectMove* self) {
     }
     int wasC4Null = self->mTargetC4 == 0;
     ColiNodeSetWord8Rebuild(self->_60C_region);
-    if (((cf::CfObjectMove94View*)self)->field_9C != 0 && self->mTargetC4 == 0) {
+    if (self->field_0x9C != 0 && self->mTargetC4 == 0) {
         // Construct the +0xD0 CActParamAnimGame sub-object as the C4 target.
         self->mTargetC4 = self->_D0;
         // Fresh C4 target is the +0xD0 CActParamAnimGame (see above).
         ((::CActParamAnim*)self->mTargetC4)->initAnimState();
-        ((cf::CfObjectMoveD0View*)self->mTargetC4)->field_4E8 = self;
+        ((cf::CActParamAnimGame*)self->mTargetC4)->field4E8 = (cf::CActParamAnimGameLink*)self;
         u32 flags = self->unk64;
         if ((flags & 0x2) != 0) {
             void* c4 = self->mTargetC4;
             if (getPlayer__Q22cf13CfGameManagerFi(0) == (void*)self) {
                 startAnimModeA(c4);
-                ((cf::CfObjectMoveD0View*)self->mTargetC4)->field_530 |= 0x400;
+                ((cf::CActParamAnimGame*)self->mTargetC4)->field530 |= 0x400;
             } else {
                 startAnimModeA2(c4);
             }
-            ((cf::CfObjectMoveD0View*)self->mTargetC4)->field_4EC |= 0x4000;
-            void* c4b = self->mTargetC4;
-            ((cf::CfObjectMoveD0View*)c4b)->field_4EC =
-                (((cf::CfObjectMoveD0View*)c4b)->field_4EC & 0xFFF5FFFF) | 0x00040000;
+            ((cf::CActParamAnimGame*)self->mTargetC4)->field4EC |= 0x4000;
+            cf::CActParamAnimGame* c4b = (cf::CActParamAnimGame*)self->mTargetC4;
+            c4b->field4EC = (c4b->field4EC & 0xFFF5FFFF) | 0x00040000;
         } else if ((flags & 0x4) != 0) {
             startAnimModeC(self->mTargetC4);
         } else if ((flags & 0x8) != 0 || (flags & 0x1) != 0) {
@@ -1889,9 +1892,9 @@ extern "C" void CfObjectMove_initAnimTarget(cf::CfObjectMove* self) {
             void* sub98 = self->mSubObj98;
             void* anim = ((cf::CfObjectModel*)self)->CfObjectModel_getAnimState();
             attachAnimObj(self->mTargetC4, sub98, field6D4, (u32)anim);
-            pushAnimNode(self->mTargetC4, (void*)((cf::CfObjectMove94View*)self)->field_9C, (void*)((cf::CfObjectMove94View*)self)->field_94);
+            pushAnimNode(self->mTargetC4, (void*)self->field_0x9C, (void*)self->field_0x94);
         } else {
-            attachAnimObj(self->mTargetC4, self->mSubObj98, (void*)((cf::CfObjectMove94View*)self)->field_9C, ((cf::CfObjectMove94View*)self)->field_94);
+            attachAnimObj(self->mTargetC4, self->mSubObj98, (void*)self->field_0x9C, (u32)self->field_0x94);
         }
     }
     u32 f68 = self->mFlags68;
@@ -1920,11 +1923,11 @@ extern "C" void CfObjectMove_initAnimTarget(cf::CfObjectMove* self) {
             float y = *(float*)self->CfObject_getMoveRateScale();
             ((cf::CfObjectMoveTargetC4*)self->mTargetC4)->field_434 = lbl_eu_80666AD0 * y;
             void* c4b = self->mTargetC4;
-            ((cf::CfObjectMoveC8View*)c4b)->field_4 = self->mSubObj38;
-            ((cf::CfObjectMoveC8View*)c4b)->field_34 = self->mSubObj38;
+            ((cf::CActParamAnimGame*)c4b)->field04 = (u32)self->mSubObj38;
+            ((cf::CActParamAnimGame*)c4b)->field34 = (u32)self->mSubObj38;
             if ((self->unk64 & 0x100) != 0) {
-                ((cf::CfObjectMoveD0View*)self->mTargetC4)->field_504 = lbl_eu_80666AA4;
-                ((cf::CfObjectMoveD0View*)self->mTargetC4)->field_50C = lbl_eu_80666A9C;
+                ((cf::CActParamAnimGame*)self->mTargetC4)->field504 = lbl_eu_80666AA4;
+                ((cf::CActParamAnimGame*)self->mTargetC4)->field50C = lbl_eu_80666A9C;
             }
         }
         // Push the mode bytes to the CActParamAnim helper, then reset them
@@ -1962,9 +1965,9 @@ extern "C" void CfObjectMove_initAnimTarget(cf::CfObjectMove* self) {
                 ((CScnItemModel*)self->mSubObj98)->vfunc50(1);
                 cf::CfObjectModelSub98* sub = self->mSubObj98;
                 if (sub != 0) {
-                    void* p = ((cf::CfObjectMoveSub98View7EC*)sub)->field_7EC;
+                    void* p = sub->field_7EC;
                     if (p != 0) {
-                        ((cf::CfObjectMove7ECView*)p)->field_2A = (u8)self->field_6CC;
+                        ((CActParam7ECTarget*)p)->field2A = (u8)self->field_6CC;
                     }
                 }
             } else {
@@ -1980,9 +1983,9 @@ extern "C" void CfObjectMove_initAnimTarget(cf::CfObjectMove* self) {
                     ((CScnItemModel*)self->mSubObj98)->vfunc50(1);
                     cf::CfObjectModelSub98* sub = self->mSubObj98;
                     if (sub != 0) {
-                        void* p = ((cf::CfObjectMoveSub98View7EC*)sub)->field_7EC;
+                        void* p = sub->field_7EC;
                         if (p != 0) {
-                            ((cf::CfObjectMove7ECView*)p)->field_2A = (u8)self->field_6CC;
+                            ((CActParam7ECTarget*)p)->field2A = (u8)self->field_6CC;
                         }
                     }
                 }
@@ -1991,7 +1994,7 @@ extern "C" void CfObjectMove_initAnimTarget(cf::CfObjectMove* self) {
     }
     if ((self->unk64 & 0x4) != 0) {
         cf::CfObjectModelSub98* sub = self->mSubObj98;
-        void* p = ((cf::CfObjectMoveSub98View7EC*)sub)->field_7EC;
+        void* p = sub->field_7EC;
         if (p != 0) {
             ((CActParam7ECTarget*)p)->func08(1, lbl_eu_8066AF20);
         }
@@ -2006,13 +2009,13 @@ extern "C" void CfObjectMove_initAnimTarget(cf::CfObjectMove* self) {
         ((CScnItemModel*)self->mSubObj98)->vfunc9C(1, 0);
     } else if (CfObj_KindBit7(self) != 0) {
         ((CScnItemModel*)self->mSubObj98)->vfunc9C(2, 0);
-        const u8* s = (const u8*)getBdatStringColumnValue(lbl_eu_806640A8, lbl_eu_804FC550, lbl_eu_80664184);
+        const u8* s = (const u8*)getBdatStringColumnValue(::cf::CfBdat::spFldMapListFileData, lbl_eu_804FC550, lbl_eu_80664184);
         u8 b = *s;
         if ((b & 0x2) != 0) {
-            ((cf::CfObjectMoveSub98View7A0*)self->mSubObj98)->field_7A0 &= ~0x10000000;
+            self->mSubObj98->field_7A0 &= ~0x10000000;
         }
         if ((b & 0x8) != 0) {
-            ScnEnvLgt_EnableFlag100(&((cf::CfObjectMoveSub98View31C*)self->mSubObj98)->field_31C, 1);
+            ScnEnvLgt_EnableFlag100(&self->mSubObj98->field_31C, 1);
         }
     }
     if (self->mSubObj38 != 0) {
@@ -2050,13 +2053,13 @@ void CfObjectMove_ensureAnimTargets(cf::CfObjectMove* self) {
                 // from the alloc result; the remaining fields re-read the
                 // member (no register reuse).
                 (&self->mTargetC8)[i] = obj;
-                ((cf::CfObjectMoveC8View*)obj)->field_378 = i;
+                ((cf::CActParamAnimGame*)obj)->field378 = i;
                 void* ta = (&self->mTargetC8)[i];
-                ((cf::CfObjectMoveC8View*)ta)->field_4 = self->mSubObj38;
+                ((cf::CActParamAnimGame*)ta)->field04 = (u32)self->mSubObj38;
                 ta = (&self->mTargetC8)[i];
-                ((cf::CfObjectMoveC8View*)ta)->field_34 = self->mSubObj38;
+                ((cf::CActParamAnimGame*)ta)->field34 = (u32)self->mSubObj38;
                 ta = (&self->mTargetC8)[i];
-                ((cf::CfObjectMoveC8View*)ta)->field_4F4 = self;
+                ((cf::CActParamAnimGame*)ta)->field4F4 = (cf::CActParamAnimGameLink*)self;
             }
             if ((&self->mTargetC8)[i] != 0) {
                 AnimGame_SetStateFlags((cf::CActParamAnimGame*)(&self->mTargetC8)[i]);
@@ -2144,17 +2147,9 @@ void CfObjectMove_setModelDisplayFlag(cf::CfObjectMove* self, int flag) {
             reinterpret_cast<CScnItemModel*>(self->mSubObj98)->vfunc50(1);
             cf::CfObjectModelSub98* sub = self->mSubObj98;
             if (sub != 0) {
-                struct Sub98Field7EC {
-                    u8 _pad[0x7EC];
-                    void* field_7EC;  // 0x7EC
-                };
-                struct Field2A {
-                    u8 _pad[0x2A];
-                    u8 field_2A;  // 0x2A
-                };
-                void* p = ((Sub98Field7EC*)sub)->field_7EC;
+                void* p = sub->field_7EC;
                 if (p != 0) {
-                    ((Field2A*)p)->field_2A = (u8)self->field_6CC;
+                    ((CActParam7ECTarget*)p)->field2A = (u8)self->field_6CC;
                 }
             }
         } else {

@@ -526,13 +526,12 @@ struct CPSkillPaneB8 {
 
 // Character-data lookup by id (retail symbol unmangled; also declared in
 // CMapSel.hpp / CItemBoxGrid.hpp).
-extern "C" u32 CtrlRemote_TouchBitByArg(u32);
+#include "kyoshin/cf/CtrlRemoteApi.hpp"
 
 // Character index splitter used by CPassiveSkill_learnAllSkills (retail symbol unmangled;
 // 3-arg form also declared in CPcKizunagram.hpp).
 
 // Shared BDAT character table pointer (.sdata; value resolved at link time).
-extern void* lbl_eu_80664090;
 
 // Shared arc resource accessor (retail symbol unmangled; also in CPresentWin.hpp).
 

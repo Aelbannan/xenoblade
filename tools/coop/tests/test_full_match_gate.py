@@ -32,11 +32,25 @@ def report():
 
 
 class FullMatchGateTests(unittest.TestCase):
+    def test_compiler_string_symbol_resolves_through_layout(self):
+        # Weak dedup can turn a decomp @STRING@ pool symbol into an UNDEF
+        # reference to the surviving retail copy.  Unlike TU-local @N names,
+        # @STRING@<mangled fn>@N is a named symbol in symbols.txt and must be
+        # proven by address, not rejected as an anonymous local label.
+        addr = 0x80663910
+        layout = LinkerLayout("test", Path("/nonexistent"), symbols={
+            "lbl_eu_80663910": (".sdata", addr),
+            "@STRING@ref__Q34nw4r3g3d7ResNodeFv@1": (".sdata", addr),
+        })
+        retail = function(relocs=((0, 109, "lbl_eu_80663910", 0),))
+        decomp = function(relocs=((0, 109, "@STRING@ref__Q34nw4r3g3d7ResNodeFv@1", 0),))
+        self.assertTrue(compare_functions(retail, decomp, linker_layout=layout).match)
+
     def test_fuzzy_100_and_failed_certificate_cannot_promote(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             left, right = root / "retail.o", root / "decomp.o"
-            left.write_bytes(build_reloc_elf({"f": bytes.fromhex("38630004 4e800020")}))
+            left.write_bytes
             right.write_bytes(build_reloc_elf({"f": bytes.fromhex("38630005 4e800020")}))
             config = CoopConfig(project_root=root, region="us")
             (root / "tools/coop").mkdir(parents=True)
@@ -136,6 +150,12 @@ class FullMatchGateTests(unittest.TestCase):
             left, right = root / "retail.o", root / "decomp.o"
             make(left, b"\0" * 4, b"Unit000\0",
                  [("f", ".text", 0, 4, GLOBAL, FUNC), ("pool", ".rodata", 0, 8, GLOBAL, OBJECT)], [(0, "pool")])
+            # linked_view() reads the extracted retail split object to decide
+            # whether a local referenced only by a deduplicated weak copy was
+            # kept.  Put this fixture's retail object at its conventional path.
+            split = root / "build/us/obj/demo"
+            split.mkdir(parents=True, exist_ok=True)
+            (split / "Unit.o").write_bytes(left.read_bytes())
             make(right, b"\0" * 8, b"Base000\0Unit000\0",
                  [("f", ".text", 0, 4, GLOBAL, FUNC), ("weak", ".text", 4, 4, WEAK, FUNC),
                   ("@base", ".rodata", 0, 8, LOCAL, OBJECT), ("@own", ".rodata", 8, 8, LOCAL, OBJECT)],

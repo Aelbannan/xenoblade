@@ -1,5 +1,5 @@
 #pragma once
-
+#include "kyoshin/cf/CfCamSymbols.hpp"
 #include <types.h>
 #include <revolution/MTX.h>
 #include <monolib/math/CVec3.hpp>
@@ -218,7 +218,7 @@ extern const char lbl_eu_80526324[];
 extern const char lbl_eu_80526300[];
 
 // C++-linkage global (mangles to isGlobalCamFlagSet__Fi).
-int isGlobalCamFlagSet(int r3);
+
 
 // Node-pool manager shared with the scene path classes
 // (libs/monolib/src/scn/UnkClass_8047CD0C.cpp). Only the task-allocating

@@ -76,112 +76,111 @@ void (*__a1_input_reports_array[])(u8 chan, u8* data, WPADStatusEx* status) = {
     __a1_3d_data_type, __a1_3e_data_type, __a1_3f_data_type,
 };
 
-// Debug message table; DEBUGPrint strings are addressed relative to the
-// report dispatch array, so they must live immediately after it in .data.
-// (The 0x438/0x44C regions are separate .data objects referenced directly.)
 static char __wpadDebugStrings[0x3B8] = {
-    /* 0x080 */ "detaching extension during initialization."
-    /* 0x0AA */ "\0"
-    /* 0x0AC */ "Dpd Setting is ok."
-    /* 0x0BE */ "\0"
-    /* 0x0C0 */ "Dpd Setting is broken."
-    /* 0x0D6 */ "\0"
-    /* 0x0D8 */ "Old Firmware uses default values because it has no Dpd Setting."
-    /* 0x117 */ "\0\0\0\0"
-    /* 0x11C */ "x = %lf, y = %lf"
-    /* 0x12C */ "\0\0\0"
-    /* 0x130 */ "difaveX = %lf, difaveY = %lf"
-    /* 0x14C */ "\0\0\0"
-    /* 0x150 */ "deltaX  = %lf, deltaY  = %lf"
-    /* 0x16C */ "\0\0\0"
-    /* 0x170 */ "_wpadCalibrationX = %lf, _wpadCalibrationY = %lf"
-    /* 0x1A0 */ "\0\0\0"
-    /* 0x1A4 */ "centX  = %lf, centY  = %lf"
-    /* 0x1BE */ "\0"
-    /* 0x1C0 */ "_wpadRolag  = %lf"
-    /* 0x1D1 */ "\0\0"
-    /* 0x1D4 */ "Acc is ok."
-    /* 0x1DE */ "\0"
-    /* 0x1E0 */ "Acc is broken."
-    /* 0x1EE */ "\0"
-    /* 0x1F0 */ "0G:  accX = %d,  accY = %d,  accZ = %d"
-    /* 0x216 */ "\0"
-    /* 0x218 */ "1G:  accX = %d,  accY = %d,  accZ = %d"
-    /* 0x23E */ "\0"
-    /* 0x240 */ "Volume: %d,   Motor: %d"
-    /* 0x257 */ "\0\0\0\0"
-    /* 0x25C */ "check sum error."
-    /* 0x26C */ "\0\0\0"
-    /* 0x270 */ "0G:  fsaccX = %d,  fsaccY = %d,  fsaccZ = %d"
-    /* 0x29C */ "\0\0\0"
-    /* 0x2A0 */ "1G:  fsaccX = %d,  fsaccY = %d,  fsaccZ = %d"
-    /* 0x2CC */ "\0\0\0"
-    /* 0x2D0 */ "FS:  X = %d,  X max = %d,  X min = %d"
-    /* 0x2F5 */ "\0\0"
-    /* 0x2F8 */ "FS:  Y = %d,  Y max = %d,  Y min = %d"
-    /* 0x31D */ "\0\0"
-    /* 0x320 */ "CL:  X = %d,  X max = %d,  X min = %d"
-    /* 0x345 */ "\0\0"
-    /* 0x348 */ "CL:  Y = %d,  Y max = %d,  Y min = %d"
-    /* 0x36D */ "\0\0"
-    /* 0x370 */ "CR:  X = %d,  X max = %d,  X min = %d"
-    /* 0x395 */ "\0\0"
-    /* 0x398 */ "CR:  Y = %d,  Y max = %d,  Y min = %d"
-    /* 0x3BD */ "\0\0"
-    /* 0x3C0 */ "LR:  L = %d,  R = %d"
-    /* 0x3D4 */ "\0\0\0"
-    /* 0x3D8 */ "devId: %d, subId: %d"
-    /* 0x3EC */ "\0\0\0"
-    /* 0x3F0 */ "type : %d"
-    /* 0x3F9 */ "\0\0"
-    /* 0x3FC */ "mode : %d"
-    /* 0x405 */ "\0\0"
-    /* 0x408 */ "last : %d"
-    /* 0x411 */ "\0\0"
-    /* 0x414 */ "Keep calibration!"
-    /* 0x425 */ "\0\0"
-    /* 0x428 */ "Recalibration!"
-    /* 0x436 */ "\0"
+    /* 0x080 */ "detaching extension during initialization.\n"
+    /* 0x0AB */ "\0"
+    /* 0x0AC */ "Dpd Setting is ok.\n"
+    /* 0x0BF */ "\0"
+    /* 0x0C0 */ "Dpd Setting is broken.\n"
+    /* 0x0D7 */ "\0"
+    /* 0x0D8 */ "Old Firmware uses default values because it has no Dpd Setting.\n"
+    /* 0x118 */ "\0"
+    /* 0x119 */ "\0"
+    /* 0x11A */ "\0"
+    /* 0x11B */ "\0"
+    /* 0x11C */ "x = %lf, y = %lf\n"
+    /* 0x12D */ "\0"
+    /* 0x12E */ "\0"
+    /* 0x12F */ "\0"
+    /* 0x130 */ "difaveX = %lf, difaveY = %lf\n"
+    /* 0x14D */ "\0"
+    /* 0x14E */ "\0"
+    /* 0x14F */ "\0"
+    /* 0x150 */ "deltaX  = %lf, deltaY  = %lf\n"
+    /* 0x16D */ "\0"
+    /* 0x16E */ "\0"
+    /* 0x16F */ "\0"
+    /* 0x170 */ "_wpadCalibrationX = %lf, _wpadCalibrationY = %lf\n"
+    /* 0x1A1 */ "\0"
+    /* 0x1A2 */ "\0"
+    /* 0x1A3 */ "\0"
+    /* 0x1A4 */ "centX  = %lf, centY  = %lf\n"
+    /* 0x1BF */ "\0"
+    /* 0x1C0 */ "_wpadRolag  = %lf\n"
+    /* 0x1D2 */ "\0"
+    /* 0x1D3 */ "\0"
+    /* 0x1D4 */ "Acc is ok.\n"
+    /* 0x1DF */ "\0"
+    /* 0x1E0 */ "Acc is broken.\n"
+    /* 0x1EF */ "\0"
+    /* 0x1F0 */ "0G:  accX = %d,  accY = %d,  accZ = %d\n"
+    /* 0x217 */ "\0"
+    /* 0x218 */ "1G:  accX = %d,  accY = %d,  accZ = %d\n"
+    /* 0x23F */ "\0"
+    /* 0x240 */ "Volume: %d,   Motor: %d\n"
+    /* 0x258 */ "\0"
+    /* 0x259 */ "\0"
+    /* 0x25A */ "\0"
+    /* 0x25B */ "\0"
+    /* 0x25C */ "check sum error.\n"
+    /* 0x26D */ "\0"
+    /* 0x26E */ "\0"
+    /* 0x26F */ "\0"
+    /* 0x270 */ "0G:  fsaccX = %d,  fsaccY = %d,  fsaccZ = %d\n"
+    /* 0x29D */ "\0"
+    /* 0x29E */ "\0"
+    /* 0x29F */ "\0"
+    /* 0x2A0 */ "1G:  fsaccX = %d,  fsaccY = %d,  fsaccZ = %d\n"
+    /* 0x2CD */ "\0"
+    /* 0x2CE */ "\0"
+    /* 0x2CF */ "\0"
+    /* 0x2D0 */ "FS:  X = %d,  X max = %d,  X min = %d\n"
+    /* 0x2F6 */ "\0"
+    /* 0x2F7 */ "\0"
+    /* 0x2F8 */ "FS:  Y = %d,  Y max = %d,  Y min = %d\n"
+    /* 0x31E */ "\0"
+    /* 0x31F */ "\0"
+    /* 0x320 */ "CL:  X = %d,  X max = %d,  X min = %d\n"
+    /* 0x346 */ "\0"
+    /* 0x347 */ "\0"
+    /* 0x348 */ "CL:  Y = %d,  Y max = %d,  Y min = %d\n"
+    /* 0x36E */ "\0"
+    /* 0x36F */ "\0"
+    /* 0x370 */ "CR:  X = %d,  X max = %d,  X min = %d\n"
+    /* 0x396 */ "\0"
+    /* 0x397 */ "\0"
+    /* 0x398 */ "CR:  Y = %d,  Y max = %d,  Y min = %d\n"
+    /* 0x3BE */ "\0"
+    /* 0x3BF */ "\0"
+    /* 0x3C0 */ "LR:  L = %d,  R = %d\n"
+    /* 0x3D5 */ "\0"
+    /* 0x3D6 */ "\0"
+    /* 0x3D7 */ "\0"
+    /* 0x3D8 */ "devId: %d, subId: %d\n"
+    /* 0x3ED */ "\0"
+    /* 0x3EE */ "\0"
+    /* 0x3EF */ "\0"
+    /* 0x3F0 */ "type : %d\n"
+    /* 0x3FA */ "\0"
+    /* 0x3FB */ "\0"
+    /* 0x3FC */ "mode : %d\n"
+    /* 0x406 */ "\0"
+    /* 0x407 */ "\0"
+    /* 0x408 */ "last : %d\n"
+    /* 0x412 */ "\0"
+    /* 0x413 */ "\0"
+    /* 0x414 */ "Keep calibration!\n"
+    /* 0x426 */ "\0"
+    /* 0x427 */ "\0"
+    /* 0x428 */ "Recalibration!\n"
+    /* 0x437 */ "\0"
 };
-
-static char lbl_80560E68[0x14] = "Received report 20";
-
-static char lbl_80560E7C[0x124] = {
-    /* 0x44C */ "initialize attachment"
-    /* 0x461 */ "\0\0"
-    /* 0x464 */ "read error happens!"
-    /* 0x477 */ "\0\0\0\0"
-    /* 0x47C */ "base addr: %08x"
-    /* 0x48B */ "\0\0\0\0"
-    /* 0x490 */ "length   : %d"
-    /* 0x49D */ "\0\0"
-    /* 0x4A0 */ "i2c = %04x"
-    /* 0x4AA */ "\0"
-    /* 0x4AC */ "enc = %d"
-    /* 0x4B4 */ "\0\0\0"
-    /* 0x4B8 */ "Access to extension register."
-    /* 0x4D5 */ "\0\0"
-    /* 0x4D8 */ "Decode!!!!"
-    /* 0x4E2 */ "\0"
-    /* 0x4E4 */ "    len = %d, addr = %04x"
-    /* 0x4FD */ "\0\0"
-    /* 0x500 */ "received data is out of range!"
-    /* 0x51E */ "\0"
-    /* 0x520 */ "Received ack!"
-    /* 0x52D */ "\0\0"
-    /* 0x530 */ "ack --> report ID = %02x, error code = %d"
-    /* 0x559 */ "\0\0"
-    /* 0x55C */ "invalid ack!"
-    /* 0x568 */ "\0\0\0\0\0\0\0",
-};
-
-// Debug message accessors (strings are stored after the report array)
-#define WPAD_DBG_MSG(off) ((const char*)__a1_input_reports_array + (off))
+static char lbl_80560E68[0x14] = "Received report 20\n";
 
 // Sensor bar / DPD calibration data, per channel (retail .sdata label, owning TU or extern)
 extern f32 _wpadCalibrationX[5][WPAD_MAX_CONTROLLERS];
 
-// Shared MWCC literal-pool constants (retail .sdata2 symbols)
+// Shared MWCC literal-pool constants
 extern f64 double_8066C258;  // 0x4330000000000000: unsigned int->double magic
 extern f64 double_8066C248;  // 0x4330000080000000: signed s16->double magic
 extern f32 float_8066C250;   // 3.14159274f
@@ -1018,56 +1017,6 @@ void __wpadGetGameInfo(s32 chan, s32 err, u8 index) {
     }
 }
 
-//
-// Acknowledgement report
-//
-
-void __a1_22_ack(u8 chan, u8* data, WPADStatusEx* status) {
-    const char* msg = (const char*)__a1_input_reports_array;
-    WPADCB* cb = __rvl_p_wpadcb[chan];
-    BOOL enable;
-    u8 type;
-    u8 err;
-    s32 ackStatus;
-
-    enable = OSDisableInterrupts();
-
-    DEBUGPrint(msg + 0x520);
-
-    memcpy(status, __rvl_p_wpadcb[chan]->rxBufs[!__rvl_p_wpadcb[chan]->rxBufIndex], RX_BUFFER_SIZE);
-
-    // Button word: report bytes merged over the preserved bits of the old value
-    status->button = (u16)(((data[2] << 8) | data[1]) & HID_WPAD_BUTTON_MASK) |
-                     (u16)(status->button & 0x6000);
-
-    if (status->dev != cb->devType) {
-        status->dev = cb->devType;
-        status->err = WPAD_ERR_INVALID;
-    }
-
-    type = data[3];
-    err = data[4];
-    ackStatus = (err == 0) ? 0 : -3;
-
-    DEBUGPrint(msg + 0x530, type, err);
-
-    if (cb->lastReportID == type) {
-        if (cb->cmdBlkCB != NULL) {
-            cb->cmdBlkCB(chan, ackStatus);
-            cb->cmdBlkCB = NULL;
-        }
-        cb->status = WPAD_ERR_OK;
-    } else {
-        DEBUGPrint(msg + 0x55C);
-    }
-
-    OSRestoreInterrupts(enable);
-}
-
-//
-// Placeholder stubs for reports not yet matched
-//
-
 void __wpadAbortInitExtension(s32 chan, s32 result) {
     WPADCB* cb = __rvl_p_wpadcb[chan];
     u8 devType;
@@ -1308,7 +1257,7 @@ void __a1_20_status_report(u8 chan, u8* data, WPADStatusEx* status) {
 
     if (cb->wpInfo.attach != 0) {
         if (oldAttach == 0) {
-            DEBUGPrint(lbl_80560E7C);
+            DEBUGPrint("initialize attachment\n");
             _wpadExtInitRetryCnt[chan] = 0;
             WPADiClearQueue(&__rvl_p_wpadcb[chan]->extCmdQueue);
             WPADiSendSetReportType(&__rvl_p_wpadcb[chan]->extCmdQueue,
@@ -1368,7 +1317,6 @@ void __a1_20_status_report(u8 chan, u8* data, WPADStatusEx* status) {
 }
 
 void __a1_21_user_data(u8 chan, u8* data, WPADStatusEx* status) {
-    const char* pDbg = (const char*)__a1_input_reports_array;
     WPADCB* cb = __rvl_p_wpadcb[chan];
     BOOL enable;
     u32 addrHi;
@@ -1380,7 +1328,7 @@ void __a1_21_user_data(u8 chan, u8* data, WPADStatusEx* status) {
     enable = OSDisableInterrupts();
 
     if ((data[3] & 0x0F) != 0) {
-        DEBUGPrint(pDbg + 0x464);
+        DEBUGPrint("read error happens!\n");
         cb->wmReadHadError = -1;
 
         if (cb->cmdBlkCB != NULL) {
@@ -1404,19 +1352,19 @@ void __a1_21_user_data(u8 chan, u8* data, WPADStatusEx* status) {
         if ((s32)(addr + cb->wmReadLength) == (s32)(dataAddr + length)) {
             s32 err;
 
-            DEBUGPrint(pDbg + 0x47C, cb->wmReadAddress);
-            DEBUGPrint(pDbg + 0x490, cb->wmReadLength);
+            DEBUGPrint("base addr: %08x\n", cb->wmReadAddress);
+            DEBUGPrint("length   : %d\n", cb->wmReadLength);
             err = cb->wmReadHadError >> 31;
             err &= -3;
-            DEBUGPrint(pDbg + 0x4A0, addrHi, err);
-            DEBUGPrint(pDbg + 0x4AC, cb->UNK_0x98D);
+            DEBUGPrint("i2c = %04x\n", addrHi, err);
+            DEBUGPrint("enc = %d\n", cb->UNK_0x98D);
 
             if (addrHi == 0x4A4) {
-                DEBUGPrint(pDbg + 0x4B8);
+                DEBUGPrint("Access to extension register.\n");
 
                 if ((u8)(cb->UNK_0x98D + 0xFE) <= 1) {
-                    DEBUGPrint(pDbg + 0x4D8);
-                    DEBUGPrint(pDbg + 0x4E4, length, addr);
+                    DEBUGPrint("Decode!!!!\n");
+                    DEBUGPrint("    len = %d, addr = %04x\n", length, addr);
                     WPADiDecode(chan, cb->wmReadDataPtr, length, addr);
                 }
             }
@@ -1445,7 +1393,7 @@ void __a1_21_user_data(u8 chan, u8* data, WPADStatusEx* status) {
             cb->status = 0;
         }
     } else {
-        DEBUGPrint(pDbg + 0x500);
+        DEBUGPrint("received data is out of range!\n");
     }
 
     memcpy(status, __rvl_p_wpadcb[chan]->rxBufs[!__rvl_p_wpadcb[chan]->rxBufIndex],
@@ -1463,6 +1411,54 @@ void __a1_21_user_data(u8 chan, u8* data, WPADStatusEx* status) {
     OSRestoreInterrupts(enable);
 }
 
+//
+// Acknowledgement report
+//
+void __a1_22_ack(u8 chan, u8* data, WPADStatusEx* status) {
+    const char* msg = (const char*)__a1_input_reports_array;
+    WPADCB* cb = __rvl_p_wpadcb[chan];
+    BOOL enable;
+    u8 type;
+    u8 err;
+    s32 ackStatus;
+
+    enable = OSDisableInterrupts();
+
+    DEBUGPrint("Received ack!\n");
+
+    memcpy(status, __rvl_p_wpadcb[chan]->rxBufs[!__rvl_p_wpadcb[chan]->rxBufIndex], RX_BUFFER_SIZE);
+
+    // Button word: report bytes merged over the preserved bits of the old value
+    status->button = (u16)(((data[2] << 8) | data[1]) & HID_WPAD_BUTTON_MASK) |
+                     (u16)(status->button & 0x6000);
+
+    if (status->dev != cb->devType) {
+        status->dev = cb->devType;
+        status->err = WPAD_ERR_INVALID;
+    }
+
+    type = data[3];
+    err = data[4];
+    ackStatus = (err == 0) ? 0 : -3;
+
+    DEBUGPrint("ack --> report ID = %02x, error code = %d\n", type, err);
+
+    if (cb->lastReportID == type) {
+        if (cb->cmdBlkCB != NULL) {
+            cb->cmdBlkCB(chan, ackStatus);
+            cb->cmdBlkCB = NULL;
+        }
+        cb->status = WPAD_ERR_OK;
+    } else {
+        DEBUGPrint("invalid ack!\n");
+    }
+
+    OSRestoreInterrupts(enable);
+}
+
+//
+// Placeholder stubs for reports not yet matched
+//
 void __a1_36_data_type(u8 chan, u8* data, WPADStatusEx* status) {
     WPADCB* cb = __rvl_p_wpadcb[chan];
 

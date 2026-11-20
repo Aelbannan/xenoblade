@@ -1,5 +1,5 @@
 #pragma once
-
+#include "kyoshin/cf/CfCamSymbols.hpp"
 #include <types.h>
 #include "monolib/util/FixStr.hpp"
 #include "kyoshin/cf/CBattleManager.hpp"
@@ -775,7 +775,7 @@ void* getObjectAt(void* list, u32 idx);
 
 // C++-mangled imports (declared so MWCC emits the retail mangled names).
 extern "C" void* getEffOwner____FPv(void* obj);
-bool isGlobalCamFlagSet(int mask);     // isGlobalCamFlagSet__Fi
+
 // findObjectById__Fi is declared (void* return) by code_802B8A3C.hpp via
 // CBattleManager.hpp - same mangled name, do not redeclare here.
 

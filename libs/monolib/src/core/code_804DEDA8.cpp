@@ -254,24 +254,28 @@ extern "C" void SchedRes_ClearBuf60() {
     memset(sTexLoadCache, 0, 0x60);
 }
 
-// Texture-loader manager: resource object pointer at +0x10 (see code_804DEDA8.hpp).
-struct TexLoaderView {
+// Texture-loader manager: resource object pointer at +0x10.
+// name-guess: CTexLoader (no retail type name; recovered from SchedTexLoadCached).
+struct CTexLoader {
     u8 _00[0x10]; // 0x00
     u8* mResObj;  // 0x10
 };
 
-struct TexResObjView {
+// name-guess: CTexResourceObject (custom archive imaged by SchedTexLoadCached).
+struct CTexResourceObject {
     u8 _00[8];        // 0x00
     u32 mOffsetTable; // 0x08: byte offset of the TexOfsEntry array
 };
 
-struct TexOfsEntryView {
+// name-guess: CTexOffsetEntry (8-byte offset-table entry).
+struct CTexOffsetEntry {
     u32 mOffset; // byte offset of the TexInfo within the res object
     u32 mPad;    // entries are 8 bytes apart
 };
 
 // One texture record inside the resource object.
-struct TexInfoView {
+// name-guess: CTexInfo (layout recovered from the GXInitTexObj fields).
+struct CTexInfo {
     u16 mHeight;  // 0x00
     u16 mWidth;   // 0x02
     u32 mFmt;     // 0x04: GXTexFmt
@@ -286,7 +290,8 @@ struct TexInfoView {
 };
 
 // 12-byte last-loaded-texture cache entry (array at sTexLoadCache).
-struct TexCacheEntryView {
+// name-guess: CTexLoadCacheEntry (sTexLoadCache element layout).
+struct CTexLoadCacheEntry {
     void* mMgr; // 0x00
     s32 mKey;   // 0x04
     s32 mWrap;  // 0x08
@@ -295,15 +300,15 @@ struct TexCacheEntryView {
 // Load texture `index` of `mgr` into tex map slot `texMap` with wrap mode
 // `wrapMode`, unless that exact combination is already the cached last load
 // (the cache is indexed by tex map slot).
-extern "C" void SchedTexLoadCached(TexLoaderView* mgr, s32 index, GXTexMapID texMap,
+extern "C" void SchedTexLoadCached(CTexLoader* mgr, s32 index, GXTexMapID texMap,
                    GXTexWrapMode wrapMode) {
-    TexCacheEntryView* cache = (TexCacheEntryView*)sTexLoadCache;
+    CTexLoadCacheEntry* cache = (CTexLoadCacheEntry*)sTexLoadCache;
     if (!(cache[texMap].mMgr == mgr && index == cache[texMap].mKey &&
           wrapMode == cache[texMap].mWrap)) {
-        TexResObjView* resObj = (TexResObjView*)mgr->mResObj;
-        TexOfsEntryView* offsets =
-            (TexOfsEntryView*)((u8*)resObj + resObj->mOffsetTable);
-        TexInfoView* info = (TexInfoView*)((u8*)resObj + offsets[index].mOffset);
+        CTexResourceObject* resObj = (CTexResourceObject*)mgr->mResObj;
+        CTexOffsetEntry* offsets =
+            (CTexOffsetEntry*)((u8*)resObj + resObj->mOffsetTable);
+        CTexInfo* info = (CTexInfo*)((u8*)resObj + offsets[index].mOffset);
         bool mipmapped = info->mMinLod != info->mMaxLod;
         GXTexObj obj;
         GXInitTexObj(&obj, (u8*)resObj + info->mImgOfs, info->mWidth,
@@ -467,6 +472,16 @@ extern "C" s32 SchedRes_FindOrClaim(u32 key) {
 #pragma push
 #pragma auto_inline off  // noinline-ok: local one-shot helpers; -ipa off / -inline noauto both shrink __dt__804DEDCC and break extab-gate
 // Working view of the entry header used while walking the chain.
+// One 0x20-byte node in the chunk chain after the header.
+struct DedccChunk {
+    u32 mNextOffset;  // +0x00 distance to the next chunk
+    u16 mType;        // +0x04 node kind (0 = terminator)
+    u8 _06[2];
+    void* mNodePtr;   // +0x08
+    void* mIndexPtr;  // +0x0C
+    u8 mPayload[0x10]; // +0x10 .. +0x20
+};
+
 struct DedccHdr {
     u8 b0;    // +0x00
     u8 b1;    // +0x01 (bit7 = flagBit)
@@ -476,6 +491,8 @@ struct DedccHdr {
     void* p8; // +0x08 node array
     void* pc; // +0x0C index array
     void* p10; // +0x10
+    u32 mField14[3]; // +0x14 .. +0x20
+    DedccChunk mChunks[1]; // +0x20 first chunk of the chain
 };
 extern "C" int __dt__804DEDCC(CResEntry* entry, void* res, u32 flagBit) {
     DedccHdr* e = (DedccHdr*)entry;
@@ -508,7 +525,7 @@ extern "C" int __dt__804DEDCC(CResEntry* entry, void* res, u32 flagBit) {
         }
         e->pc = arr;
     }
-    u8* chunk = (u8*)e + 0x20;
+    u8* chunk = (u8*)e->mChunks;
     for (;;) {
         u16 type = *(u16*)(chunk + 4);
         if (type == 0) {
@@ -844,7 +861,7 @@ extern "C" void SchedElem_ClaimNode(u32 key, CSchedFxObjView* obj, void* owner, 
             node->mNext = elem->mList;
             elem->mList = node;
         }
-        if (((*(u16*)((u8*)owner + 0x1C)) >> 4) & 1) {
+        if ((((CEffectObj*)owner)->mFlags1C >> 4) & 1) {
             elem->mCount++;
         }
     } else {
@@ -853,7 +870,7 @@ extern "C" void SchedElem_ClaimNode(u32 key, CSchedFxObjView* obj, void* owner, 
         elem->mList = node;
         elem->mPrio = prio;
         elem->mVal = (u32)obj;
-        elem->mCount = ((*(u16*)((u8*)owner + 0x1C)) >> 4) & 1;
+        elem->mCount = (((CEffectObj*)owner)->mFlags1C >> 4) & 1;
         node->mNext = NULL;
         node->mKey = (void*)(u32)i;
         node->mObj = owner;
@@ -1250,8 +1267,10 @@ struct CEntryElem {
     s16 mField02;    // 0x02
     s16 mField04;    // 0x04
     s16 mField06;    // 0x06
-    u8 mRest[0x0E];  // 0x08
-};
+    u8 mBytes08[4];  // 0x08: four channel bytes (0x10-stride elements)
+    f32 mField0C;    // 0x0C: scalar channel (0x10-stride elements)
+    f32 mField10;    // 0x10: scalar channel (0x14-stride elements)
+};                   // stride 0x14 for spline-mode entry blobs
 
 // 0x10-stride element kind with a vec3 at +0x04 (SchedAnim_LerpVec24 /
 // SchedAnim_RefreshScaleVec): 4 + 12 = 16 = the caller stride.
@@ -1435,10 +1454,12 @@ extern "C" void SchedAnim_AdvanceVec28(CSchedAnimItem* item, CEntryElem* entries
     if (rate < 0.0f) {
         return;
     }
-    u8* b = (u8*)ret + ((item->mField06 - item->mField05) & 0xFF) * 0x28;
-    CEVec3LerpPS(&item->mField0C, (u8*)ret + 4, b + 4, rate);
-    CEVec3LerpPS(&item->mField18, (u8*)ret + 0x10, b + 0x10, rate);
-    CEVec3LerpPS(&item->mField24, (u8*)ret + 0x1C, b + 0x1C, rate);
+    CEntryWideElem* wide = (CEntryWideElem*)ret;
+    CEntryWideElem* b = (CEntryWideElem*)((u8*)ret +
+                          ((item->mField06 - item->mField05) & 0xFF) * 0x28);
+    CEVec3LerpPS(&item->mField0C, &wide->mV0, &b->mV0, rate);
+    CEVec3LerpPS(&item->mField18, &wide->mV1, &b->mV1, rate);
+    CEVec3LerpPS(&item->mField24, &wide->mV2, &b->mV2, rate);
 }
 
 // Retail duplicate of SchedAnim_InitVec28.
@@ -1480,10 +1501,12 @@ extern "C" void SchedAnim_AdvanceVec28B(CSchedAnimItem* item, CEntryElem* entrie
     if (rate < 0.0f) {
         return;
     }
-    u8* b = (u8*)ret + ((item->mField06 - item->mField05) & 0xFF) * 0x28;
-    CEVec3LerpPS(&item->mField0C, (u8*)ret + 4, b + 4, rate);
-    CEVec3LerpPS(&item->mField18, (u8*)ret + 0x10, b + 0x10, rate);
-    CEVec3LerpPS(&item->mField24, (u8*)ret + 0x1C, b + 0x1C, rate);
+    CEntryWideElem* wide = (CEntryWideElem*)ret;
+    CEntryWideElem* b = (CEntryWideElem*)((u8*)ret +
+                          ((item->mField06 - item->mField05) & 0xFF) * 0x28);
+    CEVec3LerpPS(&item->mField0C, &wide->mV0, &b->mV0, rate);
+    CEVec3LerpPS(&item->mField18, &wide->mV1, &b->mV1, rate);
+    CEVec3LerpPS(&item->mField24, &wide->mV2, &b->mV2, rate);
 }
 
 // Re-roll the two slot frame lengths of an anim item: for each channel draw
@@ -1711,7 +1734,7 @@ extern "C" void SchedAnim_UpdateSpline14(CSchedAnimItem* item, CEntryElem* entri
                 item->mField14 += item->mField20;
                 item->mField18 += item->mField24;
                 if (((item->field_0x04 >> 1) & 3) == 0) {
-                    f32 startF = *(f32*)((u8*)ret + 0x10);
+                    f32 startF = ret->mField10;
                     f32 endF = *(f32*)((u8*)ret +
                                        (item->mField06 - item->mField05) *
                                            0x14 +
@@ -1751,17 +1774,16 @@ extern "C" void SchedAnim_UpdateSpline14(CSchedAnimItem* item, CEntryElem* entri
         return;
     }
     f32 rate = SchedAnim_FrameRate(item, entries, 0x14);
-    u8* pts[4] = {(u8*)ret - 0x14, (u8*)ret, (u8*)ret + 0x14,
-                  (u8*)ret + 0x28};
+    CEntryElem* pts[4] = {ret - 1, ret, ret + 1, ret + 2};
     if (item->mField05 == 0) {
-        pts[0] = (u8*)ret;
+        pts[0] = ret;
     }
-    if (*(u16*)pts[1] == 0x4000) {
-        pts[1] -= 0x14;
-        pts[2] -= 0x14;
+    if (pts[1]->mField00 == 0x4000) {
+        pts[1]--;
+        pts[2]--;
     }
-    if (*(u16*)pts[2] == 0x4000) {
-        pts[2] -= 0x14;
+    if (pts[2]->mField00 == 0x4000) {
+        pts[2]--;
     }
     SchedAnim_EvalSpline((CScheduleItem*)item, (AnimVec3*)&item->mField10,
                   &item->mField28, (s32)modeBits, (void**)pts, rate);
@@ -2354,12 +2376,12 @@ extern "C" void SchedAnim_AdvanceQuad(CSchedAnimItem* item, CEntryElem* entries,
     u8 span = item->mField06 - item->mField05;
     u8* src = retp + span * 0x10 + 4;
     if (type == 0) {
-        CEVec3LerpPS((u8*)self + 0x28, retp + 4, src, rate);
+        CEVec3LerpPS(&self->mExt28, retp + 4, src, rate);
         self->mExt28 += self->mField10;
         self->mExt2C += self->mField14;
         self->mExt30 += self->mField18;
     } else if (type == 1) {
-        CEVec3LerpPS((u8*)self + 0x28, retp + 4, src, rate);
+        CEVec3LerpPS(&self->mExt28, retp + 4, src, rate);
         self->mExt28 *= self->mExt34;
         self->mExt2C *= self->mExt38;
         self->mExt30 *= self->mExt3C;
@@ -2478,7 +2500,7 @@ extern "C" void SchedAnim_InitColor10(CSchedAnimItem* item, u8* base) {
     item->mByte1D = (u8)cw[1];
     item->mByte1E = (u8)cw[2];
     item->mByte1F = (u8)cw[3];
-    item->mField20 = *(f32*)((u8*)ret + 0xC);
+    item->mField20 = ret->mVec.z;
     u8 idx = item->mField05 + item->mField07;
     u16 w = *(u16*)(base + ((u32)idx << 4));
     if (w != 0x4000) {
@@ -2516,13 +2538,13 @@ extern "C" void SchedAnim_AdvanceColor10(CSchedAnimItem* item, CEntryElem* entri
     }
     u8* a = (u8*)ret + 4;
     u8* b = (u8*)ret + (item->mField06 - item->mField05) * 0x10 + 4;
-    u8* dst = (u8*)item + 0x1C;
+    u8* dst = &item->mByte1C;
     // Retail vectorizes these four byte lerps into two paired-single ops.
     dst[0] = (u8)(a[0] + f1 * (b[0] - a[0]));
     dst[1] = (u8)(a[1] + f1 * (b[1] - a[1]));
     dst[2] = (u8)(a[2] + f1 * (b[2] - a[2]));
     dst[3] = (u8)(a[3] + f1 * (b[3] - a[3]));
-    f32 ca = *(f32*)((u8*)ret + 0xC);
+    f32 ca = ret->mField0C;
     f32 cb = *(f32*)(b + 8);
     item->mField20 = ca + f1 * (cb - ca);
 }

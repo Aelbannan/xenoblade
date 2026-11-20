@@ -2,19 +2,10 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include <harness_catalog.h>
+#include "libs/CriWare/src/sofdec/sfdcore/sfh/sfh_types.h"
 
 u32 lbl_eu_80619BE8;
 static u32 _lbl_eu_80619BE8_pad; /* pad to 0x8 */
-
-/* SFH runtime context - 0x18 bytes */
-typedef struct SFHContext {
-    s32 active;       /* 0x00: set to 1 when created */
-    u32 field_0x04;   /* 0x04: arg0 from SFH_Create */
-    u32 field_0x08;   /* 0x08: arg1 from SFH_Create */
-    u32 field_0x0C;   /* 0x0C */
-    u32 field_0x10;   /* 0x10 */
-    u32 field_0x14;   /* 0x14 */
-} SFHContext;
 
 void SFH_Init(void) {
     lbl_eu_80619BE8++;
@@ -34,10 +25,10 @@ SFHContext* SFH_Create(u32 arg0, s32 arg1, SFHContext* ctx) {
         memset(c, 0, sizeof(SFHContext));
         if (a1 >= 0x800) {
             memset(c, 0, sizeof(SFHContext));
-            c->active = 1;
+            c->state = 1;
             result = c;
-            c->field_0x04 = a0;
-            c->field_0x08 = a1;
+            c->header = (u8*)a0;
+            c->hdrSize = (u32)a1;
         }
     }
     return result;
@@ -64,8 +55,8 @@ int SFH_IsSfdHeader(SFHContext* ctx, int* outIsValid) {
 
     *outIsValid = 0;
 
-    if (ctx->field_0x08 < 0x800) {
-        ctx->active = -1;
+    if (ctx->hdrSize < 0x800) {
+        ctx->state = -1;
         return 0;
     }
 
@@ -80,7 +71,7 @@ int SFH_IsSfdHeader(SFHContext* ctx, int* outIsValid) {
             moduleMajor = 0;
             moduleMinor = 0;
         }
-        ctx->active = 2;
+        ctx->state = 2;
         goto check_result;
     } else {
         if (!VER2_IsSfdHeader(ctx, &isValid)) {
@@ -93,18 +84,18 @@ int SFH_IsSfdHeader(SFHContext* ctx, int* outIsValid) {
         if (!VER2_AnlyHdrModuleVer(ctx, &moduleMajor, &moduleMinor)) {
             return 0;
         }
-        ctx->active = 2;
+        ctx->state = 2;
     }
 
 check_result:
-    if (ctx->active == 2)
+    if (ctx->state == 2)
         goto success;
-    ctx->active = -1;
+    ctx->state = -1;
     return 0;
 success:
-    ctx->field_0x0C = toolMinor + toolMajor * 100;
-    ctx->field_0x10 = sfhMinor + sfhMajor * 100;
-    ctx->field_0x14 = moduleMinor + moduleMajor * 100;
+    ctx->toolVer = toolMinor + toolMajor * 100;
+    ctx->sfhVer = sfhMinor + sfhMajor * 100;
+    ctx->moduleVer = moduleMinor + moduleMajor * 100;
     *outIsValid = 1;
     return 1;
 }
@@ -112,7 +103,7 @@ success:
 u32 VER1_IsExistStmId(void* buf);
 u32 VER2_IsExistStmId(void* buf);
 u32 SFH_IsExistStmId(void* buf) {
-    s32 ver = (s32)((SFHContext*)buf)->field_0x10;
+    s32 ver = (s32)((SFHContext*)buf)->sfhVer;
     if (ver < 0xC8) return VER1_IsExistStmId(buf);
     if (ver < 0x12C) return VER2_IsExistStmId(buf);
     return 0;
@@ -121,14 +112,14 @@ u32 SFH_IsExistStmId(void* buf) {
 u32 VER1_IsEffFtrInf(void* buf);
 u32 VER2_IsEffFtrInf(void* buf);
 u32 SFH_IsEffFtrInf(void* buf) {
-    s32 ver = (s32)((SFHContext*)buf)->field_0x10;
+    s32 ver = (s32)((SFHContext*)buf)->sfhVer;
     if (ver < 0xC8) return VER1_IsEffFtrInf(buf);
     if (ver < 0x12C) return VER2_IsEffFtrInf(buf);
     return 0;
 }
 
 u32 SFH_AnlyHdrToolVer(void* buf) {
-    s32 ver = (s32)((SFHContext*)buf)->field_0x10;
+    s32 ver = (s32)((SFHContext*)buf)->sfhVer;
     if (ver < 0xC8) return ((u32 (*)(void*))VER1_AnlyHdrToolVer)(buf);
     if (ver < 0x12C) return ((u32 (*)(void*))VER2_AnlyHdrToolVer)(buf);
     return 0;
@@ -137,7 +128,7 @@ u32 SFH_AnlyHdrToolVer(void* buf) {
 u32 VER1_AnlyHdrSiz(void* buf);
 u32 VER2_AnlyHdrSiz(void* buf);
 u32 SFH_AnlyHdrSiz(void* buf) {
-    s32 ver = (s32)((SFHContext*)buf)->field_0x10;
+    s32 ver = (s32)((SFHContext*)buf)->sfhVer;
     if (ver < 0xC8) return VER1_AnlyHdrSiz(buf);
     if (ver < 0x12C) return VER2_AnlyHdrSiz(buf);
     return 0;
@@ -146,7 +137,7 @@ u32 SFH_AnlyHdrSiz(void* buf) {
 u32 VER1_AnlyPackType(void* buf);
 u32 VER2_AnlyPackType(void* buf);
 u32 SFH_AnlyPackType(void* buf) {
-    s32 ver = (s32)((SFHContext*)buf)->field_0x10;
+    s32 ver = (s32)((SFHContext*)buf)->sfhVer;
     if (ver < 0xC8) return VER1_AnlyPackType(buf);
     if (ver < 0x12C) return VER2_AnlyPackType(buf);
     return 0;
@@ -155,7 +146,7 @@ u32 SFH_AnlyPackType(void* buf) {
 u32 VER1_AnlyPketSizLen(void* buf);
 u32 VER2_AnlyPketSizLen(void* buf);
 u32 SFH_AnlyPketSizLen(void* buf) {
-    s32 ver = (s32)((SFHContext*)buf)->field_0x10;
+    s32 ver = (s32)((SFHContext*)buf)->sfhVer;
     if (ver < 0xC8) return VER1_AnlyPketSizLen(buf);
     if (ver < 0x12C) return VER2_AnlyPketSizLen(buf);
     return 0;
@@ -164,7 +155,7 @@ u32 SFH_AnlyPketSizLen(void* buf) {
 u32 VER1_AnlyPackSiz(void* buf);
 u32 VER2_AnlyPackSiz(void* buf);
 u32 SFH_AnlyPackSiz(void* buf) {
-    s32 ver = (s32)((SFHContext*)buf)->field_0x10;
+    s32 ver = (s32)((SFHContext*)buf)->sfhVer;
     if (ver < 0xC8) return VER1_AnlyPackSiz(buf);
     if (ver < 0x12C) return VER2_AnlyPackSiz(buf);
     return 0;
@@ -173,7 +164,7 @@ u32 SFH_AnlyPackSiz(void* buf) {
 u32 VER1_AnlyNumElemTot(void* buf);
 u32 VER2_AnlyNumElemTot(void* buf);
 u32 SFH_AnlyNumElemTot(void* buf) {
-    s32 ver = (s32)((SFHContext*)buf)->field_0x10;
+    s32 ver = (s32)((SFHContext*)buf)->sfhVer;
     if (ver < 0xC8) return VER1_AnlyNumElemTot(buf);
     if (ver < 0x12C) return VER2_AnlyNumElemTot(buf);
     return 0;
@@ -182,7 +173,7 @@ u32 SFH_AnlyNumElemTot(void* buf) {
 u32 VER1_AnlyNumElemAud(void* buf);
 u32 VER2_AnlyNumElemAud(void* buf);
 u32 SFH_AnlyNumElemAud(void* buf) {
-    s32 ver = (s32)((SFHContext*)buf)->field_0x10;
+    s32 ver = (s32)((SFHContext*)buf)->sfhVer;
     if (ver < 0xC8) return VER1_AnlyNumElemAud(buf);
     if (ver < 0x12C) return VER2_AnlyNumElemAud(buf);
     return 0;
@@ -191,7 +182,7 @@ u32 SFH_AnlyNumElemAud(void* buf) {
 u32 VER1_AnlyNumElemVid(void* buf);
 u32 VER2_AnlyNumElemVid(void* buf);
 u32 SFH_AnlyNumElemVid(void* buf) {
-    s32 ver = (s32)((SFHContext*)buf)->field_0x10;
+    s32 ver = (s32)((SFHContext*)buf)->sfhVer;
     if (ver < 0xC8) return VER1_AnlyNumElemVid(buf);
     if (ver < 0x12C) return VER2_AnlyNumElemVid(buf);
     return 0;
@@ -200,7 +191,7 @@ u32 SFH_AnlyNumElemVid(void* buf) {
 u32 VER1_AnlyNumElemPrv(void* buf);
 u32 VER2_AnlyNumElemPrv(void* buf);
 u32 SFH_AnlyNumElemPrv(void* buf) {
-    s32 ver = (s32)((SFHContext*)buf)->field_0x10;
+    s32 ver = (s32)((SFHContext*)buf)->sfhVer;
     if (ver < 0xC8) return VER1_AnlyNumElemPrv(buf);
     if (ver < 0x12C) return VER2_AnlyNumElemPrv(buf);
     return 0;
@@ -209,7 +200,7 @@ u32 SFH_AnlyNumElemPrv(void* buf) {
 u32 VER1_AnlyByteRate(void* buf);
 u32 VER2_AnlyByteRate(void* buf);
 u32 SFH_AnlyByteRate(void* buf) {
-    s32 ver = (s32)((SFHContext*)buf)->field_0x10;
+    s32 ver = (s32)((SFHContext*)buf)->sfhVer;
     if (ver < 0xC8) return VER1_AnlyByteRate(buf);
     if (ver < 0x12C) return VER2_AnlyByteRate(buf);
     return 0;
@@ -218,7 +209,7 @@ u32 SFH_AnlyByteRate(void* buf) {
 u32 VER1_AnlyMaxPlyLenAud(void* buf);
 u32 VER2_AnlyMaxPlyLenAud(void* buf);
 u32 SFH_AnlyMaxPlyLenAud(void* buf) {
-    s32 ver = (s32)((SFHContext*)buf)->field_0x10;
+    s32 ver = (s32)((SFHContext*)buf)->sfhVer;
     if (ver < 0xC8) return VER1_AnlyMaxPlyLenAud(buf);
     if (ver < 0x12C) return VER2_AnlyMaxPlyLenAud(buf);
     return 0;
@@ -227,7 +218,7 @@ u32 SFH_AnlyMaxPlyLenAud(void* buf) {
 u32 VER1_AnlyMaxPlyLenVid(void* buf);
 u32 VER2_AnlyMaxPlyLenVid(void* buf);
 u32 SFH_AnlyMaxPlyLenVid(void* buf) {
-    s32 ver = (s32)((SFHContext*)buf)->field_0x10;
+    s32 ver = (s32)((SFHContext*)buf)->sfhVer;
     if (ver < 0xC8) return VER1_AnlyMaxPlyLenVid(buf);
     if (ver < 0x12C) return VER2_AnlyMaxPlyLenVid(buf);
     return 0;
@@ -236,7 +227,7 @@ u32 SFH_AnlyMaxPlyLenVid(void* buf) {
 u32 VER1_AnlyMaxFrmNum(void* buf);
 u32 VER2_AnlyMaxFrmNum(void* buf);
 u32 SFH_AnlyMaxFrmNum(void* buf) {
-    s32 ver = (s32)((SFHContext*)buf)->field_0x10;
+    s32 ver = (s32)((SFHContext*)buf)->sfhVer;
     if (ver < 0xC8) return VER1_AnlyMaxFrmNum(buf);
     if (ver < 0x12C) return VER2_AnlyMaxFrmNum(buf);
     return 0;
@@ -245,7 +236,7 @@ u32 SFH_AnlyMaxFrmNum(void* buf) {
 u32 VER1_AnlyMaxPicSiz(void* buf);
 u32 VER2_AnlyMaxPicSiz(void* buf);
 u32 SFH_AnlyMaxPicSiz(void* buf) {
-    s32 ver = (s32)((SFHContext*)buf)->field_0x10;
+    s32 ver = (s32)((SFHContext*)buf)->sfhVer;
     if (ver < 0xC8) return VER1_AnlyMaxPicSiz(buf);
     if (ver < 0x12C) return VER2_AnlyMaxPicSiz(buf);
     return 0;
@@ -254,7 +245,7 @@ u32 SFH_AnlyMaxPicSiz(void* buf) {
 u32 VER1_AnlyDiffTime(void* buf);
 u32 VER2_AnlyDiffTime(void* buf);
 u32 SFH_AnlyDiffTime(void* buf) {
-    s32 ver = (s32)((SFHContext*)buf)->field_0x10;
+    s32 ver = (s32)((SFHContext*)buf)->sfhVer;
     if (ver < 0xC8) {
         return 0;
     }
@@ -267,7 +258,7 @@ u32 SFH_AnlyDiffTime(void* buf) {
 u32 VER1_AnlyElemCodecAud(void* buf);
 u32 VER2_AnlyElemCodecAud(void* buf);
 u32 SFH_AnlyElemCodecAud(void* buf) {
-    s32 ver = (s32)((SFHContext*)buf)->field_0x10;
+    s32 ver = (s32)((SFHContext*)buf)->sfhVer;
     if (ver < 0xC8) return VER1_AnlyElemCodecAud(buf);
     if (ver < 0x12C) return VER2_AnlyElemCodecAud(buf);
     return 0;
@@ -276,7 +267,7 @@ u32 SFH_AnlyElemCodecAud(void* buf) {
 u32 VER1_AnlyElemLayer(void* buf);
 u32 VER2_AnlyElemLayer(void* buf);
 u32 SFH_AnlyElemLayer(void* buf) {
-    s32 ver = (s32)((SFHContext*)buf)->field_0x10;
+    s32 ver = (s32)((SFHContext*)buf)->sfhVer;
     if (ver < 0xC8) return VER1_AnlyElemLayer(buf);
     if (ver < 0x12C) return VER2_AnlyElemLayer(buf);
     return 0;
@@ -285,7 +276,7 @@ u32 SFH_AnlyElemLayer(void* buf) {
 u32 VER1_AnlyElemChNum(void* buf);
 u32 VER2_AnlyElemChNum(void* buf);
 u32 SFH_AnlyElemChNum(void* buf) {
-    s32 ver = (s32)((SFHContext*)buf)->field_0x10;
+    s32 ver = (s32)((SFHContext*)buf)->sfhVer;
     if (ver < 0xC8) return VER1_AnlyElemChNum(buf);
     if (ver < 0x12C) return VER2_AnlyElemChNum(buf);
     return 0;
@@ -294,7 +285,7 @@ u32 SFH_AnlyElemChNum(void* buf) {
 u32 VER1_AnlyElemSmpHz(void* buf);
 u32 VER2_AnlyElemSmpHz(void* buf);
 u32 SFH_AnlyElemSmpHz(void* buf) {
-    s32 ver = (s32)((SFHContext*)buf)->field_0x10;
+    s32 ver = (s32)((SFHContext*)buf)->sfhVer;
     if (ver < 0xC8) return VER1_AnlyElemSmpHz(buf);
     if (ver < 0x12C) return VER2_AnlyElemSmpHz(buf);
     return 0;
@@ -303,7 +294,7 @@ u32 SFH_AnlyElemSmpHz(void* buf) {
 u32 VER1_AnlyElemCodecVid(void* buf);
 u32 VER2_AnlyElemCodecVid(void* buf);
 u32 SFH_AnlyElemCodecVid(void* buf) {
-    s32 ver = (s32)((SFHContext*)buf)->field_0x10;
+    s32 ver = (s32)((SFHContext*)buf)->sfhVer;
     if (ver < 0xC8) return VER1_AnlyElemCodecVid(buf);
     if (ver < 0x12C) return VER2_AnlyElemCodecVid(buf);
     return 0;
@@ -312,7 +303,7 @@ u32 SFH_AnlyElemCodecVid(void* buf) {
 u32 VER1_AnlyElemBitRate(void* buf);
 u32 VER2_AnlyElemAvrBitRate(void* buf);
 u32 SFH_AnlyElemBitRate(void* buf) {
-    s32 ver = (s32)((SFHContext*)buf)->field_0x10;
+    s32 ver = (s32)((SFHContext*)buf)->sfhVer;
     if (ver < 0xC8) return VER1_AnlyElemBitRate(buf);
     if (ver < 0x12C) return VER2_AnlyElemAvrBitRate(buf);
     return 0;
@@ -321,7 +312,7 @@ u32 SFH_AnlyElemBitRate(void* buf) {
 u32 VER1_AnlyElemPicSz(void* buf);
 u32 VER2_AnlyElemPicSz(void* buf);
 u32 SFH_AnlyElemPicSz(void* buf) {
-    s32 ver = (s32)((SFHContext*)buf)->field_0x10;
+    s32 ver = (s32)((SFHContext*)buf)->sfhVer;
     if (ver < 0xC8) return VER1_AnlyElemPicSz(buf);
     if (ver < 0x12C) return VER2_AnlyElemPicSz(buf);
     return 0;
@@ -330,7 +321,7 @@ u32 SFH_AnlyElemPicSz(void* buf) {
 u32 VER1_AnlyElemPicRate(void* buf);
 u32 VER2_AnlyElemPicRate(void* buf);
 u32 SFH_AnlyElemPicRate(void* buf) {
-    s32 ver = (s32)((SFHContext*)buf)->field_0x10;
+    s32 ver = (s32)((SFHContext*)buf)->sfhVer;
     if (ver < 0xC8) return VER1_AnlyElemPicRate(buf);
     if (ver < 0x12C) return VER2_AnlyElemPicRate(buf);
     return 0;
@@ -339,7 +330,7 @@ u32 SFH_AnlyElemPicRate(void* buf) {
 u32 VER1_AnlyFtrColType(void* buf);
 u32 VER2_AnlyFtrColType(void* buf);
 u32 SFH_AnlyFtrColType(void* buf) {
-    s32 ver = (s32)((SFHContext*)buf)->field_0x10;
+    s32 ver = (s32)((SFHContext*)buf)->sfhVer;
     if (ver < 0xC8) return VER1_AnlyFtrColType(buf);
     if (ver < 0x12C) return VER2_AnlyFtrColType(buf);
     return 0;
@@ -348,7 +339,7 @@ u32 SFH_AnlyFtrColType(void* buf) {
 u32 VER1_AnlyFtrPicType(void* buf);
 u32 VER2_AnlyFtrPicType(void* buf);
 u32 SFH_AnlyFtrPicType(void* buf) {
-    s32 ver = (s32)((SFHContext*)buf)->field_0x10;
+    s32 ver = (s32)((SFHContext*)buf)->sfhVer;
     if (ver < 0xC8) return VER1_AnlyFtrPicType(buf);
     if (ver < 0x12C) return VER2_AnlyFtrPicType(buf);
     return 0;
@@ -357,7 +348,7 @@ u32 SFH_AnlyFtrPicType(void* buf) {
 u32 VER1_AnlyFtrFixFlg(void* buf);
 u32 VER2_AnlyFtrFixFlg(void* buf);
 u32 SFH_AnlyFtrFixFlg(void* buf) {
-    s32 ver = (s32)((SFHContext*)buf)->field_0x10;
+    s32 ver = (s32)((SFHContext*)buf)->sfhVer;
     if (ver < 0xC8) return VER1_AnlyFtrFixFlg(buf);
     if (ver < 0x12C) return VER2_AnlyFtrFixFlg(buf);
     return 0;
@@ -366,7 +357,7 @@ u32 SFH_AnlyFtrFixFlg(void* buf) {
 u32 VER1_AnlyFtrShcFixFlg(void* buf);
 u32 VER2_AnlyFtrShcFixFlg(void* buf);
 u32 SFH_AnlyFtrShcFixFlg(void* buf) {
-    s32 ver = (s32)((SFHContext*)buf)->field_0x10;
+    s32 ver = (s32)((SFHContext*)buf)->sfhVer;
     if (ver < 0xC8) return VER1_AnlyFtrShcFixFlg(buf);
     if (ver < 0x12C) return VER2_AnlyFtrShcFixFlg(buf);
     return 0;
@@ -375,7 +366,7 @@ u32 SFH_AnlyFtrShcFixFlg(void* buf) {
 u32 VER1_AnlyFtrExpand(void* buf);
 u32 VER2_AnlyFtrExpand(void* buf);
 u32 SFH_AnlyFtrExpand(void* buf) {
-    s32 ver = (s32)((SFHContext*)buf)->field_0x10;
+    s32 ver = (s32)((SFHContext*)buf)->sfhVer;
     if (ver < 0xC8) return VER1_AnlyFtrExpand(buf);
     if (ver < 0x12C) return VER2_AnlyFtrExpand(buf);
     return 0;
@@ -384,7 +375,7 @@ u32 SFH_AnlyFtrExpand(void* buf) {
 u32 VER1_AnlyFtrGopN(void* buf);
 u32 VER2_AnlyFtrGopN(void* buf);
 u32 SFH_AnlyFtrGopN(void* buf) {
-    s32 ver = (s32)((SFHContext*)buf)->field_0x10;
+    s32 ver = (s32)((SFHContext*)buf)->sfhVer;
     if (ver < 0xC8) return VER1_AnlyFtrGopN(buf);
     if (ver < 0x12C) return VER2_AnlyFtrGopN(buf);
     return 0;
@@ -393,7 +384,7 @@ u32 SFH_AnlyFtrGopN(void* buf) {
 u32 VER1_AnlyFtrGopM(void* buf);
 u32 VER2_AnlyFtrGopM(void* buf);
 u32 SFH_AnlyFtrGopM(void* buf) {
-    s32 ver = (s32)((SFHContext*)buf)->field_0x10;
+    s32 ver = (s32)((SFHContext*)buf)->sfhVer;
     if (ver < 0xC8) return VER1_AnlyFtrGopM(buf);
     if (ver < 0x12C) return VER2_AnlyFtrGopM(buf);
     return 0;
@@ -402,7 +393,7 @@ u32 SFH_AnlyFtrGopM(void* buf) {
 u32 VER1_AnlyFtrFxType(void* buf);
 u32 VER2_AnlyFtrFxType(void* buf);
 u32 SFH_AnlyFtrFxType(void* buf) {
-    s32 ver = (s32)((SFHContext*)buf)->field_0x10;
+    s32 ver = (s32)((SFHContext*)buf)->sfhVer;
     if (ver < 0xC8) return VER1_AnlyFtrFxType(buf);
     if (ver < 0x12C) return VER2_AnlyFtrFxType(buf);
     return 0;
@@ -411,7 +402,7 @@ u32 SFH_AnlyFtrFxType(void* buf) {
 u32 VER1_AnlyFtrNetWidth(void* buf);
 u32 VER2_AnlyFtrNetWidth(void* buf);
 u32 SFH_AnlyFtrNetWidth(void* buf) {
-    s32 ver = (s32)((SFHContext*)buf)->field_0x10;
+    s32 ver = (s32)((SFHContext*)buf)->sfhVer;
     if (ver < 0xC8) return VER1_AnlyFtrNetWidth(buf);
     if (ver < 0x12C) return VER2_AnlyFtrNetWidth(buf);
     return 0;
@@ -420,7 +411,7 @@ u32 SFH_AnlyFtrNetWidth(void* buf) {
 u32 VER1_AnlyFtrNetHeight(void* buf);
 u32 VER2_AnlyFtrNetHeight(void* buf);
 u32 SFH_AnlyFtrNetHeight(void* buf) {
-    s32 ver = (s32)((SFHContext*)buf)->field_0x10;
+    s32 ver = (s32)((SFHContext*)buf)->sfhVer;
     if (ver < 0xC8) return VER1_AnlyFtrNetHeight(buf);
     if (ver < 0x12C) return VER2_AnlyFtrNetHeight(buf);
     return 0;

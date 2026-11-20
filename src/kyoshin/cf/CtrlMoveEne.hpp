@@ -1,5 +1,5 @@
 #pragma once
-
+#include "kyoshin/cf/CfCamSymbols.hpp"
 #include <types.h>
 #include "kyoshin/cf/CtrlMoveBase.hpp"
 #include <nw4r/math/math_triangular.h>
@@ -21,6 +21,18 @@ struct CfObjectMoveC4Target {
     u32 field_0x270;        // 0x270
 };
 
+// One entry of the move-list array at +0x78 (0x14 bytes each): three floats,
+// a flags halfword, two bytes and a scaled float.
+struct CfMoveSubEntry {
+    f32 field_0x0;                  // 0x00
+    f32 field_0x4;                  // 0x04
+    f32 field_0x8;                  // 0x08
+    u16 field_0xC;                  // 0x0C flags
+    u8 field_0xE;                   // 0x0E
+    u8 field_0xF;                   // 0x0F
+    f32 field_0x10;                 // 0x10
+};
+
 
 class CtrlEnemy;
 
@@ -28,26 +40,31 @@ class __declspec(novtable) CtrlMoveEne : public CCtrlMoveBase {
 public:
     CtrlMoveEne(CtrlEnemy* owner);
 
-    union {
-        f32 field_0x4C;                 // 0x4C (ctor / CtrlMoveEne_InitMoveHook store the move-sub +0xCC result)
-        u32 field_0x4C_bits;            // same word read as integer flags by the move hook tests
-    };
-    u32 field_0x50;                   // 0x50 (CtrlMoveEne_InitMoveHook stores the bdat-derived state)
-    u32 field_0x54;                   // 0x54 (CtrlMoveEne_InitMoveHook zeroes)
-    f32 field_0x58;                   // 0x58 (CtrlMoveEne_InitMoveHook stores the movement-rate divisor)
-    f32 field_0x5C;                   // 0x5C (CtrlMoveEne_InitMoveHook stores the rand/level-derived value)
-    u8 _pad60[0xC4 - 0x60];           // 0x60-0xC3
-    CfObjectMoveC4Target* mTargetC4;  // 0xC4
-    u8 _padC8[0x12C - 0xC8];          // 0xC8-0x12B
+    f32 field_0x4C;                    // 0x4C move-sub heading word / rate-flag word
+    u32 field_0x50;                    // 0x50 bdat-derived state word
+    u32 field_0x54;                    // 0x54 timer/state word
+    u16 field_0x58;                    // 0x58 flags / entry count
+    u16 field_0x5A;                    // 0x5A gate counter
+    u32 field_0x5C;                    // 0x5C dispatch index / wander seed
+    f32 field_0x60;                    // 0x60 timer / current speed
+    f32 field_0x64;                    // 0x64 turn target / smoothed speed
+    f32 field_0x68;                    // 0x68 turn current / latched arts speed
+    f32 field_0x6C;                    // 0x6C turn target / wander timer word
+    u16 field_0x70;                    // 0x70 flags
+    u16 field_0x72;                    // 0x72 gate
+    s16 field_0x74;                    // 0x74 timer
+    s16 field_0x76;                    // 0x76 halt timer / party-probe counter
+    CfMoveSubEntry mMoveEntries[8];    // 0x78-0x117 move-list entries
+    u8 unk_118[0x12C - 0x118];         // 0x118-0x12B (never touched)
     void (CtrlMoveEne::*mMoveHook)();  // 0x12C-0x137 ptmf hook (CtrlMoveEne_DispatchMoveHook / ctor)
     ml::CVec3 mVec138;                  // 0x138 (ctor copies ml::CVec3::zero)
     ml::CVec3 mVec144;                  // 0x144 (ctor copies ml::CVec3::zero)
-    u8 _pad150[0x15C - 0x150];          // 0x150-0x15B
+    ml::CVec3 mVec150;                  // 0x150 re-approach target point
     int field_0x15C;                    // 0x15C latched actor id (TryLatchTargetActor / ConsumeTargetResolve)
     f32 field_0x160;                    // 0x160 (ctor stores 10.0f; CtrlMoveEne_TickMoveControl reads)
     f32 field_0x164;                    // 0x164 (ctor zeroes)
     f32 field_0x168;                    // 0x168 (zeroed by CtrlMoveEne_ResetMoveState)
-    u8 _pad16C[0x170 - 0x16C];          // 0x16C-0x16F
+    f32 field_0x16C;                    // 0x16C derived fall height
     f32 field_0x170;                    // 0x170 (ctor stores 0.699999988079071f)
     f32 field_0x174;                    // 0x174 (ctor stores 0.699999988079071f)
     f32 field_0x178;                    // 0x178 (zeroed by CtrlMoveEne_ResetMoveState)
@@ -55,16 +72,16 @@ public:
     u32 field_0x180;                    // 0x180 flags word (ctor / CtrlMoveEne_InitMoveHook raise bit 0x800)
     u16 field_0x184;                    // 0x184 (zeroed by CtrlMoveEne_ResetMoveState)
     u16 field_0x186;                    // 0x186 (ctor zeroes)
-    u8 _pad188[0x18A - 0x188];          // 0x188-0x189
+    s16 field_0x188;                    // 0x188 (CheckKeepMoving countdown)
     u16 field_0x18A;                    // 0x18A (ctor stores mtRand(0x3C))
     u16 field_0x18C;                    // 0x18C (CtrlMoveEne_InitMoveHook stores 2)
-    u8 _pad18E[0x190 - 0x18E];          // 0x18E-0x18F
+    s16 field_0x18E;                    // 0x18E (CheckKeepMoving target flag)
     u16 field_0x190;                    // 0x190 (zeroed by CtrlMoveEne_ResetMoveState)
     u16 field_0x192;                    // 0x192 (zeroed by CtrlMoveEne_ResetMoveState)
-    u8 _pad194[0x196 - 0x194];          // 0x194-0x195
-    u16 field_0x196;                    // 0x196 (zeroed by CtrlMoveEne_ResetMoveState)
+    u16 field_0x194;                    // 0x194
+    s16 field_0x196;                    // 0x196 (zeroed by CtrlMoveEne_ResetMoveState)
     s16 field_0x198;                    // 0x198 (CtrlMoveEne_TickMoveControl lha's and compares to 90)
-    u8 _pad19A[0x19C - 0x19A];          // 0x19A-0x19B
+    u8 unk_19A[2];                     // 0x19A-0x19B (never touched)
     f32 field_0x19C;                    // 0x19C (zeroed by CtrlMoveEne_ResetMoveState)
 
     // Retail installs these as pointer-to-member hooks: the 12-byte ptmf
@@ -85,45 +102,6 @@ public:
     void RateRandGate32Slot384(u32* out1, f32* out2);
     void RateSelectDuel50(u32* out1, f32* out2);
     void RateSelectTriple5A3C(u32* out1, f32* out2);
-};
-
-// View of the CtrlMoveEne layout used by the CtrlMoveEne_ScanGimmickTargets / CtrlMoveEne_UpdateMoveHeading /
-// CtrlMoveEne_UpdateFleeWander family: the base CCtrlMoveBase position/velocity words and
-// the +0x60..+0x72 / +0x15C / +0x18E fields those functions touch. Kept as a
-// separate view so the matched CtrlMoveEne stays byte-for-byte the same.
-struct CfObjectMoveView9 {
-    u8 _pad[0x0C];                    // 0x00-0x0B
-    ml::CVec3 mPosition;              // 0x0C (base CCtrlMoveBase)
-    ml::CVec3 mVelocity;              // 0x18 (base CCtrlMoveBase)
-    u8 _pad24[0x30 - 0x24];           // 0x24-0x2F
-    void* field_0x30;                 // 0x30 (base mpSomePtr)
-    CCtrlMoveData* field_0x34;     // 0x34 movement data block
-    f32 field_0x38;                   // 0x38
-    f32 field_0x3C;                   // 0x3C
-    u8 _pad40[0x4C - 0x40];           // 0x40-0x4B
-    f32 field_0x4C;                   // 0x4C heading word
-    f32 field_0x50;                   // 0x50
-    u8 _pad54[0x58 - 0x54];           // 0x54-0x57
-    f32 field_0x58;                   // 0x58 movement-rate divisor
-    f32 field_0x5C;                   // 0x5C
-    f32 field_0x60;                   // 0x60
-    f32 field_0x64;                   // 0x64
-    f32 field_0x68;                   // 0x68
-    f32 field_0x6C;                   // 0x6C
-    u16 field_0x70;                   // 0x70
-    u16 field_0x72;                   // 0x72
-    u8 _pad74[0x15C - 0x74];          // 0x74-0x15B
-    int field_0x15C;                  // 0x15C actor id
-    u8 _pad160[0x17C - 0x160];        // 0x160-0x17B
-    u32 field_0x17C;                  // 0x17C flags
-    u32 field_0x180;                  // 0x180 flags
-    u16 field_0x184;                  // 0x184
-    u16 field_0x186;                  // 0x186
-    u8 _pad188[0x18C - 0x188];        // 0x188-0x18B
-    u16 field_0x18C;                  // 0x18C
-    s16 field_0x18E;                  // 0x18E
-    u8 _pad190[0x198 - 0x190];        // 0x190-0x197
-    s16 field_0x198;                  // 0x198
 };
 
 // View of the battle-object sub at +0x3F60 (CtrlMoveEne_TickMoveControl toggles bit flags
@@ -259,57 +237,8 @@ public:
     virtual float* CfObjectMove_getMovementRate();  //0x1D8 (movement-rate query)
 };
 
-// View of the movement-controller object CtrlMoveEne_TryLatchTargetActor / CtrlMoveEne_MarkActiveSteady /
-// CtrlMoveEne_ConsumeTargetResolve operate on (CtrlMoveEne unit): +0x15C is an actor id fed to
-// findObjectById, +0x17C a flags word.
-struct CtrlMoveEneView {
-    u8 _pad[0x15C];                 // 0x00-0x15B
-    int field_0x15C;                // 0x15C
-    u8 _pad160[0x17C - 0x160];      // 0x160-0x17B
-    u32 field_0x17C;                // 0x17C
-};
 
-// One entry of the move-list array at +0x78 that CtrlMoveEne_InitMoveList fills (0x14
-// bytes each): three floats, a flags halfword, two bytes and a scaled float.
-struct CfMoveSubEntry {
-    f32 field_0x0;                  // 0x00
-    f32 field_0x4;                  // 0x04
-    f32 field_0x8;                  // 0x08
-    u16 field_0xC;                  // 0x0C flags
-    u8 field_0xE;                   // 0x0E
-    u8 field_0xF;                   // 0x0F
-    f32 field_0x10;                 // 0x10
-};
-
-// CtrlMoveEne_InitMoveList's word/halfword view of CtrlMoveEne fields 0x58-0x72: the
 // init path stores u16s at 0x58/0x5A and words at 0x5C/0x60, while the
-// matched CtrlMoveEne_InitMoveHook / CtrlMoveEne_UpdateFleeWander read the same storage as f32s.
-struct CfObjectMoveInitView {
-    u8 _pad[0x34];                  // 0x00-0x33
-    CCtrlMoveData* field_0x34;   // 0x34
-    u8 _pad38[0x4C - 0x38];         // 0x38-0x4B
-    f32 field_0x4C;                 // 0x4C
-    f32 field_0x50;                 // 0x50
-    f32 field_0x54;                 // 0x54
-    u16 field_0x58;                 // 0x58 (entry count)
-    u16 field_0x5A;                 // 0x5A
-    u32 field_0x5C;                 // 0x5C (bdat-derived state)
-    u32 field_0x60;                 // 0x60 (timer/derived word)
-    f32 field_0x64;                 // 0x64
-    f32 field_0x68;                 // 0x68
-    f32 field_0x6C;                 // 0x6C
-    u16 field_0x70;                 // 0x70 flags
-    u16 field_0x72;                 // 0x72
-    u8 _pad74[0x78 - 0x74];         // 0x74-0x77
-    CfMoveSubEntry field_0x78[8];   // 0x78 move-list array (8 * 0x14 = 0xA0; overlaps later words)
-    u8 _pad118[0x12C - 0x118];      // 0x118-0x12B
-    void (CtrlMoveEne::*mMoveHook)();  // 0x12C ptmf hook
-    u8 _pad138[0x17C - 0x138];      // 0x138-0x17B
-    u32 field_0x17C;                // 0x17C flags
-    u32 field_0x180;                // 0x180 flags
-    u8 _pad184[0x18C - 0x184];      // 0x184-0x18B
-    u16 field_0x18C;                // 0x18C
-};
 
 
 // Target object returned by the gimmick's +0x110 slot (CtrlMoveEne_ScanGimmickTargets marks it
@@ -340,19 +269,6 @@ struct CFunc8008B9C0Target {
     f32 field_0x508;            // 0x508
 };
 
-// CtrlMoveEne_TrackMoveTarget's view of CtrlMoveEne: +0x150 target position, +0x17C flags
-// and +0x18A timer halfword.
-struct CFunc8008CDE8View {
-    u8 _pad[0xC];               // 0x00-0x0B
-    ml::CVec3 mPosition;        // 0x0C
-    u8 _pad18[0x150 - 0x18];    // 0x18-0x14F
-    ml::CVec3 mVec150;          // 0x150 target position
-    u8 _pad15C[0x17C - 0x15C];  // 0x15C-0x17B
-    u32 field_0x17C;            // 0x17C flags
-    u8 _pad180[0x18A - 0x180];  // 0x180-0x189
-    u16 field_0x18A;            // 0x18A timer
-};
-
 // Global coli-probe object behind sEneColiProbe (CtrlMoveEne_TrackMoveTarget passes it to
 // ColiWalkSegment).
 struct CFunc8008CDE8Probe {
@@ -378,14 +294,6 @@ struct CFunc8009156CList {
 // ---------------------------------------------------------------------------
 // CtrlMoveEne_InitBattleMove views
 // ---------------------------------------------------------------------------
-
-// Word view of the 12-byte position words CtrlMoveEne_InitBattleMove copies at +0x00 and
-// +0x144 (retail moves them with lwz/stw pairs, so they are raw words here).
-struct CFunc8008E760Vec3W {
-    u32 x;                          // 0x00
-    u32 y;                          // 0x04
-    u32 z;                          // 0x08
-};
 
 // +0x3E9C Move sub-object (CfObject::UVF29 at +0xC4). Old function table deleted.
 struct CFunc8008E760Sub {
@@ -460,84 +368,6 @@ struct CFunc8008E760Data {
     u16 field_74;                                       // 0x74
 };
 
-// CtrlMoveEne_InitBattleMove's view of CtrlMoveEne: the position words at +0x00, the
-// hook ptmf at +0x12C, the word-triple mVec144 and the fields the function
-// initializes. field_4C/field_50/field_54 are u32 here because the pos copy
-// uses lwz/stw word stores (the float-store path goes through CtrlMoveEne).
-struct CFunc8008E760View {
-    CFunc8008E760Vec3W mPos0W;          // 0x00
-    u8 field_0C[4];                     // 0x0C (arg to slot 0x9C / CPartsChange_ProcessPartyInfo)
-    f32 field_0x10;                     // 0x10
-    u8 _pad14[0x34 - 0x14];             // 0x14-0x33
-    CCtrlMoveData* field_0x34;       // 0x34
-    u8 _pad38[0x4C - 0x38];             // 0x38-0x4B
-    u32 field_4C;                       // 0x4C (word stores; float store via CtrlMoveEne)
-    u32 field_50;                       // 0x50
-    u32 field_54;                       // 0x54
-    u16 field_0x58;                     // 0x58
-    u16 field_0x5A;                     // 0x5A
-    u32 field_0x5C;                     // 0x5C
-    f32 field_0x60;                     // 0x60
-    f32 field_0x64;                     // 0x64
-    u8 _pad68[0x70 - 0x68];             // 0x68-0x6F
-    u16 field_0x70;                     // 0x70
-    u16 field_0x72;                     // 0x72
-    u8 _pad74[0x76 - 0x74];             // 0x74-0x75
-    u16 field_0x76;                     // 0x76
-    u8 _pad78[0x12C - 0x78];            // 0x78-0x12B
-    void (CtrlMoveEne::*mMoveHook)();  // 0x12C ptmf
-    u8 _pad138[0x144 - 0x138];          // 0x138-0x143
-    CFunc8008E760Vec3W mVec144W;        // 0x144
-    u8 _pad150[0x160 - 0x150];          // 0x150-0x15F
-    f32 field_0x160;                    // 0x160
-    f32 field_0x164;                    // 0x164
-    f32 field_0x168;                    // 0x168
-    f32 field_0x16C;                    // 0x16C
-    u8 _pad170[0x17C - 0x170];          // 0x170-0x17B
-    u32 field_0x17C;                    // 0x17C
-    u32 field_0x180;                    // 0x180
-    u16 field_0x184;                    // 0x184
-    u16 field_0x186;                    // 0x186
-    u8 _pad188[0x18C - 0x188];          // 0x188-0x18B
-    u16 field_0x18C;                    // 0x18C
-    u16 field_0x18E;                    // 0x18E
-};
-
-// CtrlMoveEne_StepMoveEntry's view of CtrlMoveEne: base position/velocity words, the
-// move-list entry pointer arithmetic at +0x78, the hook ptmf at +0x12C, the
-// mVec138 words and the timers/flags.
-struct CFunc80090DB4View {
-    u8 _pad[0x0C];                      // 0x00-0x0B
-    ml::CVec3 mPosition;                // 0x0C
-    ml::CVec3 mVelocity;                // 0x18
-    u8 _pad24[0x34 - 0x24];             // 0x24-0x33
-    CCtrlMoveData* field_0x34;       // 0x34
-    u8 _pad38[0x4C - 0x38];             // 0x38-0x4B
-    f32 field_0x4C;                     // 0x4C
-    f32 field_0x50;                     // 0x50
-    f32 field_0x54;                     // 0x54
-    s16 field_0x58;                     // 0x58
-    s16 field_0x5A;                     // 0x5A
-    u32 field_0x5C;                     // 0x5C (ptmf dispatch index)
-    u32 field_0x60;                     // 0x60 timer
-    u8 _pad64[0x6C - 0x64];             // 0x64-0x6B
-    f32 field_0x6C;                     // 0x6C
-    u16 field_0x70;                     // 0x70
-    u16 field_0x72;                     // 0x72
-    u8 _pad74[0x78 - 0x74];             // 0x74-0x77
-    CfMoveSubEntry field_0x78[8];       // 0x78 move-list entries
-    u8 _pad118[0x12C - 0x118];          // 0x118-0x12B
-    void (CtrlMoveEne::*mMoveHook)();  // 0x12C ptmf
-    CFunc8008E760Vec3W mVec138W;        // 0x138
-    u8 _pad144[0x160 - 0x144];          // 0x144-0x15F
-    f32 field_0x160;                    // 0x160
-    u8 _pad164[0x17C - 0x164];          // 0x164-0x17B
-    u32 field_0x17C;                    // 0x17C
-    u32 field_0x180;                    // 0x180
-    u16 field_0x184;                    // 0x184
-    u16 field_0x186;                    // 0x186
-};
-
 // Move sub-object as CtrlMoveEne_StepMoveEntry calls it: vtable +0x0C (int query), +0x10
 // (int arg), +0xAC (position getter) and +0xC4 (float angle); data words at
 // +0x98 / +0xC4 / +0x63C.
@@ -587,69 +417,6 @@ struct CFunc8008D51CObj {
     u16 field_455A;                                     // 0x455A
 };
 
-// CtrlMoveEne_CheckKeepMoving's view of CtrlMoveEne: the +0x144/+0x168..+0x19C fields it
-// reads and writes (0x188 / 0x18E are s16s read with lha).
-struct CFunc8008D51CView {
-    u8 _pad[0x34];                              // 0x00-0x33
-    CCtrlMoveData* field_0x34;               // 0x34
-    u8 _pad38[0x144 - 0x38];                    // 0x38-0x143
-    ml::CVec3 mVec144;                          // 0x144
-    u8 _pad150[0x168 - 0x150];                  // 0x150-0x167
-    f32 field_0x168;                            // 0x168
-    f32 field_0x16C;                            // 0x16C
-    f32 field_0x170;                            // 0x170
-    f32 field_0x174;                            // 0x174
-    u8 _pad178[0x17C - 0x178];                  // 0x178-0x17B
-    u32 field_0x17C;                            // 0x17C
-    u32 field_0x180;                            // 0x180
-    u16 field_0x184;                            // 0x184
-    u16 field_0x186;                            // 0x186
-    s16 field_0x188;                            // 0x188
-    u16 field_0x18A;                            // 0x18A
-    u16 field_0x18C;                            // 0x18C
-    s16 field_0x18E;                            // 0x18E
-    u8 _pad190[0x19C - 0x190];                  // 0x190-0x19B
-    f32 field_0x19C;                            // 0x19C
-};
-
-// CtrlMoveEne_StepMoveList's view of CtrlMoveEne: base position/velocity words, the
-// move-list entries at +0x78, the mVec138 words, the heading/turn state and
-// the timers.
-struct CFunc8008FE8CView {
-    u8 _pad[0x0C];                              // 0x00-0x0B
-    ml::CVec3 mPosition;                        // 0x0C
-    ml::CVec3 mVelocity;                        // 0x18
-    u8 _pad24[0x34 - 0x24];                     // 0x24-0x33
-    CCtrlMoveData* field_0x34;               // 0x34
-    u8 _pad38[0x3C - 0x38];                     // 0x38-0x3B
-    f32 field_0x3C;                             // 0x3C
-    u8 _pad40[0x4C - 0x40];                     // 0x40-0x4B
-    f32 field_0x4C;                             // 0x4C
-    f32 field_0x50;                             // 0x50
-    f32 field_0x54;                             // 0x54
-    s16 field_0x58;                             // 0x58
-    s16 field_0x5A;                             // 0x5A
-    u32 field_0x5C;                             // 0x5C (ptmf dispatch index)
-    u32 field_0x60;                             // 0x60 timer
-    f32 field_0x64;                             // 0x64 turn target
-    f32 field_0x68;                             // 0x68 turn current
-    f32 field_0x6C;                             // 0x6C
-    u16 field_0x70;                             // 0x70 flags
-    u16 field_0x72;                             // 0x72 gate
-    s16 field_0x74;                             // 0x74 timer
-    u8 _pad76[0x78 - 0x76];                     // 0x76-0x77
-    CfMoveSubEntry field_0x78[8];               // 0x78 move-list entries
-    u8 _pad118[0x138 - 0x118];                  // 0x118-0x137
-    CFunc8008E760Vec3W mVec138W;                // 0x138
-    u8 _pad144[0x160 - 0x144];                  // 0x144-0x15F
-    f32 field_0x160;                            // 0x160
-    u8 _pad164[0x17C - 0x164];                  // 0x164-0x17B
-    u32 field_0x17C;                            // 0x17C
-    u32 field_0x180;                            // 0x180
-    u16 field_0x184;                            // 0x184
-    u16 field_0x186;                            // 0x186
-};
-
 // Move sub-object as CtrlMoveEne_StepMoveList calls it: vtable +0x0C (int query), +0x10
 // (int arg), +0x9C (pointer arg), +0xAC (position getter), +0xC4 (float
 // angle) and +0xCC (heading query); data words at +0x98 / +0xC4 / +0x63C.
@@ -662,40 +429,6 @@ struct CFunc8008FE8CSub {
     void* field_C4;                                     // 0xC4
     u8 _padC8[0x63C - 0xC8];                            // 0xC8-0x63B
     f32 field_63C;                                      // 0x63C
-};
-
-// CtrlMoveEne_UpdateBattleAI's view of CtrlMoveEne: the velocity words, the mVec138 /
-// mVec144 copies, the heading/timer halfwords and the +0x164..+0x19C floats.
-struct CFunc8008A2C8View {
-    u8 _pad[0x0C];                              // 0x00-0x0B
-    ml::CVec3 mPos0;                            // 0x0C
-    ml::CVec3 mVelocity;                        // 0x18
-    u8 _pad24[0x34 - 0x24];                     // 0x24-0x33
-    CCtrlMoveData* field_0x34;               // 0x34
-    u8 _pad38[0x3C - 0x38];                     // 0x38-0x3B
-    f32 field_0x3C;                             // 0x3C
-    u8 _pad40[0x138 - 0x40];                    // 0x40-0x137
-    CFunc8008E760Vec3W mVec138W;                // 0x138
-    CFunc8008E760Vec3W mVec144W;                // 0x144
-    u8 _pad150[0x164 - 0x150];                  // 0x150-0x163
-    f32 field_0x164;                            // 0x164
-    f32 field_0x168;                            // 0x168
-    f32 field_0x16C;                            // 0x16C
-    f32 field_0x170;                            // 0x170
-    f32 field_0x174;                            // 0x174
-    f32 field_0x178;                            // 0x178
-    u32 field_0x17C;                            // 0x17C
-    u32 field_0x180;                            // 0x180
-    u16 field_0x184;                            // 0x184
-    u16 field_0x186;                            // 0x186
-    u8 _pad188[0x190 - 0x188];                  // 0x188-0x18F
-    u16 field_0x190;                            // 0x190
-    s16 field_0x192;                            // 0x192
-    u8 _pad194[0x196 - 0x194];                  // 0x194-0x195
-    s16 field_0x196;                            // 0x196
-    s16 field_0x198;                            // 0x198
-    u8 _pad19A[0x19C - 0x19A];                  // 0x19A-0x19B
-    f32 field_0x19C;                            // 0x19C
 };
 
 // ---------------------------------------------------------------------------
@@ -736,44 +469,6 @@ struct CFunc80091864Target {
     u32 field_E0;                                       // 0xE0
     u8 _padE4[0x200 - 0xE4];                            // 0xE4-0x1FF
     u32 field_200;                                      // 0x200 flags
-};
-
-// CtrlMoveEne_RunMoveStateMachine's view of CtrlMoveEne: the +0x4 height float, the base
-// position words copied into mVec144, the word/halfword state fields and the
-// flags words. 0x4C/0x50/0x54 are word-copied from the sub position.
-struct CFunc80091864View {
-    u8 _pad00[0x04];                                    // 0x00-0x03
-    f32 field_0x4;                                      // 0x04
-    u8 _pad08[0x0C - 0x08];                             // 0x08-0x0B
-    CFunc8008E760Vec3W mPos0W;                          // 0x0C
-    ml::CVec3 mVelocity;                                // 0x18
-    u8 _pad24[0x34 - 0x24];                             // 0x24-0x33
-    CCtrlMoveData* field_0x34;                       // 0x34
-    u8 _pad38[0x3C - 0x38];                             // 0x38-0x3B
-    f32 field_0x3C;                                     // 0x3C
-    u8 _pad40[0x4C - 0x40];                             // 0x40-0x4B
-    u32 field_4C;                                       // 0x4C
-    u32 field_50;                                       // 0x50
-    u32 field_54;                                       // 0x54
-    u16 field_0x58;                                     // 0x58 state bits
-    u16 field_0x5A;                                     // 0x5A gate counter
-    u32 field_0x5C;                                     // 0x5C wander seed
-    f32 field_0x60;                                     // 0x60 current speed
-    f32 field_0x64;                                     // 0x64 smoothed speed
-    f32 field_0x68;                                     // 0x68 latched arts speed
-    s16 field_0x6C;                                     // 0x6C wander timer
-    s16 field_0x6E;                                     // 0x6E halt timer
-    s16 field_0x70;                                     // 0x70 lost / wait counter
-    s16 field_0x72;                                     // 0x72 turn timer
-    s16 field_0x74;                                     // 0x74 arts-speed timer
-    s16 field_0x76;                                     // 0x76 party-probe counter
-    u8 _pad78[0x144 - 0x78];                            // 0x78-0x143
-    CFunc8008E760Vec3W mVec144W;                        // 0x144
-    u8 _pad150[0x160 - 0x150];                          // 0x150-0x15F
-    f32 field_0x160;                                    // 0x160
-    u8 _pad164[0x17C - 0x164];                          // 0x164-0x17B
-    u32 field_0x17C;                                    // 0x17C flags
-    u32 field_0x180;                                    // 0x180 flags
 };
 
 // CtrlMoveEne_UpdateBattleAI helpers: the CBattleManager +0x1AA byte and the global
@@ -876,7 +571,7 @@ void* getPlayer__Q22cf13CfGameManagerFi(int index);
 extern "C" void unregisterBattleActor(void* self, void* obj);
 // CtrlMoveEne_UpdateBattleAI call site: game-flag query (C++ linkage mangles to the retail
 // isGlobalCamFlagSet__Fi).
-bool isGlobalCamFlagSet(int r3);
+
 
 // .sdata2 float constants compared/stored by the CtrlMoveEne_RateDivisorSlot0 family.
 // Declared const so MWCC treats the pool loads as constants and hoists them
@@ -907,10 +602,10 @@ extern const f32 _lbl_eu_80666608;  // CtrlMoveEne_InitBattleMove field_0x16C fa
 // bdat column-name table CtrlMoveEne_InitMoveHook passes to getEneBdatColumn (+0xA column).
 extern const char lbl_eu_804FB9E8[];
 
-// Ptmf hook constants (retail data symbols): the ctor installs __ptmf_null
-// and then the hook at sEneMoveHookDefault; CtrlMoveEne_InitMoveHook installs the hooks at
+// Ptmf hook constants: the ctor installs a null pointer-to-member (MWCC emits
+// the compiler-runtime null PTMF reference itself) and then the hook at
+// sEneMoveHookDefault; CtrlMoveEne_InitMoveHook installs the hooks at
 // sEneMoveHookTable + 0x118 / 0x124 / 0x130.
-extern void (cf::CtrlMoveEne::*const __ptmf_null)();
 extern void (cf::CtrlMoveEne::*const sEneMoveHookDefault)();
 typedef void (cf::CtrlMoveEne::*CfMoveDispatchPtmf)(void* a, void* b);
 struct CfMoveHookPtmfs {

@@ -1,14 +1,17 @@
 // Auto-scaffolded catalog TU for kyoshin/cf/CSuddenCommu
 // Replace stubs with high-level C/C++ during decomp.
-
-#include "kyoshin/cf/CBattleManager.hpp"
+#include "kyoshin/menu/CMenuZeal.hpp"
+#include <types.h>
 #include "kyoshin/menu/code_8018C5FC.hpp"
+#include "kyoshin/cf/CBattleManager.hpp"
+#include "kyoshin/cf/CSuddenCommuImports.hpp"
+
+
 #include "kyoshin/CTaskGameEff.hpp"
 #include "kyoshin/cf/CfMapItemManager.hpp"
 #include "kyoshin/harness_catalog.hpp"
 #include "libs/monolib/src/scn/CScn_8049603C.hpp" // Scn_QueryUnk80State (single owner decl)
 #include "monolib/scn/CScn.hpp"
-#include "kyoshin/cf/CSuddenCommuImports.hpp"
 #include "kyoshin/code_8028130C.hpp"
 #include "kyoshin/code_801F3BE0.hpp"
 #include "kyoshin/cf/CfSoundMan.hpp" // cf::CfSoundMan::playActorSound
@@ -26,12 +29,6 @@
 
 namespace cf {}
 using namespace cf;
-
-// Named .sdata2 signed int->float conversion magic (bit pattern
-// 0x4330000080000000, i.e. 2^52 + 2^31): defining it lets MWCC's constant
-// pool reuse the retail symbol for the (f32) int casts inside SuddenCommuTallyParty
-// instead of emitting a TU-local @N label (CVision / CfResReloadImpl idiom).
-extern const double lbl_eu_80667E40 = 4505750238502912.0;
 
 // Constructor: clears the commu state, parks the voice id at -1 (retiring
 // any prior voice via CCharVoiceMan_PlayNodeById) and initializes the timer from the
@@ -155,13 +152,13 @@ __declspec(noinline) int SuddenCommuCanStart(CSuddenCommu* self) {
 // the battle object at +0x15E0 via IdTable_QuerySumFloat (0x34) and broadcast the
 // command payload to every idle actor (vtable 0x2BC == 0); accumulate the
 // 0x61 stat into the global voice count and, when the 0x47 stat is present,
-// scale it (lbl_eu_80667E34) and feed each idle actor's 0x11C slot with the
+// scale it (0.01f) and feed each idle actor's 0x11C slot with the
 // truncated result. Then commit the count to the party gauge and either reset
 // the commu state (field_C == 4) or re-arm the partner pairing.
 //
 __declspec(noinline) void SuddenCommuTallyParty(CSuddenCommu* self) {
     u32 total = lbl_eu_806625E0;
-    f32 scale = lbl_eu_80667E34;
+    f32 scale = 0.01f;
 
     for (int i = 0; i < 3; i++) {
         void* spot = cf::CfGameManager::getPlayer(i);
@@ -196,7 +193,7 @@ __declspec(noinline) void SuddenCommuTallyParty(CSuddenCommu* self) {
 
         if (IdTable_GetSum(obj, 0x47, &stat) != 0) {
             // Plain (f32) casts: MWCC emits the 0x4330/xoris stack-double
-            // trick natively, pooling the magic into lbl_eu_80667E40 above.
+            // trick natively (the compiler emits the 2^52 magic double).
             f32 prod = scale * (f32)stat;
             for (int j = 0; j < 3; j++) {
                 void* spot2 = cf::CfGameManager::getPlayer(j);
@@ -504,7 +501,7 @@ extern "C" void SuddenCommuRearmTimer(CSuddenCommu* self) {
                 if (((CSuddenCommuBmView*)getInstance__Q22cf14CBattleManagerFv())->field_1AA != 0) goto commu_end;
                 if (((CSuddenCommuBmView*)getInstance__Q22cf14CBattleManagerFv())->field_20C8 != 0) goto commu_end;
                 cf::CfGameManager::getInstance();
-                if (isGlobalCamFlagSet__Fi(0x04000000) != 0) goto commu_end;
+                if (isGlobalCamFlagSet(0x04000000) != 0) goto commu_end;
                 if (getUnk80664658()->mFlags & 2) goto commu_end;
                 void* spotG = cf::CfGameManager::getPlayer(0);
                 CSuddenCommuActor* pG = (CSuddenCommuActor*)spotG;
@@ -571,7 +568,7 @@ commu_end:
 // documented us-801bc48c duplicated-exit wall in SuddenCommuDispatchAttacker.
 __declspec(noinline) void SuddenCommuTryStart(CSuddenCommu* self, int playerIdx, int type, CSuddenCommuActor* player, int arg5) {
     cf::CfGameManager::getInstance();
-    if (isGlobalCamFlagSet__Fi(0x04000000) != 0) return;
+    if (isGlobalCamFlagSet(0x04000000) != 0) return;
     // Mutate the parameter: merging the arg5/chance webs lets MWCC reuse
     // arg5's saved register for the roll result (retail subf r26,r26,r3).
     arg5 = ml::math::mtRand(100) - arg5;
@@ -657,7 +654,7 @@ void SuddenCommuEnterBattle(CSuddenCommu* self) {
     CSuddenCommuVoiceCue* cue;
     void* player;
     SuddenCommuMarkCommuVoices(self);
-    refreshBattleActors((cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv(), lbl_eu_80667E54, 0x13);
+    refreshBattleActors((cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv(), 0.2f, 0x13);
     CCharVoiceMan_PlayNodeById(self->field_10);
     self->field_10 = CCharVoiceMan_AllocCommuVoiceId();
     player = cf::CfGameManager::getPlayer(0);
@@ -668,7 +665,7 @@ void SuddenCommuEnterBattle(CSuddenCommu* self) {
         cue = (CSuddenCommuVoiceCue*)bindIndexedEffect(0xC0, player);
         self->field_20p = cue;
         if (cue != 0) {
-            ((cf::CfObject*)cue)->CfObject_pushRefreshValue(lbl_eu_80667E58);
+            ((cf::CfObject*)cue)->CfObject_pushRefreshValue(5.0f);
             // Typed re-read through field_20p (see header note): the typed
             // access path lets MWCC order the float-arg load before this
             // store, matching retail.
@@ -908,12 +905,12 @@ int SuddenCommuTickActive(CSuddenCommu* self) {
         if (flags & 0x8) {
             // Cue countdown active: tick it and park on timeout.
             if (self->field_20p != 0) {
-                ((cf::CfObject*)self->field_20p)->CfObject_pushRefreshValue(lbl_eu_80667E58);
+                ((cf::CfObject*)self->field_20p)->CfObject_pushRefreshValue(5.0f);
             }
             self->field_1C += Scn_GetFrameDelta(gmScene);
-            if (self->field_1C >= lbl_eu_80667E5C) {
+            if (self->field_1C >= 30.0f) {
                 self->field_24 &= ~0x8;
-                CUICfManager_queueFactoryMenu(2, lbl_eu_80667E60);
+                CUICfManager_queueFactoryMenu(2, 1.2f);
                 self->field_1C = lbl_eu_80667E48;
                 self->field_24 |= 0x8;
             }
@@ -924,7 +921,7 @@ int SuddenCommuTickActive(CSuddenCommu* self) {
         // raise the flag word for the chosen follow-up move.
         int padBit = 0;
         int moveSel = 0;
-        int winState = GetZealObjPtr();
+        int winState = (int)GetZealObjPtr();
         if (winState != 0) {
             CSuddenCommuPadView* pad = (CSuddenCommuPadView*)cf::CfGameManager::getCurrentPad();
             if (cf::CfGameManager::isClassicController(-1) != 0) {
@@ -976,7 +973,7 @@ int SuddenCommuTickActive(CSuddenCommu* self) {
     // Idle commu: clamp the timer while the window system is open, then
     // retire any attached cue.
     if (GetZealObjPtr() != 0) {
-        if (self->field_18 < lbl_eu_80667E64) self->field_18 = lbl_eu_80667E64;
+        if (self->field_18 < 90.0f) self->field_18 = 90.0f;
     }
     if (self->field_20p != 0) {
         self->field_20p->field_B0 = 0;

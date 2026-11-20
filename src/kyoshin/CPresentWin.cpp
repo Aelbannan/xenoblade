@@ -2,6 +2,7 @@
 // Auto-scaffolded catalog TU for kyoshin/CPresentWin
 // Replace stubs with high-level C/C++ during decomp.
 
+#include "kyoshin/cf/CfBdat.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/CPresentWin.hpp"
@@ -52,7 +53,7 @@ void showPresentRank(CPresentWin* self) {
     char buf[0x20];
     sprintf(buf, pool + 0x12a, rank);
 
-    int res = BdatGetS8Direct((const char*)lbl_eu_80664104, (const char*)buf, (int)((const char*)itemId));
+    int res = BdatGetS8Direct((const char*)::cf::CfBdat::spItmCollectListFileData, (const char*)buf, (int)((const char*)itemId));
 
     if ((s8)res < 0) {
         // Time not met: hide the result panes, show the failure panes and a
@@ -258,9 +259,9 @@ extern "C" void stepPresentResultAnim(CPresentWin* self) {
 // message texture to mPane28.
 extern "C" void repaintPresentItemA(CPresentWin* self) {
     u8 idx = lookupPresentRank(self, self->mField32);
-    char* name = BdatGetPtrDirect(lbl_eu_80664090, &CPresentStringPool[0x1cb], idx);
+    char* name = BdatGetPtrDirect(::cf::CfBdat::spBtlPcListFileData, &CPresentStringPool[0x1cb], idx);
     SetLayoutSelfText((nw4r::lyt::Layout*)self->mPane20, name, 0);
-    u32 msgId = BdatGetU16Direct(lbl_eu_80664090, &CPresentStringPool[0x1d0], idx) & 0xFFFF;
+    u32 msgId = BdatGetU16Direct(::cf::CfBdat::spBtlPcListFileData, &CPresentStringPool[0x1d0], idx) & 0xFFFF;
     void* tex = self->mAccessor->GetResource(0x74696D67, MakeTplNameSysFile(msgId), NULL);
     if (tex != NULL) {
         PaneSetTexPalette(self->mPane28, (TPLPalette*)tex);
@@ -270,9 +271,9 @@ extern "C" void repaintPresentItemA(CPresentWin* self) {
 // Same repaint for the mField33 (secondary) item, targeting mPane24/mPane2C.
 extern "C" void repaintPresentItemB(CPresentWin* self) {
     u8 idx = lookupPresentRank(self, self->mField33);
-    char* name = BdatGetPtrDirect(lbl_eu_80664090, &CPresentStringPool[0x1cb], idx);
+    char* name = BdatGetPtrDirect(::cf::CfBdat::spBtlPcListFileData, &CPresentStringPool[0x1cb], idx);
     SetLayoutSelfText((nw4r::lyt::Layout*)self->mPane24, name, 0);
-    u32 msgId = BdatGetU16Direct(lbl_eu_80664090, &CPresentStringPool[0x1d0], idx) & 0xFFFF;
+    u32 msgId = BdatGetU16Direct(::cf::CfBdat::spBtlPcListFileData, &CPresentStringPool[0x1d0], idx) & 0xFFFF;
     void* tex = self->mAccessor->GetResource(0x74696D67, MakeTplNameSysFile(msgId), NULL);
     if (tex != NULL) {
         PaneSetTexPalette(self->mPane2C, (TPLPalette*)tex);

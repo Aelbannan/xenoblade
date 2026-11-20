@@ -1,4 +1,6 @@
 #pragma once
+
+#include "kyoshin/cf/CfBdat.hpp"
 #include "kyoshin/cf/object/CfObjectMoveHelpers.hpp"
 #include "kyoshin/code_8025FB10.hpp"
 
@@ -12,8 +14,6 @@ extern UNKTYPE* getEffOwner(UNKTYPE* r3);
 extern UNKTYPE* getValidObject(UNKTYPE* r3);
 
 // Retail data labels referenced by the CfObjectPc methods.
-extern void* lbl_eu_806640DC;   // .sbss bdat file pointer (arts list)
-extern void* lbl_eu_806640F4;   // .sbss bdat file pointer (arts list)
 extern const char lbl_eu_804FC5EC[];    // .rodata column-name string table
 
 // Old-style retail ctor symbol of the CfResPcImpl resource object
@@ -87,7 +87,6 @@ extern "C" void fireLvUpMode4(u8* obj);
 extern "C" void fireLvUpCombo(u8* obj, int learned);
 // .rodata literal copied onto the stack by UnkVirtualFunc4 (struct defined
 // below); bdat file ptr.
-extern void* lbl_eu_80664090;
 
 // sdata2 literals referenced by the CfObjectPc methods.
 extern const float lbl_eu_80666B08;
@@ -116,11 +115,9 @@ struct Res10View {
 // Imports used by CfObjectPc_refreshGauge.
 extern u16 gmGlobalFlag42;
 extern u16 gmGlobalFlag44;
-extern void* lbl_eu_806640D4;
 extern const float lbl_eu_80666B38;
-extern const double lbl_eu_80666B40;
 extern "C" {
-void* Bdat_GetTable_AA34();                         // bdat manager refresh (void* return - must match CArtsInfo.hpp:679 / the other ~40 decls; divergent extern "C" types = 10197)
+void* Bdat_GetTable_AA34();
 u32 Bdat_GetRowBase_B41C(void* mgr);                  // first bdat row index (canonical form per ocBdat.cpp def)
 u32 Bdat_GetMaxRow_B1EC(void* mgr);                  // bdat row count (canonical form per ocBdat.cpp def)
 }
@@ -147,34 +144,17 @@ struct Obj89cField {
 // Slots 0x14/0x20 are CBattleState_UnkVirtualFunc4 / 7 (void(u32)). Deleted
 // fake pad; call via reinterpret_cast<CBattleState*>((u8*)this+8)->...
 
-// Linked-list node/head view of the battle-manager list at +0x48.
+// Linked-list node view of the battle-manager actor list. The head itself
+// is the real cf::CBattleManager::mActorList3.mStartNodePtr at +0x48; only
+// the node's next link is read while counting listed actors.
 struct BmListNode {
     BmListNode* mNext;
 };
-struct BattleMgrListView {
-    u8 _0[0x48];
-    BmListNode mListHead;
-};
 
-// Range/state bytes of the battle manager checked by updatePc /
-// CActorParam_UnkVirtualFunc88.
-struct BattleMgrRangeView {
-    u8 _0[0x1AA];
-    u8 field_0x1AA;
-    u8 _1AB[0x20C8 - 0x1AB];
-    s16 field_0x20C8;
-
-    bool isInRange() const {
-        u8 phase = field_0x1AA;
-        bool result = false;
-        if (phase < 1) {
-        } else if (phase > 0x18) {
-        } else {
-            result = true;
-        }
-        return result;
-    }
-};
+// Battle-manager state reads (phase count at +0x1AA, mode at +0x20C8 and the
+// +0x216C SuddenCommu object) now go through the public real members of
+// cf::CBattleManager: mChain.mHead.field_2, unk20C8.unk0 and mSuddenCommu.
+// The phase range check lives at its two CActParamData call sites.
 
 // Layout of the CfObjectPc region below the CfObjectActor bases (inside the
 // CfObjectMove sub-object at +0x3E9C); read by handleMoveState and the

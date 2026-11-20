@@ -3,6 +3,8 @@
 #include <types.h>
 
 #include "monolib/device/CDeviceBase.hpp"
+#include "monolib/device/CDeviceFontInfo.hpp"
+#include "monolib/util/reslist.hpp"
 
 #include <nw4r/lyt/lyt_layout.h>
 
@@ -30,22 +32,32 @@ public:
     virtual u32 isStateReady();  // 0x38
 };
 
+namespace nw4r { namespace lyt { class Layout; } }
+
 //size: 0x1f0
 class CDeviceFont : public CDeviceBase {
 public:
     CDeviceFont(const char* pName, CWorkThread* pParent);
+    virtual ~CDeviceFont();
     static CDeviceFont* getInstance();
-
-    //todo: when true return type is found clean :
-    // CMCEffCrystal::MCCrystal_BuildLayouts
-    // CTitleAHelp::OnFileEvent
-    static void* getFontInfo(u32, nw4r::lyt::Layout*);
-    /// Flush font rendering state.
-    void dispatchLayer4B70();
 
     DECL_WORKTHREAD_CREATE(CDeviceFont);
 
+    virtual void wkUpdate();
+    virtual void wkRender();
+    virtual bool wkStandbyLogin();
+    virtual bool wkStandbyLogout();
+
+    u32 getFontId();
+    u32 func_804525F0();
+    static void* getFontInfo(u32 fontId, nw4r::lyt::Layout* layout);
+    void dispatchLayer4B70();
+    CDeviceFontInfo* findFontByDevice();
+    u32 createFontInfo();
+
     //0x0: vtable
     //0x0-1c8: CDeviceBase
-    u8 unk1C8[0x1F0 - 0x1C8];
+    reslist<IDeviceFontInfo*> mInfoList; //0x1C8
+    u32 mFontId;                         //0x1E8
+    s32 field_0x1EC;                     //0x1EC
 };

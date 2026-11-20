@@ -6,6 +6,7 @@
 // IWorkEvent (+0x6C) and IScnRender (+0x70) base-dtor calls (CScrollBar /
 // CSortMenu / CMCCrystalList shape).
 #define IWORK_EVENT_INLINE_DTOR
+#include "kyoshin/cf/CfBdat.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/code_8025FB10.hpp"
@@ -529,7 +530,7 @@ void refreshQuestContent(CQuestWindow* self) {
     LayoutSetTextBoxFmtValue(self->mLayout, &base[0x163], s, 0);
     u32 v172 = BdatGetU16Direct((const void*)questRow, &base[0x172], questId);
     s = (char*)GetBdatNameByNumId(
-        BdatGetPtrDirect((const void*)lbl_eu_80664098, &base[0x88], v172 & 0xFFFF));
+        BdatGetPtrDirect((const void*)::cf::CfBdat::spFldNpcListFileData, &base[0x88], v172 & 0xFFFF));
     LayoutSetTextBoxFmtValue(self->mLayout, &base[0x179], s, 0);
     s = BdatGetPtrDirect((const void*)self->field_0xD0, &base[0x182], questId);
     LayoutSetTextBoxFmtValue(self->mLayout, &base[0x96], s, (u32)self->field_0x90);
@@ -583,18 +584,18 @@ void refreshQuestContent(CQuestWindow* self) {
                     u16 v22 = BdatGetItemType(v30 & 0xFFFF);
                     u16 v5 = BdatGetItemId(v30 & 0xFFFF);
                     switch (v22 & 0xFFFF) {
-                    case 0: cur = BdatGetPtrDirect((const void*)lbl_eu_806640F4, &base[0x88], v5 & 0xFFFF); break;
-                    case 1: cur = BdatGetPtrDirect((const void*)lbl_eu_806640D8, &base[0x88], v5 & 0xFFFF); break;
-                    case 2: cur = BdatGetPtrDirect((const void*)lbl_eu_806640F8, &base[0x88], v5 & 0xFFFF); break;
-                    case 3: cur = BdatGetPtrDirect((const void*)lbl_eu_806640FC, &base[0x88], v5 & 0xFFFF); break;
-                    case 4: cur = BdatGetPtrDirect((const void*)lbl_eu_80664104, &base[0x88], v5 & 0xFFFF); break;
-                    case 5: cur = BdatGetPtrDirect((const void*)lbl_eu_80664108, &base[0x88], v5 & 0xFFFF); break;
-                    case 6: cur = BdatGetPtrDirect((const void*)lbl_eu_8066410C, &base[0x88], v5 & 0xFFFF); break;
-                    case 7: cur = BdatGetPtrDirect((const void*)lbl_eu_80664110, &base[0x88], v5 & 0xFFFF); break;
+                    case 0: cur = BdatGetPtrDirect((const void*)::cf::CfBdat::spItmWpnListFileData, &base[0x88], v5 & 0xFFFF); break;
+                    case 1: cur = BdatGetPtrDirect((const void*)::cf::CfBdat::spBtlSkillListFileData, &base[0x88], v5 & 0xFFFF); break;
+                    case 2: cur = BdatGetPtrDirect((const void*)::cf::CfBdat::spItmEquipListFileData, &base[0x88], v5 & 0xFFFF); break;
+                    case 3: cur = BdatGetPtrDirect((const void*)::cf::CfBdat::spItmCrystalListFileData, &base[0x88], v5 & 0xFFFF); break;
+                    case 4: cur = BdatGetPtrDirect((const void*)::cf::CfBdat::spItmCollectListFileData, &base[0x88], v5 & 0xFFFF); break;
+                    case 5: cur = BdatGetPtrDirect((const void*)::cf::CfBdat::spItmMaterialListFileData, &base[0x88], v5 & 0xFFFF); break;
+                    case 6: cur = BdatGetPtrDirect((const void*)::cf::CfBdat::spItmValuableListFileData, &base[0x88], v5 & 0xFFFF); break;
+                    case 7: cur = BdatGetPtrDirect((const void*)::cf::CfBdat::spItmArtsListFileData, &base[0x88], v5 & 0xFFFF); break;
                     }
                     sprintf(buf, &base[0x1f5], i + 1);
                     if ((v22 & 0xFFFF) == 3) {
-                        u8 v204 = BdatGetU8Direct((const void*)lbl_eu_806640EC, &base[0x204], v30 & 0xFFFF);
+                        u8 v204 = BdatGetU8Direct((const void*)::cf::CfBdat::spItmItemListFileData, &base[0x204], v30 & 0xFFFF);
                         s = BdatTouchStringCell(&base[0x7f], &base[0x88], 0x1e - (v204 - 1));
                         buf2.format(&base[0x20d], cur, s);
                     } else {
@@ -638,18 +639,18 @@ void refreshQuestContent(CQuestWindow* self) {
                     u16 v30 = BdatGetItemType(v31 & 0xFFFF);
                     u16 v5 = BdatGetItemId(v31 & 0xFFFF);
                     switch (v30 & 0xFFFF) {
-                    case 0: cur = BdatGetPtrDirect((const void*)lbl_eu_806640F4, &base[0x88], v5 & 0xFFFF); break;
-                    case 1: cur = BdatGetPtrDirect((const void*)lbl_eu_806640D8, &base[0x88], v5 & 0xFFFF); break;
-                    case 2: cur = BdatGetPtrDirect((const void*)lbl_eu_806640F8, &base[0x88], v5 & 0xFFFF); break;
-                    case 3: cur = BdatGetPtrDirect((const void*)lbl_eu_806640FC, &base[0x88], v5 & 0xFFFF); break;
-                    case 4: cur = BdatGetPtrDirect((const void*)lbl_eu_80664104, &base[0x88], v5 & 0xFFFF); break;
-                    case 5: cur = BdatGetPtrDirect((const void*)lbl_eu_80664108, &base[0x88], v5 & 0xFFFF); break;
-                    case 6: cur = BdatGetPtrDirect((const void*)lbl_eu_8066410C, &base[0x88], v5 & 0xFFFF); break;
-                    case 7: cur = BdatGetPtrDirect((const void*)lbl_eu_80664110, &base[0x88], v5 & 0xFFFF); break;
+                    case 0: cur = BdatGetPtrDirect((const void*)::cf::CfBdat::spItmWpnListFileData, &base[0x88], v5 & 0xFFFF); break;
+                    case 1: cur = BdatGetPtrDirect((const void*)::cf::CfBdat::spBtlSkillListFileData, &base[0x88], v5 & 0xFFFF); break;
+                    case 2: cur = BdatGetPtrDirect((const void*)::cf::CfBdat::spItmEquipListFileData, &base[0x88], v5 & 0xFFFF); break;
+                    case 3: cur = BdatGetPtrDirect((const void*)::cf::CfBdat::spItmCrystalListFileData, &base[0x88], v5 & 0xFFFF); break;
+                    case 4: cur = BdatGetPtrDirect((const void*)::cf::CfBdat::spItmCollectListFileData, &base[0x88], v5 & 0xFFFF); break;
+                    case 5: cur = BdatGetPtrDirect((const void*)::cf::CfBdat::spItmMaterialListFileData, &base[0x88], v5 & 0xFFFF); break;
+                    case 6: cur = BdatGetPtrDirect((const void*)::cf::CfBdat::spItmValuableListFileData, &base[0x88], v5 & 0xFFFF); break;
+                    case 7: cur = BdatGetPtrDirect((const void*)::cf::CfBdat::spItmArtsListFileData, &base[0x88], v5 & 0xFFFF); break;
                     }
                     sprintf(buf3, &base[0x1f5], i + 1);
                     if ((v30 & 0xFFFF) == 3) {
-                        u8 v204 = BdatGetU8Direct((const void*)lbl_eu_806640EC, &base[0x204], v31 & 0xFFFF);
+                        u8 v204 = BdatGetU8Direct((const void*)::cf::CfBdat::spItmItemListFileData, &base[0x204], v31 & 0xFFFF);
                         s = BdatTouchStringCell(&base[0x7f], &base[0x88], 0x1e - (v204 - 1));
                         buf2.format(&base[0x20d], cur, s);
                     } else {

@@ -4,7 +4,6 @@
 #include <monolib/work/CProcess.hpp>
 #include <monolib/scn/CScn.hpp>
 #include "kyoshin/cf/CfGameManager.hpp"
-#include "kyoshin/CPartyStateWinImports.hpp"
 // Container used by the catalog helper functions CfCmd_Call86778 / CfCmd_Call82C48.
 // The hosting object keeps a cf::CfGameManager* reference at offset 0x408.
 struct CFuncHost {

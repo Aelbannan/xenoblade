@@ -5,7 +5,7 @@
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" void* MapFx_ResolveOwner(void* source);
-extern "C" u32 CtrlRemote_TouchBitByArg(u32 resourceId);
+#include "kyoshin/cf/CtrlRemoteApi.hpp"
 extern "C" void* CfObjectMove_getSelfIfActive(void* objParam);
 
 namespace cf {

@@ -42,7 +42,7 @@ CExchangeWin::~CExchangeWin() {
 void CExchangeWin::ExWin_LoadFile() {
     mFileHandle = CDeviceFile::readFile(
         mtl::MemManager::getHandleMEM2(),
-        lbl_eu_8050A740,
+        "menu/jp/ExchangeWin.arc",
         this,
         0,
         0
@@ -127,15 +127,15 @@ extern "C" void ExWin_CopyPanePair(void* dst, CExchangeWin* src, u8 val) {
     nw4r::lyt::Pane* pane2;
 
     win = src;
-    sprintf(buf, &lbl_eu_8050A740[0x18], val + 1);
+    sprintf(buf, "txt_slct%02d", val + 1);
     pane1 = win->mLayout->GetRootPane()->FindPaneByName(buf, true);
-    pane2 = win->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_8050A740[0x25], true);
+    pane2 = win->mLayout->GetRootPane()->FindPaneByName("nul_proportion", true);
     ScalePaneWorldPos((nw4r::math::VEC3*)dst, pane1, pane2, win->mLayout->GetRootPane());
 }
 
 void CExchangeWin::ExWin_SetTwoTexts(char* text1, char* text2) {
-    LayoutSetTextBoxFmtValue(mLayout, (char*)&lbl_eu_8050A740[0x34], text1, 0);
-    LayoutSetTextBoxFmtValue(mLayout, (char*)&lbl_eu_8050A740[0x41], text2, 0);
+    LayoutSetTextBoxFmtValue(mLayout, "txt_sysmes00", text1, 0);
+    LayoutSetTextBoxFmtValue(mLayout, "txt_sysmes01", text2, 0);
 }
 
 __attribute__((noinline)) void CExchangeWin::ExWin_AdvanceEnter() {
@@ -162,7 +162,7 @@ bool CExchangeWin::OnFileEvent(CEventFile* pEventFile) {
         mMemRegion.createRegion(
             mtl::MemManager::getHandleMEM2(),
             0x8000,
-            &lbl_eu_8050A740[0x4e],
+            "CExchangeWin",
             0
         );
 
@@ -177,11 +177,11 @@ bool CExchangeWin::OnFileEvent(CEventFile* pEventFile) {
     mtl::MemManager::setMemInitFlag(false);
 
     mAccessor = CLibLayout::createArcResourceAccessor();
-    mAccessor->Attach(arcData, &lbl_eu_8050A740[0x5b]);
+    mAccessor->Attach(arcData, "arc");
 
-    buildLayout(&mLayout, mAccessor, &lbl_eu_8050A740[0x5f]);
+    buildLayout(&mLayout, mAccessor, "mf70_cf60_syswin06.brlyt");
     bindLayoutAnimTransform(mLayout, &mAnimTransform, mAccessor,
-                  &lbl_eu_8050A740[0x78]);
+                  "mf70_cf60_syswin06_in.brlan");
 
     // Bind the shared font: root pane first (retail loads it into r29 before
     // the CDeviceFont call), then fetch the font handle from vtable slot 9.
@@ -194,25 +194,25 @@ bool CExchangeWin::OnFileEvent(CEventFile* pEventFile) {
     mLayout->Animate(0);
 
     // Set text fields from message table
-    char* t1 = BdatTouchStringCell(&lbl_eu_8050A740[0x94], &lbl_eu_8050A740[0x9d], 0x24);
-    LayoutSetTextBoxFmtValue(mLayout, &lbl_eu_8050A740[0xa2], t1, 0);
+    char* t1 = BdatTouchStringCell("MNU_shop", "name", 0x24);
+    LayoutSetTextBoxFmtValue(mLayout, "txt_sysmes02", t1, 0);
 
-    char* t2 = BdatTouchStringCell(&lbl_eu_8050A740[0x94], &lbl_eu_8050A740[0x9d], 0x25);
-    LayoutSetTextBoxFmtValue(mLayout, &lbl_eu_8050A740[0xaf], t2, 0);
+    char* t2 = BdatTouchStringCell("MNU_shop", "name", 0x25);
+    LayoutSetTextBoxFmtValue(mLayout, "txt_slct01", t2, 0);
 
-    char* t3 = BdatTouchStringCell(&lbl_eu_8050A740[0x94], &lbl_eu_8050A740[0x9d], 0x26);
-    LayoutSetTextBoxFmtValue(mLayout, &lbl_eu_8050A740[0xba], t3, 0);
+    char* t3 = BdatTouchStringCell("MNU_shop", "name", 0x26);
+    LayoutSetTextBoxFmtValue(mLayout, "txt_slct02", t3, 0);
 
-    char* t4 = BdatTouchStringCell(&lbl_eu_8050A740[0xc5], &lbl_eu_8050A740[0xd3], 0x2b);
-    LayoutSetTextBoxFmtValue(mLayout, &lbl_eu_8050A740[0xd8], t4, 0);
+    char* t4 = BdatTouchStringCell("MNU_kyeassign", "help", 0x2b);
+    LayoutSetTextBoxFmtValue(mLayout, "txt_close00", t4, 0);
 
     // Choose the message texture name by the game-manager mode flag (ternary
     // keeps the selection after the call so MWCC loads it straight into r4).
     const char* fileID = cf::CfGameManager::isClassicController(-1) != 0
-                             ? &lbl_eu_8050A740[0xe4]
-                             : &lbl_eu_8050A740[0xed];
+                             ? "fileID_2"
+                             : "fileID_1";
 
-    u16 keyVal = BdatGetU16ByTableKey(&lbl_eu_8050A740[0xc5], fileID, 0x2b);
+    u16 keyVal = BdatGetU16ByTableKey("MNU_kyeassign", fileID, 0x2b);
     char* name = MakeTplNameSysFile(keyVal);
 
     nw4r::lyt::ArcResourceAccessor* resAcc = CUICfManager_getArcResourceAccessor();
@@ -220,7 +220,7 @@ bool CExchangeWin::OnFileEvent(CEventFile* pEventFile) {
         (TPLPalette*)resAcc->GetResource(0x74696D67, name, 0);
 
     if (resource != nullptr) {
-        PaneSetTexPaletteByName(mLayout, &lbl_eu_8050A740[0xf6], resource);
+        PaneSetTexPaletteByName(mLayout, "pic_btn00", resource);
 
         // The TPL dims are captured before the pane lookup: retail keeps them
         // in callee-saved r29/r30 across the FindPaneByName call.
@@ -228,7 +228,7 @@ bool CExchangeWin::OnFileEvent(CEventFile* pEventFile) {
         u16 w = header->width;
         u16 h = header->height;
         nw4r::lyt::Pane* pane = mLayout->GetRootPane()->FindPaneByName(
-            &lbl_eu_8050A740[0xf6], true);
+            "pic_btn00", true);
         if (pane != nullptr) {
             // u16 -> f32 via the shared 0x43300000 magic double, then size
             // the picture pane (CfTFile.cpp / CMenuKizunaTalk convention).

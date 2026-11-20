@@ -26,11 +26,10 @@ extern "C" bool isInitialized__12CDeviceClockFv();
 
 
 // sbss data owned by this TU (blob monolibdata1d dissolve):
-//   lbl_eu_80665594 (0x80665594, 4 bytes) = sAllocFlags (u32*)
-//   lbl_eu_80665598 (0x80665598, 8 bytes) = sWorkThreads (CWorkThread**; word 0 in use)
-// (lbl_eu_80665590 = sMemAvailable is defined in CWorkThreadSystem.cpp, its user.)
-u32* lbl_eu_80665594;
-CWorkThread** lbl_eu_80665598[2];
+// sAllocFlags and sWorkThreads are the CWorkThreadSystem statics whose retail
+// storage lives in this TU's data range (sMemAvailable belongs to the user TU).
+u32* CWorkThreadSystem::sAllocFlags;
+CWorkThread** CWorkThreadSystem::sWorkThreads[2];
 
 // Reslist/CMsgParam subobject vtables (blob monolibdata labels, retail .data;
 // see owning absorb/typed defs in the defining TU). Referenced by the flat ctor below.
@@ -38,10 +37,8 @@ extern "C" u32 lbl_eu_8056B1B0[];
 extern "C" u32 lbl_eu_8056B1BC[];
 extern "C" u32 lbl_eu_8056B1D4[];
 
-// CWorkThreadSystem::sAllocHandle (sdata; defined at the bottom of this TU).
-// Accessed by label because sAllocHandle is private and the flat ctor below
-// is not a friend of CWorkThreadSystem.
-extern u32 lbl_eu_8066351C;
+// CWorkThreadSystem::sAllocHandle is defined at the bottom of this TU; the
+// flat ctor below is a CWorkThread member, which CWorkThreadSystem befriends.
 
 // Read-write mirror of the private CMsgParam<8> tail (see CDevice.cpp): lets
 // wkSetEvent/wkCheckTimeout/wkStandby hand-expand the self enqueue, which
@@ -154,7 +151,7 @@ extern "C" void* __ct__11CWorkThreadFPCcP11CWorkThreadi(
 
     // Retail defers the sdata load of sAllocHandle to the end of the init
     // sequence (cheap sda21 addressing).
-    self->mAllocHandle = lbl_eu_8066351C;
+    self->mAllocHandle = CWorkThreadSystem::sAllocHandle;
 
     // FixStr::operator=(const char*): length then copy.
     self->mName = pName;
@@ -216,10 +213,10 @@ CWorkThread::~CWorkThread(){
     }
 
     // Inlined CWorkThreadSystem::freeWID: clear this thread's allocation bit
-    // and registration slot (retail references the sbss labels via sda21).
+    // and registration slot (retail references the sbss statics via sda21).
     WORK_ID wid = mWorkID;
-    lbl_eu_80665594[wid / 32] &= ~(1 << (wid % 32));
-    lbl_eu_80665598[0][wid] = nullptr;
+    CWorkThreadSystem::sAllocFlags[wid / 32] &= ~(1 << (wid % 32));
+    CWorkThreadSystem::sWorkThreads[0][wid] = nullptr;
 
     // Member destructors (~CMsgParam<8> then ~reslist) are emitted here.
 }
@@ -574,7 +571,7 @@ CWorkThread* CWorkThread::getWorkThread(WORK_ID wid){
         return nullptr;
     }
 
-    return CWorkThreadSystem::sWorkThreads[wid];
+    return CWorkThreadSystem::sWorkThreads[0][wid];
 }
 
 void CWorkThread::setWorkParam(u32){}
@@ -755,7 +752,7 @@ void CWorkThread::wkStandby(){
             // Inlined getWorkThread(WORK_ID): sbss table lookup.
             CWorkThread* pExceptionThread = nullptr;
             if(mExceptionWorkID != INVALID_WORK_ID){
-                pExceptionThread = lbl_eu_80665598[0][mExceptionWorkID];
+                pExceptionThread = CWorkThreadSystem::sWorkThreads[0][mExceptionWorkID];
             }
 
             if(pExceptionThread != nullptr){
@@ -875,9 +872,9 @@ IWorkEventVtbl lbl_eu_8056B110 = {
 };
 
 // sAllocHandle (mtl::ALLOC_HANDLE, initialized to INVALID_HANDLE 0xFFFFFFFF)
-// - blob monolibdata1 dissolve. CWorkThreadSystem.cpp declares it extern and
-// is its user; the definition lives here (sdata lbl_eu_8066351C).
-u32 lbl_eu_8066351C = 0xFFFFFFFF;
+// - blob monolibdata1 dissolve. CWorkThreadSystem.cpp is its user; the
+// definition lives here because its retail storage is in this TU's range.
+mtl::ALLOC_HANDLE CWorkThreadSystem::sAllocHandle = 0xFFFFFFFF;
 
 // Dissolved .data vtables (retail 0x8056B1B0/1BC/1C8) - explicit to fill the 0x24 gap
 // The sdata RTTI structs (80663520/28/30) and rodata strings are still handled

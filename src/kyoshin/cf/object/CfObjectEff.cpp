@@ -1,6 +1,6 @@
 // Auto-scaffolded catalog TU for kyoshin/cf/object/CfObjectEff
 // Replace stubs with high-level C/C++ during decomp.
-
+#include "kyoshin/cf/CfCamSymbols.hpp"
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/cf/object/CfObjectEff.hpp"
 #include "kyoshin/CUIWindowManagerApi.hpp"
@@ -11,7 +11,7 @@
 #include "libs/monolib/src/scn/CScnItemModel.hpp"
 
 // Global camera-flag query (code_800F42AC.cpp; TU-local import).
-extern "C" bool isGlobalCamFlagSet__Fi(int mask);
+
 
 
 
@@ -98,7 +98,7 @@ CfObjectEff::CfObjectEff() {
     mFieldB8 = nullptr;
     mFieldBC = nullptr;
     CfGameManager::getInstance();
-    if (isGlobalCamFlagSet__Fi(0x04000000)) {
+    if (isGlobalCamFlagSet(0x04000000)) {
         mFlagsA4 |= 0x2;
     }
 }

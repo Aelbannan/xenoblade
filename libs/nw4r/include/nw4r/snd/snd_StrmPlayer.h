@@ -18,6 +18,49 @@ namespace nw4r {
 namespace snd {
 namespace detail {
 
+// Retail StrmPlayer field layouts. The sibling StrmInfo/StrmChannel headers
+// describe older sound-archive formats and do not match the fields stored in
+// this player in the shipped binary; these are the canonical player types.
+struct StrmPlayerInfo {
+    s32 format;                  // at 0x0
+    u8 loopFlag;                 // at 0x4
+    u8 _pad0x5[3];               // at 0x5
+    s32 numChannels;             // at 0x8
+    s32 sampleRate;              // at 0xC
+    u16 blockHeaderOffset;       // at 0x10
+    u16 _pad0x12;                // at 0x12
+    u32 loopStart;               // at 0x14
+    u32 loopEnd;                 // at 0x18
+    u32 dataOffset;              // at 0x1C
+    u32 numBlocks;               // at 0x20
+    u32 blockSize;               // at 0x24
+    s32 blockSamples;            // at 0x28
+    u32 lastBlockSize;           // at 0x2C
+    u32 lastBlockSamples;        // at 0x30
+    u32 lastBlockPaddedSize;     // at 0x34
+    u32 adpcmDataInterval;       // at 0x38
+    u32 adpcmDataSize;           // at 0x3C
+};                               // sizeof 0x40
+
+struct StrmPlayerAdpcmParamSet {
+    AdpcmParam param;         // at 0x0 (0x28)
+    AdpcmLoopParam loopParam; // at 0x28 (0x6)
+};                            // sizeof 0x2E
+
+struct StrmPlayerChannel {
+    void* bufferAddress;                 // at 0x0
+    StrmPlayerAdpcmParamSet adpcm;       // at 0x4 (0x2E)
+    u16 mAdpcmLoopPredScale;             // at 0x32
+};                                       // sizeof 0x34
+
+struct StrmPlayerTrackInfo {
+    u8 volume;             // at 0x0
+    u8 pan;                // at 0x1
+    u8 _pad0x2[2];         // at 0x2
+    int channelCount;      // at 0x4
+    u8 channelIndex[0x20]; // at 0x8
+};                         // sizeof 0x28
+
 class StrmPlayer : public BasicPlayer, public SoundThread::PlayerCallback {
     friend class StrmHeaderLoadTask;
     friend class StrmDataLoadTask;
@@ -89,15 +132,20 @@ public:
     void InitParam();
 
     struct PlayerTrack {
-        u8 data[0x38];
-    };
+        u8 activeFlag;                    // at 0x0
+        u8 _pad0x1[3];                    // at 0x1
+        Voice* voice;                     // at 0x4
+        StrmPlayerTrackInfo fileInfo;     // at 0x8 (0x28)
+        f32 volume;                       // at 0x30
+        f32 field_0x34;                   // at 0x34
+    };                                    // sizeof 0x38
 
     PlayerTrack* GetPlayerTrack(int index);
 
     void Update();
     bool AllocVoices(int voices);
 
-private:
+public:
     /******************************************************************************
      * StrmHeaderLoadTask
      ******************************************************************************/
@@ -137,12 +185,12 @@ private:
 
     NW4R_UT_LINKLIST_TYPEDEF_DECL(StrmDataLoadTask);
 
+private:
     static const int DATA_BLOCK_COUNT_MIN = 4;
     static const int DATA_BLOCK_COUNT_MAX = 32;
     static const int DATA_BLOCK_SIZE_MAX = 0x2000;
 
-    // TODO(kiwi) How is this calculated?
-    static const int LOAD_BUFFER_SIZE = 0x4000 + 32;
+    static const int LOAD_BUFFER_SIZE = 0x4000;
 
 private:
     bool LoadHeader(ut::FileStream* pFileStream, StartOffsetType offsetType,
@@ -173,14 +221,11 @@ private:
 
     void SetAdpcmLoopContext(int channels, u16* pPredScale);
 
-private:
-    // Retail StrmPlayer: BasicPlayer (0xD4) + SoundThread::PlayerCallback
-    // (0xC) precede the stream-specific state; MWCC's MI layout drops the
-    // callback's linklist node, so pad 8 bytes to land mStrmInfo at 0xE0 and
-    // the flag block at 0x120 (retail offsets, see StrmPlayerRetailLayout in
-    // snd_StrmPlayer.cpp).
-    u8 _padCallback[8];
-    StrmInfo mStrmInfo; // at 0xE8
+public:
+    // Retail field map used by the player and its task helpers.
+    // BasicPlayer (0xD4) + SoundThread::PlayerCallback (0xC) put the
+    // stream-specific state at retail offset 0xE0.
+    StrmPlayerInfo mStrmInfo; // at 0xE0
 
     bool mSetupFlag;           // at 0x120
     bool mActiveFlag;          // at 0x121
@@ -197,6 +242,7 @@ private:
     bool mValidAdpcmLoop;      // at 0x12C
     bool mPlayFinishFlag;      // at 0x12D
     bool mLoadFinishFlag;      // at 0x12E
+    bool mBufferAllocFlag;     // at 0x12F
 
     s32 mLoopCounter;    // at 0x130
     int mPrepareCounter; // at 0x134
@@ -216,11 +262,7 @@ private:
     int mLoopStartBlockIndex;     // at 0x160
     int mLastBlockIndex;          // at 0x164
 
-    // Retail field at +0x168 (4 bytes between mLastBlockIndex and
-    // mStartOffsetType); missing from the header before 2026-08, which put
-    // every later member 4 bytes low (destructor diff: +0x170 vs retail
-    // +0x174).
-    u32 mCurBlockIndex;           // at 0x168
+    s32 mCurBlockIndex;           // at 0x168 (pending load-task count)
 
     StartOffsetType mStartOffsetType; // at 0x16C
     int mStartOffset;                 // at 0x170
@@ -231,29 +273,19 @@ private:
     StrmDataLoadTask mStrmDataLoadTaskArea[DATA_BLOCK_COUNT_MAX]; // at 0x1A4
 
     StrmBufferPool* mBufferPool; // at 0x824
-    ut::FileStream* mFileStream; // at 0x828
-    Voice* mVoice;               // at 0x828
-    s32 mChannelCount;           // at 0x82C
-    s32 mVoiceOutCount;          // at 0x830
-
-    StrmChannel mChannels[CHANNEL_MAX];   // at 0x834
-    u16 mAdpcmLoopPredScale[CHANNEL_MAX]; // at 0x8A4
-    u16 mAdpcmLoopYn1[CHANNEL_MAX];       // at 0x8A8
-    u16 mAdpcmLoopYn2[CHANNEL_MAX];       // at 0x8AC
-
-    PlayerTrack mPlayerTracks[8]; // at 0xB78
-
-public:
-    struct MoveBlock {
-        u32 limit; // at 0x0
-        u32 count; // at 0x4
+    union {
+        Voice* mVoice;               // at 0x828 (voice while playing)
+        ut::FileStream* mFileStream; // at 0x828 (stream while preparing)
     };
-    MoveBlock mMoveBlocks[8]; // at 0xD7C
+    s32 mTrackCount;   // at 0x82C
+    s32 mChannelCount; // at 0x830
+    s32 mVoiceOutCount; // at 0x834
 
-private:
-    static u8 sLoadBuffer[LOAD_BUFFER_SIZE] ALIGN(32);
+    StrmPlayerChannel mChannels[16]; // at 0x838 (16 * 0x34 = 0x340)
+    PlayerTrack mTracks[8];          // at 0xB78 (8 * 0x38 = 0x1C0)
+
+    static u8 sLoadBuffer[LOAD_BUFFER_SIZE];
     static OSMutex sLoadBufferMutex;
-
     static bool sStaticInitFlag;
 };
 

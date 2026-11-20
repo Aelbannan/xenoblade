@@ -1,6 +1,8 @@
 // Auto-scaffolded catalog TU for kyoshin/makecrystal/CModelDispMakeCrystal
 // Replace stubs with high-level C/C++ during decomp.
+#define IWORK_EVENT_INLINE_DTOR
 
+#include "kyoshin/cf/CfBdat.hpp"
 #include <types.h>
 #include "kyoshin/code_8025FB10.hpp"
 #include "kyoshin/CScrollBar.hpp"
@@ -276,14 +278,8 @@ __declspec(section ".rodata") __attribute__((aligned(8))) __attribute__((used)) 
 __declspec(section ".rodata") __attribute__((used)) char lbl_eu_805090FC[0x114] =
     "obj/oj820002.chr\000eff/rec/eu/eu01.rec\000menu/jp/McData.arc\000MNU_skill\000help\000MNU_sysmes\000name\000MNU_crystal\000info\000itemType\000lower_E\000upper_E\000lower_D\000upper_D\000lower_C\000upper_C\000lower_B\000upper_B\000lower_A\000upper_A\000lower_S\000upper_S\000/chr/jp/pc/mu%02d%02d%02d.mca\000ANM\000CModelDispMakeCrystal\000arc\000";
 
-// .sdata: RTTI-ish pair (class name + .data RTTI pad, which stays in the
-// opaque .data absorb below, so the pad half stays an UNDEF read for now).
-extern "C" void* lbl_eu_80535F38[];
-__declspec(section ".sdata") __attribute__((aligned(8))) __attribute__((used)) const void* __RTTI__21CModelDispMakeCrystal[2] = {
-    lbl_eu_805090E4, lbl_eu_80535F38
-};
+// RTTI is emitted by MWCC from the real CModelDispMakeCrystal class.
 
-// .sdata2 0xA4: individual retail-ordered globals (one symbol per label).
 // MWCC 4.3 (-ipa file) rules, verified by micro-probes against this TU's flags:
 //  - scalar const-float/double reads fold into an anonymous first-use pool
 //    (named defs dropped, pool order diverges) and const-int reads fold into
@@ -406,10 +402,7 @@ struct CMCStep {
 // emits the member ctors from this init list in declaration (= retail store)
 // order, and the exception table records them like retail does.
 CModelDispMakeCrystal::CModelDispMakeCrystal(CScn* scene)
-    : mVtbl((u32*)lbl_eu_80535E70),
-      mVtblRender((u32*)((u8*)lbl_eu_80535E70 + 0x88)),
-      mVtblAnim((u32*)((u8*)lbl_eu_80535E70 + 0xb4)),
-      mScene(scene),
+    : mScene(scene),
       mField10(0),
       mField14(0),
       mFileHandle18(0),
@@ -439,7 +432,7 @@ CModelDispMakeCrystal::CModelDispMakeCrystal(CScn* scene)
       mEffUpRank(0),
       mEffDivide(0),
       mEffCylinder(0),
-      field_E1C(0),
+      mEntries(nullptr),
       mCurE20(0),
       mScrollBar(0),
       mSysWin(0),
@@ -727,7 +720,7 @@ void MakeCrystal_StartCharge(CModelDispMakeCrystal* self)
     }
     reinterpret_cast<CMCCylinderGauge*>(base + 0xbec)->start();
     crystalListState0To1(reinterpret_cast<CMCCrystalList*>(base + 0xc18));
-    u8* entries = *reinterpret_cast<u8**>(base + 0xe1c);
+    u8* entries = reinterpret_cast<CModelDispMakeCrystal*>(base)->mEntries;
     nw4r::math::VEC3 v;
     v.x = lbl_eu_806684C4;
     v.y = lbl_eu_806684C8;
@@ -1124,7 +1117,7 @@ extern "C" void MakeCrystal_TrySlots(void* selfp)
             // Success: reset the charge, place the crystals, and stop.
             *reinterpret_cast<f32*>(base + 0x2dcc) = 0.0f;
             ml::MTRand::getInstance();
-            u8* entries = *reinterpret_cast<u8**>(base + 0xe1c);
+            u8* entries = reinterpret_cast<CModelDispMakeCrystal*>(base)->mEntries;
             s8 n = (s8)(rand31__Q22ml6MTRandFv() % 3) + 1;
             u8 buf8[4];
             u8 buf12[8];
@@ -1216,7 +1209,7 @@ void MakeCrystal_StateCrystalFull(CModelDispMakeCrystal* self)
 {
     u8* base = reinterpret_cast<u8*>(self);
     if (!reinterpret_cast<CMCCrystalList*>(base + 0xc18)->crystalListIsActive()) return;
-    u16 crystalCount = ((MCCountHead*)*reinterpret_cast<u8**>(base + 0xe1c))->count04;
+    u16 crystalCount = ((MCCountHead*)reinterpret_cast<CModelDispMakeCrystal*>(base)->mEntries)->count04;
     if (crystalCount >= 0x64) {
         // Success: full crystal count reached.
         base[0xbdd] = 9;
@@ -1286,7 +1279,7 @@ void MakeCrystal_StateDivideSel(CModelDispMakeCrystal* self)
             base[0xbdd] = 0xf;
         } else {
             base[0xbdd] = 0xc;
-            u8* entries = *reinterpret_cast<u8**>(base + 0xe1c);
+            u8* entries = reinterpret_cast<CModelDispMakeCrystal*>(base)->mEntries;
             reinterpret_cast<CMCEffCrystal*>(base + 0xd90)->setCrystalInfo(
                 *reinterpret_cast<u16*>(entries + 2), entries[1]);
             reinterpret_cast<CMCEffCrystal*>(base + 0xd90)->startIn();
@@ -1303,7 +1296,7 @@ void MakeCrystal_StateCrystalChk(CModelDispMakeCrystal* self)
 {
     u8* base = reinterpret_cast<u8*>(self);
     if (isFinished__13CMCEffCrystalFv(base + 0xd90)) {
-        u8* entries = *reinterpret_cast<u8**>(base + 0xe1c);
+        u8* entries = reinterpret_cast<CModelDispMakeCrystal*>(base)->mEntries;
         if (*reinterpret_cast<u16*>(entries + 4) >= 0xc8) {
             base[0xbdd] = 0xd;
             reinterpret_cast<CMCEffCrystal*>(base + 0xd90)->startChange();
@@ -1339,7 +1332,7 @@ void MakeCrystal_StateRankUp(CModelDispMakeCrystal* self)
     f32 v = (*vel += lbl_eu_806684A0);
     if (v < lbl_eu_806684D8) return;
     *vel = lbl_eu_806684A4;
-    u16 count = ((MCCountHead*)*reinterpret_cast<u8**>(base + 0xe1c))->count04;
+    u16 count = ((MCCountHead*)reinterpret_cast<CModelDispMakeCrystal*>(base)->mEntries)->count04;
     if (count >= 0x12c) {
         // Success path: full crystal count reached.
         base[0xbdd] = 0xe;
@@ -1383,7 +1376,7 @@ void MakeCrystal_StateCrystalDone(CModelDispMakeCrystal* self)
     u8* base = reinterpret_cast<u8*>(self);
     if (isFinished__13CMCEffCrystalFv(base + 0xd90)) {
         MakeCrystal_AppendItemSteps(self);
-        u16 count = ((MCCountHead*)*reinterpret_cast<u8**>(base + 0xe1c))->count04;
+        u16 count = ((MCCountHead*)reinterpret_cast<CModelDispMakeCrystal*>(base)->mEntries)->count04;
         if (count >= 0x64) {
             base[0xbdd] = 0xb;
             crystalListState3To8(reinterpret_cast<CMCCrystalList*>(base + 0xc18));
@@ -1399,7 +1392,7 @@ void MakeCrystal_StateSuccessChk(CModelDispMakeCrystal* self)
 {
     if (isFinished__FPv(&((MCCSuccessAnchor*)self)->effD5C)) {
         u8* base = reinterpret_cast<u8*>(self);
-        u8* entries = *reinterpret_cast<u8**>(base + 0xe1c);
+        u8* entries = reinterpret_cast<CModelDispMakeCrystal*>(base)->mEntries;
         if (entries[0]) {
             base[0xbdd] = 0x11;
             reinterpret_cast<CMCEffCylinder*>(base + 0xdfc)
@@ -1496,7 +1489,7 @@ void MakeCrystal_DispatchTuneInput(CModelDispMakeCrystal* self)
         // Cursor back: decrement the row cursor with page wrap-around.
         if (reinterpret_cast<CSysWin*>(base + 0xe78)->isOpened() == 0) {
             u8 c1 = (u8)(base[0x2dc1] - 1);
-            u8* entries = *reinterpret_cast<u8**>(base + 0xe1c);
+            u8* entries = reinterpret_cast<CModelDispMakeCrystal*>(base)->mEntries;
             u8 entryCount = entries[0];
             base[0x2dc1] = c1;
             if ((s8)c1 < 0) {
@@ -1525,7 +1518,7 @@ void MakeCrystal_DispatchTuneInput(CModelDispMakeCrystal* self)
     } else if (bDir) {
         // Cursor forward: increment the row cursor with page wrap-around.
         if (reinterpret_cast<CSysWin*>(base + 0xe78)->isOpened() == 0) {
-            u8* entries = *reinterpret_cast<u8**>(base + 0xe1c);
+            u8* entries = reinterpret_cast<CModelDispMakeCrystal*>(base)->mEntries;
             u8 entryCount = entries[0];
             if (entryCount >= 8) {
                 u8 c1 = (u8)(base[0x2dc1] + 1);
@@ -1557,7 +1550,7 @@ void MakeCrystal_DispatchTuneInput(CModelDispMakeCrystal* self)
     } else if (bConfirm) {
         // Page back by 8 rows.
         if (reinterpret_cast<CSysWin*>(base + 0xe78)->isOpened() == 0) {
-            u8* entries = *reinterpret_cast<u8**>(base + 0xe1c);
+            u8* entries = reinterpret_cast<CModelDispMakeCrystal*>(base)->mEntries;
             u8 entryCount = entries[0];
             if (entryCount >= 8) {
                 u8 nc2 = (u8)(base[0x2dc2] - 8);
@@ -1582,7 +1575,7 @@ void MakeCrystal_DispatchTuneInput(CModelDispMakeCrystal* self)
     } else if (bMenu) {
         // Page forward by 8 rows.
         if (reinterpret_cast<CSysWin*>(base + 0xe78)->isOpened() == 0) {
-            u8* entries = *reinterpret_cast<u8**>(base + 0xe1c);
+            u8* entries = reinterpret_cast<CModelDispMakeCrystal*>(base)->mEntries;
             u8 entryCount = entries[0];
             if (entryCount >= 8) {
                 u8 nc2 = (u8)(base[0x2dc2] + 8);
@@ -1616,7 +1609,7 @@ void MakeCrystal_DispatchTuneInput(CModelDispMakeCrystal* self)
             // Selection key: resolve the cursor-sum index to an entry's
             // u16 param and set the dialog text.
             s32 idx = (s8)base[0x2dc1] + (s8)base[0x2dc2];
-            u8* entries = *reinterpret_cast<u8**>(base + 0xe1c);
+            u8* entries = reinterpret_cast<CModelDispMakeCrystal*>(base)->mEntries;
             u16 ev = *(u16*)(entries + ((u32)((u16)idx << 3)) + 2);
             char* s = BdatTouchStringCell(&lbl_eu_805090FC[0x38], &lbl_eu_805090FC[0x42], ev);
             reinterpret_cast<CSysWin*>(base + 0xe78)->switchKindPane(0);
@@ -1650,11 +1643,11 @@ struct CMCItemData {
 // crystal-slot entries, then hand the next step off to the cylinder UI.
 void MakeCrystal_FinalizeCylCount(CModelDispMakeCrystal* self)
 {
-    if (isFinished__14CMCEffCylinderFv((u8*)self + 0xdfc) == 0) return;
-    reinterpret_cast<CMCCylinderGauge*>((u8*)self + 0xbec)->decrementLevel();
-    u8 v = reinterpret_cast<CMCCylinderGauge*>((u8*)self + 0xbec)->getLevel();
-    reinterpret_cast<CMCEffCylinder*>((u8*)self + 0xdfc)->setNumber(v);
-    u8* entries = *reinterpret_cast<u8**>((u8*)self + 0xe1c);
+    if (isFinished__14CMCEffCylinderFv(&self->mEffCylinder) == 0) return;
+    self->mGauge.decrementLevel();
+    u8 v = self->mGauge.getLevel();
+    self->mEffCylinder.setNumber(v);
+    u8* entries = self->mEntries;
     CMCItemData item;
     item.field_00 = 0;
     *reinterpret_cast<u16*>(&item.field_04) = 0;
@@ -1677,18 +1670,18 @@ void MakeCrystal_FinalizeCylCount(CModelDispMakeCrystal* self)
     ((u8*)self)[0x2dc1] = 0;
     ((u8*)self)[0x2dc2] = 0;
     u8 buf[0xc];
-    crystalListAlignSlot(buf, (u8*)self + 0xc18, 0);
-    reinterpret_cast<CBaseCur*>((u8*)self + 0xe20)->setRootPaneTranslate(reinterpret_cast<const nw4r::math::VEC3*>(buf));
+    crystalListAlignSlot(buf, &self->mCrystalList, 0);
+    self->mCurE20.setRootPaneTranslate(reinterpret_cast<const nw4r::math::VEC3*>(buf));
     MakeCrystal_ResetSlotList(self, 1);
-    reinterpret_cast<CScrollBar*>((u8*)self + 0xe38)->UpdateThumb(8, entries[0]);
-    reinterpret_cast<CScrollBar*>((u8*)self + 0xe38)->PlaceThumb((u16)(s8)((u8*)self)[0x2dc2]);
+    self->mScrollBar.UpdateThumb(8, entries[0]);
+    self->mScrollBar.PlaceThumb((u16)(s8)((u8*)self)[0x2dc2]);
     playUISound(0xb1);
     if (entries[0] != 0 &&
-        reinterpret_cast<CMCCylinderGauge*>((u8*)self + 0xbec)->getLevel() != 0) {
+        self->mGauge.getLevel() != 0) {
         ((u8*)self)[0xbdd] = 0x12;
     } else {
         ((u8*)self)[0xbdd] = 0x14;
-        reinterpret_cast<CMCEffCylinder*>((u8*)self + 0xdfc)->startOut();
+        self->mEffCylinder.startOut();
     }
 }
 
@@ -2051,15 +2044,15 @@ void func_8021F2D8(CModelDispMakeCrystal* self)
 
     if (trigger1) {
         // Confirm/advance trigger: drive the makecrystal file-state machine.
-        if (((CMCGetItemBox*)((u8*)self + 0xecc))->isMCGetItemBoxGridMode() != 0) {
-            openMCGetItemBoxSysWin((CMCGetItemBox*)((u8*)self + 0xecc));
+        if ((&self->mItemBox)->isMCGetItemBoxGridMode() != 0) {
+            openMCGetItemBoxSysWin(&self->mItemBox);
         } else {
-            u8 r = (u8)getMCGetItemBoxPageState((CMCGetItemBox*)((u8*)self + 0xecc));
+            u8 r = (u8)getMCGetItemBoxPageState(&self->mItemBox);
             if (r == 1) {
                 // Proceed to the pass/fail tuning state.
                 ((u8*)self)[0xbdd] = 0x20;
-                cacheMCGetItemBoxEntries((CMCGetItemBox*)((u8*)self + 0xecc));
-                confirmMCGetItemBox((CMCGetItemBox*)((u8*)self + 0xecc));
+                cacheMCGetItemBoxEntries(&self->mItemBox);
+                confirmMCGetItemBox(&self->mItemBox);
                 playUISound(3);
             } else if (r == 2) {
                 // Jump to gauge-tuning state: rebuild the confirmation UI.
@@ -2068,27 +2061,27 @@ void func_8021F2D8(CModelDispMakeCrystal* self)
                 char* a = BdatTouchStringCell(&lbl_eu_805090FC[0x47], &lbl_eu_805090FC[0x52], 2);
                 char* b = BdatTouchStringCell(&lbl_eu_805090FC[0x47], &lbl_eu_805090FC[0x52], 4);
                 char* c = BdatTouchStringCell(&lbl_eu_805090FC[0x47], &lbl_eu_805090FC[0x52], 5);
-                reinterpret_cast<CSysWin*>((u8*)self + 0xe78)->switchKindPane(2);
-                reinterpret_cast<CSysWin*>((u8*)self + 0xe78)->setKindContent(reinterpret_cast<char*>(a), 0);
-                reinterpret_cast<CSysWin*>((u8*)self + 0xe78)->setTwoTextValues(reinterpret_cast<char*>(b), reinterpret_cast<char*>(c));
-                reinterpret_cast<CSysWin*>((u8*)self + 0xe78)->applyKind(0);
-                reinterpret_cast<CSysWin*>((u8*)self + 0xe78)->openPhase1();
-                forwardMCSubObj88((u8*)self + 0xecc, 0);
+                self->mSysWin.switchKindPane(2);
+                self->mSysWin.setKindContent(reinterpret_cast<char*>(a), 0);
+                self->mSysWin.setTwoTextValues(reinterpret_cast<char*>(b), reinterpret_cast<char*>(c));
+                self->mSysWin.applyKind(0);
+                self->mSysWin.openPhase1();
+                forwardMCSubObj88(&self->mItemBox, 0);
                 playUISound(5);
             }
         }
     } else if (trigger2) {
-        toggleMCGetItemBoxSysWin((CMCGetItemBox*)((u8*)self + 0xecc));
+        toggleMCGetItemBoxSysWin(&self->mItemBox);
     } else if (cancel) {
-        moveMCGetItemBoxLeft((u8*)self + 0xecc);
+        moveMCGetItemBoxLeft(&self->mItemBox);
     } else if (dir) {
-        moveMCGetItemBoxRight((CMCGetItemBox*)((u8*)self + 0xecc));
+        moveMCGetItemBoxRight(&self->mItemBox);
     } else if (confirm) {
-        moveMCGetItemBoxUp((CMCGetItemBox*)((u8*)self + 0xecc));
+        moveMCGetItemBoxUp(&self->mItemBox);
     } else if (menu) {
-        moveMCGetItemBoxDown((CMCGetItemBox*)((u8*)self + 0xecc));
+        moveMCGetItemBoxDown(&self->mItemBox);
     } else if (trigger3) {
-        advanceMCGetItemBox((u8*)self + 0xecc);
+        advanceMCGetItemBox(&self->mItemBox);
     }
 }
 
@@ -2309,7 +2302,7 @@ extern "C" void MakeCrystal_ReleaseAnimObj(CModelDispMakeCrystal* self, u8* obj)
 extern "C" void MakeCrystal_ResetSlotList(CModelDispMakeCrystal* self, u8 arg4)
 {
     u8* base = reinterpret_cast<u8*>(self);
-    u8* entries = *reinterpret_cast<u8**>(base + 0xe1c);
+    u8* entries = reinterpret_cast<CModelDispMakeCrystal*>(base)->mEntries;
     if (entries == nullptr) return;
     reinterpret_cast<CMCCrystalParamTable*>(entries)->sortSlots();
     crystalListClearSlots(base + 0xc18, arg4);
@@ -2450,7 +2443,7 @@ void MakeCrystal_PlaceCrystals(CModelDispMakeCrystal* self)
         // Single placement: pick a random slot, offset the crystal entry by
         // a random amount (extra +1 for char 2, or the streak count for
         // char 4), and write the entry.
-        u8* entries = *reinterpret_cast<u8**>((u8*)self + 0xe1c);
+        u8* entries = self->mEntries;
         u8 count = entries[0];
         ml::MTRand::getInstance();
         s8 slot = (s8)(count != 0 ? rand31__Q22ml6MTRandFv() % count : 0);
@@ -2469,7 +2462,7 @@ void MakeCrystal_PlaceCrystals(CModelDispMakeCrystal* self)
             (u16)slot,
             (u16)((s8)d + *(u16*)(entries + ((u16)slot << 3) + 4)),
             (u16)(s8)d);
-        reinterpret_cast<CMCEffStart*>((u8*)self + 0xca4)->startInAnim();
+        self->mEffUpRed.startInAnim();
         MakeCrystal_AdvanceSlotEntries(self);
         MakeCrystal_ResetSlotList(self, 0);
         playUISound(0x8d);
@@ -2478,7 +2471,7 @@ void MakeCrystal_PlaceCrystals(CModelDispMakeCrystal* self)
     case 1: {
         // Multi placement: place one crystal per entry, each with a random
         // offset (+1 normally, extra +1 for char 7, streak count for char 4).
-        u8* entries = *reinterpret_cast<u8**>((u8*)self + 0xe1c);
+        u8* entries = self->mEntries;
         u8 count = entries[0];
         for (u8 i = 0; i < count; i++) {
             ml::MTRand::getInstance();
@@ -2500,7 +2493,7 @@ void MakeCrystal_PlaceCrystals(CModelDispMakeCrystal* self)
                 (u16)((s8)d + *(u16*)(entries + ((u8)i << 3) + 4)),
                 (u16)(s8)d);
         }
-        reinterpret_cast<CMCEffStart*>((u8*)self + 0xcbc)->startInAnim();
+        self->mEffUpBlue.startInAnim();
         MakeCrystal_AdvanceSlotEntries(self);
         MakeCrystal_ResetSlotList(self, 0);
         playUISound(0x8c);
@@ -2511,13 +2504,13 @@ void MakeCrystal_PlaceCrystals(CModelDispMakeCrystal* self)
         // constant, then flush the effect list.
         u8 c = GetCollectedFlagByte(self->mSlots[0].field_5ac);
         if (c == 5) {
-            reinterpret_cast<CMCCylinderGauge*>((u8*)self + 0xbec)->addFillValue(
+            self->mGauge.addFillValue(
                 lbl_eu_80668500);
         } else {
-            reinterpret_cast<CMCCylinderGauge*>((u8*)self + 0xbec)->addFillValue(
+            self->mGauge.addFillValue(
                 0.0f);
         }
-        reinterpret_cast<CMCEffStart*>((u8*)self + 0xcd4)->startInAnim();
+        self->mEffUpGreen.startInAnim();
         playUISound(0xb0);
         break;
     }
@@ -2534,7 +2527,7 @@ extern "C" void MakeCrystal_AdvanceSlotEntries(void* selfp)
     u8* base = reinterpret_cast<u8*>(selfp);
     CModelDispMakeCrystal* self = reinterpret_cast<CModelDispMakeCrystal*>(selfp);
     u8 slot = 0;
-    u8* entries = *reinterpret_cast<u8**>(base + 0xe1c);
+    u8* entries = reinterpret_cast<CModelDispMakeCrystal*>(base)->mEntries;
     u8 entryCount = entries[0];
     u8 i = 0;
     while (i < entryCount) {
@@ -2561,9 +2554,9 @@ extern "C" void MakeCrystal_AdvanceSlotEntries(void* selfp)
 void MakeCrystal_AppendItemSteps(void* selfp)
 {
     u8* base = reinterpret_cast<u8*>(selfp);
-    u8* entries = *reinterpret_cast<u8**>(base + 0xe1c);
+    u8* entries = reinterpret_cast<CModelDispMakeCrystal*>(base)->mEntries;
     if (entries == nullptr) return;
-    void* g1 = lbl_eu_806640EC;
+    void* g1 = ::cf::CfBdat::spItmItemListFileData;
     u16 n = *(u16*)(entries + 2);
     u16 count = *(u16*)(entries + 4);
     u8 ch = entries[1];
@@ -2592,7 +2585,7 @@ void MakeCrystal_AppendItemSteps(void* selfp)
     }
     CItem_initSlot(&item, idx, n, tier);
     ((CItemImpl*)CItem_initItemImplInstances((CItemData*)&item))->vf58((CItemData*)&item, n);
-    void* g2 = lbl_eu_806640D8;
+    void* g2 = ::cf::CfBdat::spBtlSkillListFileData;
     u32 first = 0;
     u32 second = 0;
     // Per-arm string-table base: one address materialization shared by both
@@ -3102,7 +3095,7 @@ void MakeCrystal_RebuildSubStruct(CModelDispMakeCrystal* self, u8* subp)
 // (this+0x24), the item-source file (this+0x18), or the layout archive
 // (this+0x3c) which drives the whole sub-object construction; anything else
 // is a per-slot crystal model file.
-int CModelDispMakeCrystal::OnFileEvent(CEventFile* ev)
+bool CModelDispMakeCrystal::OnFileEvent(CEventFile* ev)
 {
     u8* base = reinterpret_cast<u8*>(this);
     // Case 1: crystal-list file completed - move the record link to +0x28.
@@ -3376,13 +3369,7 @@ void MakeCrystal_UnlinkFileSlot(CModelDispMakeCrystal* self, u8 slotA, u8 slotB)
     CtrlRemote_SetSharedBit(0xbf, 0);
 }
 
-// Byte view of the cursor slot at +0xE1C (u32 store into the entries slot).
-struct MCCursorView {
-    u8 _pad00[0xE1C];
-    u32 cursorE1C;
-};
-
-void CModelDispMakeCrystal::setCrystalCursor(u32 val) { ((MCCursorView*)this)->cursorE1C = val; }
+void CModelDispMakeCrystal::setCrystalCursor(u32 val) { mEntries = reinterpret_cast<u8*>(val); }
 
 int MakeCrystal_GetPromptState(CModelDispMakeCrystal* self)
 {
@@ -3425,11 +3412,7 @@ extern "C" void MakeCrystal_ClearAnimSlot(void* obj, u32 id)
 
 // (initCrystalData is a retail hard-symbol; not defined here so it stays a call)
 
-extern "C" void destroyCrystalDispThunk4(CModelDispMakeCrystal* self) { ((void(*)(void*))__dt__21CModelDispMakeCrystalFv)((char*)self - 0x4); }
-
 extern "C" void releaseCrystalDispThunk(CModelDispMakeCrystal* self) { ((void(*)(void*))MakeCrystal_ClearAnimSlot)((char*)self - 0x8); }
-
-extern "C" void destroyCrystalDispThunk8(CModelDispMakeCrystal* self) { ((void(*)(void*))__dt__21CModelDispMakeCrystalFv)((char*)self - 0x8); }
 
 void sinit_80221DDC() {
     initCrystalData(lbl_eu_80664718);
@@ -3438,21 +3421,9 @@ void sinit_80221DDC() {
 }
 
 
-// Typified wave7: retail .data tail as typed tables. The TU's two
-// switches (MakeCrystal_DispatchState/MakeCrystal_SpawnCrystalItem) already lower to same-size
-// native jumptables (0xA4/0x20, same order), so these objects + the
-// compiler jts + MWCC's 8-align pad ARE the 0x1B8 section. Own-TU
-// member slots use their MWCC-mangled spellings (same definitions).
-// The typeinfo object is declared inside a namespace: at global scope MWCC
-// 10322 ("illegal name overloading") rejects the __RTTI__* spelling under
-// -ipa file (the TU fully defines IWorkEvent). extern "C" names are not
-// mangled, so the table below still references __RTTI__10IWorkEvent exactly
-// (the same workaround as CView.cpp).
-namespace RTTIExterns {
-extern "C" const void* __RTTI__10IWorkEvent[];
-}
+// Retail vtable slot spellings (now unused by the emitted vtables).
 extern "C" {
-extern void WorkEvent1__10IWorkEventFPvPCc();
+
 extern void OnFileEvent__21CModelDispMakeCrystalFP10CEventFile(int);
 extern void WorkEvent3__10IWorkEventFPv();
 extern void WorkEvent4__10IWorkEventFv();
@@ -3483,37 +3454,12 @@ extern void WorkEvent28__10IWorkEventFv();
 extern void WorkEvent29__10IWorkEventFv();
 extern void WorkEvent30__10IWorkEventFv();
 extern void WorkEvent31__10IWorkEventFv();
-extern "C" void destroyCrystalDispThunk4(CModelDispMakeCrystal* self);
-extern "C" void destroyCrystalDispThunk8(CModelDispMakeCrystal* self);
 extern "C" void releaseCrystalDispThunk(CModelDispMakeCrystal* self);
 extern "C" void MakeCrystal_ClearAnimSlot(void*, u32);
-
-// .data 0xC8: CModelDispMakeCrystal vtable (RTTI + dtor + IWorkEvent
-// slots, then two secondaries at -4/-8).
-__declspec(section ".data") __attribute__((used))
-const void* lbl_eu_80535E70[50] = {
-    (void*)__RTTI__21CModelDispMakeCrystal, 0, (void*)__dt__21CModelDispMakeCrystalFv, (void*)WorkEvent1__10IWorkEventFPvPCc, // +0xE0+0
-    (void*)OnFileEvent__21CModelDispMakeCrystalFP10CEventFile, (void*)WorkEvent3__10IWorkEventFPv, (void*)WorkEvent4__10IWorkEventFv, (void*)OnPauseTrigger__10IWorkEventFb, // +0xE0+10
-    (void*)WorkEvent6__10IWorkEventFv, (void*)WorkEvent7__10IWorkEventFv, (void*)WorkEvent8__10IWorkEventFv, (void*)WorkEvent9__10IWorkEventFv, // +0xE0+20
-    (void*)WorkEvent10__10IWorkEventFv, (void*)WorkEvent11__10IWorkEventFv, (void*)WorkEvent12__10IWorkEventFv, (void*)WorkEvent13__10IWorkEventFv, // +0xE0+30
-    (void*)WorkEvent14__10IWorkEventFv, (void*)WorkEvent15__10IWorkEventFv, (void*)WorkEvent16__10IWorkEventFv, (void*)WorkEvent17__10IWorkEventFv, // +0xE0+40
-    (void*)WorkEvent18__10IWorkEventFv, (void*)WorkEvent19__10IWorkEventFv, (void*)WorkEvent20__10IWorkEventFv, (void*)WorkEvent21__10IWorkEventFv, // +0xE0+50
-    (void*)WorkEvent22__10IWorkEventFv, (void*)WorkEvent23__10IWorkEventFv, (void*)WorkEvent24__10IWorkEventFv, (void*)WorkEvent25__10IWorkEventFv, // +0xE0+60
-    (void*)WorkEvent26__10IWorkEventFv, (void*)WorkEvent27__10IWorkEventFv, (void*)WorkEvent28__10IWorkEventFv, (void*)WorkEvent29__10IWorkEventFv, // +0xE0+70
-    (void*)WorkEvent30__10IWorkEventFv, (void*)WorkEvent31__10IWorkEventFv, (void*)__RTTI__21CModelDispMakeCrystal, (void*)0xFFFFFFFC, // +0xE0+80
-(void*)destroyCrystalDispThunk4,
-    (void*)actParamNop3, (void*)actParamNop4, (void*)actParamNop7, (void*)actParamNop5, // +0xE0+A0
-(void*)destroyCrystalDispThunk8,
-(void*)releaseCrystalDispThunk, (void*)MakeCrystal_ClearAnimSlot,
-};
-
-// .data 0x10: RTTI descriptor + pad.
-__declspec(section ".data") __attribute__((used))
-void* lbl_eu_80535F38[4] = {
-    (void*)RTTIExterns::__RTTI__10IWorkEvent, 0, 0, 0
-};
 } // extern "C"
-// NOTE: no trailing pad needed - MWCC 8-aligns lbl_eu_80535E70, leaving a
+
+// The three vtables, RTTI and base lists are emitted by MWCC from the real
+// CModelDispMakeCrystal class and its base classes.
 // zero hole at 0xDC that IS the retail gap_07_80535E6C_data word.
 
 

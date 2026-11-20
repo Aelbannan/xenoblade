@@ -74,6 +74,8 @@ public:
     CMenuQstCnt(CScn* scene, short a, short b, u8 c, u8 d, u8 e);
     virtual ~CMenuQstCnt();
 
+    static CMenuQstCnt* sInstance;
+
     virtual void Init();
     virtual void Term();
     virtual void Move();
@@ -99,13 +101,9 @@ extern "C" void __construct_array(void*, void*, void*, u32, u32);
 
 extern "C" void Regist__8CProcessFP8CProcessb(void*, void*, bool);
 extern "C" void waitForDrawDone__9CDeviceVIFv();
-extern "C" int PTNotice_IsActive_3C10();
+extern "C" u32 PTNotice_IsActive_3C10();
 
 extern "C" int isQuestLogMenuActive();
 extern "C" u32 gmPauseFlags;
-extern "C" f32 lbl_eu_8066856C;
-extern "C" f32 lbl_eu_80668568;
-extern "C" void* lbl_eu_80664094;
-extern "C" void* lbl_eu_806640A8;
 extern "C" u32 lbl_eu_80573D18[];
 extern "C" char lbl_eu_80509AB4[];

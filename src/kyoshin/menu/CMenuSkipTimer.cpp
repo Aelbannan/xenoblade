@@ -12,8 +12,10 @@
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/cf/CfPadData.hpp"
 #include "monolib/core/CPadManager.hpp"
-#include "kyoshin/CSkipTimerImports.hpp"
-#include "kyoshin/menu/CMenuSkipTimerImports.hpp"
+#include "kyoshin/CArtsInfo.hpp"
+#include "kyoshin/CMainMenu.hpp"
+#include "kyoshin/CBgTexApi.hpp"
+
 #include "kyoshin/CTitleAHelp.hpp"
 #include "kyoshin/CTitleAHelpImports.hpp"
 #include "kyoshin/code_80135FDC_State.hpp"
@@ -135,12 +137,10 @@ CMenuSkipTimer* CMenuSkipTimer::create(CProcess* self, CProcess* parent) {
 // under their bare func_ names (no Itanium mangling), so they are declared
 // extern "C" here (same pattern as CMenuTutorial.cpp). Return types are int so
 // the `!= 0` tests compile to cmpwi rather than an rlwinm byte-mask.
-extern "C" {
-int BgTex_IsLoaded_3E34(CBgTex* self);
-void CSkipTimerFlagButton(CSkipTimer* self);
-}
+// BgTex_* and CSkipTimerFlagButton declarations now come from their
+// owning headers (kyoshin/CBgTexApi.hpp / kyoshin/CSkipTimer.hpp).
 
-// When the bg texture, title/help bar, and skip-timer panel are all ready,
+
 // engage the skip timer (start anim, flag phase) and play the open sound.
 extern "C" void SkipTimer_Phase0Init(CMenuSkipTimer* self) {
     if (BgTex_IsLoaded_3E34(&self->mBgTex) != 0 &&

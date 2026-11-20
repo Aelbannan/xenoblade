@@ -7,6 +7,7 @@
 //
 // Class layout lives in kyoshin/cf/CtrlMoveNpc.hpp.
 
+#include "kyoshin/cf/CfBdat.hpp"
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/cf/CtrlMoveBase.hpp"
 #include <monolib/math/CVec3.hpp>
@@ -105,7 +106,6 @@ extern const f32 lbl_eu_80667C78[2];
 // bdat column string table + row bitmap + other globals.
 extern const char sNpcRowColumnNames[];
 extern u32 sNpcRowUsableBitmap[];
-extern void* lbl_eu_806640B4;   // active table bdat data
 extern u32 gCfTEventFrameCounter;     // global value copied into mField78
 
 // ---------------------------------------------------------------------------
@@ -203,7 +203,7 @@ extern "C" void NpcMove_ClearRowBmp() {
 // ---------------------------------------------------------------------------
 int isNpcRowUsable(u32 idx, const char* p1, const char* p2, const char* p3,
                   const char* p4, const char* p5, const char* p6, const char* p7) {
-    void* bdat = lbl_eu_806640B4;
+    void* bdat = ::cf::CfBdat::spCurMapLodListFileData;
     // Column values live in address-taken slots (full-word stores after each
     // call); the u8/u16 casts at each use site lower to lbz/lhz (retail
     // shape, cf. CfGimmickSaveOff ctor).
@@ -312,7 +312,7 @@ void tickNpcMove(CCtrlMoveNpc* ths) {
 // ---------------------------------------------------------------------------
 extern "C" void refreshNpcRowFlags() {
     Bdat_GetTable_AA34();
-    void* bdat = lbl_eu_806640B4;
+    void* bdat = ::cf::CfBdat::spCurMapLodListFileData;
     cf::CfGameManager::getGameSubManager();
 
     u32* bitmap;

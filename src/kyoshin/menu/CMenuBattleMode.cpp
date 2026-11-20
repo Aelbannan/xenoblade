@@ -1,6 +1,6 @@
 #define IWORK_EVENT_INLINE_DTOR
 #include "kyoshin/menu/CMenuBattleMode.hpp"
-
+#include "kyoshin/cf/CfCamSymbols.hpp"
 #include "kyoshin/CTaskGame.hpp"
 #include "kyoshin/CUICfManager_Res.hpp"
 // Conflicting free-function redeclarations between CAIAction.hpp (via
@@ -27,7 +27,7 @@
 #include "kyoshin/cf/code_800F42AC.hpp"
 
 // Imports from code_800F42AC.cpp (TU-local, as in the other callers).
-extern "C" bool isGlobalCamFlagSet__Fi(int mask);
+
 extern "C" void* MapFx_ResolveOwner(void* src);
 
 // CfObjectMove.hpp (via the CBattleManager.hpp include above) declares it
@@ -146,7 +146,7 @@ run:
         return;
     }
     cf::CfGameManager::getInstance();
-    if (isGlobalCamFlagSet__Fi(0xafa40000)) {
+    if (isGlobalCamFlagSet(0xafa40000)) {
         return;
     }
 
@@ -227,7 +227,7 @@ draw:
         return;
     }
     cf::CfGameManager::getInstance();
-    if (isGlobalCamFlagSet__Fi(0xafa40000)) {
+    if (isGlobalCamFlagSet(0xafa40000)) {
         return;
     }
     if (mState == 0) {

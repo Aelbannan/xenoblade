@@ -4,6 +4,7 @@
 // Inline-empty ~IWorkEvent: the ctor's cleanup action references the (link-deduped)
 // weak copy, and ~CQstLogInfo elides the base call (retail shape).
 #define IWORK_EVENT_INLINE_DTOR
+#include "kyoshin/cf/CfBdat.hpp"
 #include "kyoshin/harness_catalog.hpp"
 #include "monolib/lib/CLibLayout.hpp"
 #include "kyoshin/CQstLogInfo.hpp"
@@ -164,12 +165,12 @@ extern "C" void QstLogInfo_TeardownLayout(CQstLogInfo* self) {
 }
 
 // Loads the quest-category arc: maps mField3A through the quest-name table
-// (lbl_eu_80536320) and reads the common archive file into field_0x18,
+// (sQstLogTplNames) and reads the common archive file into field_0x18,
 // clearing the loaded flag mField38.
 void QstLogInfo_LoadCommonArchive(CQstLogInfo* self) {
     self->field_0x18 = CDeviceFile::readCommonArchiveFile(
         KyoshinHeap_GetField44(),
-        lbl_eu_80536320[SearchThresholdIdx(self->mField3A)],
+        sQstLogTplNames[SearchThresholdIdx(self->mField3A)], // name-guess: .data[0x78] of 30 quest TPL names ("t05.tpl", "mf00_reg20_cat06.tpl", …)
         self, 0, 0);
     self->mField38 = 0;
 }
@@ -228,7 +229,7 @@ extern "C" void QstLogInfo_UpdateClearReasonPane(CQstLogInfo* self,
     u16 v = BdatGetU16Direct(table, &lbl_eu_8050A0B4[0x78], key);
     LayoutSetTextBoxFmtValue(self->mUnk20, &lbl_eu_8050A0B4[0x84],
                   (char*)GetBdatNameByNumId(BdatGetPtrDirect(
-                      (const char*)lbl_eu_80664098, &lbl_eu_8050A0B4[0x7f], v)),
+                      (const char*)::cf::CfBdat::spFldNpcListFileData, &lbl_eu_8050A0B4[0x7f], v)),
                   0);
     int flag = 0;
     if (v >= 0x36C && v <= 0x36E || v == 0x38C || v == 0x391 || v == 0x393) {
@@ -239,7 +240,7 @@ extern "C" void QstLogInfo_UpdateClearReasonPane(CQstLogInfo* self,
         str = BdatTouchStringCell(&lbl_eu_8050A0B4[0x8c], &lbl_eu_8050A0B4[0x7f], 0x35);
     } else {
         if (BdatGetU8Direct((const void*)table, &lbl_eu_8050A0B4[0x32], key) != 1) {
-            u16 v2 = BdatGetU16Direct((const char*)lbl_eu_80664098,
+            u16 v2 = BdatGetU16Direct((const char*)::cf::CfBdat::spFldNpcListFileData,
                                    &lbl_eu_8050A0B4[0x96], v);
             str = BdatTouchStringCell(&lbl_eu_8050A0B4[0x9e], &lbl_eu_8050A0B4[0x7f], v2);
         } else {
@@ -536,35 +537,35 @@ extern "C" void QstLogInfo_UpdateTypeObjectives(CQstLogInfo* self,
                 u16 v2 = BdatGetItemId((u16)val);
                 switch ((u16)v1) {
                 case 0:
-                    str = BdatGetPtrDirect((const void*)lbl_eu_806640F4,
+                    str = BdatGetPtrDirect((const void*)::cf::CfBdat::spItmWpnListFileData,
                                         &lbl_eu_8050A0B4[0x7f], (u16)v2);
                     break;
                 case 1:
-                    str = BdatGetPtrDirect((const void*)lbl_eu_806640D8,
+                    str = BdatGetPtrDirect((const void*)::cf::CfBdat::spBtlSkillListFileData,
                                         &lbl_eu_8050A0B4[0x7f], (u16)v2);
                     break;
                 case 2:
-                    str = BdatGetPtrDirect((const void*)lbl_eu_806640F8,
+                    str = BdatGetPtrDirect((const void*)::cf::CfBdat::spItmEquipListFileData,
                                         &lbl_eu_8050A0B4[0x7f], (u16)v2);
                     break;
                 case 3:
-                    str = BdatGetPtrDirect((const void*)lbl_eu_806640FC,
+                    str = BdatGetPtrDirect((const void*)::cf::CfBdat::spItmCrystalListFileData,
                                         &lbl_eu_8050A0B4[0x7f], (u16)v2);
                     break;
                 case 4:
-                    str = BdatGetPtrDirect((const void*)lbl_eu_80664104,
+                    str = BdatGetPtrDirect((const void*)::cf::CfBdat::spItmCollectListFileData,
                                         &lbl_eu_8050A0B4[0x7f], (u16)v2);
                     break;
                 case 5:
-                    str = BdatGetPtrDirect((const void*)lbl_eu_80664108,
+                    str = BdatGetPtrDirect((const void*)::cf::CfBdat::spItmMaterialListFileData,
                                         &lbl_eu_8050A0B4[0x7f], (u16)v2);
                     break;
                 case 6:
-                    str = BdatGetPtrDirect((const void*)lbl_eu_8066410C,
+                    str = BdatGetPtrDirect((const void*)::cf::CfBdat::spItmValuableListFileData,
                                         &lbl_eu_8050A0B4[0x7f], (u16)v2);
                     break;
                 case 7:
-                    str = BdatGetPtrDirect((const void*)lbl_eu_80664110,
+                    str = BdatGetPtrDirect((const void*)::cf::CfBdat::spItmArtsListFileData,
                                         &lbl_eu_8050A0B4[0x7f], (u16)v2);
                     break;
                 default:
@@ -572,7 +573,7 @@ extern "C" void QstLogInfo_UpdateTypeObjectives(CQstLogInfo* self,
                 }
                 sprintf(buf48, &lbl_eu_8050A0B4[0x27b], i + 1);
                 if ((u16)v1 == 3) {
-                    u8 x = BdatGetU8Direct((const void*)lbl_eu_806640EC,
+                    u8 x = BdatGetU8Direct((const void*)::cf::CfBdat::spItmItemListFileData,
                                          &lbl_eu_8050A0B4[0x288], (u16)val);
                     sprintf(buf68, &lbl_eu_8050A0B4[0x29a], str,
                             BdatTouchStringCell(&lbl_eu_8050A0B4[0x291],
@@ -635,35 +636,35 @@ extern "C" void QstLogInfo_UpdateTypeObjectives(CQstLogInfo* self,
                 u16 v2 = BdatGetItemId((u16)val);
                 switch ((u16)v1) {
                 case 0:
-                    str = BdatGetPtrDirect((const void*)lbl_eu_806640F4,
+                    str = BdatGetPtrDirect((const void*)::cf::CfBdat::spItmWpnListFileData,
                                         &lbl_eu_8050A0B4[0x7f], (u16)v2);
                     break;
                 case 1:
-                    str = BdatGetPtrDirect((const void*)lbl_eu_806640D8,
+                    str = BdatGetPtrDirect((const void*)::cf::CfBdat::spBtlSkillListFileData,
                                         &lbl_eu_8050A0B4[0x7f], (u16)v2);
                     break;
                 case 2:
-                    str = BdatGetPtrDirect((const void*)lbl_eu_806640F8,
+                    str = BdatGetPtrDirect((const void*)::cf::CfBdat::spItmEquipListFileData,
                                         &lbl_eu_8050A0B4[0x7f], (u16)v2);
                     break;
                 case 3:
-                    str = BdatGetPtrDirect((const void*)lbl_eu_806640FC,
+                    str = BdatGetPtrDirect((const void*)::cf::CfBdat::spItmCrystalListFileData,
                                         &lbl_eu_8050A0B4[0x7f], (u16)v2);
                     break;
                 case 4:
-                    str = BdatGetPtrDirect((const void*)lbl_eu_80664104,
+                    str = BdatGetPtrDirect((const void*)::cf::CfBdat::spItmCollectListFileData,
                                         &lbl_eu_8050A0B4[0x7f], (u16)v2);
                     break;
                 case 5:
-                    str = BdatGetPtrDirect((const void*)lbl_eu_80664108,
+                    str = BdatGetPtrDirect((const void*)::cf::CfBdat::spItmMaterialListFileData,
                                         &lbl_eu_8050A0B4[0x7f], (u16)v2);
                     break;
                 case 6:
-                    str = BdatGetPtrDirect((const void*)lbl_eu_8066410C,
+                    str = BdatGetPtrDirect((const void*)::cf::CfBdat::spItmValuableListFileData,
                                         &lbl_eu_8050A0B4[0x7f], (u16)v2);
                     break;
                 case 7:
-                    str = BdatGetPtrDirect((const void*)lbl_eu_80664110,
+                    str = BdatGetPtrDirect((const void*)::cf::CfBdat::spItmArtsListFileData,
                                         &lbl_eu_8050A0B4[0x7f], (u16)v2);
                     break;
                 default:
@@ -671,7 +672,7 @@ extern "C" void QstLogInfo_UpdateTypeObjectives(CQstLogInfo* self,
                 }
                 sprintf(buf8, &lbl_eu_8050A0B4[0x27b], i + 1);
                 if ((u16)v1 == 3) {
-                    u8 x = BdatGetU8Direct((const void*)lbl_eu_806640EC,
+                    u8 x = BdatGetU8Direct((const void*)::cf::CfBdat::spItmItemListFileData,
                                          &lbl_eu_8050A0B4[0x288], (u16)val);
                     sprintf(buf28, &lbl_eu_8050A0B4[0x29a], str,
                             BdatTouchStringCell(&lbl_eu_8050A0B4[0x291],
@@ -799,7 +800,7 @@ bool CQstLogInfo::OnFileEvent(CEventFile* event) {
         void* fileData = field_0x18->getData();
         CBdat::setBdatEntry(2, fileData);
         Bdat_GetTable_AA34();
-        field_0x3C = (u32)getFP(lbl_eu_80536398[SearchThresholdIdx(mField3A)]);
+        field_0x3C = (u32)getFP(sQstLogBdatColumnNames[SearchThresholdIdx(mField3A)]); // name-guess: .data[0x70] of BDAT column strings ("d%s", "eva_rate", "pc_arts", …)
         QstLogInfo_RefreshQuestDisplay(this);
         mField38 = 1;
         field_0x18 = 0;

@@ -16,13 +16,13 @@
 // Auto-scaffolded catalog TU for kyoshin/menu/CMenuArtsSet
 // Replace stubs with high-level C/C++ during decomp.
 
+#include "kyoshin/cf/CfBdat.hpp"
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/CBaseCur.hpp"
 #include "kyoshin/CScrollBar.hpp"
 #include "monolib/lib/CLibLayout.hpp"
 
 #include "kyoshin/menu/CMenuArtsSet.hpp"
-#include "kyoshin/menu/CMenuArtsSetImports.hpp"
 #include "kyoshin/cf/CtrlObjectParamSymbols.hpp"  // CtrlObjectParam_SyncParamFromActor (owner)
 #include "kyoshin/code_8028130C.hpp" // scenario-log helpers (owning header)
 #include "kyoshin/CBgTex.hpp"
@@ -284,7 +284,7 @@ extern "C" void ArtsCharList_refreshDisplay(SArtsSub8022FA58* self) {
     {
         u8 id = ArtsCharList_getId(self, self->field_0x14);
         char* tex =
-            MakeTplNameSysFile(BdatGetU16Direct(lbl_eu_80664090, lbl_eu_8050AC70 + 0xcb,
+            MakeTplNameSysFile(BdatGetU16Direct(::cf::CfBdat::spBtlPcListFileData, lbl_eu_8050AC70 + 0xcb,
                                         id) &
                           0xFFFF);
         void* res = ((nw4r::lyt::ArcResourceAccessor*)self->field_0x04)
@@ -304,7 +304,7 @@ extern "C" void ArtsCharList_refreshDisplay(SArtsSub8022FA58* self) {
         }
         u8 id = ArtsCharList_getId(self, (u8)prev);
         char* tex =
-            MakeTplNameSysFile(BdatGetU16Direct(lbl_eu_80664090, lbl_eu_8050AC70 + 0xe1,
+            MakeTplNameSysFile(BdatGetU16Direct(::cf::CfBdat::spBtlPcListFileData, lbl_eu_8050AC70 + 0xe1,
                                         id) &
                           0xFFFF);
         void* res = CUICfManager_getArcResourceAccessor()->GetResource(0x74696D67u, tex, 0);
@@ -322,7 +322,7 @@ extern "C" void ArtsCharList_refreshDisplay(SArtsSub8022FA58* self) {
         }
         u8 id = ArtsCharList_getId(self, (u8)next);
         char* tex =
-            MakeTplNameSysFile(BdatGetU16Direct(lbl_eu_80664090, lbl_eu_8050AC70 + 0xe1,
+            MakeTplNameSysFile(BdatGetU16Direct(::cf::CfBdat::spBtlPcListFileData, lbl_eu_8050AC70 + 0xe1,
                                         id) &
                           0xFFFF);
         void* res = CUICfManager_getArcResourceAccessor()->GetResource(0x74696D67u, tex, 0);
@@ -584,7 +584,7 @@ extern "C" void artsSyncSlots(SArts308B0View* self, u8 v) {
                 break;
             }
             u32 w = e->field_0x00;
-            u32 tblEntry = *(u32*)((char*)&lbl_eu_806640F8 + w);
+            u32 tblEntry = *(u32*)((char*)&::cf::CfBdat::spItmEquipListFileData + w);
             u32 cat = (u16)BdatGetItemId(w >> 20);
             u32 k = BdatGetU8Direct((const void*)tblEntry, (char*)lbl_eu_8050AC70 + 0x1df,
                                   cat) -
@@ -814,7 +814,7 @@ extern "C" u8 artsReadSelId(SArtsSub8022FA58* self) {
             }
             // Item word top 12 bits -> category; BDAT row keyed by category.
             // tbl is loaded ahead of the category lookup (retail schedule).
-            u32 tbl = (u32)lbl_eu_806640F8;
+            u32 tbl = (u32)::cf::CfBdat::spItmEquipListFileData;
             u16 cat = (u16)BdatGetItemId(entry->field_0x00 >> 20);
             u8 row = BdatGetU8Direct((const void*)tbl, lbl_eu_8050AC70 + 0x1df, cat);
             switch (row) {
@@ -1805,7 +1805,7 @@ CArtsList::CArtsList()
 
     // Temp CArtsInfo: copy its body (after the vtable) into the member.
     u8 tempInfo[0x74];
-    __ct__CArtsInfo(tempInfo);
+    __ct__9CArtsInfoFv(tempInfo);
     __as__17UnkClass_8045F564FRC17UnkClass_8045F564(&this->mSubObj74.data[4], tempInfo + 4);
         ((SArtsInfoBody*)((u8*)&this->mSubObj74 + 4))->field_0x14 =
             ((SArtsInfoBody*)(tempInfo + 4))->field_0x14;

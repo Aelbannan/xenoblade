@@ -281,7 +281,4 @@ void nw4r::snd::detail::SeqSound::OnUpdatePlayerPriority() {
         reinterpret_cast<SeqSoundOfs*>(this)->mManager)
         ->UpdatePriority(pSound, CalcCurrentPlayerPriority());
 }
-extern "C" void* GetBasicPlayer__Q44nw4r3snd6detail8SeqSoundFv(void* self) { return (void*)((u8*)self + 0x10c); }
-extern "C" void* GetBasicPlayer__Q44nw4r3snd6detail8SeqSoundCFv(void* self) { return (void*)((u8*)self + 0x10c); }
-extern "C" u8 IsPrepared__Q44nw4r3snd6detail8SeqSoundCFv(void* self) { return *(static_cast<u8*>(self) + 677); }
 

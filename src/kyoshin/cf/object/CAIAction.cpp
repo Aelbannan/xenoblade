@@ -1,3 +1,4 @@
+#include "kyoshin/cf/CfBdat.hpp"
 #include <types.h>
 #include "kyoshin/cf/CBattleManager.hpp"
 #include "kyoshin/cf/CBattleManager.hpp"
@@ -13,6 +14,7 @@
 #include "kyoshin/CArtsInfo.hpp"
 #include "kyoshin/cf/object/CObjectState.hpp"
 #include "kyoshin/cf/object/CActorParam.hpp"
+#include "kyoshin/cf/CArtsSet.hpp"
 #include "kyoshin/cf/object/CObjectParam.hpp"
 #include "kyoshin/cf/object/CfObject.hpp"
 #include "kyoshin/cf/object/CfObjectActor.hpp"
@@ -56,7 +58,7 @@ CAIAction::CAIAction() {
 
     slotBase = ring.queue.slots;
     ring.queue.capacity = 0x10;
-    q = this->entries;
+    q = (u8*)this->entries;
     p = this->trailer;
     *(void**)end = slotBase;
     ring.queue.count = 0;
@@ -527,14 +529,7 @@ void aiRingConsume(cf::CAIAction* self, u32 index) {
 }
 // extern "C" per the CfObjectPc.hpp declaration (retail symbol is unmangled;
 // CfObjectPc.cpp imports it under that exact name).
-// TU-local u16 view of the flags halfword aiActionStoreIndexedBytes
-// maintains at entry+12 (base+0x228; exact layout, replaces the raw
-// halfword derefs while keeping retail's mulli/add address schedule).
-struct AIEntryFlagsView {
-    u8 _pad[0x228];
-    u16 flags;  // 0x228
-};
-extern "C" void aiActionStoreIndexedBytes(unsigned char* self, int index, int a2, int a3, int a4, int a5, int a6, int a7, int a8, int a9, int a10, int a11, int a12, int a13) { unsigned char* base = self + index * 14; base[0x21c] = a2; base[0x21d] = a3; base[0x21e] = a4; base[0x21f] = a5; base[0x220] = a6; base[0x221] = a7; base[0x222] = a8; base[0x223] = a9; base[0x224] = a10; base[0x225] = a11; base[0x226] = a12; ((AIEntryFlagsView*)base)->flags = a13; if (a7 == 11 || a9 == 11) ((AIEntryFlagsView*)base)->flags |= 1; if (a7 == 10 || a9 == 10) ((AIEntryFlagsView*)base)->flags |= 1; if (a7 == 7 || a9 == 7) ((AIEntryFlagsView*)base)->flags |= 2; }
+extern "C" void aiActionStoreIndexedBytes(unsigned char* self, int index, int a2, int a3, int a4, int a5, int a6, int a7, int a8, int a9, int a10, int a11, int a12, int a13) { unsigned char* base = self + index * 14; base[0x21c] = a2; base[0x21d] = a3; base[0x21e] = a4; base[0x21f] = a5; base[0x220] = a6; base[0x221] = a7; base[0x222] = a8; base[0x223] = a9; base[0x224] = a10; base[0x225] = a11; base[0x226] = a12; ((cf::CAIAction*)self)->entries[index].flags = a13; if (a7 == 11 || a9 == 11) ((cf::CAIAction*)self)->entries[index].flags |= 1; if (a7 == 10 || a9 == 10) ((cf::CAIAction*)self)->entries[index].flags |= 1; if (a7 == 7 || a9 == 7) ((cf::CAIAction*)self)->entries[index].flags |= 2; }
 void aiActionClearBits0006(void* self) {
     static_cast<cf::CAIAction*>(self)->ring.unk4 &= ~0x0006;
 }
@@ -558,10 +553,10 @@ void initAIActionTable(void* tableArg) {
 }
 // memset the 160-element x 14-byte action table at +0x21C.
 extern "C" void aiResetTables(void* self) {
-    void* p = (u8*)self + 0x21C;
+    u8* p = (u8*)((cf::CAIAction*)self)->entries;
     for (int i = 0; i < 160; i++) {
-        memset(p, 0, 14);
-        p = (u8*)p + 14;
+        memset(p, 0, sizeof(cf::CAIActionEntry));
+        p = (u8*)p + sizeof(cf::CAIActionEntry);
     }
 }
 void aiFetchAction(){}
@@ -720,7 +715,7 @@ extern "C" int aiJudgeAction(cf::CAIAction* self, const u8* e, cf::CAIActionSlot
             void* ch = CtrlObjectParam_GetCharEntry(party->unk3F28);
             u16 v = *(u16*)((u8*)ch + 0xA);
             if (CItem_getNameIdFromFam(v)) {
-                u32 col = getBdatStringColumnValue((void*)lbl_eu_806640F8,
+                u32 col = getBdatStringColumnValue((void*)::cf::CfBdat::spItmEquipListFileData,
                                                     (const char*)&lbl_eu_80501968[1]);
                 if ((u32)(u8)col - 3 != b[i])
                     return 0;
@@ -730,11 +725,11 @@ extern "C" int aiJudgeAction(cf::CAIAction* self, const u8* e, cf::CAIActionSlot
         case 0x40: case 0x41: {
             // Turn-counter window; inner dispatch keyed on 0x40/0x41 only.
             if (k == 0x40) {
-                if (((CBattleMgrAIView*)getInstance__Q22cf14CBattleManagerFv())->field194
+                if (*(s32*)&((cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv())->unk194
                     < (s32)b[i] * 10)
                     return 0;
             } else if (k == 0x41) {
-                if (((CBattleMgrAIView*)getInstance__Q22cf14CBattleManagerFv())->field194
+                if (*(s32*)&((cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv())->unk194
                     > (s32)b[i] * 10)
                     return 0;
             }
@@ -823,14 +818,14 @@ extern "C" int aiJudgeAction(cf::CAIAction* self, const u8* e, cf::CAIActionSlot
 
     if (d == 4) {
         // Vision exclusion sweep + arts-slot lottery with power gates.
-        CBattleMgrAIView* bm = (CBattleMgrAIView*)getInstance__Q22cf14CBattleManagerFv();
-        void* vision = ((cf::CBattleManager*)bm)->CBattleMan_FetchVisionObj();
-        if (vision != 0 && !(*(u32*)((u8*)party + 0x3F00) & 2)
-            && *(u32*)vision != party->unk3F10 && !(bm->field824 & 0x20000))
+        cf::CBattleManager* bm = (cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv();
+        cf::CVisionSub* vision = (cf::CVisionSub*)bm->CBattleMan_FetchVisionObj();
+        if (vision != 0 && !(party->move.moveFlags & 2)
+            && vision->field_00 != party->unk3F10 && !(vision->field_824 & 0x20000))
             return 0;
 
         // Sweep the enumerator: every tagged member must pass the move probe.
-        if (!(*(u32*)((u8*)party + 0x3F00) & 2)) {
+        if (!(party->move.moveFlags & 2)) {
             CfEnumListHolder h;
             startEnumObjects(h.get(), 0x20, 0x800);
             for (u32 i = 0; i < ((CAIEnumIter*)h.get())->field620; i++) {
@@ -879,17 +874,17 @@ extern "C" int aiJudgeAction(cf::CAIAction* self, const u8* e, cf::CAIActionSlot
             }
         }
 
-        CAIArtsParamView* param = (CAIArtsParamView*)(uintptr_t)out->unk18;
+        cf::CArtsParam* param = (cf::CArtsParam*)(uintptr_t)out->unk18;
         if (param == 0)
             return 0;
-        if (isBattleStatusActive((u8*)party + 8, 0x117) != 0 && isBattleEventKind3(param->field48) != 0)
+        if (isBattleStatusActive((u8*)party + 8, 0x117) != 0 && isBattleEventKind3(param->unk48) != 0)
             return 0;
-        if (isBattleStatusActive((u8*)party + 8, 0x2F) == 0 && param->field80 - out->unk14 > 0.0f)
+        if (isBattleStatusActive((u8*)party + 8, 0x2F) == 0 && param->unk80 - out->unk14 > 0.0f)
             return 0;
         if (isBattleStatusActive((u8*)party + 8, 0x30) == 0 && !(((cf::CActorParam*)party)->CActorParam_getHitCharge() >= 0.0f))
             return 0;
         if (isBattleStatusActive((u8*)party + 8, 0x31) == 0
-            && !((f64)param->field34 <= (f64)((cf::CActorParam*)party)->CActorParam_getArtsGauge()))
+            && !((f64)(s16)param->unk34 <= (f64)((cf::CActorParam*)party)->CActorParam_getArtsGauge()))
             return 0;
         return 1;
     }
@@ -931,8 +926,8 @@ extern "C" int aiJudgeAction(cf::CAIAction* self, const u8* e, cf::CAIActionSlot
         for (int j = 0; j < 0x10; j++) {
             void* set = ((cf::CActorParam*)party)->CActorParam_getArtsSet();
             if (getArtsSlotByFlatIdx(set, j)) {
-                CAIArtsParamView* p = (CAIArtsParamView*)getArtsParamByIdx(((cf::CActorParam*)party)->CActorParam_getArtsSet(), j);
-                if (p->field77 == want) {
+                cf::CArtsParam* p = (cf::CArtsParam*)getArtsParamByIdx(((cf::CActorParam*)party)->CActorParam_getArtsSet(), j);
+                if (p->unk77 == want) {
                     out->unk12 = (s16)j;
                     sel = j;
                     break;
@@ -944,28 +939,28 @@ extern "C" int aiJudgeAction(cf::CAIAction* self, const u8* e, cf::CAIActionSlot
 
         if (!getArtsSlotByFlatIdx(((cf::CActorParam*)party)->CActorParam_getArtsSet(), sel))
             return 0;
-        CAIArtsParamView* param = (CAIArtsParamView*)getArtsParamByIdx(((cf::CActorParam*)party)->CActorParam_getArtsSet(), sel);
-        if (isBattleStatusActive((u8*)party + 8, 0x117) != 0 && isBattleEventKind3(param->field48) != 0)
+        cf::CArtsParam* param = (cf::CArtsParam*)getArtsParamByIdx(((cf::CActorParam*)party)->CActorParam_getArtsSet(), sel);
+        if (isBattleStatusActive((u8*)party + 8, 0x117) != 0 && isBattleEventKind3(param->unk48) != 0)
             return 0;
         if (ArtsGateClear(param, party, 0x200) == 0)
             return 0;
         if (isBattleStatusActive((u8*)party + 8, 0x2F) == 0) {
-            if (!(param->field48 == 0xEB && isBattleStatusActive((u8*)party + 8, 0xEB) != 0)
-                && param->field80 - out->unk14 > 0.0f)
+            if (!(param->unk48 == 0xEB && isBattleStatusActive((u8*)party + 8, 0xEB) != 0)
+                && param->unk80 - out->unk14 > 0.0f)
                 return 0;
         }
         if (isBattleStatusActive((u8*)party + 8, 0x30) == 0 && !(((cf::CActorParam*)party)->CActorParam_getHitCharge() >= 0.0f))
             return 0;
         if (isBattleStatusActive((u8*)party + 8, 0x31) == 0
-            && !((f64)param->field34 <= (f64)((cf::CActorParam*)party)->CActorParam_getArtsGauge()))
+            && !((f64)(s16)param->unk34 <= (f64)((cf::CActorParam*)party)->CActorParam_getArtsGauge()))
             return 0;
 
         // Vision exclusion, relaxed when either flag bit is set.
-        CBattleMgrAIView* bm = (CBattleMgrAIView*)getInstance__Q22cf14CBattleManagerFv();
-        void* vision = ((cf::CBattleManager*)bm)->CBattleMan_FetchVisionObj();
-        if (vision != 0 && !(*(u32*)((u8*)party + 0x3F00) & 2)
-            && !(param->field78 & 0x8000)
-            && *(u32*)vision != party->unk3F10 && !(bm->field824 & 0x20000))
+        cf::CBattleManager* bm = (cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv();
+        cf::CVisionSub* vision = (cf::CVisionSub*)bm->CBattleMan_FetchVisionObj();
+        if (vision != 0 && !(party->move.moveFlags & 2)
+            && !(param->unk78 & 0x8000)
+            && vision->field_00 != party->unk3F10 && !(vision->field_824 & 0x20000))
             return 0;
         return 1;
     }
@@ -978,9 +973,9 @@ extern "C" int aiJudgeAction(cf::CAIAction* self, const u8* e, cf::CAIActionSlot
         void* obj = MapFx_ResolveOwner(findObjectById((int)out->unk00));
         if (obj != 0 && !(*(u32*)((u8*)obj + 0x3F00) & 2))
             return 0;
-        if (!(*(u32*)((u8*)party + 0x3F00) & 2))
+        if (!(party->move.moveFlags & 2))
             return 0;
-        if (((CBattleMgrAIView*)getInstance__Q22cf14CBattleManagerFv())->field194 < 0x64)
+        if (*(s32*)&((cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv())->unk194 < 0x64)
             return 0;
         return CtrlRemote_TouchBitByArg(0x335f) != 0;
     }
@@ -988,7 +983,7 @@ extern "C" int aiJudgeAction(cf::CAIAction* self, const u8* e, cf::CAIActionSlot
     if (d >= 0x3A && d <= 0x3C) {
         // Pair flag gate; key 0x3B adds a target-tag probe and requires the
         // 0x335f unlock to be CLEAR.
-        if (!(*(u32*)((u8*)party + 0x3F00) & 2))
+        if (!(party->move.moveFlags & 2))
             return 0;
         if (d != 0x3B)
             return 1;
@@ -1005,7 +1000,7 @@ extern "C" int aiJudgeAction(cf::CAIAction* self, const u8* e, cf::CAIActionSlot
 
     if (d == 0x3D || d == 0x3E) {
         // Chained list checks (0x111 only on 0x3D, 0x112 only on 0x3E).
-        if (!(*(u32*)((u8*)party + 0x3F00) & 2))
+        if (!(party->move.moveFlags & 2))
             return 0;
         if (d == 0x3D && isBattleStatusActive((u8*)party + 8, 0x111) != 0)
             return 0;
@@ -2718,7 +2713,7 @@ void aiInstallArts(cf::CAIAction* self, u32 sel) {
             // Declared index-first: MWCC hands the pointer the lower
             // callee-saved register this way (retail r25=ptr, r26=idx).
             u32 i = 0;
-            u8* p = self->entries;
+            u8* p = (u8*)self->entries;
             while (i < 0xA0) {
                 std::memset(p, 0, 0xE);
                 p += 0xE;
@@ -2784,7 +2779,7 @@ void aiInstallArts(cf::CAIAction* self, u32 sel) {
                 }
                 return;
             }
-            p = (const cf::CAIActionTableEntry*)((const u8*)p + 0x16 + p->actionCount * 0xC);
+            p = (const cf::CAIActionTableEntry*)(p->actions + p->actionCount);
             i++;
         }
     }

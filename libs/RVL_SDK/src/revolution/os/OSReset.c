@@ -11,35 +11,6 @@ OSShutdownFunctionQueue ShutdownFunctionQueue;
 volatile BOOL __OSIsReturnToIdle;
 u32 bootThisDol;
 
-/*
- * Panic strings owned by this TU. Each OSPanic call names the string it
- * prints; the file name is shared by all of the reset paths. The objects
- * are grouped in use order: file name, hot-reset failures, menu failures,
- * then the obsolete-API warnings. Explicit sizes keep the string table's
- * 4-byte-aligned layout. The menu table also carries the data-manager and
- * menu-page strings used by the other reset paths.
- */
-char lbl_80552AF0[0xC] = "OSReset.c";
-char OSReset_hotResetPool[0x2C] =
-    "__OSHotReset(): Falied to reset system.\n\0\0\0\0";
-char OSReset_hotResetPool_b[0x34] =
-    "__OSReturnToMenu(): Falied to boot system menu.\n\0\0\0";
-char OSReset_menuPool[0xA4] =
-    "OSReturnToMenu(): Falied to boot system menu.\n\0\0"
-    "OSReturnToDataManager(): Falied to boot system menu.\n\0\0\0"
-    "Calendar/Calendar_index.html\0\0\0\0"
-    "Display/Display_index.html\0\0";
-char OSReset_menuPool_b[0xDC] =
-    "Sound/Sound_index.html\0\0"
-    "Parental_Control/Parental_Control_index.html\0\0\0\0"
-    "Internet/Internet_index.html\0\0\0\0"
-    "WiiConnect24/Wiiconnect24_index.html\0\0\0\0"
-    "Update/Update_index.html\0\0\0\0"
-    "OSReturnToSetting(): You can't specify %d.  \n\0\0";
-char OSReset_obsoletePool[0x7C] =
-    "OSResetSystem() is obsoleted. It doesn't work any longer.\n\0\0"
-    "OSSetBootDol() is obsoleted. It doesn't work any longer.\n\0\0\0\0\0\0";
-
 static void KillThreads(void);
 void __OSHotResetForError(void);
 
@@ -218,13 +189,13 @@ static inline void HotResetPanic(void) {
     }
     __OSHotReset();
 
-    OSPanic(lbl_80552AF0, 1034, OSReset_hotResetPool);
+    OSPanic("OSReset.c", 1034, "__OSHotReset(): Falied to reset system.\n");
 }
 
 static inline void HotResetPanicMenu(void) {
     HotResetPanic();
 
-    OSPanic(lbl_80552AF0, 1010, OSReset_hotResetPool_b);
+    OSPanic("OSReset.c", 1010, "__OSReturnToMenu(): Falied to boot system menu.\n");
 }
 
 void OSRestart(u32 resetCode) {
@@ -247,12 +218,11 @@ void OSRestart(u32 resetCode) {
 
     OSDisableScheduler();
     __OSShutdownDevices(OS_SD_EVENT_1);
-    /* Separate objects → retail's two lis (file + hot), not strBase+0xC. */
     if (__OSInNandBoot || __OSInReboot) {
         __OSInitSTM();
     }
     __OSHotReset();
-    OSPanic(lbl_80552AF0, 1034, OSReset_hotResetPool);
+    OSPanic("OSReset.c", 1034, "__OSHotReset(): Falied to reset system.\n");
 }
 
 void __OSReturnToMenu(u8 menuMode) {
@@ -333,7 +303,49 @@ void __OSReturnToMenu(u8 menuMode) {
 void OSReturnToMenu(void) {
     __OSReturnToMenu(0);
 
-    OSPanic(lbl_80552AF0, 895, OSReset_menuPool);
+    OSPanic("OSReset.c", 895, "OSReturnToMenu(): Falied to boot system menu.\n");
+}
+
+/* Public SDK reset paths; the game build dead-strips these functions but
+ * MWCC keeps their literals in this TU's string pool. */
+// name-guess: name from the panic string; no retail symbol/body survives dead-strip, line 1010 guessed
+void OSReturnToDataManager(void) {
+    OSPanic("OSReset.c", 1010,
+            "OSReturnToDataManager(): Falied to boot system menu.\n");
+}
+
+// name-guess: invented owner for the 7 page-name strings (Calendar..Update); no caller/symbol, switch shape and page order guessed
+void __OSReportMenuPage(u32 page) {
+    switch (page) {
+    case 0:
+        OSPanic("OSReset.c", 0, "Calendar/Calendar_index.html");
+        break;
+    case 1:
+        OSPanic("OSReset.c", 0, "Display/Display_index.html");
+        break;
+    case 2:
+        OSPanic("OSReset.c", 0, "Sound/Sound_index.html");
+        break;
+    case 3:
+        OSPanic("OSReset.c", 0,
+                "Parental_Control/Parental_Control_index.html");
+        break;
+    case 4:
+        OSPanic("OSReset.c", 0, "Internet/Internet_index.html");
+        break;
+    case 5:
+        OSPanic("OSReset.c", 0, "WiiConnect24/Wiiconnect24_index.html");
+        break;
+    case 6:
+        OSPanic("OSReset.c", 0, "Update/Update_index.html");
+        break;
+    }
+}
+
+// name-guess: name from the panic string; u32 setting/line 0 inferred from "%d", no retail body survives dead-strip
+void OSReturnToSetting(u32 setting) {
+    OSPanic("OSReset.c", 0,
+            "OSReturnToSetting(): You can't specify %d.  \n", setting);
 }
 
 void __OSReturnToMenuForError(void) {
@@ -356,7 +368,7 @@ void __OSHotResetForError(void) {
         __OSInitSTM();
     }
     __OSHotReset();
-    OSPanic(lbl_80552AF0, 1034, OSReset_hotResetPool);
+    OSPanic("OSReset.c", 1034, "__OSHotReset(): Falied to reset system.\n");
 }
 
 u32 OSGetResetCode(void) {
@@ -372,7 +384,14 @@ void OSResetSystem(BOOL reset, u32 resetCode, BOOL forceMenu) {
 #pragma unused(resetCode)
 #pragma unused(forceMenu)
 
-    OSPanic(lbl_80552AF0, 1185, OSReset_obsoletePool);
+    OSPanic("OSReset.c", 1185,
+            "OSResetSystem() is obsoleted. It doesn't work any longer.\n");
+}
+
+// name-guess: name from the obsolete-API string; void signature/line 1185 guessed, no retail body survives dead-strip
+void OSSetBootDol(void) {
+    OSPanic("OSReset.c", 1185,
+            "OSSetBootDol() is obsoleted. It doesn't work any longer.\n");
 }
 
 static void KillThreads(void) {

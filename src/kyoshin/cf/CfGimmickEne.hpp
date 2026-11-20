@@ -128,7 +128,6 @@ extern void CfGimmick_LoadBdatAreaPos(cf::CfGimmick* self, float* out, void* bda
                           void** holder);
 
 // Bdat holder seed for this gimmick (sda21 pointer global).
-extern void* lbl_eu_80664144;
 
 // Fixed column-name string block used by the ctor (offsets 0x00..0x3A).
 extern char lbl_eu_8050E6A4[];

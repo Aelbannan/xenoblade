@@ -1,3 +1,4 @@
+#include "kyoshin/cf/CfBdat.hpp"
 #include "kyoshin/cf/object/CBattleState.hpp"
 
 // C-ABI runtime helpers: extern "C" so MWCC emits the plain `memset`/`memcpy`
@@ -2070,7 +2071,7 @@ extern "C" cf::CBattleStateEntry* findTopBattleStatusEntry(cf::CBattleState* sel
 // &slot or 0. ids >= 0x12f return 0. Retail keeps an mtctr/bdnz loop
 // (26 groups x 4 entries) with a running entry index recomputed via
 // mulli/add/addi on success.
-extern "C" cf::CBattleStateEntry* matchBattleStatusEntry(cf::CBattleState* self, unsigned int id, unsigned int a, unsigned int b, unsigned int c) {
+extern "C" cf::CBattleStateEntry* matchBattleStatusEntry(void* self, u32 id, u32 a, u32 b, u32 c) {
     unsigned int i;
 
     if (id >= 0x12f) {
@@ -2110,7 +2111,7 @@ extern "C" u8 classifyBattleCommand(int index) {
         u32 w;
         u8 b;
     } u;
-    u.w = getBdatStringColumnValue(lbl_eu_806640E0, &lbl_eu_805018A8[0xf], index);
+    u.w = getBdatStringColumnValue(::cf::CfBdat::spBtlBuffListFileData, &lbl_eu_805018A8[0xf], index);
     return u.b;
 }
 void cf::CBattleState::CBattleState_setBattleParam(int id) {
@@ -2584,7 +2585,7 @@ case133_138:
             u32 bitPos;
 
             u.w = getBdatStringColumnValue(
-                lbl_eu_806640E0, &lbl_eu_805018A8[0xf], i);
+                ::cf::CfBdat::spBtlBuffListFileData, &lbl_eu_805018A8[0xf], i);
             if ((u32)target == (u32)(u.b - 4)) {
                 wordOff = (i >> 3) & ~3u;
                 bitPos = i & 0x1F;
@@ -2747,7 +2748,7 @@ case139_13E:
 
         if (kind == 0) {
             u.w = getBdatStringColumnValue(
-                lbl_eu_806640E0, &lbl_eu_805018A8[0xf], i);
+                ::cf::CfBdat::spBtlBuffListFileData, &lbl_eu_805018A8[0xf], i);
             if ((u32)(id - 0x139) == (u32)(u.b - 4)) {
                 wordOff = (i >> 3) & ~3u;
                 bitPos = i & 0x1F;
@@ -2910,7 +2911,7 @@ case13F_144:
 
         if (kind == 1) {
             u.w = getBdatStringColumnValue(
-                lbl_eu_806640E0, &lbl_eu_805018A8[0xf], i);
+                ::cf::CfBdat::spBtlBuffListFileData, &lbl_eu_805018A8[0xf], i);
             if ((u32)(id - 0x13f) == (u32)(u.b - 4)) {
                 wordOff = (i >> 3) & ~3u;
                 bitPos = i & 0x1F;

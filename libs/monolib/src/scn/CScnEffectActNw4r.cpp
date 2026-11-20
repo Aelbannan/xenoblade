@@ -15,11 +15,10 @@
 
 // This TU's .data vtable (defined at the bottom of this file); the constructor
 // installs it. Global-scope data names are not mangled by MWCC.
-extern u32 lbl_eu_8056EAD8[];
 
 // Constructor: installs the vtable and clears the act-table count.
 // Retail order: vtable store first, then mCount = 0 (body, not init list).
-CScnEffectActNw4r::CScnEffectActNw4r() { *(void**)this = (void*)lbl_eu_8056EAD8; mCount = 0; }
+CScnEffectActNw4r::CScnEffectActNw4r() { mCount = 0; }
 
 // Dtor leaves the vtable untouched; as a virtual dtor MWCC generates the
 // deleting form (null-this guard + operator delete on flag bit 0).
@@ -33,18 +32,18 @@ CScnEffectActNw4r::~CScnEffectActNw4r() {}
 
 // Most slots are one-line forwarders: load mpMgr and tail-call into the
 // manager's implementation.
-extern "C" void EffectActNw4rProbeAnimActive(CScnEffectActNw4r* self) { Scn_IsAnimActiveOrNull(self->mpMgr); }
+void CScnEffectActNw4r::EffectActNw4rProbeAnimActive() { Scn_IsAnimActiveOrNull(this->mpMgr); }
 
-extern "C" void EffectActNw4rSetLeafDist(CScnEffectActNw4r* self) { simSetLeafDist7B0(self->mpMgr); }
+void CScnEffectActNw4r::EffectActNw4rSetLeafDist() { simSetLeafDist7B0(this->mpMgr); }
 
-extern "C" void EffectActNw4rSetTreeFlag2(CScnEffectActNw4r* self) { simSetFlag2OnTree(self->mpMgr); }
+void CScnEffectActNw4r::EffectActNw4rSetTreeFlag2() { simSetFlag2OnTree(this->mpMgr); }
 
-extern "C" u8* EffectActNw4rGetLeafActData(CScnEffectActNw4r* self) { return (u8*)simGetLeafActData(self->mpMgr); }
+u8* CScnEffectActNw4r::EffectActNw4rGetLeafActData() { return (u8*)simGetLeafActData(this->mpMgr); }
 
 // Copy the position triplet into the manager's scale/pos fields at 0x304.
 // Kept as integer word copies: retail moves the bits without float ops.
-extern "C" void EffectActNw4rStoreMgrScalePos(CScnEffectActNw4r* self, const void* other) {
-    CScnEffectActMgr* mgr = self->mpMgr;
+void CScnEffectActNw4r::EffectActNw4rStoreMgrScalePos(const void* other) {
+    CScnEffectActMgr* mgr = this->mpMgr;
     *(u32*)&mgr->field_0x304 = ((const u32*)other)[0];
     *(u32*)&mgr->field_0x308 = ((const u32*)other)[1];
     *(u32*)&mgr->field_0x30c = ((const u32*)other)[2];
@@ -53,31 +52,31 @@ extern "C" void EffectActNw4rStoreMgrScalePos(CScnEffectActNw4r* self, const voi
 // Manager's effect-act getter, act slot at +0x48.
 // const self: MWCC hoists the mpMgr load above the LR-save store (retail
 // prologue order lwz r3,4(r3) BEFORE stw r0,20(sp)); non-const emits stw-first.
-extern "C" u8* EffectActNw4rGetAct48(const CScnEffectActNw4r* self) {
-    return (u8*)simGetLeafActData(self->mpMgr) + 0x48;
+u8* CScnEffectActNw4r::EffectActNw4rGetAct48() const {
+    return (u8*)simGetLeafActData(this->mpMgr) + 0x48;
 }
 
 // Manager's effect-act getter, act slot at +0x78.
-extern "C" u8* EffectActNw4rGetAct78(const CScnEffectActNw4r* self) {
-    return (u8*)simGetLeafActData(self->mpMgr) + 0x78;
+u8* CScnEffectActNw4r::EffectActNw4rGetAct78() const {
+    return (u8*)simGetLeafActData(this->mpMgr) + 0x78;
 }
 
 // Manager's effect-act getter, act slot at +0xb8.
-extern "C" u8* EffectActNw4rGetActB8(const CScnEffectActNw4r* self) {
-    return (u8*)simGetLeafActData(self->mpMgr) + 0xb8;
+u8* CScnEffectActNw4r::EffectActNw4rGetActB8() const {
+    return (u8*)simGetLeafActData(this->mpMgr) + 0xb8;
 }
 
 // Manager's effect-act getter, act slot at +0xc4.
-extern "C" u8* EffectActNw4rGetActC4(const CScnEffectActNw4r* self) {
-    return (u8*)simGetLeafActData(self->mpMgr) + 0xc4;
+u8* CScnEffectActNw4r::EffectActNw4rGetActC4() const {
+    return (u8*)simGetLeafActData(this->mpMgr) + 0xc4;
 }
 
 // Effect-act lookup: the local id table first, then the manager's chain.
-extern "C" CScnEffectAct* EffectActNw4rFindActIndexed(const CScnEffectActNw4r* self, u32 idx) {
-    if (self->mCount > idx) {
-        return self->mActs[idx];
+CScnEffectAct* CScnEffectActNw4r::EffectActNw4rFindActIndexed(u32 idx) const {
+    if (this->mCount > idx) {
+        return this->mActs[idx];
     }
-    CScnEffectAct* chain = self->mpMgr->field_0x7c4;
+    CScnEffectAct* chain = this->mpMgr->field_0x7c4;
     if (chain != 0) {
         return chain->v40()->v18(idx);
     }
@@ -86,14 +85,14 @@ extern "C" CScnEffectAct* EffectActNw4rFindActIndexed(const CScnEffectActNw4r* s
 
 // Same lookup as EffectActNw4rFindActIndexed, but gated on the manager's act flag and
 // preferring the manager's direct act slot before falling back to the chain.
-extern "C" CScnEffectAct* EffectActNw4rFindActGated(const CScnEffectActNw4r* self, u32 idx) {
-    if ((self->mpMgr->field_0x7a4 & 0x40000000) == 0) {
+CScnEffectAct* CScnEffectActNw4r::EffectActNw4rFindActGated(u32 idx) const {
+    if ((this->mpMgr->field_0x7a4 & 0x40000000) == 0) {
         return 0;
     }
-    if (TexMan_FindNode_0AF4(self->mpMgr, idx)) {
-        return self->mpMgr->v13(idx);
+    if (TexMan_FindNode_0AF4(this->mpMgr, idx)) {
+        return this->mpMgr->v13(idx);
     }
-    CScnEffectAct* chain = self->mpMgr->field_0x7c4;
+    CScnEffectAct* chain = this->mpMgr->field_0x7c4;
     if (chain != 0) {
         return chain->v40()->v13(idx);
     }
@@ -102,16 +101,16 @@ extern "C" CScnEffectAct* EffectActNw4rFindActGated(const CScnEffectActNw4r* sel
 
 // Id-based lookup that scans the u16 id table before falling back to the
 // manager's chain.
-extern "C" CScnEffectAct* EffectActNw4rFindActById(const CScnEffectActNw4r* self, u32 idx) {
-    if ((self->mpMgr->field_0x7a4 & 0x40000000) == 0) {
+CScnEffectAct* CScnEffectActNw4r::EffectActNw4rFindActById(u32 idx) const {
+    if ((this->mpMgr->field_0x7a4 & 0x40000000) == 0) {
         return 0;
     }
-    for (u32 i = 0; i < self->mCount; i++) {
-        if (self->mIds[i] == idx) {
-            return self->mActs[i];
+    for (u32 i = 0; i < this->mCount; i++) {
+        if (this->mIds[i] == idx) {
+            return this->mActs[i];
         }
     }
-    CScnEffectAct* chain = self->mpMgr->field_0x7c4;
+    CScnEffectAct* chain = this->mpMgr->field_0x7c4;
     if (chain != 0) {
         return chain->v40()->v15(idx);
     }
@@ -120,12 +119,12 @@ extern "C" CScnEffectAct* EffectActNw4rFindActById(const CScnEffectActNw4r* self
 
 // Id-based lookup that also copies the act's position triplet into out;
 // returns 1 on success, 0 when the fallback chain reports none.
-extern "C" u32 EffectActNw4rGetActPosById(const CScnEffectActNw4r* self, u32 idx, ml::CVec3* out) {
-    u32 count = self->mCount;
+u32 CScnEffectActNw4r::EffectActNw4rGetActPosById(u32 idx, ml::CVec3* out) const {
+    u32 count = this->mCount;
     for (u32 i = 0; i < count; i++) {
-        if (self->mIds[i] == idx) {
+        if (this->mIds[i] == idx) {
             // Named in z,y,x order so MWCC's load scheduler matches retail.
-            CScnEffectAct* act = self->mActs[i];
+            CScnEffectAct* act = this->mActs[i];
             float z = act->field_0x2c.x;
             float y = act->field_0x1c.x;
             float x = act->field_0xc.x;
@@ -135,7 +134,7 @@ extern "C" u32 EffectActNw4rGetActPosById(const CScnEffectActNw4r* self, u32 idx
             return 1;
         }
     }
-    CScnEffectAct* chain = self->mpMgr->field_0x7c4;
+    CScnEffectAct* chain = this->mpMgr->field_0x7c4;
     if (chain != 0) {
         return chain->v40()->v16(idx, out);
     }
@@ -144,7 +143,8 @@ extern "C" u32 EffectActNw4rGetActPosById(const CScnEffectActNw4r* self, u32 idx
 
 // Fills out with the act's position triplet; zero when the effect acts are
 // disabled or absent.
-extern "C" void EffectActNw4rGetActPosOut(ml::CVec3* out, const CScnEffectActNw4r* self, u32 idx) {
+void CScnEffectActNw4r::EffectActNw4rGetActPosOut(const CScnEffectActNw4r* self, u32 idx) {
+    ml::CVec3* out = (ml::CVec3*)this;
     if ((self->mpMgr->field_0x7a4 & 0x40000000) == 0) {
         out->x = ml::CVec3::zero.x;
         out->y = ml::CVec3::zero.y;
@@ -177,24 +177,24 @@ extern "C" void EffectActNw4rGetActPosOut(ml::CVec3* out, const CScnEffectActNw4
     out->z = ml::CVec3::zero.z;
 }
 
-extern "C" void EffectActNw4rPushWordBuf(CScnEffectActNw4r* self) { simPushWordToBuf(self->mpMgr); }
+void CScnEffectActNw4r::EffectActNw4rPushWordBuf() { simPushWordToBuf(this->mpMgr); }
 
-extern "C" void EffectActNw4rRemoveWordBuf(CScnEffectActNw4r* self) {
-    simRemoveWordFromBuf(self->mpMgr);
+void CScnEffectActNw4r::EffectActNw4rRemoveWordBuf() {
+    simRemoveWordFromBuf(this->mpMgr);
 }
 
-extern "C" void EffectActNw4rPushXform(CScnEffectActNw4r* self) {
-    scnImN4PushXform(self->mpMgr);
+void CScnEffectActNw4r::EffectActNw4rPushXform() {
+    scnImN4PushXform(this->mpMgr);
 }
 
 // Effect-range gate: the act is usable while the manager's range value sits
 // inside [AB74 - A208, AB74 + A208], unless the manager's act flag disables
 // the whole check (then always usable). Returns 1 usable / 0 outside range.
-extern "C" u32 EffectActNw4rCheckRange(CScnEffectActNw4r* self) {
+u32 CScnEffectActNw4r::EffectActNw4rCheckRange() {
     u32 result;
     u32 ok;
     CScnEffectActMgr* mgr;
-    mgr = self->mpMgr;
+    mgr = this->mpMgr;
     result = 1;
     ok = 1;
     if ((mgr->field_0x7a4 & 0x20000000) == 0) {
@@ -213,14 +213,14 @@ extern "C" u32 EffectActNw4rCheckRange(CScnEffectActNw4r* self) {
 }
 
 // Bit 30 of the manager's flag word: the manager has a direct act ready.
-extern "C" u32 EffectActNw4rHasDirectAct(CScnEffectActNw4r* self) { return (self->mpMgr->field_0x7a4 >> 30) & 1; }
+u32 CScnEffectActNw4r::EffectActNw4rHasDirectAct() { return (this->mpMgr->field_0x7a4 >> 30) & 1; }
 
-extern "C" u32 EffectActNw4rGetActCount(CScnEffectActNw4r* self) { return self->mCount; }
+u32 CScnEffectActNw4r::EffectActNw4rGetActCount() { return this->mCount; }
 
 // Virtual dispatch thunks on the manager (slots 4 / 43 / 16).
-extern "C" void EffectActNw4rMgrCallV04(CScnEffectActNw4r* self) { self->mpMgr->v4(); }
-extern "C" void EffectActNw4rCallMgrV43(CScnEffectActNw4r* self) { self->mpMgr->v43(); }
-extern "C" void EffectActNw4rCallMgrV16(CScnEffectActNw4r* self) { self->mpMgr->v16(); }
+void CScnEffectActNw4r::EffectActNw4rMgrCallV04() { this->mpMgr->v4(); }
+void CScnEffectActNw4r::EffectActNw4rCallMgrV43() { this->mpMgr->v43(); }
+void CScnEffectActNw4r::EffectActNw4rCallMgrV16() { this->mpMgr->v16(); }
 
 // Recursively register every node whose name is "<tag><NNN>" (three digits at
 // offsets 2..4) into the effect-act table: the node's mtx id selects the act
@@ -344,33 +344,3 @@ extern "C" void EffectActNw4rInitModel(CScnEffectActNw4r* self, CScnEffectActMgr
     EffectActNw4rRegisterNodes(self, &node);
 }
 
-// ===== [.data] 0x8056EAD8-0x8056EB50: CScnEffectActNw4r vtable + sub-view =====
-
-// The compiler-generated deleting-dtor symbol has no C++ spelling; declare the
-// mangled name for the vtable slot (repo-wide recipe, cf. CDeviceFont.cpp).
-extern "C" void __dt__17CScnEffectActNw4rFv();
-
-// Foreign .sdata words (typeinfo headers for the two views).
-extern u32 __RTTI__17CScnEffectActNw4r;
-extern u32 __RTTI__10IEffectAct;
-
-extern "C" u32 lbl_eu_8056EAD8[26] = {
-    (u32)&__RTTI__17CScnEffectActNw4r, 0x00000000,
-    (u32)&__dt__17CScnEffectActNw4rFv,
-    (u32)&EffectActNw4rProbeAnimActive, (u32)&EffectActNw4rMgrCallV04, (u32)&EffectActNw4rSetLeafDist,
-    (u32)&EffectActNw4rSetTreeFlag2, (u32)&EffectActNw4rCallMgrV43, (u32)&EffectActNw4rCallMgrV16,
-    (u32)&EffectActNw4rGetLeafActData, (u32)&EffectActNw4rStoreMgrScalePos, (u32)&EffectActNw4rGetAct48,
-    (u32)&EffectActNw4rGetAct78, (u32)&EffectActNw4rGetActB8, (u32)&EffectActNw4rGetActC4,
-    (u32)&EffectActNw4rFindActGated, (u32)&EffectActNw4rGetActPosOut, (u32)&EffectActNw4rFindActById,
-    (u32)&EffectActNw4rGetActPosById, (u32)&EffectActNw4rGetActCount, (u32)&EffectActNw4rFindActIndexed,
-    (u32)&EffectActNw4rPushWordBuf, (u32)&EffectActNw4rRemoveWordBuf, (u32)&EffectActNw4rPushXform,
-    (u32)&EffectActNw4rCheckRange, (u32)&EffectActNw4rHasDirectAct,
-};
-extern "C" u32 lbl_eu_8056EB40[4] = {
-    (u32)&__RTTI__10IEffectAct, 0x00000000, 0x00000000, 0x00000000,
-};
-
-// [.rodata] 0x80524108-0x80524128: RTTI class-name strings for this TU's two
-// classes (referenced by the weak typeinfo locators in .sdata).
-extern "C" __declspec(align(4)) const char CScnEffectActNw4rName[0x12] = { 0x43, 0x53, 0x63, 0x6E, 0x45, 0x66, 0x66, 0x65, 0x63, 0x74, 0x41, 0x63, 0x74, 0x4E, 0x77, 0x34, 0x72, 0x00 };
-extern "C" __declspec(align(4)) const char IEffectActName[0xB] = { 0x49, 0x45, 0x66, 0x66, 0x65, 0x63, 0x74, 0x41, 0x63, 0x74, 0x00 };

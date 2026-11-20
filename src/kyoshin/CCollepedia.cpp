@@ -1,6 +1,7 @@
 // Auto-scaffolded catalog TU for kyoshin/CCollepedia
 // Replace stubs with high-level C/C++ during decomp.
 
+#include "kyoshin/cf/CfBdat.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/cf/CtrlObjectParamSymbols.hpp"
 #include "kyoshin/harness_catalog.hpp"
@@ -379,7 +380,7 @@ extern "C" void clpBuildPages(CLPCatalog* self_) {
     extern void clpFillEntry(CLPCatalog* self, int a, int b, int c, int itemId);
 
     u16 n = 0;
-    u16 numIds = (u16)Bdat_GetMaxRow_B1EC((void*)lbl_eu_806640EC);
+    u16 numIds = (u16)Bdat_GetMaxRow_B1EC((void*)::cf::CfBdat::spItmItemListFileData);
     u16 ids[0x12c];
     for (u16 id = 1; id <= numIds; id++) {
         if ((u8)BdatGetItemType(id) == 0xa) {
@@ -390,8 +391,8 @@ extern "C" void clpBuildPages(CLPCatalog* self_) {
     }
 
     // One page per category with at least one active, uncompleted entry.
-    void* tblA = lbl_eu_806640A0;
-    void* tblB = lbl_eu_806640A8;
+    void* tblA = ::cf::CfBdat::spLandmarkListFileData;
+    void* tblB = ::cf::CfBdat::spFldMapListFileData;
     u32 numA = Bdat_GetMaxRow_B1EC(tblA);
     char* const s = lbl_eu_8050C6E8;
     for (u8 cat = 2; cat <= 0x19; cat++) {
@@ -463,10 +464,10 @@ extern "C" void clpBuildPages(CLPCatalog* self_) {
         for (u16 c = 0; c < n; c++) {
             u16 itemId = ids[c];
             u16 kind = BdatGetItemId(itemId);
-            if ((u8)BdatGetU8Direct((const void*)lbl_eu_80664104, "mapID", kind) != cat) {
+            if ((u8)BdatGetU8Direct((const void*)::cf::CfBdat::spItmCollectListFileData, "mapID", kind) != cat) {
                 continue;
             }
-            u8 sub = (u8)BdatGetU8Direct((const void*)lbl_eu_80664104, "type", kind);
+            u8 sub = (u8)BdatGetU8Direct((const void*)::cf::CfBdat::spItmCollectListFileData, "type", kind);
             if (row == 0) {
                 grp.mRows[0].mSubCategory = sub;
                 clpFillEntry(self_, g, row, 0, itemId);
@@ -548,7 +549,7 @@ extern "C" char* clpGetPageNam(CLPCatalog* self) {
     if (val == 0x1a) {
         return (char*)BdatTouchStringCell((const char*)&lbl_eu_8050C6E8[0xA2], (const char*)&lbl_eu_8050C6E8[0xAE], 0x14);
     } else {
-        return (char*)BdatGetPtrDirect((const void*)lbl_eu_806640A8, (const char*)&lbl_eu_8050C6E8[0xAE], val);
+        return (char*)BdatGetPtrDirect((const void*)::cf::CfBdat::spFldMapListFileData, (const char*)&lbl_eu_8050C6E8[0xAE], val);
     }
 }
 
@@ -588,7 +589,7 @@ extern "C" u16 clpGetCelIcon(CLPCatalog* this_, u32 arg2, u32 arg3) {
     if (arg3 >= 5) return 0;
     u16 val = this_->mPageTable.mPages[(s8)this_->mCurrentPage].mRows[arg2].mCells[arg3].mItemId;
     if (val == 0) return 0;
-    return BdatGetU16Direct((const void*)lbl_eu_806640EC, &lbl_eu_8050C6E8[0x185], val);
+    return BdatGetU16Direct((const void*)::cf::CfBdat::spItmItemListFileData, &lbl_eu_8050C6E8[0x185], val);
 }
 
 // Load the collected-progress float of the current page.
@@ -607,7 +608,7 @@ extern "C" char* clpGetEntryStr(CLPCatalog* self_, u32 arg1, u32 arg2) {
     if (val == 0) return nullptr;
     u8 b = cell->mState;
     if (b == 1) return nullptr;
-    return (char*)BdatGetPtrDirect(lbl_eu_80664104, "name", val);
+    return (char*)BdatGetPtrDirect(::cf::CfBdat::spItmCollectListFileData, "name", val);
 }
 
 // us-8025658c
@@ -662,9 +663,9 @@ extern "C" void clpFillEntry(CLPCatalog* self_, int a, int b, int c, u16 itemId)
     cell->mKind = kind;
 
     cell->mSortKey =
-        BdatGetU16Direct((const void*)lbl_eu_806640EC, "icon", (int)itemId);
+        BdatGetU16Direct((const void*)::cf::CfBdat::spItmItemListFileData, "icon", (int)itemId);
     cell->mNameId =
-        BdatGetU16Direct((const void*)lbl_eu_806640EC, "comment", (int)itemId);
+        BdatGetU16Direct((const void*)::cf::CfBdat::spItmItemListFileData, "comment", (int)itemId);
 
     // Unlock state: 0=kindless, 3=owned, 2=new/claimable, 1=locked
     if (kind == 0) {

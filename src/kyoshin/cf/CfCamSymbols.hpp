@@ -1,5 +1,5 @@
 #pragma once
-
+#include <types.h>
 namespace ml {
 class CVec3;
 }
@@ -8,7 +8,7 @@ namespace cf {
 class CfObject;
 struct CfCamFollow;
 }
-
+bool isGlobalCamFlagSet(int mask);  // retail name: isGlobalCamFlagSet__Fi
 // Canonical C++ declarations for the free helpers defined in CfCam.cpp.
 float cfCam_pitchFromVec(const ml::CVec3* v);
 void cfCam_pushStateToActive(cf::CfCamFollow* self);

@@ -34,17 +34,13 @@ extern ml::CVec3 zero__Q22ml5CVec3;
 // whose +0x44 slot is the id-table lookup. Mirror of
 // libs/monolib/src/scn/CScnEffectActNw4r (same name, layout, and slot
 // order; kept in sync by hand). The monolib header cannot be included
-// from this TU: its extern "C" free decls (Scn_IsAnimActiveOrNull, simGetLeafActData,
-// simSetFlag2OnTree) pin narrower arities that collide with this TU's
-// retail-accurate FULL-matching decls (notably the 2-arg simSetFlag2OnTree
-// and the CActParamAnim void*-shaped simGetLeafActData). Slot map dumped from
-// the retail vtable lbl_eu_8056EAD8
-// (build/us/asm/monolib/src/scn/CScnEffectActNw4r.s); every impl is
-// decomp'd in CScnEffectActNw4r.cpp. The class is novtable (ctor/dtor are
-// fragments installing the table manually), so this mirror emits nothing;
-// virtual calls dispatch by slot, never by member symbol.
-// PROMOTE: move these decls onto the monolib class and delete this mirror
-// once the free-decl arity conflict is resolved wave-wide.
+// here: its extern "C" free decls (Scn_IsAnimActiveOrNull,
+// simGetLeafActData, simSetFlag2OnTree) pin narrower arities that collide
+// with this TU's retail-accurate decls (2-arg simSetFlag2OnTree and the
+// void*-shaped simGetLeafActData). Slot map: retail vtable lbl_eu_8056EAD8
+// (build/us/asm/monolib/src/scn/CScnEffectActNw4r.s). The class is novtable
+// (ctor/dtor install the table manually), so this mirror emits nothing;
+// PROMOTE: move onto the monolib class once the arity conflict is resolved.
 struct CScnEffectAct;  // defined in the monolib header; pointer use only
 class __declspec(novtable) CScnEffectActNw4r {
 public:
@@ -87,10 +83,15 @@ namespace cf {
     struct CfObjectModelSub98 {
         u8 _pad00[0x304];             // 0x00-0x303
         u8 field_304;                // 0x304 (setChild34Sc_ source anchor; address taken)
-        u8 _pad305[0x7A4 - 0x305];   // 0x305-0x7A3
+        u8 unk305[0x31C - 0x305];    // 0x305-0x31B
+        u8 field_31C;                // 0x31C anim-target flag byte
+        u8 unk31D[0x7A0 - 0x31D];    // 0x31D-0x79F
+        u32 field_7A0;               // 0x7A0 anim-target flags
         u32 field_7A4;                // 0x7A4
         u32 field_7A8;                // 0x7A8
-        u8 _pad7AC[0x146C - 0x7AC];   // 0x7AC-0x146B
+        u8 unk7AC[0x7EC - 0x7AC];     // 0x7AC-0x7EB
+        void* field_7EC;             // 0x7EC anim sub-target pointer
+        u8 unk7F0[0x146C - 0x7F0];    // 0x7F0-0x146B
         nw4r::g3d::ResMdlData* field_146C;  // 0x146C (model resource data)
         u8 _pad1470[0x147C - 0x1470]; // 0x1470-0x147B
         CfObjectModelActTable* field_147C;  // 0x147C
@@ -104,7 +105,6 @@ namespace cf {
     // "Foreign sub-object dtor slot"), so no view is needed here.
     // (The +0xA8/+0x44 effect-act chain likewise goes through the real
     // owner ::CScnEffectActNw4r, mirrored at global scope above.)
-
 
     //min size: 0xbe
     class CfObjectModel : public CfObject {
@@ -180,7 +180,7 @@ namespace cf {
         void* mTarget70;              // 0x70 (first word of field_0x70)
         u32 field_0x74;               // 0x74-0x77: actor id (CActorParam_addHate /
                                       // sharesMoveFlags compare this word)
-        u8 _78[0x8C - 0x78];          // 0x78-0x8B
+        char mObjectName[0x8C - 0x78]; // 0x78-0x8B bdat/object name
         u16 unk8C_3;
         u16 field_0x8E;
         u8 field_0x90[0x4];          // 0x90-0x93
@@ -188,7 +188,7 @@ namespace cf {
         CfObjectModelSub98* mSubObj98; // 0x98-0x9B
         u32 field_0x9C;              // 0x9C-0x9F: packed resource id
         float field_A0;              // 0xA0-0xA3
-        u8 field_0xA4[0xC];          // 0xA4-0xAF
+        ml::CVec3 mMoveRates;        // 0xA4 approach/speed/factor
         void* mSubObjB0;             // 0xB0-0xB3
         cf::CfObjectModel* field_B4; // 0xB4 (source object stored by bindModelTo)
         const char* field_B8;        // 0xB8 (name/fallback label stored by bindModelTo)

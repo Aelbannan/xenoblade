@@ -508,7 +508,7 @@ extern "C" u32 CfRes_pushRec(u32 a, u32 b, u32 c, u32 d, u32 e, u32 f);
 extern "C" void loadLayoutScales();
 extern "C" int CfRes_tryRefreshByBits(int a, int b);
 extern "C" void CfScript_FlagSlot0();
-extern "C" u32 CtrlRemote_TouchBitByArg(u32 resourceId);
+#include "kyoshin/cf/CtrlRemoteApi.hpp"
 extern "C" void updateReloadTypeState(u32 a, u32 b);
 // Defined in code_800B06A4.cpp with C++ linkage.
 void scanTboxByXY();

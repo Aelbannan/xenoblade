@@ -1,5 +1,7 @@
 #pragma once
 
+#include "kyoshin/cf/CfBdat.hpp"
+
 #include <types.h>
 #include "kyoshin/code_80135FDC_Bdat.hpp"
 #include <nw4r/lyt.h>
@@ -708,7 +710,6 @@ struct UnkKizunaAccBA38 {
     virtual void v0();
     virtual char* getTex(int fourcc, const char* name, u32 flags);
 };
-extern void* lbl_eu_806640A8;
 struct UnkKizunaSelf9820;
 void refreshKizEntryPanes(UnkKizunaSelf9820* self);
 
@@ -968,7 +969,7 @@ struct KizunaPaneTranslateView {
     UnkKizunaVec3 translate;
 };
 
-// Opaque shared-layout manager singleton held in lbl_eu_80664098.
+// Opaque shared-layout manager singleton held in ::cf::CfBdat::spFldNpcListFileData.
 struct UnkKizunaMgr {
     u8 _00[0x40];
 };
@@ -1051,7 +1052,7 @@ extern "C" void tickKizLine(void* self);
 
 // BDAT/layout-manager helpers (unmangled retail symbols).
 extern "C" u32 Bdat_GetMaxRow_B1EC(void* fp);              // BDAT row count
-extern "C" u32 CtrlRemote_TouchBitByArg(u32 idx);               // game-progress getter
+#include "kyoshin/cf/CtrlRemoteApi.hpp"               // game-progress getter
 extern "C" u32 CtrlObjectParam_GetWorkTailValue();                      // current kizuna id
 extern "C" int strcmp(const char*, const char*);
 // Bdat_GetTable_AA34 is declared by an included header (no-arg bdat manager refresh);

@@ -3,9 +3,9 @@ __declspec(section ".rodata") __attribute__((aligned(8))) u32 lbl_eu_8051C488[22
     0x0A435249,0x204D5053,0x2F574949,0x20566572,0x2E322E30,0x36372042,0x75696C64,0x3A4F6374,0x20323820,0x32303039,0x2031313A,0x33373A35,
     0x330A0041,0x7070656E,0x643A204D,0x57343330,0x32205749,0x4933304A,0x756C3230,0x30385061,0x74636830,0x340A0000
 };
-__attribute__((aligned(4))) u32 lbl_eu_80606DD8;
-__attribute__((aligned(4))) u32 lbl_eu_80606DDC[1];
-__attribute__((aligned(4))) u32 lbl_eu_80606DE0[2];
+__attribute__((aligned(4))) u32 sMpsVersionString; // name-guess: MPS_Init stores the CRI MPS version string address (.rodata:0x8051C488) here; no other TU xrefs
+__attribute__((aligned(4))) u32 sMpsWorkBase[1]; // name-guess: work-buffer base pointer written by MPS_Init and reloaded by the MPS handle/error routines
+__attribute__((aligned(4))) u32 sMpsLastHandle[2]; // name-guess: handle cached by MPSLIB_CheckHn and the MPS_Finish error path; retail size 0x8
 
 
 extern int UTY_MemsetDword(u32 *, u32, int);
@@ -19,9 +19,9 @@ void *mpslib_InitHn(u32 *entry);
 
 
 /* MPS global state:
- *   lbl_eu_80606DD8: default error handler (set by MPS_Init)
- *   lbl_eu_80606DDC[0]: work buffer pointer
- *   lbl_eu_80606DE0[0]: last validated handle
+ *   sMpsVersionString: default error handler (set by MPS_Init)
+ *   sMpsWorkBase[0]: work buffer pointer
+ *   sMpsLastHandle[0]: last validated handle
  * Work buffer layout:
  *   +0x00: error callback
  *   +0x04: error callback arg
@@ -45,27 +45,27 @@ int MPS_Init(int max_streams, void *work_buf) {
 
     /* endianness check: first byte of 0x01020304 must be 0x01 (big-endian);
      * the default-handler store is scheduled below the check */
-    lbl_eu_80606DD8 = (u32)lbl_eu_8051C488;
+    sMpsVersionString = (u32)lbl_eu_8051C488;
     magic = 0x01020304;
     if (((u8 *)&magic)[0] != 1) {
         for (;;) ((void (*)(void))-1)();
     }
 
-    lbl_eu_80606DDC[0] = (u32)work_buf;
+    sMpsWorkBase[0] = (u32)work_buf;
 
     /* Clear the work buffer: (max_streams - 1) * 0x130 + 0x140 bytes */
     UTY_MemsetDword((u32 *)work_buf, 0,
                     (u32)((max_streams - 1) * MPS_ENTRY_SIZE + 0x140) / 4);
 
-    /* Initialize work buffer header. Each group re-reads lbl_eu_80606DDC[0]
+    /* Initialize work buffer header. Each group re-reads sMpsWorkBase[0]
      * because the stores through the work buffer may alias the global. */
-    ((u32 *)lbl_eu_80606DDC[0])[0] = 0;          /* error callback */
-    ((u32 *)lbl_eu_80606DDC[0])[1] = 0;          /* error callback arg */
-    ((u32 *)lbl_eu_80606DDC[0])[2] = 0;          /* global error code */
-    ((u32 *)lbl_eu_80606DDC[0])[3] = max_streams;
+    ((u32 *)sMpsWorkBase[0])[0] = 0;          /* error callback */
+    ((u32 *)sMpsWorkBase[0])[1] = 0;          /* error callback arg */
+    ((u32 *)sMpsWorkBase[0])[2] = 0;          /* global error code */
+    ((u32 *)sMpsWorkBase[0])[3] = max_streams;
 
     /* Mark all entries as free (state = 1); MWCC unrolls this 8x */
-    streams = (MPS_STREAM *)((u32 *)lbl_eu_80606DDC[0] + 4);
+    streams = (MPS_STREAM *)((u32 *)sMpsWorkBase[0] + 4);
     for (i = 0; i < max_streams; i++) {
         streams[i].field_0x00 = 1;
     }
@@ -78,9 +78,9 @@ int MPS_Init(int max_streams, void *work_buf) {
 }
 
 void MPS_Finish(void) {
-    u8 *entry = (u8 *)lbl_eu_80606DDC[0] + 0x10;
+    u8 *entry = (u8 *)sMpsWorkBase[0] + 0x10;
     int i = 0;
-    int count = ((u32 *)lbl_eu_80606DDC[0])[3];
+    int count = ((u32 *)sMpsWorkBase[0])[3];
 
     for (; i < count; entry += MPS_ENTRY_SIZE, i++) {
         u32 *cur = (u32 *)entry;
@@ -95,12 +95,12 @@ void MPS_Finish(void) {
         } else if (((s32 *)cur)[0] == 1) {
             err = (u32)-1;
         } else {
-            lbl_eu_80606DE0[0] = (u32)cur;
+            sMpsLastHandle[0] = (u32)cur;
             err = 0;
         }
 
         if (err != 0) {
-            u32 *gbase = (u32 *)lbl_eu_80606DDC[0];
+            u32 *gbase = (u32 *)sMpsWorkBase[0];
             gbase[2] = 0xFF020103;
             if (gbase[0]) {
                 ((void (*)(u32, u32))gbase[0])(gbase[1], 0xFF020103);
@@ -116,7 +116,7 @@ void MPS_Finish(void) {
 
 int MPSLIB_SetErr(void *handle, u32 err_code) {
     if (handle == NULL) {
-        u32 *base = (u32 *)lbl_eu_80606DDC[0];
+        u32 *base = (u32 *)sMpsWorkBase[0];
         base[2] = err_code;
         if (err_code && base[0]) {
             ((void (*)(u32, u32))base[0])(base[1], err_code);
@@ -135,7 +135,7 @@ int MPSLIB_SetErr(void *handle, u32 err_code) {
 
 int MPS_GetErrInf(void *handle, void *cb, void *arg) {
     if (handle == NULL) {
-        u32 *base = (u32 *)lbl_eu_80606DDC[0];
+        u32 *base = (u32 *)sMpsWorkBase[0];
         base[0] = (u32)cb;
         base[1] = (u32)arg;
     } else {
@@ -146,12 +146,12 @@ int MPS_GetErrInf(void *handle, void *cb, void *arg) {
         } else if (((s32 *)handle)[0] == 1) {
             err = -1;
         } else {
-            lbl_eu_80606DE0[0] = (u32)handle;
+            sMpsLastHandle[0] = (u32)handle;
             err = 0;
         }
 
         if (err) {
-            u32 *base = (u32 *)lbl_eu_80606DDC[0];
+            u32 *base = (u32 *)sMpsWorkBase[0];
             base[2] = 0xFF020101;
             if (base[0]) {
                 ((void (*)(u32, u32))base[0])(base[1], 0xFF020101);
@@ -168,7 +168,7 @@ int MPS_GetErrInf(void *handle, void *cb, void *arg) {
 int MPSLIB_CheckHn(void *handle) {
     if (handle == NULL) return -1;
     if (((s32 *)handle)[0] == 1) return -1;
-    lbl_eu_80606DE0[0] = (u32)handle;
+    sMpsLastHandle[0] = (u32)handle;
     return 0;
 }
 
@@ -188,7 +188,7 @@ static __inline u32 *mps_find_free(u32 *base, int count) {
 }
 
 void *MPS_Create(void) {
-    u32 *base = (u32 *)lbl_eu_80606DDC[0];
+    u32 *base = (u32 *)sMpsWorkBase[0];
     int count = base[3];
     u32 *entry = mps_find_free(base, count);
     if (entry == NULL) {
@@ -232,12 +232,12 @@ int MPS_Destroy(void *handle) {
     } else if (((s32 *)handle)[0] == 1) {
         err = (u32)-1;
     } else {
-        lbl_eu_80606DE0[0] = (u32)handle;
+        sMpsLastHandle[0] = (u32)handle;
         err = 0;
     }
 
     if (err) {
-        u32 *base = (u32 *)lbl_eu_80606DDC[0];
+        u32 *base = (u32 *)sMpsWorkBase[0];
         base[2] = 0xFF020103;
         if (base[0]) {
             ((void (*)(u32, u32))base[0])(base[1], 0xFF020103);

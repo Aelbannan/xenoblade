@@ -1,5 +1,5 @@
 #pragma once
-
+#include "kyoshin/cf/CfCamSymbols.hpp"
 #include <types.h>
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 // CfSoundMan is included by the .cpp; keeping it out of this widely-included
@@ -829,7 +829,7 @@ extern const f32 lbl_eu_80666C60;       // float constant, SDA21 (r2)
 extern void* findObjectById(int id);
 
 // isGlobalCamFlagSet__Fi: presentation/event flag-bit probe (mangled C++ match).
-extern bool isGlobalCamFlagSet(int mask);
+
 
 #include "kyoshin/cf/CfMapItemManager.hpp" // testActorStatus / requestItemLoad (owner decl)
 

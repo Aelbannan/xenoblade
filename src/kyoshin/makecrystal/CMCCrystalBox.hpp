@@ -1,5 +1,7 @@
 #pragma once
 
+#include "kyoshin/cf/CfBdat.hpp"
+
 #include <types.h>
 #include "kyoshin/code_80135FDC_Bdat.hpp"
 #include "kyoshin/CBaseCur.hpp"
@@ -39,7 +41,6 @@ extern float lbl_eu_80668478;
 
 // BDAT table pointer (sda21) and sdata2 constants used by the crystal-box
 // refresh callbacks (setCrystalSlotTexture / setCrystalSlotCapacity / updateCrystalBoxRows).
-extern char* lbl_eu_806640EC;     // BDAT table pointer (sda21)
 extern double lbl_eu_80668460;    // 2^52 double conversion constant (unsigned path)
 extern double lbl_eu_80668468;    // 2^52 + 2^31 double conversion constant (signed path)
 extern float lbl_eu_8066847C;
@@ -461,7 +462,6 @@ extern "C" void deleteRegion__17UnkClass_8045F564Fv(void*);
 // retail masks the u16 crystal id into the argument register (clrlwi 16), so
 // this TU saw a u16 parameter. Literal mangled identifier links to the same
 // symbol as setLayoutTextBoxNumber.
-extern void* lbl_eu_80664090;   // BDAT table pointer (sda21; CfGameManager.hpp type)
 extern float lbl_eu_80668480;
 extern float lbl_eu_80668484;
 

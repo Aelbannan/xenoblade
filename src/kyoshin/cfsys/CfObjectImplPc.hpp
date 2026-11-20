@@ -2,7 +2,7 @@
 extern "C" int Counter_TestBit(void* obj, u32 idx);
 #include "kyoshin/cf/object/CfObjectMoveHelpers.hpp"
 #include "kyoshin/code_8025FB10.hpp"
-
+#include "kyoshin/cf/CfCamSymbols.hpp"
 #include <types.h>
 #include "kyoshin/CTaskGameEff.hpp"
 #include "kyoshin/cf/CfSoundMan.hpp"
@@ -1035,7 +1035,7 @@ u8* CtrlObjectParam_GetArtsStatsRow(u8* info, int a);
 
 // C++-mangled imports (plain declarations let MWCC append the retail
 // mangling from the parameter types).
-bool isGlobalCamFlagSet(int mask);                      // isGlobalCamFlagSet__Fi
+
 cf::CfObjectImplPc18* getCfObjectPc(cf::CfObjectMove* objMove);  // getCfObjectPc__FPQ22cf12CfObjectMove
 // (findObjectById__Fi is declared by kyoshin/cf/CfSoundMan.hpp)
 

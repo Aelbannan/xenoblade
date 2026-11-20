@@ -1,6 +1,7 @@
 // Auto-scaffolded catalog TU for kyoshin/code_80135FDC
 // Replace stubs with high-level C/C++ during decomp.
-
+#include "kyoshin/cf/CtrlRemoteApi.hpp"
+#include "kyoshin/cf/CfBdat.hpp"
 #include "libs/monolib/src/scn/CScn_8049603C.hpp" // Scn_QueryUnk80State (single owner decl)
 #include "kyoshin/cf/CtrlObjectParamSymbols.hpp"
 #include "kyoshin/cf/CfResReloadImpl.hpp"  // getReloadParam0 (owner)
@@ -50,7 +51,7 @@ extern void copyVEC3(nw4r::math::VEC3*, const nw4r::math::VEC3*);
 // CtrlRemote_TouchBitByArg stays inline: include/functions.hpp declares it as
 // bool CtrlRemote_TouchBitByArg(int) - a move into code_80135FDC.hpp would clash in
 // CGame / CMenu* units that pull functions.hpp via monolib/scn.hpp.
-extern u32 CtrlRemote_TouchBitByArg(u32);
+
 }
 
 // getBdatStringColumnValue's canonical extern "C" declaration is
@@ -110,15 +111,11 @@ __attribute__((used)) u8 lbl_eu_8052E590[0x10] = "material.h";
 
 // ---------- globals ----------
 extern "C" {
-// lbl_eu_806640A8 / lbl_eu_806640D8 / lbl_eu_80664104 stay inline: they are
+// ::cf::CfBdat::spFldMapListFileData / ::cf::CfBdat::spBtlSkillListFileData / ::cf::CfBdat::spItmCollectListFileData stay inline: they are
 // declared as void* in CCollepedia.hpp / CKizunaTalkList.hpp / CMCEffStart.hpp
 // (u32 here) - moving them into code_80135FDC.hpp would clash in those callers.
-extern void* lbl_eu_806640A8;
-extern u32 lbl_eu_806640D8;
-extern u32 lbl_eu_80664104;
-// lbl_eu_806640EC stays inline: CMCGetItemBox.hpp declares it as void* - a
+// ::cf::CfBdat::spItmItemListFileData stays inline: CMCGetItemBox.hpp declares it as void* - a
 // move into code_80135FDC.hpp would clash in CMCGetItemBox.cpp.
-extern u32 lbl_eu_806640EC;
 }
 
 // lbl_eu_8052E568 / lbl_eu_8052E590 stay inline: CItemBoxInfo.hpp declares
@@ -747,12 +744,12 @@ extern "C" u32 BdatGetRankByName(u32 row) {
     // col0x22 is computed before the global test (retail hoists it).
     const char* col0x22 = &lbl_eu_80500664[0x22];
     u16 rowIdx;
-    if (lbl_eu_80664098 == 0) {
+    if (::cf::CfBdat::spFldNpcListFileData == 0) {
         rowIdx = 0;
     } else {
         Bdat_GetTable_AA34((const char*)row);
         void* result = (void*)(getBdatStringColumnValue)(
-            reinterpret_cast<void*>(lbl_eu_80664098),
+            reinterpret_cast<void*>(::cf::CfBdat::spFldNpcListFileData),
             col0x22, row);
         rowIdx = *reinterpret_cast<u16*>(&result);
     }
@@ -1245,7 +1242,7 @@ extern "C" u32 CheckEntryConditions(const char* name, u32 id) {
 
     flag = 0;
     if (v5 != 0) {
-        void* result = getBdatStringColumnValue((void*)lbl_eu_80664098, &lbl_eu_80500664[0x7E], (const char*)v5);
+        void* result = getBdatStringColumnValue((void*)::cf::CfBdat::spFldNpcListFileData, &lbl_eu_80500664[0x7E], (const char*)v5);
         u16 val = *(u16*)&result;
         if (CtrlRemote_TouchBitByArg(val + 0xA20) == 0) {
             flag = 1;
@@ -1255,7 +1252,7 @@ extern "C" u32 CheckEntryConditions(const char* name, u32 id) {
 
     flag = 0;
     if (v6 != 0) {
-        void* result = getBdatStringColumnValue((void*)lbl_eu_80664098, &lbl_eu_80500664[0x7E], (const char*)v6);
+        void* result = getBdatStringColumnValue((void*)::cf::CfBdat::spFldNpcListFileData, &lbl_eu_80500664[0x7E], (const char*)v6);
         u16 val = *(u16*)&result;
         if (CtrlRemote_TouchBitByArg(val + 0xA20) == 0) {
             flag = 1;
@@ -1524,7 +1521,7 @@ extern "C" char* GetBdatNameByNumId(const char* str) {
 
 extern "C" int BdatGetSexFlag(u32 row) {
     const char* col = &lbl_eu_80500664[0x18A];
-    u8* src = (u8*)lbl_eu_80664098;
+    u8* src = (u8*)::cf::CfBdat::spFldNpcListFileData;
     if (src == 0) {
         return 0;
     }
@@ -1535,9 +1532,9 @@ extern "C" int BdatGetSexFlag(u32 row) {
 
 extern "C" u32 MapSexFlagGroup(u32 row) {
     u8 v = 0;
-    if (lbl_eu_80664098 != 0) {
+    if (::cf::CfBdat::spFldNpcListFileData != 0) {
         Bdat_GetTable_AA34((const char*)row);
-        void* result = (void*)(getBdatStringColumnValue)((void*)lbl_eu_80664098, &lbl_eu_80500664[0x18A], row);
+        void* result = (void*)(getBdatStringColumnValue)((void*)::cf::CfBdat::spFldNpcListFileData, &lbl_eu_80500664[0x18A], row);
         v = *(u8*)&result;
     }
     u32 result = 0;
@@ -1714,7 +1711,7 @@ extern "C" u8 code80135FDC_getByte_6407E() { return gSlotItemCount; }
 
 extern "C" u16 BdatGetItemType(u32 row) {
     const char* col = &lbl_eu_80500664[0x1D2];
-    u8* src = (u8*)lbl_eu_806640EC;
+    u8* src = (u8*)::cf::CfBdat::spItmItemListFileData;
     if (src == 0) {
         return 0;
     }
@@ -1725,7 +1722,7 @@ extern "C" u16 BdatGetItemType(u32 row) {
 
 extern "C" u16 BdatGetItemId(u32 row) {
     const char* col = &lbl_eu_80500664[0x1DB];
-    u8* src = (u8*)lbl_eu_806640EC;
+    u8* src = (u8*)::cf::CfBdat::spItmItemListFileData;
     if (src == 0) {
         return 0;
     }
@@ -1736,26 +1733,26 @@ extern "C" u16 BdatGetItemId(u32 row) {
 
 extern "C" u32 LookupItemTypeTable(u32 row) {
     u32 v = 0;
-    if (lbl_eu_806640EC != 0) {
+    if (::cf::CfBdat::spItmItemListFileData != 0) {
         Bdat_GetTable_AA34((const char*)row);
-        void* result = (void*)(getBdatStringColumnValue)((void*)lbl_eu_806640EC, &lbl_eu_80500664[0x1D2], row);
+        void* result = (void*)(getBdatStringColumnValue)((void*)::cf::CfBdat::spItmItemListFileData, &lbl_eu_80500664[0x1D2], row);
         v = *(u16*)&result;
     }
     switch (v) {
     case 0: v = (u32)lbl_eu_806640F0; break;
-    case 1: v = (u32)lbl_eu_806640F4; break;
-    case 2: v = lbl_eu_806640D8; break;
+    case 1: v = (u32)::cf::CfBdat::spItmWpnListFileData; break;
+    case 2: v = (u32)::cf::CfBdat::spBtlSkillListFileData; break;
     case 3:
     case 4:
     case 5:
     case 6:
-    case 7: v = (u32)lbl_eu_806640F8; break;
-    case 8: v = (u32)lbl_eu_806640FC; break;
-    case 9: v = lbl_eu_80664104; break;
-    case 10: v = (u32)lbl_eu_80664108; break;
-    case 11: v = (u32)lbl_eu_8066410C; break;
+    case 7: v = (u32)::cf::CfBdat::spItmEquipListFileData; break;
+    case 8: v = (u32)::cf::CfBdat::spItmCrystalListFileData; break;
+    case 9: v = (u32)::cf::CfBdat::spItmCollectListFileData; break;
+    case 10: v = (u32)::cf::CfBdat::spItmMaterialListFileData; break;
+    case 11: v = (u32)::cf::CfBdat::spItmValuableListFileData; break;
     case 12:
-    case 13: v = (u32)lbl_eu_80664110; break;
+    case 13: v = (u32)::cf::CfBdat::spItmArtsListFileData; break;
     default: break;
     }
     return v;
@@ -1765,20 +1762,20 @@ extern "C" char* BuildItemNameStr(u32 row) {
     u32 a = LookupItemTypeTable(row);
     const char* col1DB = &lbl_eu_80500664[0x1DB];
     u16 b;
-    if (lbl_eu_806640EC == 0) {
+    if (::cf::CfBdat::spItmItemListFileData == 0) {
         b = 0;
     } else {
         Bdat_GetTable_AA34((const char*)a);
-        void* r = (void*)(getBdatStringColumnValue)((void*)lbl_eu_806640EC, col1DB, row);
+        void* r = (void*)(getBdatStringColumnValue)((void*)::cf::CfBdat::spItmItemListFileData, col1DB, row);
         b = *(u16*)&r;
     }
     u16 c;
     const char* col1D2 = &lbl_eu_80500664[0x1D2];
-    if (lbl_eu_806640EC == 0) {
+    if (::cf::CfBdat::spItmItemListFileData == 0) {
         c = 0;
     } else {
         Bdat_GetTable_AA34(&lbl_eu_80500664[0]);
-        void* r = (void*)(getBdatStringColumnValue)((void*)lbl_eu_806640EC, col1D2, row);
+        void* r = (void*)(getBdatStringColumnValue)((void*)::cf::CfBdat::spItmItemListFileData, col1D2, row);
         c = *(u16*)&r;
     }
     void* d0 = 0;
@@ -1793,11 +1790,11 @@ extern "C" char* BuildItemNameStr(u32 row) {
     if (c == 3) {
         u8 d;
         void* rv;
-        if (lbl_eu_806640EC == 0) {
+        if (::cf::CfBdat::spItmItemListFileData == 0) {
             d = 0;
         } else {
             Bdat_GetTable_AA34(&lbl_eu_80500664[0]);
-            rv = (void*)(getBdatStringColumnValue)((void*)lbl_eu_806640EC, &lbl_eu_80500664[0x1E2], row);
+            rv = (void*)(getBdatStringColumnValue)((void*)::cf::CfBdat::spItmItemListFileData, &lbl_eu_80500664[0x1E2], row);
             d = *(u8*)&rv;
         }
         Bdat_GetTable_AA34((const char*)rv);
@@ -2477,7 +2474,7 @@ extern "C" void RevealMinimapArea() {
     u8 flag = (u8)lbl_eu_80664184;
     if (flag == 0) return;
 
-    void* bdat = lbl_eu_806640A8;
+    void* bdat = ::cf::CfBdat::spFldMapListFileData;
     u16 row = 0;
     if (bdat != NULL) {
         Bdat_GetTable_AA34((const char*)(tbl + 0x22B));

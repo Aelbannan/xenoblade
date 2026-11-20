@@ -247,14 +247,11 @@ void CItemBoxGridSubMenu::GridSubMenu_SetupOptions(int arg) {
 // Select one of the three +0x14/+0x18/+0x1C pointers by the sign-extended
 // +0x24 index and forward the pair through ScalePaneWorldPos. The VEC3
 // destination is r3 and the submenu r4, so this stays a free function.
-extern "C" void GridSubMenu_GetCursorPos(void* self, void* src) {
-    void* arr[3];
-    arr[0] = *(void**)((u8*)src + 0x14);
-    arr[1] = *(void**)((u8*)src + 0x18);
-    arr[2] = *(void**)((u8*)src + 0x1C);
-    void* sel = arr[(s8)*(u8*)((u8*)src + 0x24)];
-    ScalePaneWorldPos((nw4r::math::VEC3*)self, (nw4r::lyt::Pane*)sel, (nw4r::lyt::Pane*)(*(void**)((u8*)src + 0x10)),
-                  (nw4r::lyt::Pane*)(*(void**)((u8*)*(void**)((u8*)src + 8) + 0x10)));
+extern "C" void GridSubMenu_GetCursorPos(void* self, CItemBoxGridSubMenu* src) {
+    nw4r::lyt::Pane* options[3] = { src->mTxtBoxA, src->mTxtBoxB, src->mTxtBoxC };
+    nw4r::lyt::Pane* sel = options[(s8)src->mSelectedIdx];
+    ScalePaneWorldPos((nw4r::math::VEC3*)self, sel, src->mRootPane,
+                      src->mLayout->GetRootPane());
 }
 
 void GridSubMenu_GetOptionCount(){}

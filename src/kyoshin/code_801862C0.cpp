@@ -1,6 +1,7 @@
 // Auto-scaffolded catalog TU for kyoshin/code_801862C0
 // Replace stubs with high-level C/C++ during decomp.
 
+#include "kyoshin/cf/CfBdat.hpp"
 #include "kyoshin/code_801862C0.hpp"
 #include "kyoshin/cf/CfMapMineManager.hpp" // lookupWorkAtAddr / gmFileObject
 #include "kyoshin/cf/object/CfObjectMoveApi.hpp" // CfObjectMove_setAnimModeArgs
@@ -233,10 +234,10 @@ void ArtsSelect_FreeSlots(u8* self) {
    invert-visibility flag, and the disp column sets/clears state bits in the
    object's 0x6C flag word. */
 void ArtsSelect_SpawnRow(MapProxy** objects, int row) {
-    // Refresh the bdat manager (result unused; it populates lbl_eu_806640B0).
+    // Refresh the bdat manager (result unused; it populates ::cf::CfBdat::spCurMapObjListFileData).
     Bdat_GetTable_AA34();
     const char* cols = (const char*)lbl_eu_805038C8;
-    void* bdat = lbl_eu_806640B0;
+    void* bdat = ::cf::CfBdat::spCurMapObjListFileData;
 
     // Column values stay memory-resident in u32 slots; the narrow reads
     // (lbz/lha/lhz through the slot) match retail's store/reload shape.
@@ -321,7 +322,7 @@ int ArtsSelect_CheckAvail(void* p, s32 row, const char* c1, const char* c2,
     u32 v6;
     u32 v7;
     u16 cur;
-    bdat = lbl_eu_806640B0;
+    bdat = ::cf::CfBdat::spCurMapObjListFileData;
     v1 = getBdatStringColumnValue(bdat, c1, row);
     // Narrow reads go through the value's storage (not casts) so MWCC keeps
     // the column values memory-resident like retail (stw + lhz/lbz).
@@ -362,7 +363,7 @@ void* ArtsSelect_GetEntry(int p) {
     int rowCount;
     int i;
     if (lbl_eu_806642D0 != 0 && p != 0) {
-        bdat = lbl_eu_806640B0;
+        bdat = ::cf::CfBdat::spCurMapObjListFileData;
         rowBase = (int)Bdat_GetRowBase_B41C(bdat);
         rowCount = (int)Bdat_GetMaxRow_B1EC(bdat) + rowBase;
         entries = (void**)lbl_eu_806642D0;
@@ -412,7 +413,7 @@ void ArtsSelect_NotifyAll(void* p) {
    then optionally apply a state id read from the bdat columns, gated on the
    global flag words gmGameFlags/28 and a second availability window. */
 void ArtsSelect_SyncRows(void* p) {
-    void* bdat = lbl_eu_806640B0;
+    void* bdat = ::cf::CfBdat::spCurMapObjListFileData;
     const char* gateCol;
     const char* cols;
     MapProxy** slots;
@@ -446,7 +447,7 @@ void ArtsSelect_SyncRows(void* p) {
             // Bits 6/10 of the global flag word gate the state refresh.
             int flag = ((((gmGameFlags >> 6) & 1) |
                          ((gmGameFlags >> 10) & 1)) != 0);
-            curTable = lbl_eu_806640B0;
+            curTable = ::cf::CfBdat::spCurMapObjListFileData;
             u8 hasName = (u8)getBdatStringColumnValue(curTable, cols + 0x45, row);
             if (hasName != 0) {
                 (*slots)->unk158(!flag); // retail slot 0x158, takes !flag

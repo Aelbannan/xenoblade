@@ -233,10 +233,7 @@ struct BattleTableEntry {
 extern "C" void __dl__FPv(void*);
 extern "C" void __dla__FPv(void*);
 extern "C" const float lbl_eu_80666DDC;
-extern "C" float lbl_eu_80666DD4;
-extern "C" float lbl_eu_80666DD0;   // 0.6f (attack-sound volume)
-extern "C" f64 lbl_eu_80666DE0;
-extern "C" BattleTableEntry sBattleEventTable[];
+
 extern u32 sAttackSoundIdTable[];       // attack sound-id table (retail .rodata)
 
 // Same-TU / shared battle helpers with retail-unmangled names (declared in

@@ -2,19 +2,21 @@
 
 #include <types.h>
 
+#include "monolib/mpfsys/MPFDraw.hpp"
+
+struct MPFDrawMdlData;
+struct MPFDrawMdlGroupList;
+struct MPFDrawMdlGroupPairList;
+
 namespace mpfsys {
 
 // Draw dispatcher object for textured models with vertex colors.
-// The singleton instance body lives in monolibdata (lbl_eu_8056DBC0).
-class MPFDrawMdlColor {
+class MPFDrawMdlColor : public MPFDraw {
 public:
     static MPFDrawMdlColor* getInstance();
 
-    // Retail instance layout (initialized by monolibdata2):
-    void* m_typeDescriptor; // +0x0
-    u32 m_unk04;            // +0x4
-    void (*m_drawAll)();    // +0x8 drawAllWithColor (dispatched with data/list args)
-    void (*m_drawHalf)();   // +0xC drawHalfWithColor (dispatched with data/list args)
+    virtual void drawAllWithColor(MPFDrawMdlData* data, const MPFDrawMdlGroupList* list);
+    virtual void drawHalfWithColor(MPFDrawMdlData* data, const MPFDrawMdlGroupPairList* list);
 };
 
 } // namespace mpfsys

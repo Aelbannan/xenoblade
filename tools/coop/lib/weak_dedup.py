@@ -45,10 +45,15 @@ remove exactly what mwld would remove before they compare.  The rule is narrow:
 * A symbol the compiler marked **force-active** (``#pragma force_active`` /
   ``FORCEACTIVE``; the ``.comment`` section's per-symbol active flag) is a
   root, as it is for mwld: it is never excluded.
-* Local (non-``.text``) data is also excluded when **every** relocation that
-  references it comes from an excluded **weak copy** (worked out from relocations to
-  a fixpoint, with no name lists).  This covers the RTTI name string and the
-  ``extabindex``/``extab`` records of an excluded function.
+* The exception records (``extabindex``/``extab``) of an excluded weak function
+  go with it.  **Local/anonymous data stays by default.**  A local object that
+  every relocation references only from excluded copies is dropped only when
+  the retail object proves it absent: its bytes do not appear at the offset the
+  object would occupy in the linked section (allowing for preceding exclusions).
+  Retail often keeps RTTI name strings and base lists even though the weak RTTI
+  locator that named them was deduplicated to another unit; dropping those
+  locals would shrink the retail slice (CfBdat's ``@8669``/``@8668``).  With no
+  retail object available the rule is deliberately conservative: keep the data.
 
 :func:`linked_view` writes a temp copy of the object with those ranges cut
 out (sections compacted, relocations re-based, and references to an
@@ -155,6 +160,59 @@ def owner_of(ranges, addr: int) -> str | None:
         if start <= addr < end:
             return unit
     return None
+
+
+# -- retail evidence -----------------------------------------------------------
+
+_RETAIL_DATA_SECTIONS = (".data", ".rodata", ".sdata", ".sdata2",
+                         ".bss", ".sbss", ".sbss2")
+_RETAIL_CACHE: dict[tuple, dict[str, bytes]] = {}
+
+
+def _retail_object(project_root: Path, region: str, unit_hint: str) -> Path | None:
+    """Split retail object for *unit_hint*, if it has been extracted."""
+    rel = _norm_unit(unit_hint)
+    path = project_root / "build" / region / "obj" / f"{rel}.o"
+    return path if path.is_file() else None
+
+
+def _retail_sections(path: Path | None) -> dict[str, bytes] | None:
+    """Section bytes of the retail split object (evidence for local cascade)."""
+    if path is None or not path.is_file():
+        return None
+    try:
+        st = path.stat()
+        key = (str(path), st.st_mtime_ns, st.st_size)
+        hit = _RETAIL_CACHE.get(key)
+        if hit is None:
+            elf = _Elf(path.read_bytes())
+            hit = {name: elf.contents[i] for i, name in enumerate(elf.names)
+                   if name in _RETAIL_DATA_SECTIONS}
+            _RETAIL_CACHE.clear()
+            _RETAIL_CACHE[key] = hit
+        return hit
+    except OSError:
+        return None
+
+
+def _retail_keeps(retail_sections: dict[str, bytes] | None, elf: _Elf,
+                  sec: int, a: int, b: int,
+                  excl: dict[int, list[tuple[int, int]]]) -> tuple[bool, int]:
+    """Does retail still carry this local object at its linked offset?
+
+    ``excl`` holds the ranges removed *before* this candidate was considered,
+    so the expected retail offset is the raw offset minus those bytes.  No
+    retail object at all is not evidence; an absent section in a known retail
+    object means a zero-size section, i.e. the local was not kept.
+    """
+    cut = sum(min(end, a) - start for start, end in excl.get(sec, ()) if start < a)
+    linked = a - cut
+    if retail_sections is None:
+        return True, linked
+    data = retail_sections.get(elf.names[sec], b"")
+    if linked + (b - a) > len(data):
+        return False, linked
+    return data[linked:linked + (b - a)] == elf.contents[sec][a:b], linked
 
 
 # -- ELF plumbing ----------------------------------------------------------------
@@ -426,8 +484,15 @@ def _dead_strip(elf: _Elf, ranges, unit_ranges, symbol_addrs: dict[str, int], th
 
 
 def compute_exclusions(elf: _Elf, unit_ranges, symbol_addrs: dict[str, int],
-                       this_unit: str | None) -> tuple[dict[int, list[tuple[int, int]]], list[str], set[int]]:
-    """(section -> excluded ranges, descriptions, excluded weak symbol indices)."""
+                       this_unit: str | None,
+                       retail_sections: dict[str, bytes] | None = None
+                       ) -> tuple[dict[int, list[tuple[int, int]]], list[str], set[int]]:
+    """(section -> excluded ranges, descriptions, excluded weak symbol indices).
+
+    *retail_sections* is the retail object's data-section bytes, used as the
+    evidence that a local object referenced only by deduplicated weak copies
+    really was dropped by mwld.  Without it those locals are kept.
+    """
     excl: dict[int, list[tuple[int, int]]] = {}
     notes: list[str] = []
     weak: set[int] = set()
@@ -462,7 +527,8 @@ def compute_exclusions(elf: _Elf, unit_ranges, symbol_addrs: dict[str, int],
     # Weak copies mwld discarded take their exception records and the local
     # data only they reference (RTTI name strings) with them.
     if weak:
-        _cascade(elf, ranges, refs, excl, notes, weak, active, symbol_addrs, local=True)
+        _cascade(elf, ranges, refs, excl, notes, weak, active, symbol_addrs,
+                 retail_sections, local=True)
 
     # Functions mwld garbage-collected take their exception records and any
     # nameless global/weak data object (a vtable) only they reference.  Local
@@ -483,11 +549,13 @@ def compute_exclusions(elf: _Elf, unit_ranges, symbol_addrs: dict[str, int],
 
 
 def _cascade(elf: _Elf, ranges, refs, excl, notes: list[str], weak: set[int], active: set[int],
-             symbol_addrs: dict[str, int], *, local: bool, named=None) -> None:
+             symbol_addrs: dict[str, int], retail_sections: dict[str, bytes] | None = None,
+             *, local: bool, named=None) -> None:
     """Exclude what only excluded ranges use: extab records, then data.
 
-    ``local=True`` strips local data; ``local=False`` strips only global/weak
-    data objects that have no retail name, and only in a section where
+    ``local=True`` keeps a local object unless the retail object proves it
+    absent at its linked offset; ``local=False`` strips only global/weak data
+    objects that have no retail name, and only in a section where
     ``named(section)`` holds (every retail symbol of this unit's slice of that
     section is spelled the same way here, so "no retail name" means "not in
     retail" rather than "named differently").
@@ -517,6 +585,7 @@ def _cascade(elf: _Elf, ranges, refs, excl, notes: list[str], weak: set[int], ac
     changed = True
     while changed:
         changed = False
+        cands = []
         for i, s in enumerate(elf.syms):
             if i not in ranges or i in weak or i in active or s[5] >= elf.shnum:
                 continue
@@ -533,11 +602,23 @@ def _cascade(elf: _Elf, ranges, refs, excl, notes: list[str], weak: set[int], ac
             a, b = ranges[i]
             if b <= a or _in(excl.get(sec, []), a):
                 continue
+            cands.append((sec, a, b, i))
+        # Section order matters: dropping one local shifts the linked offset
+        # (and therefore the retail evidence) of every local after it.
+        for sec, a, b, i in sorted(cands, key=lambda c: (c[0], c[1])):
             users = [(src, off) for src, off, tsec, toff in refs if tsec == sec and a <= toff < b]
-            if users and all(excluded(src, off) for src, off in users):
-                excl.setdefault(sec, []).append((a, b))
-                notes.append(f"{elf.names[sec]} {elf.symnames[i]} 0x{b - a:X} (only excluded symbols reference it)")
-                changed = True
+            if not (users and all(excluded(src, off) for src, off in users)):
+                continue
+            if local:
+                keeps, linked = _retail_keeps(retail_sections, elf, sec, a, b, excl)
+                if keeps:
+                    continue
+                reason = (f"only excluded symbols reference it; retail lacks those bytes at +0x{linked:X}")
+            else:
+                reason = "only excluded symbols reference it"
+            excl.setdefault(sec, []).append((a, b))
+            notes.append(f"{elf.names[sec]} {elf.symnames[i]} 0x{b - a:X} ({reason})")
+            changed = True
 
 
 def _merge(rs: list[tuple[int, int]]) -> list[tuple[int, int]]:
@@ -698,34 +779,51 @@ def rewrite(elf: _Elf, excl: dict[int, list[tuple[int, int]]], weak: set[int]) -
 
 
 _VIEW_DIR = Path(tempfile.gettempdir()) / "xeno_weak_dedup"
-# Bump when rewrite() changes what it writes for the same exclusions.
-_REWRITE_VERSION = "2:keep-alignment"
+# Bump when rewrite() changes what it writes for the same exclusions, or when
+# the exclusion rule changes.
+_REWRITE_VERSION = "3:retail-evidence-local-cascade"
 
 
-def linked_view(decomp_object: Path, project_root: Path, region: str, unit_hint: str) -> LinkedView:
-    """The decomp object as mwld would contribute it to the link (see module doc)."""
+def linked_view(decomp_object: Path, project_root: Path, region: str, unit_hint: str,
+                *, retail_object: Path | None = None) -> LinkedView:
+    """The decomp object as mwld would contribute it to the link (see module doc).
+
+    The retail split object supplies the byte/size evidence for local objects
+    that only deduplicated weak copies reference.  Pass *retail_object* when
+    the caller has it; otherwise the conventional split-object path is used.
+    """
     decomp_object = Path(decomp_object)
     try:
-        unit_ranges, symbol_addrs = _layout(Path(project_root), region)
+        project_root = Path(project_root)
+        unit_ranges, symbol_addrs = _layout(project_root, region)
     except OSError:
         return LinkedView(decomp_object)
+    if retail_object is None:
+        retail_object = _retail_object(project_root, region, unit_hint)
     return linked_view_for(decomp_object, unit_ranges, symbol_addrs,
-                           resolve_unit(unit_ranges, unit_hint))
+                           resolve_unit(unit_ranges, unit_hint),
+                           retail_sections=_retail_sections(retail_object))
 
 
 def linked_view_for(decomp_object: Path, unit_ranges, symbol_addrs: dict[str, int],
-                    this_unit: str | None) -> LinkedView:
+                    this_unit: str | None,
+                    *, retail_sections: dict[str, bytes] | None = None) -> LinkedView:
     """:func:`linked_view` with explicit layout inputs (tests)."""
     data = decomp_object.read_bytes()
     elf = _Elf(data)
-    excl, notes, weak = compute_exclusions(elf, unit_ranges, symbol_addrs, this_unit)
+    excl, notes, weak = compute_exclusions(elf, unit_ranges, symbol_addrs, this_unit,
+                                           retail_sections)
     if not excl:
         return LinkedView(decomp_object)
-    # The exclusions are part of the key: a rule change must not reuse a view
-    # written under the old rule.
-    key = _REWRITE_VERSION + repr(sorted((s, tuple(rs)) for s, rs in excl.items())) + repr(sorted(weak))
-    digest = hashlib.sha1(data + this_unit.encode() + key.encode()).hexdigest()[:16]
-    _VIEW_DIR.mkdir(parents=True, exist_ok=True)
+    # The exclusions and the retail evidence are part of the key: a rule change
+    # must not reuse a view written under the old rule.
+    evidence = repr(sorted((s, len(b), hashlib.sha1(b).hexdigest()[:8])
+                           for s, b in (retail_sections or {}).items()))
+    key = (_REWRITE_VERSION
+           + repr(sorted((s, tuple(rs)) for s, rs in excl.items()))
+           + repr(sorted(weak)) + evidence)
+    digest = hashlib.sha1(data + str(this_unit).encode() + key.encode()).hexdigest()[:16]
+
     out = _VIEW_DIR / f"{decomp_object.stem}.{digest}.o"
     if not out.is_file():
         tmp = out.with_suffix(f".{os.getpid()}.tmp")

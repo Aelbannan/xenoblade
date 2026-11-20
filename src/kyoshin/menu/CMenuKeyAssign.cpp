@@ -1,12 +1,12 @@
 #define IWORK_EVENT_INLINE_DTOR
 // kyoshin/menu/CMenuKeyAssign - key-assign (button mapping) menu (singleton).
-
+#include "kyoshin/menu/CMenuZeal.hpp"
 #include "kyoshin/cf/CBattleManager.hpp"
 #include "kyoshin/code_801F3BE0.hpp"
 #include "kyoshin/cf/CfMapItemManager.hpp"
 #include "kyoshin/menu/CMenuKeyAssign.hpp"
 #include "kyoshin/menu/CMenuArtsSelect.hpp"
-
+#include "kyoshin/cf/CfEnumObject.hpp"  // canonical findObjectById result type
 #include "monolib/device/CDeviceVI.hpp"
 #include "kyoshin/code_80135FDC_State.hpp"
 #include "kyoshin/CUICfManager_Res.hpp"
@@ -30,36 +30,6 @@
 #include "kyoshin/code_80135FDC_Bdat.hpp"
 #include "kyoshin/code_80135FDC_Lyt.hpp"
 #include "kyoshin/menu/CMenuBattleCommu.hpp"
-
-// View of the nw4r Pane bytes this TU touches (retail nw4r keeps the visible
-// flag in the low bit of the byte at +0xBB; the repo's nw4r header exposes it
-// as the protected mFlag member, so pane visibility is driven through this
-// byte view - CMenuGetItem idiom).
-struct PaneFlagView {
-    u8 _00[0xBB];
-    u8 flags; // 0xBB - bit 0 = visible
-};
-
-// Pane view covering the size words (+0x4C/+0x50) and the visible flag
-// (+0xBB) - used by openKeyAssignPlayer to size a picture pane from a texture.
-struct PaneSizeFlagView {
-    u8 _00[0x4C];
-    f32 sizeX; // 0x4C
-    f32 sizeY; // 0x50
-    u8 _54[0xBB - 0x54];
-    u8 flags;  // 0xBB
-};
-
-// Texture object returned by the arc accessor's GetResource("timg", ...)
-// call in openKeyAssignPlayer: +0x08 points at the texture header, whose first
-// word is a pointer to the u16 width/height pair.
-struct TexDimsView {
-    u16* mDims; // 0x00
-};
-struct TexView {
-    u8 _00[8];
-    TexDimsView* mHeader; // 0x08
-};
 
 // u32-word pair / f64 view used for MWCC's 0x43300000 int->float conversion
 // (subtracts the retail .sdata2 magic double lbl_eu_80667080).
@@ -124,32 +94,16 @@ struct CMenuKeyAssignPlayer {
     CMenuKeyAssignBattleObj* mSub38;   // +0x38
 };
 
-// Move's battle-manager view: +0x28/+0x8 list heads, the +0x1A8 sub-object
-// (phase byte at +2) and the +0x20C8 s16. Named locally - the shared
-// CfGameManager.hpp already declares a CBattleManagerView for another TU.
-struct CMenuKeyAssignBattleMgr {
-    u8 _00[0x8];
-    void* mList08;                     // +0x08
-    u8 _0C[0x28 - 0x0C];
-    void* mList28;                     // +0x28
-    u8 _2C[0x1A8 - 0x2C];
-    u8 mSub1A8;                        // +0x1A8 (phase at +2 = 0x1AA)
-    u8 _1A9[0x20C8 - 0x1A9];
-    s16 mSub20C8;                      // +0x20C8
-};
-
-// Circular linked-list node (head at +0x28 / +0x8, next pointer at +0).
-struct CListLink {
-    CListLink* next;                   // +0x00
-};
-
 // findObjectById result view: +0x64 flags word, +0x91 type byte.
-struct CActorTargetView {
-    u8 _00[0x64];
-    u32 mFlags64;                      // +0x64
-    u8 _68[0x91 - 0x68];
-    u8 mType91;                        // +0x91
-};
+// Kept as one explicit counted view: the real owner (CfEnumObject) is defined
+// only in CfObjectEnumList.cpp (VS-OBJ owns the CfObject* headers), and its
+// header declaration still lacks the +0x91 type byte.
+// findObjectById results are real cf-enum objects. The canonical
+// CfEnumObject declaration in kyoshin/cf/CfEnumObject.hpp supplies the
+// +0x64 flags word (flags64) and the +0x91 actor-kind byte (type91);
+// the former TU-local CActorTargetView duplicated those two fields.
+//
+//
 
 // C-ABI import used by cbRenderBefore (retail unmangled name; not declared by
 // any shared header yet, so declared here).
@@ -160,7 +114,7 @@ struct CActorTargetView {
 extern "C" {
 // Move's gate helpers (retail unmangled; declared in their own TUs but not by
 // any included header).
-int GetZealObjPtr(void);
+
 int CMainMenu_IsOpen();
 // Arts-state gate helpers used by Move (retail unmangled; declared in their
 // own TUs but not by any included header).
@@ -282,13 +236,13 @@ void CMenuKeyAssign::Move() {
     if (cf::CfGameManager::isClassicController(-1) != 0) {
         // ---- in battle ----
         int battleMode = 0;
-        void* bm = getInstance__Q22cf14CBattleManagerFv();        s16* sub20c8 = (s16*)((u8*)bm + 0x20c8);
-        if (sub20c8 != 0 && *sub20c8 != 0) {
+        cf::CBattleManager* bm =
+            (cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv();
+        if (bm->unk20C8.unk0 != 0) {
             battleMode = 1;
         }
-        u8* sub1a8 = (u8*)bm + 0x1a8;
-        if (sub1a8 != 0) {
-            u8 phase = *(u8*)(sub1a8 + 2);
+        if (bm != 0) {
+            u8 phase = bm->mChain.mHead.field_2;
             bool inRange = phase >= 1 && phase <= 0x18;
             if (inRange) {
                 if (CMenuArtsSelect_IsAvailable() != 0) {
@@ -319,15 +273,7 @@ void CMenuKeyAssign::Move() {
                         int b2 = battleCommuIsActive();
                         if (battleMode == 0 && b2 == 0 &&
                             GetZealObjPtr() == 0) {
-                            CMenuKeyAssignBattleMgr* bmv =
-                                (CMenuKeyAssignBattleMgr*)bm;
-                            u32 cnt = 0;
-                            CListLink* node =
-                                ((CListLink*)bmv->mList28)->next;
-                            while (node != (CListLink*)bmv->mList28) {
-                                node = node->next;
-                                cnt++;
-                            }
+                            u32 cnt = bm->mActorList2.size();
                             if (cnt > 1) {
                                 self->openKeyAssignPlayer();
                             } else {
@@ -399,19 +345,13 @@ void CMenuKeyAssign::Move() {
         if (player != 0) {
             void* battle = player->mSub38;
             if (((int (*)(void*, u32))((void**)battle)[0x40 / 4])(battle, 0x40000) != 0) {
-                CMenuKeyAssignBattleMgr* bmv = (CMenuKeyAssignBattleMgr*)bm;
-                u32 cnt = 0;
-                CListLink* node = ((CListLink*)bmv->mList08)->next;
-                while (node != (CListLink*)bmv->mList08) {
-                    node = node->next;
-                    cnt++;
-                }
+                u32 cnt = bm->mActorList1.size();
                 if (cnt == 0) {
                     int id = ((int (*)(void*))((void**)player)[0x4C / 4])(player);
                     if (id != 0) {
                         void* target = findObjectById(id);
                         if (target != 0) {
-                            u32 flags = ((CActorTargetView*)target)->mFlags64;
+                            u32 flags = ((CfEnumObject*)target)->flags64;
                             if (flags & 0x10000000) {
                                 void* bf = CfObjectMove_getSelfIfActive(target);
                                 u32 st =
@@ -432,7 +372,7 @@ void CMenuKeyAssign::Move() {
                                 }
                             }
                             if ((flags & 0x4000) || (flags & 0x8000)) {
-                                switch (((CActorTargetView*)target)->mType91) {
+                                switch (((CfEnumObject*)target)->type91) {
                                 case 6:
                                     self->openKeyAssignColumns(0x15, 1, 0);
                                     goto done;
@@ -485,14 +425,13 @@ void CMenuKeyAssign::Move() {
 
     // ---- not in battle ----
     int battleMode = 0;
-    void* bm = getInstance__Q22cf14CBattleManagerFv();
-    s16* sub20c8 = (s16*)((u8*)bm + 0x20c8);
-    if (sub20c8 != 0 && *sub20c8 != 0) {
+    cf::CBattleManager* bm =
+        (cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv();
+    if (bm->unk20C8.unk0 != 0) {
         battleMode = 1;
     }
-    u8* sub1a8 = (u8*)bm + 0x1a8;
-    if (sub1a8 != 0) {
-        u8 phase = *(u8*)(sub1a8 + 2);
+    if (bm != 0) {
+        u8 phase = bm->mChain.mHead.field_2;
         bool inRange = phase >= 1 && phase <= 0x18;
         if (inRange) {
             if (CMenuArtsSelect_IsAvailable() != 0) {
@@ -521,15 +460,7 @@ void CMenuKeyAssign::Move() {
                 if (arts != 0) {
                     u32 id = *arts->mSub04->getActorId();
                     if (testActorStatus(arts, &id, 0x803) != 0) {
-                        CMenuKeyAssignBattleMgr* bmv =
-                            (CMenuKeyAssignBattleMgr*)bm;
-                        u32 cnt = 0;
-                        CListLink* node =
-                            ((CListLink*)bmv->mList28)->next;
-                        while (node != (CListLink*)bmv->mList28) {
-                            node = node->next;
-                            cnt++;
-                        }
+                        u32 cnt = bm->mActorList2.size();
                         if (cnt > 1) {
                             self->openKeyAssignPlayer();
                             goto done;
@@ -609,19 +540,13 @@ void CMenuKeyAssign::Move() {
     if (player != 0) {
         void* battle = player->mSub38;
         if (((int (*)(void*, u32))((void**)battle)[0x40 / 4])(battle, 0x40000) != 0) {
-            CMenuKeyAssignBattleMgr* bmv = (CMenuKeyAssignBattleMgr*)bm;
-            u32 cnt = 0;
-            CListLink* node = ((CListLink*)bmv->mList08)->next;
-            while (node != (CListLink*)bmv->mList08) {
-                node = node->next;
-                cnt++;
-            }
+            u32 cnt = bm->mActorList1.size();
             if (cnt == 0) {
                 int id = ((int (*)(void*))((void**)player)[0x4C / 4])(player);
                 if (id != 0) {
                     void* target = findObjectById(id);
                     if (target != 0) {
-                        u32 flags = ((CActorTargetView*)target)->mFlags64;
+                        u32 flags = ((CfEnumObject*)target)->flags64;
                         if (flags & 0x10000000) {
                             void* bf = CfObjectMove_getSelfIfActive(target);
                             u32 st =
@@ -642,7 +567,7 @@ void CMenuKeyAssign::Move() {
                             }
                         }
                         if ((flags & 0x4000) || (flags & 0x8000)) {
-                            switch (((CActorTargetView*)target)->mType91) {
+                            switch (((CfEnumObject*)target)->type91) {
                             case 6:
                                 self->openKeyAssignColumns(0x15, 1, 0);
                                 goto done;
@@ -778,7 +703,7 @@ void CMenuKeyAssign::openKeyAssignColumns(int state, int count, int mode) {
             f32 sx, sy;
             str.format(&base[0x5f], BdatTouchStringCell(&base[0x49], &base[0x56], r));
             nw4r::lyt::ArcResourceAccessor* acc = CUICfManager_getArcResourceAccessor();
-            TexView* tex = (TexView*)acc->GetResource(timg, str.mString, NULL);
+            TPLPalette* tex = (TPLPalette*)acc->GetResource(timg, str.mString, NULL);
             if (tex != 0) {
                 int flag = 0;
                 if (count == 3 && mode != 0 && i == 2) {
@@ -788,16 +713,14 @@ void CMenuKeyAssign::openKeyAssignColumns(int state, int count, int mode) {
                 nw4r::lyt::Pane* pane =
                     this->mLayout->GetRootPane()->FindPaneByName(str.mString, true);
                 PaneSetTexPalette(pane, (TPLPalette*)tex);
-                u16 w = tex->mHeader->mDims[1];
-                u16 h = tex->mHeader->mDims[0];
+                u16 w = tex->descriptorArray->textureHeader->width;
+                u16 h = tex->descriptorArray->textureHeader->height;
                 cw.w[1] = (u32)w;
                 ch.w[1] = (u32)h;
                 sx = (f32)(cw.d - magic);
                 sy = (f32)(ch.d - magic);
-                PaneSizeFlagView* pv = (PaneSizeFlagView*)pane;
-                pv->sizeX = sx;
-                pv->sizeY = sy;
-                pv->flags = (pv->flags & 0xFE) | 1;
+                pane->SetSize(nw4r::lyt::Size(sx, sy));
+                pane->SetVisible(true);
             }
             if (i < 4) {
                 char* s2 = BdatTouchStringCell(&base[0x3b], &base[0x72], idx);
@@ -812,22 +735,20 @@ void CMenuKeyAssign::openKeyAssignColumns(int state, int count, int mode) {
             f32 sx2, sy2;
             str2.format(&base[0x5f], BdatTouchStringCell(&base[0x49], &base[0x56], r));
             nw4r::lyt::ArcResourceAccessor* acc = CUICfManager_getArcResourceAccessor();
-            TexView* tex = (TexView*)acc->GetResource(0x74696d67, str2.mString, NULL);
+            TPLPalette* tex = (TPLPalette*)acc->GetResource(0x74696d67, str2.mString, NULL);
             if (tex != 0) {
                 str2.format(&base[0x66], 1);
                 nw4r::lyt::Pane* pane =
                     this->mLayout->GetRootPane()->FindPaneByName(str2.mString, true);
                 PaneSetTexPalette(pane, (TPLPalette*)tex);
-                u16 w = tex->mHeader->mDims[1];
-                u16 h = tex->mHeader->mDims[0];
+                u16 w = tex->descriptorArray->textureHeader->width;
+                u16 h = tex->descriptorArray->textureHeader->height;
                 cw.w[1] = (u32)w;
                 ch.w[1] = (u32)h;
                 sx2 = (f32)(cw.d - lbl_eu_80667080);
                 sy2 = (f32)(ch.d - lbl_eu_80667080);
-                PaneSizeFlagView* pv = (PaneSizeFlagView*)pane;
-                pv->sizeX = sx2;
-                pv->sizeY = sy2;
-                pv->flags = (pv->flags & 0xFE) | 1;
+                pane->SetSize(nw4r::lyt::Size(sx2, sy2));
+                pane->SetVisible(true);
             }
             char* s2 = BdatTouchStringCell(&base[0x3b], &base[0x72], 26);
             this->setKeyAssignLabels(s2, 0);
@@ -838,22 +759,20 @@ void CMenuKeyAssign::openKeyAssignColumns(int state, int count, int mode) {
             f32 sx3, sy3;
             str3.format(&base[0x5f], BdatTouchStringCell(&base[0x49], &base[0x56], r));
             nw4r::lyt::ArcResourceAccessor* acc = CUICfManager_getArcResourceAccessor();
-            TexView* tex = (TexView*)acc->GetResource(0x74696d67, str3.mString, NULL);
+            TPLPalette* tex = (TPLPalette*)acc->GetResource(0x74696d67, str3.mString, NULL);
             if (tex != 0) {
                 str3.format(&base[0x66], 2);
                 nw4r::lyt::Pane* pane =
                     this->mLayout->GetRootPane()->FindPaneByName(str3.mString, true);
                 PaneSetTexPalette(pane, (TPLPalette*)tex);
-                u16 w = tex->mHeader->mDims[1];
-                u16 h = tex->mHeader->mDims[0];
+                u16 w = tex->descriptorArray->textureHeader->width;
+                u16 h = tex->descriptorArray->textureHeader->height;
                 cw.w[1] = (u32)w;
                 ch.w[1] = (u32)h;
                 sx3 = (f32)(cw.d - lbl_eu_80667080);
                 sy3 = (f32)(ch.d - lbl_eu_80667080);
-                PaneSizeFlagView* pv = (PaneSizeFlagView*)pane;
-                pv->sizeX = sx3;
-                pv->sizeY = sy3;
-                pv->flags = (pv->flags & 0xFE) | 1;
+                pane->SetSize(nw4r::lyt::Size(sx3, sy3));
+                pane->SetVisible(true);
             }
             char* s2 = BdatTouchStringCell(&base[0x3b], &base[0x72], state);
             this->setKeyAssignLabels(s2, 1);
@@ -916,7 +835,7 @@ void CMenuKeyAssign::openKeyAssignButtons(int a, int b, int c, int d, int e, int
             ml::FixStr<32> str(true);
             str.format(&base[0x5f], BdatTouchStringCell(&base[0x49], &base[0x56], r));
             nw4r::lyt::ArcResourceAccessor* acc = CUICfManager_getArcResourceAccessor();
-            TexView* tex = (TexView*)acc->GetResource(0x74696d67, str.mString, NULL);
+            TPLPalette* tex = (TPLPalette*)acc->GetResource(0x74696d67, str.mString, NULL);
             if (tex != 0) {
                 int flag = 0;
                 if (count >= 3 && mode != 0 && i == 2) {
@@ -926,16 +845,14 @@ void CMenuKeyAssign::openKeyAssignButtons(int a, int b, int c, int d, int e, int
                 nw4r::lyt::Pane* pane =
                     this->mLayout->GetRootPane()->FindPaneByName(str.mString, true);
                 PaneSetTexPalette(pane, (TPLPalette*)tex);
-                u16 w = tex->mHeader->mDims[1];
-                u16 h = tex->mHeader->mDims[0];
+                u16 w = tex->descriptorArray->textureHeader->width;
+                u16 h = tex->descriptorArray->textureHeader->height;
                 cw.w[1] = (u32)w;
                 ch.w[1] = (u32)h;
                 f32 sx = (f32)(cw.d - magic);
                 f32 sy = (f32)(ch.d - magic);
-                PaneSizeFlagView* pv = (PaneSizeFlagView*)pane;
-                pv->sizeX = sx;
-                pv->sizeY = sy;
-                pv->flags = (pv->flags & 0xFE) | 1;
+                pane->SetSize(nw4r::lyt::Size(sx, sy));
+                pane->SetVisible(true);
             }
             if (i < 4) {
                 char* s2 = BdatTouchStringCell(&base[0x3b], &base[0x72], idx);
@@ -949,22 +866,20 @@ void CMenuKeyAssign::openKeyAssignButtons(int a, int b, int c, int d, int e, int
             ml::FixStr<32> str2(true);
             str2.format(&base[0x5f], BdatTouchStringCell(&base[0x49], &base[0x56], r));
             nw4r::lyt::ArcResourceAccessor* acc = CUICfManager_getArcResourceAccessor();
-            TexView* tex = (TexView*)acc->GetResource(0x74696d67, str2.mString, NULL);
+            TPLPalette* tex = (TPLPalette*)acc->GetResource(0x74696d67, str2.mString, NULL);
             if (tex != 0) {
                 str2.format(&base[0x66], 1);
                 nw4r::lyt::Pane* pane =
                     this->mLayout->GetRootPane()->FindPaneByName(str2.mString, true);
                 PaneSetTexPalette(pane, (TPLPalette*)tex);
-                u16 w = tex->mHeader->mDims[1];
-                u16 h = tex->mHeader->mDims[0];
+                u16 w = tex->descriptorArray->textureHeader->width;
+                u16 h = tex->descriptorArray->textureHeader->height;
                 cw.w[1] = (u32)w;
                 ch.w[1] = (u32)h;
                 f32 sx = (f32)(cw.d - lbl_eu_80667080);
                 f32 sy = (f32)(ch.d - lbl_eu_80667080);
-                PaneSizeFlagView* pv = (PaneSizeFlagView*)pane;
-                pv->sizeX = sx;
-                pv->sizeY = sy;
-                pv->flags = (pv->flags & 0xFE) | 1;
+                pane->SetSize(nw4r::lyt::Size(sx, sy));
+                pane->SetVisible(true);
             }
             char* s2 = BdatTouchStringCell(&base[0x3b], &base[0x72], 26);
             this->setKeyAssignLabels(s2, 0);
@@ -974,22 +889,20 @@ void CMenuKeyAssign::openKeyAssignButtons(int a, int b, int c, int d, int e, int
             ml::FixStr<32> str3(true);
             str3.format(&base[0x5f], BdatTouchStringCell(&base[0x49], &base[0x56], r));
             nw4r::lyt::ArcResourceAccessor* acc = CUICfManager_getArcResourceAccessor();
-            TexView* tex = (TexView*)acc->GetResource(0x74696d67, str3.mString, NULL);
+            TPLPalette* tex = (TPLPalette*)acc->GetResource(0x74696d67, str3.mString, NULL);
             if (tex != 0) {
                 str3.format(&base[0x66], 2);
                 nw4r::lyt::Pane* pane =
                     this->mLayout->GetRootPane()->FindPaneByName(str3.mString, true);
                 PaneSetTexPalette(pane, (TPLPalette*)tex);
-                u16 w = tex->mHeader->mDims[1];
-                u16 h = tex->mHeader->mDims[0];
+                u16 w = tex->descriptorArray->textureHeader->width;
+                u16 h = tex->descriptorArray->textureHeader->height;
                 cw.w[1] = (u32)w;
                 ch.w[1] = (u32)h;
                 f32 sx = (f32)(cw.d - lbl_eu_80667080);
                 f32 sy = (f32)(ch.d - lbl_eu_80667080);
-                PaneSizeFlagView* pv = (PaneSizeFlagView*)pane;
-                pv->sizeX = sx;
-                pv->sizeY = sy;
-                pv->flags = (pv->flags & 0xFE) | 1;
+                pane->SetSize(nw4r::lyt::Size(sx, sy));
+                pane->SetVisible(true);
             }
             char* s2 = BdatTouchStringCell(&base[0x3b], &base[0x72], state);
             this->setKeyAssignLabels(s2, 1);
@@ -1032,21 +945,19 @@ void CMenuKeyAssign::openKeyAssignPlayer() {
         ml::FixStr<32> str(true);
         str.format(&base[0x5f], BdatTouchStringCell(&base[0x49], &base[0x56], r));
         nw4r::lyt::ArcResourceAccessor* acc = CUICfManager_getArcResourceAccessor();
-        TexView* tex = (TexView*)acc->GetResource(0x74696d67, str.mString, NULL);
+        TPLPalette* tex = (TPLPalette*)acc->GetResource(0x74696d67, str.mString, NULL);
         if (tex != 0) {
             str.format(&base[0x66], mapped + 1);
             nw4r::lyt::Pane* pane =
                 this->mLayout->GetRootPane()->FindPaneByName(str.mString, true);
             PaneSetTexPalette(pane, (TPLPalette*)tex);
             // u16 -> f32 via MWCC's 0x43300000 magic double pair.
-            cw.w[1] = (u32)tex->mHeader->mDims[1];
-            ch.w[1] = (u32)tex->mHeader->mDims[0];
+            cw.w[1] = (u32)tex->descriptorArray->textureHeader->width;
+            ch.w[1] = (u32)tex->descriptorArray->textureHeader->height;
             f32 sx = (f32)(cw.d - magic);
             f32 sy = (f32)(ch.d - magic);
-            PaneSizeFlagView* pv = (PaneSizeFlagView*)pane;
-            pv->sizeX = sx;
-            pv->sizeY = sy;
-            pv->flags = (pv->flags & 0xFE) | 1;
+            pane->SetSize(nw4r::lyt::Size(sx, sy));
+            pane->SetVisible(true);
         }
         if (mapped == 4) {
             mapped = 2;
@@ -1064,24 +975,24 @@ void CMenuKeyAssign::hideKeyAssignPanes() {
     int i;
     for (i = 1; i <= 6; i++) {
         sprintf(buf, &lbl_eu_804FDEE8[0x66], i);
-        PaneFlagView* p = (PaneFlagView*)this->mLayout->GetRootPane()->FindPaneByName(buf, true);
-        p->flags &= 0xFE;
+        nw4r::lyt::Pane* p = this->mLayout->GetRootPane()->FindPaneByName(buf, true);
+        p->SetVisible(false);
         if (i != 5) {
             sprintf(buf, &lbl_eu_804FDEE8[0x77], i);
-            p = (PaneFlagView*)this->mLayout->GetRootPane()->FindPaneByName(buf, true);
-            p->flags &= 0xFE;
+            p = this->mLayout->GetRootPane()->FindPaneByName(buf, true);
+            p->SetVisible(false);
             sprintf(buf, &lbl_eu_804FDEE8[0x83], i);
-            p = (PaneFlagView*)this->mLayout->GetRootPane()->FindPaneByName(buf, true);
-            p->flags &= 0xFE;
+            p = this->mLayout->GetRootPane()->FindPaneByName(buf, true);
+            p->SetVisible(false);
             sprintf(buf, &lbl_eu_804FDEE8[0x91], i);
-            p = (PaneFlagView*)this->mLayout->GetRootPane()->FindPaneByName(buf, true);
-            p->flags &= 0xFE;
+            p = this->mLayout->GetRootPane()->FindPaneByName(buf, true);
+            p->SetVisible(false);
             sprintf(buf, &lbl_eu_804FDEE8[0x9f], i);
-            p = (PaneFlagView*)this->mLayout->GetRootPane()->FindPaneByName(buf, true);
-            p->flags &= 0xFE;
+            p = this->mLayout->GetRootPane()->FindPaneByName(buf, true);
+            p->SetVisible(false);
             sprintf(buf, &lbl_eu_804FDEE8[0xad], i);
-            p = (PaneFlagView*)this->mLayout->GetRootPane()->FindPaneByName(buf, true);
-            p->flags &= 0xFE;
+            p = this->mLayout->GetRootPane()->FindPaneByName(buf, true);
+            p->SetVisible(false);
         }
     }
 }
@@ -1094,22 +1005,22 @@ void CMenuKeyAssign::setKeyAssignLabels(char* str, int idx) {
     int v = idx + 1;
     sprintf(buf, &lbl_eu_804FDEE8[0x77], v);
     LayoutSetTextBoxFmtValue(this->mLayout, buf, str, 0);
-    PaneFlagView* p = (PaneFlagView*)this->mLayout->GetRootPane()->FindPaneByName(buf, true);
-    p->flags = (p->flags & 0xFE) | 1;
+    nw4r::lyt::Pane* p = this->mLayout->GetRootPane()->FindPaneByName(buf, true);
+    p->SetVisible(true);
     sprintf(buf, &lbl_eu_804FDEE8[0x83], v);
     LayoutSetTextBoxFmtValue(this->mLayout, buf, str, 0);
-    p = (PaneFlagView*)this->mLayout->GetRootPane()->FindPaneByName(buf, true);
-    p->flags = (p->flags & 0xFE) | 1;
+    p = this->mLayout->GetRootPane()->FindPaneByName(buf, true);
+    p->SetVisible(true);
     sprintf(buf, &lbl_eu_804FDEE8[0x91], v);
     LayoutSetTextBoxFmtValue(this->mLayout, buf, str, 0);
-    p = (PaneFlagView*)this->mLayout->GetRootPane()->FindPaneByName(buf, true);
-    p->flags = (p->flags & 0xFE) | 1;
+    p = this->mLayout->GetRootPane()->FindPaneByName(buf, true);
+    p->SetVisible(true);
     sprintf(buf, &lbl_eu_804FDEE8[0x9f], v);
     LayoutSetTextBoxFmtValue(this->mLayout, buf, str, 0);
-    p = (PaneFlagView*)this->mLayout->GetRootPane()->FindPaneByName(buf, true);
-    p->flags = (p->flags & 0xFE) | 1;
+    p = this->mLayout->GetRootPane()->FindPaneByName(buf, true);
+    p->SetVisible(true);
     sprintf(buf, &lbl_eu_804FDEE8[0xad], v);
     LayoutSetTextBoxFmtValue(this->mLayout, buf, str, 0);
-    p = (PaneFlagView*)this->mLayout->GetRootPane()->FindPaneByName(buf, true);
-    p->flags = (p->flags & 0xFE) | 1;
+    p = this->mLayout->GetRootPane()->FindPaneByName(buf, true);
+    p->SetVisible(true);
 }

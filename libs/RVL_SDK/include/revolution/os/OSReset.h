@@ -36,6 +36,10 @@ void OSShutdownSystem(void);
 void OSRestart(u32 resetCode);
 void __OSReturnToMenu(u8 menuMode);
 void OSReturnToMenu(void);
+// name-guess: names from their panic strings; signatures/lines guessed (dead-stripped, no retail symbols)
+void OSReturnToDataManager(void);
+void OSReturnToSetting(u32 setting);
+void OSSetBootDol(void);
 void __OSReturnToMenuForError(void);
 void __OSHotResetForError(void);
 u32 OSGetResetCode(void);

@@ -1,4 +1,6 @@
 #pragma once
+
+#include "kyoshin/cf/CfBdat.hpp"
 #include "kyoshin/menu/MenuSndApi.hpp"
 
 #include <types.h>
@@ -290,7 +292,6 @@ extern cf::CfResReloadImplVtbl lbl_eu_80530FF0;
 extern const float lbl_eu_80667698;
 
 // BDAT table pointer and cached row index read by testReloadSub / updateReloadP1.
-extern void* lbl_eu_806640A8;   // BDAT table pointer (.sbss)
 extern u32 lbl_eu_80664184;     // cached BDAT row index (read as u16)
 // Column-name string block base and pointer table used with getBdatStringColumnValue.
 extern char lbl_eu_80503140[];

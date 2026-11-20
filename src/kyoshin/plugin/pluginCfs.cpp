@@ -1,7 +1,7 @@
 // Translation unit for kyoshin/plugin/pluginCfs
 #include "kyoshin/cf/object/CfObjectColl.hpp"
 #include "kyoshin/cf/CtrlObjectParamSymbols.hpp"  // CtrlObjectParam U16-row helpers (owner)
-
+#include "kyoshin/cf/CtrlRemoteApi.hpp"
 // Plugin script functions
 
 // Retail calls CItemBlock_getKindSlot/CItemBlock_getSlotU16 with a full-width character id (no truncation
@@ -72,7 +72,7 @@ extern "C" {
     void* getInstance__14Class_80296898Fv();
     void walkListByItemId(int, int);
     int scanBattleReady();
-    bool CtrlRemote_TouchBitByArg(int);
+
     // CtrlRemote_SetSharedBit: declared (u32,u32) by CfGameManager.hpp:767 - local
     // (int,int) form conflicts (10197). The header decl was removed by a
     // concurrent rename, so spell the (u32,u32) form locally (identical

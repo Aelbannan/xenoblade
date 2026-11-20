@@ -1,5 +1,7 @@
 #pragma once
 
+#include "kyoshin/cf/CfBdat.hpp"
+
 #include <types.h>
 #include "monolib/work/IWorkEvent.hpp"
 #include "kyoshin/CEquipItemBox.hpp"
@@ -113,9 +115,9 @@ struct CEqChCursorRec {
 };
 
 // Per-slot bdat message-table handles read indexed by CEquipChange::RebuildCursorList
-// (lbl_eu_806640D8 is an array of handles; the scalar extern comes from
+// (::cf::CfBdat::spBtlSkillListFileData is an array of handles; the scalar extern comes from
 // CEquipItemBox.hpp).
-#define lbl_eu_806640D8_arr ((void**)(void*)&lbl_eu_806640D8)
+#define lbl_eu_806640D8_arr ((void**)(void*)&::cf::CfBdat::spBtlSkillListFileData)
 
 // Character-data table returned by CtrlObjectParam_GetCharEntry; +0x176C holds a state word
 // that is 1 when the character is busy (same object as CPartyCharData). The
@@ -218,8 +220,7 @@ struct CItemExt;
 
 // bdat item-name table (sdata pointer; canonical type from cf/CItem.hpp) and
 // message-count lookup used by CEquipChange::RunMainFlow's category equip checks.
-extern void* lbl_eu_806640EC;
-extern "C" u32 CtrlRemote_TouchBitByArg(u32 resourceId);
+#include "kyoshin/cf/CtrlRemoteApi.hpp"
 
 // Per-category equipped-item row setters (CEquipChange::RunMainFlow case tails).
 extern "C" void CtrlObjectParam_SetEquipSlot5(void*, int);

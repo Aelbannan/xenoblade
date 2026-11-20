@@ -20,62 +20,9 @@
 #include "monolib/core/CProcRoot.hpp"
 #include "monolib/core/CViewRoot.hpp"
 #include "libs/monolib/src/core/CScriptCode.hpp"
-#include "monolib/data_vtables.hpp"
 
-// --- Blob monolibdata1.s dissolve: this TU owns .data 0x8056B418-0x8056B4D0,
-// .rodata 0x80522540-0x80522558, .sdata 0x80663558-0x80663560, .sbss
-// 0x806655B0-0x806655B8. ---
-
-// Retail sbss singleton slot lbl_eu_806655B0 (8 bytes; word 0 in use).
-CScriptCode* lbl_eu_806655B0[2];
-
-// RTTI name strings (.rodata) and RTTI locator (.sdata, 8 bytes):
-// { name, base-list }.
-const char lbl_eu_80522540[] = "CScriptCode";
-const char lbl_eu_8052254C[] = "CScriptCode";
-
-// RTTI locators for the base interfaces come from data_vtables.hpp
-// (void* form). Do not redeclare as u32[] -- MWCC rejects the conflict.
-// MWCC forbids taking the address of a ctor/dtor (and sibling TUs use the
-// retail-mangled free symbols for vtable words -- see CWorkFlowSetup.cpp).
-extern "C" void __dt__11CScriptCodeFv();
-extern "C" void wkStandbyLogout__11CScriptCodeFv();
-extern "C" void wkStandbyLogin__11CWorkThreadFv();
-
-// RTTI base list (.data, 0x18): [IWorkEvent, 0, CWorkThread, 0, 0, 0].
-u32 lbl_eu_8056B4B8[6] = {
-    (u32)__RTTI__10IWorkEvent, 0, (u32)__RTTI__11CWorkThread, 0, 0, 0,
-};
-
-// RTTI locator (.sdata, 8 bytes): { name, base-list }.
-u32 __RTTI__11CScriptCode[2] = { (u32)lbl_eu_80522540, (u32)lbl_eu_8056B4B8 };
-
-// CScriptCode vtable (.data, 0xA0): [rtti locator, 0, dtor, IWorkEvent 1-31,
-// wkUpdate/wkRender/wkRenderAfter/wkStandbyLogin (CWorkThread slots),
-// wkStandbyLogout (CScriptCode), wkStandbyExceptionRetry].
-u32 lbl_eu_8056B418[0xA0 / 4] = {
-    (u32)&__RTTI__11CScriptCode, 0, (u32)&__dt__11CScriptCodeFv,
-    (u32)&WorkEvent1__10IWorkEventFPvPCc, (u32)&OnFileEvent__10IWorkEventFP10CEventFile,
-    (u32)&WorkEvent3__10IWorkEventFPv, (u32)&WorkEvent4__10IWorkEventFv,
-    (u32)&OnPauseTrigger__10IWorkEventFb,
-    (u32)&WorkEvent6__10IWorkEventFv, (u32)&WorkEvent7__10IWorkEventFv,
-    (u32)&WorkEvent8__10IWorkEventFv, (u32)&WorkEvent9__10IWorkEventFv,
-    (u32)&WorkEvent10__10IWorkEventFv, (u32)&WorkEvent11__10IWorkEventFv,
-    (u32)&WorkEvent12__10IWorkEventFv, (u32)&WorkEvent13__10IWorkEventFv,
-    (u32)&WorkEvent14__10IWorkEventFv, (u32)&WorkEvent15__10IWorkEventFv,
-    (u32)&WorkEvent16__10IWorkEventFv, (u32)&WorkEvent17__10IWorkEventFv,
-    (u32)&WorkEvent18__10IWorkEventFv, (u32)&WorkEvent19__10IWorkEventFv,
-    (u32)&WorkEvent20__10IWorkEventFv, (u32)&WorkEvent21__10IWorkEventFv,
-    (u32)&WorkEvent22__10IWorkEventFv, (u32)&WorkEvent23__10IWorkEventFv,
-    (u32)&WorkEvent24__10IWorkEventFv, (u32)&WorkEvent25__10IWorkEventFv,
-    (u32)&WorkEvent26__10IWorkEventFv, (u32)&WorkEvent27__10IWorkEventFv,
-    (u32)&WorkEvent28__10IWorkEventFv, (u32)&WorkEvent29__10IWorkEventFv,
-    (u32)&WorkEvent30__10IWorkEventFv, (u32)&WorkEvent31__10IWorkEventFv,
-    (u32)&wkUpdate__11CWorkThreadFv, (u32)&wkRender__11CWorkThreadFv,
-    (u32)&wkRenderAfter__11CWorkThreadFv, (u32)&wkStandbyLogin__11CWorkThreadFv,
-    (u32)&wkStandbyLogout__11CScriptCodeFv,
-    (u32)&wkStandbyExceptionRetry__11CWorkThreadFUl,
-};
+// The compiler emits CScriptCode's RTTI, base list and vtable.
+CScriptCode* CScriptCode::sInstance;
 
 // Interface for command handler objects dispatched through vtable slot 3. All
 // pure virtuals so no vtable is emitted.
@@ -92,9 +39,7 @@ public:
 // epilogue destroy the token member and the CWorkThread base (and delete the
 // object itself when the implicit free flag is set).
 CScriptCode::~CScriptCode() {
-    *(u32*)this = (u32)lbl_eu_8056B418;
-
-    for (int i = 0; i < m_cnt0; i++) {
+        for (int i = 0; i < m_cnt0; i++) {
         if (m_slot0[i] != NULL) {
             ::operator delete(m_slot0[i]);
             m_slot0[i] = NULL;
@@ -110,7 +55,7 @@ CScriptCode::~CScriptCode() {
 
     m_cnt0 = 0;
     m_cnt1 = 0;
-    lbl_eu_806655B0[0] = NULL;
+    CScriptCode::sInstance = NULL;
 }
 
 // us-8043cb74: line parser (retail symbol is Fv-mangled but takes arguments).
@@ -196,7 +141,7 @@ s16 splitSegments__11CScriptCodeFv(CScriptCode* self, u8* pOut, u8* pIn) {
 // singleton's primary slot array. Does nothing if the key is already
 // registered.
 void registerCmd__11CScriptCodeFv(const char* pKey, CCmdDispatcher* pValue) {
-    CScriptCode* inst = lbl_eu_806655B0[0];
+    CScriptCode* inst = CScriptCode::sInstance;
     s16 cnt = inst->m_cnt0;
 
     // Search for an existing entry whose key matches `pKey`
@@ -214,7 +159,7 @@ void registerCmd__11CScriptCodeFv(const char* pKey, CCmdDispatcher* pValue) {
     entry->handler = pValue;
 
     // Append to the global instance's primary array
-    inst = lbl_eu_806655B0[0];
+    inst = CScriptCode::sInstance;
     s16 idx = inst->m_cnt0;
     inst->m_slot0[idx] = entry;
     inst->m_cnt0 = idx + 1;
@@ -227,15 +172,14 @@ CScriptCode* CScriptCode::create(CWorkThread* pParent) {
 
     if (ths != NULL) {
         // Construct base class and initialize the object
-        new (ths) CWorkThread(lbl_eu_8052254C, pParent, 1);
+        new (ths) CWorkThread("CScriptCode", pParent, 1);
 
-        *(u32*)ths = (u32)lbl_eu_8056B418;
         ths->m_cnt0 = 0;
         ths->m_cnt1 = 0;
 
         new (&ths->m_token) CToken();
         ths->field_0x1738 = 0;
-        lbl_eu_806655B0[0] = ths;
+        CScriptCode::sInstance = ths;
         ths->m_token.func_8043AA1C();
 
         ths->mType = CWorkThread::THREAD_CSCRIPTCODE;
@@ -254,21 +198,21 @@ CScriptCode* CScriptCode::create(CWorkThread* pParent) {
 // Returns 1 when no command matched.
 int dispatchCommand__11CScriptCodeFv(CCmdDispatcher* self, const char* pData, int doSecondary) {
     u8 buf[0x800];
-    s16 segCount = splitSegments__11CScriptCodeFv(lbl_eu_806655B0[0], buf, (u8*)pData);
+    s16 segCount = splitSegments__11CScriptCodeFv(CScriptCode::sInstance, buf, (u8*)pData);
 
     for (s16 s = 0; s < segCount; s++) {
         const u8* seg = &buf[s * 0x100];
 
         // Search the secondary slot array (m_slot1)
-        for (s16 i = 0; i < lbl_eu_806655B0[0]->m_cnt1; i++) {
-            CScriptCodeEntry* entry = lbl_eu_806655B0[0]->m_slot1[i];
-            if (lbl_eu_806655B0[0]->m_token.matchKeyWords(entry->key, (const char*)seg)) {
+        for (s16 i = 0; i < CScriptCode::sInstance->m_cnt1; i++) {
+            CScriptCodeEntry* entry = CScriptCode::sInstance->m_slot1[i];
+            if (CScriptCode::sInstance->m_token.matchKeyWords(entry->key, (const char*)seg)) {
                 int r = 0;
                 if (self != NULL) {
-                    r = self->cmdHandler(lbl_eu_806655B0[0]->m_token, entry->key);
+                    r = self->cmdHandler(CScriptCode::sInstance->m_token, entry->key);
                 }
                 if (entry->handler != NULL) {
-                    return entry->handler->cmdHandler(lbl_eu_806655B0[0]->m_token, entry->key);
+                    return entry->handler->cmdHandler(CScriptCode::sInstance->m_token, entry->key);
                 }
                 return r;
             }
@@ -276,17 +220,17 @@ int dispatchCommand__11CScriptCodeFv(CCmdDispatcher* self, const char* pData, in
 
         if (doSecondary) {
             // Search the primary slot array (m_slot0)
-            for (s16 i = 0; i < lbl_eu_806655B0[0]->m_cnt0; i++) {
-                CScriptCodeEntry* entry = lbl_eu_806655B0[0]->m_slot0[i];
-                if (lbl_eu_806655B0[0]->m_token.matchKeyWords(entry->key, (const char*)seg)) {
+            for (s16 i = 0; i < CScriptCode::sInstance->m_cnt0; i++) {
+                CScriptCodeEntry* entry = CScriptCode::sInstance->m_slot0[i];
+                if (CScriptCode::sInstance->m_token.matchKeyWords(entry->key, (const char*)seg)) {
                     int r = 0;
                     if (self != NULL) {
-                        r = self->cmdHandler(lbl_eu_806655B0[0]->m_token, entry->key);
+                        r = self->cmdHandler(CScriptCode::sInstance->m_token, entry->key);
                     }
                     if (entry->handler != NULL) {
-                        r = entry->handler->cmdHandler(lbl_eu_806655B0[0]->m_token, entry->key);
+                        r = entry->handler->cmdHandler(CScriptCode::sInstance->m_token, entry->key);
                     }
-                    lbl_eu_806655B0[0]->field_0x1738 = (u32)entry;
+                    CScriptCode::sInstance->field_0x1738 = (u32)entry;
                     return r;
                 }
             }
@@ -307,39 +251,39 @@ void unregisterCmd__11CScriptCodeFv(const char* pKey, CCmdDispatcher* pTarget) {
     // Primary slot array: find first entry whose key matches, free + compact.
     // The singleton is re-read after the delete/compaction (retail keeps inst
     // and cnt in volatile regs across the search, not callee-saved).
-    s16 cnt = lbl_eu_806655B0[0]->m_cnt0;
+    s16 cnt = CScriptCode::sInstance->m_cnt0;
     for (s16 i = 0; i < cnt; i++) {
-        CScriptCodeEntry* entry = lbl_eu_806655B0[0]->m_slot0[i];
+        CScriptCodeEntry* entry = CScriptCode::sInstance->m_slot0[i];
         if (entry->key == key) {
             if (entry != NULL) {
                 ::operator delete(entry);
-                lbl_eu_806655B0[0]->m_slot0[i] = NULL;
+                CScriptCode::sInstance->m_slot0[i] = NULL;
             }
-            while (i < lbl_eu_806655B0[0]->m_cnt0 - 1) {
-                lbl_eu_806655B0[0]->m_slot0[i]
-                    = lbl_eu_806655B0[0]->m_slot0[i + 1];
+            while (i < CScriptCode::sInstance->m_cnt0 - 1) {
+                CScriptCode::sInstance->m_slot0[i]
+                    = CScriptCode::sInstance->m_slot0[i + 1];
                 i++;
             }
-            lbl_eu_806655B0[0]->m_cnt0 = lbl_eu_806655B0[0]->m_cnt0 - 1;
+            CScriptCode::sInstance->m_cnt0 = CScriptCode::sInstance->m_cnt0 - 1;
             return;
         }
     }
 
     // Secondary slot array
-    cnt = lbl_eu_806655B0[0]->m_cnt1;
+    cnt = CScriptCode::sInstance->m_cnt1;
     for (s16 i = 0; i < cnt; i++) {
-        CScriptCodeEntry* entry = lbl_eu_806655B0[0]->m_slot1[i];
+        CScriptCodeEntry* entry = CScriptCode::sInstance->m_slot1[i];
         if (entry->key == key) {
             if (entry != NULL) {
                 ::operator delete(entry);
-                lbl_eu_806655B0[0]->m_slot1[i] = NULL;
+                CScriptCode::sInstance->m_slot1[i] = NULL;
             }
-            while (i < lbl_eu_806655B0[0]->m_cnt1 - 1) {
-                lbl_eu_806655B0[0]->m_slot1[i]
-                    = lbl_eu_806655B0[0]->m_slot1[i + 1];
+            while (i < CScriptCode::sInstance->m_cnt1 - 1) {
+                CScriptCode::sInstance->m_slot1[i]
+                    = CScriptCode::sInstance->m_slot1[i + 1];
                 i++;
             }
-            lbl_eu_806655B0[0]->m_cnt1 = lbl_eu_806655B0[0]->m_cnt1 - 1;
+            CScriptCode::sInstance->m_cnt1 = CScriptCode::sInstance->m_cnt1 - 1;
             return;
         }
     }
@@ -347,7 +291,7 @@ void unregisterCmd__11CScriptCodeFv(const char* pKey, CCmdDispatcher* pTarget) {
 
 // us-...: CScriptCode::getInstance()
 CScriptCode* CScriptCode::getInstance() {
-    return lbl_eu_806655B0[0];
+    return CScriptCode::sInstance;
 }
 
 // us-8043d158: CScriptCode::wkStandbyLogout()

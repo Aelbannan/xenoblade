@@ -1,5 +1,6 @@
 #pragma once
 
+
 #include <types.h>
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 #include "kyoshin/code_80135FDC_State.hpp"
@@ -184,7 +185,6 @@ extern char lbl_eu_8052C1C0[];              // temp CProcess vtable
 extern char lbl_eu_80533638[];              // CMenuBattleCommu composite vtable
 extern const f32 lbl_eu_80667DE0;           // 0.0f (animation frame reset)
 extern const f32 lbl_eu_80667DE4;           // animation "reached frame" bound
-extern void* lbl_eu_80664090;               // localized message table handle
 extern u32 gmPauseFlags;                 // global state flags (bit 21 = event busy)
 extern const void* lbl_eu_80661C60;         // RTTI typeinfo (actor source type)
 extern const void* lbl_eu_80661BE8;         // RTTI typeinfo (actor dest type)

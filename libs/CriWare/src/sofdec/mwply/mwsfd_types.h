@@ -70,6 +70,24 @@ typedef struct MwlSfdFrmInf {
     u32 field_0xa4;         /* 0xa4 SUD data size */
 } MwlSfdFrmInf;             /* 0xa8 */
 
+/* One 16-byte entry in the 32-slot stream description table at handle+0x2A4:
+ * whether the stream is present, its channel mode, sampling rate and stream id. */
+typedef struct MwsfSndInf {
+    s32 used;       /* 0x00 1 = stream in use */
+    s32 ch;         /* 0x04 channel mode */
+    s32 rate;       /* 0x08 sampling rate */
+    s32 stmId;      /* 0x0c stream id */
+} MwsfSndInf;       /* 0x10 */
+
+/* Sub-object at handle+0x5D8 and +0x600: state of one stereo stream. */
+typedef struct MwsfSstHn {
+    s32 state;             /* 0x00 1 = enabled */
+    u8  field_0x04[0x14];  /* 0x04..0x17 */
+    s32 enable;            /* 0x18 1 = channel selection valid */
+    s32 ch;                /* 0x1c selected channel */
+    u8  field_0x20[0x08];  /* 0x20..0x27 */
+} MwsfSstHn;               /* 0x28 */
+
 typedef struct HnObjVtable {
     u8 pad_0x00[0x0C];
     void (*destroy)(void* self);
@@ -130,7 +148,8 @@ typedef struct MWSFDPLY {
     s32 frmIdx;             /* 0x0d8 index of the frame being converted */
     u8 field_0xdc[0x04];    /* 0x0dc..0x0df */
     MwlSfdFrame frmFx[8];   /* 0x0e0 per-frame FX conversion records */
-    u8 field_0x2a0[0x204];  /* 0x2a0..0x4a3 */
+    s32 audInfEnable;       /* 0x2a0 1 = stream description table is ready */
+    MwsfSndInf audInf[32];  /* 0x2a4..0x4a3 32 stream descriptions */
     MwsfPicUsrBuf picUsr;   /* 0x4a4 picture user buffer description */
     u8 pad_0x4b0[0x0c];     /* 0x4b0..0x4bb */
     void* picUsrTgt;        /* 0x4bc */
@@ -167,7 +186,8 @@ typedef struct MWSFDPLY {
     u8 pad_0x550[0x08];     /* 0x550..0x557 */
     u32 field_0x558;        /* 0x558 */
     u32 zeros[31];          /* 0x55c..0x5d4 */
-    u8 field_0x5d8[0x5C];   /* 0x5d8..0x633 (SstHn sub-objects) */
+    MwsfSstHn sst[2];       /* 0x5d8 stereo stream sub-objects */
+    u8 field_0x628[0x0C];   /* 0x628..0x633 */
     u32* field_0x634;       /* 0x634 */
     u32 field_0x638;        /* 0x638 */
     u32 field_0x63c;        /* 0x63c */
@@ -185,5 +205,7 @@ typedef struct MWSFDPLY {
     u32 field_0x678;        /* 0x678 */
     u32 field_0x67c;        /* 0x67c */
     u32 field_0x680;        /* 0x680 */
-    u8 pad_0x684[0x0c];     /* 0x684..0x68f */
+    s32 field_0x684;        /* 0x684 copied picture width */
+    s32 field_0x688;        /* 0x688 frame count */
+    s32 field_0x68c;        /* 0x68c computed frame duration */
 } MWSFDPLY;             /* 0x690 */

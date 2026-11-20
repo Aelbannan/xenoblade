@@ -809,9 +809,8 @@ ConstructOpFatalError__Q44nw4r2ut6detail15ArchiveFontBaseFPQ54nw4r2ut6detail15Ar
     return 2;
 }
 
-extern "C" void
-Init__Q54nw4r2ut6detail15ArchiveFontBase18CachedStreamReaderFv(void* self) {
-    unsigned int* p = (unsigned int*)self;
+void nw4r::ut::detail::ArchiveFontBase::CachedStreamReader::Init() {
+    u32* p = reinterpret_cast<u32*>(this);
     p[0] = 0;
     p[1] = 0;
     p[2] = 0;
@@ -821,20 +820,17 @@ Init__Q54nw4r2ut6detail15ArchiveFontBase18CachedStreamReaderFv(void* self) {
     p[6] = 0;
 }
 
-extern "C" void
-Attach__Q54nw4r2ut6detail15ArchiveFontBase18CachedStreamReaderFPCvUl(void* self,
-                                                              const void* pStream,
-                                                              unsigned int size) {
-    unsigned int* p = (unsigned int*)self;
+void nw4r::ut::detail::ArchiveFontBase::CachedStreamReader::Attach(
+    const void* pStream, u32 size) {
+    u32* p = reinterpret_cast<u32*>(this);
     p[0] = (unsigned int)pStream;
     p[1] = (unsigned int)pStream;
     p[2] = (unsigned int)pStream + size;
 }
 
-extern "C" unsigned int
-GetRemain__Q54nw4r2ut6detail15ArchiveFontBase18CachedStreamReaderCFv(const void* self) {
-    return (*(const unsigned int*)((const char*)self + 8) - *(const unsigned int*)((const char*)self + 4)) +
-           (*(const unsigned int*)((const char*)self + 0x14) - *(const unsigned int*)((const char*)self + 0x10));
+u32 nw4r::ut::detail::ArchiveFontBase::CachedStreamReader::GetRemain() const {
+    return (u32)(mStreamEnd - mStreamPos) +
+           (u32)(mBufferEnd - mBufferPos);
 }
 
 void nw4r::ut::detail::ArchiveFontBase::CachedStreamReader::CopyTo(

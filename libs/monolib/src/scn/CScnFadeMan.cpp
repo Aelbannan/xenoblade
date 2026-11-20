@@ -8,48 +8,8 @@
 
 // --- Scene sink: owned CScn (IScnRender callback) -------------------------
 
-// Retail sdata2 magic doubles for int->float conversion, referenced by name so
-// no local .sdata2 pool is emitted (retail CScnFadeMan.o has an empty
-// .sdata2). AB88 = 0x4330000080000000 (signed), AB98 = 0x4330000000000000
-// (unsigned). See MWCC_CASES 7i for the union trick.
-extern double lbl_eu_8066AB88;
-extern double lbl_eu_8066AB98;
-
-union F64Conv_AB {
-    f64 d;
-    u32 w[2];
-};
-
-static inline f32 s32ToF_AB88(s32 v) {
-    F64Conv_AB c;
-    c.w[0] = 0x43300000u;
-    c.w[1] = (u32)v ^ 0x80000000u;
-    return (f32)(c.d - lbl_eu_8066AB88);
-}
-
-static inline f32 u32ToF_AB98(u32 v) {
-    F64Conv_AB c;
-    c.w[0] = 0x43300000u;
-    c.w[1] = v;
-    return (f32)(c.d - lbl_eu_8066AB98);
-}
-
-// Retail vtable words: dtor/cbRenderBefore are defined by this TU's class
-// members (symbols __dt__11CScnFadeManFv / cbRenderBefore__11CScnFadeManFv);
-// the extern "C" declarations below bind to those same symbols (MWCC keeps
-// the literal names for address-of).
-extern "C" void __dt__11CScnFadeManFv();
-extern "C" void cbRenderBefore__11CScnFadeManFv(const CScnFadeMan* self);
-
-// [.data] 0x8056EB50-0x8056EB60 (16B): CScnFadeMan vtable.
-extern "C" u32 lbl_eu_80663A38;
-extern "C" u32 lbl_eu_8056EB50[4] = {
-    (u32)&lbl_eu_80663A38, 0x00000000,
-    (u32)&__dt__11CScnFadeManFv, (u32)&cbRenderBefore__11CScnFadeManFv,
-};
 
 
-// Publishes the current fade color pointer (address of mCurrentColor).
 extern "C" void* getFadeColorPtr(u8* self) { return (void*)((u8*)self + 0x8); }
 
 // True while the fade timer has not started moving (mCurrentFrame == 0).
@@ -59,35 +19,27 @@ extern "C" u32 isFadeIdle(u8* self) { return (s32)(*(u32*)((u8*)self + 0x38)) <=
 
 CScnFadeMan::CScnFadeMan(CScn* scene) {
     mScene = scene;
-    // Store the retail vtable blob pointer manually (see CScnFadeMan.hpp) so
-    // the ctor vptr-store relocs name the retail blob instead of a compiler
-    // __vt__ symbol.
-    m_vtable = (u8*)lbl_eu_8056EB50;
-    mCurrentColor.r = lbl_eu_8066AB78;
-    mCurrentColor.g = lbl_eu_8066AB78;
-    mCurrentColor.b = lbl_eu_8066AB78;
-    mCurrentColor.a = lbl_eu_8066AB78;
-    mStartColor.r = lbl_eu_8066AB78;
-    mStartColor.g = lbl_eu_8066AB78;
-    mStartColor.b = lbl_eu_8066AB78;
-    mStartColor.a = lbl_eu_8066AB78;
-    mDestColor.r = lbl_eu_8066AB78;
-    mDestColor.g = lbl_eu_8066AB78;
-    mDestColor.b = lbl_eu_8066AB78;
-    mDestColor.a = lbl_eu_8066AB78;
+    mCurrentColor.r = 0.0f;
+    mCurrentColor.g = 0.0f;
+    mCurrentColor.b = 0.0f;
+    mCurrentColor.a = 0.0f;
+    mStartColor.r = 0.0f;
+    mStartColor.g = 0.0f;
+    mStartColor.b = 0.0f;
+    mStartColor.a = 0.0f;
+    mDestColor.r = 0.0f;
+    mDestColor.g = 0.0f;
+    mDestColor.b = 0.0f;
+    mDestColor.a = 0.0f;
     mCurrentFrame = 0;
     mFrameCount = 0;
-    // Non-virtual class (see hpp) - explicit IScnRender* conversion for the
-    // render-CB registration; the object address doubles as the IScnRender*.
+    // The render callback uses the same vtable shape as IScnRender.
     mScene->addRenderCB((IScnRender*)this, 0xc, 0x1);
 }
 
 // --- Destructor -----------------------------------------------------------
 
 CScnFadeMan::~CScnFadeMan() {
-    // Re-store the vtable pointer like the virtual-class dtor would (see hpp).
-    m_vtable = (u8*)lbl_eu_8056EB50;
-    // Same explicit IScnRender* conversion as the ctor.
     mScene->removeRenderCB((IScnRender*)this);
 }
 
@@ -106,23 +58,22 @@ void CScnFadeMan::update() {
     // The timers are 8.8 fixed-point (1 frame = 0x100), so convert each to a
     // real-valued float (integer part + fraction byte) before dividing.
     f32 prog =
-        (s32ToF_AB88(mCurrentFrame % 256) * lbl_eu_8066AB7C + s32ToF_AB88(mCurrentFrame / 256)) /
-        (s32ToF_AB88(mFrameCount % 256) * lbl_eu_8066AB7C + s32ToF_AB88(mFrameCount / 256));
+        ((f32)(mCurrentFrame % 256) * 0.00390625f + (f32)(mCurrentFrame / 256)) /
+        ((f32)(mFrameCount % 256) * 0.00390625f + (f32)(mFrameCount / 256));
     // Interpolate from mStartColor toward mDestColor, writing mCurrentColor.
-    mCurrentColor.r = mStartColor.r * prog + mDestColor.r * (lbl_eu_8066AB80 - prog);
-    mCurrentColor.g = mStartColor.g * prog + mDestColor.g * (lbl_eu_8066AB80 - prog);
-    mCurrentColor.b = mStartColor.b * prog + mDestColor.b * (lbl_eu_8066AB80 - prog);
-    mCurrentColor.a = mStartColor.a * prog + mDestColor.a * (lbl_eu_8066AB80 - prog);
+    mCurrentColor.r = mStartColor.r * prog + mDestColor.r * (1.0f - prog);
+    mCurrentColor.g = mStartColor.g * prog + mDestColor.g * (1.0f - prog);
+    mCurrentColor.b = mStartColor.b * prog + mDestColor.b * (1.0f - prog);
+    mCurrentColor.a = mStartColor.a * prog + mDestColor.a * (1.0f - prog);
 }
 
 // --- cbRenderBefore ---------------------------------------------------------
 
-// Forced-name free function with const self (MWCC_CASES "const-self lever"):
-// constness lets MWCC hoist the sdata2 global lfs above the prologue stores,
-// matching retail's load schedule; the vtable word references this exact name.
-extern "C" void cbRenderBefore__11CScnFadeManFv(const CScnFadeMan* self) {
-    const float fadeZero = lbl_eu_8066AB78;
-    if (fadeZero == self->mCurrentColor.a) {
+// The const self view preserves the retail load schedule (MWCC_CASES
+// "const-self lever").
+void CScnFadeMan::cbRenderBefore() {
+    const CScnFadeMan* self = this;
+    if (0.0f == self->mCurrentColor.a) {
         return;
     }
     CDeviceGX::getCacheInstance()->resetGXStateA();
@@ -145,7 +96,7 @@ extern "C" void cbRenderBefore__11CScnFadeManFv(const CScnFadeMan* self) {
 
 void startFade(CScnFadeMan* self, u32 count, const ml::CCol4* src) {
     if (CDeviceVI::isTvFormatPal() && count > 1) {
-        count = (u32)(u32ToF_AB98(count) / lbl_eu_8066AB90);
+        count = (u32)((f32)count / 1.2f);
     }
     self->mStartColor = self->mCurrentColor;
     self->mDestColor = *src;
@@ -160,9 +111,6 @@ void startFade(CScnFadeMan* self, u32 count, const ml::CCol4* src) {
 // --- isFadeSettled ------------------------------------------------------------
 
 u32 isFadeSettled(CScnFadeMan* self) {
-    return (lbl_eu_8066AB80 == self->mCurrentColor.a && self->mCurrentFrame == 0) ||
-           (lbl_eu_8066AB80 == self->mDestColor.a && self->mCurrentFrame != 0);
+    return (1.0f == self->mCurrentColor.a && self->mCurrentFrame == 0) ||
+           (1.0f == self->mDestColor.a && self->mCurrentFrame != 0);
 }
-// [.rodata] 0x80524128-0x80524138: RTTI class-name string (referenced by the
-// weak typeinfo locator in .sdata).
-extern "C" __declspec(align(4)) const char CScnFadeManName[0xC] = { 0x43,0x53,0x63,0x6E,0x46,0x61,0x64,0x65,0x4D,0x61,0x6E,0x00 };

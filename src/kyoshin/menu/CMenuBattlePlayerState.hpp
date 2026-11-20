@@ -1,5 +1,7 @@
 #pragma once
 
+#include "kyoshin/cf/CfBdat.hpp"
+
 #include "kyoshin/IUICf.hpp"
 #include "kyoshin/code_80135FDC_Bdat.hpp"
 #include "monolib/lib/UnkClass_8045F564.hpp"
@@ -22,7 +24,7 @@ struct MenuBpsActorFields {
 
 // C++-mangled retail helper findObjectById__Fi (actor id -> action source).
 // Declared here (not in CfObjectPc.hpp) so this TU avoids that header's
-// `extern void* lbl_eu_806640F4` clashing with code_80135FDC.hpp's u32 form.
+// `extern void* ::cf::CfBdat::spItmWpnListFileData` clashing with code_80135FDC.hpp's u32 form.
 void* findObjectById(int id);
 
 // Layout for handle returned by findObjectById
@@ -178,7 +180,7 @@ extern const f32 lbl_eu_80666FDC; // tension timer wrap limit
 extern const double lbl_eu_80666FB8; // unsigned-int -> double bias
 
 // BDAT message-table pointer: declared by cf/object/CBattleState.hpp as
-// `extern u8* lbl_eu_806640E0;`.
+// `extern u8* ::cf::CfBdat::spBtlBuffListFileData;`.
 // Per-level HP-gauge width table indexed by the quantized gauge value.
 extern f32 sBpsHpGaugeWidths[5];
 

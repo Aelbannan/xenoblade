@@ -3,9 +3,64 @@
   "permissionGate": {
     "autoDenyPatterns": [
       {
-        "pattern": "(?:\\bgit\\b(?:\\s+-C\\s+\\S+)*(?:\\s+--?[\\w-]+(?:=\\S*)?)*\\s+(?:reset|push|clean|checkout|restore|stash|filter-branch|filter-repo)\\b)|(?:\\[\\s*['\\\"]git['\\\"]\\s*,\\s*['\\\"](?:reset|push|clean|checkout|restore|stash|filter-branch|filter-repo)['\\\"])",
+        "pattern": "(?:^|[\\s;&|(`])git\\s+(?!(?:-C\\s+\\S+\\s+)?(?:show|log|diff|blame|status|ls-files|grep|rev-parse|cat-file)\\b)",
         "regex": true,
-        "description": "Blocked: destructive/rewriting git command (reset/push/clean/checkout/restore/stash/filter-branch/filter-repo), including -C/flag forms and Python argv ['git','<verb>']"
+        "description": "Blocked: agents never run mutating git (read-only git show/log/diff/blame/status only). Leave version control to the orchestrator."
+      },
+      {
+        "pattern": "run\\.py\\s+link-gate(?![^;&|\\n]*--symbols-only)",
+        "regex": true,
+        "description": "Blocked: full link-gate holds the repo-wide build lock for minutes. Agents run `run.py link-gate --symbols-only` only; the orchestrator runs the full link-gate. Report that it is needed."
+      },
+      {
+        "pattern": "(?:^|[\\s;&|(`])(?:rm|unlink|mv|truncate)\\b[^;&|\\n]*\\.hexdiff\\.lock",
+        "regex": true,
+        "description": "Blocked: build/us/.hexdiff.lock is a flock; unlinking it splits the lock queue. Never touch it, even if the pid looks stale."
+      },
+      {
+        "pattern": "(?:^|[\\s;&|(`])(?:\\S*/)?(?:powerpc-eabi-|ppc-)?objcopy\\b",
+        "regex": true,
+        "description": "Blocked: use tools/coop/lib/objread.py for object reads; objcopy with one operand rewrites the input in place."
+      },
+      {
+        "pattern": "\\.ctx\\.c\\b",
+        "regex": true,
+        "description": "Blocked: never read, grep, or edit *.ctx.c (generated context files)."
+      },
+      {
+        "pattern": "faithful(?:\\.py)?\\b[^;&|\\n]*--(?:init|ratchet|seed-headers)\\b",
+        "regex": true,
+        "description": "Blocked: only the orchestrator runs faithful --init/--ratchet/--seed-headers. Use faithful measure/check and report."
+      },
+      {
+        "pattern": "(?:^|[\\s;&|(`])(?:/usr/bin/|/usr/local/bin/|env\\s+)?python3?(?:\\.\\d+)?(?=\\s|$)",
+        "regex": true,
+        "description": "Blocked: use .venv/bin/python3, never the system python3."
+      },
+      {
+        "pattern": "(?:(?:sed\\s+-i|perl\\s+-\\w*i)[^;&|\\n]*|>>?\\s*|tee\\s+(?:-a\\s+)?|cp\\s+\\S+\\s+|mv\\s+\\S+\\s+)\\S*config/\\w+/(?:splits|symbols)\\.txt",
+        "regex": true,
+        "description": "Blocked: agents never edit splits.txt; symbols.txt only via tools/coop/faithful/rename_syms.py."
+      },
+      {
+        "pattern": "(?:^|[\\s;&|(`])(?:cp|rsync|mv)\\b[^;&|\\n]*/tmp/\\S+\\s+(?:\\./)?(?:src|libs|include|config|tools)/",
+        "regex": true,
+        "description": "Blocked: never restore files wholesale or from a snapshot (ADDENDUM 7). Undo only your own hunks with targeted edits."
+      },
+      {
+        "pattern": "(?:^|[\\s;&|(`])rm\\s+(?:-\\w*\\s+)*-\\w*[rR]",
+        "regex": true,
+        "description": "Blocked: no recursive rm. Delete individual scratch files only."
+      },
+      {
+        "pattern": "(?:^|[\\s;&|(`])(?:\\./)?ninja(?=\\s|$)",
+        "regex": true,
+        "description": "Blocked: use tools/coop/hexdiff.py (it builds under the shared lock); raw ninja is orchestrator-only."
+      },
+      {
+        "pattern": "(?:^|[\\s;&|(`])(?:pkill|killall)\\b",
+        "regex": true,
+        "description": "Blocked: never kill other processes; other agents' builds may be running."
       }
     ]
   },
@@ -27,5 +82,69 @@
       }
     ]
   },
-  "version": "0.19.0"
+  "version": "0.19.0",
+  "policies": {
+    "rules": [
+      {
+        "id": "xb-ctx-c",
+        "description": "Never read or edit *.ctx.c ({file}).",
+        "patterns": [
+          {
+            "pattern": "*.ctx.c"
+          }
+        ],
+        "protection": "noAccess",
+        "onlyIfExists": false,
+        "blockMessage": "Never read or edit *.ctx.c ({file})."
+      },
+      {
+        "id": "xb-splits",
+        "description": "Agents never edit splits.txt ({file}).",
+        "patterns": [
+          {
+            "pattern": "config/*/splits.txt"
+          }
+        ],
+        "protection": "readOnly",
+        "onlyIfExists": false,
+        "blockMessage": "Agents never edit splits.txt ({file})."
+      },
+      {
+        "id": "xb-symbols",
+        "description": "Edit symbols.txt only via tools/coop/faithful/rename_syms.py ({file}).",
+        "patterns": [
+          {
+            "pattern": "config/*/symbols.txt"
+          }
+        ],
+        "protection": "readOnly",
+        "onlyIfExists": false,
+        "blockMessage": "Edit symbols.txt only via tools/coop/faithful/rename_syms.py ({file})."
+      },
+      {
+        "id": "xb-baseline",
+        "description": "Only the orchestrator ratchets the faithful baseline ({file}).",
+        "patterns": [
+          {
+            "pattern": "docs/evidence/faithful_baseline.json"
+          }
+        ],
+        "protection": "readOnly",
+        "onlyIfExists": false,
+        "blockMessage": "Only the orchestrator ratchets the faithful baseline ({file})."
+      },
+      {
+        "id": "xb-lock",
+        "description": "Never touch the build flock ({file}).",
+        "patterns": [
+          {
+            "pattern": "build/us/.hexdiff.lock"
+          }
+        ],
+        "protection": "noAccess",
+        "onlyIfExists": false,
+        "blockMessage": "Never touch the build flock ({file})."
+      }
+    ]
+  }
 }

@@ -1,6 +1,7 @@
 // Catalog TU for kyoshin/menu/CMenuPTChangeNotice
 // Party-member change notice screen task reconstruction.
 
+#include "kyoshin/cf/CfBdat.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/harness_catalog.hpp"
 
@@ -220,7 +221,7 @@ extern "C" int PTNotice_BuildLayout_348C(CMenuPTChangeNotice* self, CEventFile* 
                 } else {
                     sprintf(buf, activeRsFmt, idx - 2);
                 }
-                u16 msg = BdatGetU16Direct(lbl_eu_80664090,
+                u16 msg = BdatGetU16Direct(::cf::CfBdat::spBtlPcListFileData,
                                         iconTypeColumn, val);
                 char* str = MakeTplNameSysFile(msg);
                 void* tex = self->mAccessor->GetResource(0x74696D67, str, NULL);
@@ -252,7 +253,7 @@ extern "C" int PTNotice_BuildLayout_348C(CMenuPTChangeNotice* self, CEventFile* 
             if (idx < count) {
                 u8 val = GetCollectedFlagWord8(idx);
                 sprintf(buf, activeAffinityFmt, idx + 1);
-                u16 msg = BdatGetU16Direct(lbl_eu_80664098,
+                u16 msg = BdatGetU16Direct(::cf::CfBdat::spFldNpcListFileData,
                                         "rlt_texture", val);
                 char* str = MakeTplNameSysFile(msg);
                 nw4r::lyt::ArcResourceAccessor* mgr = CUICfManager_getArcResourceAccessor();

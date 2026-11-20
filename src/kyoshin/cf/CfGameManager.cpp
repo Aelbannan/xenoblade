@@ -1,4 +1,5 @@
 // The header declares the 2-arg (delete-flag) form of the UnkClass_8018EF3C
+#include "kyoshin/cf/CfBdat.hpp"
 #include "kyoshin/cf/CtrlObjectParamSymbols.hpp"
 #include "kyoshin/menu/code_8018C5FC.hpp"
 #include "kyoshin/code_8025FB10.hpp"
@@ -46,28 +47,28 @@
 #undef Tok_FormatStr
 #include "kyoshin/cf/voice/CCharVoice.hpp"
 #include "kyoshin/code_801862C0.hpp"
-
+#include "kyoshin/cf/CfCamSymbols.hpp"
 // slot-0x40 virtual CtrlPlayerSub3ED4::vf14, int(int), same 0x400-probe
 // idiom as CtrlPc.cpp's mask-3 resets). Include-only: owned elsewhere.
 #define cfCam_setClear04 ctrlPcFunc_8006BBF4
 #define appendObjectById ctrlPcFunc_800F6D50
-#define GetZealObjPtr ctrlPcFunc_8017FD44
+
 #define GetZealResult ctrlPcFunc_8017FD4C
 #define getArtsParamRC2 ctrlPcGetArtsParamRC2
 #include "kyoshin/cf/CtrlPc.hpp"
 #undef cfCam_setClear04
 #undef appendObjectById
-#undef GetZealObjPtr
+
 #undef GetZealResult
 #undef getArtsParamRC2
 // Full battle-manager class for resetBattlePresentation's real slot-0x1C call
 // (setPartyMaskFlag) and +0x94/+0x194 member access. Include-only: the class
 // and its TU are owned elsewhere; nothing here is redeclared.
 #define CItem_getNameIdFromFam cbattleFunc_80158018
-#define isGlobalCamFlagSet__Fi cbattleIsGlobalCamFlagSet
+
 #define CtrlObjectParam_FindSlotTypeIndex cbattleFunc_8009E344
 #define lookupEffectForResource__Q22cf13CfGameManagerFv cbattleLookupEffectForResource
-#define __dt__Q22cf16CfObjectImplMoveFv cbattle_dt_CfObjectImplMove
+#define __dt__Q22cf16CfObjectImplMoveFv
 #define getPlayer__Q22cf13CfGameManagerFi cbattleGetPlayer
 #define lookupWorkAtAddr cbattleFunc_800B8920
 #define syncBattleState__Q22cf13CfGameManagerFv cbattleSyncBattleState
@@ -84,9 +85,9 @@
 #undef syncBattleState__Q22cf13CfGameManagerFv
 #undef getReslistBE8
 #undef addTableValueWithClamp__Q22cf13CfGameManagerFv
-#undef isGlobalCamFlagSet__Fi
-#undef CItem_getNameIdFromFam
 
+#undef CItem_getNameIdFromFam
+#include "kyoshin/menu/CMenuZeal.hpp"
 #include "monolib/core/CPadManager.hpp"
 #include "monolib/core/CView.hpp"
 #include "monolib/math/CVec3.hpp"
@@ -131,7 +132,6 @@ extern "C" void CtrlObjectParam_WriteEquipSlotValue(void* self, unsigned long in
 // --- imports for the func_8007xxxx / func_8008xxxx target bodies ---
 // (retail C-linkage names; signature params are informational, the emitted
 // reloc symbol is the unmangled name)
-extern "C" void loadBdatFileTable__Q22cf6CfBdatFv();
 extern "C" void* __ct__cf_CfTFile(void* self);
 extern "C" void* __ct__80075298(void* self);
 extern "C" void* __ct__80186578(void* self);
@@ -220,7 +220,6 @@ extern u8 gmLastDirection;
 extern float gmNandFloat54;
 extern u16 gmCounter36;
 extern u16 gmCounter38;
-extern void* lbl_eu_806640A0;
 extern const double lbl_eu_80666528;
 
 cf::CfGameManager::~CfGameManager() {
@@ -334,7 +333,7 @@ void __ct__Q22cf13CfGameManagerFv(cf::CfGameManager* self);
 void* __register_global_object(void* object, void* destructor, void* registration);
 }
 
-extern "C" u32 CtrlRemote_TouchBitByArg(u32 resourceId);
+#include "kyoshin/cf/CtrlRemoteApi.hpp"
 extern void setMasterVolume(float value, float fadeTime);
 extern const float lbl_eu_80666548;
 
@@ -365,7 +364,6 @@ extern "C" void CtrlObjectParam_WriteArtsCounter(void* self, u16 arg2);
 extern "C" void CollObjSetupVecsState4(void* self, const void* pA, const void* pB, float f);
 extern "C" void mineResetAll();
 extern "C" void resetHelpManager(cf::CHelpManager* object);
-extern "C" void setInputDisableTime__Q22cf9CfPadTaskFf(float value);
 extern float lbl_eu_806669C8;
 
 unsigned int packResourceId(unsigned int first, unsigned int second) {
@@ -508,7 +506,7 @@ extern "C" void queueSceneEventA__Q22cf13CfGameManagerFv(
     func_800838F4__Q22cf13CfGameManagerFv(0, first, second, third, fourth, value);
 }
 
-extern "C" void flushEventQueue__Q22cf13CfGameManagerFv() {
+void cf::CfGameManager::flushEventQueue() {
     while (getEventQueueCount__Q22cf13CfGameManagerFv(&gmEventQueue) != 0) {
         u16 value = popEventQueue__Q22cf13CfGameManagerFv(&gmEventQueue);
         setEventFlag__Q22cf13CfGameManagerFv(value, true);
@@ -663,7 +661,7 @@ void cf::CfGameManager::teardownGameManager() {
     UIBattleRemoveAll(0);
     CUICfManager_setFlagState(0);
     CCharVoiceMan_DestroySingleton();
-    getBattleStateB__Q22cf14CBattleManagerFv();
+    cf::CBattleManager::getBattleStateB();
     destroyHelpManager();
     __dt__80157150();
     if (!gmInitFlag) {
@@ -1229,13 +1227,6 @@ void cf::CfObject::CfObject_applyMoveYaw(float amount) {
     CfObject_syncMoveHead(amount);
 }
 
-// Retail Fv linker name kept for hand-built vtables (CfCollSphereImpl /
-// CfObjectModel). Member emits CfObject_applyMoveYaw__...Ff.
-extern "C" void CfObject_applyMoveYaw__Q22cf8CfObjectFf(
-    cf::CfObject* object, float amount) {
-    object->CfObject_syncMoveHead(amount);
-}
-
 void cf::CfGameManager::enableFlag10() {
     gmGameFlags |= 0x10;
 }
@@ -1260,15 +1251,6 @@ void* cf::CfGameManager::getSelf() { return this; }
 void cf::CfGameManager::stubEmptyA() {}
 void cf::CfGameManager::dispatchObjectFunc52() {}
 void cf::CfObject::CfObject_setMoveTargetPtr(void*) {}
-
-// Retail Fv base impl (us/jp/eu 0x80087D64: bare blr) for vtable slot 0x108.
-// Same dual-symbol shape as CfObject_applyMoveYaw above: the C++
-// member def emits the FPv override-chain symbol (referenced by the
-// CfCollSphere/CfObjectEff hand vtables); this forced-name extern "C"
-// form emits the retail Fv linker name (referenced by the CfObjectModel
-// hand vtables). Empty body: retail is a single blr.
-extern "C" void CfObject_setMoveTargetPtr__Q22cf8CfObjectFPv(
-    cf::CfObject*) {}
 void cf::CfObject::CfObject_createMoveTarget(int) {}
 
 void cf::CfGameManager::stubEmptyB() {}
@@ -1278,12 +1260,11 @@ void cf::CfGameManager::stubEmptyE() {}
 extern "C" void* getNullPtrA__Q22cf13CfGameManagerFv() { return nullptr; }
 extern "C" void* getNullPtrB__Q22cf13CfGameManagerFv() { return nullptr; }
 extern "C" void* getNullPtrC__Q22cf13CfGameManagerFv() { return nullptr; }
-// Slot +0x124 base: retail Fv returns nullptr. Forced-name keeps the Unk
-// linker spelling for hand-built vtables; virtual is CfObject_getIndexedNodeMatrix.
-extern "C" cf::CfObject* CfObject_getIndexedNodeMatrix__Q22cf8CfObjectCFUl(
-    cf::CfObject*) {
+// Slot +0x124 base: retail returns nullptr from the real virtual member.
+void* cf::CfObject::CfObject_getIndexedNodeMatrix(u32) const {
     return nullptr;
 }
+
 extern u32 gObjectMoveRateScale;
 u32* cf::CfObject::CfObject_getMoveRateScale() {
     return &gObjectMoveRateScale;
@@ -1293,15 +1274,12 @@ extern u32 gCachedFldMapRow;
 u32 cf::CfGameManager::getGlobalWord64188() { return gCachedFldMapRow; }
 extern u32 lbl_eu_80664184;
 u32 cf::CfGameManager::getGlobalWord64184() { return lbl_eu_80664184; }
-extern "C" u32 getGlobalWord64184Dup__Q22cf13CfGameManagerFv() { return lbl_eu_80664184; }
+u32 cf::CfGameManager::getGlobalWord64184Dup() { return lbl_eu_80664184; }
 extern u32 lbl_eu_8066409C;
 extern "C" u32 getGlobalPtr6409C__Q22cf13CfGameManagerFv() { return lbl_eu_8066409C; }
-extern void* lbl_eu_806640A8;
-extern "C" u32 getGlobalPtr640A8__Q22cf13CfGameManagerFv() { return (u32)lbl_eu_806640A8; }
-extern u32 lbl_eu_806640A4;
-extern "C" u32 getGlobalWord640A4__Q22cf13CfGameManagerFv() { return lbl_eu_806640A4; }
-extern void* lbl_eu_806640F4;
-extern "C" u32 getGlobalWord640F4__Q22cf13CfGameManagerFv() { return (u32)lbl_eu_806640F4; }
+u32 cf::CfGameManager::getGlobalPtr640A8() { return (u32)::cf::CfBdat::spFldMapListFileData; }
+extern "C" u32 getGlobalWord640A4__Q22cf13CfGameManagerFv() { return (u32)::cf::CfBdat::spCurRouteListFileData; }
+extern "C" u32 getGlobalWord640F4__Q22cf13CfGameManagerFv() { return (u32)::cf::CfBdat::spItmWpnListFileData; }
 
 extern "C" u32 getFieldD90Value__Q22cf13CfGameManagerFv() { return gCfTEventFrameCounter; }
 extern u8 gmGlobalFlag34;
@@ -1316,7 +1294,6 @@ void* cf::CfGameManager::getResetDataPtr() { return lbl_eu_8065FC18; }
 // the mode subsystems, wipes the manager's per-mode state block, clears the
 // presentation globals and the E24/E28 flag masks.
 extern "C" void gmCallInit1954();
-extern "C" void resetBattleState__Q22cf14CBattleManagerFv(void* battle);
 extern "C" void CfRes_updateEntry(u32 a, u32 b, u32 c, u32 d);
 extern "C" void CfRes_getInstPtr170();
 extern "C" void EffSys_Init4F9C(void* object);
@@ -1379,8 +1356,7 @@ void cf::CfGameManager::func_8007D84C() {
     CfRes_updateEntry(0, 0, 0, 0);
     Selector_GetInstance();
     __dt__800FDEF8();
-    resetBattleState__Q22cf14CBattleManagerFv(
-        getInstance__Q22cf14CBattleManagerFv());
+    cf::CBattleManager::getInstance()->resetBattleState();
     CfScript_ClearReq0();
     CfScript_ClearReq1();
     CfScript_ClearReq2();
@@ -1527,10 +1503,8 @@ extern "C" void* getDataArray219C__Q22cf13CfGameManagerFv(u8* data) { return dat
 
 void cf::CfGameManager::resetCameraManager() { Scn_GetUnk80Handle(gmScene); }
 
-// Slot +0x130 base: retail Fv returns the shared float const. Forced-name
-// keeps the Unk linker spelling for hand-built vtables; virtual is
-// CfObject_getHeightDiff.
-extern "C" float CfObject_getHeightDiff__Q22cf8CfObjectCFv(cf::CfObject*) {
+// Slot +0x130 base: retail returns the shared float const.
+float cf::CfObject::CfObject_getHeightDiff() const {
     return lbl_eu_80666498;
 }
 
@@ -1574,10 +1548,9 @@ extern "C" u32 isStateFlag20Set__Q22cf13CfGameManagerFv(const u8* data) {
     return (*reinterpret_cast<const u32*>(data + 0x4EC) >> 20) & 1;
 }
 
-extern "C" void CObjectParam_UnkVirtualFunc4__Q22cf12CObjectParamFv(u8* data) {
-    // Slot +0x48 base: clear +0x34. Real API alias is CObjectParam_clearExtraWord;
-    // forced-name Unk Fv spelling kept for hand-built vtables.
-    *reinterpret_cast<u32*>(data + 0x34) = 0;
+void cf::CObjectParam::CObjectParam_UnkVirtualFunc4() {
+    // Slot +0x48 base: clear +0x34.
+    *reinterpret_cast<u32*>(reinterpret_cast<u8*>(this) + 0x34) = 0;
 }
 
 bool cf::CfGameManager::isFlag20Set() {
@@ -1601,20 +1574,17 @@ void cf::CfGameManager::clearObjectFlagsAll() {
     mObjectFlags = 0;
 }
 
-// Slot +0x1F8/+0x200 base impls: store/load +0x1608. Virtuals are
-// CActorParam_setSecondCurrency / getSecondCurrency; forced-name Unk Fv
-// spellings kept for hand-built CREvtModel vtables.
-extern "C" void CActorParam_setSecondCurrency__Q22cf11CActorParamFUl(u8* data, u32 value) {
-    *reinterpret_cast<u32*>(data + 0x1608) = value;
+// Slot +0x1F8/+0x200 base impls: store/load +0x1608.
+void cf::CActorParam::CActorParam_setSecondCurrency(u32 value) {
+    *reinterpret_cast<u32*>(reinterpret_cast<u8*>(this) + 0x1608) = value;
 }
 
-extern "C" u32 CActorParam_getSecondCurrency__Q22cf11CActorParamFv(const u8* data) {
-    return *reinterpret_cast<const u32*>(data + 0x1608);
+u32 cf::CActorParam::CActorParam_getSecondCurrency() {
+    return *reinterpret_cast<const u32*>(reinterpret_cast<const u8*>(this) + 0x1608);
 }
 
-extern "C" cf::UnkClass_CActorParam15E0* CActorParam_getStatusTable__Q22cf11CActorParamFv(
-    u8* data) {
-    return *reinterpret_cast<cf::UnkClass_CActorParam15E0**>(data + 0x15E0);
+cf::CActorParamStatusTable* cf::CActorParam::CActorParam_getStatusTable() {
+    return *reinterpret_cast<cf::CActorParamStatusTable**>(reinterpret_cast<u8*>(this) + 0x15E0);
 }
 
 
@@ -1667,14 +1637,14 @@ cf::CfGameManager* UnkClass_8007DAE0::init(CScnNw4r* scene, CView* view,
     if (!(gmGameFlags & 0x10000)) {
         // First-boot path: tear down the battle manager, build the help manager
         // and the layered CProcess graph, then run the full subsystem reset.
-        getBattleStateA__Q22cf14CBattleManagerFv();
+        cf::CBattleManager::getBattleStateA();
     __ct__Q22cf12CHelpManagerFv(nullptr);
     CCharVoiceMan_CreateSingleton();
-    CProcess* rtRoot = GetRootProcRealTime__12CTaskManagerFv();
+    CProcess* rtRoot = CTaskManager::GetRootProcRealTime();
     gmPadTask = create__Q22cf9CfPadTaskFP8CProcess(rtRoot, scene);
-    CProcess* gameRoot = GetRootProcGame__12CTaskManagerFv();
+    CProcess* gameRoot = CTaskManager::GetRootProcGame();
     gmResManager = __ct__Q22cf5CfResFv(gameRoot, scene);
-    gameRoot = GetRootProcGame__12CTaskManagerFv();
+    gameRoot = CTaskManager::GetRootProcGame();
     gmTaskMain = cf::CfTaskMain::create(gameRoot, reinterpret_cast<CScn*>(scene));
     KyoshinHeap_Init();
     NpcMove_ClearRowBmp();
@@ -1784,7 +1754,7 @@ extern "C" void func_8007C6C0__Q22cf13CfGameManagerFv(cf::CfGameManager* self, v
     gmTransitionIndex = -1;
     gmGameStateFlag5C = 0;
     gmTimeScale = zero;
-    loadBdatFileTable__Q22cf6CfBdatFv();
+    cf::CfBdat::loadBdatFileTable();
 
     for (s32 i = 0; i < 3; ++i) {
         u32 heap = CfRes_getAllocHandle();
@@ -1946,7 +1916,7 @@ extern "C" void func_8007CF64__Q22cf13CfGameManagerFv(cf::CfGameManager* self) {
 void cf::CfGameManager::func_8007D1A0() {}
 void cf::CfGameManager::func_8007DCB8() {
     if (!gmBdatTableReady) {
-        gmBdatTablePtr = lbl_eu_80664090;
+        gmBdatTablePtr = ::cf::CfBdat::spBtlPcListFileData;
         gmBdatTableReady = 1;
     }
     void* table = gmBdatTablePtr;
@@ -2270,7 +2240,7 @@ void cf::CfGameManager::resetBattlePresentation() {
 // 0x40000 flag it resets volume/fade state and the bdat text area, then
 // walks the item-list refreshing every object; the 0x40000-clear path
 // just re-runs the list walk after an explicit event-tear-down.
-extern "C" void func_800853C8__Q22cf13CfGameManagerFv() {
+void cf::CfGameManager::func_800853C8() {
     UnkArea70CE0* area = reinterpret_cast<UnkArea70CE0*>(gmResetWorkArea);
     if ((gmGameFlags & 0x40000) != 0) {
         if (!gmInitFlag) {
@@ -2380,7 +2350,7 @@ extern "C" void func_80085978__Q22cf13CfGameManagerFv(int param) {
         if (gateFunc10) {
             CfRes_callFunc_67F10(0);
         }
-        setInputDisableTime__Q22cf9CfPadTaskFf(2.0f);
+        cf::CfPadTask::setInputDisableTime(2.0f);
         CPad* pad = gmCurrentPad;
         float zero = lbl_eu_80666498;
         if (pad != nullptr) {
@@ -2621,7 +2591,7 @@ void cf::CfGameManager::func_80085FB8() {
     gmPauseFlags &= ~0x20000000;
 }
 // cf::CfGameManager::func_80086778 - one-time bdat table scan (guarded by the
-// E35 flag). Loads the current bdat table (lbl_eu_806640A0), walks a row range,
+// E35 flag). Loads the current bdat table (::cf::CfBdat::spLandmarkListFileData), walks a row range,
 // tallies rows by the FD column byte, and for rows whose B3-column byte matches
 // lbl_eu_80664184 spawns collision objects via createBdatCollisionObj and positions them
 // with the func_800AC1xx collision helpers.
@@ -2630,7 +2600,7 @@ void cf::CfGameManager::func_80086778() {
         return;
     }
     Bdat_GetTable_AA34();
-    void* bdat = lbl_eu_806640A0;
+    void* bdat = ::cf::CfBdat::spLandmarkListFileData;
     int rowStart = (int)Bdat_GetRowBase_B41C(bdat);
     int rowCount = (int)Bdat_GetMaxRow_B1EC(bdat);
     gmEventFlag35 = 1;
@@ -2805,7 +2775,7 @@ extern "C" void func_800838F4__Q22cf13CfGameManagerFv(u32 mode, u32 first,
                                                         u32 second, u32 third,
                                                         u32 fourth, float value) {
     cf::CfGameManager* mgr = cf::CfGameManager::getInstance();
-    if (isGlobalCamFlagSet__Fi(4)) {
+    if (isGlobalCamFlagSet(4)) {
         return;
     }
     func_80084CA4__Q22cf13CfGameManagerFv(first, second, 1, false);

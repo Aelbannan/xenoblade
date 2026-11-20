@@ -32,27 +32,6 @@ struct CMenuVisionEntry {
     f32 mTimer;                                   // 0x2C
 };
 
-// Pad struct to access pane visibility byte at offset 0xBB
-struct PaneVisAccess {
-    u8 _pad[0xBB];
-    u8 visByte;
-};
-
-// Mirror of the font object returned by CDeviceFont::getFontInfo.
-// vtable slot 9 (offset 0x24 with -RTTI) yields the u32 font handle bound
-// into the layout's text panes. Never instantiated, so no vtable is emitted;
-// a genuine virtual call makes MWCC emit the retail r12 dispatch sequence.
-struct CMenuVisionFontView {
-    virtual void vf2() = 0;
-    virtual void vf3() = 0;
-    virtual void vf4() = 0;
-    virtual void vf5() = 0;
-    virtual void vf6() = 0;
-    virtual void vf7() = 0;
-    virtual void vf8() = 0;
-    virtual u32 getFontHandle() = 0; // vtable offset 0x24
-};
-
 class CMenuVision {
 public:
     virtual ~CMenuVision();

@@ -8,6 +8,7 @@
 // is needed or wanted here; the single optimize_for_size pair below marks the
 // one function retail demonstrably compiled in speed mode (see its comment).
 
+#include "kyoshin/cf/CfBdat.hpp"
 #include <cstring>
 extern "C" int Counter_TestBit(void*, u32);
 #include "kyoshin/code_8025FB10.hpp"
@@ -45,7 +46,6 @@ extern "C" void* CItemBlock_getPtr20E8();
 // Layout-build helpers for OnFileEvent (retail mangled C++ symbols; keep
 // signature shapes verbatim so the mangled names line up).
 
-extern u32 lbl_eu_80664098;
 
 #include "kyoshin/code_80135FDC_Bdat.hpp"
 #include "kyoshin/code_80135FDC_Lyt.hpp"
@@ -167,17 +167,9 @@ extern "C" void* findObjB28ById(u32);
 extern "C" void CtrlObjectParam_SyncParamFromActorEx(void*, u32);
 extern "C" void CtrlObjectParam_GetArtsStatsRow(void*, u32);
 extern "C" s32 RoundHalfAway0(float);
-extern void* lbl_eu_80664104;
-extern void* lbl_eu_806640A8;
-extern void* lbl_eu_806640F4;
-extern void* lbl_eu_806640EC;
 extern void* CItemBlock_getPtr20E8();
-extern void* lbl_eu_806640F8;
-extern void* lbl_eu_806640D8;
 // 6-byte item-box slot tables (pair of u32+u16 .sdata2 constants).
 
-extern void* lbl_eu_80664110;
-extern void* lbl_eu_80664090;
 
 
 // --- CItemBoxInfo methods ---
@@ -372,7 +364,7 @@ CItemBoxCompRecord CItemBoxInfo::BuildCmpRecord(void* arg3) {
     // Scratch doubles for MWCC's int->float magic (2^52 unsigned repair,
     // 2^63 sign-repair); retail materializes both high words up front.
     CItemBoxCompRecord rec;
-    void* global = lbl_eu_806640F4;
+    void* global = ::cf::CfBdat::spItmWpnListFileData;
     BdatGetItemType((u32)arg3);
     // v2 is a narrow-typed local: MWCC keeps it zero-extended and re-applies
     // the u16->u32 promotion per call site (retail clrlwi r5,r29,16 each
@@ -441,19 +433,19 @@ CItemBoxSlotFlags CItemBoxInfo::BuildSlotFlags(u32 item) {
         memset(&rec, 0, 0x1C);
         return rec;
     }
-    void* global = lbl_eu_806640F8;
+    void* global = ::cf::CfBdat::spItmEquipListFileData;
     u16 type = BdatGetItemType(item);
     u16 id = BdatGetItemId(item);
     char* base = (char*)&lbl_eu_805063BC;
     rec.v[0] = (u8)BdatGetU8Direct((const void*)global, "arm_phy", id);
     rec.v[1] = (u8)BdatGetU8Direct((const void*)global, "arm_eth", id);
     rec.v[2] = (u8)BdatGetU8Direct((const void*)global, "eva_rate", id);
-    u32 reqKind = BdatGetU8Direct((const void*)lbl_eu_806640F8, "arm_type", id);
+    u32 reqKind = BdatGetU8Direct((const void*)::cf::CfBdat::spItmEquipListFileData, "arm_type", id);
     for (u32 i = 0; (u8)i < (u8)code80135FDC_getByte_64077(); i++) {
         u8 slot = GetCollectedFlagByte((u8)i);
         char buf[0x20];
         sprintf(buf, "pc%d", (u8)slot);
-        rec.equipable[(u8)i] = (u8)BdatGetU8Direct((const void*)lbl_eu_806640F8, (const char*)buf, id) != 0;
+        rec.equipable[(u8)i] = (u8)BdatGetU8Direct((const void*)::cf::CfBdat::spItmEquipListFileData, (const char*)buf, id) != 0;
         if (rec.equipable[(u8)i] == 0) continue;
         CItemBoxCharEntry* member = (CItemBoxCharEntry*)CtrlObjectParam_GetCharEntry((u8)slot);
         void* counters = member->counterArea;
@@ -498,7 +490,7 @@ CItemBoxNameRecord CItemBoxInfo::BuildNameRec(void* data, void* arg3) {
     u32 count;
     void* item = arg3 != NULL ? arg3 : NULL;
     // Retail hoists this global into a register (r26) across all calls.
-    void* gd8 = lbl_eu_806640D8;
+    void* gd8 = ::cf::CfBdat::spBtlSkillListFileData;
     if (arg3 == NULL) {
         BdatGetItemType((u32)data);
     }
@@ -512,7 +504,7 @@ CItemBoxNameRecord CItemBoxInfo::BuildNameRec(void* data, void* arg3) {
         CItemImpl* inst = CItem_initItemImplInstances((CItemData*)item);
         count = (u16)inst->vf08((CItemData*)item);
     } else {
-        count = BdatGetU8Direct((const void*)lbl_eu_806640EC, "rankType", (u32)data);
+        count = BdatGetU8Direct((const void*)::cf::CfBdat::spItmItemListFileData, "rankType", (u32)data);
     }
     char* base = (char*)&lbl_eu_805063BC;
     CItemBoxNameRecord rec;
@@ -629,7 +621,7 @@ CItemBoxNameRecord CItemBoxInfo::BuildNameRec(void* data, void* arg3) {
 // four results to stack slots, reloading them for the final four output-word stores.
 CItemBoxLabelRec CItemBoxInfo::GetLabelRec(u32 item) {
     CItemBoxLabelRec r;
-    void* tbl = lbl_eu_80664104;
+    void* tbl = ::cf::CfBdat::spItmCollectListFileData;
     BdatGetItemType(item);
     // cat stays a raw u16 in a register; each call site re-applies the
     // u16->u32 argument conversion (retail clrlwi per site, no shared temp).
@@ -644,7 +636,7 @@ CItemBoxLabelRec CItemBoxInfo::GetLabelRec(u32 item) {
     if (r.c == 0x1A) {
         r.d = BdatTouchStringCell(base + 0x219, base + 0x139, 0x14);
     } else {
-        r.d = BdatGetPtrDirect(lbl_eu_806640A8, base + 0x139, r.c);
+        r.d = BdatGetPtrDirect(::cf::CfBdat::spFldMapListFileData, base + 0x139, r.c);
     }
     // Returned by value: the caller's hidden result pointer receives the
     // record as four lwz/stw pairs.
@@ -652,7 +644,7 @@ CItemBoxLabelRec CItemBoxInfo::GetLabelRec(u32 item) {
 }
 
 CItemBoxSelRec CItemBoxInfo::BuildSelRec(u32 item) {
-    void* global = lbl_eu_80664110;
+    void* global = ::cf::CfBdat::spItmArtsListFileData;
     u16 v1 = BdatGetItemType(item);
     u16 v2 = BdatGetItemId(item);
     CItemBoxSelRec rec;
@@ -698,7 +690,7 @@ CItemBoxSlotRecord1 CItemBoxInfo::BuildSlotRec(u32 item, void* arg3) {
         if ((s32)n > 0) {
             // Retail passes the pair count n as a third arg to BdatGetPtrDirect.
             rec.text[rec.counter] =
-                (u32)((char*(*)(void*, char*, u32))&BdatGetPtrDirect)(lbl_eu_806640D8, &lbl_eu_805063BC[0x139], n);
+                (u32)((char*(*)(void*, char*, u32))&BdatGetPtrDirect)(::cf::CfBdat::spBtlSkillListFileData, &lbl_eu_805063BC[0x139], n);
             rec.vals[rec.counter] = CItem_initItemImplInstances((CItemData*)p)->vf64((CItemData*)p, (u8)i);
             rec.counts[rec.counter] = n;
             rec.counter++;
@@ -921,7 +913,7 @@ void CItemBoxInfo::RenderDetail(u32 itemId, void* record, u32 arg4) {
     setLayoutTextBoxNumber((nw4r::lyt::Layout*)mpLayout, "txt_value08", (u8)flags.v[0]);
     setLayoutTextBoxNumber((nw4r::lyt::Layout*)mpLayout, "txt_value09", (u8)flags.v[1]);
     setLayoutTextBoxNumber((nw4r::lyt::Layout*)mpLayout, "txt_value22", (u8)flags.v[2]);
-    u32 v1 = BdatGetU8Direct((const void*)lbl_eu_806640F8, "arm_type", (u16)BdatGetItemId(itemId));
+    u32 v1 = BdatGetU8Direct((const void*)::cf::CfBdat::spItmEquipListFileData, "arm_type", (u16)BdatGetItemId(itemId));
     char* s1;
     switch ((u8)v1) {
         case 3: s1 = BdatTouchStringCell("MNU_item", "name", 0x32); break;
@@ -1109,7 +1101,7 @@ void CItemBoxInfo::RenderTripleRows(u32 itemId, void* record) {
                         u16 equip = (u16)((sub->field_04 >> 16) & 0xFFF);
                         u32 w = sub->_00;
                         char* label = BdatTouchStringCell("MNU_item", "name", 0x1e - ((w >> 22 & 7) - 1));
-                        u32 st = BdatGetU8Direct((const void*)lbl_eu_806640D8, "atr_type", equip);
+                        u32 st = BdatGetU8Direct((const void*)::cf::CfBdat::spBtlSkillListFileData, "atr_type", equip);
                         {
                             // (was switch: retail compiles this dispatch as compares)
                             u32 _e = (u32)(st & 0xFF);
@@ -1123,7 +1115,7 @@ void CItemBoxInfo::RenderTripleRows(u32 itemId, void* record) {
                         }
                         s16 val = (s16)((w >> 11) & 0x7FF);
                         if (val != 0) {
-                            u32 v2 = BdatGetU8Direct((const void*)lbl_eu_806640D8, "rvs_type", equip);
+                            u32 v2 = BdatGetU8Direct((const void*)::cf::CfBdat::spBtlSkillListFileData, "rvs_type", equip);
                             if (v2 != 0 && (u8)(v2 - 3) <= 1) {
                                 text.format("%d%s", val, BdatTouchStringCell("MNU_item", "name", 0x21));
                             } else {
@@ -1135,7 +1127,7 @@ void CItemBoxInfo::RenderTripleRows(u32 itemId, void* record) {
                             sprintf(buf, "txt_ethvalue%02d", idx);
                             LayoutSetTextBoxFmtValue(mpLayout, buf, "", 0);
                         }
-                        char* s = BdatGetPtrDirect((const void*)lbl_eu_806640D8, "name", equip);
+                        char* s = BdatGetPtrDirect((const void*)::cf::CfBdat::spBtlSkillListFileData, "name", equip);
                         text.format("%s%s", s, label);
                         itemCount = (u8)((w >> 22) & 7);
                         value = (s16)((w >> 11) & 0x7FF);
@@ -1218,8 +1210,8 @@ void CItemBoxInfo::RenderTripleRows(u32 itemId, void* record) {
                     char* s = BuildItemNameStr(nameId);
                     text.format("%s%s", rec3b.str, s);
                     itemVal = BdatGetItemId(nameId);
-                    itemCount = BdatGetU8Direct((const void*)lbl_eu_806640EC, "rankType", nameId);
-                    val = (u8)BdatGetU8Direct((const void*)lbl_eu_806640EC, "percent", nameId);
+                    itemCount = BdatGetU8Direct((const void*)::cf::CfBdat::spItmItemListFileData, "rankType", nameId);
+                    val = (u8)BdatGetU8Direct((const void*)::cf::CfBdat::spItmItemListFileData, "percent", nameId);
                 }
                 sprintf(buf2, "txt_eth%02d", idx);
                 LayoutSetTextBoxFmtValue(mpLayout, buf2, text.c_str(), 0);
@@ -1372,7 +1364,7 @@ void CItemBoxInfo::RenderKind3(u16 arg2, void* arg3, u32 arg4) {
     u16 cat2 = (arg3 != NULL)
         ? CItem_initItemImplInstances((CItemData*)item)->vf54((CItemData*)item)
         : BdatGetItemId(arg2);
-    u8 rows = (u8)BdatGetU8Direct((const void*)((u32)(&lbl_eu_806640D8)[cat2]), "attach", cat2);
+    u8 rows = (u8)BdatGetU8Direct((const void*)((u32)(&::cf::CfBdat::spBtlSkillListFileData)[cat2]), "attach", cat2);
     LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_para52",
                   BdatTouchStringCell("MNU_item", "name", rows + 0x15), 0);
 
@@ -1406,8 +1398,8 @@ void CItemBoxInfo::RenderKind3(u16 arg2, void* arg3, u32 arg4) {
         u8 flag = GetCollectedFlagByte(i);
         if (flag == 0) continue;
         void* lookup = CtrlObjectParam_GetCharEntry(flag);
-        cur.tbl = *(u32*)((u8*)lookup + 8);
-        cur.h = *(u16*)((u8*)lookup + 0xc);
+        cur.tbl = ((CItemBoxCharEntry*)lookup)->mBdatTable;
+        cur.h = ((CItemBoxCharEntry*)lookup)->mBdatRow;
         vals.v26 = ((CItemBoxCharEntry*)lookup)->slotIds[5];
         vals.v1C = ((CItemBoxCharEntry*)lookup)->slotIds[0];
         vals.v1E = ((CItemBoxCharEntry*)lookup)->slotIds[1];
@@ -1729,7 +1721,7 @@ void CItemBoxInfo::StampSlotTex() {
         } else {
             u8 slot = (u8)GetCollectedFlagByte((u8)i);
             u32 tag = 0x74696D67u;
-            u32 nameId = (u16)BdatGetU16Direct(lbl_eu_80664090, (char*)&lbl_eu_805063BC[0x4ce], slot);
+            u32 nameId = (u16)BdatGetU16Direct(::cf::CfBdat::spBtlPcListFileData, (char*)&lbl_eu_805063BC[0x4ce], slot);
             u32 itemId = (u32)MakeTplNameSysFile(nameId);
             u32 found = (u32)CUICfManager_getArcResourceAccessor()->GetResource(tag, (const char*)itemId, NULL);
             if (found != 0) {
@@ -1994,7 +1986,7 @@ void CItemBoxInfo::SetupDetail(u32 arg2, void* arg3, u32 arg4) {
     if (findObjB28ById(member) == NULL) {
         CtrlObjectParam_SyncParamFromActorEx(charObj, 1);
     }
-    cf::CActorParam* stats = (cf::CActorParam*)((u8*)charObj + 0x17C);
+    cf::CActorParam* stats = &((CItemBoxCharEntry*)charObj)->mParam;
 
     ml::FixStr<32> textBuffer(false);
     ml::FixStr<32> textBufferB(false);
@@ -2010,11 +2002,11 @@ void CItemBoxInfo::SetupDetail(u32 arg2, void* arg3, u32 arg4) {
     if (hp2 > 9999) hp2 = 9999;
 
     // ---- name / pane text ----
-    // Retail: BdatGetPtrDirect(lbl_eu_80664090, base+0x139, member) -- 3-arg.
+    // Retail: BdatGetPtrDirect(::cf::CfBdat::spBtlPcListFileData, base+0x139, member) -- 3-arg.
     // lbl_eu_805063BC is an UNDEF extern (blob is +0x54 inside packed rodata)
     // so immediates stay plain +0x139, not parent+0x54+imm.
     LayoutSetTextBoxFmtValue(mpLayout, "txt_para736",
-        ((char*(*)(void*, char*, u32))&BdatGetPtrDirect)(lbl_eu_80664090, "name", member), 0);
+        ((char*(*)(void*, char*, u32))&BdatGetPtrDirect)(::cf::CfBdat::spBtlPcListFileData, "name", member), 0);
     setLayoutTextBoxNumber(mpLayout, "txt_value700", (u8)stats->CActorParam_getActorLevel());
     setLayoutTextBoxNumber(mpLayout, "txt_value702", (u8)stats->CActorParam_getTotalCurrency());
     LayoutSetTextBoxInt((nw4r::lyt::Layout*)mSlotPane0, hp1);
@@ -2448,7 +2440,7 @@ void CItemBoxInfo::SetupDetail(u32 arg2, void* arg3, u32 arg4) {
             if (CheckGemChain(member, arg3, NULL)) eq2 = GetCondStat((void*)(u32)member, 0x30);
             // arm-type scaling of the entry value pairs
             u8 arm1 = BdatGetU8Direct(
-                (const void*)lbl_eu_806640F8, "arm_type",
+                (const void*)::cf::CfBdat::spItmEquipListFileData, "arm_type",
                 BdatGetItemId((u32)((item != NULL && *(u32*)item != 0)
                     ? (u16)(*(u32*)item >> 20)
                     : 0)));
@@ -2487,7 +2479,7 @@ void CItemBoxInfo::SetupDetail(u32 arg2, void* arg3, u32 arg4) {
                         }
                     }
                 }
-            u8 arm2 = BdatGetU8Direct((const void*)lbl_eu_806640F8, "arm_type", BdatGetItemId((u32)(*(u32*)arg3 >> 20)));
+            u8 arm2 = BdatGetU8Direct((const void*)::cf::CfBdat::spItmEquipListFileData, "arm_type", BdatGetItemId((u32)(*(u32*)arg3 >> 20)));
             {
                     switch (arm2) {
                         case 3: {
@@ -3030,7 +3022,7 @@ void CItemBoxInfo::SetupDetail(u32 arg2, void* arg3, u32 arg4) {
             LayoutSetTextBoxInt((nw4r::lyt::Layout*)mSlotPane2, nb);
             // arm-type scaling of entry value pairs
             u8 arm1 = BdatGetU8Direct(
-                (const void*)lbl_eu_806640F8, "arm_type",
+                (const void*)::cf::CfBdat::spItmEquipListFileData, "arm_type",
                 BdatGetItemId((u32)((item != NULL && *(u32*)item != 0)
                     ? (u16)(*(u32*)item >> 20)
                     : 0)));
@@ -3069,7 +3061,7 @@ void CItemBoxInfo::SetupDetail(u32 arg2, void* arg3, u32 arg4) {
                         }
                     }
                 }
-            u8 arm2 = BdatGetU8Direct((const void*)lbl_eu_806640F8, "arm_type", BdatGetItemId((u32)(*(u32*)arg3 >> 20)));
+            u8 arm2 = BdatGetU8Direct((const void*)::cf::CfBdat::spItmEquipListFileData, "arm_type", BdatGetItemId((u32)(*(u32*)arg3 >> 20)));
             {
                     switch (arm2) {
                         case 3: {
@@ -3514,7 +3506,7 @@ void CItemBoxInfo::SetupDetail(u32 arg2, void* arg3, u32 arg4) {
                 vals[n] = val;
                 flags[n] = flag;
                 n++;
-            } else if (BdatGetU8Direct((const void*)lbl_eu_806640D8, "accum", id) != 0) {
+            } else if (BdatGetU8Direct((const void*)::cf::CfBdat::spBtlSkillListFileData, "accum", id) != 0) {
                 u8 found = 0;
                 for (u8 j = 0; j < n; j++) {
                     if (id == ids[j]) {
@@ -3549,7 +3541,7 @@ void CItemBoxInfo::SetupDetail(u32 arg2, void* arg3, u32 arg4) {
                 vals2[n2] = val;
                 flags2[n2] = flag;
                 n2++;
-            } else if (BdatGetU8Direct((const void*)lbl_eu_806640D8, "accum", id) != 0) {
+            } else if (BdatGetU8Direct((const void*)::cf::CfBdat::spBtlSkillListFileData, "accum", id) != 0) {
                 u8 found = 0;
                 for (u8 j = 0; j < n2; j++) {
                     if (id == ids2[j]) {
@@ -3575,12 +3567,12 @@ void CItemBoxInfo::SetupDetail(u32 arg2, void* arg3, u32 arg4) {
         }
         for (u8 i = 0; i < 8; i++) {
             if (ids[i] != 0) {
-                u32 cap = BdatGetU16Direct(lbl_eu_806640D8,
+                u32 cap = BdatGetU16Direct(::cf::CfBdat::spBtlSkillListFileData,
                                        "max", ids[i]);
                 if (vals[i] > cap) vals[i] = cap;
             }
             if (ids2[i] != 0) {
-                u32 cap = BdatGetU16Direct(lbl_eu_806640D8, "max", ids2[i]);
+                u32 cap = BdatGetU16Direct(::cf::CfBdat::spBtlSkillListFileData, "max", ids2[i]);
                 if (vals2[i] > cap) vals2[i] = cap;
             }
         }
@@ -3590,7 +3582,7 @@ void CItemBoxInfo::SetupDetail(u32 arg2, void* arg3, u32 arg4) {
         for (u8 i = 0; i < 8; i++) {
             u16 compareId = ids2[i];
             s32 compareValue = (s32)vals2[i];
-            if (compareId != 0 && BdatGetU8Direct((const void*)lbl_eu_806640D8, "accum", compareId) != 0) {
+            if (compareId != 0 && BdatGetU8Direct((const void*)::cf::CfBdat::spBtlSkillListFileData, "accum", compareId) != 0) {
                 u8 done = 0;
                 for (u8 j = 0; j < 8; j++) {
                     if (compareId == ids[j]) {
@@ -3613,7 +3605,7 @@ void CItemBoxInfo::SetupDetail(u32 arg2, void* arg3, u32 arg4) {
         }
         // clear duplicate ids in listB
         for (u8 i = 0; i < 8; i++) {
-            if (ids2[i] != 0 && BdatGetU8Direct((const void*)lbl_eu_806640D8, "accum", ids2[i]) != 0) {
+            if (ids2[i] != 0 && BdatGetU8Direct((const void*)::cf::CfBdat::spBtlSkillListFileData, "accum", ids2[i]) != 0) {
                 for (u8 j = i + 1; j < 8; j++) {
                     if (ids2[i] == ids2[j]) ids2[j] = 0;
                 }
@@ -3667,12 +3659,12 @@ void CItemBoxInfo::SetupDetail(u32 arg2, void* arg3, u32 arg4) {
                 copyVEC3(&mPage.mPos[(u8)idx],
                          (void*)dstWords);
             }
-            LayoutSetTextBoxFmtValue(mpLayout, buf1, BdatGetPtrDirect(lbl_eu_806640D8, "name", id), 0);
+            LayoutSetTextBoxFmtValue(mpLayout, buf1, BdatGetPtrDirect(::cf::CfBdat::spBtlSkillListFileData, "name", id), 0);
             if (val == 0) {
                 LayoutSetTextBoxFmtValue(mpLayout,
                               buf2, "", 0);
             }
-            u8 rvs = BdatGetU8Direct((const void*)lbl_eu_806640D8,
+            u8 rvs = BdatGetU8Direct((const void*)::cf::CfBdat::spBtlSkillListFileData,
                                        "rvs_type", id);
             if (rvs != 0) {
                 if (rvs == 0xFF || rvs == 0xFE) {
@@ -3697,7 +3689,7 @@ void CItemBoxInfo::SetupDetail(u32 arg2, void* arg3, u32 arg4) {
             D8EQuad q2 = *(D8EQuad*)&itemBoxInfo_labelNeutralBottom;
             D8EQuad q3 = *(D8EQuad*)&itemBoxInfo_valueNeutralTop;
             D8EQuad q4 = *(D8EQuad*)&itemBoxInfo_valueNeutralBottom;
-            u32 cap = BdatGetU16Direct(lbl_eu_806640D8, "max", id);
+            u32 cap = BdatGetU16Direct(::cf::CfBdat::spBtlSkillListFileData, "max", id);
             if ((u32)val >= cap) {
                 __as__11_GXColorS10FRC11_GXColorS10(&q1, &itemBoxInfo_labelSpecialTop);
                 __as__11_GXColorS10FRC11_GXColorS10(&q2, &itemBoxInfo_labelSpecialBottom);
@@ -3859,7 +3851,7 @@ u32 CItemBoxInfo::GetEffect(u16 lookup_key, u32 category, void* arg3) {
         }
     }
     // cap is u16: retail clrlwi's the call result and compares signed.
-    u16 cap = (u16)BdatGetU16Direct((char*)lbl_eu_806640D8, (char*)"max", category);
+    u16 cap = (u16)BdatGetU16Direct((char*)::cf::CfBdat::spBtlSkillListFileData, (char*)"max", category);
     if ((s32)cap < (s32)result) result = cap;
     return result;
 }
@@ -3966,7 +3958,7 @@ u32 CItemBoxInfo::SumGemBonus(void* member, u32 category, void* candidate, s32 s
             }
         }
     }
-    u16 max = (u16)BdatGetU16Direct(lbl_eu_806640D8, (char*)&lbl_eu_805063BC[0x503], category);
+    u16 max = (u16)BdatGetU16Direct(::cf::CfBdat::spBtlSkillListFileData, (char*)&lbl_eu_805063BC[0x503], category);
     if (max < sum) sum = max;
     return (u32)sum;
 }
@@ -4005,13 +3997,13 @@ u32 CItemBoxInfo::TestBdatFlag(u32 arg1, void* arg2) {
     if (arg1 == 0 || arg2 == 0) return 0;
     char buf[0x20];
     sprintf(buf, &lbl_eu_805063BC[0x1f4], arg1);
-    u32 g = (u32)lbl_eu_806640F8;
+    u32 g = (u32)::cf::CfBdat::spItmEquipListFileData;
     u8 result = BdatGetU8Direct((const void*)g, (const char*)buf, (u16)BdatGetItemId(((CItemData*)arg2)->field_00 >> 20));
     return result != 0;
 }
 u32 CItemBoxInfo::SumTypeCounts(u16 arg2, void* arg3) {
     if (arg2 == 0) return 0;
-    void* g = lbl_eu_806640F8;
+    void* g = ::cf::CfBdat::spItmEquipListFileData;
     u16 v1 = arg3 ? (u16)BdatGetItemType((u32)arg3) : 0;
     u16 v2 = arg3 ? (u16)BdatGetItemId((u32)arg3) : 0;
     void* lookup = CtrlObjectParam_GetCharEntry(arg2);
@@ -4252,7 +4244,7 @@ bool CItemBoxInfo::OnFileEvent(CEventFile* file) {
             }
             LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_npctype", s, 0);
             char* name = ((char* (*)(void*, const char*, u16))&BdatGetPtrDirect)(
-                &lbl_eu_80664098, "name", itemId);
+                &::cf::CfBdat::spFldNpcListFileData, "name", itemId);
             LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_npcname",
                           GetBdatNameByNumId(name), 0);
             LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_npcframe",
@@ -4623,7 +4615,7 @@ CItemBoxCompRecord CItemBoxInfo2::BuildCmpRecord(void* arg3) {
         return rec;
     }
     {
-        void* global = lbl_eu_806640F4;
+        void* global = ::cf::CfBdat::spItmWpnListFileData;
         BdatGetItemType((u32)arg3);
         u32 v2 = BdatGetItemId((u32)arg3);
         char* base = (char*)&lbl_eu_805063BC;
@@ -4700,19 +4692,19 @@ CItemBoxSlotFlags CItemBoxInfo2::BuildSlotFlags(u32 item) {
         memset(&rec, 0, 0x1C);
         return rec;
     }
-    void* global = lbl_eu_806640F8;
+    void* global = ::cf::CfBdat::spItmEquipListFileData;
     u16 type = BdatGetItemType(item);
     u16 id = BdatGetItemId(item);
     char* base = (char*)&lbl_eu_805063BC;
     rec.v[0] = (u8)BdatGetU8Direct((const void*)global, "arm_phy", id);
     rec.v[1] = (u8)BdatGetU8Direct((const void*)global, "arm_eth", id);
     rec.v[2] = (u8)BdatGetU8Direct((const void*)global, "eva_rate", id);
-    u32 reqKind = BdatGetU8Direct((const void*)lbl_eu_806640F8, "arm_type", id);
+    u32 reqKind = BdatGetU8Direct((const void*)::cf::CfBdat::spItmEquipListFileData, "arm_type", id);
     for (u32 i = 0; (u8)i < (u8)code80135FDC_getByte_64077(); i++) {
         u8 slot = GetCollectedFlagByte((u8)i);
         char buf[0x20];
         sprintf(buf, "pc%d", (u8)slot);
-        rec.equipable[(u8)i] = (u8)BdatGetU8Direct((const void*)lbl_eu_806640F8, (const char*)buf, id) != 0;
+        rec.equipable[(u8)i] = (u8)BdatGetU8Direct((const void*)::cf::CfBdat::spItmEquipListFileData, (const char*)buf, id) != 0;
         if (rec.equipable[(u8)i] == 0) continue;
         CItemBoxCharEntry* member = (CItemBoxCharEntry*)CtrlObjectParam_GetCharEntry((u8)slot);
         void* counters = member->counterArea;
@@ -4756,7 +4748,7 @@ CItemBoxNameRecord CItemBoxInfo2::BuildNameRec(void* data, void* arg3) {
     void* item = arg3 != NULL ? arg3 : NULL;
     // Retail hoists this global into a register (r26) across all the calls;
     // a local copy reproduces the single sda21 load in the prologue.
-    void* gd8 = lbl_eu_806640D8;
+    void* gd8 = ::cf::CfBdat::spBtlSkillListFileData;
     u32 cat;
     u16 count;
     if (arg3 == NULL) {
@@ -4772,7 +4764,7 @@ CItemBoxNameRecord CItemBoxInfo2::BuildNameRec(void* data, void* arg3) {
         CItemImpl* inst = CItem_initItemImplInstances((CItemData*)item);
         count = (u16)inst->vf08((CItemData*)item);
     } else {
-        count = (u8)BdatGetU8Direct((const void*)lbl_eu_806640EC, "rankType", (u32)data);
+        count = (u8)BdatGetU8Direct((const void*)::cf::CfBdat::spItmItemListFileData, "rankType", (u32)data);
     }
     // base is only materialized after the cat/count joins (retail lis/addi at
     // the join point, not in the prologue).
@@ -4897,7 +4889,7 @@ CItemBoxNameRecord CItemBoxInfo2::BuildNameRec(void* data, void* arg3) {
 // Twin of getItemBoxLabelRec (see comment there).
 CItemBoxLabelRec CItemBoxInfo2::GetLabelRec(u32 item) {
     CItemBoxLabelRec r;
-    void* tbl = lbl_eu_80664104;
+    void* tbl = ::cf::CfBdat::spItmCollectListFileData;
     BdatGetItemType(item);
     // cat stays a raw u16 in a register; each call site re-applies the
     // u16->u32 argument conversion (retail clrlwi per site, no shared temp).
@@ -4912,7 +4904,7 @@ CItemBoxLabelRec CItemBoxInfo2::GetLabelRec(u32 item) {
     if (r.c == 0x1A) {
         r.d = BdatTouchStringCell(base + 0x219, base + 0x139, 0x14);
     } else {
-        r.d = BdatGetPtrDirect(lbl_eu_806640A8, base + 0x139, r.c);
+        r.d = BdatGetPtrDirect(::cf::CfBdat::spFldMapListFileData, base + 0x139, r.c);
     }
     // Returned by value: the caller's hidden result pointer receives the
     // record as four lwz/stw pairs.
@@ -4923,7 +4915,7 @@ CItemBoxLabelRec CItemBoxInfo2::GetLabelRec(u32 item) {
 // 8-byte slot table (flag byte + per-slot selected flags) and a flag2 result from the
 // item-table lookup, then writes all three to the info block.
 CItemBoxSelRec CItemBoxInfo2::BuildSelRec(u32 item) {
-    void* global = lbl_eu_80664110;
+    void* global = ::cf::CfBdat::spItmArtsListFileData;
     u16 v1 = BdatGetItemType(item);
     u16 v2 = BdatGetItemId(item);
     CItemBoxSelRec rec;
@@ -4965,7 +4957,7 @@ CItemBoxSlotRecord CItemBoxInfo2::BuildSlotRec(u32 item, void* arg4) {
         u32 n = (u16)CItem_initItemImplInstances((CItemData*)p)->vf4C((CItemData*)p, (u8)i);
         if ((s32)n > 0) {
             rec.text[rec.tail[1]] =
-                (u32)((char*(*)(void*, char*, u32))&BdatGetPtrDirect)(lbl_eu_806640D8, &lbl_eu_805063BC[0x139], n);
+                (u32)((char*(*)(void*, char*, u32))&BdatGetPtrDirect)(::cf::CfBdat::spBtlSkillListFileData, &lbl_eu_805063BC[0x139], n);
             rec.vals[rec.tail[1]] = CItem_initItemImplInstances((CItemData*)p)->vf64((CItemData*)p, (u8)i);
             rec.tail[1]++;
         }
@@ -5222,7 +5214,7 @@ void CItemBoxInfo2::RenderKind3(u16 arg2, void* arg3, u16 arg4) {
     } else {
         cat = BdatGetItemId(arg2);
     }
-    u8 st = BdatGetU8Direct((const void*)lbl_eu_806640D8, "attach", cat);
+    u8 st = BdatGetU8Direct((const void*)::cf::CfBdat::spBtlSkillListFileData, "attach", cat);
     char* label = BdatTouchStringCell("MNU_item", "name", (u8)st + 0x15);
     LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_para52", label, 0);
 
@@ -5552,7 +5544,7 @@ void CItemBoxInfo2::StampSlotTex() {
         } else {
             u8 slot = (u8)GetCollectedFlagByte((u8)i);
             u32 tag = 0x74696D67u;
-            u32 nameId = (u16)BdatGetU16Direct(lbl_eu_80664090, (char*)&lbl_eu_805063BC[0x4ce], slot);
+            u32 nameId = (u16)BdatGetU16Direct(::cf::CfBdat::spBtlPcListFileData, (char*)&lbl_eu_805063BC[0x4ce], slot);
             u32 itemId = (u32)MakeTplNameSysFile(nameId);
             // Item-name lookup through the shared name system (vtable+0x0C).
             u32 found = (u32)CUICfManager_getArcResourceAccessor()->GetResource(tag, (const char*)itemId, NULL);
@@ -5700,7 +5692,7 @@ void CItemBoxInfo2::SetupDetail(u16 arg2, void* arg3, u16 arg4, u32 arg5) {
     if (findObjB28ById(member) == NULL) {
         CtrlObjectParam_SyncParamFromActorEx(charObj, 1);
     }
-    cf::CActorParam* stats = (cf::CActorParam*)((u8*)charObj + 0x17C);
+    cf::CActorParam* stats = &((CItemBoxCharEntry*)charObj)->mParam;
 
     // ---- HP values (clamped to 9999) ----
     s32 hp1 = (s32)stats->CActorParam_getHp();
@@ -5709,7 +5701,7 @@ void CItemBoxInfo2::SetupDetail(u16 arg2, void* arg3, u16 arg4, u32 arg5) {
     if (hp2 > 9999) hp2 = 9999;
 
     // ---- name / pane text ----
-    LayoutSetTextBoxFmtValue(mpLayout, "txt_para736", BdatGetPtrDirect(lbl_eu_80664090, "name", member), 0);
+    LayoutSetTextBoxFmtValue(mpLayout, "txt_para736", BdatGetPtrDirect(::cf::CfBdat::spBtlPcListFileData, "name", member), 0);
     setLayoutTextBoxNumber(mpLayout, "txt_value700", (u8)stats->CActorParam_getActorLevel());
 setLayoutTextBoxNumber(mpLayout, "txt_value702", (u8)stats->CActorParam_getTotalCurrency());
     LayoutSetTextBoxInt((nw4r::lyt::Layout*)mSlotPane0, hp1);
@@ -6109,7 +6101,7 @@ setLayoutTextBoxNumber(mpLayout, "txt_value702", (u8)stats->CActorParam_getTotal
             u16 v484 = (u16)SumTypeCounts(member, (void*)(u32)w0);
             u16 v468 = (u16)SumTypeCounts(member, arg3);
             // arm-type scaling of the entry value pairs
-            u8 arm1 = (u8)BdatGetU8Direct((const void*)lbl_eu_806640F8, "arm_type", BdatGetItemId((u32)w0));
+            u8 arm1 = (u8)BdatGetU8Direct((const void*)::cf::CfBdat::spItmEquipListFileData, "arm_type", BdatGetItemId((u32)w0));
             if (arm1 == 3) {
                 s32 v = GetCondStatById(member, 0xD);
                 if (v != 0) {
@@ -6133,7 +6125,7 @@ setLayoutTextBoxNumber(mpLayout, "txt_value702", (u8)stats->CActorParam_getTotal
                     c_cur.w14 = (s16)(s32)((f32)c_cur.w14 * (0.01f * (100.0f + (f32)v)));
                 }
             }
-            u8 arm2 = (u8)BdatGetU8Direct((const void*)lbl_eu_806640F8, "arm_type", BdatGetItemId((u32)(*(u32*)arg3 >> 20)));
+            u8 arm2 = (u8)BdatGetU8Direct((const void*)::cf::CfBdat::spItmEquipListFileData, "arm_type", BdatGetItemId((u32)(*(u32*)arg3 >> 20)));
             if (arm2 == 3) {
                 s32 v = GetCondStatById(member, 0xD);
                 if (v != 0) {
@@ -6336,7 +6328,7 @@ setLayoutTextBoxNumber(mpLayout, "txt_value702", (u8)stats->CActorParam_getTotal
             }
             LayoutSetTextBoxInt((nw4r::lyt::Layout*)mSlotPane2, nb);
             // arm-type scaling of entry value pairs
-            u8 arm1 = (u8)BdatGetU8Direct((const void*)lbl_eu_806640F8, "arm_type", BdatGetItemId((u32)w0));
+            u8 arm1 = (u8)BdatGetU8Direct((const void*)::cf::CfBdat::spItmEquipListFileData, "arm_type", BdatGetItemId((u32)w0));
             if (arm1 == 3) {
                 s32 v = GetCondStatById(member, 0xD);
                 if (v != 0) {
@@ -6360,7 +6352,7 @@ setLayoutTextBoxNumber(mpLayout, "txt_value702", (u8)stats->CActorParam_getTotal
                     c_cur.w14 = (s16)(s32)((f32)c_cur.w14 * (0.01f * (100.0f + (f32)v)));
                 }
             }
-            u8 arm2 = (u8)BdatGetU8Direct((const void*)lbl_eu_806640F8, "arm_type", BdatGetItemId((u32)(*(u32*)arg3 >> 20)));
+            u8 arm2 = (u8)BdatGetU8Direct((const void*)::cf::CfBdat::spItmEquipListFileData, "arm_type", BdatGetItemId((u32)(*(u32*)arg3 >> 20)));
             if (arm2 == 3) {
                 s32 v = GetCondStatById(member, 0xD);
                 if (v != 0) {
@@ -6551,7 +6543,7 @@ setLayoutTextBoxNumber(mpLayout, "txt_value702", (u8)stats->CActorParam_getTotal
         }
         // crystal list (type == 2 && arg5 != 0)
         if (type == 2 && arg5 != 0) {
-            u8 cnt = (u8)BdatGetU8Direct((const void*)lbl_eu_806640F4, "jwl_slot", BdatGetItemId(*(u32*)arg3 >> 20));
+            u8 cnt = (u8)BdatGetU8Direct((const void*)::cf::CfBdat::spItmWpnListFileData, "jwl_slot", BdatGetItemId(*(u32*)arg3 >> 20));
             for (u8 i = 0; i < 3; i++) {
                 ItemBoxInfoCopy tmp;
                 tmp.itemId = 0;
@@ -6560,10 +6552,10 @@ setLayoutTextBoxNumber(mpLayout, "txt_value702", (u8)stats->CActorParam_getTotal
                 if (i < cnt) {
                     char buf[0x20];
                     sprintf(buf, "jwl_skill%d", i + 1);
-                    u32 id = BdatGetU16Direct(lbl_eu_806640F4, buf, BdatGetItemId(*(u32*)arg3 >> 20));
-                    u16 nameId = (u16)BdatGetU16Direct(lbl_eu_806640EC, "itemID", id);
-                    u8 icon = (u8)BdatGetU8Direct((const void*)lbl_eu_806640EC, "percent", id);
-                    u8 val = (u8)BdatGetU8Direct((const void*)lbl_eu_806640EC, "rankType", id);
+                    u32 id = BdatGetU16Direct(::cf::CfBdat::spItmWpnListFileData, buf, BdatGetItemId(*(u32*)arg3 >> 20));
+                    u16 nameId = (u16)BdatGetU16Direct(::cf::CfBdat::spItmItemListFileData, "itemID", id);
+                    u8 icon = (u8)BdatGetU8Direct((const void*)::cf::CfBdat::spItmItemListFileData, "percent", id);
+                    u8 val = (u8)BdatGetU8Direct((const void*)::cf::CfBdat::spItmItemListFileData, "rankType", id);
                     if (id != 0) {
                         ItemBoxInfoCopy tmp2;
                         tmp2.itemId = nameId;
@@ -6614,11 +6606,11 @@ setLayoutTextBoxNumber(mpLayout, "txt_value702", (u8)stats->CActorParam_getTotal
                     tmp3.value = 0;
                     tmp3.state = 0;
                     if (arg5 != 0) {
-                        if (BdatGetU8Direct((const void*)lbl_eu_806640F8, "jwl_slot", BdatGetItemId(*(u32*)arg3 >> 20)) != 0) {
-                            u16 nameId = (u16)BdatGetU16Direct(lbl_eu_806640F8, "jwl_skill1", BdatGetItemId(*(u32*)arg3 >> 20));
-                            u16 capId = (u16)BdatGetU16Direct(lbl_eu_806640EC, "itemID", nameId);
-                            u8 icon = (u8)BdatGetU8Direct((const void*)lbl_eu_806640EC, "percent", nameId);
-                            u8 val = (u8)BdatGetU8Direct((const void*)lbl_eu_806640EC, "rankType", nameId);
+                        if (BdatGetU8Direct((const void*)::cf::CfBdat::spItmEquipListFileData, "jwl_slot", BdatGetItemId(*(u32*)arg3 >> 20)) != 0) {
+                            u16 nameId = (u16)BdatGetU16Direct(::cf::CfBdat::spItmEquipListFileData, "jwl_skill1", BdatGetItemId(*(u32*)arg3 >> 20));
+                            u16 capId = (u16)BdatGetU16Direct(::cf::CfBdat::spItmItemListFileData, "itemID", nameId);
+                            u8 icon = (u8)BdatGetU8Direct((const void*)::cf::CfBdat::spItmItemListFileData, "percent", nameId);
+                            u8 val = (u8)BdatGetU8Direct((const void*)::cf::CfBdat::spItmItemListFileData, "rankType", nameId);
                             if (nameId != 0) {
                                 tmp3.itemId = capId;
                                 tmp3.value = icon;
@@ -6647,7 +6639,7 @@ setLayoutTextBoxNumber(mpLayout, "txt_value702", (u8)stats->CActorParam_getTotal
                 vals[n] = val;
                 flags[n] = flag;
                 n++;
-            } else if (BdatGetU8Direct((const void*)lbl_eu_806640D8, "accum", id) != 0) {
+            } else if (BdatGetU8Direct((const void*)::cf::CfBdat::spBtlSkillListFileData, "accum", id) != 0) {
                 u8 found = 0;
                 for (u8 j = 0; j < n; j++) {
                     if (id == ids[j]) {
@@ -6673,7 +6665,7 @@ setLayoutTextBoxNumber(mpLayout, "txt_value702", (u8)stats->CActorParam_getTotal
         }
         for (u8 i = 0; i < 8; i++) {
             if (ids[i] != 0) {
-                u32 cap = BdatGetU16Direct(lbl_eu_806640D8, "max", ids[i]);
+                u32 cap = BdatGetU16Direct(::cf::CfBdat::spBtlSkillListFileData, "max", ids[i]);
                 if (vals[i] > cap) vals[i] = cap;
             }
         }
@@ -6691,7 +6683,7 @@ setLayoutTextBoxNumber(mpLayout, "txt_value702", (u8)stats->CActorParam_getTotal
                 vals2[n2] = val;
                 flags2[n2] = flag;
                 n2++;
-            } else if (BdatGetU8Direct((const void*)lbl_eu_806640D8, "accum", id) != 0) {
+            } else if (BdatGetU8Direct((const void*)::cf::CfBdat::spBtlSkillListFileData, "accum", id) != 0) {
                 u8 found = 0;
                 for (u8 j = 0; j < n2; j++) {
                     if (id == ids2[j]) {
@@ -6717,7 +6709,7 @@ setLayoutTextBoxNumber(mpLayout, "txt_value702", (u8)stats->CActorParam_getTotal
         }
         for (u8 i = 0; i < 8; i++) {
             if (ids2[i] != 0) {
-                u32 cap = BdatGetU16Direct(lbl_eu_806640D8, "max", ids2[i]);
+                u32 cap = BdatGetU16Direct(::cf::CfBdat::spBtlSkillListFileData, "max", ids2[i]);
                 if (vals2[i] > cap) vals2[i] = cap;
             }
         }
@@ -6725,7 +6717,7 @@ setLayoutTextBoxNumber(mpLayout, "txt_value702", (u8)stats->CActorParam_getTotal
         // better/worse flags comparing listB vs listA
         u8 cmp[8];
         for (u8 i = 0; i < 8; i++) {
-            if (ids2[i] != 0 && BdatGetU8Direct((const void*)lbl_eu_806640D8, "accum", ids2[i]) != 0) {
+            if (ids2[i] != 0 && BdatGetU8Direct((const void*)::cf::CfBdat::spBtlSkillListFileData, "accum", ids2[i]) != 0) {
                 u8 done = 0;
                 for (u8 j = 0; j < 8; j++) {
                     if (ids2[i] == ids[j]) {
@@ -6751,7 +6743,7 @@ setLayoutTextBoxNumber(mpLayout, "txt_value702", (u8)stats->CActorParam_getTotal
         }
         // clear duplicate ids in listB
         for (u8 i = 0; i < 8; i++) {
-            if (ids2[i] != 0 && BdatGetU8Direct((const void*)lbl_eu_806640D8, "accum", ids2[i]) != 0) {
+            if (ids2[i] != 0 && BdatGetU8Direct((const void*)::cf::CfBdat::spBtlSkillListFileData, "accum", ids2[i]) != 0) {
                 for (u8 j = i + 1; j < 8; j++) {
                     if (ids2[i] == ids2[j]) ids2[j] = 0;
                 }
@@ -6805,11 +6797,11 @@ setLayoutTextBoxNumber(mpLayout, "txt_value702", (u8)stats->CActorParam_getTotal
                 f32 dst[3] = {v0, v1, v2};
                 copyVEC3(&mPage.mPos[idx], (void*)dst);
             }
-            LayoutSetTextBoxFmtValue(mpLayout, buf1, BdatGetPtrDirect(lbl_eu_806640D8, "name", id), 0);
+            LayoutSetTextBoxFmtValue(mpLayout, buf1, BdatGetPtrDirect(::cf::CfBdat::spBtlSkillListFileData, "name", id), 0);
             if (val == 0) {
                 LayoutSetTextBoxFmtValue(mpLayout, buf2, "", 0);
             } else {
-                u8 rvs = (u8)BdatGetU8Direct((const void*)lbl_eu_806640D8, "rvs_type", id);
+                u8 rvs = (u8)BdatGetU8Direct((const void*)::cf::CfBdat::spBtlSkillListFileData, "rvs_type", id);
                 if (rvs != 0 && (rvs == 0xFF || rvs == 0xFE)) {
                     ml::FixStr<32> fmtBuf;
                     fmtBuf.format("%d%s", (s32)val, BdatTouchStringCell("MNU_item", "name", 0x21));
@@ -6827,7 +6819,7 @@ setLayoutTextBoxNumber(mpLayout, "txt_value702", (u8)stats->CActorParam_getTotal
             GXColorS10 q2 = *(GXColorS10*)&itemBoxInfo_labelNeutralBottom;
             GXColorS10 q3 = *(GXColorS10*)&itemBoxInfo_valueNeutralTop;
             GXColorS10 q4 = *(GXColorS10*)&itemBoxInfo_valueNeutralBottom;
-            u32 cap = BdatGetU16Direct(lbl_eu_806640D8, "max", id);
+            u32 cap = BdatGetU16Direct(::cf::CfBdat::spBtlSkillListFileData, "max", id);
             if ((u32)val >= cap) {
                 __as__11_GXColorS10FRC11_GXColorS10(&q1, &itemBoxInfo_labelSpecialTop);
                 __as__11_GXColorS10FRC11_GXColorS10(&q2, &itemBoxInfo_labelSpecialBottom);
@@ -6913,7 +6905,7 @@ u32 CItemBoxInfo2::GetEffect(u32 b, u32 c, void* d) {
                     if ((u16)v != 0) {
                         u16 cat = (u16)BdatGetItemId(v);
                         if (c == cat) {
-                            result += (u8)BdatGetU8Direct((const void*)lbl_eu_806640EC, "percent", (u16)v);
+                            result += (u8)BdatGetU8Direct((const void*)::cf::CfBdat::spItmItemListFileData, "percent", (u16)v);
                         }
                     }
                 }
@@ -6957,14 +6949,14 @@ u32 CItemBoxInfo2::GetEffect(u32 b, u32 c, void* d) {
                     if ((u16)v != 0) {
                         u16 cat = (u16)BdatGetItemId(v);
                         if (c == cat) {
-                            result += (u8)BdatGetU8Direct((const void*)lbl_eu_806640EC, "percent", (u16)v);
+                            result += (u8)BdatGetU8Direct((const void*)::cf::CfBdat::spItmItemListFileData, "percent", (u16)v);
                         }
                     }
                 }
             }
         }
     }
-    u16 cap = (u16)BdatGetU16Direct(lbl_eu_806640D8, (char*)"max", c);
+    u16 cap = (u16)BdatGetU16Direct(::cf::CfBdat::spBtlSkillListFileData, (char*)"max", c);
     if ((s16)cap < (s32)result) result = cap;
     return result;
 }
@@ -6972,12 +6964,12 @@ u32 CItemBoxInfo2::TestBdatFlag(u32 arg1, u32 arg2) {
     if (arg1 == 0 || arg2 == 0) return 0;
     char buf[0x20];
     sprintf(buf, &lbl_eu_805063BC[0x1f4], arg1);
-    u32 g = (u32)lbl_eu_806640F8;
+    u32 g = (u32)::cf::CfBdat::spItmEquipListFileData;
     return (u8)BdatGetU8Direct((const void*)g, (const char*)buf, (u16)BdatGetItemId(arg2)) != 0;
 }
 u32 CItemBoxInfo2::SumTypeCounts(u16 arg2, void* arg3) {
     if (arg2 == 0) return 0;
-    void* g = lbl_eu_806640F8;
+    void* g = ::cf::CfBdat::spItmEquipListFileData;
     u16 v1 = arg3 ? (u16)BdatGetItemType((u32)arg3) : (u16)0;
     u16 v2 = arg3 ? (u16)BdatGetItemId((u32)arg3) : (u16)0;
     void* lookup = CtrlObjectParam_GetCharEntry(arg2);
@@ -7195,7 +7187,7 @@ bool CItemBoxInfo2::OnFileEvent(CEventFile* file) {
             }
             LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_npctype", s, 0);
             char* name = ((char* (*)(void*, const char*, u16))&BdatGetPtrDirect)(
-                &lbl_eu_80664098, "name", itemId);
+                &::cf::CfBdat::spFldNpcListFileData, "name", itemId);
             LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_npcname",
                           GetBdatNameByNumId(name), 0);
             LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_npcframe",
@@ -7367,8 +7359,8 @@ char* CItemBoxPage::GetItemName(u8 index) {
     char buf[0x40];
     char* base = lbl_eu_805063BC;
     sprintf(buf, "%d", val);
-    u8 fmt = (u8)BdatGetU8Direct((const void*)lbl_eu_806640D8, "rvs_type", item_id);
-    char* name = ((char*(*)(void*, const char*, u32))&BdatGetPtrDirect)(lbl_eu_806640D8, "rvs_caption", item_id);
+    u8 fmt = (u8)BdatGetU8Direct((const void*)::cf::CfBdat::spBtlSkillListFileData, "rvs_type", item_id);
+    char* name = ((char*(*)(void*, const char*, u32))&BdatGetPtrDirect)(::cf::CfBdat::spBtlSkillListFileData, "rvs_caption", item_id);
     char* out = mText.mName;
     sprintf(out, "%s", name);
     u8 is_jp = 1;
@@ -7404,7 +7396,7 @@ char* CItemBoxPage::GetItemName(u8 index) {
                     *d++ = *s++;
                 }
                 *d = *s;
-                u8 r = (u8)BdatGetU8Direct((const void*)lbl_eu_806640D8, (const char*)tbl[1 + category], item_id);
+                u8 r = (u8)BdatGetU8Direct((const void*)::cf::CfBdat::spBtlSkillListFileData, (const char*)tbl[1 + category], item_id);
                 if (is_jp) sprintf(tmp, "<col=red>%d %%<col=def>", r);
                 else sprintf(tmp, "<col=red>%d%%<col=def>", r);
             }

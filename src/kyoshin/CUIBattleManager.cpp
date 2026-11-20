@@ -1,10 +1,11 @@
 #define IWORK_EVENT_INLINE_DTOR
+#include "kyoshin/cf/CfBdat.hpp"
 #include "kyoshin/CUIBattleManager.hpp"
 #include "kyoshin/menu/CMenuBattleDamageSymbols.hpp"
 #include "monolib/lib/CLibLayout.hpp"
 #include "kyoshin/cf/CfMapItemManager.hpp"
 #include "kyoshin/CUICfManager_Res.hpp"
-
+#include "kyoshin/cf/CfCamSymbols.hpp"
 // --- CTTask<CUIBattleManager> out-of-line specializations ---
 // The canonical declared-only template emits no bodies; these explicit
 // specializations produce the retail standalone Move/Draw/dtor symbols.
@@ -107,7 +108,7 @@ int func_801042B4();
 int CMainMenu_IsOpen();
 // Family-canonical form - must match CfObjectPc.hpp / CAIAction.hpp /
 // code_802B8A3C.hpp (see the 10197 note in CTaskGame.hpp).
-bool isGlobalCamFlagSet__Fi(UNKWORD flag);
+
 }
 
 // Defined in CMenuBattlePlayerState.cpp with C++ linkage.
@@ -122,7 +123,7 @@ void* findObjectById(int id);
 // Resource getter renamed by the parallel Track-B pass
 // (CtrlRemote_TouchBitByArg -> CtrlRemote_TouchBitByArg); plain C++ decl mirrors the
 // pre-rename TU state (cf. CMiniMap.cpp) so call-site codegen is unchanged.
-u32 CtrlRemote_TouchBitByArg(u32 resourceId);
+#include "kyoshin/cf/CtrlRemoteApi.hpp"
 typedef u32* (*GetU32Fn)(void*);
 typedef int (*GetIntFn)(void*);
 
@@ -363,7 +364,7 @@ void CUIBattleManager::Move() {
     if (inst != NULL && inst->unkE8 != 0 &&
         CMenuArtsSelect_isFinished() == 0) {
         cf::CfGameManager::getInstance();
-        if (isGlobalCamFlagSet__Fi(0x10000000) == 0) {
+        if (isGlobalCamFlagSet(0x10000000) == 0) {
             player = cf::CfGameManager::getPlayer(0);
             if (player != NULL) {
                 actor = static_cast<CUIBattleActor*>(MapFx_ResolveOwner(NULL));
@@ -405,7 +406,7 @@ void CUIBattleManager::Move() {
                             if (obj != NULL &&
                                 (((CUIBattleAction*)obj)->field_64 & 4) != 0) {
                                 cf::CfGameManager::getInstance();
-                                if (isGlobalCamFlagSet__Fi(0x1000000) == 0 &&
+                                if (isGlobalCamFlagSet(0x1000000) == 0 &&
                                     CMainMenu_IsOpen() == 0) {
                                     if (UIBattleArtsSelectHandle != (void*)handle ||
                                         CMenuArtsSelect_isCreated() == 0) {
@@ -778,7 +779,7 @@ int CUIBattleManager::OnFileEvent(CUIBattleFileEvt* evt) {
         }
         tex = acc->GetResource(
             0x74696D67,
-            MakeTplNameSysFile(BdatGetU16Direct(lbl_eu_80664090, &UIBattleArcPathStrings[0x79],
+            MakeTplNameSysFile(BdatGetU16Direct(::cf::CfBdat::spBtlPcListFileData, &UIBattleArcPathStrings[0x79],
                                         (int)(u8)partyId)),
             0);
         if (tex != NULL) {
@@ -786,7 +787,7 @@ int CUIBattleManager::OnFileEvent(CUIBattleFileEvt* evt) {
         }
         tex = acc->GetResource(
             0x74696D67,
-            MakeTplNameSysFile(BdatGetU16Direct(lbl_eu_80664090, &UIBattleArcPathStrings[0x84],
+            MakeTplNameSysFile(BdatGetU16Direct(::cf::CfBdat::spBtlPcListFileData, &UIBattleArcPathStrings[0x84],
                                         (int)(u8)partyId)),
             0);
         if (tex != NULL) {
@@ -794,7 +795,7 @@ int CUIBattleManager::OnFileEvent(CUIBattleFileEvt* evt) {
         }
         tex = acc->GetResource(
             0x74696D67,
-            MakeTplNameSysFile(BdatGetU16Direct(lbl_eu_80664090, &UIBattleArcPathStrings[0x8f],
+            MakeTplNameSysFile(BdatGetU16Direct(::cf::CfBdat::spBtlPcListFileData, &UIBattleArcPathStrings[0x8f],
                                         (int)(u8)partyId)),
             0);
         if (tex != NULL) {

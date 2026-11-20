@@ -16,17 +16,15 @@ struct CScriptCodeEntry {
 };
 
 //size: 0x1740
-//
-// novtable: the retail vtable/RTTI live in the blob range owned by
-// CScriptCode.cpp (blob monolibdata1 dissolve) and are defined explicitly
-// there, so the compiler must not emit a duplicate vtable + RTTI chain.
-class __declspec(novtable) CScriptCode : public CWorkThread {
+class CScriptCode : public CWorkThread {
 public:
     virtual ~CScriptCode();
     virtual bool wkStandbyLogout();
 
     static CScriptCode* create(CWorkThread* pParent);
     static CScriptCode* getInstance();
+
+    static CScriptCode* sInstance;
 
     CScriptCodeEntry* m_slot0[128];   //0x1C4: primary slot array
     s16 m_cnt0;                       //0x3C4: primary count

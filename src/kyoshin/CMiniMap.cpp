@@ -1,8 +1,9 @@
 // Auto-scaffolded catalog TU for kyoshin/CMiniMap
 // Replace stubs with high-level C/C++ during decomp.
-
+#include "kyoshin/cf/CtrlRemoteApi.hpp"
 #define ISCN_RENDER_NO_DTOR // see CMiniMap.hpp (IScnRender sub-vtable dtor slot)
 
+#include "kyoshin/cf/CfBdat.hpp"
 #include "kyoshin/CMiniMap.hpp"
 #include "kyoshin/code_80135FDC_Bdat.hpp"
 #include "kyoshin/code_80135FDC.hpp"
@@ -128,7 +129,7 @@ extern "C" char lbl_eu_804FE1FC[];       // string pool (columns/formats/names)
 
 // ---- cross-TU helpers (retail unmangled symbols) ----
 extern "C" {
-u32 CtrlRemote_TouchBitByArg(u32 resourceId);
+
 u32 Bdat_GetMaxRow_B1EC(void*);
 void startEnumObjects(void* list, u32 type, u32 filter);
 void* __ct__800FB044(void* list, f32, void* obj, int);
@@ -145,10 +146,10 @@ void __ct__14Class_8045F858FP17UnkClass_8045F564(void* self, void* sub);
 void __dt__14Class_8045F858Fv(void* self, int);
 void bdatGetPosXYZ(ml::CVec3* out, u32 index);
 void MiniMapRebuildGimmickPanes(void* self);
-// (memberized: MiniMapFillMarkerEntry -> CMiniMapGimmickView::FillMarkerEntry; declaration moved into class CMiniMapGimmickView)
+// (memberized: MiniMapFillMarkerEntry -> CMiniMapGimmickData::FillMarkerEntry; declaration moved into class CMiniMapGimmickData)
 void MiniMapPlaceMarkers(void* self, u32 row);
 // (memberized: MiniMapBuildMarkerPanes -> MiniMapTable::BuildMarkerPanes; declaration moved into class MiniMapTable)
-// (memberized: MiniMapInitGimmickTables -> CMiniMapGimmickView::InitGimmickTables; declaration moved into class CMiniMapGimmickView)
+// (memberized: MiniMapInitGimmickTables -> CMiniMapGimmickData::InitGimmickTables; declaration moved into class CMiniMapGimmickData)
 void* CfObjectMove_getSelfIfActive(void* obj);
 void* createPicture__10CLibLayoutFv();
 void* createTextbox__10CLibLayoutFv();
@@ -209,13 +210,13 @@ extern "C" void __ct__CMiniMap(CMiniMap* self) {
     spMiniMapBdat = getFP(buf);
 
     MiniMapInitTable3x5((MiniMapTable*)self->mField3C.mW);
-    MiniMapResetGimmickTables((CMiniMapGimmickView*)self->mField17C.mW);
+    MiniMapResetGimmickTables((CMiniMapGimmickData*)self->mField17C.mW);
     new (&self->m824) UnkClass_8045F564();
     new (&self->m834) UnkClass_8045F564();
 
     // u32->f32 via the shared 0x4330 double-magic idiom (textual reference
     // keeps MWCC's pool on the retail lbl_eu name instead of an @N label).
-    char* bdat = lbl_eu_806640A8;
+    char* bdat = (char*)::cf::CfBdat::spFldMapListFileData;
     u32 row = (u8)lbl_eu_80664184;
     self->field_0x1C = BdatGetS16Direct(bdat, "minimap_x", row);
     self->field_0x1E = BdatGetS16Direct(bdat, "minimap_y", row);
@@ -383,7 +384,7 @@ bool CMiniMap::OnFileEvent(CEventFile* pEventFile) {
         AppendChild__Q34nw4r3lyt4PaneFPQ34nw4r3lyt4Pane(parent, clockPic);
 
         ((MiniMapTable*)(mField3C.mW))->BuildMarkerPanes(spMiniMapBdat, mLayout0C, mField20);
-        ((CMiniMapGimmickView*)mField17C.mW)->InitGimmickTables(mField28, mLayout0C, mField20);
+        ((CMiniMapGimmickData*)mField17C.mW)->InitGimmickTables(mField28, mLayout0C, mField20);
         mReady = 1;
         ((UnkClass_8045F564*)m824)->validateHeap();
         }
@@ -619,7 +620,7 @@ extern "C" void MiniMapTeardownMarkerPanes(CMiniMap* self) {
 
         // Reset marker-table and gimmick-view working state.
         MiniMapTermTable* table = (MiniMapTermTable*)self->mField3C.mW;
-        MiniMapTermView* view = (MiniMapTermView*)self->mField17C.mW;
+        MiniMapTermView* view = reinterpret_cast<MiniMapTermView*>(&self->mField17C);
         table->mBdat = 0;
         view->mBdat = 0;
         table->mLive = 0;
@@ -1079,7 +1080,7 @@ extern "C" void MiniMapUpdateMapIcons(MiniMapSelf* self) {
         // ---- mode-32 section ----
     mode32:
         {
-            gimmickView = (void*)((CMiniMapGimmickView*)self->m17C)->FillMarkerEntry();
+            gimmickView = (void*)((CMiniMapGimmickData*)self->m17C)->FillMarkerEntry();
             {
 #undef __cntlzw
                 u32 cf8cVal = (u32)CtrlRemote_TouchBitByArg(0x3334);
@@ -2536,7 +2537,7 @@ extern "C" void MiniMapPlaceMarkers(void* self, u32 row) {
 // via the layout's pane manager (+0x10), then fill the per-row enable/id/valid
 // entries for rows 1..count and seed both name-lookup tables.
 // ============================================================================
-void CMiniMapGimmickView::InitGimmickTables(u32 table, void* layout, f32 scale) {
+void CMiniMapGimmickData::InitGimmickTables(u32 table, void* layout, f32 scale) {
     this->field_0x00 = (const char*)table;
     this->field_0x04 = (u32)layout;
     this->field_0x08 = scale;
@@ -2677,7 +2678,7 @@ void CMMMapImg::MiniMapRequestMapImage() {
     this->mReady = 0;
 }
 
-extern "C" void MiniMapUpdateGimmickRows(CMiniMapGimmickView* self) {
+extern "C" void MiniMapUpdateGimmickRows(CMiniMapGimmickData* self) {
     // The position source is the +0x3E9C member of the player object; retail
     // null-tests the container-of pointer before dereferencing.
     cf::CfObjectMove* player = cf::CfGameManager::getPlayer(0);
@@ -2746,7 +2747,7 @@ extern "C" void MiniMapUpdateGimmickRows(CMiniMapGimmickView* self) {
 // For rows that produced a record, create/name a 'timg' picture pane (kind
 // selects the resource name; 0 skips creation) and prepend it to the layout.
 extern "C" void MiniMapRebuildGimmickPanes(void* self) {
-    CMiniMapGimmickView* view = (CMiniMapGimmickView*)self;
+    CMiniMapGimmickData* view = (CMiniMapGimmickData*)self;
     if (view->field_0x04 == 0) return;
 
     MiniMapObj* player = (MiniMapObj*)cf::CfGameManager::getPlayer(0);
@@ -3005,8 +3006,8 @@ extern "C" void MiniMapRebuildGimmickPanes(void* self) {
 }
 
 // MiniMapResetGimmickTables - reset the minimap gimmick-view tables (retail unmangled
-// name; the CMiniMapGimmickView subobject sits at minimap+0x17C).
-void MiniMapResetGimmickTables(CMiniMapGimmickView* self) {
+// name; the CMiniMapGimmickData subobject sits at minimap+0x17C).
+void MiniMapResetGimmickTables(CMiniMapGimmickData* self) {
     f32 zero = 0.0f;
     self->field_0x00 = 0;
     u32 off = 0;
@@ -3040,7 +3041,7 @@ void MiniMapResetGimmickTables(CMiniMapGimmickView* self) {
 
 // MiniMapFillMarkerEntry - fill one marker-visibility table entry per call; returns 1
 // when the row budget ran out (MiniMapUpdateMapIcons uses the result as a bool).
-u32 CMiniMapGimmickView::FillMarkerEntry() {
+u32 CMiniMapGimmickData::FillMarkerEntry() {
     // Declaration order tuned for MWCC reverse-declaration reg allocation
     // (ret=r30, end=r29, i=r28).
     u32 ret = 0;

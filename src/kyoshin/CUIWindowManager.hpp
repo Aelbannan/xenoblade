@@ -1,5 +1,5 @@
 #pragma once
-
+#include "kyoshin/cf/CtrlRemoteApi.hpp"
 #include "kyoshin/cf/IFlagEvent.hpp"
 #include "monolib/util/reslist.hpp"
 #include "monolib/work/CTTask.hpp"
@@ -168,7 +168,7 @@ void Col6_ClearGlobals_D0B8();
 void resetQuestWindow();
 void GetItemMulti_ClearDoneLatch();
 void TalkWin_ClearFlag_BDD0();
-u32 CtrlRemote_TouchBitByArg(u32 resourceId);
+
 u32 CItem_sumFamilyByte6(u16 value);
 
 // Flag-memory setter (owning TU outside this unit): writes `val` into the
@@ -246,7 +246,6 @@ extern char sQuestWindowText[];  // quest window text (BdatGetU8Direct source)
 extern char sBdatColumnNames[];  // bdat column-name blob (getBdatStringColumnValue)
 
 // bdat pointer used by the flag-buffer column reads (.sdata, other split).
-extern u8* lbl_eu_80664098;
 // rodata flag table (other split), byte-offset indexed by UIWin_QueryItemAvail.
 extern u8 lbl_804FC260[];
 
@@ -260,7 +259,6 @@ extern CQuestTimeEntry lbl_804FC240[4];
 
 // bdat item/enum table handle (.sbss, other split); source of the column
 // reads UIWin_UpdateItemAvail issues after absorbing an entry.
-extern void* lbl_eu_806640EC;
 
 class CUIWindowManager : public CTTask<CUIWindowManager>, public cf::IFlagEvent{
 public:

@@ -6,6 +6,12 @@
 
 #include <types.h>
 
+// Defined in CtrlRemote.cpp. config/jp/symbols.txt records the retail name
+// CtrlRemote_TouchBitByArg__Fi (C++ int parameter); US/EU relocations use the
+// plain C name. r3 is the shared-buffer index and the value returned in r3 is
+// consumed by callers (e.g. checkArtsFull compares it against 0x108/0x116).
+extern "C" u32 CtrlRemote_TouchBitByArg(int arg);
+
 namespace cf {
 class CtrlRemote;
 }

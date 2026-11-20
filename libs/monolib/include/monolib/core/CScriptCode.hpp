@@ -9,6 +9,8 @@ public:
     static CScriptCode* create(CWorkThread* pParent);
 
     static CScriptCode* getInstance();
+
+    static CScriptCode* sInstance;
 };
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)

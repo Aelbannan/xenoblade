@@ -139,11 +139,10 @@ void tboxState0Tick(UnkCode8027513C* self) {
 
     // Branch 1: field_0x4EC has bit 1 (0x2) set
     if (target->field_0x4EC & 2) {
-        float threshold = lbl_eu_806689F0; // 0.001
         self->field_0x6C++;
 
         // Only proceed if field_0x3C4 is below the threshold
-        if (target->field_0x3C4 < threshold) {
+        if (target->field_0x3C4 < 0.001f) {
             // Position-vector getter at CfObject vtable +0xAC (UVF23). The
             // static type is CfObject* so the call binds the real virtual
             // (CfObjectModel/CfObjectMove declare a non-virtual homonym).
@@ -155,8 +154,8 @@ void tboxState0Tick(UnkCode8027513C* self) {
                 int type = 46;   // 0x2e
                 int mode = 217;  // 0xd9
 
-                if (rtarget->field_0x3C4 > lbl_eu_806689D8 ||
-                    rtarget->field_0x4F8 < lbl_eu_806689DC) {
+                if (rtarget->field_0x3C4 > -4.0f ||
+                    rtarget->field_0x4F8 < 0.9f) {
                     type = 45;   // 0x2d
                     mode = 216;  // 0xd8
                 }
@@ -168,9 +167,9 @@ void tboxState0Tick(UnkCode8027513C* self) {
                     // paired-single ops matching retail.
                     nw4r::math::VEC3 sum;
                     nw4r::math::VEC3 offset;
-                    offset.x = lbl_eu_806689E0; // 0.0
-                    offset.y = lbl_eu_806689E4; // 0.01
-                    offset.z = lbl_eu_806689E0; // 0.0
+                    offset.x = 0.0f; // 0.0
+                    offset.y = 0.01f; // 0.01
+                    offset.z = 0.0f; // 0.0
 
                     nw4r::math::VEC3Add(&sum, (const nw4r::math::VEC3*)pos, &offset);
 
@@ -186,21 +185,21 @@ void tboxState0Tick(UnkCode8027513C* self) {
                     posVec[0] = posContainer->posX;
                     posVec[1] = posContainer->posY;
                     posVec[2] = posContainer->posZ;
-                    posVec[3] = lbl_eu_806689E8; // 1.0
+                    posVec[3] = 1.0f; // 1.0
                     setChildV40__(eff, posVec);
                 }
 
                 // Play sound effect at the fetched position
                 UnkCamObj* camObj = (UnkCamObj*)Scn_QueryUnk80State(gmScene);
-                CfSoundMan_PlayLinkedParam(0, mode, (u32)(uintptr_t)pos, lbl_eu_806689E8 - camObj->field_0xC,
-                              lbl_eu_806689EC);
+                CfSoundMan_PlayLinkedParam(0, mode, (u32)(uintptr_t)pos, 1.0f - camObj->field_0xC,
+                              30.0f);
             }
         }
 
         cf::CfObjectMove* obj = self->field_0x14;
         if (*(u32*)(&obj->field_0x90[0]) != 0) {
-            target->field_0x504 = lbl_eu_806689F4; // 0.1
-            target->field_0x50C = lbl_eu_806689F8; // 0.4
+            target->field_0x504 = 0.1f; // 0.1
+            target->field_0x50C = 0.4f; // 0.4
         }
     } else if (target->field_0xC & 2) {
         // Branch 2: field_0x4EC bit 1 not set, check field_0xC bit 1.
@@ -236,7 +235,7 @@ void tboxState0Tick(UnkCode8027513C* self) {
                     posVec[0] = posContainer->posX;
                     posVec[1] = posContainer->posY;
                     posVec[2] = posContainer->posZ;
-                    posVec[3] = lbl_eu_806689E8; // 1.0
+                    posVec[3] = 1.0f; // 1.0
                     setChildV40__(eff, posVec);
                 }
             }

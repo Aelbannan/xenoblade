@@ -1,4 +1,5 @@
 #pragma once
+
 #include "kyoshin/cf/CtrlNpcApi.hpp"
 
 #include <types.h>
@@ -17,7 +18,7 @@ namespace ml {
 struct CVec3;
 }
 
-class CScn;  // monolib scene (CfGameManager owns the shared gmScene global)
+#include "monolib/scn/CScn.hpp"  // canonical scene type
 
 // Base +0x9C implementation (defined in CfObjectModel.cpp as a forced-name
 // free function: the retail symbol is Fv but the body reads r4 as a position
@@ -72,7 +73,7 @@ extern u32 gmPauseFlags;   // global flag word (bit 26) gating the CfObjectMove_
 extern u32 gmGameFlags;
 extern u16 gmGlobalFlag42;   // mode words checked by CfObject_UnkVirtualFunc26 (== 4 / == 1)
 extern u16 gmGlobalFlag44;
-extern CScn* gmScene;  // shared scene pointer passed to the Scn_GetFrameDelta time query
+#include "kyoshin/cf/CfGameManagerData.hpp"  // canonical gmScene owner
 // Shared speed constant (retail unmangled name; the .cpp also defines a
 // namespace-cf copy used by the resetMoveSpeed helper). Declared const so
 // MWCC treats the SDA load as read-only and hoists/schedules it at retail's
@@ -120,19 +121,7 @@ extern const float lbl_eu_80666ACC;
 // current time value from the shared scene object. extern "C" keeps the
 // call-site reloc at the unmangled retail name (docs/MWCC_CASES.md sec 2).
 f32 Scn_GetFrameDelta(void* scene);
-// Minimal bdat imports (CfBdat.hpp cannot be included here: its
-// getBdatStringColumnValue declaration conflicts with harness_catalog.hpp's).
-// The static-member forms keep the retail mangled reloc names.
-namespace cf {
-class CfBdat {
-public:
-    static u32 resolveWpnTok(u32 param1);
-    static const char* getBdatStringEntry(u16 index);
-    static void resetMapBdatFileDataPointers();
-};
-}  // namespace cf
 // Retail sbss bdat globals used by CfObjectMove_initAnimTarget.
-extern void* lbl_eu_806640A8;   // spFldMapListFileData
 extern u32 lbl_eu_80664184;     // cached fld-map row index
 // One-arg call form of the CActParamAnim translation helper (defined 2-arg
 // in kyoshin/action/CActParamAnim.cpp). Retail CfObject_setMoveTargetVec
@@ -427,7 +416,9 @@ namespace cf {
         void* mTargetC8;         // 0xC8-0xCB
         void* mTargetCC;         // 0xCC-0xCF
         u8 _D0[0x53C];           // 0xD0-0x60B
-        u8 _60C_region[0xB4];   // 0x60C-0x6BF
+        u8 _60C_region[0xA8];   // 0x60C-0x6B3 collision region
+        u32 mField6B4;          // 0x6B4 region flag word
+        u8 unk6B8[8];           // 0x6B8-0x6BF
         void* mTarget6C0;         // 0x6C0-0x6C3
         u32 mField6C4;           // 0x6C4-0x6C7 (CfObjectMove_resetAnimModeArgs stores 1)
         s8 mField6C8;            // 0x6C8 (CfObjectMove_resetAnimModeArgs stores -1)
@@ -567,14 +558,8 @@ namespace cf {
     // its CfObjectMove_setAnimModeArgs 5-arg declaration conflicts with the 4-arg form
     // this unit needs, so a local view is used (same scheme as
     // CfObjectMoveTargetC4).
-    struct CfObjectMoveNpcView {
-        u8 _pad[0xC0];       // 0x00-0xBF
-        u16 field_C0;        // 0xC0 action id
-    };
-    // vtable proxy for the CfObjectMove mTargetC4 object's slot +0x80: retail
-    // CfObject_queryTargetState tail-calls it with a 0 arg and returns its int
-    // result (the null path returns 1). Dummy slots pin the offset.
-    // vtable proxy for the CfObjectModel+0x98 sub-object's slot +0x64 with an
+    // CfObject_queryTargetState now calls CActParamAnim's real slot.
+
     // explicit int arg: retail CfObjectMove_setMoveModeField forwards a 4-bit flag extracted
     // from mFlags6C9 (the base CfObjectModelSub98vt proxy declares the slot
     // no-arg). Dummy slots pin the offset.
@@ -612,12 +597,6 @@ namespace cf {
     // CfObjectModel's opaque 0xA4-0xAF pad): CfObjectMove_updateSpeedA8 reads/writes
     // field_A8 as a movement speed; CfObjectMove_tickSpeed and
     // CfObject_updateMoveRate use all three as approach-rate terms.
-    struct CfObjectMoveA8View {
-        u8 _pad[0xA4];
-        float field_A4;  // 0xA4
-        float field_A8;  // 0xA8
-        float field_AC;  // 0xAC
-    };
     // Byte view of CfObjectMove::mFlags6C9 as bitfields (MWCC lays out the
     // first-declared field at the MSB). top3 spans word bits 24-26; clearing
     // it emits the retail rlwinm r0,r0,0,27,23 that CfObjectMove_setAnimModeArgs keeps (a
@@ -633,16 +612,6 @@ namespace cf {
     // Layout of the +0xC8/+0xCC target objects CfObjectMove_ensureAnimTargets constructs and
     // initializes (ctor __ct__8005A3FC): +0x4/+0x34 receive the +0x38
     // sub-object pointer, +0x378 the slot index, +0x4F4 the owner.
-    struct CfObjectMoveC8View {
-        u8 _pad00[0x4];           // 0x00-0x03
-        void* field_4;            // 0x04 (self->mSubObj38)
-        u8 _pad08[0x34 - 0x8];    // 0x08-0x33
-        void* field_34;           // 0x34 (self->mSubObj38)
-        u8 _pad38[0x378 - 0x38];  // 0x38-0x377
-        u32 field_378;            // 0x378 (slot index)
-        u8 _pad37C[0x4F4 - 0x37C];  // 0x37C-0x4F3
-        void* field_4F4;          // 0x4F4 (owner CfObjectMove)
-    };
     // Base pad that places the vptr at object+0x10 (retail double-hop reads
     // the vtable via lwz r12, 0x10(r3); same scheme as the file-scope
     // ObjReal view in CfObjectMove.cpp).
@@ -658,10 +627,6 @@ namespace cf {
     // clears bits through this separate view type so MWCC's alias analysis
     // treats the clamp-path clear as a fresh read - retail reloads mFlags68
     // (lwz r0,0x68) at each clamp-path clear).
-    struct CfObjectMoveFlags68View {
-        u8 _pad[0x68];
-        u32 flags68;  // 0x68
-    };
     // vtable proxy for the +0x98 sub-object's slot +0x48 with an explicit
     // float arg (retail CfObjectMove_tickSpeed forwards the movement value to the
     // slot; the CObjectParam base header declares it no-arg). Dummy slots
@@ -687,25 +652,8 @@ namespace cf {
     // View of the +0xD0 CActParamAnimGame sub-object fields CfObjectMove_initAnimTarget
     // touches: owner at +0x4E8, flag word at +0x4EC, speeds at +0x504/+0x50C,
     // and the u16 at +0x530.
-    struct CfObjectMoveD0View {
-        u8 _pad00[0x4E8];       // 0x00-0x4E7
-        void* field_4E8;        // 0x4E8 (owner CfObjectMove)
-        u32 field_4EC;          // 0x4EC
-        u8 _pad4F0[0x504 - 0x4F0];  // 0x4F0-0x503
-        float field_504;        // 0x504
-        u8 _pad508[0x50C - 0x508];  // 0x508-0x50B
-        float field_50C;        // 0x50C
-        u8 _pad510[0x530 - 0x510];  // 0x510-0x52F
-        u16 field_530;          // 0x530
-    };
     // View of the +0x6C0 movement-target object's float fields CfObjectMove_resetMoveTarget
     // reads/writes (+0xC angle, +0x14 speed).
-    struct CfObjectMove6C0View {
-        u8 _pad[0xC];           // 0x00-0x0B
-        float field_C;          // 0x0C
-        u8 _pad10[0x14 - 0x10]; // 0x10-0x13
-        float field_14;         // 0x14
-    };
     // View of the +0xC4 target's flag word (CfObject_UnkVirtualFunc27 ORs in
     // the 0x20 bit when the incoming position moved on Z only).
     struct CfObjectMoveC4FlagsView {
@@ -714,10 +662,6 @@ namespace cf {
     };
     // View of the +0x6B4 word inside the +0x60C region (CfObjectMove_testMoveProximity toggles
     // bit 12 around the ColiCheckMoveRadius call).
-    struct CfObjectMove6B4View {
-        u8 _pad[0x6B4];         // 0x00-0x6B3
-        u32 field_6B4;          // 0x6B4
-    };
     // View of the scene object Scn_FindCamItem returns: its +0x10C position
     // vector is read by CfObjectMove_testMoveProximity (the ColiCheckMoveRadius target).
     struct CfResScene10C {
@@ -729,28 +673,11 @@ namespace cf {
     // View of the CfObjectModel +0xB4/+0xB8 words (CfObject_UnkVirtualFunc4
     // forwards them to the vtable +0x1AC slot; CfObjectModel declares the
     // range as opaque padding).
-    struct CfObjectMoveB4View {
-        u8 _pad[0xB4];          // 0x00-0xB3
-        u32 field_B4;           // 0xB4
-        u32 field_B8;           // 0xB8
-    };
     // View of the CfObjectModel +0x94/+0x9C words (CfObjectMove_initAnimTarget forwards them
     // to the CActParamAnim helpers; CfObjectModel declares both opaque).
-    struct CfObjectMove94View {
-        u8 _pad[0x94];          // 0x00-0x93
-        u32 field_94;           // 0x94
-        u8 _pad98[0x9C - 0x98]; // 0x98-0x9B
-        u32 field_9C;           // 0x9C
-    };
     // View of the CfObjectMove +0x54 diff-vector area (CfObjectMove_refreshPosition /
     // CfObjectMove_resetMoveTarget store a position difference there as integer words;
     // CfObjectModel declares 0x54 as CfObjectSub54).
-    struct CfObjectMove54View {
-        u8 _pad[0x54];          // 0x00-0x53
-        u32 field_54;           // 0x54
-        u32 field_58;           // 0x58
-        u32 field_5C;           // 0x5C
-    };
     // View of the getEffOwner result's +0x45CA u16 (CfObjectMove_resetMoveTarget tests its
     // bit 0).
     struct CfObjectMoveAD86View {
@@ -760,22 +687,6 @@ namespace cf {
     // Views of the +0x98 sub-object's +0x7A0/+0x7EC words and the object behind
     // +0x7EC (CfObjectMove_initAnimTarget clears a bit at +0x7A0, writes a byte at +0x2A of
     // the +0x7EC target and calls its vtable +0x1C).
-    struct CfObjectMoveSub98View7A0 {
-        u8 _pad[0x7A0];         // 0x00-0x79F
-        u32 field_7A0;          // 0x7A0
-    };
-    struct CfObjectMoveSub98View7EC {
-        u8 _pad[0x7EC];         // 0x00-0x7EB
-        void* field_7EC;        // 0x7EC
-    };
-    struct CfObjectMoveSub98View31C {
-        u8 _pad[0x31C];         // 0x00-0x31B
-        u8 field_31C;           // 0x31C
-    };
-    struct CfObjectMove7ECView {
-        u8 _pad[0x2A];          // 0x00-0x29
-        u8 field_2A;            // 0x2A
-    };
     // +0xB0 sub-object: cf::CfResObjImpl (vptr at +0x10).
     // getCameraDataBlock result: cf::CfCam::cfCam_loadUnk164 (+0x60).
     // +0x7EC target: CActParam7ECTarget::func08 (u32, float).

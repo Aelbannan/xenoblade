@@ -1,6 +1,7 @@
 // Decomp of kyoshin/menu/CMenuKizunaTalkList.
 // Kizuna talk list screen process (CProcess + IScnRender MI).
 
+#include "kyoshin/cf/CfBdat.hpp"
 #include <nw4r/lyt/lyt_drawInfo.h>
 #include "kyoshin/menu/CMenuKizunaTalkList.hpp"
 #include "kyoshin/CMainMenu.hpp" // CMainMenu_GetInstancePtr
@@ -15,12 +16,11 @@
 #include "monolib/work/CWorkThreadSystem.hpp"
 
 #include <revolution/GX.h>
-#include "kyoshin/CKizunaTalkListImports.hpp"
-#include "kyoshin/CTitleAHelp.hpp"
+
 #include "kyoshin/CTitleAHelpImports.hpp"
 #include "kyoshin/code_80135FDC_State.hpp"
 
-// CfGameManager.hpp cannot be included here: it declares lbl_eu_80664090 as
+// CfGameManager.hpp cannot be included here: it declares ::cf::CfBdat::spBtlPcListFileData as
 // void* while CKizunaTalkList.hpp (via our header) declares it u8*. The pad
 // accessors are declared member-for-member on cf::CfGameManager in our header
 // instead.

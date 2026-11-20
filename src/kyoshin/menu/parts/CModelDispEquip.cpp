@@ -66,10 +66,10 @@ CModelDispEquip::CModelDispEquip(u32 somePtr, s32 equipSlot) {
     // clrlslwi r0,r6,24,2) with a rolled mtctr/bdnz loop body.
     for (u8 i = 0; i < 2; i++) {
         tail->animModelPtrs[i] = 0;
-        ((CActParamHolderTail*)tail)->animPtrs[i] = 0;
+        tail->animPtrs[i] = 0;
     }
     for (u8 i = 0; i < 8; i++) {
-        ((CActParamHolderTail*)tail)->equipPtrs[i] = 0;
+        tail->equipPtrs[i] = 0;
     }
     // Retail re-inits a stack temp per slot and copies it field-by-field
     // (lwz/stw x2 + lbz/stb), not as one struct assignment.
@@ -261,7 +261,7 @@ void ModelDispEquip_StepFadeOut(CModelDispEquip* self) {
         // coloring lands it in r4 with the index in r5 (retail allocation).
         CModelDispAnimColor* p;
         for (u8 i = 0; i < 2; i++) {
-            p = (CModelDispAnimColor*)((CActParamHolderTail*)holder)->animPtrs[i];
+            p = (CModelDispAnimColor*)holder->animPtrs[i];
             if (p != 0)
                 *(V4*)&p->field_0x40 = *(const V4*)tmp;
         }
@@ -304,7 +304,7 @@ extern "C" void ModelDispEquip_StepFadeIn(CModelDispEquip* self) {
     struct V4 { u32 w[4]; };
     CModelDispAnimColor* p;
     for (u8 i = 0; i < 2; i++) {
-        p = (CModelDispAnimColor*)((CActParamHolderTail*)holder)->animPtrs[i];
+        p = (CModelDispAnimColor*)holder->animPtrs[i];
         if (p != 0)
             *(V4*)&p->field_0x40 = *(const V4*)tmp;
     }
@@ -324,15 +324,15 @@ extern "C" void ModelDispEquip_TeardownHolder(CModelDispEquip* self, CActParamHo
     if (holder->field_0x00 == 0)
         return;
     for (u8 i = 0; i < 2; i++) {
-        CModelDispEffectView* e = reinterpret_cast<CModelDispEffectView*>(holder->animPtrs[i]);
+        CSchedule* e = reinterpret_cast<CSchedule*>(holder->animPtrs[i]);
         if (e != 0) {
             // Retail shape: cmplwi/mr-default/beq/addi - an if-update, not a
             // ternary (ternary reorders the mr past the branch).
-            CModelDispEffectView* parent = reinterpret_cast<CModelDispEffectView*>(self);
+            CScheduleChild* parent = reinterpret_cast<CScheduleChild*>(self);
             if (self != 0)
-                parent = reinterpret_cast<CModelDispEffectView*>(reinterpret_cast<u8*>(self) + 8);
+                parent = reinterpret_cast<CScheduleChild*>(reinterpret_cast<u8*>(self) + 8);
             schedDetachChildSlot(e, parent);
-            schedClearFlag15Update(reinterpret_cast<CModelDispEffectView*>(holder->animPtrs[i]));
+            schedClearFlag15Update(reinterpret_cast<CSchedule*>(holder->animPtrs[i]));
             holder->animPtrs[i] = 0;
         }
         CScnItemModel* m = reinterpret_cast<CScnItemModel*>(holder->animModelPtrs[i]);
@@ -423,10 +423,10 @@ extern "C" void ModelDispEquip_BuildPartyModel(CModelDispEquip* self) {
             }
             if (holder->field_0x00 == 0 && ready != 0) {
                 // ---- build the display model (retail statement order) ----
-                ((CActParamHolderTail*)holder)->currentModelPtr = (u32)actor;
+                holder->currentModelPtr = (u32)actor;
                 holder->field_0x00 = Scn_SetupAnim(self->somePtr, m, -1, 1);
                 reinterpret_cast<CScnItemModel*>(holder->field_0x00)->vfunc64(0);
-                ((CActParamHolderTail*)holder)->equipPtrs[1] =
+                holder->equipPtrs[1] =
 ((u32)reinterpret_cast<cf::CfObject*>(&actor->move)->CfObject_getSlotBits(1) >> 10) & 0x3FF;
                 s16 be = CfObjectMove_getSubB0FieldA(reinterpret_cast<cf::CfObjectMove*>(&actor->move));
                 CModelDispParamSlot* param = CfRes_getPcGridEntry(be, 0);
@@ -558,14 +558,14 @@ extern "C" void ModelDispEquip_BuildEquipModel(CModelDispEquip* self) {
 
     CModelDispCharRecord* rec = (CModelDispCharRecord*)CtrlObjectParam_GetCharEntry(charId);
     self->weaponId = rec->weaponId;
-    ((CActParamHolderTail*)holder)->equipPtrs[1] = bdatPcPartsRes(charId, (s16)(u16)rec->field_0x0E, 1, 0);
-    ((CActParamHolderTail*)holder)->equipPtrs[2] = bdatPcPartsRes(charId, (s16)(u16)rec->field_0x10, 2, 0);
-    ((CActParamHolderTail*)holder)->equipPtrs[3] = bdatPcPartsRes(charId, (s16)(u16)rec->field_0x12, 3, 0);
-    ((CActParamHolderTail*)holder)->equipPtrs[4] = bdatPcPartsRes(charId, (s16)(u16)rec->field_0x14, 4, 0);
-    ((CActParamHolderTail*)holder)->equipPtrs[5] = bdatPcPartsRes(charId, (s16)(u16)rec->field_0x16, 5, 0);
+    holder->equipPtrs[1] = bdatPcPartsRes(charId, (s16)(u16)rec->field_0x0E, 1, 0);
+    holder->equipPtrs[2] = bdatPcPartsRes(charId, (s16)(u16)rec->field_0x10, 2, 0);
+    holder->equipPtrs[3] = bdatPcPartsRes(charId, (s16)(u16)rec->field_0x12, 3, 0);
+    holder->equipPtrs[4] = bdatPcPartsRes(charId, (s16)(u16)rec->field_0x14, 4, 0);
+    holder->equipPtrs[5] = bdatPcPartsRes(charId, (s16)(u16)rec->field_0x16, 5, 0);
 
     u32 v6 = bdatResByIndex(self->weaponId & 0xFFFF);
-    ((CActParamHolderTail*)holder)->equipPtrs[6] = v6;
+    holder->equipPtrs[6] = v6;
     s32 allLoaded = 1;
     // Shared equip files 1-3 (slots 6-8): only start a load when the slot has
     // neither data nor an in-flight handle. The "4/0xC/0xD + bits 20-26 == 0x2B"
@@ -588,7 +588,7 @@ extern "C" void ModelDispEquip_BuildEquipModel(CModelDispEquip* self) {
     }
     if (self->fileSlots[7].data == 0) {
         if (self->fileSlots[7].handle == 0) {
-            u32 ex2 = (((CActParamHolderTail*)holder)->equipPtrs[6] >> 20) & 0x7F;
+            u32 ex2 = (holder->equipPtrs[6] >> 20) & 0x7F;
             if ((charId == 4 || (u16)(charId + 0x10000 - 0xC) <= 1) && ex2 == 0x2B) {
                 sprintf(buf2, &lbl_eu_80507FF8[0x11], charId, ex2, 0x14);
             } else {
@@ -611,7 +611,7 @@ extern "C" void ModelDispEquip_BuildEquipModel(CModelDispEquip* self) {
                 buf3[0xF] = '0';
                 buf3[0x10] = '1';
             }
-            u32 ex3 = (((CActParamHolderTail*)holder)->equipPtrs[6] >> 20) & 0x7F;
+            u32 ex3 = (holder->equipPtrs[6] >> 20) & 0x7F;
             if ((charId == 4 || (u16)(charId + 0x10000 - 0xC) <= 1) && ex3 == 0x2B) {
                 buf3[0xE] = '3';
             }
@@ -636,7 +636,7 @@ extern "C" void ModelDispEquip_BuildEquipModel(CModelDispEquip* self) {
     // zero stores); note MWCC folds any spelling of these constants into
     // identical code.
     for (u32 i = 1; i <= 5; i++) {
-        u32 modelId = ((CActParamHolderTail*)holder)->equipPtrs[i];
+        u32 modelId = holder->equipPtrs[i];
         if (modelId == 0) continue;
         buf.mString[0] = '\0';
         buf.mLength = 0;
@@ -654,7 +654,7 @@ extern "C" void ModelDispEquip_BuildEquipModel(CModelDispEquip* self) {
             setHandleFlag1__11CDeviceFileFP11CFileHandle(fh);
         } else {
             fs->flag = 1;
-            fs->data = (u8*)CfRes_tryResolveToken(((CActParamHolderTail*)holder)->equipPtrs[i], &outType);
+            fs->data = (u8*)CfRes_tryResolveToken(holder->equipPtrs[i], &outType);
             if (outType == 0xFFFFFFFF) {
                 syncFieldData__Q22cf13CfGameManagerFv(charId, 0);
             }
@@ -1090,34 +1090,34 @@ extern "C" void ModelDispEquip_HandleSlotCmd(CModelDispEquip* self, u32 unused,
             val = atoi(&cmd->field_0x1C);
         for (u8 i = 0; i < 2; i++) {
             if (holder->animModelPtrs[i] != 0 &&
-                ((CActParamHolderTail*)holder)->animPtrs[i] == 0) {
-                CModelDispEffectView* effect =
+                holder->animPtrs[i] == 0) {
+                CSchedule* effect =
                     EffRoot_AddSchedReq(lbl_eu_8065FC18, self->modelData, self->somePtr,
                                   val - 1, 1, 0);
-                ((CActParamHolderTail*)holder)->animPtrs[i] = effect;
+                holder->animPtrs[i] = effect;
                 if (effect != 0) {
                     // Copy-then-adjust shape: retail passes self itself when
                     // null (mr r4,r26; beq skips the +8).
-                    CModelDispEffectView* parent =
-                        reinterpret_cast<CModelDispEffectView*>(self);
+                    CScheduleChild* parent =
+                        reinterpret_cast<CScheduleChild*>(self);
                     if (parent != 0)
-                        parent = reinterpret_cast<CModelDispEffectView*>(
+                        parent = reinterpret_cast<CScheduleChild*>(
                             reinterpret_cast<u8*>(parent) + 8);
                     schedAttachChildSlot(effect, parent);
                     void* chain =
                         reinterpret_cast<void*>(reinterpret_cast<CScnItemModel*>(holder->animModelPtrs[i])->vfuncA8());
-                    reinterpret_cast<CModelDispEffectView*>(
-                        ((CActParamHolderTail*)holder)->animPtrs[i])->field_0x14 =
+                    reinterpret_cast<CSchedule*>(
+                        holder->animPtrs[i])->field_0x14 =
                         reinterpret_cast<u32>(chain);
                 }
             }
         }
     } else if (cmd->field_0x0A == 3) {
         // effect declared before the index for retail scratch coloring.
-        CModelDispEffectView* effect;
+        CSchedule* effect;
         for (u8 i = 0; i < 2; i++) {
             effect =
-                (CModelDispEffectView*)((CActParamHolderTail*)holder)->animPtrs[i];
+                (CSchedule*)holder->animPtrs[i];
             if (effect != 0)
                 effect->field_0x59 = 1;
         }
@@ -1136,10 +1136,9 @@ extern "C" void ModelDispEquip_ClearAnimPtr(CModelDispEquip* self, u32 val) {
     // Holder-base addressing (addi r6,r3,16 + 0xff4(rX) like retail) plus
     // -O4,s keeps the 2-iteration loop rolled as the mtlr/bdnz countdown.
     CActParamHolder* holder = &self->actParamHolder;
-    CActParamHolderTail* tail = (CActParamHolderTail*)holder;
     for (u8 i = 0; i < 2; i++) {
-        if (tail->animPtrs[i] == (void*)val) {
-            tail->animPtrs[i] = 0;
+        if (holder->animPtrs[i] == (void*)val) {
+            holder->animPtrs[i] = 0;
         }
     }
 }

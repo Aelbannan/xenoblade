@@ -16,14 +16,8 @@ struct UnkArtsSelectRef {
     void* unkB0; // 0xB0
 };
 
-// Element of unk200[]; flag byte at +0xBB (Pane::mFlag / bit0).
-struct UnkArtsSelectEntry {
-    u8 unk00[0xBB];
-    u8 unkBB; // 0xBB - bit0 gates per-slot draw in cbRenderBefore
-};
-
 // The arts-param object returned by getArtsParamAtCnt (retail cf::CAttackParam,
-// size 0x88). MWCC lays the vptr at +0x84 because the class derives from a
+// size 0x88). MWCC lays the vptr at +0x84
 // non-polymorphic 0x84-byte base; the vtable's slot +0x14 is the gauge getMax
 // (retail CAttackParam_getArtsGaugeMax, returns f32). Declared virtual index 3
 // lands at vtable offset (3+2)*4 = 0x14 (2 hidden slots: RTTI + offset-to-top).
@@ -121,10 +115,10 @@ public:
     nw4r::lyt::AnimTransform* unk194[9]; // 0x194
     nw4r::lyt::Layout* unk1B8[9]; // 0x1B8 - cbRenderBefore loop keyed by unk30C bits
     nw4r::lyt::AnimTransform* unk1DC[9]; // 0x1DC
-    UnkArtsSelectEntry* unk200[9]; // 0x200 - indexed (i+1)%9 in cbRenderBefore
-    UnkArtsSelectEntry* unk224[9]; // 0x224
-    UnkArtsSelectEntry* unk248[9]; // 0x248
-    UnkArtsSelectEntry* unk26C[7]; // 0x26C..0x284 - visibility flag group
+    nw4r::lyt::Pane* unk200[9]; // 0x200 - indexed (i+1)%9 in cbRenderBefore
+    nw4r::lyt::Pane* unk224[9]; // 0x224
+    nw4r::lyt::Pane* unk248[9]; // 0x248
+    nw4r::lyt::Pane* unk26C[7]; // 0x26C..0x284 - visibility flag group
     u8 unk288; // 0x288
     u8 unk289[8]; // 0x289..0x290 - ctor clears per-slot bytes
     u8 unk291; // 0x291

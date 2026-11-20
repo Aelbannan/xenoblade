@@ -1,7 +1,7 @@
 // Auto-scaffolded catalog TU for monolib/src/scn/CScnItemPool
 #include <harness_catalog.h>
 #include "monolib/util/MemManager.hpp"
-#include "monolib/src/scn/CScnItemPool.hpp"
+#include "monolib/scn/CScnItemPool.hpp"
 #include "monolib/data_vtables.hpp"
 
 class CScn;

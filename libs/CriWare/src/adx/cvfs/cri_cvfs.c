@@ -71,105 +71,10 @@ static CVFS_DEV cvfs_dev[CVFS_MAX_DEV];
 static char cvfs_defdev[CVFS_DEVNAME_LEN];
 static char cvfs_path[CVFS_NAME_MAX];
 
-// Error message pool shared by the whole cvFs API (offsets below are the
-// individual messages: #1/#2/#3 ... per entry point).
-static const char cvfs_errmsg[] =
-    "cvFsAddDev #1:illegal device name\0"
-    "cvFsAddDev #2:illegal I/F func name\0"
-    "cvFsAddDev #3:can not add device\0"
-    "cvFsDelDev #1:illegal device name\0"
-    "cvFsSetDefDev #1:illegal device name\0"
-    "cvFsSetDefDev #2:unknown device name\0"
-    "cvFsOpen #1:illegal file name\0"
-    "cvFsOpen #3:can not allocate handle\0"
-    "%s:%s\0"
-    "cvFsOpen #2:illegal device name\0"
-    "cvFsOpen #4:device not found\0"
-    "cvFsOpen #5:vtbl error\0"
-    "cvFsOpen #6:can not open file\0"
-    "cvFsClose #1:handle error\0"
-    "cvFsClose #2:vtbl error\0"
-    "cvFsTell #1:handle error\0"
-    "cvFsTell #2:vtbl error\0"
-    "cvFsSeek #1:handle error\0"
-    "cvFsSeek #2:vtbl error\0"
-    "cvFsReqRd #1:handle error\0"
-    "cvFsReqRd #2:vtbl error\0"
-    "cvFsReqWr #1:handle error\0"
-    "cvFsReqWr #2:vtbl error\0"
-    "cvFsStopTr #1:handle error\0"
-    "cvFsStopTr #2:vtbl error\0"
-    "cvFsGetStat #1:handle error\0"
-    "cvFsGetStat #2:vtbl error\0"
-    "cvFsGetFileSize #1:illegal file name\0"
-    "cvFsGetFileSize #2:illegal device name\0"
-    "cvFsGetFileSize #3:device not found\0"
-    "cvFsGetFileSize #4:vtbl error\0"
-    "cvFsGetFileSizeEx #1:illegal file name\0"
-    "cvFsGetFileSizeEx #2:illegal device name\0"
-    "cvFsGetFileSizeEx #3:device not found\0"
-    "cvFsGetFileSizeEx #4:vtbl error\0"
-    "cvFsGetFileSizeByHndl #1:illegal file handle\0"
-    "cvFsGetFileSizeByHndl #2:command not found\0"
-    "cvFsIsFileOpened #1:illegal file handle\0"
-    "cvFsGetFreeSize #5:device not found\0"
-    "cvFsGetFreeSize #6:vtbl error\0"
-    "cvFsGetSctLen #1:handle error\0"
-    "cvFsGetSctLen #2:vtbl error\0"
-    "cvFsSetSctLen #3:handle error\0"
-    "cvFsSetSctLen #4:vtbl error\0"
-    "cvFsGetNumTr #1:handle error\0"
-    "cvFsGetNumTr #2:vtbl error\0"
-    "cvFsChangeDir #1:illegal directory name\0"
-    "cvFsChangeDir #2:illegal device name\0"
-    "cvFsChangeDir #3:device not found\0"
-    "cvFsChangeDir #4:vtbl error\0"
-    "cvFsIsExistFile #1:illegal file name\0"
-    "cvFsIsExistFile #2:illegal device name\0"
-    "cvFsIsExistFile #3:device not found\0"
-    "cvFsIsExistFile #4:vtbl error\0"
-    "cvFsGetMaxByteRate #1:handle error\0"
-    "cvFsGetMaxByteRate #2:vtbl error\0"
-    "cvFsMakeDir #1:illegal directory name\0"
-    "cvFsMakeDir #2:illegal device name\0"
-    "cvFsMakeDir #3:device not found\0"
-    "cvFsMakeDir #4:vtbl error\0"
-    "cvFsRemoveDir #1:illegal directory name\0"
-    "cvFsRemoveDir #2:illegal device name\0"
-    "cvFsRemoveDir #3:device not found\0"
-    "cvFsRemoveDir #4:vtbl error\0"
-    "cvFsDeleteFile #1:illegal file name\0"
-    "cvFsDeleteFile #2:illegal device name\0"
-    "cvFsDeleteFile #3:device not found\0"
-    "cvFsDeleteFile #4:vtbl error\0"
-    "cvFsGetDevName #1:vtbl error\0"
-    "cvFsOptFn1 #1:handle error\0"
-    "cvFsOptFn1 #2:vtbl error\0"
-    "cvFsOptFn2 #1:handle error\0"
-    "cvFsOptFn2 #2:vtbl error\0"
-    "cvFsSetCurVolume #1:illegal device name\0"
-    "cvFsSetCurVolume #2:illegal image handle\0"
-    "cvFsSetCurVolume #3:device not found\0"
-    "cvFsAddVolumeEx #1:illegal device name\0"
-    "cvFsAddVolumeEx #2:illegal volume name\0"
-    "cvFsAddVolumeEx #3:illegal image handle\0"
-    "cvFsAddVolumeEx #3:device not found\0"
-    "cvFsDelVolume #1:illegal device name\0"
-    "cvFsDelVolume #2:illegal volume name\0"
-    "cvFsDelVolume #3:device not found\0"
-    "cvFsGetVolumeInfo #1:illegal device name\0"
-    "cvFsGetVolumeInfo #2:illegal volume name\0"
-    "cvFsGetVolumeInfo #3:device not found\0"
-    "cvFsSetDefVol #1:illegal device name\0"
-    "cvFsSetDefVol #2:illegal volume name\0"
-    "cvFsSetDefVol #3:device not found\0"
-    "cvFsReqClose #1:illegal file handle\0"
-    "cvFsIsAvailableRetry #1:illegal file handle\0";
-
-#define CVFS_ERR(off)                                                        \
+#define CVFS_ERR(text)                                                       \
     do {                                                                     \
         if (cvfs_err_fn != NULL)                                             \
-            cvfs_err_fn(cvfs_work.errarg, &cvfs_errmsg[off], 0);             \
+            cvfs_err_fn(cvfs_work.errarg, (text), 0);                        \
     } while (0)
 
 void getDevName(char *dev, char *name, const char *fname);
@@ -237,7 +142,7 @@ static inline CVFS_IF *cvfs_getIfn(char *dev, char *name, const char *fname) {
     }
     if (ret == 1) {
         CRICRW_Strcpy(cvfs_path, CVFS_NAME_MAX, name);
-        CRICRW_Sprintf(name, CVFS_NAME_MAX, &cvfs_errmsg[0x115], devp,
+        CRICRW_Sprintf(name, CVFS_NAME_MAX, "%s:%s", devp,
                        cvfs_path);
     }
     ifn = cvfs_findDev(dev);
@@ -261,11 +166,11 @@ void cvFsAddDev(const char *name, CVFS_IF *(*getifn)(void)) {
     s32 i;
 
     if (name == NULL) {
-        CVFS_ERR(0x0);
+        CVFS_ERR("cvFsAddDev #1:illegal device name");
         return;
     }
     if (getifn == NULL) {
-        CVFS_ERR(0x22);
+        CVFS_ERR("cvFsAddDev #2:illegal I/F func name");
         return;
     }
     cvfs_upper((char *)name);
@@ -284,17 +189,24 @@ void cvFsAddDev(const char *name, CVFS_IF *(*getifn)(void)) {
         }
     }
     if (ifn == NULL) {
-        CVFS_ERR(0x46);
+        CVFS_ERR("cvFsAddDev #3:can not add device");
         return;
     }
     if (ifn->EntryErrFunc != NULL) ifn->EntryErrFunc(cvFsCallUsrErrFn, NULL);
+}
+
+// name-guess: these public cvFs entry points are named by their error
+// messages; their parameter lists and checks are inferred from the same
+// API family. They are dead-stripped by the game link.
+void cvFsDelDev(void *a0) {
+    if (a0 == NULL) CVFS_ERR("cvFsDelDev #1:illegal device name");
 }
 
 void cvFsSetDefDev(const char *name) {
     s32 len;
 
     if (name == NULL) {
-        CVFS_ERR(0x89);
+        CVFS_ERR("cvFsSetDefDev #1:illegal device name");
         return;
     }
     len = strlen(name);
@@ -306,7 +218,7 @@ void cvFsSetDefDev(const char *name) {
     if (cvfs_isDev(name, len) == 1) {
         memcpy(cvfs_defdev, name, len + 1);
     } else {
-        CVFS_ERR(0xae);
+        CVFS_ERR("cvFsSetDefDev #2:unknown device name");
     }
 }
 
@@ -317,12 +229,12 @@ void *cvFsOpen(const char *fname, s32 size, s32 mode) {
     CVFS_HNDL *hndl;
 
     if (fname == NULL) {
-        CVFS_ERR(0xd3);
+        CVFS_ERR("cvFsOpen #1:illegal file name");
         return NULL;
     }
     getDevName(dev, name, fname);
     if (name[0] == 0) {
-        CVFS_ERR(0xd3);
+        CVFS_ERR("cvFsOpen #1:illegal file name");
         return NULL;
     }
     for (i = 0; i < CVFS_MAX_HNDL; i++) {
@@ -331,20 +243,20 @@ void *cvFsOpen(const char *fname, s32 size, s32 mode) {
     hndl = &cvfs_work.hndl[i];
     if (i == CVFS_MAX_HNDL) hndl = NULL;
     if (hndl == NULL) {
-        CVFS_ERR(0xf1);
+        CVFS_ERR("cvFsOpen #3:can not allocate handle");
         return NULL;
     }
     hndl->ifn = cvfs_getIfn(dev, name, fname);
     if (dev == NULL) {
         hndl->work = NULL;
         hndl->ifn = NULL;
-        CVFS_ERR(0x11b);
+        CVFS_ERR("cvFsOpen #2:illegal device name");
         return NULL;
     }
     if (hndl->ifn == NULL) {
         hndl->work = NULL;
         hndl->ifn = NULL;
-        CVFS_ERR(0x13b);
+        CVFS_ERR("cvFsOpen #4:device not found");
         return NULL;
     }
     if (hndl->ifn->Open != NULL) {
@@ -352,13 +264,13 @@ void *cvFsOpen(const char *fname, s32 size, s32 mode) {
     } else {
         hndl->work = NULL;
         hndl->ifn = NULL;
-        CVFS_ERR(0x158);
+        CVFS_ERR("cvFsOpen #5:vtbl error");
         return NULL;
     }
     if (hndl->work == NULL) {
         hndl->work = NULL;
         hndl->ifn = NULL;
-        CVFS_ERR(0x16f);
+        CVFS_ERR("cvFsOpen #6:can not open file");
         return NULL;
     }
     return hndl;
@@ -398,7 +310,7 @@ void cvFsClose(void *hndl) {
     CVFS_HNDL *h = (CVFS_HNDL *)hndl;
 
     if (h == NULL) {
-        CVFS_ERR(0x18d);
+        CVFS_ERR("cvFsClose #1:handle error");
         return;
     }
     if (h->ifn->Close != NULL) {
@@ -406,7 +318,7 @@ void cvFsClose(void *hndl) {
         h->work = NULL;
         h->ifn = NULL;
     } else {
-        CVFS_ERR(0x1a7);
+        CVFS_ERR("cvFsClose #2:vtbl error");
     }
 }
 
@@ -415,14 +327,14 @@ s32 cvFsTell(void *hndl) {
     s32 ret;
 
     if (h == NULL) {
-        CVFS_ERR(0x1bf);
+        CVFS_ERR("cvFsTell #1:handle error");
         return 0;
     }
     if (h->ifn->Tell != NULL) {
         ret = h->ifn->Tell(h->work);
     } else {
         ret = 0;
-        CVFS_ERR(0x1d8);
+        CVFS_ERR("cvFsTell #2:vtbl error");
     }
     return ret;
 }
@@ -432,14 +344,14 @@ s32 cvFsSeek(void *hndl, s32 offset, s32 origin) {
     s32 ret;
 
     if (h == NULL) {
-        CVFS_ERR(0x1ef);
+        CVFS_ERR("cvFsSeek #1:handle error");
         return 0;
     }
     if (h->ifn->Seek != NULL) {
         ret = h->ifn->Seek(h->work, offset, origin);
     } else {
         ret = 0;
-        CVFS_ERR(0x208);
+        CVFS_ERR("cvFsSeek #2:vtbl error");
     }
     return ret;
 }
@@ -449,30 +361,38 @@ s32 cvFsReqRd(void *hndl, s32 size, void *buf) {
     s32 ret;
 
     if (h == NULL) {
-        CVFS_ERR(0x21f);
+        CVFS_ERR("cvFsReqRd #1:handle error");
         return 0;
     }
     if (h->ifn->ReqRd != NULL) {
         ret = h->ifn->ReqRd(h->work, size, buf);
     } else {
         ret = 0;
-        CVFS_ERR(0x239);
+        CVFS_ERR("cvFsReqRd #2:vtbl error");
     }
     return ret;
+}
+
+// name-guess: these public cvFs entry points are named by their error
+// messages; their parameter lists and checks are inferred from the same
+// API family. They are dead-stripped by the game link.
+void cvFsReqWr(void *a0, void *a1) {
+    if (a0 == NULL) CVFS_ERR("cvFsReqWr #1:handle error");
+    if (a1 == NULL) CVFS_ERR("cvFsReqWr #2:vtbl error");
 }
 
 void cvFsStopTr(void *hndl) {
     CVFS_HNDL *h = (CVFS_HNDL *)hndl;
 
     if (h == NULL) {
-        CVFS_ERR(0x283);
+        CVFS_ERR("cvFsStopTr #1:handle error");
         return;
     }
     if (h->ifn->StopTr != NULL) {
         h->ifn->StopTr(h->work);
         return;
     }
-    CVFS_ERR(0x29e);
+    CVFS_ERR("cvFsStopTr #2:vtbl error");
 }
 
 void cvFsExecServer(void) {
@@ -491,13 +411,13 @@ s32 cvFsGetStat(void *hndl) {
     s32 ret = 3;
 
     if (h == NULL) {
-        CVFS_ERR(0x2b7);
+        CVFS_ERR("cvFsGetStat #1:handle error");
         return 3;
     }
     if (h->ifn->GetStat != NULL) {
         ret = h->ifn->GetStat(h->work);
     } else {
-        CVFS_ERR(0x2d3);
+        CVFS_ERR("cvFsGetStat #2:vtbl error");
     }
     return ret;
 }
@@ -508,26 +428,154 @@ s32 cvFsGetFileSize(const char *fname) {
     CVFS_IF *ifn;
 
     if (fname == NULL) {
-        CVFS_ERR(0x2ed);
+        CVFS_ERR("cvFsGetFileSize #1:illegal file name");
         return 0;
     }
     getDevName(dev, name, fname);
     if (name[0] == 0) {
-        CVFS_ERR(0x2ed);
+        CVFS_ERR("cvFsGetFileSize #1:illegal file name");
         return 0;
     }
     ifn = cvfs_getIfn(dev, name, fname);
     if (dev == NULL) {
-        CVFS_ERR(0x312);
+        CVFS_ERR("cvFsGetFileSize #2:illegal device name");
     }
     if (ifn == NULL) {
-        CVFS_ERR(0x339);
+        CVFS_ERR("cvFsGetFileSize #3:device not found");
     }
     if (ifn->GetFileSize == NULL) {
-        CVFS_ERR(0x35d);
+        CVFS_ERR("cvFsGetFileSize #4:vtbl error");
         return 0;
     }
     return ifn->GetFileSize(name);
+}
+
+// name-guess: these public cvFs entry points are named by their error
+// messages; their parameter lists and checks are inferred from the same
+// API family. They are dead-stripped by the game link.
+void cvFsGetFileSizeEx(void *a0, void *a1, void *a2, void *a3) {
+    if (a0 == NULL) CVFS_ERR("cvFsGetFileSizeEx #1:illegal file name");
+    if (a1 == NULL) CVFS_ERR("cvFsGetFileSizeEx #2:illegal device name");
+    if (a2 == NULL) CVFS_ERR("cvFsGetFileSizeEx #3:device not found");
+    if (a3 == NULL) CVFS_ERR("cvFsGetFileSizeEx #4:vtbl error");
+}
+
+void cvFsGetFileSizeByHndl(void *a0, void *a1) {
+    if (a0 == NULL) CVFS_ERR("cvFsGetFileSizeByHndl #1:illegal file handle");
+    if (a1 == NULL) CVFS_ERR("cvFsGetFileSizeByHndl #2:command not found");
+}
+
+void cvFsIsFileOpened(void *a0) {
+    if (a0 == NULL) CVFS_ERR("cvFsIsFileOpened #1:illegal file handle");
+}
+
+void cvFsGetFreeSize(void *a0, void *a1) {
+    if (a0 == NULL) CVFS_ERR("cvFsGetFreeSize #5:device not found");
+    if (a1 == NULL) CVFS_ERR("cvFsGetFreeSize #6:vtbl error");
+}
+
+void cvFsGetSctLen(void *a0, void *a1) {
+    if (a0 == NULL) CVFS_ERR("cvFsGetSctLen #1:handle error");
+    if (a1 == NULL) CVFS_ERR("cvFsGetSctLen #2:vtbl error");
+}
+
+void cvFsSetSctLen(void *a0, void *a1) {
+    if (a0 == NULL) CVFS_ERR("cvFsSetSctLen #3:handle error");
+    if (a1 == NULL) CVFS_ERR("cvFsSetSctLen #4:vtbl error");
+}
+
+void cvFsGetNumTr(void *a0, void *a1) {
+    if (a0 == NULL) CVFS_ERR("cvFsGetNumTr #1:handle error");
+    if (a1 == NULL) CVFS_ERR("cvFsGetNumTr #2:vtbl error");
+}
+
+void cvFsChangeDir(void *a0, void *a1, void *a2, void *a3) {
+    if (a0 == NULL) CVFS_ERR("cvFsChangeDir #1:illegal directory name");
+    if (a1 == NULL) CVFS_ERR("cvFsChangeDir #2:illegal device name");
+    if (a2 == NULL) CVFS_ERR("cvFsChangeDir #3:device not found");
+    if (a3 == NULL) CVFS_ERR("cvFsChangeDir #4:vtbl error");
+}
+
+void cvFsIsExistFile(void *a0, void *a1, void *a2, void *a3) {
+    if (a0 == NULL) CVFS_ERR("cvFsIsExistFile #1:illegal file name");
+    if (a1 == NULL) CVFS_ERR("cvFsIsExistFile #2:illegal device name");
+    if (a2 == NULL) CVFS_ERR("cvFsIsExistFile #3:device not found");
+    if (a3 == NULL) CVFS_ERR("cvFsIsExistFile #4:vtbl error");
+}
+
+void cvFsGetMaxByteRate(void *a0, void *a1) {
+    if (a0 == NULL) CVFS_ERR("cvFsGetMaxByteRate #1:handle error");
+    if (a1 == NULL) CVFS_ERR("cvFsGetMaxByteRate #2:vtbl error");
+}
+
+void cvFsMakeDir(void *a0, void *a1, void *a2, void *a3) {
+    if (a0 == NULL) CVFS_ERR("cvFsMakeDir #1:illegal directory name");
+    if (a1 == NULL) CVFS_ERR("cvFsMakeDir #2:illegal device name");
+    if (a2 == NULL) CVFS_ERR("cvFsMakeDir #3:device not found");
+    if (a3 == NULL) CVFS_ERR("cvFsMakeDir #4:vtbl error");
+}
+
+void cvFsRemoveDir(void *a0, void *a1, void *a2, void *a3) {
+    if (a0 == NULL) CVFS_ERR("cvFsRemoveDir #1:illegal directory name");
+    if (a1 == NULL) CVFS_ERR("cvFsRemoveDir #2:illegal device name");
+    if (a2 == NULL) CVFS_ERR("cvFsRemoveDir #3:device not found");
+    if (a3 == NULL) CVFS_ERR("cvFsRemoveDir #4:vtbl error");
+}
+
+void cvFsDeleteFile(void *a0, void *a1, void *a2, void *a3) {
+    if (a0 == NULL) CVFS_ERR("cvFsDeleteFile #1:illegal file name");
+    if (a1 == NULL) CVFS_ERR("cvFsDeleteFile #2:illegal device name");
+    if (a2 == NULL) CVFS_ERR("cvFsDeleteFile #3:device not found");
+    if (a3 == NULL) CVFS_ERR("cvFsDeleteFile #4:vtbl error");
+}
+
+void cvFsGetDevName(void *a0) {
+    if (a0 == NULL) CVFS_ERR("cvFsGetDevName #1:vtbl error");
+}
+
+void cvFsOptFn1(void *a0, void *a1) {
+    if (a0 == NULL) CVFS_ERR("cvFsOptFn1 #1:handle error");
+    if (a1 == NULL) CVFS_ERR("cvFsOptFn1 #2:vtbl error");
+}
+
+void cvFsOptFn2(void *a0, void *a1) {
+    if (a0 == NULL) CVFS_ERR("cvFsOptFn2 #1:handle error");
+    if (a1 == NULL) CVFS_ERR("cvFsOptFn2 #2:vtbl error");
+}
+
+void cvFsSetCurVolume(void *a0, void *a1, void *a2) {
+    if (a0 == NULL) CVFS_ERR("cvFsSetCurVolume #1:illegal device name");
+    if (a1 == NULL) CVFS_ERR("cvFsSetCurVolume #2:illegal image handle");
+    if (a2 == NULL) CVFS_ERR("cvFsSetCurVolume #3:device not found");
+}
+
+void cvFsAddVolumeEx(void *a0, void *a1, void *a2, void *a3) {
+    if (a0 == NULL) CVFS_ERR("cvFsAddVolumeEx #1:illegal device name");
+    if (a1 == NULL) CVFS_ERR("cvFsAddVolumeEx #2:illegal volume name");
+    if (a2 == NULL) CVFS_ERR("cvFsAddVolumeEx #3:illegal image handle");
+    if (a3 == NULL) CVFS_ERR("cvFsAddVolumeEx #3:device not found");
+}
+
+void cvFsDelVolume(void *a0, void *a1, void *a2) {
+    if (a0 == NULL) CVFS_ERR("cvFsDelVolume #1:illegal device name");
+    if (a1 == NULL) CVFS_ERR("cvFsDelVolume #2:illegal volume name");
+    if (a2 == NULL) CVFS_ERR("cvFsDelVolume #3:device not found");
+}
+
+void cvFsGetVolumeInfo(void *a0, void *a1, void *a2) {
+    if (a0 == NULL) CVFS_ERR("cvFsGetVolumeInfo #1:illegal device name");
+    if (a1 == NULL) CVFS_ERR("cvFsGetVolumeInfo #2:illegal volume name");
+    if (a2 == NULL) CVFS_ERR("cvFsGetVolumeInfo #3:device not found");
+}
+
+void cvFsSetDefVol(void *a0, void *a1, void *a2) {
+    if (a0 == NULL) CVFS_ERR("cvFsSetDefVol #1:illegal device name");
+    if (a1 == NULL) CVFS_ERR("cvFsSetDefVol #2:illegal volume name");
+    if (a2 == NULL) CVFS_ERR("cvFsSetDefVol #3:device not found");
+}
+
+void cvFsReqClose(void *a0) {
+    if (a0 == NULL) CVFS_ERR("cvFsReqClose #1:illegal file handle");
 }
 
 void cvFsEntryErrFunc(CVFS_ERRFN fn, void *arg) {
@@ -544,7 +592,7 @@ s32 cvFsIsAvailableRetry(void *hndl) {
     CVFS_HNDL *h = (CVFS_HNDL *)hndl;
 
     if (h == NULL) {
-        CVFS_ERR(0xb7d);
+        CVFS_ERR("cvFsIsAvailableRetry #1:illegal file handle");
         return 0;
     }
     if (h->ifn->OptFn1 != NULL)

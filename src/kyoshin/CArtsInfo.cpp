@@ -1,3 +1,4 @@
+#define IWORK_EVENT_INLINE_DTOR // ~CArtsInfo elides the empty base dtor (retail)
 // Auto-scaffolded catalog TU for kyoshin/CArtsInfo
 // Replace stubs with high-level C/C++ during decomp.
 
@@ -5,6 +6,7 @@
 // CfGameManager.hpp's import block repeats it with a void* shape; MWCC forbids
 // overloading an extern "C" function (10197), so hide the import-block copy.
 #define CItem_initItemImplInstances cfImport_CItem_initItemImplInstances
+#include "kyoshin/cf/CfBdat.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
 #undef CItem_initItemImplInstances
 #include "kyoshin/CArtsInfo.hpp"
@@ -25,14 +27,7 @@
 // Extern declarations for referenced symbols
 // Counter_TestBit is declared once in the owning header code_8025FB10.hpp.
 
-// String table base (rodata, accessed via sda21 relocation)
-extern char lbl_eu_8050B00C[];
 
-// Vtable symbol for CArtsInfo (array form: name decays to its address so the
-// ctor stores it directly like retail)
-extern void* lbl_eu_80536A88[];
-
-// Jump table for state machine dispatch (CArtsInfo_UpdateAnims)
 extern void* jumptable_eu_805369A0[];
 
 // Float constants in small data area
@@ -50,7 +45,6 @@ extern u32 sArtsChangeColorB;
 
 // Small data object (.sbss, addressed via @sda21): arts bdat file pointer.
 // void* (not u32): shared with kyoshin/cf/CItem.hpp (MWCC 10197).
-extern void* lbl_eu_806640F4;
 
 // Shared sdata2 int->float correction constants (2^52-family magics) are
 // declared in CArtsInfo.hpp; referenced by name so the conversion lfd's emit
@@ -112,74 +106,48 @@ u8 CArtsInfo::getField48() { return field_0x48; }
 
 u8 CArtsInfo::getField49() { return field_0x49; }
 
-// __ct__CArtsInfo - constructor
-// .text:0x0, size 0xAC
-// __ct__CArtsInfo - constructor. Retail is a C-linkage global taking `this`
-// (MWCC leaves __-prefixed globals unmangled); written free-function so the
-// UnkClass_8045F564 member is not auto-constructed twice.
-CArtsInfo* __ct__CArtsInfo(CArtsInfo* self) {
-    // Set vtable pointer
-    *(void**)self = lbl_eu_80536A88;
-
-    // Construct embedded UnkClass_8045F564 member
-    __ct__17UnkClass_8045F564Fv(&self->mMemRegion);
-
+// __ct__CArtsInfo - constructor .text:0x0, size 0xAC
+CArtsInfo::CArtsInfo() : mCursor(nullptr) {
     // Initialize all fields to zero/default
-    self->field_0x14 = 0;
-    self->field_0x18 = 0;
-    self->field_0x1C = 0;
-    self->mpLayout1 = nullptr;
-    self->mpAnimTrans1 = nullptr;
-    self->mpAnimTrans2 = nullptr;
-    self->mpAnimTrans3 = nullptr;
-    self->mpAnimTrans4 = nullptr;
-    self->mpLayout2 = nullptr;
-    self->mpAnimTrans5 = nullptr;
-    self->mpAnimTrans6 = nullptr;
-    self->field_0x40 = 0;
-    self->field_0x44 = 0;
-    self->field_0x48 = 0;
-    self->field_0x49 = 1;
-    self->field_0x4C = 0;
-    self->field_0x50 = 0;
-    self->field_0x54 = 0;
-    self->field_0x55 = 0;
-    self->field_0x56 = 0;
-    self->field_0x58 = 0;
-    self->field_0x5A = 0;
-
-    // Construct embedded CCur18 cursor
-    __ct__6CCur18FPQ34nw4r3lyt19ArcResourceAccessor(&self->mCursor, 0);
-
-    return self;
+    field_0x14 = 0;
+    field_0x18 = 0;
+    field_0x1C = 0;
+    mpLayout1 = nullptr;
+    mpAnimTrans1 = nullptr;
+    mpAnimTrans2 = nullptr;
+    mpAnimTrans3 = nullptr;
+    mpAnimTrans4 = nullptr;
+    mpLayout2 = nullptr;
+    mpAnimTrans5 = nullptr;
+    mpAnimTrans6 = nullptr;
+    field_0x40 = 0;
+    field_0x44 = 0;
+    field_0x48 = 0;
+    field_0x49 = 1;
+    field_0x4C = 0;
+    field_0x50 = 0;
+    field_0x54 = 0;
+    field_0x55 = 0;
+    field_0x56 = 0;
+    field_0x58 = 0;
+    field_0x5A = 0;
 }
 
-// __dt__9CArtsInfoFv - destructor .text:0xAC, size 0x60 Retail dtor is a plain
-// function: destroys the +0x5C CCur18 cursor and the +0x04 UnkClass_8045F564 member,
-// then frees self when the delete flag is positive. Written in the free-function form
-// (CTitle pattern) because the member-dtor shape would emit a vtable store for the
-// virtual dtor that retail does not have.
-extern "C" void* __dt__9CArtsInfoFv(CArtsInfo* self, int flags) {
-    if (self != 0) {
-        __dt__6CCur18Fv(&self->mCursor, -1);
-        __dt__17UnkClass_8045F564Fv(&self->mMemRegion, -1);
-        if (flags > 0) {
-            operator delete(self);
-        }
-    }
-    return self;
-}
+// __dt__9CArtsInfoFv - destructor .text:0xAC, size 0x60. The member dtor
+// destroys the +0x5C CCur18 cursor and the +0x04 UnkClass_8045F564 member;
+// MWCC adds the deleting-destructor flag branch around operator delete.
+CArtsInfo::~CArtsInfo() {}
 
 // CArtsInfo_LoadFiles - file loading
 // .text:0x10C, size 0x68
 void CArtsInfo_LoadFiles(CArtsInfo* self) {
     void* handle = getHandleMEM2__Q23mtl10MemManagerFv();
     self->field_0x14 = (int)readFile__11CDeviceFileFUlPCcP10IWorkEventii(
-        (u32)handle, (const char*)lbl_eu_8050B00C, (void*)self, 0, 0);
+        (u32)handle, (const char*)"menu/jp/ArtsInfo.arc", (void*)self, 0, 0);
 
     self->field_0x18 =
         (int)readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii(
-            (u32)KyoshinHeap_GetField44(), (const char*)(lbl_eu_8050B00C + 0x15),
+            (u32)KyoshinHeap_GetField44(), (const char*)"common/jp/bdat_menu_arts.bin",
             (void*)self, 0, 0);
 }
 
@@ -337,14 +305,13 @@ void CArtsInfo_OpenDetail6(CArtsInfo* self) {
     // read the display value through the stats sub-object's vtable+0x200
     // virtual (user virtual #126).
     CArtsCharData* obj = (CArtsCharData*)CtrlObjectParam_GetCharEntry(self->field_0x54);
-    char* base = lbl_eu_8050B00C;
-    char* str1 = BdatTouchStringCell(base + 0x32, base + 0x3D, 0x18);
+    char* str1 = BdatTouchStringCell((char*)"MNU_battle", (char*)"name", 0x18);
     int dispVal = (int)((cf::CActorParam*)&obj->stats)->CActorParam_getSecondCurrency();
 
     char buf[32];
-    sprintf(buf, base + 0x42, dispVal, str1);
+    sprintf(buf, (char*)"%d%s", dispVal, str1);
 
-    LayoutSetTextBoxText(self->mpLayout1, base + 0x47, buf, 0);
+    LayoutSetTextBoxText(self->mpLayout1, (char*)"txt_ap00", buf, 0);
 
     playUISound(0x6D);
 }
@@ -583,68 +550,68 @@ void CArtsInfo_AnimState9(CArtsInfo* self) {
 // symbol; inlining would balloon their bodies.
 extern "C" void CArtsInfo_BindAllPanes(CArtsInfo* self) {
     // Bind animations for all named panes on layout 1
-    LayoutSetTextBoxFmtValue(self->mpLayout1, lbl_eu_8050B00C + 0x50, lbl_eu_8050B00C + 0x58, 0);
-    LayoutSetTextBoxFmtValue(self->mpLayout1, lbl_eu_8050B00C + 0x59, lbl_eu_8050B00C + 0x58, 0);
-    LayoutSetTextBoxFmtValue(self->mpLayout1, lbl_eu_8050B00C + 0x64, lbl_eu_8050B00C + 0x58, 0);
-    LayoutSetTextBoxFmtValue(self->mpLayout1, lbl_eu_8050B00C + 0x72, lbl_eu_8050B00C + 0x58, 0);
-    LayoutSetTextBoxFmtValue(self->mpLayout1, lbl_eu_8050B00C + 0x80, lbl_eu_8050B00C + 0x58, 0);
-    LayoutSetTextBoxFmtValue(self->mpLayout1, lbl_eu_8050B00C + 0x8B, lbl_eu_8050B00C + 0x58, 0);
-    LayoutSetTextBoxFmtValue(self->mpLayout1, lbl_eu_8050B00C + 0x96, lbl_eu_8050B00C + 0x58, 0);
-    LayoutSetTextBoxFmtValue(self->mpLayout1, lbl_eu_8050B00C + 0xA1, lbl_eu_8050B00C + 0x58, 0);
-    LayoutSetTextBoxFmtValue(self->mpLayout1, lbl_eu_8050B00C + 0xAC, lbl_eu_8050B00C + 0x58, 0);
-    LayoutSetTextBoxFmtValue(self->mpLayout1, lbl_eu_8050B00C + 0xB7, lbl_eu_8050B00C + 0x58, 0);
-    LayoutSetTextBoxFmtValue(self->mpLayout1, lbl_eu_8050B00C + 0xC2, lbl_eu_8050B00C + 0x58, 0);
-    LayoutSetTextBoxFmtValue(self->mpLayout1, lbl_eu_8050B00C + 0xCD, lbl_eu_8050B00C + 0x58, 0);
-    LayoutSetTextBoxFmtValue(self->mpLayout1, lbl_eu_8050B00C + 0xD8, lbl_eu_8050B00C + 0x58, 0);
-    LayoutSetTextBoxFmtValue(self->mpLayout1, lbl_eu_8050B00C + 0xE3, lbl_eu_8050B00C + 0x58, 0);
-    LayoutSetTextBoxFmtValue(self->mpLayout1, lbl_eu_8050B00C + 0xEE, lbl_eu_8050B00C + 0x58, 0);
-    LayoutSetTextBoxFmtValue(self->mpLayout1, lbl_eu_8050B00C + 0xFD, lbl_eu_8050B00C + 0x58, 0);
-    LayoutSetTextBoxFmtValue(self->mpLayout1, lbl_eu_8050B00C + 0x10C, lbl_eu_8050B00C + 0x58, 0);
-    LayoutSetTextBoxFmtValue(self->mpLayout1, lbl_eu_8050B00C + 0x11B, lbl_eu_8050B00C + 0x58, 0);
-    LayoutSetTextBoxFmtValue(self->mpLayout1, lbl_eu_8050B00C + 0x12A, lbl_eu_8050B00C + 0x58, 0);
-    LayoutSetTextBoxFmtValue(self->mpLayout1, lbl_eu_8050B00C + 0x139, lbl_eu_8050B00C + 0x58, 0);
-    LayoutSetTextBoxFmtValue(self->mpLayout1, lbl_eu_8050B00C + 0x148, lbl_eu_8050B00C + 0x58, 0);
-    LayoutSetTextBoxFmtValue(self->mpLayout1, lbl_eu_8050B00C + 0x157, lbl_eu_8050B00C + 0x58, 0);
-    LayoutSetTextBoxFmtValue(self->mpLayout1, lbl_eu_8050B00C + 0x166, lbl_eu_8050B00C + 0x58, 0);
-    LayoutSetTextBoxFmtValue(self->mpLayout1, lbl_eu_8050B00C + 0x175, lbl_eu_8050B00C + 0x58, 0);
+    LayoutSetTextBoxFmtValue(self->mpLayout1, (char*)"txt_tit", (char*)"", 0);
+    LayoutSetTextBoxFmtValue(self->mpLayout1, (char*)"txt_para00", (char*)"", 0);
+    LayoutSetTextBoxFmtValue(self->mpLayout1, (char*)"txt_para01_00", (char*)"", 0);
+    LayoutSetTextBoxFmtValue(self->mpLayout1, (char*)"txt_para01_01", (char*)"", 0);
+    LayoutSetTextBoxFmtValue(self->mpLayout1, (char*)"txt_para02", (char*)"", 0);
+    LayoutSetTextBoxFmtValue(self->mpLayout1, (char*)"txt_para03", (char*)"", 0);
+    LayoutSetTextBoxFmtValue(self->mpLayout1, (char*)"txt_para04", (char*)"", 0);
+    LayoutSetTextBoxFmtValue(self->mpLayout1, (char*)"txt_para05", (char*)"", 0);
+    LayoutSetTextBoxFmtValue(self->mpLayout1, (char*)"txt_para06", (char*)"", 0);
+    LayoutSetTextBoxFmtValue(self->mpLayout1, (char*)"txt_para07", (char*)"", 0);
+    LayoutSetTextBoxFmtValue(self->mpLayout1, (char*)"txt_para08", (char*)"", 0);
+    LayoutSetTextBoxFmtValue(self->mpLayout1, (char*)"txt_para09", (char*)"", 0);
+    LayoutSetTextBoxFmtValue(self->mpLayout1, (char*)"txt_para10", (char*)"", 0);
+    LayoutSetTextBoxFmtValue(self->mpLayout1, (char*)"txt_para11", (char*)"", 0);
+    LayoutSetTextBoxFmtValue(self->mpLayout1, (char*)"txt_value02_02", (char*)"", 0);
+    LayoutSetTextBoxFmtValue(self->mpLayout1, (char*)"txt_value03_02", (char*)"", 0);
+    LayoutSetTextBoxFmtValue(self->mpLayout1, (char*)"txt_value04_02", (char*)"", 0);
+    LayoutSetTextBoxFmtValue(self->mpLayout1, (char*)"txt_value05_02", (char*)"", 0);
+    LayoutSetTextBoxFmtValue(self->mpLayout1, (char*)"txt_value06_02", (char*)"", 0);
+    LayoutSetTextBoxFmtValue(self->mpLayout1, (char*)"txt_value07_02", (char*)"", 0);
+    LayoutSetTextBoxFmtValue(self->mpLayout1, (char*)"txt_value08_02", (char*)"", 0);
+    LayoutSetTextBoxFmtValue(self->mpLayout1, (char*)"txt_value09_02", (char*)"", 0);
+    LayoutSetTextBoxFmtValue(self->mpLayout1, (char*)"txt_value10_02", (char*)"", 0);
+    LayoutSetTextBoxFmtValue(self->mpLayout1, (char*)"txt_value11_02", (char*)"", 0);
 
     // Bind animations for all named panes on layout 2
-    LayoutSetTextBoxFmtValue(self->mpLayout2, lbl_eu_8050B00C + 0x50, lbl_eu_8050B00C + 0x58, 0);
-    LayoutSetTextBoxFmtValue(self->mpLayout2, lbl_eu_8050B00C + 0x59, lbl_eu_8050B00C + 0x58, 0);
-    LayoutSetTextBoxFmtValue(self->mpLayout2, lbl_eu_8050B00C + 0x64, lbl_eu_8050B00C + 0x58, 0);
-    LayoutSetTextBoxFmtValue(self->mpLayout2, lbl_eu_8050B00C + 0x72, lbl_eu_8050B00C + 0x58, 0);
-    LayoutSetTextBoxFmtValue(self->mpLayout2, lbl_eu_8050B00C + 0x80, lbl_eu_8050B00C + 0x58, 0);
-    LayoutSetTextBoxFmtValue(self->mpLayout2, lbl_eu_8050B00C + 0x8B, lbl_eu_8050B00C + 0x58, 0);
-    LayoutSetTextBoxFmtValue(self->mpLayout2, lbl_eu_8050B00C + 0x96, lbl_eu_8050B00C + 0x58, 0);
-    LayoutSetTextBoxFmtValue(self->mpLayout2, lbl_eu_8050B00C + 0xA1, lbl_eu_8050B00C + 0x58, 0);
-    LayoutSetTextBoxFmtValue(self->mpLayout2, lbl_eu_8050B00C + 0xAC, lbl_eu_8050B00C + 0x58, 0);
-    LayoutSetTextBoxFmtValue(self->mpLayout2, lbl_eu_8050B00C + 0xB7, lbl_eu_8050B00C + 0x58, 0);
-    LayoutSetTextBoxFmtValue(self->mpLayout2, lbl_eu_8050B00C + 0xC2, lbl_eu_8050B00C + 0x58, 0);
-    LayoutSetTextBoxFmtValue(self->mpLayout2, lbl_eu_8050B00C + 0xCD, lbl_eu_8050B00C + 0x58, 0);
-    LayoutSetTextBoxFmtValue(self->mpLayout2, lbl_eu_8050B00C + 0xD8, lbl_eu_8050B00C + 0x58, 0);
-    LayoutSetTextBoxFmtValue(self->mpLayout2, lbl_eu_8050B00C + 0xE3, lbl_eu_8050B00C + 0x58, 0);
-    LayoutSetTextBoxFmtValue(self->mpLayout2, lbl_eu_8050B00C + 0xEE, lbl_eu_8050B00C + 0x58, 0);
-    LayoutSetTextBoxFmtValue(self->mpLayout2, lbl_eu_8050B00C + 0xFD, lbl_eu_8050B00C + 0x58, 0);
-    LayoutSetTextBoxFmtValue(self->mpLayout2, lbl_eu_8050B00C + 0x10C, lbl_eu_8050B00C + 0x58, 0);
-    LayoutSetTextBoxFmtValue(self->mpLayout2, lbl_eu_8050B00C + 0x11B, lbl_eu_8050B00C + 0x58, 0);
-    LayoutSetTextBoxFmtValue(self->mpLayout2, lbl_eu_8050B00C + 0x12A, lbl_eu_8050B00C + 0x58, 0);
-    LayoutSetTextBoxFmtValue(self->mpLayout2, lbl_eu_8050B00C + 0x139, lbl_eu_8050B00C + 0x58, 0);
-    LayoutSetTextBoxFmtValue(self->mpLayout2, lbl_eu_8050B00C + 0x148, lbl_eu_8050B00C + 0x58, 0);
-    LayoutSetTextBoxFmtValue(self->mpLayout2, lbl_eu_8050B00C + 0x157, lbl_eu_8050B00C + 0x58, 0);
-    LayoutSetTextBoxFmtValue(self->mpLayout2, lbl_eu_8050B00C + 0x166, lbl_eu_8050B00C + 0x58, 0);
-    LayoutSetTextBoxFmtValue(self->mpLayout2, lbl_eu_8050B00C + 0x175, lbl_eu_8050B00C + 0x58, 0);
+    LayoutSetTextBoxFmtValue(self->mpLayout2, (char*)"txt_tit", (char*)"", 0);
+    LayoutSetTextBoxFmtValue(self->mpLayout2, (char*)"txt_para00", (char*)"", 0);
+    LayoutSetTextBoxFmtValue(self->mpLayout2, (char*)"txt_para01_00", (char*)"", 0);
+    LayoutSetTextBoxFmtValue(self->mpLayout2, (char*)"txt_para01_01", (char*)"", 0);
+    LayoutSetTextBoxFmtValue(self->mpLayout2, (char*)"txt_para02", (char*)"", 0);
+    LayoutSetTextBoxFmtValue(self->mpLayout2, (char*)"txt_para03", (char*)"", 0);
+    LayoutSetTextBoxFmtValue(self->mpLayout2, (char*)"txt_para04", (char*)"", 0);
+    LayoutSetTextBoxFmtValue(self->mpLayout2, (char*)"txt_para05", (char*)"", 0);
+    LayoutSetTextBoxFmtValue(self->mpLayout2, (char*)"txt_para06", (char*)"", 0);
+    LayoutSetTextBoxFmtValue(self->mpLayout2, (char*)"txt_para07", (char*)"", 0);
+    LayoutSetTextBoxFmtValue(self->mpLayout2, (char*)"txt_para08", (char*)"", 0);
+    LayoutSetTextBoxFmtValue(self->mpLayout2, (char*)"txt_para09", (char*)"", 0);
+    LayoutSetTextBoxFmtValue(self->mpLayout2, (char*)"txt_para10", (char*)"", 0);
+    LayoutSetTextBoxFmtValue(self->mpLayout2, (char*)"txt_para11", (char*)"", 0);
+    LayoutSetTextBoxFmtValue(self->mpLayout2, (char*)"txt_value02_02", (char*)"", 0);
+    LayoutSetTextBoxFmtValue(self->mpLayout2, (char*)"txt_value03_02", (char*)"", 0);
+    LayoutSetTextBoxFmtValue(self->mpLayout2, (char*)"txt_value04_02", (char*)"", 0);
+    LayoutSetTextBoxFmtValue(self->mpLayout2, (char*)"txt_value05_02", (char*)"", 0);
+    LayoutSetTextBoxFmtValue(self->mpLayout2, (char*)"txt_value06_02", (char*)"", 0);
+    LayoutSetTextBoxFmtValue(self->mpLayout2, (char*)"txt_value07_02", (char*)"", 0);
+    LayoutSetTextBoxFmtValue(self->mpLayout2, (char*)"txt_value08_02", (char*)"", 0);
+    LayoutSetTextBoxFmtValue(self->mpLayout2, (char*)"txt_value09_02", (char*)"", 0);
+    LayoutSetTextBoxFmtValue(self->mpLayout2, (char*)"txt_value10_02", (char*)"", 0);
+    LayoutSetTextBoxFmtValue(self->mpLayout2, (char*)"txt_value11_02", (char*)"", 0);
 
     // Set text rendering parameters for specific panes on layout 2
-    PaneMatSetTevColorsByName(self->mpLayout2, lbl_eu_8050B00C + 0xEE, &sArtsPaneTevColorA, &sArtsPaneTevColorB);
-    PaneMatSetTevColorsByName(self->mpLayout2, lbl_eu_8050B00C + 0xFD, &sArtsPaneTevColorA, &sArtsPaneTevColorB);
-    PaneMatSetTevColorsByName(self->mpLayout2, lbl_eu_8050B00C + 0x10C, &sArtsPaneTevColorA, &sArtsPaneTevColorB);
-    PaneMatSetTevColorsByName(self->mpLayout2, lbl_eu_8050B00C + 0x11B, &sArtsPaneTevColorA, &sArtsPaneTevColorB);
-    PaneMatSetTevColorsByName(self->mpLayout2, lbl_eu_8050B00C + 0x12A, &sArtsPaneTevColorA, &sArtsPaneTevColorB);
-    PaneMatSetTevColorsByName(self->mpLayout2, lbl_eu_8050B00C + 0x139, &sArtsPaneTevColorA, &sArtsPaneTevColorB);
-    PaneMatSetTevColorsByName(self->mpLayout2, lbl_eu_8050B00C + 0x148, &sArtsPaneTevColorA, &sArtsPaneTevColorB);
-    PaneMatSetTevColorsByName(self->mpLayout2, lbl_eu_8050B00C + 0x157, &sArtsPaneTevColorA, &sArtsPaneTevColorB);
-    PaneMatSetTevColorsByName(self->mpLayout2, lbl_eu_8050B00C + 0x166, &sArtsPaneTevColorA, &sArtsPaneTevColorB);
-    PaneMatSetTevColorsByName(self->mpLayout2, lbl_eu_8050B00C + 0x175, &sArtsPaneTevColorA, &sArtsPaneTevColorB);
+    PaneMatSetTevColorsByName(self->mpLayout2, (char*)"txt_value02_02", &sArtsPaneTevColorA, &sArtsPaneTevColorB);
+    PaneMatSetTevColorsByName(self->mpLayout2, (char*)"txt_value03_02", &sArtsPaneTevColorA, &sArtsPaneTevColorB);
+    PaneMatSetTevColorsByName(self->mpLayout2, (char*)"txt_value04_02", &sArtsPaneTevColorA, &sArtsPaneTevColorB);
+    PaneMatSetTevColorsByName(self->mpLayout2, (char*)"txt_value05_02", &sArtsPaneTevColorA, &sArtsPaneTevColorB);
+    PaneMatSetTevColorsByName(self->mpLayout2, (char*)"txt_value06_02", &sArtsPaneTevColorA, &sArtsPaneTevColorB);
+    PaneMatSetTevColorsByName(self->mpLayout2, (char*)"txt_value07_02", &sArtsPaneTevColorA, &sArtsPaneTevColorB);
+    PaneMatSetTevColorsByName(self->mpLayout2, (char*)"txt_value08_02", &sArtsPaneTevColorA, &sArtsPaneTevColorB);
+    PaneMatSetTevColorsByName(self->mpLayout2, (char*)"txt_value09_02", &sArtsPaneTevColorA, &sArtsPaneTevColorB);
+    PaneMatSetTevColorsByName(self->mpLayout2, (char*)"txt_value10_02", &sArtsPaneTevColorA, &sArtsPaneTevColorB);
+    PaneMatSetTevColorsByName(self->mpLayout2, (char*)"txt_value11_02", &sArtsPaneTevColorA, &sArtsPaneTevColorB);
 }
 
 // CArtsInfo_RefreshLayout - arts info full layout refresh. Formats the arts name/lv
@@ -654,53 +621,53 @@ extern "C" void CArtsInfo_BindAllPanes(CArtsInfo* self) {
 // would balloon its body.
 extern "C" void CArtsInfo_RefreshLayout(CArtsInfo* self) {
     char buf[32]; // sprintf at +0x8
-    char* str1 = BdatTouchStringCell(lbl_eu_8050B00C + 0x32, lbl_eu_8050B00C + 0x3d, 0x18);
-    sprintf(buf, lbl_eu_8050B00C + 0x42, self->field_0x58, str1);
-    LayoutSetTextBoxText(self->mpLayout1, lbl_eu_8050B00C + 0x184, buf, 0);
+    char* str1 = BdatTouchStringCell((char*)"MNU_battle", (char*)"name", 0x18);
+    sprintf(buf, (char*)"%d%s", self->field_0x58, str1);
+    LayoutSetTextBoxText(self->mpLayout1, (char*)"txt_ap", buf, 0);
 
-    char* str2 = BdatTouchStringCell(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x3d, self->field_0x55);
+    char* str2 = BdatTouchStringCell((char*)"pc_arts", (char*)"name", self->field_0x55);
     char* str3 = 0;
     if (self->field_0x56 != 0) {
-        str3 = BdatTouchStringCell(lbl_eu_8050B00C + 0x32, lbl_eu_8050B00C + 0x3d, self->field_0x56 + 0x1e);
+        str3 = BdatTouchStringCell((char*)"MNU_battle", (char*)"name", self->field_0x56 + 0x1e);
     }
-    sprintf(buf, lbl_eu_8050B00C + 0x193, str2, str3);
-    LayoutSetTextBoxText(self->mpLayout1, lbl_eu_8050B00C + 0x50, buf, 0);
+    sprintf(buf, (char*)"%s%s", str2, str3);
+    LayoutSetTextBoxText(self->mpLayout1, (char*)"txt_tit", buf, 0);
 
     char* str4 = 0;
     if (self->field_0x56 < 0xA) {
         if (self->field_0x56 != 0) {
-            str4 = BdatTouchStringCell(lbl_eu_8050B00C + 0x32, lbl_eu_8050B00C + 0x3d, self->field_0x56 + 0x1f);
+            str4 = BdatTouchStringCell((char*)"MNU_battle", (char*)"name", self->field_0x56 + 0x1f);
         }
-        sprintf(buf, lbl_eu_8050B00C + 0x193, str2, str4);
-        LayoutSetTextBoxText(self->mpLayout2, lbl_eu_8050B00C + 0x50, buf, 0);
+        sprintf(buf, (char*)"%s%s", str2, str4);
+        LayoutSetTextBoxText(self->mpLayout2, (char*)"txt_tit", buf, 0);
     }
 
-    char* s = BdatGetPtrDirect((const void*)self->field_0x4C, lbl_eu_8050B00C + 0x198, self->field_0x55);
-    LayoutSetTextBoxFmtValue(self->mpLayout1, lbl_eu_8050B00C + 0x59, s, 0);
+    char* s = BdatGetPtrDirect((const void*)self->field_0x4C, (char*)"msg", self->field_0x55);
+    LayoutSetTextBoxFmtValue(self->mpLayout1, (char*)"txt_para00", s, 0);
     if (self->field_0x56 < 0xA) {
-        LayoutSetTextBoxFmtValue(self->mpLayout2, lbl_eu_8050B00C + 0x59, s, 0);
+        LayoutSetTextBoxFmtValue(self->mpLayout2, (char*)"txt_para00", s, 0);
     }
 
-    u8 f1 = BdatGetU8Direct((const void*)self->field_0x4C, lbl_eu_8050B00C + 0x19c, self->field_0x55);
-    u8 f2 = BdatGetU8Direct((const void*)self->field_0x4C, lbl_eu_8050B00C + 0x1a1, self->field_0x55);
-    u8 f3 = BdatGetU8Direct((const void*)self->field_0x4C, lbl_eu_8050B00C + 0x1a6, self->field_0x55);
+    u8 f1 = BdatGetU8Direct((const void*)self->field_0x4C, (char*)"trgA", self->field_0x55);
+    u8 f2 = BdatGetU8Direct((const void*)self->field_0x4C, (char*)"trgB", self->field_0x55);
+    u8 f3 = BdatGetU8Direct((const void*)self->field_0x4C, (char*)"trgC", self->field_0x55);
     char* p1 = 0;
     char* p2 = 0;
     char* p3 = 0;
-    if (f1 != 0) p1 = BdatGetPtrDirect((const void*)self->field_0x50, lbl_eu_8050B00C + 0x1ab, f1);
-    if (f2 != 0) p2 = BdatGetPtrDirect((const void*)self->field_0x50, lbl_eu_8050B00C + 0x1ab, f2);
-    if (f3 != 0) p3 = BdatGetPtrDirect((const void*)self->field_0x50, lbl_eu_8050B00C + 0x1ab, f3);
-    LayoutSetTextBoxFmtValue(self->mpLayout1, lbl_eu_8050B00C + 0x64, p1, 0);
+    if (f1 != 0) p1 = BdatGetPtrDirect((const void*)self->field_0x50, (char*)"tagStr", f1);
+    if (f2 != 0) p2 = BdatGetPtrDirect((const void*)self->field_0x50, (char*)"tagStr", f2);
+    if (f3 != 0) p3 = BdatGetPtrDirect((const void*)self->field_0x50, (char*)"tagStr", f3);
+    LayoutSetTextBoxFmtValue(self->mpLayout1, (char*)"txt_para01_00", p1, 0);
     if (self->field_0x56 < 0xA) {
-        LayoutSetTextBoxFmtValue(self->mpLayout2, lbl_eu_8050B00C + 0x64, p1, 0);
+        LayoutSetTextBoxFmtValue(self->mpLayout2, (char*)"txt_para01_00", p1, 0);
     }
-    LayoutSetTextBoxFmtValue(self->mpLayout1, lbl_eu_8050B00C + 0x80, p2, 0);
+    LayoutSetTextBoxFmtValue(self->mpLayout1, (char*)"txt_para02", p2, 0);
     if (self->field_0x56 < 0xA) {
-        LayoutSetTextBoxFmtValue(self->mpLayout2, lbl_eu_8050B00C + 0x80, p2, 0);
+        LayoutSetTextBoxFmtValue(self->mpLayout2, (char*)"txt_para02", p2, 0);
     }
-    LayoutSetTextBoxFmtValue(self->mpLayout1, lbl_eu_8050B00C + 0x8b, p3, 0);
+    LayoutSetTextBoxFmtValue(self->mpLayout1, (char*)"txt_para03", p3, 0);
     if (self->field_0x56 < 0xA) {
-        LayoutSetTextBoxFmtValue(self->mpLayout2, lbl_eu_8050B00C + 0x8b, p3, 0);
+        LayoutSetTextBoxFmtValue(self->mpLayout2, (char*)"txt_para03", p3, 0);
     }
 
     // Loop counters: full-width ints narrowed to u8 at the call sites
@@ -711,7 +678,7 @@ extern "C" void CArtsInfo_RefreshLayout(CArtsInfo* self) {
     unsigned int n = 2;
     unsigned int i = 1;
     do {
-        sprintf(buf, lbl_eu_8050B00C + 0x1b2, (u8)i);
+        sprintf(buf, (char*)"tag%d", (u8)i);
         u8 f = BdatGetU8Direct((const void*)self->field_0x4C, (const char*)buf, self->field_0x55);
         if (f != 0) {
             CArtsInfo_UpdateArtsRow(self, f, (u8)n++);
@@ -730,9 +697,9 @@ extern "C" void CArtsInfo_UpdateCursor(CArtsInfo* self) {
     s8 idx = self->field_0x5A;
     if (idx < 0) return;
 
-    sprintf(buf, lbl_eu_8050B00C + 0x1b8, idx + 1);
+    sprintf(buf, (char*)"txt_slct%02d", idx + 1);
     nw4r::lyt::Pane* pane1 = self->mpLayout1->GetRootPane()->FindPaneByName(buf, true);
-    nw4r::lyt::Pane* pane2 = self->mpLayout1->GetRootPane()->FindPaneByName(lbl_eu_8050B00C + 0x1c5, true);
+    nw4r::lyt::Pane* pane2 = self->mpLayout1->GetRootPane()->FindPaneByName((char*)"nul_proportion", true);
     ScalePaneWorldPos(&pos, pane1, pane2, self->mpLayout1->GetRootPane());
     self->mCursor.setRootPaneTranslate(&pos);
 }
@@ -814,7 +781,7 @@ extern "C" int CArtsInfo_GetEquipValue(CArtsInfo* self, int arg2) {
             }
         }
     }
-    u16 t = (u16)BdatGetU16Direct((const void*)lbl_eu_806640D8, lbl_eu_8050B00C + 0x1d4, arg2);
+    u16 t = (u16)BdatGetU16Direct((const void*)::cf::CfBdat::spBtlSkillListFileData, (char*)"max", arg2);
     if (t < result) result = t;
     return result;
 }
@@ -848,9 +815,9 @@ extern "C" u32 CArtsInfo_GetSkill2D(CArtsInfo* self) {
 // level+1 argument (clrlwi 24) before the call.
 extern "C" int CArtsInfo_GetGridA(CArtsInfo* self, u8 arg2, u8 arg3) {
     int v1 = (arg3 != 0) ? arg3 : self->field_0x55;
-    u16 a = BdatGetU16ByTableKey(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x1d8, v1);
+    u16 a = BdatGetU16ByTableKey((char*)"pc_arts", (char*)"rate1", v1);
     int v2 = (arg3 != 0) ? arg3 : self->field_0x55;
-    u8 b = BdatGetU8ByTableKey(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x1de, v2);
+    u8 b = BdatGetU8ByTableKey((char*)"pc_arts", (char*)"grow_powl", v2);
     return a + b * (arg2 - 1);
 }
 
@@ -858,9 +825,9 @@ extern "C" int CArtsInfo_GetGridA(CArtsInfo* self, u8 arg2, u8 arg3) {
 // different string-table offsets (0x1e8/0x1ee).
 extern "C" int CArtsInfo_GetGridB(CArtsInfo* self, u8 arg2, u8 arg3) {
     int v1 = (arg3 != 0) ? arg3 : self->field_0x55;
-    u16 a = BdatGetU16ByTableKey(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x1e8, v1);
+    u16 a = BdatGetU16ByTableKey((char*)"pc_arts", (char*)"rate2", v1);
     int v2 = (arg3 != 0) ? arg3 : self->field_0x55;
-    u8 b = BdatGetU8ByTableKey(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x1ee, v2);
+    u8 b = BdatGetU8ByTableKey((char*)"pc_arts", (char*)"grow_powh", v2);
     return a + b * (arg2 - 1);
 }
 
@@ -883,8 +850,8 @@ int CArtsInfo_CalcDmg52(CArtsInfo* self) {
     u32 v0 = e->field_00;
     if (v0 == 0) goto fail;
     u16 id = BdatGetItemId(v0 >> 20);
-    u16 hp = BdatGetU16Direct((const void*)lbl_eu_806640F4, lbl_eu_8050B00C + 0x1f8, id);
-    u8 b = (u8)BdatGetU8Direct((const void*)lbl_eu_806640F4, lbl_eu_8050B00C + 0x200, id);
+    u16 hp = BdatGetU16Direct((const void*)::cf::CfBdat::spItmWpnListFileData, (char*)"dmg_low", id);
+    u8 b = (u8)BdatGetU8Direct((const void*)::cf::CfBdat::spItmWpnListFileData, (char*)"flag", id);
     if ((b & 4) != 0) {
         // u16 local: retail masks the scale at definition (clrlwi in r3).
         u16 base = (u16)CtrlObjectParam_GetArtsDataWord(obj);
@@ -910,8 +877,8 @@ int CArtsInfo_CalcDmg53(CArtsInfo* self) {
     u32 v0 = e->field_00;
     if (v0 == 0) goto fail;
     u16 id = BdatGetItemId(v0 >> 20);
-    u16 hp = BdatGetU16Direct((const void*)lbl_eu_806640F4, lbl_eu_8050B00C + 0x205, id);
-    u8 b = (u8)BdatGetU8Direct((const void*)lbl_eu_806640F4, lbl_eu_8050B00C + 0x200, id);
+    u16 hp = BdatGetU16Direct((const void*)::cf::CfBdat::spItmWpnListFileData, (char*)"dmg_hi", id);
+    u8 b = (u8)BdatGetU8Direct((const void*)::cf::CfBdat::spItmWpnListFileData, (char*)"flag", id);
     if ((b & 4) != 0) {
         // u16 local: retail masks the scale at definition (clrlwi in r3).
         u16 base = (u16)CtrlObjectParam_GetArtsDataWord(obj);
@@ -934,9 +901,9 @@ fail:
 // r30 (same shape as CArtsInfo_GetSkillStr).
 extern "C" char* CArtsInfo_GetSkill20C(CArtsInfo* self, u32 arg2) {
     char* result = 0;
-    u8 r = BdatGetU8Direct((const void*)self->field_0x50, lbl_eu_8050B00C + 0x20C, arg2);
+    u8 r = BdatGetU8Direct((const void*)self->field_0x50, (char*)"tagFS", arg2);
     if (r != 0) {
-        result = BdatTouchStringCell(lbl_eu_8050B00C + 0x32, lbl_eu_8050B00C + 0x3D, r);
+        result = BdatTouchStringCell((char*)"MNU_battle", (char*)"name", r);
     }
     return result;
 }
@@ -946,9 +913,9 @@ extern "C" char* CArtsInfo_GetSkill20C(CArtsInfo* self, u32 arg2) {
 // hoists `li r30, 0` before the call and returns it via r30.
 extern "C" char* CArtsInfo_GetSkillStr(CArtsInfo* self, u32 arg2) {
     char* result = 0;
-    u8 r = BdatGetU8Direct((const void*)self->field_0x50, lbl_eu_8050B00C + 0x212, arg2);
+    u8 r = BdatGetU8Direct((const void*)self->field_0x50, (char*)"tagBS", arg2);
     if (r != 0) {
-        result = BdatTouchStringCell(lbl_eu_8050B00C + 0x32, lbl_eu_8050B00C + 0x3D, r);
+        result = BdatTouchStringCell((char*)"MNU_battle", (char*)"name", r);
     }
     return result;
 }
@@ -1002,13 +969,13 @@ extern "C" void CArtsInfo_FmtRow2C(CArtsInfo*, u8, int);
 
 extern "C" void CArtsInfo_UpdateArtsRow(CArtsInfo* self, u8 arg2, u8 arg3) {
     char buf[32]; // sprintf at +0x8
-    char* s = BdatGetPtrDirect((const void*)self->field_0x50, lbl_eu_8050B00C + 0x1ab, arg2);
-    sprintf(buf, lbl_eu_8050B00C + 0x218, arg3 + 2);
+    char* s = BdatGetPtrDirect((const void*)self->field_0x50, (char*)"tagStr", arg2);
+    sprintf(buf, (char*)"txt_para%02d", arg3 + 2);
     LayoutSetTextBoxFmtValue(self->mpLayout1, buf, s, 0);
     if (self->field_0x56 < 0xA) {
         LayoutSetTextBoxFmtValue(self->mpLayout2, buf, s, 0);
     }
-    u8 k = (u8)BdatGetU8Direct((const void*)self->field_0x50, lbl_eu_8050B00C + 0x225, arg2);
+    u8 k = (u8)BdatGetU8Direct((const void*)self->field_0x50, (char*)"tagCALC", arg2);
     switch (k) {
     case 0x00: CArtsInfo_FmtRow00(self, arg2, arg3); break;
     case 0x01: CArtsInfo_FmtRow01(self, arg2, arg3); break;
@@ -1071,7 +1038,7 @@ void CArtsInfo_FmtRow00(CArtsInfo* self, u8 arg2, int arg3) {
     char buf2[32]; // sprintf at +0x8
     char* s1 = CArtsInfo_GetSkill20C(self, arg2);
     char* s2 = CArtsInfo_GetSkillStr(self, arg2);
-    u8 r = BdatGetU8ByTableKey(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x22d, self->field_0x55);
+    u8 r = BdatGetU8ByTableKey((char*)"pc_arts", (char*)"cast", self->field_0x55);
     float d = (float)r;
     if (r != 0) {
         d = d * 0.1f;
@@ -1081,10 +1048,10 @@ void CArtsInfo_FmtRow00(CArtsInfo* self, u8 arg2, int arg3) {
     // f1, f31).
     float f = d - 0.01f * (d * (float)CArtsInfo_GetEquipValue(self, 0x2d));
     f -= 0.01f * (d * (float)CArtsInfo_GetSkill5C(self));
-    sprintf(buf1, lbl_eu_8050B00C + 0x232, s1, f, s2);
+    sprintf(buf1, (char*)"%s%.1f%s", s1, f, s2);
     SjisDotToCommaEU(buf1);
     CArtsInfo_DotToCommaDE(self, arg2, buf1);
-    sprintf(buf2, lbl_eu_8050B00C + 0x23b, arg3 + 2);
+    sprintf(buf2, (char*)"txt_value%02d_02", arg3 + 2);
     LayoutSetTextBoxText(self->mpLayout1, buf2, buf1, 0);
     if (self->field_0x56 < 0xA) {
         LayoutSetTextBoxText(self->mpLayout2, buf2, buf1, 0);
@@ -1106,9 +1073,9 @@ void CArtsInfo_FmtRow01(CArtsInfo* self, u8 arg2, int arg3) {
     char* s1 = CArtsInfo_GetSkill20C(self, arg2);
     char* s2 = CArtsInfo_GetSkillStr(self, arg2);
     CtrlObjectParam_GetCurrentRowKey(CtrlObjectParam_GetCharEntry(self->field_0x54));
-    BdatGetU8ByTableKey(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x24c, self->field_0x55);
-    u8 v = BdatGetU8ByTableKey(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x250, self->field_0x55);
-    u8 w = BdatGetU8ByTableKey(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x257, self->field_0x55);
+    BdatGetU8ByTableKey((char*)"pc_arts", (char*)"idx", self->field_0x55);
+    u8 v = BdatGetU8ByTableKey((char*)"pc_arts", (char*)"recast", self->field_0x55);
+    u8 w = BdatGetU8ByTableKey((char*)"pc_arts", (char*)"glow_recast", self->field_0x55);
     // NOTE: retail lfds the 2^52 correction constants from the shared sdata2
     // labels (lbl_eu_806686A8 unsigned / lbl_eu_80668698 signed); every source
     // form that references the named doubles rewrites the conversion schedule
@@ -1120,16 +1087,16 @@ void CArtsInfo_FmtRow01(CArtsInfo* self, u8 arg2, int arg3) {
     float fv = (float)v;
     float fw = (float)w;
     float cur = fv - 0.01f * ((float)(self->field_0x56 - 1) * (fv * fw));
-    sprintf(buf1, lbl_eu_8050B00C + 0x232, s1, cur, s2);
+    sprintf(buf1, (char*)"%s%.1f%s", s1, cur, s2);
     SjisDotToCommaEU(buf1);
     CArtsInfo_DotToCommaDE(self, arg2, buf1);
-    sprintf(buf2, lbl_eu_8050B00C + 0x23b, arg3 + 2);
+    sprintf(buf2, (char*)"txt_value%02d_02", arg3 + 2);
     LayoutSetTextBoxText(self->mpLayout1, buf2, buf1, 0);
     if (self->field_0x56 < 0xA) {
         // (int) cast: retail converts level with the s32 magic (xoris);
         // plain (float)u8 would use the shorter u32 magic.
         float nxt = fv - 0.01f * ((float)(int)self->field_0x56 * (fv * fw));
-        sprintf(buf3, lbl_eu_8050B00C + 0x232, s1, nxt, s2);
+        sprintf(buf3, (char*)"%s%.1f%s", s1, nxt, s2);
         SjisDotToCommaEU(buf3);
         CArtsInfo_DotToCommaDE(self, arg2, buf3);
         LayoutSetTextBoxText(self->mpLayout2, buf2, buf3, 0);
@@ -1154,9 +1121,9 @@ void CArtsInfo_FmtRow02(CArtsInfo* self, u8 arg2, int arg3) {
     char buf2[32]; // sprintf at +0x8
     char* s1 = CArtsInfo_GetSkill20C(self, arg2);
     char* s2 = CArtsInfo_GetSkillStr(self, arg2);
-    s8 r = BdatGetS8ByTableKey(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x263, self->field_0x55);
-    sprintf(buf1, lbl_eu_8050B00C + 0x266, s1, (s8)abs(r), s2);
-    sprintf(buf2, lbl_eu_8050B00C + 0x23b, arg3 + 2);
+    s8 r = BdatGetS8ByTableKey((char*)"pc_arts", (char*)"tp", self->field_0x55);
+    sprintf(buf1, (char*)"%s%d%s", s1, (s8)abs(r), s2);
+    sprintf(buf2, (char*)"txt_value%02d_02", arg3 + 2);
     LayoutSetTextBoxText(self->mpLayout1, buf2, buf1, 0);
     if (self->field_0x56 < 0xA) {
         LayoutSetTextBoxText(self->mpLayout2, buf2, buf1, 0);
@@ -1177,9 +1144,9 @@ void CArtsInfo_FmtRow03(CArtsInfo* self, u8 arg2, int arg3) {
     char buf2[32]; // sprintf at +0x8
     char* s1 = CArtsInfo_GetSkill20C(self, arg2);
     char* s2 = CArtsInfo_GetSkillStr(self, arg2);
-    u16 v1 = BdatGetU16ByTableKey(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x26d, self->field_0x55);
+    u16 v1 = BdatGetU16ByTableKey((char*)"pc_arts", (char*)"st_time", self->field_0x55);
     float f1 = (float)v1;
-    u8 v2 = BdatGetU8ByTableKey(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x275, self->field_0x55);
+    u8 v2 = BdatGetU8ByTableKey((char*)"pc_arts", (char*)"grow_st_time", self->field_0x55);
     float f2 = (float)v2;
     if (f1 != lbl_eu_80668680) {
         float scaled = f1 * lbl_eu_806686A4;
@@ -1203,14 +1170,14 @@ void CArtsInfo_FmtRow03(CArtsInfo* self, u8 arg2, int arg3) {
         f2 = scaled2;
     }
     float cur = f1 + f2 * (float)(self->field_0x56 - 1);
-    sprintf(buf1, lbl_eu_8050B00C + 0x232, s1, cur, s2);
+    sprintf(buf1, (char*)"%s%.1f%s", s1, cur, s2);
     SjisDotToCommaEU(buf1);
     CArtsInfo_DotToCommaDE(self, arg2, buf1);
-    sprintf(buf2, lbl_eu_8050B00C + 0x23b, arg3 + 2);
+    sprintf(buf2, (char*)"txt_value%02d_02", arg3 + 2);
     LayoutSetTextBoxText(self->mpLayout1, buf2, buf1, 0);
     if (self->field_0x56 < 0xA) {
         float nxt = f1 + f2 * (float)(int)self->field_0x56;
-        sprintf(buf1, lbl_eu_8050B00C + 0x232, s1, nxt, s2);
+        sprintf(buf1, (char*)"%s%.1f%s", s1, nxt, s2);
         SjisDotToCommaEU(buf1);
         CArtsInfo_DotToCommaDE(self, arg2, buf1);
         LayoutSetTextBoxText(self->mpLayout2, buf2, buf1, 0);
@@ -1325,19 +1292,19 @@ void CArtsInfo_FmtRow06(CArtsInfo* self, u8 arg2, int arg3) {
     int v1 = RoundHalfAway0(0.01f * (float)(g1 * s));
     int t = m2 + stat;
     int v2 = RoundHalfAway0(0.01f * (float)(g2 * t));
-    u8 v3 = BdatGetU8ByTableKey(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x289, self->field_0x55);
-    BdatGetU16ByTableKey(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x26d, self->field_0x55);
-    BdatGetU16ByTableKey(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x290, self->field_0x55);
+    u8 v3 = BdatGetU8ByTableKey((char*)"pc_arts", (char*)"st_val", self->field_0x55);
+    BdatGetU16ByTableKey((char*)"pc_arts", (char*)"st_time", self->field_0x55);
+    BdatGetU16ByTableKey((char*)"pc_arts", (char*)"st_itv", self->field_0x55);
     v1 = RoundHalfAway0(0.01f * (float)(v1 * v3));
     int a = CArtsInfo_GetEquipValue(self, 0x49);
     int value1 = v1 + RoundHalfAway0(0.01f * (float)(v1 * a));
     v2 = RoundHalfAway0(0.01f * (float)(v2 * v3));
     a = CArtsInfo_GetEquipValue(self, 0x49);
     int value2 = v2 + RoundHalfAway0(0.01f * (float)(v2 * a));
-    char* str = BdatTouchStringCell(lbl_eu_8050B00C + 0x32, lbl_eu_8050B00C + 0x3d, 0x52);
-    sprintf(buf1, lbl_eu_8050B00C + 0x282, value1, str, value2);
+    char* str = BdatTouchStringCell((char*)"MNU_battle", (char*)"name", 0x52);
+    sprintf(buf1, (char*)"%d%s%d", value1, str, value2);
     int level = arg3 + 2;
-    sprintf(buf2, lbl_eu_8050B00C + 0x23b, level);
+    sprintf(buf2, (char*)"txt_value%02d_02", level);
     LayoutSetTextBoxText(self->mpLayout1, buf2, buf1, 0);
     if (self->field_0x56 < 0xA) {
         int g1n = CArtsInfo_GetGridA(self, self->field_0x56 + 1, 0);
@@ -1350,9 +1317,9 @@ void CArtsInfo_FmtRow06(CArtsInfo* self, u8 arg2, int arg3) {
         v2n = RoundHalfAway0(0.01f * (float)(v2n * v3));
         a = CArtsInfo_GetEquipValue(self, 0x49);
         int value2n = v2n + RoundHalfAway0(0.01f * (float)(v2n * a));
-        char* str2 = BdatTouchStringCell(lbl_eu_8050B00C + 0x32, lbl_eu_8050B00C + 0x3d, 0x52);
-        sprintf(buf1, lbl_eu_8050B00C + 0x282, value1n, str2, value2n);
-        sprintf(buf2, lbl_eu_8050B00C + 0x23b, level);
+        char* str2 = BdatTouchStringCell((char*)"MNU_battle", (char*)"name", 0x52);
+        sprintf(buf1, (char*)"%d%s%d", value1n, str2, value2n);
+        sprintf(buf2, (char*)"txt_value%02d_02", level);
         LayoutSetTextBoxText(self->mpLayout2, buf2, buf1, 0);
         PaneMatSetTevColorsByName(self->mpLayout2, buf2, (const GXColorS10*)&sArtsChangeColorA, (const GXColorS10*)&sArtsChangeColorB);
     }
@@ -1391,7 +1358,7 @@ void CArtsInfo_FmtRow07(CArtsInfo* self, u8 const arg2, int arg3) {
     int v1 = RoundHalfAway0(0.01f * (float)(g1 * s));
     int t = m2 + stat;
     int v2 = RoundHalfAway0(0.01f * (float)(g2 * t));
-    int base = BdatGetU8ByTableKey(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x289, self->field_0x55);
+    int base = BdatGetU8ByTableKey((char*)"pc_arts", (char*)"st_val", self->field_0x55);
     switch (self->field_0x55) {
     case 0x68:
         base = 0x28;
@@ -1407,7 +1374,7 @@ void CArtsInfo_FmtRow07(CArtsInfo* self, u8 const arg2, int arg3) {
     }
     v1 = RoundHalfAway0(0.01f * (float)(v1 * base));
     v2 = RoundHalfAway0(0.01f * (float)(v2 * base));
-    u32 k = BdatGetU16ByTableKey(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x297, self->field_0x55);
+    u32 k = BdatGetU16ByTableKey((char*)"pc_arts", (char*)"st_type", self->field_0x55);
     if ((u16)k == 0x66) {
         int a = CArtsInfo_GetEquipValue(self, 0x49);
         v1 += RoundHalfAway0(0.01f * (float)(v1 * a));
@@ -1429,10 +1396,10 @@ void CArtsInfo_FmtRow07(CArtsInfo* self, u8 const arg2, int arg3) {
         a = CArtsInfo_GetEquipValue(self, 0x5c);
         v2 += RoundHalfAway0(0.01f * (float)(v2 * a));
     }
-    char* str = BdatTouchStringCell(lbl_eu_8050B00C + 0x32, lbl_eu_8050B00C + 0x3d, 0x52);
-    sprintf(buf1, lbl_eu_8050B00C + 0x282, v1, str, v2);
+    char* str = BdatTouchStringCell((char*)"MNU_battle", (char*)"name", 0x52);
+    sprintf(buf1, (char*)"%d%s%d", v1, str, v2);
     int level = arg3 + 2;
-    sprintf(buf2, lbl_eu_8050B00C + 0x23b, level);
+    sprintf(buf2, (char*)"txt_value%02d_02", level);
     LayoutSetTextBoxText(self->mpLayout1, buf2, buf1, 0);
     if (self->field_0x56 < 0xA) {
         int g1n = CArtsInfo_GetGridA(self, self->field_0x56 + 1, 0);
@@ -1441,7 +1408,7 @@ void CArtsInfo_FmtRow07(CArtsInfo* self, u8 const arg2, int arg3) {
         int v2n = RoundHalfAway0(0.01f * (float)(g2n * t));
         v1n = RoundHalfAway0(0.01f * (float)(v1n * base));
         v2n = RoundHalfAway0(0.01f * (float)(v2n * base));
-        u32 k2 = BdatGetU16ByTableKey(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x297, self->field_0x55);
+        u32 k2 = BdatGetU16ByTableKey((char*)"pc_arts", (char*)"st_type", self->field_0x55);
         if ((u16)k2 == 0x66) {
             int a = CArtsInfo_GetEquipValue(self, 0x49);
             v1n += RoundHalfAway0(0.01f * (float)(v1n * a));
@@ -1463,9 +1430,9 @@ void CArtsInfo_FmtRow07(CArtsInfo* self, u8 const arg2, int arg3) {
             a = CArtsInfo_GetEquipValue(self, 0x5c);
             v2n += RoundHalfAway0(0.01f * (float)(v2n * a));
         }
-        char* str2 = BdatTouchStringCell(lbl_eu_8050B00C + 0x32, lbl_eu_8050B00C + 0x3d, 0x52);
-        sprintf(buf1, lbl_eu_8050B00C + 0x282, v1n, str2, v2n);
-        sprintf(buf2, lbl_eu_8050B00C + 0x23b, level);
+        char* str2 = BdatTouchStringCell((char*)"MNU_battle", (char*)"name", 0x52);
+        sprintf(buf1, (char*)"%d%s%d", v1n, str2, v2n);
+        sprintf(buf2, (char*)"txt_value%02d_02", level);
         LayoutSetTextBoxText(self->mpLayout2, buf2, buf1, 0);
         PaneMatSetTevColorsByName(self->mpLayout2, buf2, (const GXColorS10*)&sArtsChangeColorA, (const GXColorS10*)&sArtsChangeColorB);
     }
@@ -1481,15 +1448,15 @@ void CArtsInfo_FmtRow08(CArtsInfo* self, u8 arg2, int arg3) {
     char buf2[32]; // sprintf at +0x8
     char* s1 = CArtsInfo_GetSkill20C(self, arg2);
     char* s2 = CArtsInfo_GetSkillStr(self, arg2);
-    u8 v1 = BdatGetU8ByTableKey(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x289, self->field_0x55);
-    u8 v2 = BdatGetU8ByTableKey(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x29f, self->field_0x55);
+    u8 v1 = BdatGetU8ByTableKey((char*)"pc_arts", (char*)"st_val", self->field_0x55);
+    u8 v2 = BdatGetU8ByTableKey((char*)"pc_arts", (char*)"grow_st_val", self->field_0x55);
     u32 cur = v1 + v2 * (self->field_0x56 - 1);
-    sprintf(buf1, lbl_eu_8050B00C + 0x266, s1, cur, s2);
-    sprintf(buf2, lbl_eu_8050B00C + 0x23b, arg3 + 2);
+    sprintf(buf1, (char*)"%s%d%s", s1, cur, s2);
+    sprintf(buf2, (char*)"txt_value%02d_02", arg3 + 2);
     LayoutSetTextBoxText(self->mpLayout1, buf2, buf1, 0);
     if (self->field_0x56 < 0xA) {
         u32 nxt = v1 + v2 * self->field_0x56;
-        sprintf(buf1, lbl_eu_8050B00C + 0x266, s1, nxt, s2);
+        sprintf(buf1, (char*)"%s%d%s", s1, nxt, s2);
         LayoutSetTextBoxText(self->mpLayout2, buf2, buf1, 0);
         if (cur != nxt) {
             PaneMatSetTevColorsByName(self->mpLayout2, buf2, (const GXColorS10*)&sArtsChangeColorA, (const GXColorS10*)&sArtsChangeColorB);
@@ -1530,19 +1497,19 @@ void CArtsInfo_FmtRow09(CArtsInfo* self, u8 arg2, int arg3) {
     int g2 = CArtsInfo_GetGridB(self, self->field_0x56, 0);
     int v1 = RoundHalfAway0(0.01f * (float)(g1 * stat));
     int v2 = RoundHalfAway0(0.01f * (float)(g2 * stat));
-    char* str = BdatTouchStringCell(lbl_eu_8050B00C + 0x32, lbl_eu_8050B00C + 0x3d, 0x52);
-    sprintf(buf1, lbl_eu_8050B00C + 0x282, v1, str, v2);
+    char* str = BdatTouchStringCell((char*)"MNU_battle", (char*)"name", 0x52);
+    sprintf(buf1, (char*)"%d%s%d", v1, str, v2);
     level = arg3 + 2;
-    sprintf(buf2, lbl_eu_8050B00C + 0x23b, level);
+    sprintf(buf2, (char*)"txt_value%02d_02", level);
     LayoutSetTextBoxText(self->mpLayout1, buf2, buf1, 0);
     if (self->field_0x56 < 0xA) {
         int g1n = CArtsInfo_GetGridA(self, self->field_0x56 + 1, 0);
         int g2n = CArtsInfo_GetGridB(self, self->field_0x56 + 1, 0);
         int v1n = RoundHalfAway0(0.01f * (float)(g1n * stat));
         int v2n = RoundHalfAway0(0.01f * (float)(g2n * stat));
-        char* str2 = BdatTouchStringCell(lbl_eu_8050B00C + 0x32, lbl_eu_8050B00C + 0x3d, 0x52);
-        sprintf(buf1, lbl_eu_8050B00C + 0x282, v1n, str2, v2n);
-        sprintf(buf2, lbl_eu_8050B00C + 0x23b, level);
+        char* str2 = BdatTouchStringCell((char*)"MNU_battle", (char*)"name", 0x52);
+        sprintf(buf1, (char*)"%d%s%d", v1n, str2, v2n);
+        sprintf(buf2, (char*)"txt_value%02d_02", level);
         LayoutSetTextBoxText(self->mpLayout2, buf2, buf1, 0);
         PaneMatSetTevColorsByName(self->mpLayout2, buf2, (const GXColorS10*)&sArtsChangeColorA, (const GXColorS10*)&sArtsChangeColorB);
     }
@@ -1685,15 +1652,15 @@ void CArtsInfo_FmtRow0D(CArtsInfo* self, u8 arg2, int arg3) {
     char buf2[32]; // sprintf at +0x8
     char* s1 = CArtsInfo_GetSkill20C(self, arg2);
     char* s2 = CArtsInfo_GetSkillStr(self, arg2);
-    u8 v1 = BdatGetU8ByTableKey(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x289, self->field_0x55);
-    u8 v2 = BdatGetU8ByTableKey(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x29f, self->field_0x55);
+    u8 v1 = BdatGetU8ByTableKey((char*)"pc_arts", (char*)"st_val", self->field_0x55);
+    u8 v2 = BdatGetU8ByTableKey((char*)"pc_arts", (char*)"grow_st_val", self->field_0x55);
     u32 cur = v1 + v2 * (self->field_0x56 - 1);
-    sprintf(buf1, lbl_eu_8050B00C + 0x266, s1, cur, s2);
-    sprintf(buf2, lbl_eu_8050B00C + 0x23b, arg3 + 2);
+    sprintf(buf1, (char*)"%s%d%s", s1, cur, s2);
+    sprintf(buf2, (char*)"txt_value%02d_02", arg3 + 2);
     LayoutSetTextBoxText(self->mpLayout1, buf2, buf1, 0);
     if (self->field_0x56 < 0xA) {
         u32 nxt = v1 + v2 * self->field_0x56;
-        sprintf(buf1, lbl_eu_8050B00C + 0x266, s1, nxt, s2);
+        sprintf(buf1, (char*)"%s%d%s", s1, nxt, s2);
         LayoutSetTextBoxText(self->mpLayout2, buf2, buf1, 0);
         if (cur != nxt) {
             PaneMatSetTevColorsByName(self->mpLayout2, buf2, (const GXColorS10*)&sArtsChangeColorA, (const GXColorS10*)&sArtsChangeColorB);
@@ -1709,15 +1676,15 @@ void CArtsInfo_FmtRow0E(CArtsInfo* self, u8 arg2, int arg3) {
     char buf2[32]; // sprintf at +0x8
     char* s1 = CArtsInfo_GetSkill20C(self, arg2);
     char* s2 = CArtsInfo_GetSkillStr(self, arg2);
-    u8 v1 = BdatGetU8ByTableKey(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x289, self->field_0x55);
-    u8 v2 = BdatGetU8ByTableKey(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x29f, self->field_0x55);
+    u8 v1 = BdatGetU8ByTableKey((char*)"pc_arts", (char*)"st_val", self->field_0x55);
+    u8 v2 = BdatGetU8ByTableKey((char*)"pc_arts", (char*)"grow_st_val", self->field_0x55);
     u32 cur = v1 + v2 * (self->field_0x56 - 1);
-    sprintf(buf1, lbl_eu_8050B00C + 0x266, s1, cur, s2);
-    sprintf(buf2, lbl_eu_8050B00C + 0x23b, arg3 + 2);
+    sprintf(buf1, (char*)"%s%d%s", s1, cur, s2);
+    sprintf(buf2, (char*)"txt_value%02d_02", arg3 + 2);
     LayoutSetTextBoxText(self->mpLayout1, buf2, buf1, 0);
     if (self->field_0x56 < 0xA) {
         u32 nxt = v1 + v2 * self->field_0x56;
-        sprintf(buf1, lbl_eu_8050B00C + 0x266, s1, nxt, s2);
+        sprintf(buf1, (char*)"%s%d%s", s1, nxt, s2);
         LayoutSetTextBoxText(self->mpLayout2, buf2, buf1, 0);
         if (cur != nxt) {
             PaneMatSetTevColorsByName(self->mpLayout2, buf2, (const GXColorS10*)&sArtsChangeColorA, (const GXColorS10*)&sArtsChangeColorB);
@@ -1733,15 +1700,15 @@ void CArtsInfo_FmtRow0F(CArtsInfo* self, u8 arg2, int arg3) {
     char buf2[32]; // sprintf at +0x8
     char* s1 = CArtsInfo_GetSkill20C(self, arg2);
     char* s2 = CArtsInfo_GetSkillStr(self, arg2);
-    u8 v1 = BdatGetU8ByTableKey(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x289, self->field_0x55);
-    u8 v2 = BdatGetU8ByTableKey(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x29f, self->field_0x55);
+    u8 v1 = BdatGetU8ByTableKey((char*)"pc_arts", (char*)"st_val", self->field_0x55);
+    u8 v2 = BdatGetU8ByTableKey((char*)"pc_arts", (char*)"grow_st_val", self->field_0x55);
     u32 cur = (v1 + v2 * (self->field_0x56 - 1)) * 10;
-    sprintf(buf1, lbl_eu_8050B00C + 0x266, s1, cur, s2);
-    sprintf(buf2, lbl_eu_8050B00C + 0x23b, arg3 + 2);
+    sprintf(buf1, (char*)"%s%d%s", s1, cur, s2);
+    sprintf(buf2, (char*)"txt_value%02d_02", arg3 + 2);
     LayoutSetTextBoxText(self->mpLayout1, buf2, buf1, 0);
     if (self->field_0x56 < 0xA) {
         u32 nxt = (v1 + v2 * self->field_0x56) * 10;
-        sprintf(buf1, lbl_eu_8050B00C + 0x266, s1, nxt, s2);
+        sprintf(buf1, (char*)"%s%d%s", s1, nxt, s2);
         LayoutSetTextBoxText(self->mpLayout2, buf2, buf1, 0);
         if (cur != nxt) {
             PaneMatSetTevColorsByName(self->mpLayout2, buf2, (const GXColorS10*)&sArtsChangeColorA, (const GXColorS10*)&sArtsChangeColorB);
@@ -1772,23 +1739,23 @@ void CArtsInfo_FmtRow10(CArtsInfo* self, u8 arg2, int arg3) {
     // form that references the named doubles rewrites the schedule (+frsp,
     // frame resize).
     float fb;
-    u8 v1 = BdatGetU8ByTableKey(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x289, self->field_0x55);
+    u8 v1 = BdatGetU8ByTableKey((char*)"pc_arts", (char*)"st_val", self->field_0x55);
     float fa = (float)v1;
-    u8 v2 = BdatGetU8ByTableKey(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x29f, self->field_0x55);
+    u8 v2 = BdatGetU8ByTableKey((char*)"pc_arts", (char*)"grow_st_val", self->field_0x55);
     fb = (float)v2;
     if (fa != lbl_eu_80668680) {
         float scaled = fa * lbl_eu_806686A4;
         fa = scaled;
     }
     float cur = fa + lbl_eu_806686A4 * (fb * (float)(self->field_0x56 - 1));
-    sprintf(buf1, lbl_eu_8050B00C + 0x232, s1, cur, s2);
+    sprintf(buf1, (char*)"%s%.1f%s", s1, cur, s2);
     SjisDotToCommaEU(buf1);
     CArtsInfo_DotToCommaDE(self, arg2, buf1);
-    sprintf(buf2, lbl_eu_8050B00C + 0x23b, arg3 + 2);
+    sprintf(buf2, (char*)"txt_value%02d_02", arg3 + 2);
     LayoutSetTextBoxText(self->mpLayout1, buf2, buf1, 0);
     if (self->field_0x56 < 0xA) {
         float nxt = fa + lbl_eu_806686A4 * (fb * (float)(int)self->field_0x56);
-        sprintf(buf1, lbl_eu_8050B00C + 0x232, s1, nxt, s2);
+        sprintf(buf1, (char*)"%s%.1f%s", s1, nxt, s2);
         SjisDotToCommaEU(buf1);
         CArtsInfo_DotToCommaDE(self, arg2, buf1);
         LayoutSetTextBoxText(self->mpLayout2, buf2, buf1, 0);
@@ -1813,19 +1780,19 @@ void CArtsInfo_FmtRow21(CArtsInfo* self, u8 arg2, int arg3) {
     char buf2[32]; // sprintf at +0x8
     char* s1 = CArtsInfo_GetSkill20C(self, arg2);
     char* s2 = CArtsInfo_GetSkillStr(self, arg2);
-    u8 v1 = BdatGetU8ByTableKey(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x289, self->field_0x55);
+    u8 v1 = BdatGetU8ByTableKey((char*)"pc_arts", (char*)"st_val", self->field_0x55);
     float fa = (float)v1;
-    u8 v2 = BdatGetU8ByTableKey(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x29f, self->field_0x55);
+    u8 v2 = BdatGetU8ByTableKey((char*)"pc_arts", (char*)"grow_st_val", self->field_0x55);
     float fb = (float)v2;
     float cur = lbl_eu_80668684 + (lbl_eu_806686A4 * fa + fb * (float)(self->field_0x56 - 1));
-    sprintf(buf1, lbl_eu_8050B00C + 0x232, s1, cur, s2);
+    sprintf(buf1, (char*)"%s%.1f%s", s1, cur, s2);
     SjisDotToCommaEU(buf1);
     CArtsInfo_DotToCommaDE(self, arg2, buf1);
-    sprintf(buf2, lbl_eu_8050B00C + 0x23b, arg3 + 2);
+    sprintf(buf2, (char*)"txt_value%02d_02", arg3 + 2);
     LayoutSetTextBoxText(self->mpLayout1, buf2, buf1, 0);
     if (self->field_0x56 < 0xA) {
         float nxt = lbl_eu_80668684 + (lbl_eu_806686A4 * fa + fb * (float)(int)self->field_0x56);
-        sprintf(buf1, lbl_eu_8050B00C + 0x232, s1, nxt, s2);
+        sprintf(buf1, (char*)"%s%.1f%s", s1, nxt, s2);
         SjisDotToCommaEU(buf1);
         CArtsInfo_DotToCommaDE(self, arg2, buf1);
         LayoutSetTextBoxText(self->mpLayout2, buf2, buf1, 0);
@@ -1843,9 +1810,9 @@ void CArtsInfo_FmtRow11(CArtsInfo* self, u8 arg2, int arg3) {
     char buf2[32]; // sprintf at +0x8
     char* s1 = CArtsInfo_GetSkill20C(self, arg2);
     char* s2 = CArtsInfo_GetSkillStr(self, arg2);
-    u8 r = BdatGetU8ByTableKey(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x289, self->field_0x55);
-    sprintf(buf1, lbl_eu_8050B00C + 0x266, s1, r, s2);
-    sprintf(buf2, lbl_eu_8050B00C + 0x23b, arg3 + 2);
+    u8 r = BdatGetU8ByTableKey((char*)"pc_arts", (char*)"st_val", self->field_0x55);
+    sprintf(buf1, (char*)"%s%d%s", s1, r, s2);
+    sprintf(buf2, (char*)"txt_value%02d_02", arg3 + 2);
     LayoutSetTextBoxText(self->mpLayout1, buf2, buf1, 0);
     if (self->field_0x56 < 0xA) {
         LayoutSetTextBoxText(self->mpLayout2, buf2, buf1, 0);
@@ -1866,14 +1833,14 @@ void CArtsInfo_FmtRow12(CArtsInfo* self, u8 arg2, int arg3) {
     char buf2[32]; // sprintf at +0x8
     char* s1 = CArtsInfo_GetSkill20C(self, arg2);
     char* s2 = CArtsInfo_GetSkillStr(self, arg2);
-    u8 r = BdatGetU8ByTableKey(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x2ab, self->field_0x55);
+    u8 r = BdatGetU8ByTableKey((char*)"pc_arts", (char*)"st_val2", self->field_0x55);
     u32 cur = (u32)(lbl_eu_806686BC * (float)self->field_0x56 + (float)r);
-    sprintf(buf1, lbl_eu_8050B00C + 0x266, s1, cur, s2);
-    sprintf(buf2, lbl_eu_8050B00C + 0x23b, arg3 + 2);
+    sprintf(buf1, (char*)"%s%d%s", s1, cur, s2);
+    sprintf(buf2, (char*)"txt_value%02d_02", arg3 + 2);
     LayoutSetTextBoxText(self->mpLayout1, buf2, buf1, 0);
     if (self->field_0x56 < 0xA) {
         u32 nxt = (u32)(lbl_eu_806686BC * (float)(self->field_0x56 + 1) + (float)r);
-        sprintf(buf1, lbl_eu_8050B00C + 0x266, s1, nxt, s2);
+        sprintf(buf1, (char*)"%s%d%s", s1, nxt, s2);
         LayoutSetTextBoxText(self->mpLayout2, buf2, buf1, 0);
         if (cur != nxt) {
             PaneMatSetTevColorsByName(self->mpLayout2, buf2, (const GXColorS10*)&sArtsChangeColorA, (const GXColorS10*)&sArtsChangeColorB);
@@ -1889,9 +1856,9 @@ void CArtsInfo_FmtRow13(CArtsInfo* self, u8 arg2, int arg3) {
     char buf2[32]; // sprintf at +0x8
     char* s1 = CArtsInfo_GetSkill20C(self, arg2);
     char* s2 = CArtsInfo_GetSkillStr(self, arg2);
-    s16 r = BdatGetS16ByTableKey(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x2b3, self->field_0x55);
-    sprintf(buf1, lbl_eu_8050B00C + 0x266, s1, r, s2);
-    sprintf(buf2, lbl_eu_8050B00C + 0x23b, arg3 + 2);
+    s16 r = BdatGetS16ByTableKey((char*)"pc_arts", (char*)"sp_val1", self->field_0x55);
+    sprintf(buf1, (char*)"%s%d%s", s1, r, s2);
+    sprintf(buf2, (char*)"txt_value%02d_02", arg3 + 2);
     LayoutSetTextBoxText(self->mpLayout1, buf2, buf1, 0);
     if (self->field_0x56 < 0xA) {
         LayoutSetTextBoxText(self->mpLayout2, buf2, buf1, 0);
@@ -1906,9 +1873,9 @@ void CArtsInfo_FmtRow14(CArtsInfo* self, u8 arg2, int arg3) {
     char buf2[32]; // sprintf at +0x8
     char* s1 = CArtsInfo_GetSkill20C(self, arg2);
     char* s2 = CArtsInfo_GetSkillStr(self, arg2);
-    s16 r = BdatGetS16ByTableKey(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x2b3, self->field_0x55);
-    sprintf(buf1, lbl_eu_8050B00C + 0x266, s1, r, s2);
-    sprintf(buf2, lbl_eu_8050B00C + 0x23b, arg3 + 2);
+    s16 r = BdatGetS16ByTableKey((char*)"pc_arts", (char*)"sp_val1", self->field_0x55);
+    sprintf(buf1, (char*)"%s%d%s", s1, r, s2);
+    sprintf(buf2, (char*)"txt_value%02d_02", arg3 + 2);
     LayoutSetTextBoxText(self->mpLayout1, buf2, buf1, 0);
     if (self->field_0x56 < 0xA) {
         LayoutSetTextBoxText(self->mpLayout2, buf2, buf1, 0);
@@ -1924,8 +1891,8 @@ void CArtsInfo_FmtRow15(CArtsInfo* self, u8 arg2, int arg3) {
     char* s1 = CArtsInfo_GetSkill20C(self, arg2);
     char* s2 = CArtsInfo_GetSkillStr(self, arg2);
     int id = CArtsInfo_GetStatId20(self);
-    sprintf(buf1, lbl_eu_8050B00C + 0x266, s1, id << 1, s2);
-    sprintf(buf2, lbl_eu_8050B00C + 0x23b, arg3 + 2);
+    sprintf(buf1, (char*)"%s%d%s", s1, id << 1, s2);
+    sprintf(buf2, (char*)"txt_value%02d_02", arg3 + 2);
     LayoutSetTextBoxText(self->mpLayout1, buf2, buf1, 0);
     if (self->field_0x56 < 0xA) {
         LayoutSetTextBoxText(self->mpLayout2, buf2, buf1, 0);
@@ -1940,9 +1907,9 @@ void CArtsInfo_FmtRow16(CArtsInfo* self, u8 arg2, int arg3) {
     char buf2[32]; // sprintf at +0x8
     char* s1 = CArtsInfo_GetSkill20C(self, arg2);
     char* s2 = CArtsInfo_GetSkillStr(self, arg2);
-    u8 r = BdatGetU8ByTableKey(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x289, self->field_0x55);
-    sprintf(buf1, lbl_eu_8050B00C + 0x266, s1, r, s2);
-    sprintf(buf2, lbl_eu_8050B00C + 0x23b, arg3 + 2);
+    u8 r = BdatGetU8ByTableKey((char*)"pc_arts", (char*)"st_val", self->field_0x55);
+    sprintf(buf1, (char*)"%s%d%s", s1, r, s2);
+    sprintf(buf2, (char*)"txt_value%02d_02", arg3 + 2);
     LayoutSetTextBoxText(self->mpLayout1, buf2, buf1, 0);
     if (self->field_0x56 < 0xA) {
         LayoutSetTextBoxText(self->mpLayout2, buf2, buf1, 0);
@@ -1957,17 +1924,17 @@ void CArtsInfo_FmtRow17(CArtsInfo* self, u8 arg2, int arg3) {
     char buf2[32]; // sprintf at +0x8
     char* s1 = CArtsInfo_GetSkill20C(self, arg2);
     char* s2 = CArtsInfo_GetSkillStr(self, arg2);
-    s16 r = BdatGetS16ByTableKey(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x2b3, self->field_0x55);
+    s16 r = BdatGetS16ByTableKey((char*)"pc_arts", (char*)"sp_val1", self->field_0x55);
     // MWCC s32->f32 magic (retail: extsh + 0x4330/xoris/lfd/fsubs, no frsp).
     float d = (float)r;
     if (r != 0) {
         float scaled_d = d * lbl_eu_806686A4;
         d = scaled_d;
     }
-    sprintf(buf1, lbl_eu_8050B00C + 0x232, s1, d, s2);
+    sprintf(buf1, (char*)"%s%.1f%s", s1, d, s2);
     SjisDotToCommaEU(buf1);
     CArtsInfo_DotToCommaDE(self, arg2, buf1);
-    sprintf(buf2, lbl_eu_8050B00C + 0x23b, arg3 + 2);
+    sprintf(buf2, (char*)"txt_value%02d_02", arg3 + 2);
     LayoutSetTextBoxText(self->mpLayout1, buf2, buf1, 0);
     if (self->field_0x56 < 0xA) {
         LayoutSetTextBoxText(self->mpLayout2, buf2, buf1, 0);
@@ -1985,8 +1952,8 @@ void CArtsInfo_FmtRow18(CArtsInfo* self, u8 arg2, int arg3) {
     char buf1[32]; // sprintf at +0x28
     char buf2[32]; // sprintf at +0x8
     char* s1 = CArtsInfo_GetSkill20C(self, arg2);
-    sprintf(buf1, lbl_eu_8050B00C + 0x266, s1, 5, CArtsInfo_GetSkillStr(self, arg2));
-    sprintf(buf2, lbl_eu_8050B00C + 0x23b, arg3 + 2);
+    sprintf(buf1, (char*)"%s%d%s", s1, 5, CArtsInfo_GetSkillStr(self, arg2));
+    sprintf(buf2, (char*)"txt_value%02d_02", arg3 + 2);
     LayoutSetTextBoxText(self->mpLayout1, buf2, buf1, 0);
     if (self->field_0x56 < 0xA) {
         LayoutSetTextBoxText(self->mpLayout2, buf2, buf1, 0);
@@ -2009,10 +1976,10 @@ void CArtsInfo_FmtRow19(CArtsInfo* self, u8 arg2, int arg3) {
     char buf2[32]; // sprintf at +0x8
     char* s1 = CArtsInfo_GetSkill20C(self, arg2);
     char* s2 = CArtsInfo_GetSkillStr(self, arg2);
-    sprintf(buf1, lbl_eu_8050B00C + 0x232, s1, lbl_eu_806686C0, s2);
+    sprintf(buf1, (char*)"%s%.1f%s", s1, lbl_eu_806686C0, s2);
     SjisDotToCommaEU(buf1);
     CArtsInfo_DotToCommaDE(self, arg2, buf1);
-    sprintf(buf2, lbl_eu_8050B00C + 0x23b, arg3 + 2);
+    sprintf(buf2, (char*)"txt_value%02d_02", arg3 + 2);
     LayoutSetTextBoxText(self->mpLayout1, buf2, buf1, 0);
     if (self->field_0x56 < 0xA) {
         LayoutSetTextBoxText(self->mpLayout2, buf2, buf1, 0);
@@ -2025,8 +1992,8 @@ void CArtsInfo_FmtRow1A(CArtsInfo* self, u8 arg2, int arg3) {
     char buf2[32]; // sprintf at +0x8
     char* s1 = CArtsInfo_GetSkill20C(self, arg2);
     char* s2 = CArtsInfo_GetSkillStr(self, arg2);
-    sprintf(buf1, lbl_eu_8050B00C + 0x266, s1, 25, s2);
-    sprintf(buf2, lbl_eu_8050B00C + 0x23b, arg3 + 2);
+    sprintf(buf1, (char*)"%s%d%s", s1, 25, s2);
+    sprintf(buf2, (char*)"txt_value%02d_02", arg3 + 2);
     LayoutSetTextBoxText(self->mpLayout1, buf2, buf1, 0);
     if (self->field_0x56 < 0xA) {
         LayoutSetTextBoxText(self->mpLayout2, buf2, buf1, 0);
@@ -2041,8 +2008,8 @@ void CArtsInfo_FmtRow1B(CArtsInfo* self, u8 arg2, int arg3) {
     char buf2[32]; // sprintf at +0x8
     char* s1 = CArtsInfo_GetSkill20C(self, arg2);
     char* s2 = CArtsInfo_GetSkillStr(self, arg2);
-    sprintf(buf1, lbl_eu_8050B00C + 0x266, s1, 25, s2);
-    sprintf(buf2, lbl_eu_8050B00C + 0x23b, arg3 + 2);
+    sprintf(buf1, (char*)"%s%d%s", s1, 25, s2);
+    sprintf(buf2, (char*)"txt_value%02d_02", arg3 + 2);
     LayoutSetTextBoxText(self->mpLayout1, buf2, buf1, 0);
     if (self->field_0x56 < 0xA) {
         LayoutSetTextBoxText(self->mpLayout2, buf2, buf1, 0);
@@ -2055,8 +2022,8 @@ void CArtsInfo_FmtRow1C(CArtsInfo* self, u8 arg2, int arg3) {
     char buf2[32]; // sprintf at +0x8
     char* s1 = CArtsInfo_GetSkill20C(self, arg2);
     char* s2 = CArtsInfo_GetSkillStr(self, arg2);
-    sprintf(buf1, lbl_eu_8050B00C + 0x266, s1, 50, s2);
-    sprintf(buf2, lbl_eu_8050B00C + 0x23b, arg3 + 2);
+    sprintf(buf1, (char*)"%s%d%s", s1, 50, s2);
+    sprintf(buf2, (char*)"txt_value%02d_02", arg3 + 2);
     LayoutSetTextBoxText(self->mpLayout1, buf2, buf1, 0);
     if (self->field_0x56 < 0xA) {
         LayoutSetTextBoxText(self->mpLayout2, buf2, buf1, 0);
@@ -2069,8 +2036,8 @@ void CArtsInfo_FmtRow1D(CArtsInfo* self, u8 arg2, int arg3) {
     char buf2[32]; // sprintf at +0x8
     char* s1 = CArtsInfo_GetSkill20C(self, arg2);
     char* s2 = CArtsInfo_GetSkillStr(self, arg2);
-    sprintf(buf1, lbl_eu_8050B00C + 0x266, s1, 100, s2);
-    sprintf(buf2, lbl_eu_8050B00C + 0x23b, arg3 + 2);
+    sprintf(buf1, (char*)"%s%d%s", s1, 100, s2);
+    sprintf(buf2, (char*)"txt_value%02d_02", arg3 + 2);
     LayoutSetTextBoxText(self->mpLayout1, buf2, buf1, 0);
     if (self->field_0x56 < 0xA) {
         LayoutSetTextBoxText(self->mpLayout2, buf2, buf1, 0);
@@ -2084,10 +2051,10 @@ void CArtsInfo_FmtRow1E(CArtsInfo* self, u8 arg2, int arg3) {
     char buf2[32]; // sprintf at +0x8
     char* s1 = CArtsInfo_GetSkill20C(self, arg2);
     char* s2 = CArtsInfo_GetSkillStr(self, arg2);
-    sprintf(buf1, lbl_eu_8050B00C + 0x2bb, s1, lbl_eu_806686C8, s2);
+    sprintf(buf1, (char*)"%s%.2f%s", s1, lbl_eu_806686C8, s2);
     SjisDotToCommaEU(buf1);
     CArtsInfo_DotToCommaDE(self, arg2, buf1);
-    sprintf(buf2, lbl_eu_8050B00C + 0x23b, arg3 + 2);
+    sprintf(buf2, (char*)"txt_value%02d_02", arg3 + 2);
     LayoutSetTextBoxText(self->mpLayout1, buf2, buf1, 0);
     if (self->field_0x56 < 0xA) {
         LayoutSetTextBoxText(self->mpLayout2, buf2, buf1, 0);
@@ -2102,8 +2069,8 @@ void CArtsInfo_FmtRow1F(CArtsInfo* self, u8 arg2, int arg3) {
     char buf2[32]; // sprintf at +0x8
     char* s1 = CArtsInfo_GetSkill20C(self, arg2);
     char* s2 = CArtsInfo_GetSkillStr(self, arg2);
-    sprintf(buf1, lbl_eu_8050B00C + 0x266, s1, 50, s2);
-    sprintf(buf2, lbl_eu_8050B00C + 0x23b, arg3 + 2);
+    sprintf(buf1, (char*)"%s%d%s", s1, 50, s2);
+    sprintf(buf2, (char*)"txt_value%02d_02", arg3 + 2);
     LayoutSetTextBoxText(self->mpLayout1, buf2, buf1, 0);
     if (self->field_0x56 < 0xA) {
         LayoutSetTextBoxText(self->mpLayout2, buf2, buf1, 0);
@@ -2120,8 +2087,8 @@ void CArtsInfo_FmtRow20(CArtsInfo* self, u8 arg2, int arg3) {
     char buf2[32]; // sprintf at +0x8
     char* s1 = CArtsInfo_GetSkill20C(self, arg2);
     char* s2 = CArtsInfo_GetSkillStr(self, arg2);
-    sprintf(buf1, lbl_eu_8050B00C + 0x266, s1, 2, s2);
-    sprintf(buf2, lbl_eu_8050B00C + 0x23b, arg3 + 2);
+    sprintf(buf1, (char*)"%s%d%s", s1, 2, s2);
+    sprintf(buf2, (char*)"txt_value%02d_02", arg3 + 2);
     LayoutSetTextBoxText(self->mpLayout1, buf2, buf1, 0);
     if (self->field_0x56 < 0xA) {
         LayoutSetTextBoxText(self->mpLayout2, buf2, buf1, 0);
@@ -2135,9 +2102,9 @@ void CArtsInfo_FmtRow22(CArtsInfo* self, u8 arg2, int arg3) {
     char buf2[32]; // sprintf at +0x8
     char* s1 = CArtsInfo_GetSkill20C(self, arg2);
     char* s2 = CArtsInfo_GetSkillStr(self, arg2);
-    u8 r = BdatGetU8ByTableKey(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x2ab, self->field_0x55);
-    sprintf(buf1, lbl_eu_8050B00C + 0x266, s1, r, s2);
-    sprintf(buf2, lbl_eu_8050B00C + 0x23b, arg3 + 2);
+    u8 r = BdatGetU8ByTableKey((char*)"pc_arts", (char*)"st_val2", self->field_0x55);
+    sprintf(buf1, (char*)"%s%d%s", s1, r, s2);
+    sprintf(buf2, (char*)"txt_value%02d_02", arg3 + 2);
     LayoutSetTextBoxText(self->mpLayout1, buf2, buf1, 0);
     if (self->field_0x56 < 0xA) {
         LayoutSetTextBoxText(self->mpLayout2, buf2, buf1, 0);
@@ -2155,15 +2122,15 @@ void CArtsInfo_FmtRow23(CArtsInfo* self, u8 arg2, int arg3) {
     char buf2[32]; // sprintf at +0x8
     char* s1 = CArtsInfo_GetSkill20C(self, arg2);
     char* s2 = CArtsInfo_GetSkillStr(self, arg2);
-    u8 v1 = BdatGetU8ByTableKey(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x289, self->field_0x55);
-    u8 v2 = BdatGetU8ByTableKey(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x29f, self->field_0x55);
+    u8 v1 = BdatGetU8ByTableKey((char*)"pc_arts", (char*)"st_val", self->field_0x55);
+    u8 v2 = BdatGetU8ByTableKey((char*)"pc_arts", (char*)"grow_st_val", self->field_0x55);
     u32 cur = v1 + v2 * (self->field_0x56 - 1);
-    sprintf(buf1, lbl_eu_8050B00C + 0x266, s1, cur, s2);
-    sprintf(buf2, lbl_eu_8050B00C + 0x23b, arg3 + 2);
+    sprintf(buf1, (char*)"%s%d%s", s1, cur, s2);
+    sprintf(buf2, (char*)"txt_value%02d_02", arg3 + 2);
     LayoutSetTextBoxText(self->mpLayout1, buf2, buf1, 0);
     if (self->field_0x56 < 0xA) {
         u32 nxt = v1 + v2 * self->field_0x56;
-        sprintf(buf1, lbl_eu_8050B00C + 0x266, s1, nxt, s2);
+        sprintf(buf1, (char*)"%s%d%s", s1, nxt, s2);
         LayoutSetTextBoxText(self->mpLayout2, buf2, buf1, 0);
         if (cur != nxt) {
             PaneMatSetTevColorsByName(self->mpLayout2, buf2, (const GXColorS10*)&sArtsChangeColorA, (const GXColorS10*)&sArtsChangeColorB);
@@ -2182,15 +2149,15 @@ void CArtsInfo_FmtRow24(CArtsInfo* self, u8 arg2, int arg3) {
     char buf2[32]; // sprintf at +0x8
     char* s1 = CArtsInfo_GetSkill20C(self, arg2);
     char* s2 = CArtsInfo_GetSkillStr(self, arg2);
-    BdatGetU8ByTableKey(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x289, self->field_0x55);
-    BdatGetU8ByTableKey(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x29f, self->field_0x55);
+    BdatGetU8ByTableKey((char*)"pc_arts", (char*)"st_val", self->field_0x55);
+    BdatGetU8ByTableKey((char*)"pc_arts", (char*)"grow_st_val", self->field_0x55);
     u32 level = self->field_0x56;
-    sprintf(buf1, lbl_eu_8050B00C + 0x266, s1, level, s2);
-    sprintf(buf2, lbl_eu_8050B00C + 0x23b, arg3 + 2);
+    sprintf(buf1, (char*)"%s%d%s", s1, level, s2);
+    sprintf(buf2, (char*)"txt_value%02d_02", arg3 + 2);
     LayoutSetTextBoxText(self->mpLayout1, buf2, buf1, 0);
     if (self->field_0x56 < 0xA) {
         u32 nxt = self->field_0x56 + 1;
-        sprintf(buf1, lbl_eu_8050B00C + 0x266, s1, nxt, s2);
+        sprintf(buf1, (char*)"%s%d%s", s1, nxt, s2);
         LayoutSetTextBoxText(self->mpLayout2, buf2, buf1, 0);
         if (level != nxt) {
             PaneMatSetTevColorsByName(self->mpLayout2, buf2, (const GXColorS10*)&sArtsChangeColorA, (const GXColorS10*)&sArtsChangeColorB);
@@ -2206,10 +2173,10 @@ void CArtsInfo_FmtRow25(CArtsInfo* self, u8 arg2, int arg3) {
     char buf2[32]; // sprintf at +0x8
     char* s1 = CArtsInfo_GetSkill20C(self, arg2);
     char* s2 = CArtsInfo_GetSkillStr(self, arg2);
-    sprintf(buf1, lbl_eu_8050B00C + 0x232, s1, lbl_eu_806686A0, s2);
+    sprintf(buf1, (char*)"%s%.1f%s", s1, lbl_eu_806686A0, s2);
     SjisDotToCommaEU(buf1);
     CArtsInfo_DotToCommaDE(self, arg2, buf1);
-    sprintf(buf2, lbl_eu_8050B00C + 0x23b, arg3 + 2);
+    sprintf(buf2, (char*)"txt_value%02d_02", arg3 + 2);
     LayoutSetTextBoxText(self->mpLayout1, buf2, buf1, 0);
     if (self->field_0x56 < 0xA) {
         LayoutSetTextBoxText(self->mpLayout2, buf2, buf1, 0);
@@ -2226,17 +2193,17 @@ void CArtsInfo_FmtRow26(CArtsInfo* self, u8 arg2, int arg3) {
     CArtsInfo_GetSkillStr(self, arg2);
     char buf1[32]; // sprintf at +0x28
     char buf2[32]; // sprintf at +0x8
-    u8 v1 = BdatGetU8ByTableKey(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x289, self->field_0x55);
-    u8 v2 = BdatGetU8ByTableKey(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x29f, self->field_0x55);
+    u8 v1 = BdatGetU8ByTableKey((char*)"pc_arts", (char*)"st_val", self->field_0x55);
+    u8 v2 = BdatGetU8ByTableKey((char*)"pc_arts", (char*)"grow_st_val", self->field_0x55);
     u32 cur = v1 + v2 * (self->field_0x56 - 1);
-    char* str = BdatTouchStringCell(lbl_eu_8050B00C + 0x32, lbl_eu_8050B00C + 0x3d, 0x52);
-    sprintf(buf1, lbl_eu_8050B00C + 0x282, 5, str, cur);
-    sprintf(buf2, lbl_eu_8050B00C + 0x23b, arg3 + 2);
+    char* str = BdatTouchStringCell((char*)"MNU_battle", (char*)"name", 0x52);
+    sprintf(buf1, (char*)"%d%s%d", 5, str, cur);
+    sprintf(buf2, (char*)"txt_value%02d_02", arg3 + 2);
     LayoutSetTextBoxText(self->mpLayout1, buf2, buf1, 0);
     if (self->field_0x56 < 0xA) {
         u32 nxt = v1 + v2 * self->field_0x56;
-        char* str2 = BdatTouchStringCell(lbl_eu_8050B00C + 0x32, lbl_eu_8050B00C + 0x3d, 0x52);
-        sprintf(buf1, lbl_eu_8050B00C + 0x282, 5, str2, nxt);
+        char* str2 = BdatTouchStringCell((char*)"MNU_battle", (char*)"name", 0x52);
+        sprintf(buf1, (char*)"%d%s%d", 5, str2, nxt);
         LayoutSetTextBoxText(self->mpLayout2, buf2, buf1, 0);
         if (cur != nxt) {
             PaneMatSetTevColorsByName(self->mpLayout2, buf2, (const GXColorS10*)&sArtsChangeColorA, (const GXColorS10*)&sArtsChangeColorB);
@@ -2253,13 +2220,13 @@ void CArtsInfo_FmtRow27(CArtsInfo* self, u8 arg2, int arg3) {
     char buf2[32]; // sprintf at +0x8
     char* s1 = CArtsInfo_GetSkill20C(self, arg2);
     char* s2 = CArtsInfo_GetSkillStr(self, arg2);
-    s16 r = BdatGetS16ByTableKey(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x2b3, self->field_0x55);
+    s16 r = BdatGetS16ByTableKey((char*)"pc_arts", (char*)"sp_val1", self->field_0x55);
     // MWCC s32->f32 magic (retail: extsh + 0x4330/xoris/lfd/fsubs, no frsp).
     float d = (float)r;
-    sprintf(buf1, lbl_eu_8050B00C + 0x232, s1, d, s2);
+    sprintf(buf1, (char*)"%s%.1f%s", s1, d, s2);
     SjisDotToCommaEU(buf1);
     CArtsInfo_DotToCommaDE(self, arg2, buf1);
-    sprintf(buf2, lbl_eu_8050B00C + 0x23b, arg3 + 2);
+    sprintf(buf2, (char*)"txt_value%02d_02", arg3 + 2);
     LayoutSetTextBoxText(self->mpLayout1, buf2, buf1, 0);
     if (self->field_0x56 < 0xA) {
         LayoutSetTextBoxText(self->mpLayout2, buf2, buf1, 0);
@@ -2273,9 +2240,9 @@ void CArtsInfo_FmtRow2C(CArtsInfo* self, u8 arg2, int arg3) {
     char buf2[32]; // sprintf at +0x8
     char* s1 = CArtsInfo_GetSkill20C(self, arg2);
     char* s2 = CArtsInfo_GetSkillStr(self, arg2);
-    s16 r = BdatGetS16ByTableKey(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x2c4, self->field_0x55);
-    sprintf(buf1, lbl_eu_8050B00C + 0x266, s1, r, s2);
-    sprintf(buf2, lbl_eu_8050B00C + 0x23b, arg3 + 2);
+    s16 r = BdatGetS16ByTableKey((char*)"pc_arts", (char*)"sp_val2", self->field_0x55);
+    sprintf(buf1, (char*)"%s%d%s", s1, r, s2);
+    sprintf(buf2, (char*)"txt_value%02d_02", arg3 + 2);
     LayoutSetTextBoxText(self->mpLayout1, buf2, buf1, 0);
     if (self->field_0x56 < 0xA) {
         LayoutSetTextBoxText(self->mpLayout2, buf2, buf1, 0);
@@ -2361,7 +2328,7 @@ extern "C" void CArtsInfo_Refresh(CArtsInfo* self) {
 // Branch 2 (event handle == field_0x18, the message bdat file): routes the
 // loaded data into CBdat, resolves the two FP table entries named by the
 // string table, calls the split1 reset stub, clears field_0x18, returns 1.
-int CArtsInfo::OnFileEvent(CEventFile* event) {
+bool CArtsInfo::OnFileEvent(CEventFile* event) {
     if ((u32)field_0x14 == (u32)event->mFileHandle) {
         mMemRegion.createRegion((int)getHandleMEM2__Q23mtl10MemManagerFv(),
                                 0x18000, (char*)"CArtsInfo", 0);
@@ -2413,14 +2380,14 @@ int CArtsInfo::OnFileEvent(CEventFile* event) {
                       BdatTouchStringCell((char*)"MNU_battle", (char*)"name", 49), 0);
         LayoutSetTextBoxFmtValue(mpLayout1, (char*)"txt_slct02",
                       BdatTouchStringCell((char*)"MNU_battle", (char*)"name", 50), 0);
-        LayoutSetTextBoxFmtValue(mpLayout1, (char*)"txt_close00",
-                      BdatTouchStringCell((char*)"MNU_kyeassign", (char*)"help", 43), 0);
+        char* closeText = BdatTouchStringCell((char*)"MNU_kyeassign", (char*)"help", 43);
+        LayoutSetTextBoxFmtValue(mpLayout1, (char*)"txt_close00", closeText, 0);
 
         // Message-detail textbox: pane name depends on the CFGameManager
         // query result.
-        const char* detailPane = (cf::CfGameManager::isClassicController(-1) == 0)
-                                     ? (char*)"fileID_1"
-                                     : (char*)"fileID_2";
+        const char* detailPane = (cf::CfGameManager::isClassicController(-1) != 0)
+                                     ? (char*)"fileID_2"
+                                     : (char*)"fileID_1";
         // Retail masks the lookup result to its low half and feeds it through
         // MakeTplNameSysFile to get the message resource name.
         char* resName = MakeTplNameSysFile(

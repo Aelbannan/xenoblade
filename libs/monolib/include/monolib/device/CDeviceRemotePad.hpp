@@ -5,11 +5,7 @@
 #include "monolib/core/CPadManager.hpp"
 
 //size: 0x1f0
-// __declspec(novtable): the retail vtable is the manual lbl_eu_8056BBC0
-// table defined in CDeviceRemotePad.cpp (blob monolibdata1d dissolve);
-// novtable stops MWCC from auto-emitting __vt__16CDeviceRemotePad + RTTI,
-// and the ctor stores the retail label explicitly.
-class __declspec(novtable) CDeviceRemotePad : public CDeviceBase {
+class CDeviceRemotePad : public CDeviceBase {
 public:
     CDeviceRemotePad(const char* pName, CWorkThread* pParent);
     ~CDeviceRemotePad();

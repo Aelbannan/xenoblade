@@ -1,6 +1,7 @@
 // Auto-scaffolded catalog TU for kyoshin/cf/object/CfObjectPc
 // Replace stubs with high-level C/C++ during decomp.
 
+#include "kyoshin/cf/CfBdat.hpp"
 #include "kyoshin/cf/CBattleManager.hpp"
 #include "kyoshin/code_8025FB10.hpp"
 #include "kyoshin/cf/CfMapItemManager.hpp"
@@ -82,7 +83,7 @@ void CfObjectPc_setupFrame(cf::CfObjectPc* obj) {
         CfObjectPcArtsData* data;
         int col;
         data = (CfObjectPcArtsData*)CtrlObjectParam_GetCharEntry(f->field_0x3F28);
-        file = lbl_eu_80664090;
+        file = ::cf::CfBdat::spBtlPcListFileData;
         col = 4;
         // Signed compare (cmpi) in retail.
         if ((int)CtrlObjectParam_GetCurrentRowKey(data) == 1) {
@@ -279,7 +280,7 @@ void cf::CfObjectPc::setupActionTable() {
         // first byte is '1' (the value is returned packed; read its low byte).
         CfObjectPcArtsData* artsData = (CfObjectPcArtsData*)CtrlObjectParam_GetCharEntry(
             ((CfObjectPcSubFields*)this)->field_0x3F28);
-        u32 val = getBdatStringColumnValue(lbl_eu_806640F4,
+        u32 val = getBdatStringColumnValue(::cf::CfBdat::spItmWpnListFileData,
             (const char*)lbl_eu_804FC5EC + 0x24, artsData->field_0xC);
         if (*(s8*)&val == 1) {
         aiInstallArts((u8*)&((PcAiSubView*)this)->ai, 0x70, 0xd);
@@ -325,9 +326,9 @@ void cf::CfObjectPc::CfObject_UnkVirtualFunc4() {
         }
     } else {
         // Count entries in the battle-manager list at +0x48.
-        BmListNode* head =
-            &((BattleMgrListView*)getInstance__Q22cf14CBattleManagerFv())
-                ->mListHead;
+        cf::CBattleManager* bm =
+            static_cast<cf::CBattleManager*>(getInstance__Q22cf14CBattleManagerFv());
+        BmListNode* head = (BmListNode*)bm->mActorList3.mStartNodePtr;
         int count = 0;
         for (BmListNode* n = head->mNext; n != head; n = n->mNext) {
             count++;
@@ -371,7 +372,7 @@ void cf::CfObjectPc::CfObject_UnkVirtualFunc4() {
     }
     if (moveSub == (u8*)getPlayer__Q22cf13CfGameManagerFi(0)) {
         getInstance__Q22cf13CfGameManagerFv();
-        if (isGlobalCamFlagSet__Fi(0x100000)) {
+        if (isGlobalCamFlagSet(0x100000)) {
             // Distinct fake types per +0x3E9C dispatch so MWCC re-materializes
             // addi r3, r31, 0x3E9C like retail instead of caching one temp.
             if (chkFlag == 0 && this->checkStateFlags(1) == 0) {
@@ -441,7 +442,7 @@ void cf::CfObjectPc::CActorParam_decayArtsMatrix(float value) {
 int cf::CfObjectPc::CActorParam_getCurrencyBalance() {
     // Arts count from the param object (vtable 0xFC); the arts table index is
     // count+1, capped at 99 entries. Returns 1 when over the cap.
-    void* bdat = lbl_eu_806640DC;
+    void* bdat = ::cf::CfBdat::spBtlGrowListFileData;
     u32 idx = this->CActorParam_getArtsLevel() + 1;
     if (idx > 0x63) return 1;
     u32 sval = getBdatStringColumnValue(bdat,
@@ -484,8 +485,11 @@ void cf::CfObjectPc::CActorParam_UnkVirtualFunc88(u32 arg1, u32 arg2, u32 arg3) 
         fireLvUpCombo(f->field_0x3F10, this->resetArtsState());
         void* state;
         void* state2;
-        if (((BattleMgrRangeView*)getInstance__Q22cf14CBattleManagerFv())->isInRange()) goto actedDone;
-        if (((BattleMgrRangeView*)getInstance__Q22cf14CBattleManagerFv())->field_0x20C8 != 0) goto actedDone;
+        cf::CBattleManager* bm =
+            static_cast<cf::CBattleManager*>(getInstance__Q22cf14CBattleManagerFv());
+        u8 phase = bm->mChain.mHead.field_2;
+        if (phase < 1 || phase > 0x18) goto actedDone;
+        if (bm->unk20C8.unk0 != 0) goto actedDone;
         state = *(void**)(*(cf::CObjectState**)((u8*)this + 4))->getStateData();
         if (testActorStatus(this, (int*)&state, 6) ||
             ((state2 = *(void**)(*(cf::CObjectState**)((u8*)this + 4))->getStateData()),
@@ -554,16 +558,17 @@ extern "C" int CfObjectPc_refreshGauge(cf::CfObjectPc* self, int flag) {
             self->CActorParam_isBattleLocked() != 0) {
             goto resetGauge;
         }
-        BattleMgrRangeView* bm =
-            (BattleMgrRangeView*)getInstance__Q22cf14CBattleManagerFv();
-        if (bm->field_0x1AA >= 1 && bm->field_0x1AA <= 0x18) {
+        cf::CBattleManager* bm =
+            static_cast<cf::CBattleManager*>(getInstance__Q22cf14CBattleManagerFv());
+        u8 phase = bm->mChain.mHead.field_2;
+        if (phase >= 1 && phase <= 0x18) {
             return 0;
         }
-        if (SuddenCommuIsStateActive((u8*)bm + 0x216C)) {
+        if (SuddenCommuIsStateActive(&bm->mSuddenCommu)) {
             return 0;
         }
-        if (((BattleMgrRangeView*)getInstance__Q22cf14CBattleManagerFv())
-                ->field_0x20C8 != 0) {
+        bm = static_cast<cf::CBattleManager*>(getInstance__Q22cf14CBattleManagerFv());
+        if (bm->unk20C8.unk0 != 0) {
             return 0;
         }
         u32 fourB0 =
@@ -573,7 +578,7 @@ extern "C" int CfObjectPc_refreshGauge(cf::CfObjectPc* self, int flag) {
         u32 modeOff = (u32)gmGlobalFlag42 * 100;
         int channel = (int)*(u16*)((u8*)&gmGlobalFlag44 + modeOff) + (int)modeOff;
         Bdat_GetTable_AA34();
-        void* mgr = lbl_eu_806640D4;
+        void* mgr = ::cf::CfBdat::spFldDmObjListFileData;
         int i = Bdat_GetRowBase_B41C(mgr);
         int end = i + Bdat_GetMaxRow_B1EC(mgr);
         const char* names = (const char*)lbl_eu_804FC5EC;
@@ -590,7 +595,7 @@ extern "C" int CfObjectPc_refreshGauge(cf::CfObjectPc* self, int flag) {
             double thr = (double)(int)((vC & 0xFF) * 30);
             if (newGauge < thr) return 1;
             u32 vD = getBdatStringColumnValue(mgr, names + 0x52, i);
-            double base = (double)(int)(vD & 0xFF) - lbl_eu_80666B40;
+            double base = (double)(int)(vD & 0xFF) - 4503599627370496.0;
             float dmg = lbl_eu_80666B38 *
                 (base * self->CActorParam_getDamageScale());
             if (isBattleStatusActive((u8*)self + 8, 0xE9)) {
@@ -687,6 +692,4 @@ __declspec(section ".sdata2") __attribute__((used))
 const double lbl_eu_80666B30 = 4503601774854144.0;
 __declspec(section ".sdata2") __attribute__((used))
 const float lbl_eu_80666B38 = 0.01f;
-__declspec(section ".sdata2") __attribute__((used))
-const double lbl_eu_80666B40 = 4503599627370496.0;
 

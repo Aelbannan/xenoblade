@@ -357,7 +357,7 @@ bool CScnCameraMan::WorkEvent1(UNKTYPE* payload, const char* cmd) {
         return false;
     }
 
-    f32 scale = lbl_eu_8066AB48;
+    f32 scale = 0.017453289f;
 
     // Slot 2 holds the target euler vector; scale every component, then copy
     // member-wise into the non-const argument (retail uses lfs/stfs).
@@ -398,19 +398,10 @@ extern u32 lbl_eu_80663A08;
 extern "C" void registerCmd__11CScriptCodeFv(void* a, void* b);
 extern "C" void CamMan_EvalScript0_B3FC() { registerCmd__11CScriptCodeFv((void*)lbl_eu_80663A08, 0); }
 
-// Retail s16->f32 magic double (2^52 + 2^31 = 0x4330000080000000; owned by
-// CGXCache.cpp's pool range). Plain (f32) casts below expand to the same
-// xoris/lfd/fsubs idiom; the cast constant pools anonymously (@6139).
-extern const double lbl_eu_8066AB60;
-
 extern "C" void unregisterCmd__11CScriptCodeFv(void* self);
 extern "C" void CamMan_EvalScript_B408() { unregisterCmd__11CScriptCodeFv((void*)lbl_eu_80663A08); }
 
-// MWCC's built-in (f32)(s16) cast pools the 0x4330000080000000 magic constant
-// anonymously; assembling the double by hand keeps the retail reference to
-// lbl_eu_8066AB60.
 
-// Projects a world position onto the camera item's screen rectangle: transforms
 // `pos` into camera space (view matrix at +0xCC), rejects points behind the
 // near plane, divides by z, runs the projected point through the coefficient
 // block at +0x150 (three plane-style rows), then rescales into screen space
@@ -418,18 +409,12 @@ extern "C" void CamMan_EvalScript_B408() { unregisterCmd__11CScriptCodeFv((void*
 // NOTE (byte-matching): locals are declared so MWCC's reverse-declaration
 // slot assignment yields the retail stack layout (v lowest, conversions last).
 extern "C" bool CamMan_ProjectToScreen(ml::CVec3* out, CScnItemCameraProject* item, ml::CVec3* pos) {
-    // s16 -> f32 through the 0x43300000/xoris double trick; hand-assembled so
-    // the magic constant keeps its retail reference to lbl_eu_8066AB60.
-    union {
-        double d;
-        u32 w[2];
-    } convB, convA;
     ml::CVec3 dir;
     ml::CVec3 result;
     ml::CVec3 v;
-    out->x = lbl_eu_8066AB50;
-    out->y = lbl_eu_8066AB50;
-    out->z = lbl_eu_8066AB50;
+    out->x = -500.0f;
+    out->y = -500.0f;
+    out->z = -500.0f;
 
     PSMTXMultVec(item->mViewMtx, (Vec*)pos, (Vec*)&v);
 
@@ -447,7 +432,7 @@ extern "C" bool CamMan_ProjectToScreen(ml::CVec3* out, CScnItemCameraProject* it
     // the getWidthScale call like retail.
     ret = true;
 
-    f32 inv = lbl_eu_8066AB54 / v.z;
+    f32 inv = 1.0f / v.z;
     dir.x = v.x * inv;
     dir.y = v.y * inv;
     dir.z = inv;
@@ -468,14 +453,8 @@ extern "C" bool CamMan_ProjectToScreen(ml::CVec3* out, CScnItemCameraProject* it
     f32 ny = item->mAspect * out->y;
     out->y = ny;
 
-    convA.w[1] = (u32)(s32)item->mOffsetX ^ 0x80000000;
-    convA.w[0] = 0x43300000;
-    out->x = lbl_eu_8066AB58 * (f32)(convA.d - lbl_eu_8066AB60) *
-             (lbl_eu_8066AB54 - out->x);
-    convB.w[1] = (u32)(s32)item->mOffsetY ^ 0x80000000;
-    convB.w[0] = 0x43300000;
-    out->y = (f32)(convB.d - lbl_eu_8066AB60) * lbl_eu_8066AB58 *
-             (lbl_eu_8066AB54 + out->y);
+    out->x = 0.5f * (f32)(s16)item->mOffsetX * (1.0f - out->x);
+    out->y = (f32)(s16)item->mOffsetY * 0.5f * (1.0f + out->y);
     return ret;
 }
 
@@ -491,7 +470,7 @@ extern "C" void CamMan_BuildPerspective(Mtx44 mtx, CScnItemCamera* item) {
 
     CGXCacheTail* cache = (CGXCacheTail*)CDeviceGX::getCacheInstance();
     f32 aspect = ((f32)cache->mScissorDeltaX / (f32)cache->mScissorDeltaY) *
-                 lbl_eu_8066AB6C;
+                 0.947f;
     C_MTXPerspective(mtx, item->mFovY, aspect * CDeviceVI::getWidthScale(),
                      nearZ, farZ);
 }
@@ -508,20 +487,20 @@ extern "C" void CamMan_ComputeViewFalloff(f32* outDirX, f32* outFall, CScnCamera
     ml::CVec3 diff = *pos - item->mPos;
     f32 dist = PSVECMag((const Vec*)&diff);
 
-    *outFall = lbl_eu_8066AB68;
+    *outFall = 0.0f;
     if (dist < fMax) {
         if (dist < fMin) {
-            *outFall = lbl_eu_8066AB54;
+            *outFall = 1.0f;
         } else {
             // Linear falloff between the near and far distances.
-            *outFall = lbl_eu_8066AB54 - (dist - fMin) / (fMax - fMin);
+            *outFall = 1.0f - (dist - fMin) / (fMax - fMin);
         }
     }
 
     ml::CVec3 dir;
     PSMTXMultVec(item->mMtx, (Vec*)pos, (Vec*)&dir);
     f32 sqLen = dir.y * dir.y + dir.x * dir.x + dir.z * dir.z;
-    if (sqLen == lbl_eu_8066AB68) {
+    if (sqLen == 0.0f) {
         dir = ml::CVec3::zero;
     } else {
         PSVECNormalize((Vec*)&dir, (Vec*)&dir);

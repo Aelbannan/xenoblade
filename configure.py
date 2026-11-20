@@ -1496,7 +1496,7 @@ config.libs = [
             Object(Matching, "CriWare/src/adx/ahx/ahx_cmn.c", mw_version = "Wii/1.1"),
             Object(NonMatching, "CriWare/src/adx/ahx/ahx_dcd.c", mw_version = "Wii/1.1"),
             Object(Matching, "CriWare/src/adx/cricfg/cfg_lib.c", mw_version = "Wii/1.1"),
-            Object(NonMatching, "CriWare/src/adx/cvfs/cri_cvfs.c", mw_version = "Wii/1.1"),
+            Object(NonMatching, "CriWare/src/adx/cvfs/cri_cvfs.c", mw_version = "Wii/1.1", extra_cflags = ["-str reuse,pool,readonly"]),
             Object(NonMatching, "CriWare/src/adx/gcci/gcci.c", mw_version = "Wii/1.1"),
             Object(Matching, "CriWare/src/adx/gcci/gcci_sub.c", mw_version = "Wii/1.1"),
             Object(Matching, "CriWare/src/adx/lsc/lsc_err.c", mw_version = "Wii/1.1"),
@@ -1511,7 +1511,7 @@ config.libs = [
             Object(NonMatching, "CriWare/src/adx/sj/sj_utl.c", mw_version = "Wii/1.1"),
             Object(Matching, "CriWare/src/adx/sj/sj_crs.c", mw_version = "Wii/1.1"),
             Object(Matching, "CriWare/src/adx/sj/sj_err.c", mw_version = "Wii/1.1"),
-            Object(NonMatching, "CriWare/src/adx/svm/svm.c", mw_version = "Wii/1.1"),
+            Object(NonMatching, "CriWare/src/adx/svm/svm.c", mw_version = "Wii/1.1", extra_cflags = ["-str reuse,pool,readonly"]),
             Object(NonMatching, "CriWare/src/adx/adxt/adx_dcd3.c", mw_version = "Wii/1.1"),
             Object(Matching, "CriWare/src/adx/adxt/adx_bsps.c", mw_version = "Wii/1.1"),
             Object(NonMatching, "CriWare/src/adx/adxt/adx_bau.c", mw_version = "Wii/1.1"),
@@ -1529,7 +1529,7 @@ config.libs = [
         [
             Object(NonMatching, "CriWare/src/sofdec/cft/srcgc/cftyp422_ppc.c"),
             Object(Matching, "CriWare/src/sofdec/cft/cft_common.c"),
-            Object(NonMatching, "CriWare/src/sofdec/mwply/mwsfdfrm.c", mw_version = "Wii/1.1"),
+            Object(NonMatching, "CriWare/src/sofdec/mwply/mwsfdfrm.c", mw_version = "Wii/1.1", extra_cflags = ["-str reuse,pool,readonly"]),
             Object(Matching, "CriWare/src/sofdec/mwply/mwsfdrna.c"),
             Object(Matching, "CriWare/src/sofdec/mwply/mwsfdrsc.c"),
             Object(NonMatching, "CriWare/src/sofdec/mwply/mwsfdsl.c", mw_version = "Wii/1.1"),
@@ -1865,7 +1865,7 @@ config.libs = [
             Object(Matching, "monolib/src/work/CWorkFlowWiiReset.cpp"),
             Object(Matching, "monolib/src/work/CWorkFlowWiiPowerOff.cpp"),
             Object(NonMatching, "monolib/src/work/CWorkRoot.cpp", extra_cflags=["-O4,s", "-func_align 16", "-RTTI off"]),
-            Object(NonMatching, "monolib/src/work/CWorkSystem.cpp", extra_cflags=["-O4,s", "-func_align 16", "-RTTI off"]),
+            Object(NonMatching, "monolib/src/work/CWorkSystem.cpp", extra_cflags=["-O4,s", "-func_align 16"]),
             Object(Matching, "monolib/src/work/CWorkSystemMem.cpp", extra_cflags=["-O4,s", "-func_align 4"]),
             Object(Matching, "monolib/src/work/CProcess.cpp", extra_cflags=["-func_align 4"], link_transform={
                 # Retail __sinit_\CProcess_cpp is global; MWCC emits it local.
@@ -1875,7 +1875,7 @@ config.libs = [
             Object(NonMatching, "monolib/src/util/CChildListNode.cpp", extra_cflags=["-RTTI off"]),  # retail CChildListNode.o has no RTTI/vtable data (vtables live in monolibdata blob); -RTTI off drops the __RTTI__/type-name emissions
             Object(NonMatching, "monolib/src/core/CPadManager.cpp"),
             Object(NonMatching, "monolib/src/util/CStopwatchUtil.cpp"),
-            Object(NonMatching, "monolib/src/device/CDeviceRemotePad.cpp", extra_cflags=["-RTTI off"]),  # __RTTI__10IWorkEvent/11CWorkThread conflict (10322)
+            Object(NonMatching, "monolib/src/device/CDeviceRemotePad.cpp"),
             # 10/10 functions FULL_MATCH (hexdiff); ctor needs body-assignment
             # member inits after the manual novtable vptr store (MWCC_PATTERNS
             # "novtable ctor vptr store"). Split-size FAIL by exactly 0x58:

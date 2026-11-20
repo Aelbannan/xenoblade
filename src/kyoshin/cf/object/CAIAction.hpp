@@ -42,6 +42,14 @@ struct CAIActionSubEntry {
     u8 b11;  // 0x0B -> a12
 };
 
+// One 0xE-byte action record in CAIAction::entries (12 action bytes plus the
+// flag halfword the store helper maintains). Declaring the array with its real
+// element type removes the offset overlay otherwise used for the flag word.
+struct CAIActionEntry {
+    CAIActionSubEntry action; // 0x00 .. 0x0B
+    u16 flags;                // 0x0C
+};
+
 // Variable-length AI config table entry (stride 0x16 + actionCount * 0xC).
 struct CAIActionTableEntry {
     u8 id;                   // 0x00 - selection id
@@ -122,7 +130,7 @@ public:
 
     // 0x0: vtable
     CAIActionRing ring; // 0x4 .. 0x21C (slot queue at 0xC)
-    u8 entries[0x8C0]; // 0x21C .. 0xADC (160 * 0xE)
+    CAIActionEntry entries[160]; // 0x21C .. 0xADC (160 * 0xE)
     u8 trailer[0x20];  // 0xADC .. 0xAFC (CAIActionSlot)
     u32 unkAFC;        // 0xAFC
     u8 unkB00;         // 0xB00
@@ -159,7 +167,7 @@ extern cf::CAIActionTable* lbl_eu_806641B0;
 extern void* findObjectById(int);        // C++ linkage -> findObjectById__Fi
 
 // Forward decl for real state sub-object (owner: CObjectState, slot 0x30).
-namespace cf { class CObjectState; }
+namespace cf { class CObjectState; struct CBattleStateEntry; }
 
 // Embedded move object at partyBase + 0x3E9C (real owner: CObjectParam/CfObjectMove, slots 0x4C/0x50).
 struct CAIPartyMoveObj {
@@ -189,20 +197,7 @@ struct CAIEnumIter {
     u32 field620;             // 0x620 entry count / limit
 };
 
-// Arts-parameter record probed by the action gates.
-struct CAIArtsParamView {
-    u8 pad00[0x34];
-    s16 field34;              // 0x34 (cost/level field, sign-extended)
-    u8 pad36[0x48 - 0x36];
-    u16 field48;              // 0x48 arts id
-    u8 pad4A[0x77 - 0x4A];
-    u8 field77;               // 0x77 category byte
-    u32 field78;              // 0x78 flag word (bit 0x8000)
-    u8 pad7C[0x80 - 0x7C];
-    f32 field80;              // 0x80 power value
-};
-
-// Element row (CPartsChange_FindActorById result): s16 gate value at +0xA2.
+// Element row
 struct CAIElemA4View {
     u8 pad00[0xA2];
     s16 fieldA2;
@@ -214,22 +209,14 @@ struct CAIChDataView {
     u16 field45C0;
 };
 
-// Battle manager singleton fields probed by aiJudgeAction.
-struct CBattleMgrAIView {
-    u8 pad00[0x194];
-    s32 field194;             // 0x194 turn/frame counter
-    u8 pad198[0x824 - 0x198];
-    u32 field824;             // 0x824 flag bits (bit 0x20000)
-};
-
-// Imports used by aiJudgeAction (unmangled retail symbols).
+// Imports used by aiJudgeAction
 extern "C" long testActorStatus(void* p, void* out, u32 arg);
 extern "C" int canAIUseArts(void* party, u32 arg);
 extern "C" int lookupArtsParamById(void* artsSet, int idx);
 extern "C" int isPcEffectSlotActive(int idx);
 extern "C" u16 getReloadParam0(void);   // canonical u16 form (chapter/episode getter)
 extern "C" u32 CtrlObjectParam_GetCurrentRowKey(void* obj);
-extern "C" u32 CtrlRemote_TouchBitByArg(u32 id);
+#include "kyoshin/cf/CtrlRemoteApi.hpp"
 extern "C" int CItem_getNameIdFromFam(u32 v);
 extern "C" u32 getBdatStringColumnValue(void* table, const char* col, s32 index = 0); // canonical ocBdat.hpp form; default keeps 2-arg call sites compiling
 extern "C" void* CPartsChange_FindActorById(void* table, u32 id);
@@ -237,6 +224,10 @@ void* getEffOwner(void* obj);   // C++ linkage -> getEffOwner____FPv
 extern "C" void* CPartsChange_GetActorTable(void);
 extern "C" int IdTable_GetSum(void* self, int id, void* out);
 extern "C" int isBattleEventKind3(int id);   // canonical int param (CBattleState.cpp definition)
+// Canonical declarations for the two CBattleState.cpp helpers (CBattleManager and
+// CActorParam pass the CBattleState sub-object as an opaque pointer).
+extern "C" cf::CBattleStateEntry* matchBattleStatusEntry(void* self, u32 id, u32 a, u32 b, u32 c);
+extern "C" bool isBattleStatusKind1(int value);
 extern "C" int ArtsGateClear(void* param, void* actor, u32 flags);
 // (getArtsSlotRC / getArtsParamRC2 moved to their single owner decl on
 // kyoshin/cf/chain/CChainActorList.hpp - int/const void* forms matching the
@@ -246,7 +237,6 @@ extern "C" u16 getArtsSlotByFlatIdx(const void* artsSet, int idx);
 extern "C" u16 getArtsSlotAtCnt(void* artsSet, u32 idx);
 extern "C" void* getAtkParam(void* artsSet, int idx);
 // BDAT select table + global bdat root (data imports).
-extern void* lbl_eu_806640F8;
 extern u8 lbl_eu_80501968[];
 
 // Sub-object referenced by CAIActionQuery::unk18.

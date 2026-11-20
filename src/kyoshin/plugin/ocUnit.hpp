@@ -59,6 +59,13 @@ extern "C" void* ArtsSelect_Insert(void* p, void* obj);
 extern "C" void* ArtsSelect_CacheEntry(void* dst, void* src);
 extern "C" void* ArtsSelect_Lookup(void* pObj, int slot);
 
+// OC instance handle (same layout as CamOCHandle in pluginCam.hpp):
+// the object id consumed by ArtsSelect_Lookup sits at +0x04.
+struct OcUnitHandle {
+    u8 _pad00[4];
+    u32 mObjId04;    // +0x04
+};
+
 struct Vec3f {
     f32 x;
     f32 y;
@@ -101,8 +108,8 @@ extern "C" {
 void ocUnitRegist();
 void CfObjectMove_attachMoveRegion(cf::CfObject* obj);
 void* CfObjectMove_getSelfIfActive(void* objParam);
-void UIWin_CreateTalkWin(void* obj, const char* str, int mode);
-void UIWin_CreateEveTalkWin(void* obj, const char* str);
+void UIWin_CreateTalkWin(u32 obj, const char* str, int mode);
+void UIWin_CreateEveTalkWin(u32 obj, const char* str);
 unsigned int UIWin_GetTimer();
 // Retail caller compares the raw register (cmpwi), so declare as int, not u8.
 

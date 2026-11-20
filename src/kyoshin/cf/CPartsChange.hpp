@@ -41,19 +41,9 @@ struct CfPartyInfoSortKey {
     /* 0x04 */ f32 sortKey;
 };
 
-// Wrapper for CActorParam fields accessed by CPartsChange accessors
+// Accessor spelling retained for the recorded retail symbols. No data
+// members: the fields live on the real CActorParam / CBattleState class.
 struct CfActorAccessors {
-    u8 pad_00[0x1E];
-    /* 0x1E */ u16 mFlags1E;
-    u8 pad_20[0x10];
-    /* 0x30 */ void* mField30;
-    u8 pad_34[0x58];
-    /* 0x8C */ f32 mField8C;
-    u8 pad_90[4];
-    /* 0x94 */ u32 mField94;
-    u8 pad_98[6];
-    /* 0x9E */ u16 mField9E;
-
     void SetFlag400(int enable);
     u32 GetField94();
     u16 GetField9E();
@@ -63,15 +53,9 @@ struct CfActorAccessors {
     void* GetField30();
 };
 
-// Wrapper for CfObjectPc fields at 0x45C0+
+// Accessor spelling retained for the recorded retail symbols. No data
+// members: the tail fields still need the counted view in the .cpp.
 struct CfObjectPcExt {
-    u8 pad[0x45C0];
-    /* 0x45C0 */ u16 mField45C0;
-    u8 pad_45C2[2];
-    /* 0x45C4 */ u16 mField45C4;
-    /* 0x45C6 */ u16 mField45C6;
-    /* 0x45C8 */ u16 mField45C8;
-
     void SetField45C4(u16 val);
     void SetField45C8(u16 val);
     u16 GetField45C6();

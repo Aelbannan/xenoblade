@@ -89,12 +89,11 @@ struct CScnFilterIteratorReslist {
     void IterList_destroy();
 };
 
-class __declspec(novtable) CScnFilterMan {
+class CScnFilterMan {
 public:
-    CScnFilterMan();
     virtual ~CScnFilterMan();
     void update();
-    void cbRenderBefore();
+    virtual void cbRenderBefore();
 
     CScn* mScene;                        // 0x04 scene back-pointer
     CScnFilterReslist field_08;          // 0x08 reslist<CScnFilter*> member

@@ -19,7 +19,6 @@
 #include <nw4r/lyt.h>
 
 #include <functions.hpp>
-#include "kyoshin/CTutorialImports.hpp"
 #include "kyoshin/code_80135FDC_Lyt.hpp"
 #include "kyoshin/code_80135FDC_State.hpp"
 

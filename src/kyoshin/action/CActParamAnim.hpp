@@ -303,7 +303,7 @@ struct CActParamAnimSubObjView {
 };
 
 // C-linkage callees in sibling units (retail names, keep verbatim).
-extern "C" float simGetLeafAnimDist(u8* object);
+extern "C" float simGetLeafAnimDist(void* object);
 extern "C" int scn80496HasChild2Node(u8* object);
 extern "C" float simGetLeafAnimDist4(u8* object);
 extern "C" int simRefreshFadeDist(u8* object);
@@ -339,10 +339,8 @@ extern "C" void ScnRes_CopyEntryMid(void* out, int a);
 // +0x3A0 attached sub-object). Retail dispatches vtable+0x08 with an int
 // fall-state gate (func_8005D2C4), +0x14 with a position vector
 // (trackGroundAt/func_8005EEB4), and +0x18 with an int flag
-// (func_8005EEB4). Same shape as Cf7ECTarget in CfObjectMove.hpp: a tiny
-// named iface on the owning object, never constructed here, so no vtable
-// is emitted by including TUs. The +0x0C/+0x10 slots mirror CObjectState
-// UVF2/UVF3 (the target's early-vtable family); they are never dispatched
+// (func_8005EEB4). The +0x0C/+0x10 slots mirror CObjectState
+
 // from the anim TUs.
 class CActParam7ECTarget {
 public:
@@ -354,6 +352,8 @@ public:
     virtual void func10(u32 arg);       // +0x10 (mirrors CObjectState UVF3)
     virtual void func14(const void* vec);  // +0x14 position notify
     virtual void func18(int arg);       // +0x18 flag
+    u8 unk04[0x26];                     // +0x04..+0x29
+    u8 field2A;                         // +0x2A anim sub-target flag byte
 };
 
 
@@ -365,7 +365,7 @@ public:
     virtual float getAttachedAnimScale();
     virtual float getAttachedAnimRate();
     virtual void clearAnimState();
-    virtual void dispatchAnimSlot();
+    virtual int dispatchAnimSlot(u32 sel, u32 val);
     virtual void startFlag2000Anim();
     virtual void startFlag0800Anim();
     virtual void startFlag0400Anim();
@@ -384,7 +384,7 @@ public:
     virtual void fireCountGate();
     virtual void fireWord378Gt();
     virtual void func_8004F884();
-    virtual int fireBlendDflt(u32 param);
+    virtual void fireBlendDflt(u32 param);
     virtual void fireParamGate();
     virtual void fireBlendCust();
     virtual void startIfActive();
@@ -407,7 +407,7 @@ public:
     virtual bool isAnimEffectActive();
     virtual void fireOpenGate3();
     virtual void fireOpenGate2();
-    virtual void func_8004DAE0();
+    virtual int func_8004DAE0();
     virtual void fireFlag4D4Gt();
     virtual void fire4D4ZeroGt();
     virtual bool isAnimChainActive();
@@ -458,7 +458,6 @@ public:
     u32 testAndClearFlag18();
     void mulVec3Y(float param_2);
     int getChainInt();
-
 public:
     // Real retail layout. The whole state block is part of CActParamAnim;
     // derived classes add only their own tail at +0x4E8.
@@ -471,7 +470,8 @@ public:
     u8 _pad_28[0x2C - 0x28];
     s32 field2C;                // +0x2C (copied to field374 in switchSubAnim)
     s32 field30;                // +0x30 (copied to field374 in dispatchAnimSlot)
-    u8 _pad_34[0x260 - 0x34];   // +0x34..+0x25F (rest of embedded CActParamData base)
+    u32 field34;                // +0x34 (second anim-slot counter)
+    u8 unk38[0x260 - 0x38];     // +0x38..+0x25F (rest of embedded CActParamData base)
     u32 field260;               // +0x260 (flag word tested by testAnimBit5/13/16/18)
     u8 _pad_264[0x26C - 0x264]; // +0x264..+0x26B
     u8* field26C;               // +0x26C: eff request record (NULL = none)

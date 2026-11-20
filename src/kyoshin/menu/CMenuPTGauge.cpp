@@ -199,7 +199,7 @@ void CMenuPTGauge::Move() {
         break;
     }
     case 1: {
-        if (advanceAnimTransform(mAnimDefault, lbl_eu_806679EC) != 0) {
+        if (advanceAnimTransform(mAnimDefault, 1.0f) != 0) {
             mPhase = 2;
         }
         break;
@@ -277,7 +277,7 @@ void CMenuPTGauge::Move() {
         break;
     }
     case 3: {
-        if (AnimRewindFrame(mAnimDefault, lbl_eu_806679EC) != 0) {
+        if (AnimRewindFrame(mAnimDefault, 1.0f) != 0) {
             mPhase = 0;
         }
         break;
@@ -609,7 +609,7 @@ after_five:
 }
 void PTGaugeClsAnm(CMenuPTGauge* self, s32 partyVal) {
     // Advance the close animation one frame (result unused).
-    advanceAnimTransform(self->mAnimClose, lbl_eu_806679EC);
+    advanceAnimTransform(self->mAnimClose, 1.0f);
 
     if ((float)partyVal >= 300.0f) {
         self->mGaugeBase = 3;
@@ -619,7 +619,7 @@ void PTGaugeClsAnm(CMenuPTGauge* self, s32 partyVal) {
         self->mLayout->SetAnimationEnable(self->mAnimIdle, true);
         self->mAnimIdle->SetFrame(lbl_eu_806679E0);
         self->mLayout->Animate(0);
-        playUISound(0x66); // SE
+        playUISound(0x66);
     } else {
         if (partyVal < 200) {
             self->mGaugeBase = 1;
@@ -632,7 +632,7 @@ void PTGaugeClsAnm(CMenuPTGauge* self, s32 partyVal) {
         }
     }
 }
-// Close-action dispatch entry: once the party value reaches 100.0f,
+// Close-action dispatch entry
 // reset the gauge base state to 1 and re-bind the open animation from frame 0
 // with SE 0x65.
 void PTGaugeClsAct(CMenuPTGauge* self, s32 partyVal) {
@@ -647,13 +647,13 @@ void PTGaugeClsAct(CMenuPTGauge* self, s32 partyVal) {
         playUISound(0x65); // SE
     }
 }
-// Entry-action dispatch entry: re-seed the open animation to frame 1, then
+// Entry-action dispatch entry
 // switch between close state (value >= 200.0f) or reset-to-entry
 // (value < 100) with SE 0x65.
 void PTGaugeEntAct(CMenuPTGauge* self, s32 partyVal) {
     // Retail seeds this frame through the out-of-line helper, not the inline
     // SetFrame accessor.
-    advanceAnimTransform(self->mAnimOpen, lbl_eu_806679EC);
+    advanceAnimTransform(self->mAnimOpen, 1.0f);
     // MWCC emits the 0x4330000080000000 s32->double correction constant for
     // the plain (float) cast; it is not a source subtraction.
     if ((float)partyVal >= lbl_eu_80667A00) {
@@ -673,7 +673,7 @@ void PTGaugeEntAct(CMenuPTGauge* self, s32 partyVal) {
     }
 }
 
-// Gauge refresh + action dispatch: when the displayed value changed, resize
+// Gauge refresh
 // the gauge pane proportionally to the party value, then always dispatch the
 // per-state handler selected by mGaugeBase.
 void PTGaugeDispat(CMenuPTGauge* self, s32 partyVal) {
@@ -710,5 +710,5 @@ void PTGaugeIdlAct(CMenuPTGauge* self, s32 partyVal) {
     }
 }
 
-// Live instance of the single PT Gauge widget (retail .sbss slot).
+// Live instance
 CMenuPTGauge* spPTGaugeInstance;

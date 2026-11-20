@@ -113,7 +113,7 @@ CSelShopWin::~CSelShopWin() {
 /* Start loading the shop window arc resources. */
 void CSelShopWin::loadShopWinArc() {
     mFileHandle = CDeviceFile::readFile(
-        mtl::MemManager::getHandleMEM2(), lbl_eu_8050A62C,
+        mtl::MemManager::getHandleMEM2(), "menu/jp/ShopSubWin.arc",
         this, 0, 0);
     mIsLoaded = 0;
 }
@@ -185,9 +185,9 @@ translates via ScalePaneWorldPos). C-linkage (retail unmangled getShopWinPanePos
    Each GetRootPane() is a fresh load, matching retail's per-use reload. */
 extern "C" void getShopWinPanePos(nw4r::math::VEC3* pOutPos, CSelShopWin* window, int idx) {
     char buf[0x28];
-    sprintf(buf, &lbl_eu_8050A62C[0x17], idx + 1);
+    sprintf(buf, "txt_%02d", idx + 1);
     nw4r::lyt::Pane* pane1 = window->mLayout->GetRootPane()->FindPaneByName(buf, true);
-    nw4r::lyt::Pane* pane2 = window->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_8050A62C[0x20], true);
+    nw4r::lyt::Pane* pane2 = window->mLayout->GetRootPane()->FindPaneByName("nul_proportion", true);
     ScalePaneWorldPos(pOutPos, pane1, pane2, window->mLayout->GetRootPane());
 }
 #pragma pop
@@ -195,7 +195,7 @@ extern "C" void getShopWinPanePos(nw4r::math::VEC3* pOutPos, CSelShopWin* window
 #pragma push
 #pragma auto_inline off
 void CSelShopWin::advanceShopWinOpen() {
-    float f = lbl_eu_80668600;
+    float f = 1.0f;
     if (advanceAnimTransform(this->mAnimTransform, f) != 0) {
         this->mAnimState = 2;
         this->mAnimActive = 1;
@@ -203,7 +203,7 @@ void CSelShopWin::advanceShopWinOpen() {
 }
 
 void CSelShopWin::rewindShopWinClose() {
-    float f = lbl_eu_80668600;
+    float f = 1.0f;
     if (AnimRewindFrame(this->mAnimTransform, f) != 0) {
         this->mAnimState = 0;
         this->mAnimActive = 1;
@@ -226,14 +226,14 @@ bool CSelShopWin::OnFileEvent(CEventFile* pEventFile) {
     if (mFileHandle == pEventFile->mFileHandle) {
         // Build the shop window layout from the freshly-loaded arc.
         mtl::ALLOC_HANDLE handle = mtl::MemManager::getHandleMEM2();
-        mMemRegion.createRegion(handle, 0x8000, &lbl_eu_8050A62C[0x2f], 0);
+        mMemRegion.createRegion(handle, 0x8000, "CSelShopWin", 0);
         Class_8045F858 sp8(&mMemRegion);
         void* archive = mFileHandle->getData();
         mtl::MemManager::setMemInitFlag(false);
         mAccessor = CLibLayout::createArcResourceAccessor();
-        mAccessor->Attach(archive, &lbl_eu_8050A62C[0x3b]);
-        buildLayout(&mLayout, mAccessor, &lbl_eu_8050A62C[0x3f]);
-        bindLayoutAnimTransform(mLayout, &mAnimTransform, mAccessor, &lbl_eu_8050A62C[0x58]);
+        mAccessor->Attach(archive, "arc");
+        buildLayout(&mLayout, mAccessor, "mf70_cf60_syswin05.brlyt");
+        bindLayoutAnimTransform(mLayout, &mAnimTransform, mAccessor, "mf70_cf60_syswin05_in.brlan");
 
         nw4r::lyt::Pane* rootPane = mLayout->GetRootPane();
         ShopFontView* fontObj =
@@ -246,7 +246,7 @@ bool CSelShopWin::OnFileEvent(CEventFile* pEventFile) {
 
         // Clear bit 0 of the info pane's byte at +0xBB.
         ShopPaneInfo* info = reinterpret_cast<ShopPaneInfo*>(
-            mLayout->GetRootPane()->FindPaneByName(&lbl_eu_8050A62C[0x74], true));
+            mLayout->GetRootPane()->FindPaneByName("nul_value", true));
         info->field_BB &= 0xfe;
 
         char* text = NULL;
@@ -261,29 +261,29 @@ bool CSelShopWin::OnFileEvent(CEventFile* pEventFile) {
             }
         }
 
-        LayoutSetTextBoxFmtValue(mLayout, &lbl_eu_8050A62C[0x7e], text, 0);
+        LayoutSetTextBoxFmtValue(mLayout, "txt_titlemes", text, 0);
         {
-            char* t = BdatTouchStringCell(&lbl_eu_8050A62C[0x8b], &lbl_eu_8050A62C[0x94], 8);
-            LayoutSetTextBoxFmtValue(mLayout, &lbl_eu_8050A62C[0x99], t, 0);
+            char* t = BdatTouchStringCell("MNU_shop", "name", 8);
+            LayoutSetTextBoxFmtValue(mLayout, "txt_01", t, 0);
         }
         {
-            char* t = BdatTouchStringCell(&lbl_eu_8050A62C[0x8b], &lbl_eu_8050A62C[0x94], 9);
-            LayoutSetTextBoxFmtValue(mLayout, &lbl_eu_8050A62C[0xa0], t, 0);
+            char* t = BdatTouchStringCell("MNU_shop", "name", 9);
+            LayoutSetTextBoxFmtValue(mLayout, "txt_02", t, 0);
         }
         {
-            char* t = BdatTouchStringCell(&lbl_eu_8050A62C[0x8b], &lbl_eu_8050A62C[0x94], 10);
-            LayoutSetTextBoxFmtValue(mLayout, &lbl_eu_8050A62C[0xa7], t, 0);
+            char* t = BdatTouchStringCell("MNU_shop", "name", 10);
+            LayoutSetTextBoxFmtValue(mLayout, "txt_03", t, 0);
         }
-        char* t2b = BdatTouchStringCell(&lbl_eu_8050A62C[0xae], &lbl_eu_8050A62C[0xbc], 0x2b);
-        LayoutSetTextBoxFmtValue(mLayout, &lbl_eu_8050A62C[0xc1], t2b, 0);
-        LayoutSetTextBoxFmtValue(mLayout, &lbl_eu_8050A62C[0xcd], t2b, 0);
+        char* t2b = BdatTouchStringCell("MNU_kyeassign", "help", 0x2b);
+        LayoutSetTextBoxFmtValue(mLayout, "txt_close00", t2b, 0);
+        LayoutSetTextBoxFmtValue(mLayout, "txt_close01", t2b, 0);
 
         // Ternary keeps both format strings as immediate addi offsets
         // (retail preloads 0xe2 then overwrites with 0xd9 when nonzero).
         u16 val = static_cast<u16>(BdatGetU16ByTableKey(
-            &lbl_eu_8050A62C[0xae],
-            cf::CfGameManager::isClassicController(-1) != 0 ? &lbl_eu_8050A62C[0xd9]
-                                                           : &lbl_eu_8050A62C[0xe2],
+            "MNU_kyeassign",
+            cf::CfGameManager::isClassicController(-1) != 0 ? "fileID_2"
+                                                           : "fileID_1",
             0x2b));
         char* mssg = MakeTplNameSysFile(val);
 
@@ -291,36 +291,32 @@ bool CSelShopWin::OnFileEvent(CEventFile* pEventFile) {
         nw4r::lyt::ArcResourceAccessor* mgr = CUICfManager_getArcResourceAccessor();
         UnkMsgObj* obj = static_cast<UnkMsgObj*>(mgr->GetResource(0x74696d67U, mssg, 0));
         if (obj != NULL) {
-            PaneSetTexPaletteByName(mLayout, &lbl_eu_8050A62C[0xeb], (TPLPalette*)obj);
-            PaneSetTexPaletteByName(mLayout, &lbl_eu_8050A62C[0xf5], (TPLPalette*)obj);
+            PaneSetTexPaletteByName(mLayout, "pic_btn00", (TPLPalette*)obj);
+            PaneSetTexPaletteByName(mLayout, "pic_btn01", (TPLPalette*)obj);
 
             // Two u16 counts ([+2] row, [+0] column) offsetting the two
-            // panes; u32->float via the named 2^52+2^31 magic double keeps
-            // the sdata2 reloc on lbl_eu_80668608.
-            // Two u16 counts ([+2] row, [+0] column) offsetting the two
-            // panes; u32->float via the named 2^52+2^31 magic double keeps
-            // the sdata2 reloc on lbl_eu_80668608.
+            // panes; the plain integer-to-double casts emit the 2^52 magic.
             UnkCoords* coords = obj->chain->pCoords;
             u16 row = coords->c2;
             u16 col = coords->c0;
-            nw4r::lyt::Pane* p1 = mLayout->GetRootPane()->FindPaneByName(&lbl_eu_8050A62C[0xeb], true);
+            nw4r::lyt::Pane* p1 = mLayout->GetRootPane()->FindPaneByName("pic_btn00", true);
             if (p1 != NULL) {
                 // Materialize both int->double conversions up front so MWCC
                 // shares one 2^52-magic lfd across the two subtractions.
                 double dRow = row;
                 double dCol = col;
                 float src[2];
-                src[0] = dRow - lbl_eu_80668608;
-                src[1] = dCol - lbl_eu_80668608;
+                src[0] = dRow;
+                src[1] = dCol;
                 writePanePos(p1, src);
             }
-            nw4r::lyt::Pane* p2 = mLayout->GetRootPane()->FindPaneByName(&lbl_eu_8050A62C[0xf5], true);
+            nw4r::lyt::Pane* p2 = mLayout->GetRootPane()->FindPaneByName("pic_btn01", true);
             if (p2 != NULL) {
                 double dRow = row;
                 double dCol = col;
                 float src[2];
-                src[0] = dRow - lbl_eu_80668608;
-                src[1] = dCol - lbl_eu_80668608;
+                src[0] = dRow;
+                src[1] = dCol;
                 writePanePos(p2, src);
             }
         }

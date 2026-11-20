@@ -1,4 +1,5 @@
 #define IWORK_EVENT_INLINE_DTOR
+#include "kyoshin/cf/CfBdat.hpp"
 #include <types.h>
 #include "kyoshin/code_80135FDC_Bdat.hpp"
 #include <nw4r/lyt.h>
@@ -10,7 +11,6 @@ extern "C" void func_8022EB0C(CMCCrystalSupport* self);
 
 extern "C" {
 extern char lbl_eu_8050AA3C[];
-extern void* lbl_eu_80664090;
 extern const float lbl_eu_80668630;
 extern const float lbl_eu_80668634;
 
@@ -71,7 +71,7 @@ extern "C" void CrySupStartState(CMCCrystalSupport* self) {
 #pragma optimize_for_size on
 extern "C" void CrySupSetTexByIndex(CMCCrystalSupport* self, u16 index) {
     const char* base = lbl_eu_8050AA3C;
-    u16 key = BdatGetU16Direct(lbl_eu_80664090, base + 0x2d, index);
+    u16 key = BdatGetU16Direct(::cf::CfBdat::spBtlPcListFileData, base + 0x2d, index);
     char* name = MakeTplNameSysFile(key);
     void* resource = self->mAccessor->GetResource('timg', name, nullptr);
     if (resource != nullptr) {

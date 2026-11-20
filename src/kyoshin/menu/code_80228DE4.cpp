@@ -9,10 +9,11 @@
 //
 // The unit is data-free: QstData::Refresh reads the shared string pool at
 // lbl_eu_80509AB4 (owned by the next unit) and the quest tables at
-// lbl_eu_80573D18 / lbl_eu_806640A8, all external. CMenuQstCnt keeps
+// lbl_eu_80573D18 / ::cf::CfBdat::spFldMapListFileData, all external. CMenuQstCnt keeps
 // .rodata 0x80509A00..0x80509AA8, .data 0x80536128..0x80536228,
 // .sdata/.sdata2/.sbss, and the next unit starts at 0x80509AA8.
 
+#include "kyoshin/cf/CfBdat.hpp"
 #include <types.h>
 
 #include "kyoshin/code_80135FDC_State.hpp"
@@ -56,7 +57,7 @@ void QstData::Refresh() {
             if ((res & 0xff) == 2) continue;
             u32 showFlag = (res & 0xff) == 1;
             if (kindClass == 3) showFlag = 0;
-            u8 x = (u8)BdatGetU8Direct((const void*)lbl_eu_806640A8, &lbl_eu_80509AB4[0xa], cat);
+            u8 x = (u8)BdatGetU8Direct((const void*)::cf::CfBdat::spFldMapListFileData, &lbl_eu_80509AB4[0xa], cat);
             mList[mCount++] = QstInfo(i, kindClass, cat, kind, showFlag, res, x);
         }
     }

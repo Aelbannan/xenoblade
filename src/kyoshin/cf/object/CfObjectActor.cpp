@@ -7,8 +7,6 @@
 
 #include "kyoshin/cf/CfMapItemManager.hpp"  // dispatchItemLoad / testActorStatus
 
-extern const u32 sVisionPairEngagePtmf[3];
-
 
 // Object behind
 struct CfObjectActorInner {
@@ -144,7 +142,7 @@ void CfObjectActor::CActorParam_applyDamage(float value, int a, int b, int c) {
     if ((gmPauseFlags & 0x800) != 0) return;
     int v27 = 0;
     getInstance__Q22cf13CfGameManagerFv();
-    if (isGlobalCamFlagSet__Fi(0x04000000) != 0) {
+    if (isGlobalCamFlagSet(0x04000000) != 0) {
         cf::CfPtmf3 ptmf;
         ptmf.field_0 = sVisionPairEngagePtmf[0];
         ptmf.field_4 = sVisionPairEngagePtmf[1];
@@ -306,7 +304,7 @@ void CfObjectActor::CActorParam_applyDamage(float value, int a, int b, int c) {
                     f *= calcBattleDamage(0, this, 0);
                     this->CActorParam_addHp(f);
                     CBattleState_clearStatusId(0x100);
-                    this->CActorParam_addArtsGauge(lbl_eu_80667768);
+                    this->CActorParam_addArtsGauge(50.0f);
                     CBattleMan_ClearEventNotify(getInstance__Q22cf14CBattleManagerFv(), (u32)this, (u16)0x93);
                 }
             }
@@ -518,7 +516,4 @@ const float lbl_eu_80667760 = 100.0f;
 __declspec(section ".sdata2") __attribute__((used))
 const float lbl_eu_80667764 = 0.01f;
 __declspec(section ".sdata2") __attribute__((used))
-const float lbl_eu_80667768 = 50.0f;
-__declspec(section ".sdata2") __attribute__((used))
-const float lbl_eu_8066776C = -1.0f;
-
+extern const float lbl_eu_8066776C = -1.0f;

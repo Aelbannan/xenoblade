@@ -15,6 +15,8 @@ namespace nw4r {
 namespace snd {
 namespace detail {
 
+class AxVoice;
+
 inline int CalcAxvpbDelta(u16 init, u16 target) {
     return (target - init) / AX_SAMPLES_PER_FRAME;
 }
@@ -132,6 +134,7 @@ private:
     static const u16 DEFAULT_VOLUME = AX_MAX_VOLUME;
 
 private:
+    friend class AxVoice;
     AXVPB* mVpb;                    // at 0x0
     u32 mSync;                      // at 0x4
     volatile AXPBVE mPrevVeSetting; // at 0x8
@@ -258,6 +261,7 @@ public:
     void SetRmtMix(const RemoteMixParam& rParam);
     void SetSrc(f32 ratio, bool initial);
     void SetVe(f32 volume, f32 initVolume);
+    bool IsNeedNextUpdate(const MixParam& rParam) const;
     void SetLpf(u16 freq);
     void SetBiquad(u8 biquad, f32 value);
     void SetRemoteFilter(u8 filter);

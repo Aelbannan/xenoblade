@@ -3,6 +3,7 @@
 
 // Inline-empty ~IWorkEvent: the retail destructor elides the base call.
 #define IWORK_EVENT_INLINE_DTOR
+#include "kyoshin/cf/CfBdat.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"  // canonical CItem_initItemImplInstances decl
 #include "kyoshin/makecrystal/CMCGetItemBox.hpp"
 #include "kyoshin/CItemBoxInfo.hpp"
@@ -246,7 +247,7 @@ char* getMCItemSubText(CMCItemBoxSub* sub, u16 index) {
         // bdat-managed entry: name comes from the item database.
         void* inst = CItem_initItemImplInstances((CItemData*)p);
         u32 v = (u32)((u32(*)(void*, void*))(*(void***)inst)[0x22])(inst, p);
-        char* s = BdatGetPtrDirect((void*)lbl_eu_80664100, "comment", (u16)v);
+        char* s = BdatGetPtrDirect((void*)::cf::CfBdat::spItmDropCrystalListFileData, "comment", (u16)v);
         ((ml::FixStr<128>*)&sub->name)->format(&lbl_eu_8050FF8C[0], s);
         return (char*)&sub->name;
     }
@@ -264,7 +265,7 @@ char* getMCItemSubText(CMCItemBoxSub* sub, u16 index) {
         // Gem slot: icon/kind/name triple drives the message placeholders.
         // Declared in this order so MWCC lays the buffers out at the retail
         // stack offsets (tbl / fmtBuf / buf48 / tail / copy).
-        void* db = (void*)lbl_eu_806640D8;
+        void* db = (void*)::cf::CfBdat::spBtlSkillListFileData;
         void* inst1 = CItem_initItemImplInstances((CItemData*)p);
         u32 icon = (u32)((u32(*)(void*, void*))(*(void***)inst1)[0x15])(inst1, p);
         void* inst2 = CItem_initItemImplInstances((CItemData*)p);
@@ -342,7 +343,7 @@ char* getMCItemSubText(CMCItemBoxSub* sub, u16 index) {
         u8 v = (u8)(pad102 + 0xFC);
         void* tbl2 = (void*)sCrystalMesTable;
         if (v <= 5 || pad102 == 2) tbl2 = (void*)sCrystalItemTable;
-        u32 n = BdatGetU16Direct((void*)lbl_eu_806640EC, "comment", id);
+        u32 n = BdatGetU16Direct((void*)::cf::CfBdat::spItmItemListFileData, "comment", id);
         char* s = BdatGetPtrDirect(tbl2, "comment", (u16)n);
         ((ml::FixStr<128>*)&sub->name)->format(&lbl_eu_8050FF8C[0], s);
         return (char*)&sub->name;
@@ -938,7 +939,7 @@ extern "C" void setMCSlotIconTex(CMCGetItemBox* self, u32 idx, CMCItemBoxEntry* 
             h = 0;
             CMCItemImplShim* inst = (CMCItemImplShim*)CItem_initItemImplInstances((CItemData*)e);
             u32 k = inst->getIcon(e);
-            u8 r = (u8)BdatGetU8Direct((const void*)lbl_eu_806640D8, &lbl_eu_8050FF8C[0x128], (u16)k);
+            u8 r = (u8)BdatGetU8Direct((const void*)::cf::CfBdat::spBtlSkillListFileData, &lbl_eu_8050FF8C[0x128], (u16)k);
             switch (r) {
                 case 4: h = MakeTplNameSysFile(0x144); break;
                 case 5: h = MakeTplNameSysFile(0x145); break;
@@ -993,7 +994,7 @@ extern "C" void setMCSlotIconTex(CMCGetItemBox* self, u32 idx, CMCItemBoxEntry* 
     }
     if (h == 0) {
         if (idx != 0) {
-            char* name = MakeTplNameSysFile((u16)BdatGetU16Direct((void*)lbl_eu_806640EC, &lbl_eu_8050FF8C[0x144], idx));
+            char* name = MakeTplNameSysFile((u16)BdatGetU16Direct((void*)::cf::CfBdat::spItmItemListFileData, &lbl_eu_8050FF8C[0x144], idx));
             h = self->arcAcc2->GetResource(0x74696d67u, name, 0);
             if (h == 0)
                 h = self->arcAcc1->GetResource(0x74696d67u, &lbl_eu_8050FF8C[0x131], 0);
@@ -1076,7 +1077,7 @@ void setMCSlotNameTex(CMCGetItemBox* self, u32 idx, CMCItemBoxEntry* entry, u8 n
     }
     if (h == 0) {
         if (idx != 0) {
-            char* name = MakeTplNameSysFile((u16)BdatGetU16Direct(lbl_eu_806640EC, &lbl_eu_8050FF8C[0x15c], idx));
+            char* name = MakeTplNameSysFile((u16)BdatGetU16Direct(::cf::CfBdat::spItmItemListFileData, &lbl_eu_8050FF8C[0x15c], idx));
             h = self->arcAcc2->GetResource(0x74696d67u, name, 0);
             if (h == 0)
                 h = self->arcAcc1->GetResource(0x74696d67u, &lbl_eu_8050FF8C[0x131], 0);

@@ -1,6 +1,6 @@
 // Auto-scaffolded catalog TU for kyoshin/cf/code_800F42AC
 // Replace stubs with high-level C/C++ during decomp.
-
+#include "kyoshin/cf/CfCamSymbols.hpp"
 #include <string.h>
 #include "kyoshin/CUIWindowManagerApi.hpp"
 
@@ -12,7 +12,7 @@ extern "C" void UIWin_FlagBufClear();
 
 // Imported C-ABI symbols used only inside this TU.
 extern "C" void* getInstance__Q22cf13CfGameManagerFv(void);
-extern "C" bool isGlobalCamFlagSet__Fi(int mask);
+
 extern "C" int findObjectById__Fi(int id);
 extern "C" void* MapFx_ResolveOwner(void* src);
 extern "C" int isBattleStatusActive(void* self, int id);
@@ -53,7 +53,7 @@ float ScMain_GetRoundedMetric(ScMain* self) {
         return (f32)((s32)((double)sum + round));
     }
     getInstance__Q22cf13CfGameManagerFv();
-    if (isGlobalCamFlagSet__Fi(0x04000000))
+    if (isGlobalCamFlagSet(0x04000000))
         return roundf_to_f32(self->field_830);
     return roundf_to_f32(self->sub->field_7C);
 }
@@ -65,7 +65,7 @@ extern "C" float ScMain_GetRatio(ScMain* self) {
     if (self->flags_824 & 0x100000)
         return 0.0f;
     getInstance__Q22cf13CfGameManagerFv();
-    if (isGlobalCamFlagSet__Fi(0x04000000))
+    if (isGlobalCamFlagSet(0x04000000))
         return 1.0f;
     if (self->sub == 0)
         return 0.0f;

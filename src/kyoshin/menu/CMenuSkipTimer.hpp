@@ -8,6 +8,9 @@
 #include "monolib/scn/IScnRender.hpp"
 #include <types.h>
 
+// String table owned by this TU's .rodata split (MNU_skip* pane names).
+extern const char lbl_eu_80510540[0x10];
+
 // Skip-timer widget shown during cutscene skipping.
 // IUICf task base (0x00-0x57), the IScnRender render-callback subobject at
 // +0x58, then the embedded widgets.
@@ -31,3 +34,12 @@ public:
     CSkipTimer mTimerData;         // 0xB8
     u8 mFlag3;                     // 0x150
 };
+
+// Global mode bitfield defined in kyoshin/CUICfManager.cpp (.sbss).
+extern u32 gmPauseFlags;
+
+// Free functions defined in this TU (retail keeps their bare C names).
+extern "C" void SkipTimer_Phase0Init(CMenuSkipTimer* self);
+extern "C" void SkipTimer_Phase1Mark2(CMenuSkipTimer* self);
+extern "C" void SkipTimer_Phase2PollPad(CMenuSkipTimer* self);
+extern "C" void SkipTimer_Phase3Handle(CMenuSkipTimer* self);

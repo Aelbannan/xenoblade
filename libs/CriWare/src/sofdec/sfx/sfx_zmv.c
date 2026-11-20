@@ -4,20 +4,20 @@
 
 void* memset(void* s, int c, size_t n);
 
-u8 lbl_eu_8061A260[0x270]; /* .bss 0x8061A260 size 0x270 */
+u8 sfxz_work_area[0x270]; /* .bss 0x8061A260 size 0x270 */ // name-guess: TU-owned 0x270 bss arena indexed as 8 x 0x4C SFXZ objects
 const float lbl_eu_8051D218 = 0.0f;
 const float lbl_eu_8051D21C = 1.164f;
 extern char lbl_eu_8051D220[52];
 extern char lbl_eu_8051D254[500];
 
 void SFXZ_Init(void) {
-    memset(lbl_eu_8061A260, 0, 0x26c);
-    *(u32*)(lbl_eu_8061A260 + 8) = 8;
-    *(u32*)(lbl_eu_8061A260 + 4) = 0;
+    memset(sfxz_work_area, 0, 0x26c);
+    *(u32*)(sfxz_work_area + 8) = 8;
+    *(u32*)(sfxz_work_area + 4) = 0;
 }
 
 void* SFXZ_Create(void) {
-    u8* base = lbl_eu_8061A260;
+    u8* base = sfxz_work_area;
     u8* p = base + 12;
     s32 cnt = *(s32*)(base + 8);
     s32 i;
@@ -31,14 +31,14 @@ found:
     if (p == NULL)
         return p;
     {
-        float f0 = lbl_eu_8051D218;
+        float f0 = 0.0f;
         *(float*)(p + 0x3C) = f0;
         *(float*)(p + 0x40) = f0;
     }
     *(u32*)(p + 0x44) = 0;
     *(u32*)(p + 0x48) = 0;
     *(u32*)(p + 0x04) = 0;
-    (*(u32*)lbl_eu_8061A260)++;
+    (*(u32*)sfxz_work_area)++;
     *(u32*)p = 1;
     return p;
 }
@@ -46,7 +46,7 @@ found:
 void SFXZ_Destroy(void* self) {
     if (self == NULL) return;
     *(u32*)((u8*)self) = 0;
-    *(s32*)lbl_eu_8061A260 -= 1;
+    *(s32*)sfxz_work_area -= 1;
 }
 void sfxzmv_SetTagGrp();
 struct SFXZTagInf { u32 unk8; u32 tag; u32 a; u32 b; };
@@ -226,7 +226,7 @@ void sfxzmv_MakeOrgZ32TblByCCIR(void* self, u32 f1, u32 f0, u32* dst) {
     u32* d = dst + 256;
 
     for (i = 16; i < 236; i++) {
-        tbl[i] = (u8)(lbl_eu_8051D21C * (double)(i - 16));
+        tbl[i] = (u8)(1.164f * (double)(i - 16));
     }
     for (i = 236; i < 256; i++) {
         tbl[i] = 0xFF;
@@ -237,7 +237,7 @@ void sfxzmv_MakeOrgZ32TblByCCIR(void* self, u32 f1, u32 f0, u32* dst) {
     }
 }
 void sfxzmv_MakeZ32TblFromOrgZ32(void* self, u32* src, u32* dst) {
-    if (*(u32*)((u8*)lbl_eu_8061A260 + 4) == 1) {
+    if (*(u32*)((u8*)sfxz_work_area + 4) == 1) {
         u32 i, j;
         for (i = 0; i < 16; i++) {
             for (j = 0; j < 16; j++) {
@@ -301,7 +301,7 @@ typedef struct SFXZDblTbl {
 void sfxzmv_MakeZ16TblFromOrgZ32(void* self, u32* src, u16* dst) {
     f32 zmin = *(f32*)((u8*)self + 0x3C);
     f32 zmax = *(f32*)((u8*)self + 0x40);
-    if (*(u32*)((u8*)lbl_eu_8061A260 + 4) == 1) {
+    if (*(u32*)((u8*)sfxz_work_area + 4) == 1) {
         u32 i, j;
         for (i = 0; i < 16; i++) {
             for (j = 0; j < 16; j++) {

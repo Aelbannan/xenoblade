@@ -1191,13 +1191,7 @@ unlink_done:
 // w0 (retail lwzu/lwz + reversed stw pair + trailing word).
 extern u32 lbl_eu_8052E294[3];
 extern "C" void CUICfManager_initEventTriplet(CUICfManager* self) {
-    struct EvTripView {
-        u8 field_0x00[0x3C];
-        u32 field_0x3C[3];           // +0x3C event-triplet destination
-        u8 field_0x48[0x114 - 0x48];
-        void* field_0x114;          // +0x114 (mFileHandle)
-    };
-    if (((EvTripView*)self)->field_0x114 != 0) {
+    if (self->mFileHandle != 0) {
         return;
     }
     u32 w0;
@@ -1205,7 +1199,7 @@ extern "C" void CUICfManager_initEventTriplet(CUICfManager* self) {
     const u32* src = (const u32*)lbl_eu_8052E294;
     w0 = src[0];
     w1 = src[1];
-    u32* dst = ((EvTripView*)self)->field_0x3C;
+    u32* dst = reinterpret_cast<u32*>(&self->mMoveFunc);
     dst[1] = w1;
     dst[0] = w0;
     dst[2] = src[2];
@@ -1273,20 +1267,20 @@ int CUICfManager_tryResetSlots() {
     if (m == 0) {
         return 0;
     }
-    return CUICfManager_tryResetFreeSlot(reinterpret_cast<u8*>(reinterpret_cast<CUICfManagerSlotView*>(m)->slots));
+    return CUICfManager_tryResetFreeSlot(reinterpret_cast<u8*>(&m->mInitSlots[0].unk04));
 }
 // CUICfManager_claimSlotByTemplate: like CUICfManager_tryResetSlots but forwards its first argument (the
 // caller's this) as the src arg of the template-copy claim CUICfManager_claimFreeSlotByCopy.
 // Declaring CUICfManager_claimFreeSlotByCopy extern "C" makes its C++ definition emit the
 // flat retail symbol.
-extern "C" int CUICfManager_claimFreeSlotByCopy(u8* base, CUICfSrcCopyView* src);
-extern "C" int CUICfManager_claimSlotByTemplate(CUICfSrcCopyView* src) {
+extern "C" int CUICfManager_claimFreeSlotByCopy(u8* base, CUICfSlotTemplate* src);
+extern "C" int CUICfManager_claimSlotByTemplate(CUICfSlotTemplate* src) {
     CUICfManager* m = static_cast<CUICfManager*>(CUICfManager::spInstance);
     if (m == 0) {
         return 0;
     }
     return CUICfManager_claimFreeSlotByCopy(
-        reinterpret_cast<u8*>(reinterpret_cast<CUICfManagerSlotView*>(m)->slots), src);
+        reinterpret_cast<u8*>(&m->mInitSlots[0].unk04), src);
 }
 // CUICfManager_claimSlotByIds: forwards all five args to the 5-id slot claim
 // CUICfManager_claimFreeSlotByIds after the null gate (retail shifts the arg registers up).
@@ -1297,7 +1291,7 @@ extern "C" int CUICfManager_claimSlotByIds(u16 a1, u16 a2, u16 a3, u16 a4, u16 a
         return 0;
     }
     return CUICfManager_claimFreeSlotByIds(
-        reinterpret_cast<u8*>(reinterpret_cast<CUICfManagerSlotView*>(m)->slots),
+        reinterpret_cast<u8*>(&m->mInitSlots[0].unk04),
         a1, a2, a3, a4, a5);
 }
 // CUICfManager_claimSlotByIdState: forwards both args (id, state) to the slot claim
@@ -1309,7 +1303,7 @@ extern "C" int CUICfManager_claimSlotByIdState(u16 id, u8 state) {
         return 0;
     }
     return CUICfManager_claimFreeSlotByIdState(
-        reinterpret_cast<u8*>(reinterpret_cast<CUICfManagerSlotView*>(m)->slots), id, state);
+        reinterpret_cast<u8*>(&m->mInitSlots[0].unk04), id, state);
 }
 // CUICfManager_claimSlotFormatted: forwards its first argument as the (u16) second arg of the
 // sprintf-based slot claim CUICfManager_claimFreeSlotFormatted (same null-gate shape as the other
@@ -1321,7 +1315,7 @@ extern "C" int CUICfManager_claimSlotFormatted(u16 arg1) {
         return 0;
     }
     return CUICfManager_claimFreeSlotFormatted(
-        reinterpret_cast<u8*>(reinterpret_cast<CUICfManagerSlotView*>(m)->slots), arg1);
+        reinterpret_cast<u8*>(&m->mInitSlots[0].unk04), arg1);
 }
 // CUICfManager_claimSlotByTwoIds: same two-arg forward to CUICfManager_claimFreeSlotByTwoIds (slot claim with id + arg).
 extern "C" int CUICfManager_claimFreeSlotByTwoIds(u8* base, u16 a1, u16 a2);
@@ -1331,7 +1325,7 @@ extern "C" int CUICfManager_claimSlotByTwoIds(u16 a1, u16 a2) {
         return 0;
     }
     return CUICfManager_claimFreeSlotByTwoIds(
-        reinterpret_cast<u8*>(reinterpret_cast<CUICfManagerSlotView*>(m)->slots), a1, a2);
+        reinterpret_cast<u8*>(&m->mInitSlots[0].unk04), a1, a2);
 }
 extern "C" int CUICfManager_hasInUseSlot() {
     CUICfManager* inst = (CUICfManager*)CUICfManager::spInstance;
@@ -1372,7 +1366,7 @@ void CUICfManager::CTest::Init() {}
 // ---------------------------------------------------------------------------
 extern "C" void CUICfManager_dispatchFreeSlot(u8* base) {
     volatile u32 savedRet;
-    CUICfSlotDispView* slot;
+    CUICfSwapSlot* slot;
     CUICfManager* inst;
     int i;
     int byteOff;
@@ -1424,17 +1418,17 @@ extern "C" void CUICfManager_dispatchFreeSlot(u8* base) {
             return;
         }
 
-        slot = reinterpret_cast<CUICfSlotDispView*>(base);
-        if (slot->field_0x00 == 7) {
+        slot = reinterpret_cast<CUICfSwapSlot*>(base);
+        if (slot->field_0 == 7) {
             return;
         }
-    switch (slot->field_0x00) {
+    switch (slot->field_0) {
     case 0:
         UIWin_CreatePTChange(1);
         break;
     case 1: {
         inst = (CUICfManager*)CUICfManager::spInstance;
-        u8 idx = slot->field_0x01;
+        u8 idx = slot->field_1;
         if (inst != NULL) {
             u32 tempRet = reinterpret_cast<u32>(CMenuTutorial::create(reinterpret_cast<CProcess*>(inst->unk144), reinterpret_cast<CProcess*>(inst->unk11C), idx));
             savedRet = tempRet;
@@ -1476,30 +1470,30 @@ extern "C" void CUICfManager_dispatchFreeSlot(u8* base) {
         break;
     }
     case 3:
-        UIWin_CreateB4790Win((u32)(uintptr_t)&slot->block_04, 1);
+        UIWin_CreateB4790Win((u32)(uintptr_t)&slot->block1, 1);
         break;
     case 2: {
         // The three trailing 1 args share one materialized constant in
         // retail (single li, copies to r9/r10); plain literals reproduce
         // the TU's constant shape without a synthetic local.
-        UIWin_CreateItemMulti(slot->field_D8, slot->field_DA, slot->field_DC, slot->field_DE,
-                      slot->field_E0, 1, 1, 1, 0);
+        UIWin_CreateItemMulti(slot->ids[0], slot->ids[1], slot->ids[2], slot->ids[3],
+                      slot->ids[4], 1, 1, 1, 0);
         break;
     }
     case 4:
-        UIWin_CreateQuestWin(slot->field_E2, slot->field_E4, 1);
+        UIWin_CreateQuestWin(slot->ids[5], slot->byteE4, 1);
         break;
     case 5:
-        UIWin_CreateSysWin0(slot->str_E6, 0, 1);
+        UIWin_CreateSysWin0(slot->strE6.b, 0, 1);
         break;
     case 6:
-        UIWin_CreateSysWin1((u32)(uintptr_t)slot->str_E6, slot->str_126, 0, 1);
+        UIWin_CreateSysWin1((u32)(uintptr_t)slot->strE6.b, slot->str126.b, 0, 1);
         break;
     default:
         break;
     }
 
-    slot->field_0x00 = 7;
+    slot->field_0 = 7;
     CUICfManager_sortSlotList(base);
     }
 }
@@ -1620,7 +1614,7 @@ extern "C" int CUICfManager_claimFreeSlotByIndex(u8* base, u8 index) {
 // gate/scan skeleton; the claim body sets slot flag 3 and copies four
 // 0x34-byte blocks (src +0/0x34/0x68/0x9C -> slot +4/0x38/0x6C/0xA0) plus a
 // word (src +0xD0 -> slot +0xD4) via the block-copy helper.
-int CUICfManager_claimFreeSlotByCopy(u8* base, CUICfSrcCopyView* src) {
+int CUICfManager_claimFreeSlotByCopy(u8* base, CUICfSlotTemplate* src) {
     int gateBusy;
     if (PTNotice_IsActive_3C10() != 0) {
         gateBusy = 1;
@@ -1651,15 +1645,15 @@ int CUICfManager_claimFreeSlotByCopy(u8* base, CUICfSrcCopyView* src) {
     u8 j;
     for (j = 0; j < 8; j++) {
         if (base[j * 0x168] == 7) {
-            CUICfSlotCopyView* slot =
-                reinterpret_cast<CUICfSlotCopyView*>(base + j * 0x168);
-            slot->field_0x00 = 3;
+            CUICfSwapSlot* slot =
+                reinterpret_cast<CUICfSwapSlot*>(base + j * 0x168);
+            slot->field_0 = 3;
             changed = 1;
             CItem_copyRecMasked(&slot->block1, &src->block1);
             CItem_copyRecMasked(&slot->block2, &src->block2);
             CItem_copyRecMasked(&slot->block3, &src->block3);
             CItem_copyRecMasked(&slot->block4, &src->block4);
-            slot->field_D4 = src->field_D0;
+            slot->wordD4 = src->field_D0;
             break;
         }
     }
@@ -1712,15 +1706,15 @@ int CUICfManager_claimFreeSlotByIds(u8* base, u16 a1, u16 a2, u16 a3, u16 a4, u1
         int changed = 0;
         for (j = 0; j < 8; j++) {
             if ((u32)base[j * 0x168] == 7) {
-                CUICfSlotIdWriteView* slot =
-                    reinterpret_cast<CUICfSlotIdWriteView*>(base + j * 0x168);
-                slot->field_0x00 = 2;
+                CUICfSwapSlot* slot =
+                    reinterpret_cast<CUICfSwapSlot*>(base + j * 0x168);
+                slot->field_0 = 2;
                 changed = 1;
-                slot->field_D8 = a1;
-                slot->field_DA = a2;
-                slot->field_DC = a3;
-                slot->field_DE = a4;
-                slot->field_E0 = a5;
+                slot->ids[0] = a1;
+                slot->ids[1] = a2;
+                slot->ids[2] = a3;
+                slot->ids[3] = a4;
+                slot->ids[4] = a5;
                 break;
             }
         }
@@ -1767,12 +1761,12 @@ int CUICfManager_claimFreeSlotByIdState(u8* base, u16 id, u8 state) {
     u8 j;
     for (j = 0; j < 8; j++) {
         if (base[j * 0x168] == 7) {
-            CUICfSlotWriteView* slot =
-                reinterpret_cast<CUICfSlotWriteView*>(base + j * 0x168);
-            slot->field_0x00 = 4;
+            CUICfSwapSlot* slot =
+                reinterpret_cast<CUICfSwapSlot*>(base + j * 0x168);
+            slot->field_0 = 4;
             changed = 1;
-            slot->field_0xE2 = id;
-            slot->field_0xE4 = state;
+            slot->ids[5] = id;
+            slot->byteE4 = state;
             break;
         }
     }
@@ -1816,11 +1810,11 @@ int CUICfManager_claimFreeSlotFormatted(u8* base, u16 arg1) {
         u8 j;
         for (j = 0; j < 8; j++) {
             if (base[j * 0x168] == 7) {
-                CUICfSlotStrView* slot =
-                    reinterpret_cast<CUICfSlotStrView*>(base + j * 0x168);
-                slot->field_0x00 = 5;
+                CUICfSwapSlot* slot =
+                    reinterpret_cast<CUICfSwapSlot*>(base + j * 0x168);
+                slot->field_0 = 5;
                 changed = 1;
-                sprintf(slot->str, (const char*)lbl_eu_805000A8, arg1);
+                sprintf(slot->strE6.b, (const char*)lbl_eu_805000A8, arg1);
                 break;
             }
         }
@@ -1864,12 +1858,12 @@ int CUICfManager_claimFreeSlotByTwoIds(u8* base, u16 a1, u16 a2) {
     int changed = 0;
     for (j = 0; j < 8; j++) {
         if (base[j * 0x168] == 7) {
-            CUICfSlotStrView* slot =
-                reinterpret_cast<CUICfSlotStrView*>(base + j * 0x168);
-            slot->field_0x00 = 6;
+            CUICfSwapSlot* slot =
+                reinterpret_cast<CUICfSwapSlot*>(base + j * 0x168);
+            slot->field_0 = 6;
             changed = 1;
-            sprintf(slot->str, (const char*)lbl_eu_805000A8, a1);
-            sprintf(&slot->str[0x40], (const char*)lbl_eu_805000A8, a2);
+            sprintf(slot->strE6.b, (const char*)lbl_eu_805000A8, a1);
+            sprintf(slot->str126.b, (const char*)lbl_eu_805000A8, a2);
             break;
         }
     }
@@ -4097,7 +4091,7 @@ int CUICfManager_isUIBusy() {
         return 0;
     }
     // Retail holds the slot-array base (inst+0x14C) in r31 across the gates.
-    u8* base = (u8*)inst + 0x14c;
+    u8* base = reinterpret_cast<u8*>(&inst->mInitSlots[0].unk04);
     int flag;
     if (PTNotice_IsActive_3C10() != 0) {
         flag = 1;
@@ -4126,9 +4120,10 @@ int CUICfManager_isUIBusy() {
     return 0;
 }
 #include "kyoshin/cf/CBattleManager.hpp"
-
+#include "kyoshin/cf/CfActorMoveLayout.hpp"
 // Float-returning vtable slot (vtable +0x128) of the player wrapper.
-typedef float (*CUICfVFloatFn)(CUICfPlayerView*);
+typedef float (*CUICfVFloatFn)(cf::CfActorMoveLayout*);
+#include "kyoshin/cf/CActParamAnimGame.hpp"
 
 // CUICfManager_checkMenuOpenGate (us-80136480): busy/slot-state probe. Returns 1 when any
 // menu-system busy gate is set (sound/state gates first), 2 when the battle
@@ -4142,8 +4137,8 @@ extern "C" int CUICfManager_checkMenuOpenGate(u8* singleton) {
     int count;
     int slotUsed;
     CUICfEnumList620* enumList;
-    CUICfPlayerView* px;
-    CUICfObj3F60View* battleObj;
+    cf::CfActorMoveLayout* actor;
+    cf::CActParamAnimGame* battleObj;
     CUICfManager* inst;
 
     if (isSceneActive__Q22cf13CfGameManagerFv() != 0) {
@@ -4189,23 +4184,20 @@ extern "C" int CUICfManager_checkMenuOpenGate(u8* singleton) {
     }
     {
         cf::CfObjectMove* player = cf::CfGameManager::getPlayer(0);
-        px = reinterpret_cast<CUICfPlayerView*>(player);
-        if (player != NULL) {
-            px = reinterpret_cast<CUICfPlayerView*>(reinterpret_cast<u8*>(player) - 0x3E9C);
-        }
-        if (px != NULL) {
-            u8** vt = *reinterpret_cast<u8***>(px);
-            f32 v = reinterpret_cast<CUICfVFloatFn>(vt[0x128 / 4])(px);  // DEBT(callcast): manual vtable slot-0x128 dispatch cast; retail uses r12 ABI
+        actor = static_cast<cf::CfActorMoveLayout*>(player);
+        if (actor != NULL) {
+            u8** vt = *reinterpret_cast<u8***>(actor);
+            f32 v = reinterpret_cast<CUICfVFloatFn>(vt[0x128 / 4])(actor);  // DEBT(callcast): manual vtable slot-0x128 dispatch cast; retail uses r12 ABI
             if (v == 0.0f) {
                 return 2;
             }
-            if (px->field_3F60 != NULL) {
-                battleObj = reinterpret_cast<CUICfObj3F60View*>(px->field_3F60);
-                if ((battleObj->field_530 & 1) != 0) {
+            if (player->mTargetC4 != NULL) {
+                battleObj = static_cast<cf::CActParamAnimGame*>(player->mTargetC4);
+                if ((battleObj->field530 & 1) != 0) {
                     return 2;
                 }
                 {
-                    u32 w4ec = battleObj->field_4EC;
+                    u32 w4ec = battleObj->field4EC;
                     if ((w4ec & (1 << 8)) != 0) {
                         return 2;
                     }
@@ -4244,10 +4236,9 @@ extern "C" int CUICfManager_checkMenuOpenGate(u8* singleton) {
     if (inst == NULL) {
         slotUsed = 0;
     } else {
-        CUICfManagerSlotView* mv = reinterpret_cast<CUICfManagerSlotView*>(inst);
         u8 i;
         for (i = 0; i < 8; i++) {
-            if (mv->slots[i].flag == 4) {
+            if (inst->mInitSlots[i].unk04 == 4) {
                 slotUsed = 1;
                 break;
             }

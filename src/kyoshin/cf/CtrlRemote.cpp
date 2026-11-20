@@ -475,9 +475,7 @@ a89c:
                     self->mField5C->mSub3E9C.getPosition());
             const nw4r::math::VEC3* pOther =
                 reinterpret_cast<const nw4r::math::VEC3*>(
-                    ((CVoiceOwnerIntfPc*)&((CtrlPlayerSweepView*)other)
-                         ->mOwner3E9C)
-                        ->getPosition());
+                    ((CtrlPlayerObj*)other)->mSub3E9C.getPosition());
             ml::CVec3 diff;
             nw4r::math::VEC3Sub(
                 reinterpret_cast<nw4r::math::VEC3*>(&diff), pOther, pSelf);
@@ -502,8 +500,7 @@ a89c:
                     self->mField5C->mSub3E9C.getPosition());
             const nw4r::math::VEC3* pT =
                 reinterpret_cast<const nw4r::math::VEC3*>(
-                    ((CVoiceOwnerIntfPc*)&((CtrlPlayerSweepView*)t)->mOwner3E9C)
-                        ->getPosition());
+                    ((CtrlPlayerObj*)t)->mSub3E9C.getPosition());
             ml::CVec3 diff;
             nw4r::math::VEC3Sub(
                 reinterpret_cast<nw4r::math::VEC3*>(&diff), pT, pSelf);
@@ -515,8 +512,7 @@ a89c:
     }
 }
 
-struct CActorParam1840View { u8 _pad[0x1840]; float f1840; };
-float cf::CActorParam::CActorParam_UnkVirtualFunc106() { return ((CActorParam1840View*)this)->f1840; }
+float cf::CActorParam::CActorParam_UnkVirtualFunc106() { return unk17E4.field_5C; }
 
 // Target us-8009abb4. Pad-handler gate: when the global "demo/idle" state
 // word clears, run a battery of player-state probes; if none of them flag a
@@ -1170,8 +1166,8 @@ void CtrlRemote_MenuComboSweep(CtrlPcVf38* self)
             (CBattleManagerViewPc*)getInstance__Q22cf14CBattleManagerFv();
         count = 0;
         CtrlSweepNode* node =
-            reinterpret_cast<CtrlBmSweepView*>(bm)->mField28->mNext;
-        while (reinterpret_cast<CtrlBmSweepView*>(bm)->mField28 != node) {
+            ((CtrlSweepNode*)((cf::CBattleManager*)bm)->mActorList2.mStartNode.mNext)->mNext;
+        while (((CtrlSweepNode*)((cf::CBattleManager*)bm)->mActorList2.mStartNode.mNext) != node) {
             node = node->mNext;
             count++;
         }
@@ -1254,7 +1250,7 @@ void CtrlRemote_MenuComboSweep(CtrlPcVf38* self)
                     // matching retail's cmpwi/beq/addi/mr sequence.
                     u8* arg = reinterpret_cast<u8*>(MapFx_ResolveOwner(handle));
                     if (arg != NULL) {
-                        arg = reinterpret_cast<CtrlAccSweepView*>(arg)->mOwner3E9C;
+                        arg = (u8*)&((CtrlPlayerObj*)arg)->mSub3E9C;
                     }
                     bindIndexedEffect(0xBC, arg);
                 }
@@ -1288,8 +1284,7 @@ void CtrlRemote_MenuComboSweep(CtrlPcVf38* self)
                         CCharVoiceMan_EnqueueOrderVoice2();
                         u8* arg = reinterpret_cast<u8*>(self->mField5C);
                         if (arg != NULL) {
-                            arg = reinterpret_cast<CtrlPlayerSweepView*>(arg)
-                                      ->mOwner3E9C;
+                            arg = (u8*)&self->mField5C->mSub3E9C;
                         }
                         bindIndexedEffect(0xBC, arg);
                     }
@@ -1314,7 +1309,7 @@ void CtrlRemote_ArtsWindowDispatch(CtrlPcVf38State* self)
     u32 bmFlag;
     int mode;
     u32 mask;
-    CtrlRemoteEaView* ea;
+    cf::CVisionSub* ea;
     s32 page;
     u32 gateVal;
     CtrlRemoteSub374View* obj374;
@@ -1337,7 +1332,7 @@ void CtrlRemote_ArtsWindowDispatch(CtrlPcVf38State* self)
         return;
     }
 
-    fd = GetZealObjPtr();
+    fd = reinterpret_cast<Fd44State*>(GetZealObjPtr());
     if (fd != NULL) {
         // Arts-select window-state dispatch: window value 1 drives the
         // select-state machine (slot 0xF4 closed / slots 0xF0 with the new
@@ -1365,11 +1360,11 @@ void CtrlRemote_ArtsWindowDispatch(CtrlPcVf38State* self)
         }
         if (sel == 5) {
             ea =
-                (CtrlRemoteEaView*)cf::CBattleManager::getInstance()->CBattleMan_FetchVisionObj();
+                (cf::CVisionSub*)cf::CBattleManager::getInstance()->CBattleMan_FetchVisionObj();
             if (ea != NULL) {
                 page = GetZealResult(fd);
                 if ((u32)(page - 1) <= 1) {
-                    ea->mField824 |= 0x00080000;
+                    ea->field_824 |= 0x00080000;
                 }
             }
         }
@@ -1794,7 +1789,7 @@ int CtrlRemote_GetFixedSize1214(void* self) { return 4628; }
 
 u32* CtrlRemote_MapDataIndex(u32* buffer, s32 index, s32* typeOut, s32* idxOut);
 
-extern "C" void CtrlRemote_TouchBitByArg(void* arg)
+extern "C" u32 CtrlRemote_TouchBitByArg(int arg)
 {
 	s32 flag = (s8)sCtrlRemoteBufInitialized;
 	if (flag == 0) {
@@ -1803,7 +1798,7 @@ extern "C" void CtrlRemote_TouchBitByArg(void* arg)
 		memset(&sCtrlRemoteSharedBuf[0x1214 / 4], 0, 0x20);
 		sCtrlRemoteBufInitialized = 1;
 	}
-	CtrlRemote_TestSharedBit(sCtrlRemoteSharedBuf, (s32)arg);
+	return CtrlRemote_TestSharedBit(sCtrlRemoteSharedBuf, arg);
 }
 
 // Set a control-data bit: initialize the shared buffer if needed, then write

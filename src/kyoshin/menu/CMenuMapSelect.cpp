@@ -1,5 +1,5 @@
 // World map screen UI process (kyoshin/menu/CMenuMapSelect).
-
+#include "kyoshin/cf/CtrlRemoteApi.hpp"
 #include <nw4r/lyt/lyt_drawInfo.h>
 #include "kyoshin/menu/CMenuMapSelect.hpp"
 #include "kyoshin/CMainMenu.hpp" // CMainMenu_GetInstancePtr
@@ -10,7 +10,6 @@
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/CTitleAHelp.hpp"
 #include "kyoshin/CTitleAHelpImports.hpp"
-#include "kyoshin/CFloorMapImports.hpp"
 #include <monolib/scn/CScn.hpp>
 #include "kyoshin/CTaskGame.hpp"
 #include <revolution/GX.h>
@@ -166,7 +165,7 @@ void Scn_SetPauseFlag(CScn* scn, int flag);
 void BgTex_Release_3D9C(CBgTex* self);
 void FloorMap_Teardown(CFloorMap* self);
 void UIWin_ControlWindowLists(u32, u32);
-u32 CtrlRemote_TouchBitByArg(u32 resourceId);
+
 int CMainMenu_IsOpen();
 int BgTex_IsLoaded_3E34(CBgTex* self);
 void BgTex_Tick_3D54(CBgTex* self);

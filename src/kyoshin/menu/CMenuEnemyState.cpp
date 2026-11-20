@@ -1,4 +1,5 @@
 #define IWORK_EVENT_INLINE_DTOR
+#include "kyoshin/cf/CfBdat.hpp"
 #include "kyoshin/menu/CMenuEnemyState.hpp"
 #include "kyoshin/cf/object/CfObjectSelectorObj.hpp"
 #include "kyoshin/menu/CMenuEnemyState.hpp"
@@ -42,7 +43,6 @@ extern const f32 lbl_eu_80667004;
 extern const f32 sEnemyHighlightScale;
 extern const f32 sEnemyHighlightUnknown3C;
 // Enemy-data table pointer (sdata) used by the highlight-scan helpers.
-extern u8* lbl_eu_806640E0;
 // Texture-index table for the panel-highlight search (EneSt_SearchHighlightTexture).
 extern u32 sEnemyTextureNameTable[];
 // sdata colour/scale quads + s16 pairs used by EneSt_RegisterPanel's pane setup.
@@ -58,7 +58,6 @@ extern s16 sEnemyColorQuad4[];
 extern s16 sEnemyColorQuad5[];
 extern s16 sEnemyColorQuad6[];
 extern s16 sEnemyColorQuad7[];
-extern u32 lbl_eu_806640CC;
 // sdata2 constants used by the position-marker helpers.
 
 #include "kyoshin/cf/CfGameManager.hpp"
@@ -2055,7 +2054,7 @@ void CMenuEnemyState::EneSt_UpdatePanelHighlight(u8* panelData) {
 
         void* sub = getEffOwner____FPv(obj);
         if (sub != NULL) {
-            u8 v = BdatGetU8Direct((const void*)lbl_eu_806640CC, &sMenuEnemyNamePool[0x288],
+            u8 v = BdatGetU8Direct((const void*)::cf::CfBdat::spCurBtlEneListFileData, &sMenuEnemyNamePool[0x288],
                                  static_cast<AD860Result*>(sub)->id3F28);
             // Retail clrlwi's the result - keep the u8 narrowing.
             switch (v) {
@@ -2264,7 +2263,7 @@ void CMenuEnemyState::EneSt_ScanSlotHighlight(Actor2Layout* actor2) {
                 reinterpret_cast<SubSlot5CResult*>(reinterpret_cast<cf::CBattleState*>(&actor2->sub8)->CBattleState_getEventEntry(idx));
             if (res->word30 != 0x800 && res->id0C != 0 && res->id0C != 0xF &&
                 res->id0C != 0x10 && res->id0C != 0x12) {
-                u16 id = BdatGetU16Direct(lbl_eu_806640E0,
+                u16 id = BdatGetU16Direct(::cf::CfBdat::spBtlBuffListFileData,
                                        &sMenuEnemyNamePool[0x295], res->id0C);
                 if (id != 0) {
                     char* name = MakeTplNameSysFile(id);
@@ -2315,7 +2314,7 @@ void CMenuEnemyState::EneSt_ScanSlotHighlight(Actor2Layout* actor2) {
                             break;
                         }
                     } else {
-                        u16 id = BdatGetU16Direct(lbl_eu_806640E0,
+                        u16 id = BdatGetU16Direct(::cf::CfBdat::spBtlBuffListFileData,
                                                &sMenuEnemyNamePool[0x295], v);
                         if (id != 0) {
                             char* name = MakeTplNameSysFile(id);

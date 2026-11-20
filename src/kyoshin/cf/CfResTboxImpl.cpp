@@ -237,11 +237,11 @@ extern "C" void ResTbox_OpenResource(CfResTboxImpl* ths) {
     }
     mtl::MemManager::setMemInitFlag(true);
     if (ths->field_00->field_6C & 0x20000000) {
-        f32 anim = lbl_eu_806681D0;
+        f32 anim = 1.0f;
         ths->field_00->field_6C =
             *(volatile u32*)&ths->field_00->field_6C & ~0x20000000;
         ((cf::CfObject*)ths->field_00)->CfObject_syncModelRate(anim);
-        CfObjectMove_setMoveSpeedGated((cf::CfObjectMove*)ths->field_00, lbl_eu_806681D4);
+        CfObjectMove_setMoveSpeedGated((cf::CfObjectMove*)ths->field_00, 20.0f);
     }
     CfObjectMove_initAnimTarget((cf::CfObjectMove*)ths->field_00);
     if (ths->field_00->field_38 != 0) {
@@ -348,12 +348,7 @@ const void* lbl_eu_80534FB8[138] = {
     (const void*)CfObjectMove_isEffectSlotUsed__Q22cf12CfObjectMoveFUl, (const void*)CfObjectMove_signalEffectSlot__Q22cf12CfObjectMoveFUl, (const void*)CfObjectMove_flushEffectSlots__Q22cf12CfObjectMoveFv, (const void*)CfObjectMove_setAllEffectBits__Q22cf12CfObjectMoveFv,
     (const void*)CfObjectMove_loadResourceById__Q22cf12CfObjectMoveFUl, 0,
 };
-// sdata2 scalars read by ResTbox_OpenResource (1.0f rate, 20.0f speed).
-__declspec(section ".sdata2") __attribute__((used))
-float lbl_eu_806681D0 = 1.0f;
-__declspec(section ".sdata2") __attribute__((used))
-float lbl_eu_806681D4 = 20.0f;
-// sbss once-flag (retail 8 bytes: the label covers the whole granule).
+
 char lbl_eu_80664660[8] = { 0 };
 // T5 (805351E0): 3 x 12-byte member-function slots. Retail encoding is
 // {this-delta 0, -1 marker, func addr}; slot 0 is zeros (filled at runtime

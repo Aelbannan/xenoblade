@@ -1,7 +1,7 @@
 #include <types.h>
 #include "kyoshin/menu/code_8018C5FC.hpp"
 #include "kyoshin/code_8025FB10.hpp"
-
+#include "kyoshin/cf/CtrlRemoteApi.hpp"
 #include "kyoshin/cf/CfSoundMan.hpp"
 #include "monolib/scn/CScn.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
@@ -73,7 +73,7 @@ extern "C" {
     // C-ABI retail symbol (functions.hpp declares the C++-mangled bool f(int)
     // which would emit CtrlRemote_TouchBitByArg__Fi; the cf-namespace extern "C" decl
     // below shadows it so the unmangled CtrlRemote_TouchBitByArg reloc is emitted.
-    u32 CtrlRemote_TouchBitByArg(u32);
+
     CMB_PartyList_8018C5FC* getListB28__Fv();
     void CCharVoiceMan_EnqueuePartyGageVoice(s32, s32);
 }

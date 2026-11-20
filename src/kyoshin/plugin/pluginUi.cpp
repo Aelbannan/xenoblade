@@ -1,3 +1,4 @@
+#include "kyoshin/cf/CfBdat.hpp"
 #include "kyoshin/plugin/pluginUi.hpp"
 #include "kyoshin/CUIWindowManagerApi.hpp"
 #include "kyoshin/CfEnumListHolder.hpp"
@@ -399,7 +400,7 @@ int getSelectNum(VMThread* pThread) {
 // from the shared character table, then show it in a party-talk box whose
 // caption comes from the fixed string-table entry at +0xD (index 11/12).
 static void mesPTSet(int id, int captionIdx) {
-    char* name = BdatGetPtrDirect(lbl_eu_80664090, lbl_eu_804FABF0, id);
+    char* name = BdatGetPtrDirect(::cf::CfBdat::spBtlPcListFileData, lbl_eu_804FABF0, id);
     UIWin_CreateSysWin1((u32)(uintptr_t)name,
                   (void*)BdatTouchStringCell(&lbl_eu_804FABF0[0xd], lbl_eu_804FABF0,
                                 captionIdx),
@@ -444,7 +445,7 @@ int mesGetArts(VMThread* pThread) {
     arg = vmArgPtrGet(pThread, 2);
     int idx = vmArgIntGet(3, arg);
 
-    char* row = BdatGetPtrDirect(lbl_eu_80664090, lbl_eu_804FABF0, id);
+    char* row = BdatGetPtrDirect(::cf::CfBdat::spBtlPcListFileData, lbl_eu_804FABF0, id);
     char* sIdx = BdatTouchStringCell(&lbl_eu_804FABF0[5], lbl_eu_804FABF0, idx);
     char* sName = BdatTouchStringCell(&lbl_eu_804FABF0[0xd], lbl_eu_804FABF0, 7);
     char* sFoot = BdatTouchStringCell(&lbl_eu_804FABF0[0xd], lbl_eu_804FABF0, 0xa);
@@ -507,7 +508,7 @@ int setLastTalkNpc(VMThread* pThread) {
         CtrlObjectParam_SetWorkTailValue(0);
         return 0;
     }
-    char* tbl = lbl_eu_80664098;
+    char* tbl = (char*)::cf::CfBdat::spFldNpcListFileData;
     int count = Bdat_GetMaxRow_B1EC(tbl);
     for (int i = 1; i <= count; i++) {
         // Key compare is on the low 16 bits only.

@@ -7,7 +7,7 @@
  */
 
 #include "libs/monolib/src/scn/CScnItemAnim.hpp"
-#include "monolib/src/scn/CScnItemPool.hpp"
+#include "monolib/scn/CScnItemPool.hpp"
 #include <cstring>
 #include <nw4r/db/db_assert.h>
 #include <monolib/scn/CScnItemCameraNw4r.hpp>

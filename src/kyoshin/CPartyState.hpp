@@ -164,11 +164,9 @@ public:
 extern "C" int* CtrlObjectParam_GetSlotTableBase();
 #include "kyoshin/cf/CtrlObjectParamSymbols.hpp"
 
-extern "C" u32 CtrlRemote_TouchBitByArg(u32);
+#include "kyoshin/cf/CtrlRemoteApi.hpp"
 
 // Party-slot data-table pointers (.sdata).
-extern void* lbl_eu_80664090;
-extern char* lbl_eu_80664098;
 
 // Character stats getters (unmangled retail symbols).
 extern "C" char* CItemBlock_getPtr20E8();

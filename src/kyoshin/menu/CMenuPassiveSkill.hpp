@@ -205,7 +205,7 @@ struct CMenuPassivePSView {
 #pragma pack(pop)
 
 // Game-progress flag getter (shared split1 helper, retail-unmangled name).
-extern "C" u32 CtrlRemote_TouchBitByArg(u32 flagId);
+#include "kyoshin/cf/CtrlRemoteApi.hpp"
 
 // cf::CfPadData view: only the flag words dispatchPassiveSkillInput reads (held buttons
 // at +0x00/+0x04, turbo/short-press flags at +0x104).

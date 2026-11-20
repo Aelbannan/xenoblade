@@ -2,6 +2,7 @@
 // Retail disassembly is used only as a reference for the data layout and
 // control flow; all implementation below is ordinary C/C++.
 
+#include "kyoshin/cf/CfBdat.hpp"
 #include "kyoshin/cf/CBattleManager.hpp"
 #include "kyoshin/cf/object/CfObjectEffSymbols.hpp"
 #include "kyoshin/cf/CfMapItemManager.hpp"
@@ -72,7 +73,6 @@ extern WarpColumns gGimmickBdatColumns;
 extern WarpStateProc lbl_eu_80535938[];
 extern WarpJumpProc jumptable_eu_80535830[];
 extern WarpVec3 gGimmickAnchorPoint;
-extern void* lbl_eu_80664134;
 extern u32 gGimmickPartyFlags;
 extern f32 lbl_eu_8066AF20;
 
@@ -149,7 +149,7 @@ extern "C" void __ct__cf_CfGimmickWarp(WarpData* self, u16 rowId) {
     self->typeId = 4;
 
     void* manager = Bdat_GetTable_AA34();
-    u32 tableValue = (u32)lbl_eu_80664134;
+    u32 tableValue = (u32)::cf::CfBdat::spCurWarpGmFileData;
     self->rowId = rowId;
 
     u32 valueE4 = getBdatStringColumnValue((void*)tableValue, gGimmickBdatColumns.c2c, rowId);

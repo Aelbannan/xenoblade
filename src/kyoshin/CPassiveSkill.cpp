@@ -15,6 +15,7 @@
 // The value view lives in its own namespace (extern "C" keeps the retail
 // symbol) so it cannot collide with CSysWin.hpp's pointer-form decl - same
 // pattern as CMenuArtsSet.cpp's artsFAD0View.
+#include "kyoshin/cf/CfBdat.hpp"
 #include "kyoshin/cf/CItem.hpp"
 #include "kyoshin/harness_catalog.hpp"
 #include "monolib/lib/CLibLayout.hpp"
@@ -43,12 +44,6 @@ extern "C" UnkClass_8045F564* __ct__17UnkClass_8045F564Fv(UnkClass_8045F564* sel
 // emitting a TU-local @N label
 // CMiniMap.cpp's 806670A8). Value is 2^52 = 0x4330000000000000.
 extern const double lbl_eu_80668910 = 4503599627370496.0;
-
-// Per-character slot-spacing table read by CPassiveSkillLine_refreshLearnGrid (retail .sdata2,
-// read at (id-1)*2 with an 8-byte per-character stride; 2 elements keep it
-// in .sdata2 so the retail sda21 reloc is emitted). Values unresolved
-// (placeholder).
-extern const f32 lbl_eu_80668930[] = { 0.0f, 0.0f };
 
 // Skill-info sub-struct initializer (defined later in this TU). C linkage so the call
 // reloc is the plain retail name.
@@ -170,7 +165,7 @@ extern "C" void CPassiveSkillInit_triggerPane14(UI_PassiveSkillInit* self) {
     // Animation trigger: when the init flag is 1, rewind the anim transform,
     // mark the sub-state active and show the skill pane.
     if (self->field_1B == 1) {
-        self->field_C->SetFrame(lbl_eu_80668904);
+        self->field_C->SetFrame(0.0f);
         self->field_1A = 1;
         setPaneVisible(self->field_14, 1);
     } else {
@@ -184,7 +179,7 @@ extern "C" void CPassiveSkillInit_triggerPane14(UI_PassiveSkillInit* self) {
 void CPassiveSkillInit_triggerPane10(UI_PassiveSkillInit* self) {
     // Same trigger as CPassiveSkillInit_triggerPane14 but drives the other pane (+0x10).
     if (self->field_1B == 1) {
-        self->field_C->SetFrame(lbl_eu_80668904);
+        self->field_C->SetFrame(0.0f);
         self->field_1A = 0;
         setPaneVisible(self->field_10, 1);
     } else {
@@ -485,7 +480,7 @@ extern "C" void CPassiveSkillInfo_setNameTex(UI::CPassiveSkillInfo* self, u8 id1
     if (id1 == 0 || id2 == 0) {
         return;
     }
-    void* table = lbl_eu_80664090;
+    void* table = ::cf::CfBdat::spBtlPcListFileData;
     u16 v1 = BdatGetU16Direct(table, &lbl_eu_8050DC20[0x1e8], id1);
     u16 v2 = BdatGetU16Direct(table, &lbl_eu_8050DC20[0x1e8], id2);
     char* text1 = MakeTplNameSysFile(v1);
@@ -520,62 +515,62 @@ extern "C" void CPassiveSkillLine_refreshSkillCell(UI::CPassiveSkillLine* self, 
     switch (state) {
     case 0: {
         u8 idx = (u8)(row + (id - 1) * 5 + 1);
-        char* text = BdatGetPtrDirect(gpPassiveSkillCharBdat, &lbl_eu_8050DC20[0x207], idx);
-        LayoutSetTextBoxFmtValue(self->field_8, &lbl_eu_8050DC20[0x20c], text, 0);
-        text = BdatGetPtrDirect(gpPassiveSkillCharBdat, &lbl_eu_8050DC20[0x1a4], idx);
-        LayoutSetTextBoxFmtValue(self->field_8, &lbl_eu_8050DC20[0x215], text, 0);
-        text = BdatTouchStringCell(&lbl_eu_8050DC20[0x21f], &lbl_eu_8050DC20[0x207], 0x15);
-        LayoutSetTextBoxFmtValue(self->field_8, &lbl_eu_8050DC20[0x22b], text, 0);
-        LayoutSetTextBoxFmtValue(self->field_8, &lbl_eu_8050DC20[0x154], &lbl_eu_8050DC20[0x182], 0);
-        u8 v1 = BdatGetU8Direct((const void*)gpPassiveSkillValueBdat, &lbl_eu_8050DC20[0x235], idx);
-        text = BdatGetPtrDirect(gpPassiveSkillEffectBdat, &lbl_eu_8050DC20[0x207], (u8)v1);
-        LayoutSetTextBoxFmtValue(self->field_8, &lbl_eu_8050DC20[0x23b], text, 0);
-        u8 v2 = BdatGetU8Direct((const void*)gpPassiveSkillEffectBdat, &lbl_eu_8050DC20[0x245], (u8)v1);
+        char* text = BdatGetPtrDirect(gpPassiveSkillCharBdat, "name", idx);
+        LayoutSetTextBoxFmtValue(self->field_8, "txt_nm01", text, 0);
+        text = BdatGetPtrDirect(gpPassiveSkillCharBdat, "help", idx);
+        LayoutSetTextBoxFmtValue(self->field_8, "txt_exp01", text, 0);
+        text = BdatTouchStringCell("MNU_passive", "name", 0x15);
+        LayoutSetTextBoxFmtValue(self->field_8, "txt_exp02", text, 0);
+        LayoutSetTextBoxFmtValue(self->field_8, "txt_value03", "", 0);
+        u8 v1 = BdatGetU8Direct((const void*)gpPassiveSkillValueBdat, "skill", idx);
+        text = BdatGetPtrDirect(gpPassiveSkillEffectBdat, "name", (u8)v1);
+        LayoutSetTextBoxFmtValue(self->field_8, "txt_exp03", text, 0);
+        u8 v2 = BdatGetU8Direct((const void*)gpPassiveSkillEffectBdat, "val_type", (u8)v1);
         UI::CPSkillRecord* rec = reinterpret_cast<UI::CPSkillRecord*>(
             (u8*)CtrlObjectParam_GetCharEntry(id) + row * 0xc4 + 0x3534);
         u8 found = 1;
         for (u8 i = 1; i <= 5; i++) {
             if (rec->slots[i].word == 0) {
-                sprintf(buf3, &lbl_eu_8050DC20[0x24e], i);
+                sprintf(buf3, "val%d", i);
                 u8 v3 = BdatGetU8Direct((const void*)gpPassiveSkillValueBdat, (const char*)buf3, idx);
                 if (v3 != 0 && rec->slots[i].word != 0xe && rec->slots[i].word != 0x4b &&
                     rec->slots[i].word != 0xa5 && rec->slots[i].word != 0xc8) {
-                    char* t12 = BdatTouchStringCell(&lbl_eu_8050DC20[0x21f], &lbl_eu_8050DC20[0x207], 0x12);
-                    LayoutSetTextBoxFmtValue(self->field_8, &lbl_eu_8050DC20[0x254], t12, 0);
-                    char* t6 = BdatTouchStringCell(&lbl_eu_8050DC20[0x21f], &lbl_eu_8050DC20[0x207], 0x6);
+                    char* t12 = BdatTouchStringCell("MNU_passive", "name", 0x12);
+                    LayoutSetTextBoxFmtValue(self->field_8, "txt_exp04", t12, 0);
+                    char* t6 = BdatTouchStringCell("MNU_passive", "name", 0x6);
                     if (v2 == 1) {
-                        sprintf(buf3, &lbl_eu_8050DC20[0x25e], (u8)v3);
+                        sprintf(buf3, "%d", (u8)v3);
                     } else {
-                        sprintf(buf3, &lbl_eu_8050DC20[0x261], (u8)v3, t6);
+                        sprintf(buf3, "%d%s", (u8)v3, t6);
                     }
-                    LayoutSetTextBoxText(self->field_8, &lbl_eu_8050DC20[0x160], buf3, 0);
+                    LayoutSetTextBoxText(self->field_8, "txt_value04", buf3, 0);
                 } else {
-                    LayoutSetTextBoxFmtValue(self->field_8, &lbl_eu_8050DC20[0x254], &lbl_eu_8050DC20[0x182], 0);
-                    LayoutSetTextBoxFmtValue(self->field_8, &lbl_eu_8050DC20[0x160], &lbl_eu_8050DC20[0x182], 0);
+                    LayoutSetTextBoxFmtValue(self->field_8, "txt_exp04", "", 0);
+                    LayoutSetTextBoxFmtValue(self->field_8, "txt_value04", "", 0);
                 }
                 found = 0;
                 break;
             }
         }
         if (found != 0) {
-            u8 v3 = BdatGetU8Direct((const void*)gpPassiveSkillValueBdat, &lbl_eu_8050DC20[0x266], idx);
+            u8 v3 = BdatGetU8Direct((const void*)gpPassiveSkillValueBdat, "val6", idx);
             if (v3 != 0) {
-                char* t12 = BdatTouchStringCell(&lbl_eu_8050DC20[0x21f], &lbl_eu_8050DC20[0x207], 0x12);
-                LayoutSetTextBoxFmtValue(self->field_8, &lbl_eu_8050DC20[0x254], t12, 0);
-                char* t6 = BdatTouchStringCell(&lbl_eu_8050DC20[0x21f], &lbl_eu_8050DC20[0x207], 0x6);
+                char* t12 = BdatTouchStringCell("MNU_passive", "name", 0x12);
+                LayoutSetTextBoxFmtValue(self->field_8, "txt_exp04", t12, 0);
+                char* t6 = BdatTouchStringCell("MNU_passive", "name", 0x6);
                 if (v2 == 1) {
-                    sprintf(buf3, &lbl_eu_8050DC20[0x25e], (u8)v3);
+                    sprintf(buf3, "%d", (u8)v3);
                 } else {
-                    sprintf(buf3, &lbl_eu_8050DC20[0x261], (u8)v3, t6);
+                    sprintf(buf3, "%d%s", (u8)v3, t6);
                 }
-                LayoutSetTextBoxText(self->field_8, &lbl_eu_8050DC20[0x160], buf3, 0);
+                LayoutSetTextBoxText(self->field_8, "txt_value04", buf3, 0);
             } else {
-                LayoutSetTextBoxFmtValue(self->field_8, &lbl_eu_8050DC20[0x254], &lbl_eu_8050DC20[0x182], 0);
-                LayoutSetTextBoxFmtValue(self->field_8, &lbl_eu_8050DC20[0x160], &lbl_eu_8050DC20[0x182], 0);
+                LayoutSetTextBoxFmtValue(self->field_8, "txt_exp04", "", 0);
+                LayoutSetTextBoxFmtValue(self->field_8, "txt_value04", "", 0);
             }
         }
-        LayoutSetTextBoxFmtValue(self->field_8, &lbl_eu_8050DC20[0x26b], &lbl_eu_8050DC20[0x182], 0);
-        LayoutSetTextBoxFmtValue(self->field_8, &lbl_eu_8050DC20[0x16c], &lbl_eu_8050DC20[0x182], 0);
+        LayoutSetTextBoxFmtValue(self->field_8, "txt_exp05", "", 0);
+        LayoutSetTextBoxFmtValue(self->field_8, "txt_value05", "", 0);
         CPassiveSkillLine_refreshSP(self, id);
         CPassiveSkillLine_setCellMessage(self, 0, row, col);
         break;
@@ -583,49 +578,49 @@ extern "C" void CPassiveSkillLine_refreshSkillCell(UI::CPassiveSkillLine* self, 
     case 1:
     case 2: {
         u8 idx = (u8)(col + row * 5 + (id - 1) * 0x19 + 1);
-        char* text = BdatGetPtrDirect(gpPassiveSkillBdat, &lbl_eu_8050DC20[0x207], idx);
-        LayoutSetTextBoxFmtValue(self->field_8, &lbl_eu_8050DC20[0x20c], text, 0);
-        text = BdatGetPtrDirect(gpPassiveSkillHelpBdat, &lbl_eu_8050DC20[0x1a4], idx);
-        LayoutSetTextBoxFmtValue(self->field_8, &lbl_eu_8050DC20[0x215], text, 0);
-        u8 v0 = BdatGetU8Direct((const void*)gpPassiveSkillHelpBdat, &lbl_eu_8050DC20[0x275], idx);
-        char* tSel = BdatTouchStringCell(&lbl_eu_8050DC20[0x21f], &lbl_eu_8050DC20[0x207], v0 == 1 ? 0x15 : 0x14);
-        LayoutSetTextBoxFmtValue(self->field_8, &lbl_eu_8050DC20[0x22b], tSel, 0);
-        u8 v1 = BdatGetU8Direct((const void*)gpPassiveSkillBdat, &lbl_eu_8050DC20[0x27a], idx);
-        char* t6 = BdatTouchStringCell(&lbl_eu_8050DC20[0x21f], &lbl_eu_8050DC20[0x207], 0x6);
+        char* text = BdatGetPtrDirect(gpPassiveSkillBdat, "name", idx);
+        LayoutSetTextBoxFmtValue(self->field_8, "txt_nm01", text, 0);
+        text = BdatGetPtrDirect(gpPassiveSkillHelpBdat, "help", idx);
+        LayoutSetTextBoxFmtValue(self->field_8, "txt_exp01", text, 0);
+        u8 v0 = BdatGetU8Direct((const void*)gpPassiveSkillHelpBdat, "type", idx);
+        char* tSel = BdatTouchStringCell("MNU_passive", "name", v0 == 1 ? 0x15 : 0x14);
+        LayoutSetTextBoxFmtValue(self->field_8, "txt_exp02", tSel, 0);
+        u8 v1 = BdatGetU8Direct((const void*)gpPassiveSkillBdat, "val2", idx);
+        char* t6 = BdatTouchStringCell("MNU_passive", "name", 0x6);
         if (v1 == 0) {
-            LayoutSetTextBoxFmtValue(self->field_8, &lbl_eu_8050DC20[0x154], &lbl_eu_8050DC20[0x182], 0);
+            LayoutSetTextBoxFmtValue(self->field_8, "txt_value03", "", 0);
         } else {
-            sprintf(buf2, &lbl_eu_8050DC20[0x261], (u8)v1, t6);
-            LayoutSetTextBoxText(self->field_8, &lbl_eu_8050DC20[0x154], buf2, 0);
+            sprintf(buf2, "%d%s", (u8)v1, t6);
+            LayoutSetTextBoxText(self->field_8, "txt_value03", buf2, 0);
         }
-        u8 v2 = BdatGetU8Direct((const void*)gpPassiveSkillBdat, &lbl_eu_8050DC20[0x235], idx);
-        text = BdatGetPtrDirect(gpPassiveSkillEffectBdat, &lbl_eu_8050DC20[0x207], (u8)v2);
-        LayoutSetTextBoxFmtValue(self->field_8, &lbl_eu_8050DC20[0x23b], text, 0);
-        u8 v3 = BdatGetU8Direct((const void*)gpPassiveSkillEffectBdat, &lbl_eu_8050DC20[0x245], (u8)v2);
-        u8 v4 = BdatGetU8Direct((const void*)gpPassiveSkillBdat, &lbl_eu_8050DC20[0x27f], idx);
+        u8 v2 = BdatGetU8Direct((const void*)gpPassiveSkillBdat, "skill", idx);
+        text = BdatGetPtrDirect(gpPassiveSkillEffectBdat, "name", (u8)v2);
+        LayoutSetTextBoxFmtValue(self->field_8, "txt_exp03", text, 0);
+        u8 v3 = BdatGetU8Direct((const void*)gpPassiveSkillEffectBdat, "val_type", (u8)v2);
+        u8 v4 = BdatGetU8Direct((const void*)gpPassiveSkillBdat, "val1", idx);
         if (v4 != 0 && idx != 0xe && idx != 0x4b && idx != 0xa5 && idx != 0xc8) {
-            char* t12 = BdatTouchStringCell(&lbl_eu_8050DC20[0x21f], &lbl_eu_8050DC20[0x207], 0x12);
-            LayoutSetTextBoxFmtValue(self->field_8, &lbl_eu_8050DC20[0x254], t12, 0);
+            char* t12 = BdatTouchStringCell("MNU_passive", "name", 0x12);
+            LayoutSetTextBoxFmtValue(self->field_8, "txt_exp04", t12, 0);
             if (v3 == 1) {
-                sprintf(buf2, &lbl_eu_8050DC20[0x25e], (u8)v4);
+                sprintf(buf2, "%d", (u8)v4);
             } else {
-                sprintf(buf2, &lbl_eu_8050DC20[0x261], (u8)v4, t6);
+                sprintf(buf2, "%d%s", (u8)v4, t6);
             }
-            LayoutSetTextBoxText(self->field_8, &lbl_eu_8050DC20[0x160], buf2, 0);
+            LayoutSetTextBoxText(self->field_8, "txt_value04", buf2, 0);
         } else {
-            LayoutSetTextBoxFmtValue(self->field_8, &lbl_eu_8050DC20[0x254], &lbl_eu_8050DC20[0x182], 0);
-            LayoutSetTextBoxFmtValue(self->field_8, &lbl_eu_8050DC20[0x160], &lbl_eu_8050DC20[0x182], 0);
+            LayoutSetTextBoxFmtValue(self->field_8, "txt_exp04", "", 0);
+            LayoutSetTextBoxFmtValue(self->field_8, "txt_value04", "", 0);
         }
-        u8 v5 = BdatGetU8Direct((const void*)gpPassiveSkillBdat, &lbl_eu_8050DC20[0x284], idx);
+        u8 v5 = BdatGetU8Direct((const void*)gpPassiveSkillBdat, "time", idx);
         if (v5 != 0) {
-            char* t13 = BdatTouchStringCell(&lbl_eu_8050DC20[0x21f], &lbl_eu_8050DC20[0x207], 0x13);
-            LayoutSetTextBoxFmtValue(self->field_8, &lbl_eu_8050DC20[0x26b], t13, 0);
-            char* t5 = BdatTouchStringCell(&lbl_eu_8050DC20[0x21f], &lbl_eu_8050DC20[0x207], 0x5);
-            sprintf(buf2, &lbl_eu_8050DC20[0x261], (u8)v5, t5);
-            LayoutSetTextBoxText(self->field_8, &lbl_eu_8050DC20[0x16c], buf2, 0);
+            char* t13 = BdatTouchStringCell("MNU_passive", "name", 0x13);
+            LayoutSetTextBoxFmtValue(self->field_8, "txt_exp05", t13, 0);
+            char* t5 = BdatTouchStringCell("MNU_passive", "name", 0x5);
+            sprintf(buf2, "%d%s", (u8)v5, t5);
+            LayoutSetTextBoxText(self->field_8, "txt_value05", buf2, 0);
         } else {
-            LayoutSetTextBoxFmtValue(self->field_8, &lbl_eu_8050DC20[0x26b], &lbl_eu_8050DC20[0x182], 0);
-            LayoutSetTextBoxFmtValue(self->field_8, &lbl_eu_8050DC20[0x16c], &lbl_eu_8050DC20[0x182], 0);
+            LayoutSetTextBoxFmtValue(self->field_8, "txt_exp05", "", 0);
+            LayoutSetTextBoxFmtValue(self->field_8, "txt_value05", "", 0);
         }
         if (state == 1) {
             CPassiveSkillLine_refreshSP(self, id);
@@ -638,94 +633,94 @@ extern "C" void CPassiveSkillLine_refreshSkillCell(UI::CPassiveSkillLine* self, 
     }
     default: {
         if (col != 0) {
-            char* t19 = BdatTouchStringCell(&lbl_eu_8050DC20[0x21f], &lbl_eu_8050DC20[0x207], 0x19);
-            LayoutSetTextBoxFmtValue(self->field_8, &lbl_eu_8050DC20[0x20c], t19, 0);
-            LayoutSetTextBoxFmtValue(self->field_8, &lbl_eu_8050DC20[0x215], t19, 0);
-            LayoutSetTextBoxFmtValue(self->field_8, &lbl_eu_8050DC20[0x22b], t19, 0);
-            LayoutSetTextBoxFmtValue(self->field_8, &lbl_eu_8050DC20[0x154], &lbl_eu_8050DC20[0x182], 0);
-            LayoutSetTextBoxFmtValue(self->field_8, &lbl_eu_8050DC20[0x23b], t19, 0);
-            LayoutSetTextBoxFmtValue(self->field_8, &lbl_eu_8050DC20[0x254], &lbl_eu_8050DC20[0x182], 0);
-            LayoutSetTextBoxFmtValue(self->field_8, &lbl_eu_8050DC20[0x160], &lbl_eu_8050DC20[0x182], 0);
-            LayoutSetTextBoxFmtValue(self->field_8, &lbl_eu_8050DC20[0x26b], &lbl_eu_8050DC20[0x182], 0);
-            LayoutSetTextBoxFmtValue(self->field_8, &lbl_eu_8050DC20[0x16c], &lbl_eu_8050DC20[0x182], 0);
-            char* t18 = BdatTouchStringCell(&lbl_eu_8050DC20[0x21f], &lbl_eu_8050DC20[0x207], 0x18);
-            LayoutSetTextBoxFmtValue(self->field_8, &lbl_eu_8050DC20[0x183], t18, 0);
+            char* t19 = BdatTouchStringCell("MNU_passive", "name", 0x19);
+            LayoutSetTextBoxFmtValue(self->field_8, "txt_nm01", t19, 0);
+            LayoutSetTextBoxFmtValue(self->field_8, "txt_exp01", t19, 0);
+            LayoutSetTextBoxFmtValue(self->field_8, "txt_exp02", t19, 0);
+            LayoutSetTextBoxFmtValue(self->field_8, "txt_value03", "", 0);
+            LayoutSetTextBoxFmtValue(self->field_8, "txt_exp03", t19, 0);
+            LayoutSetTextBoxFmtValue(self->field_8, "txt_exp04", "", 0);
+            LayoutSetTextBoxFmtValue(self->field_8, "txt_value04", "", 0);
+            LayoutSetTextBoxFmtValue(self->field_8, "txt_exp05", "", 0);
+            LayoutSetTextBoxFmtValue(self->field_8, "txt_value05", "", 0);
+            char* t18 = BdatTouchStringCell("MNU_passive", "name", 0x18);
+            LayoutSetTextBoxFmtValue(self->field_8, "txt_exp07", t18, 0);
             void* res = 0;
             switch (spId) {
-            case 0: res = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x289], 0); break;
-            case 1: res = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x2a1], 0); break;
-            case 2: res = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x2b9], 0); break;
-            case 3: res = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x2d1], 0); break;
-            case 4: res = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x2e9], 0); break;
+            case 0: res = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, "mf40_kiz_pcicon_e00.tpl", 0); break;
+            case 1: res = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, "mf40_kiz_pcicon_d00.tpl", 0); break;
+            case 2: res = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, "mf40_kiz_pcicon_c00.tpl", 0); break;
+            case 3: res = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, "mf40_kiz_pcicon_b00.tpl", 0); break;
+            case 4: res = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, "mf40_kiz_pcicon_a00.tpl", 0); break;
             }
             if (res != 0) {
-                PaneSetTexPaletteByName(self->field_8, &lbl_eu_8050DC20[0x301], (TPLPalette*)res);
-                setPaneVisible(self->field_8->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x301], true), 1);
+                PaneSetTexPaletteByName(self->field_8, "pic_kizicon", (TPLPalette*)res);
+                setPaneVisible(self->field_8->GetRootPane()->FindPaneByName("pic_kizicon", true), 1);
             }
-            LayoutSetTextBoxFmtValue(self->field_8, &lbl_eu_8050DC20[0x178], &lbl_eu_8050DC20[0x182], 0);
+            LayoutSetTextBoxFmtValue(self->field_8, "txt_exp06", "", 0);
         } else if (row != 0) {
-            char* text = BdatGetPtrDirect(gpPassiveSkillBdat, &lbl_eu_8050DC20[0x207], row);
-            LayoutSetTextBoxFmtValue(self->field_8, &lbl_eu_8050DC20[0x20c], text, 0);
-            text = BdatGetPtrDirect(gpPassiveSkillHelpBdat, &lbl_eu_8050DC20[0x1a4], row);
-            LayoutSetTextBoxFmtValue(self->field_8, &lbl_eu_8050DC20[0x215], text, 0);
-            u8 v0 = BdatGetU8Direct((const void*)gpPassiveSkillHelpBdat, &lbl_eu_8050DC20[0x275], row);
-            char* tSel = BdatTouchStringCell(&lbl_eu_8050DC20[0x21f], &lbl_eu_8050DC20[0x207], v0 == 1 ? 0x15 : 0x14);
-            LayoutSetTextBoxFmtValue(self->field_8, &lbl_eu_8050DC20[0x22b], tSel, 0);
-            u8 v1 = BdatGetU8Direct((const void*)gpPassiveSkillBdat, &lbl_eu_8050DC20[0x27a], row);
-            char* t6 = BdatTouchStringCell(&lbl_eu_8050DC20[0x21f], &lbl_eu_8050DC20[0x207], 0x6);
+            char* text = BdatGetPtrDirect(gpPassiveSkillBdat, "name", row);
+            LayoutSetTextBoxFmtValue(self->field_8, "txt_nm01", text, 0);
+            text = BdatGetPtrDirect(gpPassiveSkillHelpBdat, "help", row);
+            LayoutSetTextBoxFmtValue(self->field_8, "txt_exp01", text, 0);
+            u8 v0 = BdatGetU8Direct((const void*)gpPassiveSkillHelpBdat, "type", row);
+            char* tSel = BdatTouchStringCell("MNU_passive", "name", v0 == 1 ? 0x15 : 0x14);
+            LayoutSetTextBoxFmtValue(self->field_8, "txt_exp02", tSel, 0);
+            u8 v1 = BdatGetU8Direct((const void*)gpPassiveSkillBdat, "val2", row);
+            char* t6 = BdatTouchStringCell("MNU_passive", "name", 0x6);
             if (v1 == 0) {
-                LayoutSetTextBoxFmtValue(self->field_8, &lbl_eu_8050DC20[0x154], &lbl_eu_8050DC20[0x182], 0);
+                LayoutSetTextBoxFmtValue(self->field_8, "txt_value03", "", 0);
             } else {
-                sprintf(buf0, &lbl_eu_8050DC20[0x261], (u8)v1, t6);
-                LayoutSetTextBoxText(self->field_8, &lbl_eu_8050DC20[0x154], buf0, 0);
+                sprintf(buf0, "%d%s", (u8)v1, t6);
+                LayoutSetTextBoxText(self->field_8, "txt_value03", buf0, 0);
             }
-            u8 v2 = BdatGetU8Direct((const void*)gpPassiveSkillBdat, &lbl_eu_8050DC20[0x235], row);
-            text = BdatGetPtrDirect(gpPassiveSkillEffectBdat, &lbl_eu_8050DC20[0x207], (u8)v2);
-            LayoutSetTextBoxFmtValue(self->field_8, &lbl_eu_8050DC20[0x23b], text, 0);
-            u8 v3 = BdatGetU8Direct((const void*)gpPassiveSkillEffectBdat, &lbl_eu_8050DC20[0x245], (u8)v2);
-            u8 v4 = BdatGetU8Direct((const void*)gpPassiveSkillBdat, &lbl_eu_8050DC20[0x27f], row);
+            u8 v2 = BdatGetU8Direct((const void*)gpPassiveSkillBdat, "skill", row);
+            text = BdatGetPtrDirect(gpPassiveSkillEffectBdat, "name", (u8)v2);
+            LayoutSetTextBoxFmtValue(self->field_8, "txt_exp03", text, 0);
+            u8 v3 = BdatGetU8Direct((const void*)gpPassiveSkillEffectBdat, "val_type", (u8)v2);
+            u8 v4 = BdatGetU8Direct((const void*)gpPassiveSkillBdat, "val1", row);
             if (v4 != 0 && row != 0xe && row != 0x4b && row != 0xa5 && row != 0xc8) {
-                char* t12 = BdatTouchStringCell(&lbl_eu_8050DC20[0x21f], &lbl_eu_8050DC20[0x207], 0x12);
-                LayoutSetTextBoxFmtValue(self->field_8, &lbl_eu_8050DC20[0x254], t12, 0);
+                char* t12 = BdatTouchStringCell("MNU_passive", "name", 0x12);
+                LayoutSetTextBoxFmtValue(self->field_8, "txt_exp04", t12, 0);
                 if (v3 == 1) {
-                    sprintf(buf0, &lbl_eu_8050DC20[0x25e], (u8)v4);
+                    sprintf(buf0, "%d", (u8)v4);
                 } else {
-                    sprintf(buf0, &lbl_eu_8050DC20[0x261], (u8)v4, t6);
+                    sprintf(buf0, "%d%s", (u8)v4, t6);
                 }
-                LayoutSetTextBoxText(self->field_8, &lbl_eu_8050DC20[0x160], buf0, 0);
+                LayoutSetTextBoxText(self->field_8, "txt_value04", buf0, 0);
             } else {
-                LayoutSetTextBoxFmtValue(self->field_8, &lbl_eu_8050DC20[0x254], &lbl_eu_8050DC20[0x182], 0);
-                LayoutSetTextBoxFmtValue(self->field_8, &lbl_eu_8050DC20[0x160], &lbl_eu_8050DC20[0x182], 0);
+                LayoutSetTextBoxFmtValue(self->field_8, "txt_exp04", "", 0);
+                LayoutSetTextBoxFmtValue(self->field_8, "txt_value04", "", 0);
             }
-            u8 v5 = BdatGetU8Direct((const void*)gpPassiveSkillBdat, &lbl_eu_8050DC20[0x284], row);
+            u8 v5 = BdatGetU8Direct((const void*)gpPassiveSkillBdat, "time", row);
             if (v5 != 0) {
-                char* t13 = BdatTouchStringCell(&lbl_eu_8050DC20[0x21f], &lbl_eu_8050DC20[0x207], 0x13);
-                LayoutSetTextBoxFmtValue(self->field_8, &lbl_eu_8050DC20[0x26b], t13, 0);
-                char* t5 = BdatTouchStringCell(&lbl_eu_8050DC20[0x21f], &lbl_eu_8050DC20[0x207], 0x5);
-                sprintf(buf0, &lbl_eu_8050DC20[0x261], (u8)v5, t5);
-                LayoutSetTextBoxText(self->field_8, &lbl_eu_8050DC20[0x16c], buf0, 0);
+                char* t13 = BdatTouchStringCell("MNU_passive", "name", 0x13);
+                LayoutSetTextBoxFmtValue(self->field_8, "txt_exp05", t13, 0);
+                char* t5 = BdatTouchStringCell("MNU_passive", "name", 0x5);
+                sprintf(buf0, "%d%s", (u8)v5, t5);
+                LayoutSetTextBoxText(self->field_8, "txt_value05", buf0, 0);
             } else {
-                LayoutSetTextBoxFmtValue(self->field_8, &lbl_eu_8050DC20[0x26b], &lbl_eu_8050DC20[0x182], 0);
-                LayoutSetTextBoxFmtValue(self->field_8, &lbl_eu_8050DC20[0x16c], &lbl_eu_8050DC20[0x182], 0);
+                LayoutSetTextBoxFmtValue(self->field_8, "txt_exp05", "", 0);
+                LayoutSetTextBoxFmtValue(self->field_8, "txt_value05", "", 0);
             }
-            char* t16 = BdatTouchStringCell(&lbl_eu_8050DC20[0x21f], &lbl_eu_8050DC20[0x207], 0x16);
-            LayoutSetTextBoxFmtValue(self->field_8, &lbl_eu_8050DC20[0x178], t16, 0);
+            char* t16 = BdatTouchStringCell("MNU_passive", "name", 0x16);
+            LayoutSetTextBoxFmtValue(self->field_8, "txt_exp06", t16, 0);
         } else {
-            char* t19 = BdatTouchStringCell(&lbl_eu_8050DC20[0x21f], &lbl_eu_8050DC20[0x207], 0x19);
-            LayoutSetTextBoxFmtValue(self->field_8, &lbl_eu_8050DC20[0x20c], t19, 0);
-            LayoutSetTextBoxFmtValue(self->field_8, &lbl_eu_8050DC20[0x215], t19, 0);
-            LayoutSetTextBoxFmtValue(self->field_8, &lbl_eu_8050DC20[0x22b], t19, 0);
-            LayoutSetTextBoxFmtValue(self->field_8, &lbl_eu_8050DC20[0x154], &lbl_eu_8050DC20[0x182], 0);
-            LayoutSetTextBoxFmtValue(self->field_8, &lbl_eu_8050DC20[0x23b], t19, 0);
-            LayoutSetTextBoxFmtValue(self->field_8, &lbl_eu_8050DC20[0x254], &lbl_eu_8050DC20[0x182], 0);
-            LayoutSetTextBoxFmtValue(self->field_8, &lbl_eu_8050DC20[0x160], &lbl_eu_8050DC20[0x182], 0);
-            LayoutSetTextBoxFmtValue(self->field_8, &lbl_eu_8050DC20[0x26b], &lbl_eu_8050DC20[0x182], 0);
-            LayoutSetTextBoxFmtValue(self->field_8, &lbl_eu_8050DC20[0x16c], &lbl_eu_8050DC20[0x182], 0);
-            char* t17 = BdatTouchStringCell(&lbl_eu_8050DC20[0x21f], &lbl_eu_8050DC20[0x207], 0x17);
-            LayoutSetTextBoxFmtValue(self->field_8, &lbl_eu_8050DC20[0x178], t17, 0);
+            char* t19 = BdatTouchStringCell("MNU_passive", "name", 0x19);
+            LayoutSetTextBoxFmtValue(self->field_8, "txt_nm01", t19, 0);
+            LayoutSetTextBoxFmtValue(self->field_8, "txt_exp01", t19, 0);
+            LayoutSetTextBoxFmtValue(self->field_8, "txt_exp02", t19, 0);
+            LayoutSetTextBoxFmtValue(self->field_8, "txt_value03", "", 0);
+            LayoutSetTextBoxFmtValue(self->field_8, "txt_exp03", t19, 0);
+            LayoutSetTextBoxFmtValue(self->field_8, "txt_exp04", "", 0);
+            LayoutSetTextBoxFmtValue(self->field_8, "txt_value04", "", 0);
+            LayoutSetTextBoxFmtValue(self->field_8, "txt_exp05", "", 0);
+            LayoutSetTextBoxFmtValue(self->field_8, "txt_value05", "", 0);
+            char* t17 = BdatTouchStringCell("MNU_passive", "name", 0x17);
+            LayoutSetTextBoxFmtValue(self->field_8, "txt_exp06", t17, 0);
         }
-        LayoutSetTextBoxFmtValue(self->field_8, &lbl_eu_8050DC20[0x183], &lbl_eu_8050DC20[0x182], 0);
-        setPaneVisible(self->field_8->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x301], true), 0);
+        LayoutSetTextBoxFmtValue(self->field_8, "txt_exp07", "", 0);
+        setPaneVisible(self->field_8->GetRootPane()->FindPaneByName("pic_kizicon", true), 0);
         CPassiveSkillLine_refreshSP(self, id);
         CPassiveSkillLine_setSlotNamePanes(self, row);
         break;
@@ -891,16 +886,16 @@ extern "C" void CPassiveSkillLine_setCellMessage(UI::CPassiveSkillLine* self, in
         (u8*)CtrlObjectParam_GetCharEntry(charId) + 0x3534);
     UI::CPSkillRecord* rec = &blob->records[row];
     if (rec->slots[slot + 1].word != 0 || charId == 0) {
-        char* msg4 = BdatTouchStringCell(&lbl_eu_8050DC20[0x21f], &lbl_eu_8050DC20[0x207], 4);
-        char* msgE = BdatTouchStringCell(&lbl_eu_8050DC20[0x21f], &lbl_eu_8050DC20[0x207], 0xe);
-        char* msg19 = BdatTouchStringCell(&lbl_eu_8050DC20[0x21f], &lbl_eu_8050DC20[0x207], 0x19);
+        char* msg4 = BdatTouchStringCell("MNU_passive", "name", 4);
+        char* msgE = BdatTouchStringCell("MNU_passive", "name", 0xe);
+        char* msg19 = BdatTouchStringCell("MNU_passive", "name", 0x19);
         char errBuf[0x28];
-        sprintf(errBuf, &lbl_eu_8050DC20[0x33b], msg19, msg4, msg19, msgE);
-        LayoutSetTextBoxText(self->field_8, &lbl_eu_8050DC20[0x139], errBuf, 0);
+        sprintf(errBuf, "%s%s%s%s", msg19, msg4, msg19, msgE);
+        LayoutSetTextBoxText(self->field_8, "txt_value02", errBuf, 0);
     } else {
         u32 table = (u32)gpPassiveSkillBdat;
         u8 v = (u8)(row * 5 + slot + (charId - 1) * 0x19 + 1);
-        u8 result = BdatGetU8Direct((const void*)table, &lbl_eu_8050DC20[0x344], v);
+        u8 result = BdatGetU8Direct((const void*)table, "point_PP", v);
         u16 v100 = (u16)(result * 100);
         u16 cost = 0;
         if (slot == 0) {
@@ -908,16 +903,16 @@ extern "C" void CPassiveSkillLine_setCellMessage(UI::CPassiveSkillLine* self, in
         } else if (rec->slots[(u8)slot].word != 0) {
             cost = (u16)blob->costs[(u8)row];
         }
-        char* msg4 = BdatTouchStringCell(&lbl_eu_8050DC20[0x21f], &lbl_eu_8050DC20[0x207], 4);
-        char* msgE = BdatTouchStringCell(&lbl_eu_8050DC20[0x21f], &lbl_eu_8050DC20[0x207], 0xe);
+        char* msg4 = BdatTouchStringCell("MNU_passive", "name", 4);
+        char* msgE = BdatTouchStringCell("MNU_passive", "name", 0xe);
         char buf[0x20];
-        sprintf(buf, &lbl_eu_8050DC20[0x34d], cost, msg4, v100, msgE);
-        LayoutSetTextBoxText(self->field_8, &lbl_eu_8050DC20[0x139], buf, 0);
+        sprintf(buf, "%d%s%d%s", cost, msg4, v100, msgE);
+        LayoutSetTextBoxText(self->field_8, "txt_value02", buf, 0);
     }
-    char* msgD = BdatTouchStringCell(&lbl_eu_8050DC20[0x21f], &lbl_eu_8050DC20[0x207], 0xd);
-    LayoutSetTextBoxFmtValue(self->field_8, &lbl_eu_8050DC20[0x356], msgD, 0);
-    LayoutSetTextBoxFmtValue(self->field_8, &lbl_eu_8050DC20[0x145], &lbl_eu_8050DC20[0x182], 0);
-    LayoutSetTextBoxFmtValue(self->field_8, &lbl_eu_8050DC20[0x35f], &lbl_eu_8050DC20[0x182], 0);
+    char* msgD = BdatTouchStringCell("MNU_passive", "name", 0xd);
+    LayoutSetTextBoxFmtValue(self->field_8, "txt_hd02", msgD, 0);
+    LayoutSetTextBoxFmtValue(self->field_8, "txt_value02_01", "", 0);
+    LayoutSetTextBoxFmtValue(self->field_8, "txt_unt02", "", 0);
 }
 
 // Skill-name pane setter for the +0x28 line (retail
@@ -1847,18 +1842,18 @@ extern "C" void CPassiveSkillLine_handleInput(u8* selfRaw) {
             // either push the confirm dialogs or apply a free/unlearned
             // acquisition directly.
             u8 itemCat = BdatGetU8Direct((const void*)gpPassiveSkillBdat,
-                                       &lbl_eu_8050DC20[0x235], slot->word);
+                                       "skill", slot->word);
             self->field_11F = itemCat;
             if (itemCat == 0x85 || itemCat == 0x84) {
                 self->field_E8 = 0x10;
                 self->field_11E = 0;
-                char* msgA = BdatTouchStringCell(&lbl_eu_8050DC20[0x21f],
-                                           &lbl_eu_8050DC20[0x207],
+                char* msgA = BdatTouchStringCell("MNU_passive",
+                                           "name",
                                            itemCat == 0x85 ? 0x1a : 0x1b);
-                char* msgB = BdatTouchStringCell(&lbl_eu_8050DC20[0x21f],
-                                           &lbl_eu_8050DC20[0x207], 0x1c);
-                char* msgC = BdatTouchStringCell(&lbl_eu_8050DC20[0x21f],
-                                           &lbl_eu_8050DC20[0x207], 0x1d);
+                char* msgB = BdatTouchStringCell("MNU_passive",
+                                           "name", 0x1c);
+                char* msgC = BdatTouchStringCell("MNU_passive",
+                                           "name", 0x1d);
                 reinterpret_cast<CSysWin*>(self->mInfo.field_54)->setKindContent(reinterpret_cast<char*>(msgA), 0);
                 reinterpret_cast<CSysWin*>(self->mInfo.field_54)->setTwoTextValues(reinterpret_cast<char*>(msgB), reinterpret_cast<char*>(msgC));
                 reinterpret_cast<CSysWin*>(static_cast<CSysWin*>(self->mInfo.field_54))->applyKind(0);
@@ -1972,7 +1967,7 @@ extern "C" void CPassiveSkillLine_confirmAcquire(void* selfRaw) {
             return;
         }
         u16 msgId =
-            BdatGetU8Direct((const void*)gpPassiveSkillBdat, &lbl_eu_8050DC20[0x235], cost);
+            BdatGetU8Direct((const void*)gpPassiveSkillBdat, "skill", cost);
         u8 itemCat = (u8)msgId;
         u8 count = CPassiveSkillLine_countSkillId(self, 0);
         char* msgA;
@@ -1981,20 +1976,20 @@ extern "C" void CPassiveSkillLine_confirmAcquire(void* selfRaw) {
         if (itemCat == 0x85 && count <= 1) {
             self->field_E8 = 0x10;
             self->field_11E = 1;
-            msgA = BdatTouchStringCell(&lbl_eu_8050DC20[0x21f],
-                                 &lbl_eu_8050DC20[0x207], 0x1a);
-            msgB = BdatTouchStringCell(&lbl_eu_8050DC20[0x21f],
-                                 &lbl_eu_8050DC20[0x207], 0x1c);
-            msgC = BdatTouchStringCell(&lbl_eu_8050DC20[0x21f],
-                                 &lbl_eu_8050DC20[0x207], 0x1d);
+            msgA = BdatTouchStringCell("MNU_passive",
+                                 "name", 0x1a);
+            msgB = BdatTouchStringCell("MNU_passive",
+                                 "name", 0x1c);
+            msgC = BdatTouchStringCell("MNU_passive",
+                                 "name", 0x1d);
         } else if (itemCat == 0x84 && count <= 1) {
             self->field_E8 = 0x10;
-            msgA = BdatTouchStringCell(&lbl_eu_8050DC20[0x21f],
-                                 &lbl_eu_8050DC20[0x207], 0x1b);
-            msgB = BdatTouchStringCell(&lbl_eu_8050DC20[0x21f],
-                                 &lbl_eu_8050DC20[0x207], 0x1c);
-            msgC = BdatTouchStringCell(&lbl_eu_8050DC20[0x21f],
-                                 &lbl_eu_8050DC20[0x207], 0x1d);
+            msgA = BdatTouchStringCell("MNU_passive",
+                                 "name", 0x1b);
+            msgB = BdatTouchStringCell("MNU_passive",
+                                 "name", 0x1c);
+            msgC = BdatTouchStringCell("MNU_passive",
+                                 "name", 0x1d);
         } else {
             self->field_11F = 0;
             break;
@@ -2380,7 +2375,7 @@ void CPassiveSkillLine_refreshNameTex(UI::CPassiveSkillLine* self) {
     u8 id = GetCollectedFlagByte(v);
     u8 idUp = GetCollectedFlagByte((u8)up);
     u8 idDown = GetCollectedFlagByte((u8)down);
-    u16 msgId = BdatGetU16Direct(lbl_eu_80664090, &lbl_eu_8050DC20[0x4b4], id);
+    u16 msgId = BdatGetU16Direct(::cf::CfBdat::spBtlPcListFileData, &lbl_eu_8050DC20[0x4b4], id);
     char* text = MakeTplNameSysFile(msgId);
     u32 resU = (u32)(reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)
                          ->GetResource(0x74696d67, text, 0));
@@ -2409,14 +2404,14 @@ extern "C" void CPassiveSkillLine_updateSkillTabs(UI::CPassiveSkillLine* self) {
     convB.w[0] = 0x43300000;
     char bufTab[0x20];
     char buf[0x20];
-    setPaneVisible(self->field_8->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x48b], true), 0);
-    setPaneVisible(self->field_8->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x497], true), 1);
+    setPaneVisible(self->field_8->GetRootPane()->FindPaneByName("nul_fc_slpt", true), 0);
+    setPaneVisible(self->field_8->GetRootPane()->FindPaneByName("pic_fcbs_sl00", true), 1);
     u8 id = GetCollectedFlagByte(self->field_F3);
     for (u8 i = 1; i <= 5; i++) {
-        sprintf(bufTab, &lbl_eu_8050DC20[0x4e3], id, i);
+        sprintf(bufTab, "mf20_skl01_pc%02dcat%02d.tpl", id, i);
         void* res = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, bufTab, 0);
         if (res != 0) {
-            sprintf(bufTab, &lbl_eu_8050DC20[0x500], i);
+            sprintf(bufTab, "pic_cat%02d", i);
             PaneSetTexPaletteByName(self->field_8, (const char*)bufTab, (TPLPalette*)res);
         }
     }
@@ -2427,43 +2422,43 @@ extern "C" void CPassiveSkillLine_updateSkillTabs(UI::CPassiveSkillLine* self) {
     // indexed lwz off the sda21 base) instead of passing the table base.
     int idxA = (int)(t16 * 5 + 4);
     int idxB = (int)(id * 5);
-    u8 v = BdatGetU8Direct((const void*)gpPassiveSkillValueBdat, &lbl_eu_8050DC20[0x50c], (u8)idxA);
+    u8 v = BdatGetU8Direct((const void*)gpPassiveSkillValueBdat, "flag", (u8)idxA);
     if (CtrlRemote_TouchBitByArg((u8)v + 0x3509) != 0) {
-        setPaneVisible(self->field_8->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x511], true), 1);
-        void* res = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x51b], 0);
+        setPaneVisible(self->field_8->GetRootPane()->FindPaneByName("nul_cat04", true), 1);
+        void* res = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, "mf20_skl00_plbs02.tpl", 0);
         if (res != 0) {
-            PaneSetTexPaletteByName(self->field_8, &lbl_eu_8050DC20[0x531], (TPLPalette*)res);
+            PaneSetTexPaletteByName(self->field_8, "pic_bis02", (TPLPalette*)res);
         }
         for (u8 i = 0; i < 5; i++) {
             setPaneVisible(self->cells[3][i].mpLayout->GetRootPane(), 1);
         }
         self->field_F9 = 1;
     } else {
-        setPaneVisible(self->field_8->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x511], true), 0);
-        void* res = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x53b], 0);
+        setPaneVisible(self->field_8->GetRootPane()->FindPaneByName("nul_cat04", true), 0);
+        void* res = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, "mf20_skl00_plbs04.tpl", 0);
         if (res != 0) {
-            PaneSetTexPaletteByName(self->field_8, &lbl_eu_8050DC20[0x531], (TPLPalette*)res);
+            PaneSetTexPaletteByName(self->field_8, "pic_bis02", (TPLPalette*)res);
         }
         for (u8 i = 0; i < 5; i++) {
             setPaneVisible(self->cells[3][i].mpLayout->GetRootPane(), 0);
         }
     }
-    u8 v2 = BdatGetU8Direct((const void*)gpPassiveSkillValueBdat, &lbl_eu_8050DC20[0x50c], (u8)idxB);
+    u8 v2 = BdatGetU8Direct((const void*)gpPassiveSkillValueBdat, "flag", (u8)idxB);
     if (CtrlRemote_TouchBitByArg(v2 + 0x3509) != 0) {
-        setPaneVisible(self->field_8->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x551], true), 1);
-        void* res = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x55b], 0);
+        setPaneVisible(self->field_8->GetRootPane()->FindPaneByName("nul_cat05", true), 1);
+        void* res = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, "mf20_skl00_plbs03.tpl", 0);
         if (res != 0) {
-            PaneSetTexPaletteByName(self->field_8, &lbl_eu_8050DC20[0x571], (TPLPalette*)res);
+            PaneSetTexPaletteByName(self->field_8, "pic_bis03", (TPLPalette*)res);
         }
         for (u8 i = 0; i < 5; i++) {
             setPaneVisible(self->cells[4][i].mpLayout->GetRootPane(), 1);
         }
         self->field_FA = 1;
     } else {
-        setPaneVisible(self->field_8->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x551], true), 0);
-        void* res = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x57b], 0);
+        setPaneVisible(self->field_8->GetRootPane()->FindPaneByName("nul_cat05", true), 0);
+        void* res = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, "mf20_skl00_plbs05.tpl", 0);
         if (res != 0) {
-            PaneSetTexPaletteByName(self->field_8, &lbl_eu_8050DC20[0x571], (TPLPalette*)res);
+            PaneSetTexPaletteByName(self->field_8, "pic_bis03", (TPLPalette*)res);
         }
         for (u8 i = 0; i < 5; i++) {
             setPaneVisible(self->cells[4][i].mpLayout->GetRootPane(), 0);
@@ -2473,9 +2468,9 @@ extern "C" void CPassiveSkillLine_updateSkillTabs(UI::CPassiveSkillLine* self) {
     u32 cur = data->field_3DD0;
     UI::CPSkillBlob* blob = reinterpret_cast<UI::CPSkillBlob*>((u8*)data + 0x3534);
     for (u8 row = 0; row < 5; row++) {
-        sprintf(buf, &lbl_eu_8050DC20[0x591], row + 1);
+        sprintf(buf, "pic_ef%02d_00", row + 1);
         nw4r::lyt::Pane* paneA = self->field_8->GetRootPane()->FindPaneByName(buf, true);
-        sprintf(buf, &lbl_eu_8050DC20[0x59f], row + 1);
+        sprintf(buf, "pic_ef%02d_01", row + 1);
         nw4r::lyt::Pane* paneB = self->field_8->GetRootPane()->FindPaneByName(buf, true);
         setPaneVisible(paneA, row == cur);
         setPaneVisible(paneB, row == cur);
@@ -2488,46 +2483,46 @@ extern "C" void CPassiveSkillLine_updateSkillTabs(UI::CPassiveSkillLine* self) {
         UI::CPSkillBlobCost* costBlob = reinterpret_cast<UI::CPSkillBlobCost*>(blob);
         for (u8 i = 1; i <= 5; i++) {
             int gridIdx = i + rowIdxBase;
-            u8 v1 = BdatGetU8Direct((const void*)gpPassiveSkillBdat, &lbl_eu_8050DC20[0x5ad], (u8)gridIdx);
-            u8 v2b = BdatGetU8Direct((const void*)gpPassiveSkillBdat, &lbl_eu_8050DC20[0x5b3], (u8)gridIdx);
-            u8 v3 = BdatGetU8Direct((const void*)gpPassiveSkillBdat, &lbl_eu_8050DC20[0x344], (u8)gridIdx);
+            u8 v1 = BdatGetU8Direct((const void*)gpPassiveSkillBdat, "shape", (u8)gridIdx);
+            u8 v2b = BdatGetU8Direct((const void*)gpPassiveSkillBdat, "target", (u8)gridIdx);
+            u8 v3 = BdatGetU8Direct((const void*)gpPassiveSkillBdat, "point_PP", (u8)gridIdx);
             u32 word = rec->slots[i].word;
             u16 value = (u16)(v3 * 0x64);
             void* res2 = 0;
             if (word == 0) {
                 switch (v1) {
-                case 1: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x5ba], 0); break;
-                case 2: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x5d3], 0); break;
-                case 3: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x5ec], 0); break;
-                case 4: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x605], 0); break;
-                case 5: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x61e], 0); break;
+                case 1: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, "mf20_skl02_icnbs_c00.tpl", 0); break;
+                case 2: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, "mf20_skl02_icnbs_c01.tpl", 0); break;
+                case 3: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, "mf20_skl02_icnbs_c02.tpl", 0); break;
+                case 4: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, "mf20_skl02_icnbs_c03.tpl", 0); break;
+                case 5: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, "mf20_skl02_icnbs_c04.tpl", 0); break;
                 }
             } else if (v2b == 1) {
                 switch (v1) {
-                case 1: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x637], 0); break;
-                case 2: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x650], 0); break;
-                case 3: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x669], 0); break;
-                case 4: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x682], 0); break;
-                case 5: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x69b], 0); break;
+                case 1: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, "mf20_skl02_icnbs_a00.tpl", 0); break;
+                case 2: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, "mf20_skl02_icnbs_a01.tpl", 0); break;
+                case 3: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, "mf20_skl02_icnbs_a02.tpl", 0); break;
+                case 4: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, "mf20_skl02_icnbs_a03.tpl", 0); break;
+                case 5: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, "mf20_skl02_icnbs_a04.tpl", 0); break;
                 }
             } else {
                 switch (v1) {
-                case 1: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x6b4], 0); break;
-                case 2: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x6cd], 0); break;
-                case 3: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x6e6], 0); break;
-                case 4: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x6ff], 0); break;
-                case 5: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x718], 0); break;
+                case 1: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, "mf20_skl02_icnbs_b00.tpl", 0); break;
+                case 2: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, "mf20_skl02_icnbs_b01.tpl", 0); break;
+                case 3: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, "mf20_skl02_icnbs_b02.tpl", 0); break;
+                case 4: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, "mf20_skl02_icnbs_b03.tpl", 0); break;
+                case 5: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, "mf20_skl02_icnbs_b04.tpl", 0); break;
                 }
             }
             if (res2 != 0) {
-                sprintf(buf, &lbl_eu_8050DC20[0x431], rowP1, i);
+                sprintf(buf, "pic_icbs_sl%02d_%02d", rowP1, i);
                 PaneSetTexPaletteByName(self->field_8, (const char*)buf, (TPLPalette*)res2);
             }
-            u32 msgId = BdatGetU16Direct(gpPassiveSkillHelpBdat, &lbl_eu_8050DC20[0x731], (u8)gridIdx);
+            u32 msgId = BdatGetU16Direct(gpPassiveSkillHelpBdat, "icon", (u8)gridIdx);
             char* text = MakeTplNameSysFile((u16)msgId);
             void* res3 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, text, 0);
             if (res3 != 0) {
-                sprintf(buf, &lbl_eu_8050DC20[0x736], rowP1, i);
+                sprintf(buf, "pic_ic_sl%02d_%02d", rowP1, i);
                 PaneSetTexPaletteByName(self->field_8, (const char*)buf, (TPLPalette*)res3);
                 GXColorS10 fs0 = PaneMatGetS16QuadByName(self->field_8, buf, 0);
                 GXColorS10 fs1 = fs0;
@@ -2548,7 +2543,7 @@ extern "C" void CPassiveSkillLine_updateSkillTabs(UI::CPassiveSkillLine* self) {
                     PaneMatSetTevColorsByName(self->field_8, buf, col2, col1);
                 }
             }
-            sprintf(buf, &lbl_eu_8050DC20[0x749], rowP1, i);
+            sprintf(buf, "pic_msk_sl%02d_%02d", rowP1, i);
             setPaneVisible(self->field_8->GetRootPane()->FindPaneByName(buf, true), 0);
             nw4r::lyt::Layout* cellLayout = self->cells[row][i - 1].mpLayout;
             nw4r::lyt::AnimTransform* anim = self->cells[row][i - 1].mpAnimTrans;
@@ -2595,17 +2590,17 @@ extern "C" void CPassiveSkillLine_updateSkillTabs(UI::CPassiveSkillLine* self) {
                 anim->SetFrame(f);
                 cellLayout->Animate(0);
             }
-            setPaneVisible(cellLayout->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x446], true), 0);
-            setPaneVisible(cellLayout->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x451], true), 0);
-            setPaneVisible(cellLayout->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x45c], true), 0);
-            setPaneVisible(cellLayout->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x467], true), 0);
-            setPaneVisible(cellLayout->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x472], true), 0);
+            setPaneVisible(cellLayout->GetRootPane()->FindPaneByName("pic_lock00", true), 0);
+            setPaneVisible(cellLayout->GetRootPane()->FindPaneByName("pic_lock01", true), 0);
+            setPaneVisible(cellLayout->GetRootPane()->FindPaneByName("pic_lock02", true), 0);
+            setPaneVisible(cellLayout->GetRootPane()->FindPaneByName("pic_lock03", true), 0);
+            setPaneVisible(cellLayout->GetRootPane()->FindPaneByName("pic_lock04", true), 0);
             switch (v1) {
-            case 1: setPaneVisible(cellLayout->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x446], true), 1); break;
-            case 2: setPaneVisible(cellLayout->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x451], true), 1); break;
-            case 3: setPaneVisible(cellLayout->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x45c], true), 1); break;
-            case 4: setPaneVisible(cellLayout->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x467], true), 1); break;
-            case 5: setPaneVisible(cellLayout->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x472], true), 1); break;
+            case 1: setPaneVisible(cellLayout->GetRootPane()->FindPaneByName("pic_lock00", true), 1); break;
+            case 2: setPaneVisible(cellLayout->GetRootPane()->FindPaneByName("pic_lock01", true), 1); break;
+            case 3: setPaneVisible(cellLayout->GetRootPane()->FindPaneByName("pic_lock02", true), 1); break;
+            case 4: setPaneVisible(cellLayout->GetRootPane()->FindPaneByName("pic_lock03", true), 1); break;
+            case 5: setPaneVisible(cellLayout->GetRootPane()->FindPaneByName("pic_lock04", true), 1); break;
             }
         }
     }
@@ -2617,8 +2612,8 @@ extern "C" void CPassiveSkillLine_updateSkillTabs(UI::CPassiveSkillLine* self) {
 // cell attach the category icon/name textures and drive the pane visibility
 // from the learned state and the remaining-SP affordability check.
 void CPassiveSkillLine_updateLearnGrid(UI::CPassiveSkillLine* self) {
-    setPaneVisible(self->field_8->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x48b], true), 1);
-    setPaneVisible(self->field_8->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x497], true), 0);
+    setPaneVisible(self->field_8->GetRootPane()->FindPaneByName("nul_fc_slpt", true), 1);
+    setPaneVisible(self->field_8->GetRootPane()->FindPaneByName("pic_fcbs_sl00", true), 0);
     // Buffer size/order and statement order matter: MWCC lays the two 0x20
     // scratch buffers at sp+0xa8/sp+0xc8 inside the 0x140 frame, and the
     // entry2 -> catBase -> v -> cnt sequence fixes the r16/r14/r17/r6 alloc.
@@ -2638,7 +2633,7 @@ void CPassiveSkillLine_updateLearnGrid(UI::CPassiveSkillLine* self) {
             entry2 = entry;
             for (u8 i = 1; i <= 5; i++) {
                 if ((u8)i == (s8)self->field_FE + 1) {
-                    sprintf(bufB, &lbl_eu_8050DC20[0x772], i);
+                    sprintf(bufB, "rvs_effect%02d", i);
                     v = BdatGetU8Direct((const void*)gpPassiveSkillIconBdat, (const char*)bufB, catBase + entry);
                     break;
                 }
@@ -2651,17 +2646,17 @@ void CPassiveSkillLine_updateLearnGrid(UI::CPassiveSkillLine* self) {
         }
     }
     self->field_F4 = entry2;
-    u32 msgId = BdatGetU16Direct(lbl_eu_80664090, &lbl_eu_8050DC20[0x1e8], entry2);
+    u32 msgId = BdatGetU16Direct(::cf::CfBdat::spBtlPcListFileData, "tag_icon", entry2);
     char* text = MakeTplNameSysFile((u16)msgId);
     void* res = CUICfManager_getArcResourceAccessor()->GetResource(0x74696d67, text, 0);
     if (res != 0) {
-        PaneSetTexPaletteByName(self->field_8, &lbl_eu_8050DC20[0x781], (TPLPalette*)res);
+        PaneSetTexPaletteByName(self->field_8, "pic_fc_pt00", (TPLPalette*)res);
     }
     for (u8 i = 1; i <= 5; i++) {
-        sprintf(bufA, &lbl_eu_8050DC20[0x4e3], entry2, i);
+        sprintf(bufA, "mf20_skl01_pc%02dcat%02d.tpl", entry2, i);
         void* res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, bufA, 0);
         if (res2 != 0) {
-            sprintf(bufA, &lbl_eu_8050DC20[0x500], i);
+            sprintf(bufA, "pic_cat%02d", i);
             PaneSetTexPaletteByName(self->field_8, (const char*)bufA, (TPLPalette*)res2);
         }
     }
@@ -2670,42 +2665,42 @@ void CPassiveSkillLine_updateLearnGrid(UI::CPassiveSkillLine* self) {
     u32 t16 = (u32)((u8)entry2 - 1);
     u8 r0 = (u8)(t16 * 5 + 4);
     u8 nextRow = (u8)(entry2 * 5);
-    u8 vv = BdatGetU8Direct((const void*)gpPassiveSkillValueBdat, &lbl_eu_8050DC20[0x50c], r0);
+    u8 vv = BdatGetU8Direct((const void*)gpPassiveSkillValueBdat, "flag", r0);
     if (CtrlRemote_TouchBitByArg((u8)vv + 0x3509) != 0) {
-        setPaneVisible(self->field_8->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x511], true), 1);
-        void* res3 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x51b], 0);
+        setPaneVisible(self->field_8->GetRootPane()->FindPaneByName("nul_cat04", true), 1);
+        void* res3 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, "mf20_skl00_plbs02.tpl", 0);
         if (res3 != 0) {
-            PaneSetTexPaletteByName(self->field_8, &lbl_eu_8050DC20[0x531], (TPLPalette*)res3);
+            PaneSetTexPaletteByName(self->field_8, "pic_bis02", (TPLPalette*)res3);
         }
         self->field_FB = 1;
     } else {
-        setPaneVisible(self->field_8->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x511], true), 0);
-        void* res3 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x53b], 0);
+        setPaneVisible(self->field_8->GetRootPane()->FindPaneByName("nul_cat04", true), 0);
+        void* res3 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, "mf20_skl00_plbs04.tpl", 0);
         if (res3 != 0) {
-            PaneSetTexPaletteByName(self->field_8, &lbl_eu_8050DC20[0x531], (TPLPalette*)res3);
+            PaneSetTexPaletteByName(self->field_8, "pic_bis02", (TPLPalette*)res3);
         }
     }
-    u8 vv2 = BdatGetU8Direct((const void*)gpPassiveSkillValueBdat, &lbl_eu_8050DC20[0x50c], nextRow);
+    u8 vv2 = BdatGetU8Direct((const void*)gpPassiveSkillValueBdat, "flag", nextRow);
     if (CtrlRemote_TouchBitByArg(vv2 + 0x3509) != 0) {
-        setPaneVisible(self->field_8->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x551], true), 1);
-        void* res3 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x55b], 0);
+        setPaneVisible(self->field_8->GetRootPane()->FindPaneByName("nul_cat05", true), 1);
+        void* res3 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, "mf20_skl00_plbs03.tpl", 0);
         if (res3 != 0) {
-            PaneSetTexPaletteByName(self->field_8, &lbl_eu_8050DC20[0x571], (TPLPalette*)res3);
+            PaneSetTexPaletteByName(self->field_8, "pic_bis03", (TPLPalette*)res3);
         }
         self->field_FC = 1;
     } else {
-        setPaneVisible(self->field_8->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x551], true), 0);
-        void* res3 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x57b], 0);
+        setPaneVisible(self->field_8->GetRootPane()->FindPaneByName("nul_cat05", true), 0);
+        void* res3 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, "mf20_skl00_plbs05.tpl", 0);
         if (res3 != 0) {
-            PaneSetTexPaletteByName(self->field_8, &lbl_eu_8050DC20[0x571], (TPLPalette*)res3);
+            PaneSetTexPaletteByName(self->field_8, "pic_bis03", (TPLPalette*)res3);
         }
     }
     UI::CPSkillBlob* blob = reinterpret_cast<UI::CPSkillBlob*>(
         (u8*)CtrlObjectParam_GetCharEntry((u8)entry2) + 0x3534);
     for (u8 row = 0; row < 5; row++) {
-        sprintf(bufB, &lbl_eu_8050DC20[0x591], row + 1);
+        sprintf(bufB, "pic_ef%02d_00", row + 1);
         nw4r::lyt::Pane* paneA = self->field_8->GetRootPane()->FindPaneByName(bufB, true);
-        sprintf(bufB, &lbl_eu_8050DC20[0x59f], row + 1);
+        sprintf(bufB, "pic_ef%02d_01", row + 1);
         nw4r::lyt::Pane* paneB = self->field_8->GetRootPane()->FindPaneByName(bufB, true);
         setPaneVisible(paneA, 0);
         setPaneVisible(paneB, 0);
@@ -2718,45 +2713,45 @@ void CPassiveSkillLine_updateLearnGrid(UI::CPassiveSkillLine* self) {
         UI::CPSkillRecord* rec = &blob->records[row];
         for (u8 i = 1; i <= 5; i++) {
             u32 gridIdx = (u8)(i + rowIdxBase + gridBase);
-            u8 v1 = BdatGetU8Direct((const void*)gpPassiveSkillBdat, &lbl_eu_8050DC20[0x5ad], gridIdx);
-            u8 v2 = BdatGetU8Direct((const void*)gpPassiveSkillBdat, &lbl_eu_8050DC20[0x5b3], gridIdx);
-            BdatGetU8Direct((const void*)gpPassiveSkillBdat, &lbl_eu_8050DC20[0x344], gridIdx);
+            u8 v1 = BdatGetU8Direct((const void*)gpPassiveSkillBdat, "shape", gridIdx);
+            u8 v2 = BdatGetU8Direct((const void*)gpPassiveSkillBdat, "target", gridIdx);
+            BdatGetU8Direct((const void*)gpPassiveSkillBdat, "point_PP", gridIdx);
             u32 word = rec->slots[i].word;
             void* res2 = 0;
             if (word == 0) {
                 switch (v1) {
-                case 1: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x5ba], 0); break;
-                case 2: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x5d3], 0); break;
-                case 3: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x5ec], 0); break;
-                case 4: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x605], 0); break;
-                case 5: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x61e], 0); break;
+                case 1: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, "mf20_skl02_icnbs_c00.tpl", 0); break;
+                case 2: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, "mf20_skl02_icnbs_c01.tpl", 0); break;
+                case 3: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, "mf20_skl02_icnbs_c02.tpl", 0); break;
+                case 4: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, "mf20_skl02_icnbs_c03.tpl", 0); break;
+                case 5: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, "mf20_skl02_icnbs_c04.tpl", 0); break;
                 }
             } else if (v2 == 1) {
                 switch (v1) {
-                case 1: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x637], 0); break;
-                case 2: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x650], 0); break;
-                case 3: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x669], 0); break;
-                case 4: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x682], 0); break;
-                case 5: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x69b], 0); break;
+                case 1: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, "mf20_skl02_icnbs_a00.tpl", 0); break;
+                case 2: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, "mf20_skl02_icnbs_a01.tpl", 0); break;
+                case 3: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, "mf20_skl02_icnbs_a02.tpl", 0); break;
+                case 4: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, "mf20_skl02_icnbs_a03.tpl", 0); break;
+                case 5: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, "mf20_skl02_icnbs_a04.tpl", 0); break;
                 }
             } else {
                 switch (v1) {
-                case 1: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x6b4], 0); break;
-                case 2: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x6cd], 0); break;
-                case 3: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x6e6], 0); break;
-                case 4: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x6ff], 0); break;
-                case 5: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x718], 0); break;
+                case 1: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, "mf20_skl02_icnbs_b00.tpl", 0); break;
+                case 2: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, "mf20_skl02_icnbs_b01.tpl", 0); break;
+                case 3: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, "mf20_skl02_icnbs_b02.tpl", 0); break;
+                case 4: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, "mf20_skl02_icnbs_b03.tpl", 0); break;
+                case 5: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, "mf20_skl02_icnbs_b04.tpl", 0); break;
                 }
             }
             if (res2 != 0) {
-                sprintf(bufB, &lbl_eu_8050DC20[0x431], rowP1, i);
+                sprintf(bufB, "pic_icbs_sl%02d_%02d", rowP1, i);
                 PaneSetTexPaletteByName(self->field_8, (const char*)bufB, (TPLPalette*)res2);
             }
-            u32 msgId2 = BdatGetU16Direct(gpPassiveSkillHelpBdat, &lbl_eu_8050DC20[0x731], gridIdx);
+            u32 msgId2 = BdatGetU16Direct(gpPassiveSkillHelpBdat, "icon", gridIdx);
             char* text2 = MakeTplNameSysFile((u16)msgId2);
             void* res3 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, text2, 0);
             if (res3 != 0) {
-                sprintf(bufB, &lbl_eu_8050DC20[0x736], rowP1, i);
+                sprintf(bufB, "pic_ic_sl%02d_%02d", rowP1, i);
                 PaneSetTexPaletteByName(self->field_8, (const char*)bufB, (TPLPalette*)res3);
                 GXColorS10 fs0 = PaneMatGetS16QuadByName(self->field_8, bufB, 0);
                 GXColorS10 fs1 = fs0;
@@ -2773,16 +2768,16 @@ void CPassiveSkillLine_updateLearnGrid(UI::CPassiveSkillLine* self) {
                     PaneMatSetTevColorsByName(self->field_8, bufB, col2, col1);
                 }
             }
-            sprintf(bufB, &lbl_eu_8050DC20[0x749], rowP1, i);
+            sprintf(bufB, "pic_msk_sl%02d_%02d", rowP1, i);
             nw4r::lyt::Pane* pane6 = self->field_8->GetRootPane()->FindPaneByName(bufB, true);
             setPaneVisible(pane6, (u32)(word == 0));
             void* res4 = 0;
             switch (v1) {
-            case 1: res4 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x78d], 0); break;
-            case 2: res4 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x7a2], 0); break;
-            case 3: res4 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x7b7], 0); break;
-            case 4: res4 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x7cc], 0); break;
-            case 5: res4 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x7e1], 0); break;
+            case 1: res4 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, "mf20_skl02_lck00.tpl", 0); break;
+            case 2: res4 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, "mf20_skl02_lck01.tpl", 0); break;
+            case 3: res4 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, "mf20_skl02_lck02.tpl", 0); break;
+            case 4: res4 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, "mf20_skl02_lck03.tpl", 0); break;
+            case 5: res4 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, "mf20_skl02_lck04.tpl", 0); break;
             }
             if (res4 != 0) {
                 nw4r::lyt::Pane* pane2 = self->field_8->GetRootPane()->FindPaneByName(bufB, true);
@@ -2799,7 +2794,7 @@ void CPassiveSkillLine_updateLearnGrid(UI::CPassiveSkillLine* self) {
                     reinterpret_cast<CPSkillPaneB8*>(pane2)->field_B8 = 0xa0;
                 }
             }
-            sprintf(bufB, &lbl_eu_8050DC20[0x75d], rowP1, i);
+            sprintf(bufB, "pic_curs_sl%02d_%02d", rowP1, i);
             nw4r::lyt::Pane* pane3 = self->field_8->GetRootPane()->FindPaneByName(bufB, true);
             setPaneVisible(pane3, (u32)(v0 == v1));
             u8 id3 = GetCollectedFlagByte(self->field_F3);
@@ -2817,10 +2812,10 @@ void CPassiveSkillLine_updateLearnGrid(UI::CPassiveSkillLine* self) {
             }
             self->field_104[row * 5 + i - 1] = 0;
             if (isPaneVisible(pane3) != 0) {
-                sprintf(bufB, &lbl_eu_8050DC20[0x75d], rowP1, i);
+                sprintf(bufB, "pic_curs_sl%02d_%02d", rowP1, i);
                 nw4r::lyt::Pane* pane5 = self->field_8->GetRootPane()->FindPaneByName(bufB, true);
                 if (found != 0) {
-                    void* res5 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x7f6], 0);
+                    void* res5 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, "mf20_skl00_curs03.tpl", 0);
                     if (res5 != 0) {
                         PaneSetTexPalette(pane5, (TPLPalette*)(reinterpret_cast<u32>(res5)));
                         GXColorS10 c1, c2;
@@ -2834,7 +2829,7 @@ void CPassiveSkillLine_updateLearnGrid(UI::CPassiveSkillLine* self) {
                         UI::CPSkillRecord* rec2 = &blob->records2[row2];
                         for (u8 i2 = 1; i2 <= 5; i2++) {
                             if (rec2->slots[i2].word != 0) {
-                                sum += BdatGetU16Direct(gpPassiveSkillBdat, &lbl_eu_8050DC20[0x318], rec2->slots[i2].word);
+                                sum += BdatGetU16Direct(gpPassiveSkillBdat, "point_SP", rec2->slots[i2].word);
                             }
                         }
                     }
@@ -2842,16 +2837,16 @@ void CPassiveSkillLine_updateLearnGrid(UI::CPassiveSkillLine* self) {
                     u8 rowR2 = sPassiveSkillCharRows[(u8)id3b * 8 + (u8)self->field_F4 - 9];
                     UI::CPSkillRecord* rec3 = &blob->records2[rowR2];
                     if (rec3->slots[(s8)self->field_FE + 1].word != 0) {
-                        sum -= BdatGetU16Direct(gpPassiveSkillBdat, &lbl_eu_8050DC20[0x318], rec3->slots[(s8)self->field_FE + 1].word);
+                        sum -= BdatGetU16Direct(gpPassiveSkillBdat, "point_SP", rec3->slots[(s8)self->field_FE + 1].word);
                     }
                     s32 remaining = (s32)((UI::CPSkillBlobTotal*)blob)->totalSP - (s32)sum;
                     u8 costIdx = (u8)(((u32)(u8)self->field_F4 - 1) * 0x19 + rowIdxBase + i);
-                    u32 costId = BdatGetU16Direct(gpPassiveSkillBdat, &lbl_eu_8050DC20[0x318], costIdx);
-                    sprintf(bufB, &lbl_eu_8050DC20[0x749], rowP1, i);
+                    u32 costId = BdatGetU16Direct(gpPassiveSkillBdat, "point_SP", costIdx);
+                    sprintf(bufB, "pic_msk_sl%02d_%02d", rowP1, i);
                     if (remaining >= (s32)(u16)(u16)costId) {
                         nw4r::lyt::Pane* pane6b = self->field_8->GetRootPane()->FindPaneByName(bufB, true);
                         if (isPaneVisible(pane6b) == 0) {
-                            void* res6 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x80c], 0);
+                            void* res6 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, "mf20_skl00_curs01.tpl", 0);
                             if (res6 != 0) {
                                 PaneSetTexPalette(pane6b, (TPLPalette*)(reinterpret_cast<u32>(res6)));
                                 GXColorS10 c1, c2;
@@ -2862,7 +2857,7 @@ void CPassiveSkillLine_updateLearnGrid(UI::CPassiveSkillLine* self) {
                             self->field_104[row * 5 + i - 1] = 1;
                         }
                     } else {
-                        void* res7 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x822], 0);
+                        void* res7 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, "mf20_skl00_curs02.tpl", 0);
                         if (res7 != 0) {
                             PaneSetTexPalette(pane5, (TPLPalette*)(reinterpret_cast<u32>(res7)));
                             GXColorS10 c1, c2;
@@ -2888,15 +2883,15 @@ extern "C" void CPassiveSkillLine_refreshLearnGrid(UI::CPassiveSkillLine* self) 
     u8 id = GetCollectedFlagByte(self->field_F3);
     UI::CPSkillBlob* blob = reinterpret_cast<UI::CPSkillBlob*>(
         (u8*)CtrlObjectParam_GetCharEntry((u8)id) + 0x3534);
-    setPaneVisible(self->field_18->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x838], true), 0);
-    setPaneVisible(self->field_18->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x841], true), 0);
-    setPaneVisible(self->field_18->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x84a], true), 0);
-    setPaneVisible(self->field_18->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x853], true), 0);
-    setPaneVisible(self->field_18->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x85c], true), 0);
-    setPaneVisible(self->field_18->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x865], true), 0);
+    setPaneVisible(self->field_18->GetRootPane()->FindPaneByName("nul_pt01", true), 0);
+    setPaneVisible(self->field_18->GetRootPane()->FindPaneByName("nul_pt02", true), 0);
+    setPaneVisible(self->field_18->GetRootPane()->FindPaneByName("nul_pt03", true), 0);
+    setPaneVisible(self->field_18->GetRootPane()->FindPaneByName("nul_pt04", true), 0);
+    setPaneVisible(self->field_18->GetRootPane()->FindPaneByName("nul_pt05", true), 0);
+    setPaneVisible(self->field_18->GetRootPane()->FindPaneByName("nul_pt06", true), 0);
     u32 t = id - 1;
     u32 catBase = (t & 0x1F) * 8;
-    f32 scale = lbl_eu_80668930[t * 2];
+    f32 scale = 43.0f;
     const u8* table = &sPassiveSkillCharRows[t * 8];
     char buf[0x28];
     u8 slotCount = 0;
@@ -2906,13 +2901,13 @@ extern "C" void CPassiveSkillLine_refreshLearnGrid(UI::CPassiveSkillLine* self) 
             continue;
         }
         u8 slot = slotCount + 1;
-        sprintf(buf, &lbl_eu_8050DC20[0x86e], slot);
+        sprintf(buf, "nul_pt%02d", slot);
         setPaneVisible(self->field_18->GetRootPane()->FindPaneByName(buf, true), 1);
-        u16 msgId = BdatGetU16Direct(lbl_eu_80664090, &lbl_eu_8050DC20[0x1e8], entry);
+        u16 msgId = BdatGetU16Direct(::cf::CfBdat::spBtlPcListFileData, "tag_icon", entry);
         char* text = MakeTplNameSysFile(msgId);
         void* res = CUICfManager_getArcResourceAccessor()->GetResource(0x74696d67, text, 0);
         if (res != 0) {
-            sprintf(buf, &lbl_eu_8050DC20[0x879], slot);
+            sprintf(buf, "pic_fc_pt%02d", slot);
             PaneSetTexPaletteByName(self->field_18, (const char*)buf, (TPLPalette*)res);
         }
         u8 row = table[entry - 1];
@@ -2920,58 +2915,58 @@ extern "C" void CPassiveSkillLine_refreshLearnGrid(UI::CPassiveSkillLine* self) 
         u32 cat = catBase + entry;
         u8 learnedCount = 0;
         for (u8 s = 1; s <= 5; s++) {
-            sprintf(buf, &lbl_eu_8050DC20[0x772], s);
+            sprintf(buf, "rvs_effect%02d", s);
             u8 v = BdatGetU8Direct((const void*)gpPassiveSkillIconBdat, (const char*)buf, cat);
             UI::CPSkillSlot* slotPtr = &rec->slots[s];
             void* res2 = 0;
             void* res3;
             if ((slotPtr->byte14 & 1) == 0) {
                 switch (v) {
-                case 1: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x887], 0); break;
-                case 2: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x8a0], 0); break;
-                case 3: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x8b9], 0); break;
-                case 4: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x8d2], 0); break;
-                case 5: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x8eb], 0); break;
+                case 1: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, "mf20_skl02_icnbs_e00.tpl", 0); break;
+                case 2: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, "mf20_skl02_icnbs_e01.tpl", 0); break;
+                case 3: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, "mf20_skl02_icnbs_e02.tpl", 0); break;
+                case 4: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, "mf20_skl02_icnbs_e03.tpl", 0); break;
+                case 5: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, "mf20_skl02_icnbs_e04.tpl", 0); break;
                 }
-                res3 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x904], 0);
+                res3 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, "mf00_com00_dmy.tpl", 0);
             } else if (slotPtr->word != 0) {
-                u8 v2 = BdatGetU8Direct((const void*)gpPassiveSkillBdat, &lbl_eu_8050DC20[0x5b3], slotPtr->word);
+                u8 v2 = BdatGetU8Direct((const void*)gpPassiveSkillBdat, "target", slotPtr->word);
                 if (v2 == 1) {
                     switch (v) {
-                    case 1: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x637], 0); break;
-                    case 2: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x650], 0); break;
-                    case 3: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x669], 0); break;
-                    case 4: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x682], 0); break;
-                    case 5: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x69b], 0); break;
+                    case 1: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, "mf20_skl02_icnbs_a00.tpl", 0); break;
+                    case 2: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, "mf20_skl02_icnbs_a01.tpl", 0); break;
+                    case 3: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, "mf20_skl02_icnbs_a02.tpl", 0); break;
+                    case 4: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, "mf20_skl02_icnbs_a03.tpl", 0); break;
+                    case 5: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, "mf20_skl02_icnbs_a04.tpl", 0); break;
                     }
                 } else if (v2 == 2) {
                     switch (v) {
-                    case 1: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x6b4], 0); break;
-                    case 2: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x6cd], 0); break;
-                    case 3: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x6e6], 0); break;
-                    case 4: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x6ff], 0); break;
-                    case 5: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x718], 0); break;
+                    case 1: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, "mf20_skl02_icnbs_b00.tpl", 0); break;
+                    case 2: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, "mf20_skl02_icnbs_b01.tpl", 0); break;
+                    case 3: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, "mf20_skl02_icnbs_b02.tpl", 0); break;
+                    case 4: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, "mf20_skl02_icnbs_b03.tpl", 0); break;
+                    case 5: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, "mf20_skl02_icnbs_b04.tpl", 0); break;
                     }
                 }
-                msgId = BdatGetU16Direct(gpPassiveSkillHelpBdat, &lbl_eu_8050DC20[0x731], slotPtr->word);
+                msgId = BdatGetU16Direct(gpPassiveSkillHelpBdat, "icon", slotPtr->word);
                 text = MakeTplNameSysFile(msgId);
                 res3 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, text, 0);
             } else {
                 switch (v) {
-                case 1: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x917], 0); break;
-                case 2: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x930], 0); break;
-                case 3: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x949], 0); break;
-                case 4: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x962], 0); break;
-                case 5: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x97b], 0); break;
+                case 1: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, "mf20_skl02_icnbs_d00.tpl", 0); break;
+                case 2: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, "mf20_skl02_icnbs_d01.tpl", 0); break;
+                case 3: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, "mf20_skl02_icnbs_d02.tpl", 0); break;
+                case 4: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, "mf20_skl02_icnbs_d03.tpl", 0); break;
+                case 5: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, "mf20_skl02_icnbs_d04.tpl", 0); break;
                 }
-                res3 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x904], 0);
+                res3 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, "mf00_com00_dmy.tpl", 0);
             }
             if (res2 != 0) {
-                sprintf(buf, &lbl_eu_8050DC20[0x994], slot, s);
+                sprintf(buf, "pic_icbs_pt%02d_%02d", slot, s);
                 PaneSetTexPaletteByName(self->field_18, (const char*)buf, (TPLPalette*)res2);
             }
             if (res3 != 0) {
-                sprintf(buf, &lbl_eu_8050DC20[0x9a9], slot, s);
+                sprintf(buf, "pic_ic_pt%02d_%02d", slot, s);
                 PaneSetTexPaletteByName(self->field_18, (const char*)buf, (TPLPalette*)res3);
                 GXColorS10 fs0 = PaneMatGetS16QuadByName(self->field_18, buf, 0);
                 GXColorS10 fs1 = fs0;
@@ -2992,7 +2987,7 @@ extern "C" void CPassiveSkillLine_refreshLearnGrid(UI::CPassiveSkillLine* self) 
                 learnedCount++;
             }
         }
-        sprintf(buf, &lbl_eu_8050DC20[0x9bc], slot);
+        sprintf(buf, "pic_line_pt%02d", slot);
         nw4r::lyt::Pane* pane = self->field_18->GetRootPane()->FindPaneByName(buf, true);
         // Retail converts the learned count through the 0x4330-magic double
         // (store count into a u32 pair viewed as f64, subtract 2^52) rather
@@ -3018,16 +3013,16 @@ void CPassiveSkillLine_updateStatePanes(UI::CPassiveSkillLine* self) {
     if (self->field_E8 <= 5) {
     // States 1..5.
     if ((s8)self->field_F6 == 0) {
-        sprintf(buf, &lbl_eu_8050DC20[0x500], (s8)self->field_F5 + 1);
+        sprintf(buf, "pic_cat%02d", (s8)self->field_F5 + 1);
         CPassiveSkillRegion_syncSlotPanes(&self->mInfo.field_3C, 0);
     } else {
-        sprintf(buf, &lbl_eu_8050DC20[0x431], (s8)self->field_F5 + 1);
+        sprintf(buf, "pic_icbs_sl%02d_%02d", (s8)self->field_F5 + 1);
         CPassiveSkillRegion_syncSlotPanes(&self->mInfo.field_3C, 1);
     }
     nw4r::lyt::Pane* paneE =
         self->field_8->GetRootPane()->FindPaneByName(buf, true);
     nw4r::lyt::Pane* paneF = self->field_8->GetRootPane()->FindPaneByName(
-        &lbl_eu_8050DC20[0x4a5], true);
+        "nul_proportion", true);
     nw4r::math::VEC3 pos;
     ScalePaneWorldPos(&pos, paneE, paneF, self->field_8->GetRootPane());
     CBaseCur::SetPaneTranslate(self->mInfo.field_24->GetRootPane(), &pos);
@@ -3040,54 +3035,54 @@ void CPassiveSkillLine_updateStatePanes(UI::CPassiveSkillLine* self) {
     u8 slotId = GetCollectedFlagByte((s8)self->field_F3);
     int row5v = (s8)self->field_F5 - 1;
         u8 v = (u8)(slotId + row5v * 5 + 1);
-    char* msg = BdatGetPtrDirect(gpPassiveSkillCharBdat, &lbl_eu_8050DC20[0x207], v);
-    LayoutSetTextBoxFmtValue(self->mInfo.mpLayout, &lbl_eu_8050DC20[0x20c], msg, 0);
-    char* msg2 = BdatGetPtrDirect(gpPassiveSkillCharBdat, &lbl_eu_8050DC20[0x207], v);
-    LayoutSetTextBoxFmtValue(self->mInfo.mpLayout, &lbl_eu_8050DC20[0x215], msg2, 0);
-    char* msg3 = BdatTouchStringCell(&lbl_eu_8050DC20[0x21f], &lbl_eu_8050DC20[0x207], 0x15);
-    LayoutSetTextBoxFmtValue(self->mInfo.mpLayout, &lbl_eu_8050DC20[0x22b], msg3, 0);
-    LayoutSetTextBoxFmtValue(self->mInfo.mpLayout, &lbl_eu_8050DC20[0x154],
-                  &lbl_eu_8050DC20[0x182], 0);
-    u16 cost = BdatGetU8Direct((const void*)gpPassiveSkillValueBdat, &lbl_eu_8050DC20[0x235], v);
-    char* msg4 = BdatGetPtrDirect(gpPassiveSkillEffectBdat, &lbl_eu_8050DC20[0x207], cost);
-    LayoutSetTextBoxFmtValue(self->mInfo.mpLayout, &lbl_eu_8050DC20[0x23b], msg4, 0);
-    u16 v100 = BdatGetU8Direct((const void*)gpPassiveSkillEffectBdat, &lbl_eu_8050DC20[0x245], cost);
+    char* msg = BdatGetPtrDirect(gpPassiveSkillCharBdat, "name", v);
+    LayoutSetTextBoxFmtValue(self->mInfo.mpLayout, "txt_nm01", msg, 0);
+    char* msg2 = BdatGetPtrDirect(gpPassiveSkillCharBdat, "name", v);
+    LayoutSetTextBoxFmtValue(self->mInfo.mpLayout, "txt_exp01", msg2, 0);
+    char* msg3 = BdatTouchStringCell("MNU_passive", "name", 0x15);
+    LayoutSetTextBoxFmtValue(self->mInfo.mpLayout, "txt_exp02", msg3, 0);
+    LayoutSetTextBoxFmtValue(self->mInfo.mpLayout, "txt_value03",
+                  "", 0);
+    u16 cost = BdatGetU8Direct((const void*)gpPassiveSkillValueBdat, "skill", v);
+    char* msg4 = BdatGetPtrDirect(gpPassiveSkillEffectBdat, "name", cost);
+    LayoutSetTextBoxFmtValue(self->mInfo.mpLayout, "txt_exp03", msg4, 0);
+    u16 v100 = BdatGetU8Direct((const void*)gpPassiveSkillEffectBdat, "val_type", cost);
     CtrlObjectParam_GetCharEntry((u8)slotId);
     UI::CPSkillLearnRecord* rec = reinterpret_cast<UI::CPSkillLearnRecord*>(
         (u8*)CtrlObjectParam_GetCharEntry((u8)slotId) + 0x3534 + (s8)self->field_F5 * 0xC4);
     for (u8 si = 1; si <= 5; si++) {
         u32 word = *(u32*)&rec[si];
         if (word != 0) {
-            char* msgS = BdatGetPtrDirect(gpPassiveSkillValueBdat, &lbl_eu_8050DC20[0x207], v);
-            sprintf(buf, &lbl_eu_8050DC20[0x24e], (u8)si);
+            char* msgS = BdatGetPtrDirect(gpPassiveSkillValueBdat, "name", v);
+            sprintf(buf, "val%d", (u8)si);
             u16 sp = BdatGetU8Direct((const void*)gpPassiveSkillValueBdat, (const char*)buf, v);
             if (sp != 0 && sp != 0xe && sp != 0x4b && sp != 0xa5 && sp != 0xc8) {
-                char* msgA = BdatTouchStringCell(&lbl_eu_8050DC20[0x21f],
-                                           &lbl_eu_8050DC20[0x207], 0x12);
-                LayoutSetTextBoxFmtValue(self->mInfo.mpLayout, &lbl_eu_8050DC20[0x254],
+                char* msgA = BdatTouchStringCell("MNU_passive",
+                                           "name", 0x12);
+                LayoutSetTextBoxFmtValue(self->mInfo.mpLayout, "txt_exp04",
                               msgA, 0);
-                char* msgB = BdatTouchStringCell(&lbl_eu_8050DC20[0x21f],
-                                           &lbl_eu_8050DC20[0x207], 6);
+                char* msgB = BdatTouchStringCell("MNU_passive",
+                                           "name", 6);
                 if (cost == 1) {
-                    sprintf(buf, &lbl_eu_8050DC20[0x25e], v100);
+                    sprintf(buf, "%d", v100);
                 } else {
-                    sprintf(buf, &lbl_eu_8050DC20[0x261], v100);
+                    sprintf(buf, "%d%s", v100);
                 }
-                LayoutSetTextBoxText(self->mInfo.mpLayout, &lbl_eu_8050DC20[0x160],
+                LayoutSetTextBoxText(self->mInfo.mpLayout, "txt_value04",
                               buf, 0);
             } else {
-                LayoutSetTextBoxFmtValue(self->mInfo.mpLayout, &lbl_eu_8050DC20[0x254],
-                              &lbl_eu_8050DC20[0x182], 0);
-                LayoutSetTextBoxFmtValue(self->mInfo.mpLayout, &lbl_eu_8050DC20[0x160],
-                              &lbl_eu_8050DC20[0x182], 0);
+                LayoutSetTextBoxFmtValue(self->mInfo.mpLayout, "txt_exp04",
+                              "", 0);
+                LayoutSetTextBoxFmtValue(self->mInfo.mpLayout, "txt_value04",
+                              "", 0);
             }
             break;
         }
     }
-    LayoutSetTextBoxFmtValue(self->mInfo.mpLayout, &lbl_eu_8050DC20[0x26b],
-                  &lbl_eu_8050DC20[0x182], 0);
-    LayoutSetTextBoxFmtValue(self->mInfo.mpLayout, &lbl_eu_8050DC20[0x16c],
-                  &lbl_eu_8050DC20[0x182], 0);
+    LayoutSetTextBoxFmtValue(self->mInfo.mpLayout, "txt_exp05",
+                  "", 0);
+    LayoutSetTextBoxFmtValue(self->mInfo.mpLayout, "txt_value05",
+                  "", 0);
     CPassiveSkillLine_refreshSP(self, (u8)slotId);
     CPassiveSkillLine_setCellMessage(self, 0, (s8)self->field_F5, 0);
         return;
@@ -3095,13 +3090,13 @@ void CPassiveSkillLine_updateStatePanes(UI::CPassiveSkillLine* self) {
     if (self->field_E8 <= 0xC) {
 // States 6..0xC: rebuild the +0xFD/+0xFE pane pair and sweep the
 // character's field_EA category table.
-sprintf(buf, &lbl_eu_8050DC20[0x994], (s8)self->field_FD + 1,
+sprintf(buf, "pic_icbs_pt%02d_%02d", (s8)self->field_FD + 1,
     (s8)self->field_FE + 1);
 CPassiveSkillRegion_syncSlotPanes(&self->mInfo.field_3C, 1);
 nw4r::lyt::Pane* paneC =
 self->field_8->GetRootPane()->FindPaneByName(buf, true);
 nw4r::lyt::Pane* paneD = self->field_8->GetRootPane()->FindPaneByName(
-&lbl_eu_8050DC20[0x4a5], true);
+"nul_proportion", true);
 nw4r::math::VEC3 pos;
 ScalePaneWorldPos(&pos, paneC, paneD, self->field_8->GetRootPane());
 CBaseCur::SetPaneTranslate(self->mInfo.field_24->GetRootPane(), &pos);
@@ -3133,13 +3128,13 @@ return;
         return;
     }
 // States 0xD..0xF: refresh the +0xF7/+0xF8 cell panes.
-sprintf(buf, &lbl_eu_8050DC20[0x431], (s8)self->field_F7 + 1,
+sprintf(buf, "pic_icbs_sl%02d_%02d", (s8)self->field_F7 + 1,
         (s8)self->field_F8 + 1);
 CPassiveSkillRegion_syncSlotPanes(&self->mInfo.field_3C, 1);
 nw4r::lyt::Pane* paneA =
     self->field_8->GetRootPane()->FindPaneByName(buf, true);
 nw4r::lyt::Pane* paneB = self->field_8->GetRootPane()->FindPaneByName(
-    &lbl_eu_8050DC20[0x4a5], true);
+    "nul_proportion", true);
 nw4r::math::VEC3 pos;
 ScalePaneWorldPos(&pos, paneA, paneB, self->field_8->GetRootPane());
     CBaseCur::SetPaneTranslate(self->mInfo.field_24->GetRootPane(), &pos);
@@ -3253,7 +3248,7 @@ void CPassiveSkillLine_syncEquipState(UI::CPassiveSkillLine* self) {
         }
         u16 cat = BdatGetItemId(item->word >> 20);
         u8 flag = 0;
-        u8 result = BdatGetU8Direct((const void*)lbl_eu_806640F8, &lbl_eu_8050DC20[0x9cc], cat);
+        u8 result = BdatGetU8Direct((const void*)::cf::CfBdat::spItmEquipListFileData, &lbl_eu_8050DC20[0x9cc], cat);
         if (self->field_11F == 0x85) {
             if (result == 3) {
                 flag = 1;
@@ -3318,30 +3313,30 @@ void CPassiveSkillLine_refreshGridPositions(UI::CPassiveSkillLine* self) {
         cellRow = &self->cells[row][0];
         for (col = 0; col < 5; col++) {
             UI::CPSkillGridCell* cell = cellRow + col;
-            sprintf(buf, &lbl_eu_8050DC20[0x431], row + 1, col + 1);
+            sprintf(buf, "pic_icbs_sl%02d_%02d", row + 1, col + 1);
             nw4r::lyt::Pane* pane =
                 self->field_8->GetRootPane()->FindPaneByName(buf, true);
             nw4r::math::VEC3 pos;
             AccumPaneWorldPosB(&pos, pane);
             CBaseCur::SetPaneTranslate(
                 cell->mpLayout->GetRootPane()->FindPaneByName(
-                    &lbl_eu_8050DC20[0x446], true),
+                    "pic_lock00", true),
                 &pos);
             CBaseCur::SetPaneTranslate(
                 cell->mpLayout->GetRootPane()->FindPaneByName(
-                    &lbl_eu_8050DC20[0x451], true),
+                    "pic_lock01", true),
                 &pos);
             CBaseCur::SetPaneTranslate(
                 cell->mpLayout->GetRootPane()->FindPaneByName(
-                    &lbl_eu_8050DC20[0x45c], true),
+                    "pic_lock02", true),
                 &pos);
             CBaseCur::SetPaneTranslate(
                 cell->mpLayout->GetRootPane()->FindPaneByName(
-                    &lbl_eu_8050DC20[0x467], true),
+                    "pic_lock03", true),
                 &pos);
             CBaseCur::SetPaneTranslate(
                 cell->mpLayout->GetRootPane()->FindPaneByName(
-                    &lbl_eu_8050DC20[0x472], true),
+                    "pic_lock04", true),
                 &pos);
             cell->mpLayout->Animate(0);
         }
@@ -3356,34 +3351,34 @@ void CPassiveSkillLine_refreshGridPositions(UI::CPassiveSkillLine* self) {
 // each cell animation.
 void CPassiveSkillLine_refreshGridAlpha(UI::CPassiveSkillLine* self) {
     u8 v = self->field_8->GetRootPane()
-                ->FindPaneByName(&lbl_eu_8050DC20[0x9d5], true)
+                ->FindPaneByName("nul_all", true)
                 ->GetAlpha();
     // The pane alpha is a byte fraction of 255.
     f32 f = (f32)v / 255.0f;
-    if (f > lbl_eu_80668900) {
-        f = lbl_eu_80668900;
+    if (f > 1.0f) {
+        f = 1.0f;
 
-        f = lbl_eu_80668904;
+        f = 0.0f;
     }
     UI::CPSkillGridCell* cellRow;
-    s32 scaled = (s32)(lbl_eu_80668940 * f);
+    s32 scaled = (s32)(160.0f * f);
     for (u8 row = 0; row < 5; row++) {
         cellRow = &self->cells[row][0];
         for (u8 col = 0; col < 5; col++) {
             cellRow[col].mpLayout->GetRootPane()
-                ->FindPaneByName(&lbl_eu_8050DC20[0x446], true)
+                ->FindPaneByName("pic_lock00", true)
                 ->SetAlpha((u8)scaled);
             cellRow[col].mpLayout->GetRootPane()
-                ->FindPaneByName(&lbl_eu_8050DC20[0x451], true)
+                ->FindPaneByName("pic_lock01", true)
                 ->SetAlpha((u8)scaled);
             cellRow[col].mpLayout->GetRootPane()
-                ->FindPaneByName(&lbl_eu_8050DC20[0x45c], true)
+                ->FindPaneByName("pic_lock02", true)
                 ->SetAlpha((u8)scaled);
             cellRow[col].mpLayout->GetRootPane()
-                ->FindPaneByName(&lbl_eu_8050DC20[0x467], true)
+                ->FindPaneByName("pic_lock03", true)
                 ->SetAlpha((u8)scaled);
             cellRow[col].mpLayout->GetRootPane()
-                ->FindPaneByName(&lbl_eu_8050DC20[0x472], true)
+                ->FindPaneByName("pic_lock04", true)
                 ->SetAlpha((u8)scaled);
             cellRow[col].mpLayout->Animate(0);
         }
@@ -3465,10 +3460,10 @@ extern "C" void __dt__7CSysWinFv(void*, int);
 // entry's 32 per-slot records in the char-data learn table at +0x3534.
 extern "C" void CPassiveSkill_loadSkillData(UI::CPassiveSkill* self) {
     self->field_18 = (u32)readFile__11CDeviceFileFUlPCcP10IWorkEventii(
-        (u32)getHandleMEM2__Q23mtl10MemManagerFv(), &lbl_eu_8050DC20[2525],
+        (u32)getHandleMEM2__Q23mtl10MemManagerFv(), "menu/jp/PassiveSkill.arc",
         (void*)self, 0, 0);
     self->field_1C = (u32)readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii(
-        KyoshinHeap_GetField44(), &lbl_eu_8050DC20[2550], (void*)self, 0, 0);
+        KyoshinHeap_GetField44(), "common/jp/bdat_menu_psv.bin", (void*)self, 0, 0);
 
     u8 tempW[0x3C];
     __ct__7CSysWinFUc(reinterpret_cast<CSysWin*>(tempW), 2);

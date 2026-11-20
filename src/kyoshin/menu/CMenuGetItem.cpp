@@ -23,10 +23,8 @@
 #include "kyoshin/code_80135FDC_Lyt.hpp"
 #include "kyoshin/CUICfManager_Res.hpp"
 
-// Get-item string table (layout name, anim name, pane names, sprintf formats).
-extern char lbl_eu_805018D0[];
 // cbRenderBefore gate flag (bit 21 skips the draw).
-extern u32 gmPauseFlags;
+
 // GetItem singleton instance (retail SDA symbol).
 extern CMenuGetItem* lbl_eu_806641A8;
 
@@ -100,19 +98,15 @@ void CMenuGetItem::Init() {
     // The region address is recomputed at each use (this+0x64) - a held
     // pointer local would claim an extra callee-saved register.
     mMemRegion.createRegion(
-        (int)mtl::MemManager::getHandleMEM2(), 0x1000, lbl_eu_805018D0, 0);
+        (int)mtl::MemManager::getHandleMEM2(), 0x1000, "CMenuGetItem", 0);
     Class_8045F858 memHost(&mMemRegion);
 
     mField_90 = isLandTelopActive();
 
     {
-        // String base kept in a block-scoped local for the build-up phase;
-        // the switch below re-materializes the address (retail shape).
-        char* base = lbl_eu_805018D0;
-
         // Build the layout and its first anim transform from the arc resource.
-        buildLayout(&mLayout, CUICfManager_getArcResourceAccessor(), &base[0xd]);
-        bindLayoutAnimTransform(mLayout, &mField_78, CUICfManager_getArcResourceAccessor(), &base[0x26]);
+        buildLayout(&mLayout, CUICfManager_getArcResourceAccessor(), (char*)"mf70_cf50_sideinfo.brlyt");
+        bindLayoutAnimTransform(mLayout, &mField_78, CUICfManager_getArcResourceAccessor(), (char*)"mf70_cf50_sideinfo_in.brlan");
 
         // Bind the font: push the font object's pane back onto the root pane.
         nw4r::lyt::Pane* rootPane = mLayout->GetRootPane();
@@ -125,13 +119,13 @@ void CMenuGetItem::Init() {
         mLayout->Animate(0);
 
         // Resolve the three variant panes by name.
-        mField_7C = mLayout->GetRootPane()->FindPaneByName(&base[0x42], true);
-        mField_80 = mLayout->GetRootPane()->FindPaneByName(&base[0x4c], true);
-        mField_84 = mLayout->GetRootPane()->FindPaneByName(&base[0x58], true);
+        mField_7C = mLayout->GetRootPane()->FindPaneByName((char*)"pic_title", true);
+        mField_80 = mLayout->GetRootPane()->FindPaneByName((char*)"pic_title01", true);
+        mField_84 = mLayout->GetRootPane()->FindPaneByName((char*)"pic_title02", true);
     }
 
     if (mField_2AF == 0) {
-        // if-set, not ternary: MWCC branchless-selects constant ternaries.
+
         u8 fix = 2;
         if (mField_9D != 0) {
             fix = 3;
@@ -149,19 +143,16 @@ void CMenuGetItem::Init() {
         }
         break;
     case 2:
-        title = BdatTouchStringCell(&lbl_eu_805018D0[0x64], &lbl_eu_805018D0[0x6f],
-                              mField_9C + 0x53);
+        title = BdatTouchStringCell("MNU_battle", "name", mField_9C + 0x53);
         break;
     case 3:
-        title = BdatTouchStringCell(&lbl_eu_805018D0[0x74], &lbl_eu_805018D0[0x82],
-                              mField_9C);
-        mField_2B0 = BdatGetU16ByTableKey(&lbl_eu_805018D0[0x74], &lbl_eu_805018D0[0x88],
-                                   mField_9C);
+        title = BdatTouchStringCell("JNL_playaward", "title", mField_9C);
+        mField_2B0 = BdatGetU16ByTableKey("JNL_playaward", "exp", mField_9C);
         break;
     }
 
     // Hide the variant panes that do not match the active variant
-    // (v = variant - 1; the low bit of +0xBB is the visible flag).
+
     u8 v = mField_2AF - 1;
     if (mField_7C != NULL) {
         reinterpret_cast<PaneFlagView*>(mField_7C)->flags =
@@ -176,7 +167,7 @@ void CMenuGetItem::Init() {
             (reinterpret_cast<PaneFlagView*>(mField_84)->flags & 0xFE) | (v > 2);
     }
 
-    LayoutSetTextBoxFmtValue(mLayout, &lbl_eu_805018D0[0x8c], (char*)title, 0);
+    LayoutSetTextBoxFmtValue(mLayout, (char*)"txt_item", (char*)title, 0);
 
     // MI adjust: IScnRender subobject at +0x5c (null-this safe).
     mScn->addRenderCB(this, 7, 0);
@@ -333,7 +324,7 @@ extern "C" void CMenuGetItem_AppendEntry(CMenuGetItem* self, int arg0, int arg1)
             GetItemEntry* dst = &buf[count];
             dst->type = item->type;
             count++;
-            sprintf(dst->name, &lbl_eu_805018D0[0x95], item->name);
+            sprintf(dst->name, "%s", item->name);
             dst->field_0x41 = item->field_0x41;
         }
     }
@@ -343,12 +334,12 @@ extern "C" void CMenuGetItem_AppendEntry(CMenuGetItem* self, int arg0, int arg1)
         for (u8 i = 0; i < count; i++) {
             GetItemEntry* item = &self->mItems[i];
             item->type = buf[i].type;
-            sprintf(item->name, &lbl_eu_805018D0[0x95], buf[i].name);
+            sprintf(item->name, "%s", buf[i].name);
             item->field_0x41 = buf[i].field_0x41;
         }
 
         // Append the new entry (variant selected by arg1: 3 = item name,
-        // 2 = party member name). The type select is an if-set, not a
+
         // ternary - MWCC branchless-selects constant ternaries (neg/or/
         // rlwinm) while retail uses a branch here.
         u8 cnt = self->mField_2AE;
@@ -361,13 +352,11 @@ extern "C" void CMenuGetItem_AppendEntry(CMenuGetItem* self, int arg0, int arg1)
         }
         item->type = (u8)type;
         if (arg1 != 0) {
-            name = BdatTouchStringCell(&lbl_eu_805018D0[0x74], &lbl_eu_805018D0[0x82],
-                                 arg0);
+            name = BdatTouchStringCell("JNL_playaward", "title", arg0);
         } else {
-            name = BdatTouchStringCell(&lbl_eu_805018D0[0x64], &lbl_eu_805018D0[0x6f],
-                                 arg0 + 0x53);
+            name = BdatTouchStringCell("MNU_battle", "name", arg0 + 0x53);
         }
-        sprintf(item->name, &lbl_eu_805018D0[0x95], name);
+        sprintf(item->name, "%s", name);
     }
 }
 

@@ -58,7 +58,7 @@ extern "C" void actAnimVt2C(void* self);
 extern "C" void actAnimVt5C(void* self);
 extern "C" void actAnimVt60(void* self);
 extern "C" void actAnimVt64(void* self);
-extern "C" void actAnimVt68(void* self);
+extern "C" void actAnimVt68(void* self, u32 a);
 extern "C" void actAnimVt6C(void* self);
 extern "C" void actAnimVt70(void* self);
 extern "C" void actAnimVt74(void* self);
@@ -181,7 +181,7 @@ extern "C" void actAnimVt2C(void* self) { ((CActParamAnim*)self)->startFlag1000A
 extern "C" void actAnimVt5C(void* self) { ((CActParamAnim*)self)->fireCountGate(); }
 extern "C" void actAnimVt60(void* self) { ((CActParamAnim*)self)->fireWord378Gt(); }
 extern "C" void actAnimVt64(void* self) { ((CActParamAnim*)self)->func_8004F884(); }
-extern "C" void actAnimVt68(void* self) { ((CActParamAnimView*)self)->fireBlendDflt(); }
+extern "C" void actAnimVt68(void* self, u32 a) { ((CActParamAnim*)self)->fireBlendDflt(a); }
 extern "C" void actAnimVt6C(void* self) { ((CActParamAnim*)self)->fireParamGate(); }
 extern "C" void actAnimVt70(void* self) { ((CActParamAnim*)self)->fireBlendCust(); }
 extern "C" void actAnimVt74(void* self) { ((CActParamAnim*)self)->startIfActive(); }
@@ -951,7 +951,7 @@ void updateParamFloats(CActParamData* self, float arg1, float arg2) {
     self->mA2BC = countA;
     float incA = entryA->mFloat388;
     self->mA2C8 = self->mA2C8 + incA;
-    if (static_cast<ActParamObjView*>(self->mObj10)->check80(0)) {
+    if (static_cast<CActParamAnim*>(self->mObj10)->calcAnimBlendWeight(0)) {
         self->mA2C0 = self->mA2C0 + 1;
     }
     u8 fireA;
@@ -982,7 +982,7 @@ void updateParamFloats(CActParamData* self, float arg1, float arg2) {
     float incB = entryB->mFloat388;
     self->mFloat348 = self->mFloat348 + incB;
 
-    if (static_cast<ActParamObjView*>(self->mObj10)->check80(1)) {
+    if (static_cast<CActParamAnim*>(self->mObj10)->calcAnimBlendWeight(1)) {
         self->mField340 = self->mField340 + 1;
     }
     u8 fireB;
@@ -1198,8 +1198,10 @@ check:
 // Retail shares one type-check block between loop entry and back-edge (goto
 // form) and keeps the type halfword live across the check into the dispatch.
 int walkParamContext(CActParamData* self, void* ctx) {
-    ActParamCtx94* rec = static_cast<ActParamCtx94*>(ctx);
-    void* rec14 = rec->mRec14;
+    // ctx is one of the two real 0x80-byte reset blocks; use its actual
+    // CActParamData members instead of an offset view.
+    bool isB = ACTPARAM_CTX_SEL(self, ctx);
+    void* rec14 = isB ? (void*)self->mPtr2F4 : (void*)self->mField274;
     if (rec14 == 0 || self->mObj10 == 0) {
         return 0;
     }
@@ -1211,8 +1213,9 @@ int walkParamContext(CActParamData* self, void* ctx) {
 
     // Re-read mRec14 after the walk call (the opaque call blocks CSE, so
     // retail reloads the field here).
-    u8* cur = reinterpret_cast<u8*>(rec->mRec14) +
-              *reinterpret_cast<u16*>(rec->mRec14);
+    void* rec14Reload = isB ? (void*)self->mPtr2F4 : (void*)self->mField274;
+    u8* cur = reinterpret_cast<u8*>(rec14Reload) +
+              *reinterpret_cast<u16*>(rec14Reload);
     u16 type;
     goto check;
 body:
@@ -1232,19 +1235,20 @@ check:
 
     // Gate callbacks: vt+0x1C with either context word (each site recomputes
     // the ctx-is-own-block flag), then vt+0xC4.
-    if (rec->mField1C != 0) {
-        if (static_cast<ActParamObjView*>(self->mObj10)->invoke1C(
-                ACTPARAM_CTX_SEL(self, ctx), rec->mField1C)) {
+    u32 field1C = isB ? self->mField2FC : self->mA27C;
+    u32 field20 = isB ? self->mField300 : self->mA280;
+    u32 field74 = isB ? self->mField354 : self->mField2D4;
+    if (field1C != 0) {
+        if (static_cast<CActParamAnim*>(self->mObj10)->dispatchAnimSlot(isB, field1C)) {
             return 1;
         }
-    } else if (rec->mField20 != 0) {
-        if (static_cast<ActParamObjView*>(self->mObj10)->invoke1C(
-                ACTPARAM_CTX_SEL(self, ctx), rec->mField20)) {
+    } else if (field20 != 0) {
+        if (static_cast<CActParamAnim*>(self->mObj10)->dispatchAnimSlot(isB, field20)) {
             return 1;
         }
     }
-    if (rec->mField74 != 0) {
-        if (static_cast<ActParamObjView*>(self->mObj10)->invokeC4()) {
+    if (field74 != 0) {
+        if (static_cast<CActParamAnim*>(self->mObj10)->func_8004DAE0()) {
             return 1;
         }
     }
@@ -1504,7 +1508,7 @@ extern "C" void walkParamBlkB(void* self) {
 //       ours CSEs the constant into a register across opaque calls.
 //   (c) ~100B size gap, retail larger; shared-tail shapes partially closed
 //       by goto noFire but branch-target offsets still shift downstream.
-int evalParamTiming(CActParamData* self,
+extern "C" int evalParamTiming(CActParamData* self,
                                        ActParamD3CMember* member,
                                        ActParamD3CTimeRec* rec, int gate) {
     if (self->mField24 == 0) {
@@ -1968,15 +1972,6 @@ extern "C" int hasParamSubObjB(CActParamData* self) {
     return result;
 }
 
-// Sub-object selector getter: pick block A (sel==0) or B, read its linked
-// ref (+0x48) and current threshold float (+0x54), and gate the returned
-// short on signed comparisons of the ref shorts against that threshold.
-struct ActParamSelBlk {
-    u8 _pad00[0x48];
-    CActParamDataRef* mRef48;              // 0x48
-    u8 _pad4C[0x54 - 0x4C];
-    float mLimit54;                        // 0x54
-};
 void clearParamTags(CActParamData* self) {
     self->mField2D4 = 0;
     self->mField354 = 0;
@@ -1984,13 +1979,18 @@ void clearParamTags(CActParamData* self) {
 
 int getParamSelS16(CActParamData* self, int sel);
 int getParamSelS16(CActParamData* self, int sel) {
-    ActParamSelBlk* blk;
+    CActParamData* blk;
+    const CActParamDataRef* ref;
+    float limit;
     if (sel != 0) {
-        blk = reinterpret_cast<ActParamSelBlk*>(self->getResetBlock2E0());
+        blk = (CActParamData*)self->getResetBlock2E0();
+        ref = reinterpret_cast<const CActParamDataRef*>((uintptr_t)blk->mField328);
+        limit = blk->mFloat334;
     } else {
-        blk = reinterpret_cast<ActParamSelBlk*>(&self->mA260);
+        blk = self;
+        ref = reinterpret_cast<const CActParamDataRef*>((uintptr_t)blk->mA2A8);
+        limit = blk->mFloat2B4;
     }
-    const CActParamDataRef* ref = blk->mRef48;
     if (ref == NULL) {
         return 0;
     }
@@ -2002,15 +2002,15 @@ int getParamSelS16(CActParamData* self, int sel) {
     // idiom per check (byte-identical to retail; see MWCC_CASES 7i). The
     // 2^52 magic constant pools to a TU-local cookie that the repo reloc
     // map canonicalizes to lbl_eu_80665F98.
-    if ((float)v > blk->mLimit54) {
+    if ((float)v > limit) {
         return 0;
     }
-    if (!((float)v <= blk->mLimit54)) {
+    if (!((float)v <= limit)) {
         goto zero;
     }
     s16 w = ref->mShort0A;
     if (w != 0) {
-        if (!((float)w > blk->mLimit54)) {
+        if (!((float)w > limit)) {
             goto zero;
         }
     } else {
@@ -2633,18 +2633,14 @@ void CActParamData::initParamStatics() {
 }
 
 
-// When bit 2 of the flag is set, convert the s16 at src+8 to a float via the
-// signed 2^52 double-magic and store it at dst+64. Always returns 0.
-// The callback receives untyped buffers, but retail reads an s16 at src+8
-// and stores an f32 at dst+0x40; the views below make that exact layout.
-struct CopyS16SrcView { u8 pad_00[8]; s16 field_8; };
-struct CopyS16DstView { u8 pad_00[0x40]; f32 field_40; };
+// When bit 2 of the flag is set, convert the source ref's s16 to a float via
+// the signed 2^52 double-magic and store it in the destination's +0x40 slot.
 extern "C" u32 copyS16ToFlt(u32 flag, void* a2, void* dst, const void* src) {
     if ((flag & 4) != 0) goto convert;
     return 0;
 convert:
-    ((CopyS16DstView*)dst)->field_40 =
-        (f32)((const CopyS16SrcView*)src)->field_8 * ml::deg2rad;
+    ((ActParamT1Dst*)dst)->mFloat40 =
+        (f32)((const CActParamDataRef*)src)->mShort08 * ml::deg2rad;
     return 0;
 }
 

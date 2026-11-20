@@ -1,6 +1,3 @@
-class __declspec(novtable) CDeviceBase;
-class __declspec(novtable) CDeviceVI;
-class __declspec(novtable) IErrorWii;
 #include "monolib/device.hpp"
 #include "monolib/lib.hpp"
 #include "monolib/work.hpp"
@@ -16,34 +13,10 @@ using namespace ml;
 extern template class reslist<CDeviceVICb*>;
 extern template class _reslist_base<CDeviceVICb*>;
 
-// --- Dissolved retail data (CDeviceVI TU) ---
-// Retail bytes/relocs dumped from build/us/asm/monolib/src/device/CDeviceVI.s
-// .rodata 0x80522990 (0xB9), .data 0x8056BDF8 (0x170), .sdata 0x80663600 (0x18),
-// .bss 0x806574B8 (0x40), .sbss 0x80665648 (0x05), .sdata2 0x8066A360 (0x18).
-// Emitted as extern "C" u32 arrays with (u32)&extern, rodata align, novtable.
-
 extern "C" {
-    // sdata2 floats/double (retail .sdata2)
-    extern float lbl_eu_8066A360; // 0.033333335
-    extern float lbl_eu_8066A364; // 1.3333334
-    extern float lbl_eu_8066A368; // 1.0f
-    extern double lbl_eu_8066A370; // 4503599627370496.0
-    // sdata class locators (retail .sdata)
-    extern u32 __RTTI__9CDeviceVI[2];
-    extern u32 lbl_eu_80663608[2];
-    extern u32 lbl_eu_80663610[2];
-    // data RTTI base lists and vtables
-    extern u32 lbl_eu_8056BF28[7];
-    extern u32 lbl_eu_8056BF50[3];
-    extern u32 __vt__9CDeviceVI[45];
-    extern u32 __vt__23reslist_P11CDeviceVICb[3];
-    extern u32 __vt__29_reslist_base_P11CDeviceVICb[3];
-    extern u32 lbl_eu_806635F0[];
-    extern u32 __RTTI__10IWorkEvent[];
-    extern u32 __RTTI__11CWorkThread[];
-    // IWorkEvent / CWorkThread virtuals
-    extern void __dt__9CDeviceVIFv(void* self, int flag);
-    extern void WorkEvent1__10IWorkEventFPvPCc();
+    // IWorkEvent / CWorkThread virtuals referenced by the compiler-emitted
+    // vtable.
+
     extern void OnFileEvent__10IWorkEventFP10CEventFile();
     extern void WorkEvent3__10IWorkEventFPv();
     extern void WorkEvent4__10IWorkEventFv();
@@ -83,8 +56,6 @@ extern "C" {
     extern void errorWiiCB__9CDeviceVIFv(void* self);
     extern void __dt__23reslist_P11CDeviceVICbFv();
     extern void __dt__29_reslist_base_P11CDeviceVICbFv();
-    extern void thunk_456_dt(void* self, int flag);
-    extern void thunk_456_error(void* self);
     // rodata strings (retail .rodata)
     extern const char lbl_eu_80522A08[];
     extern const char lbl_eu_80522A14[];
@@ -94,10 +65,6 @@ extern "C" {
 // rodata strings with correct align and order (retail 0x80522A08, 0x80522A14, 0x80522A2C)
 // Defined after gammaLevels to preserve .rodata order: int table (0x78) first, then strings.
 
-// sdata locators (retail .sdata 0x80663600 0x18)
-extern "C" u32 __RTTI__9CDeviceVI[2] = { (u32)&lbl_eu_80522A08, (u32)&lbl_eu_8056BF28 };
-extern "C" u32 lbl_eu_80663608[2] = { (u32)&lbl_eu_80522A14, (u32)&lbl_eu_8056BF50 };
-extern "C" u32 lbl_eu_80663610[2] = { (u32)&lbl_eu_80522A2C, 0 };
 
 // data (retail .data 0x8056BDF8 0x170) - retail order
 // renderModes at 0x0 (0x40)
@@ -127,41 +94,6 @@ extern "C" u32 lbl_eu_8056BE38[15] = {
     0x00000001, 0x00000606, 0x06060606, 0x06060606, 0x06060606,
     0x06060606, 0x06060606, 0x06060808, 0x0A0C0A08, 0x08000000
 };
-// __vt__9CDeviceVI at 0x7C (0xB4)
-extern "C" u32 __vt__9CDeviceVI[45] = {
-    (u32)&__RTTI__9CDeviceVI, 0, (u32)&__dt__9CDeviceVIFv,
-    (u32)&WorkEvent1__10IWorkEventFPvPCc, (u32)&OnFileEvent__10IWorkEventFP10CEventFile,
-    (u32)&WorkEvent3__10IWorkEventFPv, (u32)&WorkEvent4__10IWorkEventFv,
-    (u32)&OnPauseTrigger__10IWorkEventFb,
-    (u32)&WorkEvent6__10IWorkEventFv, (u32)&WorkEvent7__10IWorkEventFv,
-    (u32)&WorkEvent8__10IWorkEventFv, (u32)&WorkEvent9__10IWorkEventFv,
-    (u32)&WorkEvent10__10IWorkEventFv, (u32)&WorkEvent11__10IWorkEventFv,
-    (u32)&WorkEvent12__10IWorkEventFv, (u32)&WorkEvent13__10IWorkEventFv,
-    (u32)&WorkEvent14__10IWorkEventFv, (u32)&WorkEvent15__10IWorkEventFv,
-    (u32)&WorkEvent16__10IWorkEventFv, (u32)&WorkEvent17__10IWorkEventFv,
-    (u32)&WorkEvent18__10IWorkEventFv, (u32)&WorkEvent19__10IWorkEventFv,
-    (u32)&WorkEvent20__10IWorkEventFv, (u32)&WorkEvent21__10IWorkEventFv,
-    (u32)&WorkEvent22__10IWorkEventFv, (u32)&WorkEvent23__10IWorkEventFv,
-    (u32)&WorkEvent24__10IWorkEventFv, (u32)&WorkEvent25__10IWorkEventFv,
-    (u32)&WorkEvent26__10IWorkEventFv, (u32)&WorkEvent27__10IWorkEventFv,
-    (u32)&WorkEvent28__10IWorkEventFv, (u32)&WorkEvent29__10IWorkEventFv,
-    (u32)&WorkEvent30__10IWorkEventFv, (u32)&WorkEvent31__10IWorkEventFv,
-    (u32)&wkUpdate__9CDeviceVIFv, (u32)&wkRender__11CWorkThreadFv,
-    (u32)&wkRenderAfter__11CWorkThreadFv, (u32)&wkStandbyLogin__9CDeviceVIFv,
-    (u32)&wkStandbyLogout__9CDeviceVIFv, (u32)&wkStandbyExceptionRetry__11CWorkThreadFUl,
-    (u32)&__RTTI__9CDeviceVI, 0xFFFFFE38, (u32)&thunk_456_dt, (u32)&thunk_456_error, (u32)&errorWiiCB__9CDeviceVIFv
-};
-// lbl_eu_8056BF28 at 0x130 (0x1C)
-extern "C" u32 lbl_eu_8056BF28[7] = { (u32)&__RTTI__10IWorkEvent, 0, (u32)&__RTTI__11CWorkThread, 0, (u32)&lbl_eu_806635F0, 0, 0 };
-// __vt__23reslist at 0x14C (0xC)
-extern "C" u32 __vt__23reslist_P11CDeviceVICb[3] = { (u32)&lbl_eu_80663608, 0, (u32)&__dt__23reslist_P11CDeviceVICbFv };
-// lbl_eu_8056BF50 at 0x158 (0xC)
-extern "C" u32 lbl_eu_8056BF50[3] = { (u32)&lbl_eu_80663610, 0, 0 };
-// __vt__29 at 0x164 (0xC)
-extern "C" u32 __vt__29_reslist_base_P11CDeviceVICb[3] = { (u32)&lbl_eu_80663610, 0, (u32)&__dt__29_reslist_base_P11CDeviceVICbFv };
-
-
-
 extern "C" __declspec(section ".rodata") const u32 lbl_eu_80522990[30] = {
     1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30
 };
@@ -224,9 +156,6 @@ unk2B5(1),
 mTargetFramerate(TARGET_FRAMERATE),
 mSecPerFrame(MS_PER_FRAME),
 unk2C0(0) {
-    // novtable: store retail vtables by hand (primary at +0x0, IErrorWii at +0x1C8)
-    *(void**)this = (void*)&__vt__9CDeviceVI;
-    *(void**)((u8*)this + 0x1C8) = (void*)((u8*)&__vt__9CDeviceVI + 0xA0);
     spInstance = this;
     unk2A0.set(0,0);
     mtl::ALLOC_HANDLE handle = sUseStaticHandle ? mtl::MemManager::getHandleStatic() : CDevice::getDevSys1Handle();
@@ -241,9 +170,6 @@ unk2C0(0) {
 }
 
 CDeviceVI::~CDeviceVI(){
-    // novtable: restore retail vtables (primary + IErrorWii secondary) like retail dtor
-    *(void**)this = (void*)&__vt__9CDeviceVI;
-    *(void**)((u8*)this + 0x1C8) = (void*)((u8*)&__vt__9CDeviceVI + 0xA0);
     CErrorWii::removeCallback(this);
 
     DELETE_ARRAY(mXfbBuffersPtr);
@@ -743,7 +669,6 @@ extern "C" {
     extern GXRenderModeObj GXMpal480Int;
     extern GXRenderModeObj GXMpal480Prog;
     extern GXRenderModeObj GXMpal480ProgSoft;
-    extern void __dt__9CDeviceVIFv(void* self, int flag);
     extern void WorkEvent1__10IWorkEventFPvPCc();
     extern void OnFileEvent__10IWorkEventFP10CEventFile();
     extern void WorkEvent3__10IWorkEventFPv();
@@ -782,33 +707,7 @@ extern "C" {
     extern void wkStandbyLogout__9CDeviceVIFv();
     extern void wkStandbyExceptionRetry__11CWorkThreadFUl();
     extern void errorWiiCB__9CDeviceVIFv(void* self);
-    extern void thunk_456_dt(void* self, int flag);
-    extern void thunk_456_error(void* self);
-    extern u32 __RTTI__10IWorkEvent[];
-    extern u32 __RTTI__11CWorkThread[];
-    extern u32 lbl_eu_806635F0[];
     extern const char lbl_eu_80522A08[];
     extern const char lbl_eu_80522A14[];
     extern const char lbl_eu_80522A2C[];
 }
-
-// Thunks for the IErrorWii secondary base (retail @456@ symbols at
-// .text 0x8044B9A0/0x8044B9A8): recover the full object from the +0x1C8
-// IErrorWii subobject and tail-call the real body. High-level adjustor form
-// (CLibCri.cpp precedent); the @N@ names are unspellable in C++ and are
-// renamed onto the retail symbols by UNIT_RULES exact_renames.
-void thunk_456_dt(void* self, int flag) {
-    __dt__9CDeviceVIFv((char*)self - 0x1C8, flag);
-}
-void thunk_456_error(void* self) {
-    errorWiiCB__9CDeviceVIFv((char*)self - 0x1C8);
-}
-
-// lbl_eu_8056BE38 moved to top .data block for retail order (0x40) - original location removed
-
-
-
-// extern "C" u32 __RTTI__9CDeviceVI[2] = { 0x00000000, 0x00000000 };
-// extern "C" u32 lbl_eu_80663608[2] = { 0x00000000, 0x00000000 };
-// extern "C" u32 lbl_eu_80663610[2] = { 0x00000000, 0x00000000 };
-

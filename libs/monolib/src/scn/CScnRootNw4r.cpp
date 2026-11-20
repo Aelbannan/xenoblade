@@ -4,7 +4,7 @@
 // MEMAllocator callbacks.
 
 #include <harness_catalog.h>
-#include "monolib/src/scn/CScnItemPool.hpp"
+#include "monolib/scn/CScnItemPool.hpp"
 #include "monolib/scn/CScn.hpp"
 #include "libs/monolib/src/scn/CScnRootNw4r.hpp"  // CScnRootNw4r class + fields
 #include "libs/monolib/src/scn/CScnCameraMan.hpp"  // refreshCurrentCamera

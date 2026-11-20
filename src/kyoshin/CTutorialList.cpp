@@ -24,7 +24,7 @@
 #include "kyoshin/CUICfManager_Res.hpp"
 
 // Layout / BDAT helpers with unmangled retail names.
-extern "C" u32 CtrlRemote_TouchBitByArg(u32 resourceId);
+#include "kyoshin/cf/CtrlRemoteApi.hpp"
 extern "C" u32 Bdat_GetMaxRow_B1EC(void* fp);
 extern "C" void* Bdat_GetTable_AA34();
 #include "kyoshin/cf/CfGameManager.hpp"

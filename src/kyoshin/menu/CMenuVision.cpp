@@ -1,3 +1,4 @@
+#include "kyoshin/cf/CfBdat.hpp"
 #include <nw4r/lyt/lyt_drawInfo.h>
 #include "kyoshin/menu/CMenuVision.hpp"
 #include "kyoshin/code_80135FDC_Bdat.hpp"
@@ -34,12 +35,6 @@ extern CMenuVision* sVisionMenuInstance;
 
 void tickVisionExpiry(CMenuVision*, CMenuVisionEntry*);
 
-// Read-only view
-struct AnimFrameAccess {
-    u8 _pad[0x10];
-    f32 frame;
-};
-
 extern "C" {
 void* findObjectById__Fi(int);
 
@@ -59,7 +54,6 @@ extern u32 visionPaneColorMode42TenAltSecond;
 extern u32 visionPaneColorMode42OneSecond;
 extern f32 lbl_eu_80667DD4;
 extern u32 lbl_eu_80667DD0;
-extern void* lbl_eu_806640E0;
 extern const char* visionKnownStatusIconNames[4];
 extern const char* visionOtherStatusIconNames[4];
 }
@@ -94,12 +88,6 @@ struct PaneTransAccess {
     u8 _pad[0x4C];
     f32 transX;
     f32 transY;
-};
-
-struct PaneScaleAccess {
-    u8 _pad[0x44];
-    f32 scaleX;
-    f32 scaleY;
 };
 
 struct MenuVisionBattleData {
@@ -139,9 +127,7 @@ static inline MenuVisionActorInfo* menuVisionActorInfo(void* actor) {
 
 static inline void menuVisionSetVisible(nw4r::lyt::Pane* pane, bool visible) {
     if (pane != 0) {
-        PaneVisAccess* access = reinterpret_cast<PaneVisAccess*>(pane);
-        access->visByte &= ~1;
-        access->visByte |= visible;
+        pane->SetVisible(visible);
     }
 }
 
@@ -307,7 +293,7 @@ extern "C" __declspec(noinline) CMenuVision* __ct__CMenuVision(CMenuVision* self
 extern "C" void __dt__17UnkClass_8045F564Fv(void*, int);
 extern "C" void* __dt__11CMenuVisionFv(void* self, int flag) {
     if (self != 0) {
-        __dt__17UnkClass_8045F564Fv((char*)self + 0x64, -1);
+        __dt__17UnkClass_8045F564Fv(&((CMenuVision*)self)->mLayoutMem, -1);
         if (self != 0) {
             if (self != 0) {
                 __dt__8CProcessFv(reinterpret_cast<CProcess*>(self), 0);
@@ -749,7 +735,7 @@ extern "C" void driveVisionUpdate(int flags) {
             break;
         }
         if (image != 0) {
-            PaneSetTexPaletteByName(entry.mLayout, (char*)(lbl_eu_80504268 + 0x422), (TPLPalette*)image);
+            PaneSetTexPaletteByName(entry.mLayout, lbl_eu_80504268 + 0x422, (TPLPalette*)image);
         }
         menuVisionBeginWithoutSecond(entry);
     }
@@ -868,24 +854,22 @@ extern "C" void driveVisionUpdate(int flags) {
             entry.mLayout->GetRootPane()->FindPaneByName(lbl_eu_80504268 + 0x1FB, true)->SetVisible(true);
             if ((battle->flags84 & 1) || (battle->flags88 & 0x100) || ScMain_GetSummedInt((ScMain*)battle) > 0) {
                 setLayoutTextBoxNumber(
-                    entry.mLayout, (char*)(lbl_eu_80504268 + 0x1FB), ScMain_GetSummedInt((ScMain*)battle));
+                    entry.mLayout, lbl_eu_80504268 + 0x1FB, ScMain_GetSummedInt((ScMain*)battle));
                 nw4r::math::VEC2 scale;
                 scale.x = lbl_eu_80667DD4;
                 scale.y = lbl_eu_80667DD4;
-                PaneScaleAccess* pane = reinterpret_cast<PaneScaleAccess*>(
-                    entry.mLayout->GetRootPane()->FindPaneByName(lbl_eu_80504268 + 0x1FB, true));
-                pane->scaleX = scale.x;
-                pane->scaleY = scale.y;
+                nw4r::lyt::Pane* pane =
+                    entry.mLayout->GetRootPane()->FindPaneByName(lbl_eu_80504268 + 0x1FB, true);
+                pane->SetScale(scale);
             } else {
                 char* text = BdatTouchStringCell(lbl_eu_80504268 + 0x56B, lbl_eu_80504268 + 0x576, 11);
                 LayoutSetTextBoxFmtValue(entry.mLayout, lbl_eu_80504268 + 0x1FB, text, 0);
                 nw4r::math::VEC2 scale;
                 scale.x = lbl_eu_80667DC4;
                 scale.y = lbl_eu_80667DC4;
-                PaneScaleAccess* pane = reinterpret_cast<PaneScaleAccess*>(
-                    entry.mLayout->GetRootPane()->FindPaneByName(lbl_eu_80504268 + 0x1FB, true));
-                pane->scaleX = scale.x;
-                pane->scaleY = scale.y;
+                nw4r::lyt::Pane* pane =
+                    entry.mLayout->GetRootPane()->FindPaneByName(lbl_eu_80504268 + 0x1FB, true);
+                pane->SetScale(scale);
             }
 
             VisionQuad first = visionTevColorDefaultFirst;
@@ -977,15 +961,15 @@ extern "C" void driveVisionUpdate(int flags) {
                         }
                         i++;
                     } while (i < 4);
-                    if (!(reinterpret_cast<PaneVisAccess*>(panic)->visByte & 1)) {
-                        u16 id = BdatGetU16Direct(lbl_eu_806640E0, lbl_eu_80504268 + 0x57B, previous);
+                    if (!panic->IsVisible()) {
+                        u16 id = BdatGetU16Direct(::cf::CfBdat::spBtlBuffListFileData, lbl_eu_80504268 + 0x57B, previous);
                         if (id != 0) {
                             menuVisionReplacePaneImage(status, menuVisionResource(MakeTplNameSysFile(id)));
                         }
                     }
                 }
                 if (current != 0) {
-                    u16 id = BdatGetU16Direct(lbl_eu_806640E0, lbl_eu_80504268 + 0x57B, current);
+                    u16 id = BdatGetU16Direct(::cf::CfBdat::spBtlBuffListFileData, lbl_eu_80504268 + 0x57B, current);
                     if (id != 0) {
                         menuVisionReplacePaneImage(statusAlt, menuVisionResource(MakeTplNameSysFile(id)));
                     }
@@ -1013,15 +997,15 @@ extern "C" void driveVisionUpdate(int flags) {
                         }
                         i++;
                     } while (i < 4);
-                    if (!(reinterpret_cast<PaneVisAccess*>(panic)->visByte & 1)) {
-                        u16 id = BdatGetU16Direct(lbl_eu_806640E0, lbl_eu_80504268 + 0x57B, current);
+                    if (!panic->IsVisible()) {
+                        u16 id = BdatGetU16Direct(::cf::CfBdat::spBtlBuffListFileData, lbl_eu_80504268 + 0x57B, current);
                         if (id != 0) {
                             menuVisionReplacePaneImage(status, menuVisionResource(MakeTplNameSysFile(id)));
                         }
                     }
                 }
                 if (previous != 0) {
-                    u16 id = BdatGetU16Direct(lbl_eu_806640E0, lbl_eu_80504268 + 0x57B, previous);
+                    u16 id = BdatGetU16Direct(::cf::CfBdat::spBtlBuffListFileData, lbl_eu_80504268 + 0x57B, previous);
                     if (id != 0) {
                         menuVisionReplacePaneImage(statusAlt, menuVisionResource(MakeTplNameSysFile(id)));
                     }
@@ -1051,7 +1035,7 @@ extern "C" void driveVisionUpdate(int flags) {
             value = 0;
         }
         setLayoutTextBoxNumber(
-            entry.mLayout, (char*)(lbl_eu_80504268 + 0x208), value);
+            entry.mLayout, lbl_eu_80504268 + 0x208, value);
         menuVisionBeginSilent(entry);
 
         CMenuVisionEntry& barEntry = menu->mEntries[4];
@@ -1210,7 +1194,7 @@ L_continue:
             if (bmObj != NULL) {
                 // While the HP-bar pane is visible, track the target position.
                 nw4r::lyt::Pane* pane1 = e->mLayout->GetRootPane()->FindPaneByName(lbl_eu_80504268 + 0x195, true);
-                if (reinterpret_cast<PaneVisAccess*>(pane1)->visByte & 1) {
+                if (pane1->IsVisible()) {
                     nw4r::lyt::Pane* posPane = e->mLayout->GetRootPane()->FindPaneByName(lbl_eu_80504268 + 0x215, true);
                     PaneTransAccess* trans = reinterpret_cast<PaneTransAccess*>(posPane);
                     nw4r::math::VEC2 position;
@@ -1306,30 +1290,29 @@ void CMenuVision::Init() {
         e.mAnim1->SetFrame(0.0f);
         e.mLayout->Animate(0);
 
-        // Hide 6 standard panes by clearing bit 0 of visByte
+        // Hide 6 standard panes.
         nw4r::lyt::Pane* p = e.mLayout->GetRootPane()->FindPaneByName(lbl_eu_80504268 + 0x169, true);
-        reinterpret_cast<PaneVisAccess*>(p)->visByte &= ~1;
+        p->SetVisible(false);
         p = e.mLayout->GetRootPane()->FindPaneByName(lbl_eu_80504268 + 0x174, true);
-        reinterpret_cast<PaneVisAccess*>(p)->visByte &= ~1;
+        p->SetVisible(false);
         p = e.mLayout->GetRootPane()->FindPaneByName(lbl_eu_80504268 + 0x17f, true);
-        reinterpret_cast<PaneVisAccess*>(p)->visByte &= ~1;
+        p->SetVisible(false);
         p = e.mLayout->GetRootPane()->FindPaneByName(lbl_eu_80504268 + 0x18a, true);
-        reinterpret_cast<PaneVisAccess*>(p)->visByte &= ~1;
+        p->SetVisible(false);
         p = e.mLayout->GetRootPane()->FindPaneByName(lbl_eu_80504268 + 0x195, true);
-        reinterpret_cast<PaneVisAccess*>(p)->visByte &= ~1;
+        p->SetVisible(false);
         p = e.mLayout->GetRootPane()->FindPaneByName(lbl_eu_80504268 + 0x1a2, true);
-        reinterpret_cast<PaneVisAccess*>(p)->visByte &= ~1;
+        p->SetVisible(false);
 
         // Show the entry-specific pane (retail clears bit 0 first, then sets it)
         p = e.mLayout->GetRootPane()->FindPaneByName((const char*)paneNames[i], true);
-        reinterpret_cast<PaneVisAccess*>(p)->visByte &= ~1;
-        reinterpret_cast<PaneVisAccess*>(p)->visByte |= 1;
+        p->SetVisible(true);
 
         // Per-index special setup
         if (i == 1) {
-            CMenuVisionFontView* fontObj = reinterpret_cast<CMenuVisionFontView*>(
+            IDeviceFontInfo* fontObj = static_cast<IDeviceFontInfo*>(
                 getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1));
-            u32 fontVal = fontObj->getFontHandle();
+            u32 fontVal = reinterpret_cast<u32>(fontObj->getFont());
 
             setLayoutTextBoxFont(e.mLayout, lbl_eu_80504268 + 0x1ab, fontVal);
             setLayoutTextBoxFont(e.mLayout, lbl_eu_80504268 + 0x1b8, fontVal);
@@ -1371,7 +1354,7 @@ void tickVisionExpiry(CMenuVision*, CMenuVisionEntry* entry) {
     if (advanceAnimTransform(entry->mAnim7, lbl_eu_80667DC4)) {
         entry->mState = 0;
     }
-    if (!(reinterpret_cast<AnimFrameAccess*>(entry->mAnim7)->frame >= lbl_eu_80667DDC)) {
+    if (!(entry->mAnim7->GetFrame() >= lbl_eu_80667DDC)) {
         return;
     }
     if (entry->field_0x28 != 0) {
@@ -1383,27 +1366,27 @@ void tickVisionExpiry(CMenuVision*, CMenuVisionEntry* entry) {
     int kind = 0;
     nw4r::lyt::Pane* pane;
     pane = root->FindPaneByName(lbl_eu_80504268 + 0x169, true);
-    if (reinterpret_cast<PaneVisAccess*>(pane)->visByte & 1) {
+    if (pane->IsVisible()) {
         index = 0; kind = 4;
     } else {
     pane = root->FindPaneByName(lbl_eu_80504268 + 0x174, true);
-    if (reinterpret_cast<PaneVisAccess*>(pane)->visByte & 1) {
+    if (pane->IsVisible()) {
         index = 1; kind = 5;
     } else {
     pane = root->FindPaneByName(lbl_eu_80504268 + 0x17f, true);
-    if (reinterpret_cast<PaneVisAccess*>(pane)->visByte & 1) {
+    if (pane->IsVisible()) {
         index = 2; kind = 6;
     } else {
     pane = root->FindPaneByName(lbl_eu_80504268 + 0x18a, true);
-    if (reinterpret_cast<PaneVisAccess*>(pane)->visByte & 1) {
+    if (pane->IsVisible()) {
         index = 3; kind = 7;
     } else {
     pane = root->FindPaneByName(lbl_eu_80504268 + 0x195, true);
-    if (reinterpret_cast<PaneVisAccess*>(pane)->visByte & 1) {
+    if (pane->IsVisible()) {
         index = 4; kind = 8;
     } else {
     pane = root->FindPaneByName(lbl_eu_80504268 + 0x1a2, true);
-    if (reinterpret_cast<PaneVisAccess*>(pane)->visByte & 1) {
+    if (pane->IsVisible()) {
         index = 5; kind = 9;
     }
     }}}}}

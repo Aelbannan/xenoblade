@@ -331,8 +331,6 @@ extern char lbl_eu_804FD524[];
 extern char lbl_eu_8052C1C0[];
 extern char lbl_eu_8052C230[];
 extern u32 lbl_eu_80535AD0[3]; // retail name of the null PMF triple
-extern u32 lbl_eu_80664160;
-extern u32 lbl_eu_806640E0;
 extern u32 gmPauseFlags;
 extern const f32 lbl_eu_80666F68; // 0.0f (zero-fill constant)
 extern const f32 lbl_eu_80666F6C; // 1.0f

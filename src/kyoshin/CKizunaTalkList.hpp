@@ -143,3 +143,10 @@ public:
     void moveTalkCursor();
     void rebuildTalkList();
 };
+
+// File-scope data owned by kyoshin/CKizunaTalkList.cpp (retail .sbss).
+extern "C" void* sKizunaTalkBdatData;
+extern "C" void* sKizunaTalkRowColorNeutralA;
+extern "C" void* sKizunaTalkRowColorNeutralB;
+extern "C" void* sKizunaTalkRowColorSelectedA;
+extern "C" void* sKizunaTalkRowColorSelectedB;

@@ -55,11 +55,11 @@ class IUIWindow;
 extern const f32 lbl_eu_806672C8; // proximity float constant (.sdata2, r2-sda21)
 extern "C" int CMainMenu_IsOpen();  // matches CTaskGame.hpp
 extern "C" u32 GetItemMulti_IsActiveFlag();  // canonical u32 form (per CMenuGetItemMulti.cpp def / CVision.hpp)
-extern "C" int PTNotice_IsActive_3C10();  // matches CMenuQstCnt.hpp (int)
+extern "C" u32 PTNotice_IsActive_3C10();  // definition: CMenuPTChangeNotice.cpp
 extern "C" u32 MenuTutorialIsCreated();  // definition: CMenuTutorial.cpp (u32)
 class CSysWinBuff;
 extern "C" CSysWinBuff* getInstance__11CSysWinBuffFv(); // matches CMainMenu.hpp
-extern "C" u32 CtrlRemote_TouchBitByArg(u32 resourceId);      // resource getter (CMiniMap.cpp)
+#include "kyoshin/cf/CtrlRemoteApi.hpp"      // resource getter (CMiniMap.cpp)
 extern "C" bool hasQuestWindow();                    // close-quest-menu gate (CQuestWindow.cpp)
 extern char lbl_8066DCF8[4];     // .sbss2 font-name blob (address used as pName)
 // C-library delete operators (flat retail symbols; shared runtime helpers).
@@ -108,55 +108,40 @@ extern const f32 lbl_eu_806672D0;      // player-pose constant
 extern char lbl_eu_806621EC[4];
 extern char lbl_eu_806621E8[4];
 
-// 0x168-stride view over mInitSlots[].unk04 (CUICfManager_hasInUseSlot's flag scan).
+// 0x168-stride slot-flag array at manager +0x14C. RETAIL SHAPE: MWCC needs
+// the 0x168-stride element type to reproduce the unrolled li/mulli/lbzx scan
+// in CUICfManager_hasInUseSlot (a u8 pointer folds to direct lbz offsets).
 struct CUICfSlotFlagView {
     u8 flag;                     // mInitSlots[i].unk04 (0x14c + i*0x168)
     u8 pad[0x168 - 0x01];
 };
 
-// Manager view offsetting the slot-flag array to +0x14C (avoids raw pointer
-// arithmetic at CUICfManager_checkMenuOpenGate's flag==4 scan).
 struct CUICfManagerSlotView {
     u8 pad[0x14C];
     CUICfSlotFlagView slots[8];  // +0x14C, 0x168 stride
 };
 
-// 0x34-byte block used by the slot-swap records (same layout as
-// CUICfInitBlock; field_0xNN names avoid the repo lint's unkN rule).
-struct CUICfSwapBlock {
-    u32 field_0x00;
-    u16 field_0x04;
-    u8 field_0x06[0x34 - 6];
-};
-
-// Zero-view over CUICfSwapBlock for the swap clears (names the two zeroed
-// fields; the block copies go through CItem_copyRecMasked with CUICfInitBlock*).
-struct CUICfBlockZeroView {
-    u32 field_0x00;
-    u16 field_0x04;
-};
-
 // 0x40-byte string buffer inside a swap record (struct assignment makes
-// MWCC emit the retail lwz/stw word-pair copies).
+
 struct CUICfSwapStr {
     char b[0x40];
 };
 
-// Player-wrapper view for CUICfManager_checkMenuOpenGate's pose/state checks (CfObjectMove is
-// at +0x3E9C inside the wrapper; +0x3F60 points at the battle object).
-struct CUICfPlayerView {
-    u8 pad[0x3F60];
-    u8* field_3F60;              // +0x3F60
-};
-
-// Battle-object view for CUICfManager_checkMenuOpenGate's flag checks (+0x530 halfword bit 0,
-// +0x4EC word bits 1/8/15).
-struct CUICfObj3F60View {
-    u8 pad[0x4EC];
-    u32 field_4EC;               // +0x4EC
-    u8 pad2[0x530 - 0x4F0];
-    u16 field_530;               // +0x530
-};
+// CUICfManager_checkMenuOpenGate now reaches both actors through real
+// classes. The player's embedded CfObjectMove is at actor +0x3E9C; the
+// canonical static_cast in CfActorMoveLayout.hpp emits that same subi.
+// CfObjectMove::mTargetC4 is the +0x3F60 battle-object pointer, and the
+// pointee is a real cf::CActParamAnimGame (declared in CActParamAnimGame.hpp):
+//   field530 (+0x530) bit 0, field4EC (+0x4EC) bits 1/8/15.
+// The two former overlay structs duplicated exactly those three offsets
+// and were removed without changing any call-site instruction.
+// The vtable slot-0x128 call still takes the actor-base pointer, which
+// the layout cast recovers from getPlayer(0)'s CfObjectMove*.
+// Keeping these declarations as comments preserves -ipa-file line numbers
+// for the other matched functions in this TU.
+// No data members were lost: the overlays carried no objects of their own.
+// CfActorMoveLayout's pad reproduces the actor's CAIAction trailer.
+// The flag meanings are documented on CActParamAnimGame's fields.
 
 // CBattleManager's battle-object circular list (head pointer at +0x8; nodes
 // are single-linked {next@0}).
@@ -219,28 +204,6 @@ struct CUICfSwapSlot {
     CUICfSwapStr strE6;          // +0xE6
     CUICfSwapStr str126;         // +0x126
 }; // size 0x166
-
-// Dispatch view over one init-slot region for CUICfManager_dispatchFreeSlot (base =
-// &mInitSlots[0].unk04). Flag/state bytes at +0/+1, block data at +4,
-// five u16 ids at +0xD8..+0xE0, u16 id at +0xE2, u8 state at +0xE4, and the
-// two sprintf buffers at +0xE6 / +0x126.
-struct CUICfSlotDispView {
-    u8 field_0x00;               // +0x00 slot flag
-    u8 field_0x01;               // +0x01 slot state
-    u8 pad[0x04 - 0x02];
-    CUICfInitBlock block_04;     // +0x04
-    u8 pad2[0xD8 - 0x38];
-    u16 field_D8;                // +0xD8
-    u16 field_DA;                // +0xDA
-    u16 field_DC;                // +0xDC
-    u16 field_DE;                // +0xDE
-    u16 field_E0;                // +0xE0
-    u16 field_E2;                // +0xE2
-    u8 field_E4;                 // +0xE4
-    u8 pad3;                     // +0xE5
-    char str_E6[0x40];           // +0xE6
-    char str_126[0x80];          // +0x126
-};
 
 struct CUICfInitState {
     u8 mode;
@@ -319,6 +282,10 @@ extern "C" void* __ct__CUICfManager(CUICfManager* self, class CScnNw4r* pScene,
 // class so the in-class friend binds to this same C linkage.
 extern "C" bool OnFileEvent__12CUICfManagerFv(CUICfManager* self, CEventFile* evt);
 
+// Flat retail helper that fills the CTTask move-function words; it needs
+// member access to the protected CTTask base storage.
+extern "C" void CUICfManager_initEventTriplet(CUICfManager* self);
+
 struct CUICfInitSlot {
     u8 unk00[4];
     u8 unk04;
@@ -331,50 +298,8 @@ struct CUICfInitSlot {
     CUICfInitTail unkD8;
 }; // size = 0x168
 
-// Write view over one init-slot region for CUICfManager_claimFreeSlotByIdState's slot fill
-// (flag byte at +0, u16 id at +0xE2, u8 state at +0xE4).
-struct CUICfSlotWriteView {
-    u8 field_0x00;             // +0x00 slot flag (4 = in use)
-    u8 pad[0xE2 - 0x01];
-    u16 field_0xE2;            // +0xE2
-    u8 field_0xE4;             // +0xE4
-};
 
-// Write view over one init-slot region for CUICfManager_claimFreeSlotByIds's 5-id claim
-// (flag byte at +0, five u16 ids at +0xD8..+0xE0).
-struct CUICfSlotIdWriteView {
-    u8 field_0x00;             // +0x00 slot flag (2 = claiming)
-    u8 pad[0xD8 - 0x01];
-    u16 field_D8;              // +0xD8
-    u16 field_DA;              // +0xDA
-    u16 field_DC;              // +0xDC
-    u16 field_DE;              // +0xDE
-    u16 field_E0;              // +0xE0
-};
-
-// Write view over one init-slot region for CUICfManager_claimFreeSlotFormatted/CUICfManager_claimFreeSlotByTwoIds's
-// sprintf fills (flag byte at +0, char buffer at +0xE6).
-struct CUICfSlotStrView {
-    u8 field_0x00;             // +0x00 slot flag
-    u8 pad[0xE6 - 0x01];
-    char str[0x80];            // +0xE6 sprintf target
-};
-
-// 0x168-stride slot write view for CUICfManager_claimFreeSlotByCopy's block-copy claim
-// (flag byte at +0, four 0x34-byte blocks at +4/+0x38/+0x6C/+0xA0,
-// u32 at +0xD4).
-struct CUICfSlotCopyView {
-    u8 field_0x00;                 // +0x00 slot flag (3 = claiming)
-    u8 pad[0x04 - 0x01];
-    CUICfInitBlock block1;         // +0x04
-    CUICfInitBlock block2;         // +0x38
-    CUICfInitBlock block3;         // +0x6C
-    CUICfInitBlock block4;         // +0xA0
-    u32 field_D4;                  // +0xD4
-};
-
-// Source-side view of the template arg for CUICfManager_claimFreeSlotByCopy's block copy.
-struct CUICfSrcCopyView {
+struct CUICfSlotTemplate {
     CUICfInitBlock block1;         // +0x00
     CUICfInitBlock block2;         // +0x34
     CUICfInitBlock block3;         // +0x68
@@ -443,7 +368,8 @@ private:
     friend void* __ct__CUICfManager(CUICfManager*, CScnNw4r*,
                                     mtl::ALLOC_HANDLE);
     friend int CUICfManager_prepareMenus();
-    // 0x000-0x054 CTTask
+    friend void CUICfManager_initEventTriplet(CUICfManager*);
+
     // 0x054-0x058 IWorkEvent
     // 0x058-0x05C cf::IFlagEvent
 public:

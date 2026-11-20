@@ -12,6 +12,19 @@
 #include "kyoshin/cf/CBattleManager.hpp"
 #include "kyoshin/CfEnumListHolder.hpp"
 
+// Retail .rodata tables owned by this TU. Declared in retail address order so
+// MWCC emits the same bytes at 0x80501978..0x80501A38.
+static const f32 sArtsFacingRates[6] = { 6.5f, 8.0f, 10.0f, 12.5f, 15.0f, 0.0f };
+static const f32 sArtsClampedRates[6] = { 3.0f, 4.0f, 5.5f, 7.0f, 8.5f, 10.0f };
+static const f32 sArtsScaledSpeeds[6] = { 1.0f, 1.2f, 1.5f, 1.8f, 2.1f, 2.4f };
+static const f32 sArtsGaugeRates[6] = { 0.0f, 0.0f, 3.0f, 5.0f, 10.0f, 15.0f };
+static const u64 sArtsSelectFlags[12] = {
+    0x0000000000000000ULL, 0x0000010000000020ULL,
+    0x0000000000000000ULL, 0x0000002000000100ULL,
+    0, 0, 0, 0, 0, 0, 0,
+    0x0000002000000100ULL
+};
+
 // Free-function imports previously supplied by the trimmed chain headers
 // (CChainTimer.hpp / CfObjectImplEne.hpp / CBattleManager.hpp). extern "C"
 // keeps the call-site relocs at the retail unmangled names.
@@ -22,19 +35,9 @@ extern "C" void* getObjectAt(void* list, u32 idx);
 extern "C" void* MapFx_ResolveOwner(void* src);
 
 // float constants (retail .sdata2 pool) used by the effect-dispatch paths
-extern const float lbl_eu_805019A8[6];  // arts-speed table (getArtsScaledSpeed)
-extern const float lbl_eu_80667460;
 extern const float lbl_eu_80667464;
 extern const float lbl_eu_80667468;
 extern const float lbl_eu_8066746C;
-extern const float lbl_eu_80667470;
-extern const float lbl_eu_80667474;
-extern const float lbl_eu_80667478;
-extern const float lbl_eu_8066747C;
-extern const float lbl_eu_80667480;
-extern const float lbl_eu_80667484;
-extern const float lbl_eu_80667488;
-extern const float lbl_eu_8066748C;
 
 namespace cf {
     // Retail record tables installed at +0x84 by the ctors (CAttackParam:
@@ -134,16 +137,15 @@ extern "C" int getArtsTier(int x) {
     }
     return ret;
 }
-extern "C" float getArtsFacing(const u8* this_) { unsigned short raw = reinterpret_cast<const cf::CAttackParamPrefix*>(this_)->unk5A; int value = raw; if (value < 0) value = 0; else if (value > 4) value = 4; extern const float lbl_eu_80501978[]; return lbl_eu_80501978[value]; }
+extern "C" float getArtsFacing(const u8* this_) { unsigned short raw = reinterpret_cast<const cf::CAttackParamPrefix*>(this_)->unk5A; int value = raw; if (value < 0) value = 0; else if (value > 4) value = 4; return sArtsFacingRates[value]; }
 void getArtsClampedRate(){}
-extern const float lbl_eu_805019C0[];
 extern "C" float getArtsGaugeRate(const u8* self) {
     int index = reinterpret_cast<const cf::CAttackParamPrefix*>(self)->unk5A;
     if (index < 0)
         index = 0;
     else if (index > 5)
         index = 5;
-    return lbl_eu_805019C0[index];
+    return sArtsGaugeRates[index];
 }
 extern "C" int isArtsSpecialKind(const u8* self) { const unsigned short value = reinterpret_cast<const cf::CAttackParamPrefix*>(self)->unk5C; return value == 3 || value == 4 || value == 11; }
 extern "C" bool hasArtsGauge(u8* self) {
@@ -163,7 +165,7 @@ float getArtsScaledSpeed(const u8* self) {
     } else if (idx > 5) {
         idx = 5;
     }
-    return lbl_eu_805019A8[idx] * scale;
+    return sArtsScaledSpeeds[idx] * scale;
 }
 
 // getArtsClampedRate: clamp the u16 at +0x5a to [0,5] (retail keeps the dead
@@ -175,8 +177,7 @@ extern "C" float getArtsClampedRate(const u8* self) {
     } else if (value > 5) {
         value = 5;
     }
-    extern const float lbl_eu_80501990[];
-    return lbl_eu_80501990[value];
+    return sArtsClampedRates[value];
 }
 
 // ---------------------------------------------------------------------------
@@ -206,16 +207,14 @@ extern "C" int ArtsGateClear(void* param, void* actor, int flags) {
 // ---------------------------------------------------------------------------
 // Data imports for checkArtsFull (global scope: MWCC does not mangle these).
 // ---------------------------------------------------------------------------
-extern const u64 lbl_eu_805019D8[12];     // arts-select battle table (0x60 B)
-extern const char lbl_eu_80526324[];      // warning file name
+extern const char lbl_eu_80526324[];
 extern const char lbl_eu_80526300[];      // warning message
-extern f64 lbl_eu_80667490;               // 2^52 (u32 -> float magic)
-extern f64 lbl_eu_80667498;               // 2^31 magic (s32 -> float)
+// The 2^52 / 2^31 int->float magic doubles are no longer referenced here;
+// their retail storage is part of the shared compiler pool.
 extern u16 gmGlobalFlag42;               // current area id
-// lbl_eu_8066746C / 80667470 / 80667474 / 80667478 / 8066747C / 80667480 /
-// 80667484 / 80667488 / 8066748C and ml::pi / 8066A1FC / 8066A210
-// are declared by headers already in the include chain (CfObjectModel.hpp /
-// CfCamEvent_1.hpp etc.).
+// The other pool floats (0.5/15/25/2/100/1/pi*128^-1/10/0.2) and
+// ml::pi / ml::tau / ml::deg2rad are declared by headers already in the
+// include chain (CfObjectModel.hpp / CfCamEvent_1.hpp etc.).
 
 // C-linkage-less imports (retail symbols are unmangled but no header declares
 // them with C linkage; declared here with C++ linkage for compilation - reloc
@@ -225,7 +224,7 @@ extern int IdTable_GetSum(void* self, int id, void* out);
 extern void* lookupBattleStatusEntry(void* self, unsigned int id);
 extern void* appendObjectById(void* list, int index);
 extern int getAnimEff(void* obj);
-extern int CtrlRemote_TouchBitByArg(u32 resource);
+#include "kyoshin/cf/CtrlRemoteApi.hpp"
 extern void rebuildByDistanceCone(void* list, void* vec, f32 a, f32 b, f32 c, int d);
 extern void rebuildByDualCone(void* list, void* vec, f32 a, f32 b, f32 c, f32 d, f32 e, int f);
 extern void* __ct__800FB044(void* list, f32 a, void* vec, int d);
@@ -304,8 +303,6 @@ int checkArtsFull(void* param, void* actor, int flags) {
                 // Battle-manager / arts-select table path.
                 cf::CBattleManager* bm = cf::CBattleManager::getInstance();
                 if (*(u32*)&bm->unk20C8 == 0) {
-                    u64 table[12];
-                    for (int i = 0; i < 12; i++) table[i] = lbl_eu_805019D8[i];
                     if (p->unk5C != 2) {
                         f32 f30;
                         f32 f31 = p->unk60;
@@ -314,14 +311,14 @@ int checkArtsFull(void* param, void* actor, int flags) {
                         CfEnumListHolder holder;
                         f30 = (f32)p->unk64 * ml::deg2rad;
                         int idx = (obj->field_3F00 & 2) ? 0 : 4;
-                        int tblWord = *(u32*)((u8*)table + 4 + p->unk5C * 8 + idx);
+                        int tblWord = *(u32*)((const u8*)sArtsSelectFlags + 4 + p->unk5C * 8 + idx);
                         if (obj->v163() != 0) {
                             int sv;
                             if (IdTable_GetSum(obj->v163(), 0x77, &sv) != 0) {
                                 if (p->unk78 & 2) {
-                                    if (f31 <= lbl_eu_80667470) {
+                                    if (f31 <= 15.0f) {
                                         f31 += (f32)(s32)sv;
-                                        if (f31 > lbl_eu_80667474) f31 = lbl_eu_80667474;
+                                        if (f31 > 25.0f) f31 = 25.0f;
                                     }
                                 }
                             }
@@ -335,7 +332,7 @@ int checkArtsFull(void* param, void* actor, int flags) {
                         }
                         u32 sv2;
                         if (testActorStatus(obj, (int*)&sv2, 0x806) != 0) {
-                            f31 *= lbl_eu_80667478;
+                            f31 *= 2.0f;
                         }
                         if (!(p->unk78 & 2)) {
                             f31 = obj->v110()[0];
@@ -351,7 +348,7 @@ int checkArtsFull(void* param, void* actor, int flags) {
                             vec70[1] = ((f32*)obj->mSub.s41())[4];
                             vec70[2] = ((f32*)obj->mSub.s41())[8];
                         }
-                        vec70[1] = vec70[1] - (vec70[1] - ((f32*)obj->mSub.s41())[4]) * lbl_eu_8066746C;
+                        vec70[1] = vec70[1] - (vec70[1] - ((f32*)obj->mSub.s41())[4]) * 0.5f;
                         f27 = vec70[1] - ((f32*)obj->mSub.s41())[4];
                         if (f27 != 0.0f) {
                             f32 len2 = f27 * f27 + f31 * f31;
@@ -409,8 +406,8 @@ int checkArtsFull(void* param, void* actor, int flags) {
                             void* list = holder.get();
                             startEnumObjects(list, tblWord, 0x1000);
                             f32 v1 = obj->v364();
-                            f32 f28 = v1 + ml::pi * lbl_eu_8066746C;
-                            f32 f29 = v1 - ml::pi * lbl_eu_8066746C;
+                            f32 f28 = v1 + ml::pi * 0.5f;
+                            f32 f29 = v1 - ml::pi * 0.5f;
                             list = holder.get();
                             rebuildByDualCone(list, vec70, f31, f30, f28, f30, f29, dmgKind);
                             list = holder.get();
@@ -427,7 +424,7 @@ int checkArtsFull(void* param, void* actor, int flags) {
                         case 5: {
                             void* list = holder.get();
                             startEnumObjects(list, tblWord, 0x1000);
-                            f32 f27b = (f32)p->unk64 / lbl_eu_8066747C;
+                            f32 f27b = (f32)p->unk64 / 100.0f;
                             f32 f28 = obj->v364();
                             list = holder.get();
                             __ct__800FBA18(list, f31, f27b, f28, dmgKind);
@@ -470,9 +467,9 @@ int checkArtsFull(void* param, void* actor, int flags) {
                         if (p->unk78 & 0x8000) {
                             // positional offset effect (paired-single math)
                             f32 base[3];
-                            base[0] = lbl_eu_80667460;
-                            base[1] = lbl_eu_80667480;
-                            base[2] = lbl_eu_80667460;
+                            base[0] = 0.0f;
+                            base[1] = 1.0f;
+                            base[2] = 0.0f;
                             f32* off = (f32*)obj->mSub.s41();
                             f32 sum[3];
                             sum[0] = off[0] + base[0];
@@ -492,14 +489,14 @@ int checkArtsFull(void* param, void* actor, int flags) {
                                 if (!(p->unk78 & 2)) {
                                     f32 f27b = nw4r::math::Atan2FIdx(
                                         *(f32*)((u8*)target + 0x3e9c + 0x28 + 0x4) - ((f32*)obj->mSub.s41())[4],
-                                        *(f32*)((u8*)target + 0x3e9c + 0x28) - ((f32*)obj->mSub.s41())[0]) * lbl_eu_80667484;
+                                        *(f32*)((u8*)target + 0x3e9c + 0x28) - ((f32*)obj->mSub.s41())[0]) * 0.024543693f;
                                     f27b -= obj->v363();
                                     while (ml::pi <= f27b) f27b -= ml::tau;
                                     while (f27b < -ml::pi) f27b += ml::tau;
                                     f32* tpos = (f32*)obj->mSub.s41();
                                     if (ColiQuerySpecDispatch((u8*)target + 0x44a8, tpos, 0, 1) == 0) {
                                         f32 lim = obj->v111()[0];
-                                        if (-(lim * lbl_eu_8066746C) <= f27b && f27b <= lim * lbl_eu_8066746C) {
+                                        if (-(lim * 0.5f) <= f27b && f27b <= lim * 0.5f) {
                                             // in range
                                         } else {
                                             reject = 1;
@@ -532,15 +529,15 @@ int checkArtsFull(void* param, void* actor, int flags) {
 
     // Gate: range flag (0x2) - arts range vs distance.
     if (!(flags & 0x2)) {
-        if (p->unk80 > lbl_eu_80667460) result |= 0x2;
+        if (p->unk80 > 0.0f) result |= 0x2;
     }
     // Gate: range flag (0x4).
     if (!(flags & 0x4)) {
-        if (p->unk7C > lbl_eu_80667460) result |= 0x80;
+        if (p->unk7C > 0.0f) result |= 0x80;
     }
     // Gate: range flag (0x8).
     if (!(flags & 0x8)) {
-        if (isBattleStatusActive((u8*)a + 8, 0x30) == 0 && lbl_eu_80667460 > a->v78()) {
+        if (isBattleStatusActive((u8*)a + 8, 0x30) == 0 && 0.0f > a->v78()) {
             result |= 0x8;
         }
     }
@@ -551,7 +548,7 @@ int checkArtsFull(void* param, void* actor, int flags) {
             if (dmg > 0 && (f32)dmg > a->v84()) {
                 result |= 0x10;
             } else if (p->unk78 & 0x40) {
-                if (a->v84() < lbl_eu_80667488) result |= 0x10;
+                if (a->v84() < 10.0f) result |= 0x10;
             }
         }
     }
@@ -572,7 +569,7 @@ int checkArtsFull(void* param, void* actor, int flags) {
         if ((obj->field_3F00 & 2) && obj->field_3F28 == 1) {
             if (p->unk78 & 1) {
                 if (p->unk48 == 0xea) {
-                    if (a->v84() < lbl_eu_8066747C) result |= 0x80;
+                    if (a->v84() < 100.0f) result |= 0x80;
                     int kind = CtrlRemote_TouchBitByArg(0x20);
                     if (kind > 0x108 && kind < 0x116 && (gmGlobalFlag42 & 0x1F000) != 0) {
                         result |= 0x80;
@@ -585,7 +582,7 @@ int checkArtsFull(void* param, void* actor, int flags) {
                         result |= 0x80;
                     }
                 } else {
-                    if (p->unk48 == 0x10d && a->v72() < lbl_eu_80667478) result |= 0x80;
+                    if (p->unk48 == 0x10d && a->v72() < 2.0f) result |= 0x80;
                 }
             }
         }
@@ -598,7 +595,7 @@ int checkArtsFull(void* param, void* actor, int flags) {
             if (st == 0xe) result |= 0x80;
             int st2 = obj->field_3F60 ? *(u32*)((u8*)obj->field_3F60 + 0x374) : 0;
             if (st2 == 0xd) result |= 0x80;
-            if (a->v84() >= lbl_eu_8066747C) result |= 0x80;
+            if (a->v84() >= 100.0f) result |= 0x80;
         }
         if ((obj->field_3F00 & 2) && obj->field_3F28 == 6) {
             if (p->unk48 == 0xf8) {
@@ -619,7 +616,7 @@ int checkArtsFull(void* param, void* actor, int flags) {
                 if (p->unk3C == 4) {
                     if (getFirstFreeSlot() == -1) result |= 0x80;
                 } else if (p->unk77 == 0xb) {
-                    if (a->v74() <= lbl_eu_8066748C) result |= 0x80;
+                    if (a->v74() <= 0.2f) result |= 0x80;
                 } else if (p->unk77 >= 0xe && p->unk77 <= 0xf) {
                     if (isBattleStatusActive((u8*)obj + 8, 0x10a) == 0) result |= 0x80;
                 } else if (p->unk77 == 6) {

@@ -1,12 +1,12 @@
 // Decompiled functions for kyoshin/plugin/pluginHelp.
 // Help system plugin registrations - checks resource availability,
 // creates help entries, and manages pad input gating.
-
+#include "kyoshin/cf/CtrlRemoteApi.hpp"
 #include "kyoshin/plugin/pluginHelp.hpp"
 #include "monolib/vm/yvm2.h"
 
 extern "C" {
-    extern u32 CtrlRemote_TouchBitByArg(u32 resourceId);
+
     extern void CtrlRemote_SetSharedBit(u32 destination, u32 value);
     extern void CUICfManager_queueTutorialMenu(u32 param0, u32 param1, u32 param2);
     extern u32 MenuTutorialIsCreated();

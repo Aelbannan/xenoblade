@@ -50,5 +50,5 @@ public:
     void GridSubMenu_SetupOptions(int arg);
 };
 
-extern "C" void GridSubMenu_GetCursorPos(void* self, void* src);
+extern "C" void GridSubMenu_GetCursorPos(void* self, CItemBoxGridSubMenu* src);
 

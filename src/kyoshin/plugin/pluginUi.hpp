@@ -71,7 +71,6 @@ extern u32 __RTTI__Q22cf10CfObjectPc;
 
 // Shared BDAT character-name table pointer (.sbss); resolved by
 // BdatGetPtrDirect against lbl_eu_804FABF0 keys.
-extern void* lbl_eu_80664090;
 
 // Sub-object hanging off the player at +0x3ED4 (real owner:
 // cf::CfObjectImplWalker, whose vf40 at +0x40 is the talk-busy probe used
@@ -184,6 +183,5 @@ void CtrlObjectParam_SetWorkTailValue(int id);
 // Character-table row count / keyed lookup helpers (setLastTalkNpc).
 int Bdat_GetMaxRow_B1EC(char* tbl);
 // Character-table object used by setLastTalkNpc (.sbss pointer).
-extern char* lbl_eu_80664098;
 
 }

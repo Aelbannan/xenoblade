@@ -2,116 +2,14 @@
 #include "monolib/core.hpp"
 #include "monolib/lib.hpp"
 
-// ============================================================================
-// Blob monolibdata1d/monolibdata1 dissolve - CDeviceRemotePad-owned data
-// ranges. Retail bytes/reloc names below are the DOL + retail blob ground
-// truth. The RTTI base-list .sdata objects, the RTTI name .rodata strings,
-// the class vtables and the sbss singleton are defined here with the retail
-// names. NOTE: this TU needs effective `-RTTI off` (see report) - with RTTI
-// on, MWCC auto-generates __RTTI__* symbols that clash with the extern "C"
-// declarations of the retail RTTI objects.
-//
-// The vtable/RTTI function addresses are referenced through C-linkage extern
-// declarations of the retail (mangled) names; they coexist with the real
-// class member declarations (probe-verified) as long as the auto-generated
-// RTTI symbols stay off.
-// ============================================================================
-
-// Vtable-slot targets, RTTI objects and the retail RTTI/vtable labels.
-#include "monolib/data_vtables.hpp"
-
-// .data RTTI base lists (defined below; forward decls for the .sdata refs).
-extern "C" u32 lbl_eu_8056BC60[8];
-extern "C" u32 lbl_eu_8056BD20[6];
-
-// CDeviceBase inherits these CWorkThread slots. Kept local: other TUs declare
-// these C-linkage names with incompatible parameter lists.
-extern "C" void wkStandbyLogin__11CWorkThreadFv();
-extern "C" void wkStandbyLogout__11CWorkThreadFv();
-
-// .rodata 0x80522960-0x80522980: RTTI name strings.
-extern "C" const char lbl_eu_80522960[0x11] = "CDeviceRemotePad";
-extern "C" const char lbl_eu_80522974[0xC] = "CDeviceBase";
-
-// .sdata 0x806635E8-0x806635F8: RTTI base lists {&name, &baseList}.
-extern "C" u32 lbl_eu_806635E8[2] = { (u32)&lbl_eu_80522960[0], (u32)&lbl_eu_8056BC60[0] };
-extern "C" u32 lbl_eu_806635F0[2] = { (u32)&lbl_eu_80522974[0], (u32)&lbl_eu_8056BD20[0] };
-
-// .data 0x8056BBC0: CDeviceRemotePad vtable (0xA0).
-extern "C" u32 lbl_eu_8056BBC0[0xA0 / 4] = {
-    (u32)&lbl_eu_806635E8[0], 0, (u32)&__dt__16CDeviceRemotePadFv,
-    (u32)&WorkEvent1__10IWorkEventFPvPCc, (u32)&OnFileEvent__10IWorkEventFP10CEventFile,
-    (u32)&WorkEvent3__10IWorkEventFPv, (u32)&WorkEvent4__10IWorkEventFv,
-    (u32)&OnPauseTrigger__10IWorkEventFb,
-    (u32)&WorkEvent6__10IWorkEventFv, (u32)&WorkEvent7__10IWorkEventFv,
-    (u32)&WorkEvent8__10IWorkEventFv, (u32)&WorkEvent9__10IWorkEventFv,
-    (u32)&WorkEvent10__10IWorkEventFv, (u32)&WorkEvent11__10IWorkEventFv,
-    (u32)&WorkEvent12__10IWorkEventFv, (u32)&WorkEvent13__10IWorkEventFv,
-    (u32)&WorkEvent14__10IWorkEventFv, (u32)&WorkEvent15__10IWorkEventFv,
-    (u32)&WorkEvent16__10IWorkEventFv, (u32)&WorkEvent17__10IWorkEventFv,
-    (u32)&WorkEvent18__10IWorkEventFv, (u32)&WorkEvent19__10IWorkEventFv,
-    (u32)&WorkEvent20__10IWorkEventFv, (u32)&WorkEvent21__10IWorkEventFv,
-    (u32)&WorkEvent22__10IWorkEventFv, (u32)&WorkEvent23__10IWorkEventFv,
-    (u32)&WorkEvent24__10IWorkEventFv, (u32)&WorkEvent25__10IWorkEventFv,
-    (u32)&WorkEvent26__10IWorkEventFv, (u32)&WorkEvent27__10IWorkEventFv,
-    (u32)&WorkEvent28__10IWorkEventFv, (u32)&WorkEvent29__10IWorkEventFv,
-    (u32)&WorkEvent30__10IWorkEventFv, (u32)&WorkEvent31__10IWorkEventFv,
-    (u32)&wkUpdate__16CDeviceRemotePadFv, (u32)&wkRender__11CWorkThreadFv,
-    (u32)&wkRenderAfter__11CWorkThreadFv, (u32)&wkStandbyLogin__16CDeviceRemotePadFv,
-    (u32)&wkStandbyLogout__16CDeviceRemotePadFv, (u32)&wkStandbyExceptionRetry__11CWorkThreadFUl,
-};
-
-// .data 0x8056BC60: CDeviceRemotePad RTTI base list (0x20).
-extern "C" u32 lbl_eu_8056BC60[] = {
-    (u32)&__RTTI__10IWorkEvent, 0, (u32)&__RTTI__11CWorkThread, 0,
-    (u32)&lbl_eu_806635F0[0], 0, 0, 0,
-};
-
-// .data 0x8056BC80: CDeviceBase vtable (0xA0) - base-class slots are the
-// CWorkThread implementations.
-extern "C" u32 __vt__11CDeviceBase[0xA0 / 4] = {
-    (u32)&lbl_eu_806635F0[0], 0, (u32)&__dt__11CDeviceBaseFv,
-    (u32)&WorkEvent1__10IWorkEventFPvPCc, (u32)&OnFileEvent__10IWorkEventFP10CEventFile,
-    (u32)&WorkEvent3__10IWorkEventFPv, (u32)&WorkEvent4__10IWorkEventFv,
-    (u32)&OnPauseTrigger__10IWorkEventFb,
-    (u32)&WorkEvent6__10IWorkEventFv, (u32)&WorkEvent7__10IWorkEventFv,
-    (u32)&WorkEvent8__10IWorkEventFv, (u32)&WorkEvent9__10IWorkEventFv,
-    (u32)&WorkEvent10__10IWorkEventFv, (u32)&WorkEvent11__10IWorkEventFv,
-    (u32)&WorkEvent12__10IWorkEventFv, (u32)&WorkEvent13__10IWorkEventFv,
-    (u32)&WorkEvent14__10IWorkEventFv, (u32)&WorkEvent15__10IWorkEventFv,
-    (u32)&WorkEvent16__10IWorkEventFv, (u32)&WorkEvent17__10IWorkEventFv,
-    (u32)&WorkEvent18__10IWorkEventFv, (u32)&WorkEvent19__10IWorkEventFv,
-    (u32)&WorkEvent20__10IWorkEventFv, (u32)&WorkEvent21__10IWorkEventFv,
-    (u32)&WorkEvent22__10IWorkEventFv, (u32)&WorkEvent23__10IWorkEventFv,
-    (u32)&WorkEvent24__10IWorkEventFv, (u32)&WorkEvent25__10IWorkEventFv,
-    (u32)&WorkEvent26__10IWorkEventFv, (u32)&WorkEvent27__10IWorkEventFv,
-    (u32)&WorkEvent28__10IWorkEventFv, (u32)&WorkEvent29__10IWorkEventFv,
-    (u32)&WorkEvent30__10IWorkEventFv, (u32)&WorkEvent31__10IWorkEventFv,
-    (u32)&wkUpdate__11CWorkThreadFv, (u32)&wkRender__11CWorkThreadFv,
-    (u32)&wkRenderAfter__11CWorkThreadFv, (u32)&wkStandbyLogin__11CWorkThreadFv,
-    (u32)&wkStandbyLogout__11CWorkThreadFv, (u32)&wkStandbyExceptionRetry__11CWorkThreadFUl,
-};
-
-// .data 0x8056BD20: CDeviceBase RTTI base list (0x18).
-extern "C" u32 lbl_eu_8056BD20[] = {
-    (u32)&__RTTI__10IWorkEvent, 0, (u32)&__RTTI__11CWorkThread, 0, 0, 0,
-};
-
 // .sbss 0x80665638: CDeviceRemotePad singleton (8 bytes; word 0 in use).
 // (tentative definition with C linkage; header declares it extern "C")
 extern "C" {
 CDeviceRemotePad* lbl_eu_80665638[2];
 }
 
-// Own TU owns CDeviceBase's dtor: retail places it (0x8044A2AC) at the head
-// of this unit's slice, right before CDeviceRemotePad's dtor. The header
-// defines it inline, so the odr-use from __vt__11CDeviceBase above emits the
-// weak __dt__11CDeviceBaseFv here with the retail body (base-dtor + delete).
-
 CDeviceRemotePad::CDeviceRemotePad(const char* pName, CWorkThread* pParent) :
 CDeviceBase(pName, pParent, MAX_CHILD){
-    // Retail stores the manual vtable label (novtable class, no auto store).
-    *reinterpret_cast<u32**>(this) = lbl_eu_8056BBC0;
     mPadUpdateFunc = nullptr;
     lbl_eu_80665638[0] = this;
 

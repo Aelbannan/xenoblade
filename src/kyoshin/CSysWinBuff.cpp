@@ -3,6 +3,7 @@
 #define IWORK_EVENT_INLINE_DTOR
 #define CTTASK_INLINE_DTOR
 #define IUIWINDOW_INLINE_DTOR
+#include "kyoshin/cf/CfBdat.hpp"
 #include "kyoshin/CSysWinBuff.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"  // canonical setPresentationFlag decl
 #include "kyoshin/CSysWin.hpp"
@@ -120,7 +121,7 @@ void CSysWinBuff::Move() {
         if (mSysWin.isReady()) {
             if (sBuffMenuBdat == 0) break;
             mFlagB8 = 1;
-            u16 index = BdatGetU16Direct((void*)lbl_eu_806640E0, "help", mArgBA);
+            u16 index = BdatGetU16Direct((void*)::cf::CfBdat::spBtlBuffListFileData, "help", mArgBA);
             char* text = BdatGetPtrDirect((void*)sBuffMenuBdat, "help", index);
             mSysWin.setKindContent(text, 0);
             mSysWin.applyKind(1);

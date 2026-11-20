@@ -1,6 +1,7 @@
 #pragma once
 
 #include "kyoshin/cf/object/CfObjectMoveHelpers.hpp"
+#include "monolib/core/CSchedule.hpp"
 #include <types.h>
 #include <PowerPC_EABI_Support/Runtime/MWCPlusLib.h>
 
@@ -63,15 +64,6 @@ struct CActParamAnimView {
     u8 _37C[0x13C - 0x4];
     void* field_0x4B4; // +0x4B4 model/next-chain-obj pointer (getAnimChain result)
     u8 _4B8[0x84];
-};
-
-// Effect-instance view written by ModelDispEquip_HandleSlotCmd: word at +0x14 (result of the
-// vtable+0xA8 call) and a byte at +0x59 (active flag, set in the cmd==3 case).
-struct CModelDispEffectView {
-    u8 _00[0x14];
-    u32 field_0x14; // +0x14
-    u8 _18[0x41];
-    u8 field_0x59;  // +0x59
 };
 
 // Command buffer passed to ModelDispEquip_HandleSlotCmd: byte +0xA selects the command
@@ -218,16 +210,6 @@ struct CActParamHolder {
     void* animPtrs[2];      // +0xFF4 effect-slot color targets (== equip+0x1004)
 };
 
-// Flat view of the memory past the embedded holder (0xFD0): alias of the
-// CActParamHolder tail (equipPtrs/currentModelPtr/animPtrs) kept for functions
-// that address the region through the tail type.
-struct CActParamHolderTail {
-    u8 _00[0xFD0];      // 0x00..0xFD0
-    u32 equipPtrs[8];   // 0xFD0 = CModelDispEquip+0xFE0
-    u32 currentModelPtr; // 0xFF0 = CModelDispEquip+0x1000
-    void* animPtrs[2];  // 0xFF4 = CModelDispEquip+0x1004
-};
-
 class CModelDispEquip {
 public:
     CModelDispEquip(u32 somePtr, s32 equipSlot);
@@ -316,8 +298,8 @@ extern const u32 equipSignAnimTable[2];
 // MWCC from C++-mangling the call relocs (plain decls emit tickAnimFrame__FP..).
 extern "C" void tickAnimFrame(CActParamAnimView* self);
 
-extern "C" CModelDispEffectView* EffRoot_AddSchedReq(const u32* mgr, u8* bdat, u32 global, int r6, int r7, int r8);
-extern "C" void schedAttachChildSlot(CModelDispEffectView* effect, CModelDispEffectView* parent);
+extern "C" CSchedule* EffRoot_AddSchedReq(const u32* mgr, u8* bdat, u32 global, int r6, int r7, int r8);
+extern "C" void schedAttachChildSlot(CSchedule* effect, CScheduleChild* parent);
 extern "C" s32 getInstance__Q22ml6MTRandFv();
 extern "C" u32 rand31__Q22ml6MTRandFv();
 extern "C" int atoi(const char* str);
@@ -347,8 +329,8 @@ extern "C" void waitForDrawDone__9CDeviceVIFv();
 // ---- Enum-list / actor imports (ModelDispEquip_TeardownHolder / 801FFDC4 / 80200FB0) ----
 extern "C" void startEnumObjects(CModelDispEnumList* list, u32 type, u32 filter);
 extern "C" CModelDispSlot* getEntryAt(CModelDispEnumList* list, u32 index);
-extern "C" void schedClearFlag15Update(CModelDispEffectView* effect);
-extern "C" void schedDetachChildSlot(CModelDispEffectView* effect, CModelDispEffectView* parent);
+extern "C" void schedClearFlag15Update(CSchedule* effect);
+extern "C" void schedDetachChildSlot(CSchedule* effect, CScheduleChild* parent);
 extern "C" CModelDispNameParam* CfModel_GetBdatString(u8 value);
 extern "C" u32 bdatBitFromCol(u32 param1, const char* column, u32 param3);
 extern "C" int sprintf(char* str, const char* fmt, ...);

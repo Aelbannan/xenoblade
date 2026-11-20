@@ -1,10 +1,14 @@
 // Auto-scaffolded catalog TU for kyoshin/code_800B06A4
 // Replace stubs with high-level C/C++ during decomp.
 
+#include "kyoshin/cf/CfBdat.hpp"
 #include <types.h>
 #include "kyoshin/code_800AA008_Tok.hpp"
 #include "kyoshin/cf/object/CfObjectColl.hpp"
-extern "C" int* CtrlObjectParam_GetSlotTableBase();  // owner: include/functions.hpp
+#include "kyoshin/cf/object/CfObjectModel.hpp"
+#include "kyoshin/cf/object/CfObjectMap.hpp"
+#include "kyoshin/cf/object/CfObjectMove.hpp"
+
 // cf::CfObjectEne members (CfObjectEne.hpp cannot be included here yet: its
 // CfObjectActor/CfObjectMove chain clashes with this unit's loosely typed
 // extern "C" imports).
@@ -99,7 +103,7 @@ void init_0A90(void){}
 // the values are mirrored into the 80663E__ scratch set (first and last also
 // squared) - the same state sinit_800B9A40 seeds.
 void loadLayoutScales() {
-    void* tbl = lbl_eu_806640A8;
+    void* tbl = ::cf::CfBdat::spFldMapListFileData;
     u32 row = lbl_eu_80664184;
     // Two conversion scratch buffers: retail alternates between stack slots
     // sp+0x18 / sp+0x20 across the four conversions.
@@ -257,7 +261,7 @@ void init_dispatchTarget_2(){}
 extern u32 lbl_eu_80663F24;
 void gvar_clearF24(){lbl_eu_80663F24 = 0;}
 void cf::IFactoryEvent::FactoryEvent4() {}
-void UnkClass_805764CC::set_u32_00(u32 val){*(u32*)((u8*)this + 0x0) = val;}
+void UnkClass_805764CC::set_u32_00(u32 val){field_0x00 = val;}
 void copy_int_ptr(int* dst, int* src){*dst = *src;}
 
 extern "C" void copyWordAt4(void* a, void* b) {
@@ -635,7 +639,7 @@ extern "C" void tickMineSubobject(UnkClass_805764CC* self) {
         ((CfMapMineManager*)self->field_0xCAC)->ScanPoints();
     }
 }
-u32 UnkClass_805764CC::get_u32_04(){return *(u32*)((u8*)this + 0x4);}
+u32 UnkClass_805764CC::get_u32_04(){return field_0x04;}
 // us-800b35fc - __dt__800B2D30
 // Destructor that calls subobject destructor, then frees memory if flags > 0.
 // Returns self (standard MWCC destructor convention).
@@ -698,21 +702,21 @@ extern "C" void poolInsertBack(FactoryPoolList* self, void* payloadSrc) {
 // copies data from r6 into entry[8], copies the node template from r5[0] into entry[0..7],
 // and links it into the list before the node pointed to by r5[0].
 // Returns the new entry pointer via *r3.
-extern "C" void poolInsertNode(void** out, void* list, void* templ, void* data) {
+extern "C" void poolInsertNode(void** out, UnkClass_805764CC* list, void* templ, void* data) {
     s32 idx = 0;
     s32 byteOff = 0;
 
     // Find first empty slot (entry[0] == 0). Count and entry base re-read
     // per iteration (retail cmp r8,r10; blt loop, not counted mtctr).
-    for (; idx < *(s32*)((u8*)list + 0x18); idx++) {
-        if (*(u32*)(*(u32*)((u8*)list + 0x14) + byteOff) == 0) {
+    for (; idx < (s32)list->field_0x18; idx++) {
+        if (*(u32*)((u8*)list->field_0x14 + byteOff) == 0) {
             break;
         }
         byteOff += 0xC;
     }
 
     // Calculate entry pointer
-    u32* newEntry = (u32*)(*(u32*)((u8*)list + 0x14) + idx * 0xC);
+    u32* newEntry = (u32*)((u8*)list->field_0x14 + idx * 0xC);
 
     // Copy data word into entry[8] (retail guards the computed address:
     // addic. r4,r7,8; beq - kept from a source-level pointer null check).
@@ -733,13 +737,13 @@ extern "C" void poolInsertNode(void** out, void* list, void* templ, void* data) 
     *out = newEntry;
 }
 void init_2ED0(){}
-int obj_testBit_64_v0(void* p){return (*(int*)((char*)p + 0x64) >> 1) & 1;}
-int obj_testBit_64_v1(void* p){return (*(int*)((char*)p + 0x64) >> 1) & 1;}
-int obj_testBit_64_v2(void* p){return (*(int*)((char*)p + 0x64) >> 1) & 1;}
-int obj_testBit_64_v3(void* p){return (*(int*)((char*)p + 0x64) >> 1) & 1;}
-int obj_testBit_64_v4(void* p){return (*(int*)((char*)p + 0x64) >> 1) & 1;}
-int obj_testBit_64_v5(void* p){return (*(int*)((char*)p + 0x64) >> 1) & 1;}
-int obj_testBit_64_v6(void* p){return (*(int*)((char*)p + 0x64) >> 1) & 1;}
+int obj_testBit_64_v0(void* p){return (((cf::CfObject*)p)->unk64 >> 1) & 1;}
+int obj_testBit_64_v1(void* p){return (((cf::CfObject*)p)->unk64 >> 1) & 1;}
+int obj_testBit_64_v2(void* p){return (((cf::CfObject*)p)->unk64 >> 1) & 1;}
+int obj_testBit_64_v3(void* p){return (((cf::CfObject*)p)->unk64 >> 1) & 1;}
+int obj_testBit_64_v4(void* p){return (((cf::CfObject*)p)->unk64 >> 1) & 1;}
+int obj_testBit_64_v5(void* p){return (((cf::CfObject*)p)->unk64 >> 1) & 1;}
+int obj_testBit_64_v6(void* p){return (((cf::CfObject*)p)->unk64 >> 1) & 1;}
 u32 shift_u32_hi8(u32 val){return (val >> 16) & 0xFF;}
 // Sorted circular-buffer insertion ordered by the element's sort key at
 
@@ -961,7 +965,7 @@ check:
     goto check2;
 loop2:
     void* data = cur->mItem;                 // node->field_0x08 payload
-    s32 type = *(s32*)((u8*)data + 0x94);    // data->field_0x94 type id
+    s32 type = ((cf::CfObjectModel*)data)->field_0x94; // real type-id field
     if (type == 1 || type == 6) {
         poolInsertThunk(&self->field_0xC28, data);
     }
@@ -1188,7 +1192,7 @@ void sub_mainReset(){reslistFirstItem(getInstance());}
 void init_7058(){}
 void init_708C(){}
 void init_70FC(){}
-u32 gvar_get40F4(void){extern void* lbl_eu_806640F4; return (u32)lbl_eu_806640F4;}
+u32 gvar_get40F4(void){ return (u32)::cf::CfBdat::spItmWpnListFileData;}
 
 void* UnkClass_805764CC::getPtr_720(){return (void*)((u8*)this + 0x720);}
 void init_7214(){}
@@ -1435,7 +1439,7 @@ extern "C" void tickSpeedPass(UnkClass_805764CC* self, void* arg) {
     if (arg == 0) return;
     if (isSceneLoading__Q22cf13CfGameManagerFv() != 0) return;
     if (gflagHasMask(2) == 0) {
-        reloadMatchingItems(self, (const F8C0ListSource*)((u8*)self + 0xb48));
+    reloadMatchingItems(self, (const F8C0ListSource*)&self->field_0xB48);
     }
     if (lbl_eu_80663ED8 > lbl_eu_806669D8) {
         float dt = CfT_PlayRateGet();
@@ -1453,9 +1457,9 @@ extern "C" void tickSpeedPass(UnkClass_805764CC* self, void* arg) {
     if (result == 0) {
         SpeedSortBuffer buf;
         clear_700__17UnkClass_805764CCFv(&buf);
-        gatherSpeedEntries(self, (IB8FC4Player*)arg, (void*)((u8*)self + 0xb48),
+        gatherSpeedEntries(self, (IB8FC4Player*)arg, &self->field_0xB48,
                       &buf, sReslistGaugeA);
-        gatherSpeedEntries(self, (IB8FC4Player*)arg, (void*)((u8*)self + 0xb68),
+        gatherSpeedEntries(self, (IB8FC4Player*)arg, &self->field_0xB68,
                       &buf, sFactoryEventBaseReslistSize);
         processSortedBuffer(self, &buf);
     }
@@ -1936,23 +1940,24 @@ extern "C" void walkListByItemId(u32 arg1, u32 arg2) {
 // us-800b7b34 - allocTboxEntry
 // Allocates the first free pool slot of the TboxInfo reslist (link word == 0),
 // copies the payload record in, then links the slot at the head of the list.
-void allocTboxEntry(TboxInfoReslistPoolView* list, TboxPayload* src) {
+void allocTboxEntry(reslist<cf::TboxInfo>* list, TboxPayload* src) {
     s32 index = 0;
     u32 off = 0;
     s32 count;
     CfReslistNode* sentinel = list->mStartNodePtr; // r9: loaded before the loop
-    count = list->mSlotCount;                      // r8: loaded once
+    count = (s32)list->field_0x30;                 // r8: loaded once
     while (index < count) {
         // Empty slot claimed by this insert: its link word is still null.
         // Pool base re-read every iteration (retail reloads +0x2c in the loop).
-        if (*(CfReslistNode**)((u8*)list->mSlots + off) == 0) {
+        TboxPoolSlot* slots = (TboxPoolSlot*)list->field_0x2c;
+        if (*(CfReslistNode**)((u8*)slots + off) == 0) {
             break;
         }
         off += 0x24;
         index++;
     }
     // Base is re-read after the search (retail reloads +0x2c a second time).
-    TboxPoolSlot* slot = (TboxPoolSlot*)((u8*)list->mSlots + index * 0x24);
+    TboxPoolSlot* slot = (TboxPoolSlot*)((u8*)list->field_0x2c + index * 0x24);
     TboxPayload* dst = &slot->mInfo;
     if (dst != 0) {
         dst->field_00 = src->field_00;
@@ -2168,7 +2173,7 @@ u32 testObj64bit31(u8* self) {
 }
 // us-800b463c - return bit 27 of field at +0x6C
 u32 testObj6Cbit27(u8* self) {
-    return ((((Obj6CView*)self)->field_6C >> 27) & 1);
+    return ((((cf::CfObject*)self)->field_0x6C >> 27) & 1);
 }
 // Target us-800b5320: evtTypeSlot7E
 // Rejects null / non-enabled args, then checks whether the parent container's
@@ -2267,15 +2272,17 @@ extern "C" s32 evtTypeSlot80(CEvtTypeArg* arg) {
 }
 // us-800b5868 - clear bit 0 and set bit 1 of the field at +0x6C
 extern "C" void setObj6Cbit1(void* self) {
-    ((Obj6CView*)self)->field_6C = (((Obj6CView*)self)->field_6C & ~1u) | 2u;
+    cf::CfObject* obj = (cf::CfObject*)self;
+    obj->field_0x6C = (obj->field_0x6C & ~1u) | 2u;
 }
 // us-800b588c - clear bit 1 and set bit 0 of the field at +0x6C
 extern "C" void setObj6Cbit0(void* self) {
-    ((Obj6CView*)self)->field_6C = (((Obj6CView*)self)->field_6C & ~2u) | 1u;
+    cf::CfObject* obj = (cf::CfObject*)self;
+    obj->field_0x6C = (obj->field_0x6C & ~2u) | 1u;
 }
 // us-800b58a0 - accessor returning field at +0x70
 extern "C" u32 getObjField70(void* self) {
-    return ((Obj6CView*)self)->field_70;
+    return (u32)((cf::CfObjectModel*)self)->mTarget70;
 }
 // us-800b6dd8 - return pointer field at +0x98
 extern "C" B5994Obj* getObjField98(void* obj) {
@@ -2287,7 +2294,7 @@ extern "C" int getObjField620(void* obj) {
 }
 // us-800b6dcc - return mask & field at +0x6C
 u32 andObj6Cmask(u8* self, u32 mask) {
-    return mask & ((Obj6CView*)self)->field_6C;
+    return mask & ((cf::CfObject*)self)->field_0x6C;
 }
 // us-800b3654 - poolInsertThunk
 // Thunk: copy arg to a stack local, then forward its address to poolInsertBack.
@@ -2496,14 +2503,15 @@ extern "C" void* findWorkById(UnkClass_805764CC* self, int id) {
 // (-O4,s) negotiation per walls #6/#13.
 
 extern "C" void allocTboxPool(void* self, unsigned long handle, unsigned long count) {
-    TboxInfoReslistPoolView* list = (TboxInfoReslistPoolView*)self;
-    list->mSlots = (TboxPoolSlot*)__construct_new_array(
+    reslist<cf::TboxInfo>* list = (reslist<cf::TboxInfo>*)self;
+    TboxPoolSlot* slots = (TboxPoolSlot*)__construct_new_array(
         allocate_array__Q23mtl10MemManagerFUlUl(count * 0x24 + 0x10, handle),
         (ConstructorDestructor)factoryCtorNop, (ConstructorDestructor)0, 0x24, count);
+    list->field_0x2c = (u32)slots;
     for (int i = 0; i < (int)count; i++) {
-        list->mSlots[i].mLink0 = 0;
+        ((TboxPoolSlot*)list->field_0x2c)[i].mLink0 = 0;
     }
-    list->mSlotCount = (u32)count;
+    list->field_0x30 = (u32)count;
 }
 
 // Imports for spawnVoiceActor (voice/actor spawn path).
@@ -2636,7 +2644,7 @@ extern "C" void registerFactoryEvent__FPvPQ22cf13IFactoryEvent(UnkClass_805764CC
     ensureFactoryPool(self);
 
     // Walk the node list at field_0xC80; node next/prev/data links.
-    sentinel = (CFactoryEventPoolNode*)(*(u32*)((u8*)self + 0xc84));
+    sentinel = (CFactoryEventPoolNode*)self->field_0xC80.mStartNodePtr;
     CFactoryEventPoolNode* node = sentinel->next;
     while (node != sentinel) {
         if (node->data == event) {
@@ -2649,11 +2657,11 @@ extern "C" void registerFactoryEvent__FPvPQ22cf13IFactoryEvent(UnkClass_805764CC
     // re-reads the pool base from self->[0xc94] every slot check (aliasing),
     // and keeps an explicit running byte-offset (r5) alongside the slot index
     // (r4): `lwzx r0,r3,r5` + `addi r5,r5,12` + `addi r4,r4,1`.
-    count = *(int*)((u8*)self + 0xc98);
+    count = (int)self->field_0xC80.field_0x18;
     idx = 0;
     byteOff = 0;
     while (idx < count) {
-        if (*(u32*)(*(u8**)((u8*)self + 0xc94) + byteOff) == 0) {
+        if (*(u32*)((u8*)self->field_0xC80.field_0x14 + byteOff) == 0) {
             break;
         }
         byteOff += 0xc;
@@ -3543,9 +3551,9 @@ extern "C" void tickObjectLists(UnkClass_805764CC* self, void* arg, void* other)
             }
         } else if ((data->flags68 & 0x40) != 0) {
             // Notify every queued factory event about this object, then remove it.
-            CfReslistNode* qHead = *(CfReslistNode**)((u8*)self + 0xC84);
+            CfReslistNode* qHead = (CfReslistNode*)self->field_0xC80.mStartNodePtr;
             CfReslistNode* q = qHead->mNext;
-            while (q != *(CfReslistNode**)((u8*)self + 0xC84)) {
+            while (q != (CfReslistNode*)self->field_0xC80.mStartNodePtr) {
                 ((IQItem4*)q->mItem)->unk04(data);
                 q = q->mNext;
             }
@@ -3732,7 +3740,7 @@ extern "C" u32 fileObjectIntoPools(UnkClass_805764CC* self, cf::CfObject* obj) {
     // Register in the sorted ring buffer, then route into the reslists.
     // Single-exit else-if chain matches retail's shared return tail.
     flag = 0;
-    ringInsertSorted((UnkClass_800B0AD8*)((u8*)self + 0x20), (UnkClass_805764CC**)&obj, &flag);
+    ringInsertSorted(&self->field_0x20, (UnkClass_805764CC**)&obj, &flag);
     if (cfCam_bit1At0x64(obj)) {
         poolInsertThunk(&self->field_0xB28, obj);
     } else if (testObj64bit8(obj)) {
@@ -4161,13 +4169,7 @@ extern "C" s32 scanBattleObjects() {
 // (flags at +0x64/+0x70/+0x74, fileObjectIntoPools filing, slot 0x58 init hook)
 // and notify every queued factory event (field_0xC80 list, slot 3).
 
-// Manager counter view: the D08 word sits inside an otherwise-unnamed pad.
-struct B20B4Mgr {
-    u8 _pad[0xD08];
-    u32 d08;
-};
 
-// Common object-head view written by every spawn path + the tail.
 struct B20B4ObjView {
     u8 _pad00[0x64];
     u32 flags64;                   // +0x64 final mask
@@ -4177,13 +4179,6 @@ struct B20B4ObjView {
 };
 
 // Npc/pc deep fields filled after construction.
-struct B20B4NpcView {
-    u8 _pad00[0x70C - 0x00];
-    u16 h70C;
-    u16 h70E;
-    u16 h710;
-    u16 h712;
-};
 
 // Eff (kind 0x20) fields: name string copy + id halves.
 struct B20B4EffView {
@@ -4195,53 +4190,6 @@ struct B20B4EffView {
     u16 h8C;                       // +0x8C w00 & 0x3ff
 };
 
-// Point/marker objects (kinds 0x18000 / 0x4000): fully hand-initialized.
-struct B20B4PtView {
-    void* vtbl;                    // 0x00
-    u32 field04;
-    u32 field08;
-    u32 field0C;
-    u8 b10;
-    u8 _pad11[0x30 - 0x11];
-    u32 field30;
-    u32 field34;
-    u32 field38;
-    float f3C;                     // 0x3C..0x5C: nine copies of D8 constant
-    float f40;
-    float f44;
-    float f48;
-    float f4C;
-    float f50;
-    float f54;
-    float f58;
-    float f5C;
-    float f60;                     // DC constant
-    u32 flags68;                   // 0x68
-    u8 pad6C0;
-    u8 pad6D0;
-    u8 pad6E0;
-    u8 pad6F0;
-    u32 field74;
-    u8 b78;                        // 0x78
-    u8 _pad79[0x88 - 0x79];
-    u32 field88;
-    u16 h8C;
-    u16 h8E;
-    u8 b90;                        // 0x90
-    u8 _pad91[0x94 - 0x91];
-    u32 field94;                   // 0x94 (0x18000 only)
-    u32 field98;                   // init 1
-    u32 field9C;
-    u8 _padA0[0x120 - 0xA0];
-    u8 b120;
-    u8 _pad121[0x130 - 0x121];
-    u32 field130;
-    u8 rec134;                     // 0x134 record byte (zeroed via loop)
-    u8 _pad135[0x144 - 0x135];
-    u32 rec144;                    // +0x10 of the record
-    float f148;                    // E0 constant (0x18000 only)
-    u16 h158;
-};
 
 // ObjectModel (kind 0x200): inlined ctor body over the raw 0x2f50 block.
 struct B20B4ModelView {
@@ -4296,18 +4244,16 @@ struct B20B4EvtNode {
     }
 
 // Manager counter bump: increments D08 with a wrap guard keeping it non-zero.
-#define B20B4_BUMP(obj) \
+#define B20B4_BUMP(field74) \
     do { \
-        B20B4ObjView* ov = (B20B4ObjView*)(obj); \
-        B20B4Mgr* mgr = (B20B4Mgr*)self; \
-        ov->field74 = mgr->d08; \
-        u32 c = mgr->d08 + 1; \
+        field74 = self->field_0xD08; \
+        u32 c = self->field_0xD08 + 1; \
         if ((c & 0x7fffffff) == 0) { \
             if (c == 0) { \
                 c = 1; \
             } \
         } \
-        mgr->d08 = c; \
+        self->field_0xD08 = c; \
     } while (0)
 
 void* spawnMaskedObject(UnkClass_805764CC* self, u32 mask,
@@ -4325,40 +4271,45 @@ void* spawnMaskedObject(UnkClass_805764CC* self, u32 mask,
     case 0x200: {
         // ObjectModel: flat ctor then a hand-inlined finisher over the block.
         void* mem = mtl::MemManager::allocate(0x2f50, (unsigned long)CfRes_getHeapHandle());
+        cf::CfObjectMap* map;
         if (mem != 0) {
             __ct__Q22cf13CfObjectModelFv(mem);
+            map = (cf::CfObjectMap*)mem;
+            // Residual: UnkMapSubF0's inner words 0x100/0x104/0x110/0x2F28
+            // are still unnamed in the non-owned CfObjectMap.hpp; keep the
+            // narrow view only until that header names them.
             B20B4ModelView* mv = (B20B4ModelView*)mem;
             u32 zero = 0;
             *(void**)mem = (void*)lbl_eu_80529128;
-            mv->zDC = zero;
-            mv->zE0 = zero;
-            mv->zE4 = zero;
-            mv->zE8 = zero;
-            mv->zEC = zero;
+            map->field_0xDC = (void*)zero;
+            map->field_0xE0 = (void*)zero;
+            map->field_0xE4 = (void*)zero;
+            map->field_0xE8 = (void*)zero;
+            map->field_0xEC = (void*)zero;
             mv->z100 = zero;
             mv->z104 = zero;
             mv->z110 = zero;
             mv->z2F28 = zero;
-            __dt__8047BDA8((u8*)mem + 0xf0);
-            mv->z2F38 = zero;
+            __dt__8047BDA8(&map->field_0xF0);
+            map->field_0x2F38 = zero;
             float fDCm = lbl_eu_806669DC;
-            mv->z2F3C = zero;
-            mv->b2F40 = 0;
-            mv->f2F48 = fDCm;
+            map->field_0x2F3C = (CScnEnvLgtCtrlListItem*)zero;
+            map->field_0x2F40 = 0;
+            map->field_0x2F48 = fDCm;
         }
         obj = mem;
         if (obj == 0) {
             break;
         }
         {
-            B20B4ObjView* ov = (B20B4ObjView*)obj;
-            ov->field70 = w04;
-            B20B4_BUMP(obj);
+            map->mTarget70 = (void*)w04;
+            B20B4_BUMP(map->field_0x74);
         }
         break;
     }
     case 0x02: {
         // Npc/Pc pair: h24 selects compact npc vs big pc container.
+        cf::CfObjectMove* move;
         if (res == 0) {
             break;
         }
@@ -4426,14 +4377,12 @@ void* spawnMaskedObject(UnkClass_805764CC* self, u32 mask,
             B20B4_SET_FIELDS(obj)
             {
                 // Deep fields: counter snapshot then the halfword row.
-                B20B4ObjView* ov = (B20B4ObjView*)obj;
-                B20B4Mgr* mgr = (B20B4Mgr*)self;
-                ov->field74 = mgr->d08;
-                B20B4NpcView* nv = (B20B4NpcView*)obj;
-                nv->h70C = payload->h1C;
-                nv->h70E = payload->h1E;
-                nv->h710 = payload->h20;
-                nv->h712 = payload->h22;
+                move = (cf::CfObjectMove*)obj;
+                move->field_0x74 = self->field_0xD08;
+                move->field_70C[0] = payload->h1C;
+                move->field_70C[1] = payload->h1E;
+                move->field_710[0] = payload->h20;
+                move->field_710[1] = payload->h22;
             }
             if (slot >= 0 && handle >= 0) {
                 // Claim the slot: stamp our handle into this entry set,
@@ -4484,7 +4433,7 @@ void* spawnMaskedObject(UnkClass_805764CC* self, u32 mask,
             } else {
                 mask = 0x80000008;
             }
-            B20B4_BUMP(obj);
+            B20B4_BUMP(move->field_0x74);
         }
         break;
     }
@@ -4515,7 +4464,7 @@ void* spawnMaskedObject(UnkClass_805764CC* self, u32 mask,
         CfObjectMove_setSubB0FieldA(obj, -1);
         ((IB20B4Set*)obj)->setField(0, w00);
         ((IB20B4Set*)obj)->setField(1, w04);
-        B20B4_BUMP(obj);
+        B20B4_BUMP(((cf::CfObjectMove*)obj)->field_0x74);
         break;
     }
     case 0x80: {
@@ -4531,7 +4480,7 @@ void* spawnMaskedObject(UnkClass_805764CC* self, u32 mask,
             break;
         }
         ((cf::CfObjectObj*)obj)->setup(w04, w00);
-        B20B4_BUMP(obj);
+        B20B4_BUMP(((cf::CfObjectMove*)obj)->field_0x74);
         break;
     }
     case 0x100: {
@@ -4547,7 +4496,7 @@ void* spawnMaskedObject(UnkClass_805764CC* self, u32 mask,
             break;
         }
         ((cf::CfObjectObj*)obj)->setup(w04, w00);
-        B20B4_BUMP(obj);
+        B20B4_BUMP(((cf::CfObjectMove*)obj)->field_0x74);
         break;
     }
     case 0x20: {
@@ -4581,7 +4530,7 @@ void* spawnMaskedObject(UnkClass_805764CC* self, u32 mask,
             strcpy(ev->name78, name);
             ev->h8C = (u16)(w00 & 0x3ff);
             ev->field70 = w04;
-            B20B4_BUMP(obj);
+            B20B4_BUMP(((B20B4ObjView*)obj)->field74);
         }
         break;
     }
@@ -4594,50 +4543,51 @@ void* spawnMaskedObject(UnkClass_805764CC* self, u32 mask,
         void* mem = mtl::MemManager::allocate(0x164, (unsigned long)CfRes_getAllocHandle());
         obj = mem;
         if (mem != 0) {
-            B20B4PtView* p = (B20B4PtView*)mem;
+            cf::CfObject* base = (cf::CfObject*)mem;
+            cf::CfObjectColl* coll = (cf::CfObjectColl*)mem;
             u32 zero = 0;
-            p->field04 = zero;
+            base->unk4 = zero;
             float fD8 = lbl_eu_806669D8;
             float fDC = lbl_eu_806669DC;
-            p->field08 = zero;
-            p->field0C = zero;
-            p->b10 = 0;
-            p->field30 = zero;
-            p->field34 = zero;
-            p->vtbl = (void*)__vt__Q22cf8CfObject;
-            p->field38 = zero;
-            p->f3C = fD8;
-            p->f40 = fD8;
-            p->f44 = fD8;
-            p->f48 = fD8;
-            p->f4C = fD8;
-            p->f50 = fD8;
-            p->f54 = fD8;
-            p->f58 = fD8;
-            p->f5C = fD8;
-            p->f60 = fDC;
-            p->flags68 = zero;
-            p->pad6C0 = 0;
-            p->pad6D0 = 0;
-            p->pad6E0 = 0;
-            p->pad6F0 = 0;
-            p->field74 = zero;
-            p->b78 = 0;
-            p->field88 = zero;
-            p->h8C = 0;
-            p->h8E = 0;
+            base->unk8 = zero;
+            base->unkC = zero;
+            ((u8*)&base->mPtr10)[0] = 0;
+            base->field_30 = zero;
+            *(u32*)base->unk34 = zero;
+            *(void**)mem = (void*)__vt__Q22cf8CfObject;
+            base->mSubObj38 = (void*)zero;
+            base->mPos3C = fD8;
+            base->mPos40 = fD8;
+            base->mPos44 = fD8;
+            *(float*)base->_pad48 = fD8;
+            base->mField4C = fD8;
+            *(float*)base->_pad50 = fD8;
+            base->mSubObj54.mPos.x = fD8;
+            base->mSubObj54.mPos.y = fD8;
+            base->mSubObj54.mPos.z = fD8;
+            base->mFloat60 = fDC;
+            base->mFlags68 = zero;
+            ((u8*)&base->field_0x6C)[0] = 0;
+            ((u8*)&base->field_0x6C)[1] = 0;
+            ((u8*)&base->field_0x6C)[2] = 0;
+            ((u8*)&base->field_0x6C)[3] = 0;
+            *(u32*)coll->pad70 = zero;
+            coll->pad70[8] = 0;
+            *(u32*)&coll->pad70[0x18] = zero;
+            *(u16*)&coll->pad70[0x1C] = 0;
+            *(u16*)&coll->pad70[0x1E] = 0;
             ((void (*)(void*))((void**)__vt__Q22cf8CfObject)[0x5c / 4])(mem);
-            p->b90 = 0;
-            p->flags68 = (p->flags68 | 0x00100000) & 0x00380000;
-            p->field94 = zero;
-            p->field98 = 1;
-            p->field9C = zero;
-            p->b120 = 0;
-            p->field130 = zero;
+            coll->pad70[0x20] = 0;
+            base->mFlags68 = (base->mFlags68 | 0x00100000) & 0x00380000;
+            coll->field_0x94 = zero;
+            coll->field_0x98 = 1;
+            coll->field_0x9C = zero;
+            coll->fieldName120.mString[0] = 0;
+            coll->fieldName120.mLength = zero;
             // Zero the single fixed-size record at +0x134.
             {
-                u8* cur = (u8*)mem + 0x134;
-                u8* end = (u8*)mem + 0x148;
+                u8* cur = (u8*)coll->pad134;
+                u8* end = (u8*)&coll->field_0x148;
                 if (cur < end) {
                     u32 cnt = (u32)(end + 0x13 - cur) / 0x14;
                     while (cnt-- != 0) {
@@ -4647,11 +4597,11 @@ void* spawnMaskedObject(UnkClass_805764CC* self, u32 mask,
                     }
                 }
             }
-            p->vtbl = (void*)lbl_eu_80528600;
+            *(void**)mem = (void*)lbl_eu_80528600;
             float fE0 = 360.0f;
-            p->f148 = fE0;
-            p->h158 = 0;
-            B20B4_BUMP(obj);
+            coll->field_0x148 = fE0;
+            coll->field_0x158 = 0;
+            B20B4_BUMP(*(u32*)coll->pad70);
             ((IB20B4Start*)obj)->start(1);
         }
         break;
@@ -4665,43 +4615,44 @@ void* spawnMaskedObject(UnkClass_805764CC* self, u32 mask,
         void* mem = mtl::MemManager::allocate(0x94, (unsigned long)CfRes_getAllocHandle());
         obj = mem;
         if (mem != 0) {
-            B20B4PtView* p = (B20B4PtView*)mem;
+            cf::CfObject* base = (cf::CfObject*)mem;
+            cf::CfObjectColl* coll = (cf::CfObjectColl*)mem;
             u32 zero = 0;
-            p->field04 = zero;
+            base->unk4 = zero;
             float fD8 = lbl_eu_806669D8;
             float fDC = lbl_eu_806669DC;
-            p->field08 = zero;
-            p->field0C = zero;
-            p->b10 = 0;
-            p->field30 = zero;
-            p->field34 = zero;
-            p->vtbl = (void*)__vt__Q22cf8CfObject;
-            p->field38 = zero;
-            p->f3C = fD8;
-            p->f40 = fD8;
-            p->f44 = fD8;
-            p->f48 = fD8;
-            p->f4C = fD8;
-            p->f50 = fD8;
-            p->f54 = fD8;
-            p->f58 = fD8;
-            p->f5C = fD8;
-            p->f60 = fDC;
-            p->flags68 = zero;
-            p->pad6C0 = 0;
-            p->pad6D0 = 0;
-            p->pad6E0 = 0;
-            p->pad6F0 = 0;
-            p->field74 = zero;
-            p->b78 = 0;
-            p->field88 = zero;
-            p->h8C = 0;
-            p->h8E = 0;
+            base->unk8 = zero;
+            base->unkC = zero;
+            ((u8*)&base->mPtr10)[0] = 0;
+            base->field_30 = zero;
+            *(u32*)base->unk34 = zero;
+            *(void**)mem = (void*)__vt__Q22cf8CfObject;
+            base->mSubObj38 = (void*)zero;
+            base->mPos3C = fD8;
+            base->mPos40 = fD8;
+            base->mPos44 = fD8;
+            *(float*)base->_pad48 = fD8;
+            base->mField4C = fD8;
+            *(float*)base->_pad50 = fD8;
+            base->mSubObj54.mPos.x = fD8;
+            base->mSubObj54.mPos.y = fD8;
+            base->mSubObj54.mPos.z = fD8;
+            base->mFloat60 = fDC;
+            base->mFlags68 = zero;
+            ((u8*)&base->field_0x6C)[0] = 0;
+            ((u8*)&base->field_0x6C)[1] = 0;
+            ((u8*)&base->field_0x6C)[2] = 0;
+            ((u8*)&base->field_0x6C)[3] = 0;
+            *(u32*)coll->pad70 = zero;
+            coll->pad70[8] = 0;
+            *(u32*)&coll->pad70[0x18] = zero;
+            *(u16*)&coll->pad70[0x1C] = 0;
+            *(u16*)&coll->pad70[0x1E] = 0;
             ((void (*)(void*))((void**)__vt__Q22cf8CfObject)[0x5c / 4])(mem);
-            p->vtbl = (void*)__vt__Q22cf13CfObjectPoint;
-            p->b90 = 0;
-            p->flags68 = (p->flags68 | 0x00100000) & 0x00380000;
-            B20B4_BUMP(obj);
+            *(void**)mem = (void*)__vt__Q22cf13CfObjectPoint;
+            coll->pad70[0x20] = 0;
+            base->mFlags68 = (base->mFlags68 | 0x00100000) & 0x00380000;
+            B20B4_BUMP(*(u32*)coll->pad70);
             ((IB20B4Start*)obj)->start(1);
         }
         break;
@@ -4719,10 +4670,9 @@ void* spawnMaskedObject(UnkClass_805764CC* self, u32 mask,
         return 0;
     }
     {
-        B20B4ObjView* ov = (B20B4ObjView*)obj;
-        ov->flags64 = mask;
+        ((cf::CfObject*)obj)->unk64 = mask;
         fileObjectIntoPools(self, (cf::CfObject*)obj);
-        ov->field70 = w04;
+        ((B20B4ObjView*)obj)->field70 = w04;
         ((IB20B4Vt58*)obj)->unk22(arg);
 
         CfReslistNode* sentinel = (CfReslistNode*)self->field_0xC80.mStartNodePtr;
@@ -5510,8 +5460,7 @@ extern "C" void copyObjVec724(void* self, void* src) {
     vec->field_72C = ((u32*)src)[2];
 }
 extern "C" u32 getGlobalU32_40F4() {
-    extern void* lbl_eu_806640F4;
-    return (u32)lbl_eu_806640F4;
+    return (u32)::cf::CfBdat::spItmWpnListFileData;
 }
 
 // Fill the C28 reslist

@@ -47,9 +47,9 @@ __declspec(section ".data") __attribute__((aligned(8))) void *lbl_eu_80565B98[26
     0
 };
 
-void (*lbl_eu_805EC450)(u32, const char*, int);
-u32 lbl_eu_805EC454;
-unsigned char mfci_bss_gap[0x9F0];
+void (*mfci_errfn)(u32, const char*, int); // name-guess: adjacent CriWare gcci_errfn; sole mfci.c use is the error callback
+u32 mfci_errarg; // name-guess: adjacent CriWare gcci_errarg; passed as errfn arg
+unsigned char mfci_work[0x9F0]; // name-guess: adjacent CriWare gcci_work; remainder of the 0x9F8 error/work BSS block
 
 extern void CRICRW_Sprintf(char* buf, int size, const char* fmt, ...);
 extern void CRICRW_Strcpy(char* dst, int maxlen, const char* src);
@@ -88,8 +88,8 @@ int mfci_str_to_uint_ptr(const char* str, char** endptr, int base) {
 void mfCiExecServer() {}
 
 void mfCiEntryErrFunc(u32 a, u32 b) {
-    lbl_eu_805EC450 = (void (*)(u32, const char*, int))a;
-    lbl_eu_805EC454 = b;
+    mfci_errfn = (void (*)(u32, const char*, int))a;
+    mfci_errarg = b;
 }
 
 typedef struct MfCiFile {
@@ -115,7 +115,7 @@ typedef struct MfCiGlobals {
 } MfCiGlobals;
 
 int mfCiGetFileSize(const char* name) {
-    MfCiGlobals* g = (MfCiGlobals*)&lbl_eu_805EC450;
+    MfCiGlobals* g = (MfCiGlobals*)&mfci_errfn;
     int size = 0;
     const char* p;
     if (strlen(name) >= 0x12) {
@@ -132,7 +132,7 @@ int mfCiGetFileSize(const char* name) {
 
 void* mfCiOpen(const char* path, int mode) {
     MfCiFile* sct;
-    MfCiGlobals* g = (MfCiGlobals*)&lbl_eu_805EC450;
+    MfCiGlobals* g = (MfCiGlobals*)&mfci_errfn;
     int i;
 
     if (path == NULL) {
@@ -189,8 +189,8 @@ void* mfCiOpen(const char* path, int mode) {
 void mfCiClose(MfCiFile* sct) {
     if (sct == NULL) {
         const char* msg = lbl_eu_80518844 + 0xB4;
-        if (lbl_eu_805EC450 != NULL)
-            lbl_eu_805EC450(lbl_eu_805EC454, msg, 0);
+        if (mfci_errfn != NULL)
+            mfci_errfn(mfci_errarg, msg, 0);
         return;
     }
     SVM_Lock();
@@ -205,8 +205,8 @@ void mfCiClose(MfCiFile* sct) {
 int mfCiSeek(MfCiFile* sct, int offset, int whence) {
     if (sct == NULL) {
         const char* msg = lbl_eu_80518844 + 0xCC;
-        if (lbl_eu_805EC450 != NULL)
-            lbl_eu_805EC450(lbl_eu_805EC454, msg, 0);
+        if (mfci_errfn != NULL)
+            mfci_errfn(mfci_errarg, msg, 0);
         return 0;
     }
     SVM_Lock();
@@ -231,8 +231,8 @@ int mfCiSeek(MfCiFile* sct, int offset, int whence) {
 int mfCiTell(MfCiFile* sct) {
     if (sct == NULL) {
         const char* msg = lbl_eu_80518844 + 0xE5;
-        if (lbl_eu_805EC450 != NULL)
-            lbl_eu_805EC450(lbl_eu_805EC454, msg, 0);
+        if (mfci_errfn != NULL)
+            mfci_errfn(mfci_errarg, msg, 0);
         return 0;
     }
     return sct->pos;
@@ -247,7 +247,7 @@ static void mfciParseSizeTail(char** pp, unsigned long* outSize) {
 }
 
 int mfCiReqRd(MfCiFile* sct, int size, void* buf) {
-    MfCiGlobals* g = (MfCiGlobals*)&lbl_eu_805EC450;
+    MfCiGlobals* g = (MfCiGlobals*)&mfci_errfn;
     char* p;
     int parsed;
     int n;
@@ -324,8 +324,8 @@ int mfCiReqRd(MfCiFile* sct, int size, void* buf) {
 void mfCiStopTr(MfCiFile* sct) {
     if (sct == NULL) {
         const char* msg = lbl_eu_80518844 + 0xB4;
-        if (lbl_eu_805EC450 != NULL)
-            lbl_eu_805EC450(lbl_eu_805EC454, msg, 0);
+        if (mfci_errfn != NULL)
+            mfci_errfn(mfci_errarg, msg, 0);
         return;
     }
     SVM_Lock();
@@ -336,8 +336,8 @@ void mfCiStopTr(MfCiFile* sct) {
 int mfCiGetStat(MfCiFile* sct) {
     if (sct == NULL) {
         const char* msg = lbl_eu_80518844 + 0xB4;
-        if (lbl_eu_805EC450 != NULL)
-            lbl_eu_805EC450(lbl_eu_805EC454, msg, 0);
+        if (mfci_errfn != NULL)
+            mfci_errfn(mfci_errarg, msg, 0);
         return 0;
     }
     return (s8)sct->status;
@@ -346,8 +346,8 @@ int mfCiGetStat(MfCiFile* sct) {
 int mfCiGetSctLen(MfCiFile* sct) {
     if (sct == NULL) {
         const char* msg = lbl_eu_80518844 + 0x158;
-        if (lbl_eu_805EC450 != NULL)
-            lbl_eu_805EC450(lbl_eu_805EC454, msg, 0);
+        if (mfci_errfn != NULL)
+            mfci_errfn(mfci_errarg, msg, 0);
         return 0;
     }
     return sct->sctsize;
@@ -367,8 +367,8 @@ void mfCiSetSctLen(MfCiSectInfo* sct, int sctsize)
 {
     if (sct == NULL) {
         const char* msg = lbl_eu_80518844 + 0x170;
-        if (lbl_eu_805EC450 != NULL)
-            lbl_eu_805EC450(lbl_eu_805EC454, msg, 0);
+        if (mfci_errfn != NULL)
+            mfci_errfn(mfci_errarg, msg, 0);
         return;
     }
     s32 len = sct->len;
@@ -381,15 +381,15 @@ void mfCiSetSctLen(MfCiSectInfo* sct, int sctsize)
 int mfCiGetNumTr(MfCiFile* sct) {
     if (sct == NULL) {
         const char* msg = lbl_eu_80518844 + 0xB4;
-        if (lbl_eu_805EC450 != NULL)
-            lbl_eu_805EC450(lbl_eu_805EC454, msg, 0);
+        if (mfci_errfn != NULL)
+            mfci_errfn(mfci_errarg, msg, 0);
         return 0;
     }
     return sct->numTr;
 }
 
 int mfCiOptFn1(MfCiFile* sct, int op) {
-    MfCiGlobals* g = (MfCiGlobals*)&lbl_eu_805EC450;
+    MfCiGlobals* g = (MfCiGlobals*)&mfci_errfn;
     const char* p;
     int result;
 

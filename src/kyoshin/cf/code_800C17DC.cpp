@@ -309,26 +309,20 @@ Unk805739E8 lbl_eu_805739E8;
 Unk805739F8 lbl_eu_805739F8;
 
 // ---------------------------------------------------------------------------
-// Retail .sdata2 (0x28): the six scenario-keyword strings used by the
-// lbl_eu_8052A528 dispatch table.  Offsets follow retail
-// (0x00/0x04/0x08/0x0C/0x14/0x1C), so the two strings after the 7-byte
-// "effect" get an explicit 4-byte alignment; retail's .sdata2 extent is 0x28.
-__declspec(section ".sdata2") char lbl_eu_80666B58[4] = "chr";
-__declspec(section ".sdata2") char lbl_eu_80666B5C[4] = "anm";
-__declspec(section ".sdata2") char lbl_eu_80666B60[4] = "obj";
-__declspec(section ".sdata2") char lbl_eu_80666B64[7] = "effect";
-__declspec(section ".sdata2") __attribute__((aligned(4))) char lbl_eu_80666B6C[6] = "mapse";
-__declspec(section ".sdata2") __attribute__((aligned(4))) char lbl_eu_80666B74[5] = "pack";
+// Retail .sdata2 (0x28): MWCC pools the six scenario-keyword string literals
+// from the dispatch table below at 0x00/0x04/0x08/0x0C/0x14/0x1C in first-use
+// order, with the padding after "effect" and "mapse" emitted by the compiler;
+// no separate string definitions are needed.
 
 // ---------------------------------------------------------------------------
 // Retail .data owned by this TU (0x30): the scenario-keyword dispatch table.
 TextKeyword lbl_eu_8052A528[6] = {
-    { (const char*)lbl_eu_80666B58, 0x0 },
-    { (const char*)lbl_eu_80666B5C, 0x1 },
-    { (const char*)lbl_eu_80666B60, 0x2 },
-    { (const char*)lbl_eu_80666B64, 0x3 },
-    { (const char*)lbl_eu_80666B6C, 0x4 },
-    { (const char*)lbl_eu_80666B74, 0x5 },
+    { "chr", 0x0 },
+    { "anm", 0x1 },
+    { "obj", 0x2 },
+    { "effect", 0x3 },
+    { "mapse", 0x4 },
+    { "pack", 0x5 },
 };
 
 // Retail .sdata2 ends with a 4-byte zero word at 0x24 (the retail split names

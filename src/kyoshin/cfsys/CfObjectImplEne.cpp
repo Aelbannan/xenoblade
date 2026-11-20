@@ -19,6 +19,10 @@ extern "C" int MoveImplEne_SyncTargetArrow(cf::CfObjectImplEneObj* self, int fla
 extern "C" int MoveImplEne_RunSharedUpdate0(void* self);
 extern "C" void MoveImplEne_MatchTokenRelease(cf::CfObjectImplEneObj* self, u32 arg);
 
+// The retail .sdata pointer owns this string; define it here so the emitted
+// small-data address matches the object that strstr reads in the original.
+const char* lbl_eu_80661D48 = "en0153";
+
 // Runs the per-frame update: prepares via MoveImplInitFields, dispatches vtable
 // slot 0xe4, feeds the result + sub-fields into CharEffInit, pushes the
 // +0x28 sub-object into attachOwner, and finally triggers vtable slot 0x30
@@ -106,7 +110,7 @@ void MoveImplEne_TickBattleAI(cf::CfObjectImplEneObj* self) {
     if (((cf::CfObjectImplEne14*)self->field_14)->field_90 != 0) {
         if (self->vf40(0x400) != 0) {
             ((cf::CfObjectImplEne98*)((cf::CfObjectImplEne14*)self->field_14)->field_98)->n5C(
-                lbl_eu_80666CE0);
+                0.02f);
         }
     }
     MoveImplEne_SyncTargetArrow(self, 1);
@@ -125,9 +129,9 @@ void MoveImplEne_TickBattleState(cf::CfObjectImplEneObj* self) {
     if (!(battleObj->field_3374 & 0x100) && battleObj->field_3F60 != 0) resetOk = 1;
     if (resetOk != 0 && (((cf::CfImplEneField3F60*)(u32)battleObj->field_3F60)->field_4EC & 0x80)) doReset = 1;
     if (doReset != 0) {
-        battleObj->bg18(lbl_eu_80666CE4);
+        battleObj->bg18(0.0f);
     }
-    if (battleObj->bg2C() == lbl_eu_80666CE4) return;
+    if (battleObj->bg2C() == 0.0f) return;
 
     // Address-taken id slots (testActorStatus out values); order matters for
     // the retail stack layout (0x30 down to 0x10).
@@ -141,11 +145,11 @@ void MoveImplEne_TickBattleState(cf::CfObjectImplEneObj* self) {
     int idH;
     int idI;
     if (testActorStatus(battleObj, &idA, 0x1e) != 0) {
-        if (*(float*)battleObj->bh34() > lbl_eu_80666CE4) {
-            CfObjectMove_setMoveSpeed(&battleObj->mSub, lbl_eu_80666CE8);
+        if (*(float*)battleObj->bh34() > 0.0f) {
+            CfObjectMove_setMoveSpeed(&battleObj->mSub, 20.0f);
         }
         f32 f31 = battleObj->mSub.sg6C();
-        if (isGlobalCamFlagSet(0x04000000) == 0 && f31 == lbl_eu_80666CEC &&
+        if (isGlobalCamFlagSet(0x04000000) == 0 && f31 == 1.0f &&
             battleObj->mSub.sh10(2) == 0) {
             battleObj->field_3F04 |= 0x40;
         }
@@ -155,7 +159,7 @@ void MoveImplEne_TickBattleState(cf::CfObjectImplEneObj* self) {
     if (testActorStatus(battleObj, &idB, 0x1c) != 0) {
         // Player: drive the actor by its battle-cmd flags.
         if (isGlobalCamFlagSet(0x04000000) != 0) return;
-        if (*(float*)battleObj->bh34() > lbl_eu_80666CEC) {
+        if (*(float*)battleObj->bh34() > 1.0f) {
             if (testActorStatus(battleObj, &idC, 0x20000000) == 0) {
                 if (battleObj->bi44() != 0) {
                     UIWin_CreateItemMulti(battleObj->bi44(), 0, 0, 0, 0, 1, 0, 1, 0);
@@ -163,7 +167,7 @@ void MoveImplEne_TickBattleState(cf::CfObjectImplEneObj* self) {
                 dispatchItemLoad(battleObj, 0x20000000);
             }
         }
-        if (*(float*)battleObj->bh34() > lbl_eu_80666CE4) {
+        if (*(float*)battleObj->bh34() > 0.0f) {
             if (testActorStatus(battleObj, &idD, 0x40000000) == 0) {
                 UIWin_BuildFlagBuf(1, battleObj->field_3F28, 0);
                 dispatchItemLoad(battleObj, 0x40000000);
@@ -189,17 +193,17 @@ void MoveImplEne_TickBattleState(cf::CfObjectImplEneObj* self) {
         // Waiting: interrupt the current command when the timer is up.
         f32 f31 = *(float*)battleObj->bh34();
         if (battleObj->bfE0() == 1) {
-            if (f31 > lbl_eu_80666CE4) dispatchItemLoad(battleObj, 0x1e);
+            if (f31 > 0.0f) dispatchItemLoad(battleObj, 0x1e);
         } else if (battleObj->bfE0() == 2) {
-            if (f31 > lbl_eu_80666CE4) dispatchItemLoad(battleObj, 0x1e);
+            if (f31 > 0.0f) dispatchItemLoad(battleObj, 0x1e);
         } else {
-            if (f31 > lbl_eu_80666CE4) dispatchItemLoad(battleObj, 0x1e);
+            if (f31 > 0.0f) dispatchItemLoad(battleObj, 0x1e);
         }
         return;
     }
 
     // Enemy: nothing is in progress - resolve the 0x968 death sequence.
-    if (battleObj->bg28() > lbl_eu_80666CE4) return;
+    if (battleObj->bg28() > 0.0f) return;
     if (testActorStatus(battleObj, &idF, 0x1c) != 0) return;
     if (testActorStatus(battleObj, &idG, 0x1a) != 0) return;
     if (testActorStatus(battleObj, &idH, 0x19) != 0) return;
@@ -232,7 +236,7 @@ void MoveImplEne_TickBattleState(cf::CfObjectImplEneObj* self) {
         for (u32 i = 0; i < ((cf::CfEnumList*)holder.get())->field_620; i++) {
             void* obj = MapFx_ResolveOwner(getObjectAt(holder.get(), i));
             if (obj != 0) {
-                ((cf::CfImplEneBattleObj*)obj)->bg18(lbl_eu_80666CE4);
+                ((cf::CfImplEneBattleObj*)obj)->bg18(0.0f);
             }
         }
     }
@@ -255,7 +259,7 @@ void MoveImplEne_PlayKindSound(cf::CfObjectImplEneObj* self, u32 id, u32 kind, u
         CfSoundMan_StopSlotByMode(0, 0x1bb, 0);
         break;
     case 0x11:
-        cf::CfSoundMan::playActorSound(0, 0x1bb, 0, 0, lbl_eu_80666CEC);
+        cf::CfSoundMan::playActorSound(0, 0x1bb, 0, 0, 1.0f);
         break;
     }
 }
@@ -287,7 +291,7 @@ int MoveImplEne_ScanTimelineCount(cf::CfObjectImplEneObj* self) {
             if (p->field_3F34 == 0) continue;
             if (p->field_3F60 == 0) continue;
             registerBattleActor(cf::CBattleManager::getInstance(), p);
-            p->bhC4((int)src, lbl_eu_80666CEC, lbl_eu_80666CE4, lbl_eu_80666CE4);
+            p->bhC4((int)src, 1.0f, 0.0f, 0.0f);
             count++;
         }
     }
@@ -299,7 +303,7 @@ int MoveImplEne_ScanTimelineCount(cf::CfObjectImplEneObj* self) {
 // toward the current target, and spawns/updates an arrow effect token at
 // +0x36C. Returns 1 while engaged, 0 when the guard chain fails.
 int MoveImplEne_SyncTargetArrow(cf::CfObjectImplEneObj* self, int flag) {
-    if (Scn_GetFrameDelta(gmScene) == lbl_eu_80666CE4) return 0;
+    if (Scn_GetFrameDelta(gmScene) == 0.0f) return 0;
 
     cf::CfImplEneBattleObj* battleObj = (cf::CfImplEneBattleObj*)self->field_18;
     if (battleObj->bhBC() != 0) goto fail;
@@ -321,7 +325,7 @@ int MoveImplEne_SyncTargetArrow(cf::CfObjectImplEneObj* self, int flag) {
     ml::CVec3 t1pos(t1->field_0C, t1->field_1C, t1->field_2C);
     ml::CVec3 t2pos(t2->field_0C, t2->field_1C, t2->field_2C);
     ml::CVec3 diff(t1pos.x - t2pos.x, t1pos.y - t2pos.y, t1pos.z - t2pos.z);
-    ml::CVec3 dir(diff.x, lbl_eu_80666CE4, diff.z);
+    ml::CVec3 dir(diff.x, 0.0f, diff.z);
 
     // isZero-style guard on the horizontal offset (epsilon from sdata2).
     bool temp = false;
@@ -331,22 +335,22 @@ int MoveImplEne_SyncTargetArrow(cf::CfObjectImplEneObj* self, int flag) {
     bool result = false;
     if (temp && ml::math::abs(dir.z) <= ml::epsilon) result = true;
     if (result) {
-        dir.set(lbl_eu_80666CE4, lbl_eu_80666CE4, lbl_eu_80666CEC);
+        dir.set(0.0f, 0.0f, 1.0f);
     } else {
-        if (dir.x * dir.x + dir.y * dir.y + dir.z * dir.z == lbl_eu_80666CE4) {
+        if (dir.x * dir.x + dir.y * dir.y + dir.z * dir.z == 0.0f) {
             dir = ml::CVec3::zero;
         } else {
             PSVECNormalize(dir, dir);
         }
     }
 
-    dir.x *= lbl_eu_80666CF0;
-    dir.y *= lbl_eu_80666CF0;
-    dir.z *= lbl_eu_80666CF0;
+    dir.x *= 0.52f;
+    dir.y *= 0.52f;
+    dir.z *= 0.52f;
 
     ml::CVec3 v8(t1pos.x - dir.x, t1pos.y - dir.y, t1pos.z - dir.z);
     f32 rot[3] = {v8.x, v8.y, v8.z};
-    f32 angle = lbl_eu_80666CF4 * nw4r::math::Atan2FIdx(dir.x, dir.z);
+    f32 angle = 0.024543693f * nw4r::math::Atan2FIdx(dir.x, dir.z);
 
     // Create the direction-arrow effect once per engagement.
     if (self->field_36C == 0 && flag != 0 && self14->field_C4 != 0) {
@@ -364,7 +368,7 @@ int MoveImplEne_SyncTargetArrow(cf::CfObjectImplEneObj* self, int flag) {
     // While engaged, keep the arrow's rotation and mode in sync.
     if (self->field_36C != 0 && flag == 0) {
         CEffectInst* effect = (CEffectInst*)self->field_36C;
-        f32 rotScaled[3] = {lbl_eu_80666CE4, angle, lbl_eu_80666CE4};
+        f32 rotScaled[3] = {0.0f, angle, 0.0f};
         effect->mMode =
             (s32)((((cf::CfImplEneField3F34*)(u32)battleObj->field_3F34)->field_7A4 >> 27) & 1);
         effect->mRot[0] = *(s32*)&rot[0];

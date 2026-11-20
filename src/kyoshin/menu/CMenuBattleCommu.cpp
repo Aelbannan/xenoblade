@@ -1,6 +1,7 @@
 // Catalog TU for kyoshin/menu/CMenuBattleCommu
 // Battle commu menu screen process reconstruction.
 
+#include "kyoshin/cf/CfBdat.hpp"
 #include "kyoshin/menu/CMenuBattleCommu.hpp"
 #include "kyoshin/cf/CfMapItemManager.hpp"
 #include "kyoshin/CTaskGame.hpp"
@@ -440,12 +441,12 @@ void showBattleCommu(CMenuBattleCommu* self) {
                 }
                 if (jp != 0) {
                     sprintf(buf, "%s %s",
-                            BdatGetPtrDirect(lbl_eu_80664090, "name",
+                            BdatGetPtrDirect(::cf::CfBdat::spBtlPcListFileData, "name",
                                           value),
                             name);
                 } else {
                     sprintf(buf, "%s %s", name,
-                            BdatGetPtrDirect(lbl_eu_80664090, "name",
+                            BdatGetPtrDirect(::cf::CfBdat::spBtlPcListFileData, "name",
                                           value));
                 }
             } else {
@@ -474,12 +475,12 @@ void showBattleCommu(CMenuBattleCommu* self) {
                 }
                 if (jp != 0) {
                     sprintf(buf, "%s %s",
-                            BdatGetPtrDirect(lbl_eu_80664090, "name",
+                            BdatGetPtrDirect(::cf::CfBdat::spBtlPcListFileData, "name",
                                           value),
                             name);
                 } else {
                     sprintf(buf, "%s %s", name,
-                            BdatGetPtrDirect(lbl_eu_80664090, "name",
+                            BdatGetPtrDirect(::cf::CfBdat::spBtlPcListFileData, "name",
                                           value));
                 }
             } else {

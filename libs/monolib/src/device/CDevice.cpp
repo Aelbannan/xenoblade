@@ -9,11 +9,10 @@ extern "C" bool func_eu_8044A600();  // SCGetLanguage() == 0 (JP console); decla
 using namespace ml;
 
 
-// The name buffers are retail-owned data; everything else in this TU
-// (vtables, RTTI records, base lists and type-name strings) is emitted by
-// MWCC from the real CDevice / CDeviceException class hierarchy.
-extern FixStr<64> lbl_eu_806574F8;
-extern FixStr<64> lbl_eu_8065753C;
+// The name buffers are retail-owned globals (JP symbols.txt names them
+// spNotRunningDeviceName / spColdStartNotRunningDeviceName); everything else
+// in this TU (vtables, RTTI records, base lists and type-name strings) is
+// emitted by MWCC from the real CDevice / CDeviceException hierarchy.
 
 // Inline copy of CWorkThread::isRunning() visible only in this TU so the
 // retail inline shape (no bl) reproduces in isInitialized/isAllReady.
@@ -106,8 +105,8 @@ extern CDevice* lbl_eu_80665650;             // CDevice::spInstance
 extern "C" const char* lbl_eu_80663670;  // CDevice::devSys1String
 extern "C" const char* lbl_eu_80663674;
 
-FixStr<64> CDevice::spNotRunningDeviceName;
-FixStr<64> CDevice::spColdStartNotRunningDeviceName;
+FixStr<64> spNotRunningDeviceName;
+FixStr<64> spColdStartNotRunningDeviceName;
 //Handles for the DeviceSystem1/DeviceSystem2 regions, which live in MEM1/MEM2 respectively.
 // The retail slots at 0x80663678/0x8066367C precede this TU's .sdata slice;
 // createRegions() assigns them through the imported names.
@@ -212,7 +211,7 @@ bool CDevice::isAllReady(){
 
         //If a device that isn't running is found, save its name
         if(!tRunning){
-            lbl_eu_806574F8 = thread->mName.c_str();
+            spNotRunningDeviceName = thread->mName.c_str();
         }
 
         result = result & tRunning;
@@ -291,7 +290,7 @@ bool CDevice::isColdStartReady(){
 
         //If a cold-start device isn't running yet, save its name.
         if(!tRunning){
-            lbl_eu_8065753C = thread->mName.c_str();
+            spColdStartNotRunningDeviceName = thread->mName.c_str();
         }
 
         result = result & tRunning;

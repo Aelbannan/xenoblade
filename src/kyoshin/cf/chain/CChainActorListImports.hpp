@@ -6,6 +6,7 @@
 
 #include "kyoshin/cf/chain/CChainActorList.hpp"
 #include "kyoshin/cf/chain/CChainEffect.hpp"
+#include "kyoshin/menu/CMenuZeal.hpp"
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" u32 UIWin_GetInstance();
 extern "C" void UIWin_Create6F8B0Win(int);
@@ -28,7 +29,7 @@ extern "C" void addTableValueWithClamp__Q22cf13CfGameManagerFv(int, int, int);
 // CChainTimer.hpp so both headers co-exist without rename guards.
 namespace cf { class CChainBattleObj; }
 extern "C" s32 getTableValueByPair__Q22cf13CfGameManagerFv(s32 firstId, s32 secondId);
-extern "C" int GetZealObjPtr(void);
+
 extern "C" int GetZealResult(int);
 extern "C" int getArtsSlotRC(const void* arts, short index, short subindex);
 extern "C" void* getArtsParamRC2(const void* arts, int index, int subindex);

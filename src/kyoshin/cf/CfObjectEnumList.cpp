@@ -1,6 +1,6 @@
 // Auto-scaffolded catalog TU for kyoshin/cf/CfObjectEnumList
 // Replace stubs with high-level C/C++ during decomp.
-
+#include "kyoshin/cf/CtrlRemoteApi.hpp"
 #include "kyoshin/cf/CfObjectEnumList.hpp"
 #include "kyoshin/cf/CBattleManager.hpp"
 #include "kyoshin/cf/code_800F42AC.hpp"  // Sc4798_GetSignedItemValue
@@ -13,7 +13,7 @@
 #include <nw4r/math/math_arithmetic.h>  // FrSqrt
 #include <nw4r/db/db_assert.h>    // nw4r::db::Warning
 #include <revolution/mtx/vec.h>   // PSVECAdd
-
+#include "kyoshin/cf/CfEnumObject.hpp"  // canonical CfEnumObject + flags64/type91
 // Forward decl (was pulled in via CfCam.hpp, which now conflicts with this
 // TU's extern "C" declarations of MapFx_ResolveOwner/func_800BBC0C).
 namespace cf { class CfCamFollow; }
@@ -237,45 +237,45 @@ extern "C" void startEnumObjects(void* self_, u32 param, u32 param2) {
 
 #define ENUM_DUMMY_VIRTUAL(n_) virtual void v##n_() = 0
 
-class CfEnumObjectBase {
-public:
-    ENUM_DUMMY_VIRTUAL(0);  ENUM_DUMMY_VIRTUAL(1);  ENUM_DUMMY_VIRTUAL(2);
-    ENUM_DUMMY_VIRTUAL(3);  ENUM_DUMMY_VIRTUAL(4);  ENUM_DUMMY_VIRTUAL(5);
-    ENUM_DUMMY_VIRTUAL(6);  ENUM_DUMMY_VIRTUAL(7);  ENUM_DUMMY_VIRTUAL(8);
-    ENUM_DUMMY_VIRTUAL(9);  ENUM_DUMMY_VIRTUAL(10); ENUM_DUMMY_VIRTUAL(11);
-    ENUM_DUMMY_VIRTUAL(12); ENUM_DUMMY_VIRTUAL(13); ENUM_DUMMY_VIRTUAL(14);
-    ENUM_DUMMY_VIRTUAL(15); ENUM_DUMMY_VIRTUAL(16); ENUM_DUMMY_VIRTUAL(17);
-    ENUM_DUMMY_VIRTUAL(18); ENUM_DUMMY_VIRTUAL(19); ENUM_DUMMY_VIRTUAL(20);
-    ENUM_DUMMY_VIRTUAL(21); ENUM_DUMMY_VIRTUAL(22); ENUM_DUMMY_VIRTUAL(23);
-    ENUM_DUMMY_VIRTUAL(24); ENUM_DUMMY_VIRTUAL(25); ENUM_DUMMY_VIRTUAL(26);
-    virtual bool isEnabled() = 0; // vtable +0x74
-    ENUM_DUMMY_VIRTUAL(28); ENUM_DUMMY_VIRTUAL(29); ENUM_DUMMY_VIRTUAL(30);
-    ENUM_DUMMY_VIRTUAL(31); ENUM_DUMMY_VIRTUAL(32); ENUM_DUMMY_VIRTUAL(33);
-    ENUM_DUMMY_VIRTUAL(34); ENUM_DUMMY_VIRTUAL(35); ENUM_DUMMY_VIRTUAL(36);
-    ENUM_DUMMY_VIRTUAL(37); ENUM_DUMMY_VIRTUAL(38); ENUM_DUMMY_VIRTUAL(39);
-    ENUM_DUMMY_VIRTUAL(40); ENUM_DUMMY_VIRTUAL(41); ENUM_DUMMY_VIRTUAL(42);
-    ENUM_DUMMY_VIRTUAL(43); ENUM_DUMMY_VIRTUAL(44); ENUM_DUMMY_VIRTUAL(45);
-    ENUM_DUMMY_VIRTUAL(46); ENUM_DUMMY_VIRTUAL(47); ENUM_DUMMY_VIRTUAL(48);
-    ENUM_DUMMY_VIRTUAL(49); ENUM_DUMMY_VIRTUAL(50); ENUM_DUMMY_VIRTUAL(51);
-    ENUM_DUMMY_VIRTUAL(52); ENUM_DUMMY_VIRTUAL(53); ENUM_DUMMY_VIRTUAL(54);
-    ENUM_DUMMY_VIRTUAL(55); ENUM_DUMMY_VIRTUAL(56); ENUM_DUMMY_VIRTUAL(57);
-    ENUM_DUMMY_VIRTUAL(58); ENUM_DUMMY_VIRTUAL(59); ENUM_DUMMY_VIRTUAL(60);
-    ENUM_DUMMY_VIRTUAL(61); ENUM_DUMMY_VIRTUAL(62); ENUM_DUMMY_VIRTUAL(63);
-    ENUM_DUMMY_VIRTUAL(64); ENUM_DUMMY_VIRTUAL(65); ENUM_DUMMY_VIRTUAL(66);
-    ENUM_DUMMY_VIRTUAL(67); ENUM_DUMMY_VIRTUAL(68); ENUM_DUMMY_VIRTUAL(69);
-    ENUM_DUMMY_VIRTUAL(70); ENUM_DUMMY_VIRTUAL(71); ENUM_DUMMY_VIRTUAL(72);
-    ENUM_DUMMY_VIRTUAL(73); ENUM_DUMMY_VIRTUAL(74); ENUM_DUMMY_VIRTUAL(75);
-    ENUM_DUMMY_VIRTUAL(76); ENUM_DUMMY_VIRTUAL(77); ENUM_DUMMY_VIRTUAL(78);
-    ENUM_DUMMY_VIRTUAL(79); ENUM_DUMMY_VIRTUAL(80); ENUM_DUMMY_VIRTUAL(81);
-    ENUM_DUMMY_VIRTUAL(82); ENUM_DUMMY_VIRTUAL(83); ENUM_DUMMY_VIRTUAL(84);
-    ENUM_DUMMY_VIRTUAL(85);
-    virtual bool filterA() = 0;  // vtable +0x160
-    virtual bool filterB() = 0;  // vtable +0x164
-    ENUM_DUMMY_VIRTUAL(88);
-    virtual float filterC() = 0; // vtable +0x16C
-    ENUM_DUMMY_VIRTUAL(90);
-    virtual float filterD() = 0; // vtable +0x174
-};
+// CfEnumObjectBase virtual slots are declared in the canonical header.
+// The real declaration now lives in kyoshin/cf/CfEnumObject.hpp;
+// callers (including CMenuKeyAssign) use the same class instead of
+// a TU-local overlay. Retail vtable slot order is unchanged.
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 class CfEnumActorAuxBase {
 public:
@@ -296,18 +296,18 @@ public:
     virtual bool test(int) = 0; // vtable +0x80
 };
 
-class CfEnumObject : public CfEnumObjectBase {
-public:
-    u8 _pad_004[0x64 - 0x04];
-    u32 flags64;
-    u32 field68;            // 0x68 (mFlags68)
-    u8 _pad_06C[0x74 - 0x6C];
-    u32 objectId;
-    u8 _pad_078[0x8C - 0x78];
-    u16 type8C;
-    u8 _pad_08E[0xC4 - 0x8E];
-    CfEnumActorAux* actorAux;
-};
+// CfEnumObject data members (flags64 at +0x64, type91 at +0x91).
+// The real declaration now lives in kyoshin/cf/CfEnumObject.hpp;
+// callers (including CMenuKeyAssign) use the same class instead of
+// a TU-local overlay. Retail vtable slot order is unchanged.
+//
+//
+//
+//
+//
+//
+//
+//
 
 class CfEnumActorBase {
 public:
@@ -417,7 +417,7 @@ CfEnumObject* insertReslistC08(CfEnumObject*);
 CfEnumActor* func_800BBC0C(CfEnumObject*);
 int isBattleStatusActive(void*, int);
 int isSpeedAbove(CfEnumActorAux*);
-int CtrlRemote_TouchBitByArg(int);
+
 CfEnumKind* CollObjHasFlag64Bit15(CfEnumObject*);
 CfEnumObject* Selector_GetInstance();
 CfEnumObject* findObjectById__Fi(int);

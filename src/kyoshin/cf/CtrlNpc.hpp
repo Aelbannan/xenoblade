@@ -1,5 +1,5 @@
 #pragma once
-
+#include "kyoshin/cf/CfCamSymbols.hpp"
 #include <types.h>
 #include <revolution/MTX.h>  // nw4r::math::VEC3 (segment-projection helper decl)
 #include "kyoshin/cf/object/CObjectState.hpp"
@@ -173,7 +173,7 @@ union CtrlNpcCvtDbl {
 
 // Talk/page controller update helpers (CtrlNpcUpdateTalk).
 extern "C" int UIWin_PackHiLo(unsigned int arg0, int arg1);
-extern "C" u32 CtrlRemote_TouchBitByArg(u32 resourceId);
+#include "kyoshin/cf/CtrlRemoteApi.hpp"
 extern "C" void* Bdat_GetTable_AA34();
 extern "C" void UIWin_CreateTalkWin(void* self, char* text, int flag);
 extern "C" void UIWin_ShowTalkWindow(void* self);
@@ -288,8 +288,8 @@ extern const void* gNpcActionState2Handlers[];   // action 3 handlers
 
 // CfGameManager singleton + presentation-flag probe (isGlobalCamFlagSet__Fi).
 extern "C" void* getInstance__Q22cf13CfGameManagerFv();
-bool isGlobalCamFlagSet(int mask);
+
 // Search-helper helpers reached with CCtrlNpcChar::field_98.
 namespace cf { struct CfObjectModelSub98; }
-extern "C" float simGetLeafAnimDist(cf::CCtrlNpcSearch* obj);
+extern "C" float simGetLeafAnimDist(void* obj);
 extern "C" void scnImN4DynStart(cf::CfObjectModelSub98* sub);

@@ -4,14 +4,7 @@
 // Global scope: MWCC does not mangle file-scope names, so plain extern emits
 // the exact retail symbols.
 //
-// FxChorusDpl2 vtable (this TU's split .data 0x8056A798, 0x28). The table is
-// emitted below as data; the ctor stores its address into the object's vptr.
-// Slot layout (retail): {0, 0, dtor, StartUp, Shutdown, UpdateBuffer,
-// OnChangeOutputMode, AssignWorkBuffer, ReleaseWorkBuffer, 0}.
-struct FxChorusDpl2Vtbl {
-    u32 slots[10];
-};
-extern FxChorusDpl2Vtbl lbl_eu_8056A798;
+// FxChorusDpl2's vtable is emitted by MWCC from the real class below.
 
 namespace nw4r {
 namespace snd {
@@ -38,17 +31,14 @@ struct FxChorusParam {
 // would make MWCC emit the weak __vt__FxBase / weak FxBase+LinkListNode
 // dtors into this TU, which retail's split does not carry (retail keeps
 // only the 0x28 derived vtable here; the weak base copies link elsewhere).
-// __declspec(novtable): MWCC must not emit a local __vt__FxChorusDpl2; the
-// ctor stores lbl_eu_8056A798 explicitly (retail's vptr store is in the
-// ctor body).
-class __declspec(novtable) FxChorusDpl2 {
+class FxChorusDpl2 : public FxBase {
 public:
     FxChorusDpl2();
 
-    // Declared only (virtual: retail slot 0x08 holds the deleting dtor).
-    // The dtor lives in the factory TU's linkage (retail __dt__...Dpl2Fv is
-    // at 0x801C47F8, inside kyoshin/cf/code_801C2C14.cpp's split, not here).
-    virtual ~FxChorusDpl2(); // at 0x8
+    // The deleting dtor is defined inline here so MWCC emits this TU's vtable;
+    // the strong retail __dt__...Dpl2Fv (0x801C47F8) still links from
+    // kyoshin/cf/code_801C2C14.cpp and occupies vtable slot 0x08.
+    virtual ~FxChorusDpl2() {} // at 0x8 (strong definition lives in the fx-slot TU)
 
     virtual bool StartUp();  // at 0xC
     virtual void Shutdown(); // at 0x10
@@ -75,14 +65,6 @@ private:
         u32 mAllocCount;     // at 0x18
     };
 
-    // vptr + intrusive link node (retail FxBase prefix layout, stored
-    // explicitly: this TU defines the class standalone so MWCC emits no
-    // weak FxBase vtable/dtor support into this TU's split). The vptr itself
-    // is the class's implicit vtable pointer at +0x0 (written manually from
-    // lbl_eu_8056A798); only the link fields are declared.
-    void* linkPrev;          // at 0x4 (intrusive FxBase link node)
-    void* linkNext;          // at 0x8
-
     bool mIsActive;          // at 0xC
     s32 mOutputMode;         // at 0x10
     WorkHeap mWorkHeap;      // at 0x14
@@ -96,13 +78,7 @@ private:
 };
 
 FxChorusDpl2::FxChorusDpl2() {
-    // Retail store order (0x4, 0x8, vptr 0x0, 0xc, 0x14, 0x18, floats): the
-    // link node is zeroed explicitly first, then the manual vptr store lands.
-    linkPrev = nullptr;      // 0x4
-    linkNext = nullptr;      // 0x8
-    *(FxChorusDpl2Vtbl**)this = &lbl_eu_8056A798; // 0x0
-
-    mIsActive = false;         // 0xc
+    mIsActive = false;         // 0xC
     mWorkHeap.mHeap = nullptr; // 0x14
     mWorkHeap.mAllocCount = 0; // 0x18
 
@@ -308,30 +284,3 @@ void FxChorusDpl2::OnChangeOutputMode() {
 
 } // namespace snd
 } // namespace nw4r
-
-// Slot targets under their exact retail linker names (extern "C" prevents
-// re-mangling, so each name resolves to the same TU's member definition;
-// the dtor is defined in the factory TU at 0x801C47F8). Referenced only by
-// the hand-built vtable below - never called here.
-extern "C" void __dt__Q34nw4r3snd12FxChorusDpl2Fv();
-extern "C" bool StartUp__Q34nw4r3snd12FxChorusDpl2Fv();
-extern "C" void Shutdown__Q34nw4r3snd12FxChorusDpl2Fv();
-extern "C" void UpdateBuffer__Q34nw4r3snd12FxChorusDpl2FiPPvUlQ34nw4r3snd12SampleFormatfQ34nw4r3snd10OutputMode();
-extern "C" void OnChangeOutputMode__Q34nw4r3snd12FxChorusDpl2Fv();
-extern "C" bool AssignWorkBuffer__Q34nw4r3snd12FxChorusDpl2FPvUl();
-extern "C" void ReleaseWorkBuffer__Q34nw4r3snd12FxChorusDpl2Fv();
-
-// Retail vtable data (.data @0x8056A798, 0x28); the ctor stores it at +0x0.
-__declspec(section ".data") __attribute__((used))
-FxChorusDpl2Vtbl lbl_eu_8056A798 = { {
-    0,
-    0,
-    (u32)__dt__Q34nw4r3snd12FxChorusDpl2Fv,
-    (u32)StartUp__Q34nw4r3snd12FxChorusDpl2Fv,
-    (u32)Shutdown__Q34nw4r3snd12FxChorusDpl2Fv,
-    (u32)UpdateBuffer__Q34nw4r3snd12FxChorusDpl2FiPPvUlQ34nw4r3snd12SampleFormatfQ34nw4r3snd10OutputMode,
-    (u32)OnChangeOutputMode__Q34nw4r3snd12FxChorusDpl2Fv,
-    (u32)AssignWorkBuffer__Q34nw4r3snd12FxChorusDpl2FPvUl,
-    (u32)ReleaseWorkBuffer__Q34nw4r3snd12FxChorusDpl2Fv,
-    0,
-} };

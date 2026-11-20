@@ -3,6 +3,7 @@
 #include <types.h>
 #include "monolib/math/CVec3.hpp"
 #include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (ml::epsilon)
+#include "libs/monolib/src/scn/IEffectAct.hpp"
 
 namespace nw4r {
 namespace g3d {
@@ -176,10 +177,36 @@ extern "C" void simPushWordToBuf(CScnEffectActMgr* mgr);
 extern "C" void simRemoveWordFromBuf(CScnEffectActMgr* mgr);
 extern "C" void scnImN4PushXform(CScnEffectActMgr* mgr);
 
-class __declspec(novtable) CScnEffectActNw4r {
+class CScnEffectActNw4r : public IEffectAct {
 public:
     CScnEffectActNw4r();
     virtual ~CScnEffectActNw4r();
+
+    // Retail vtable order (0x8056EAD8), one virtual per slot.
+    virtual void EffectActNw4rProbeAnimActive();
+    virtual void EffectActNw4rMgrCallV04();
+    virtual void EffectActNw4rSetLeafDist();
+    virtual void EffectActNw4rSetTreeFlag2();
+    virtual void EffectActNw4rCallMgrV43();
+    virtual void EffectActNw4rCallMgrV16();
+    virtual u8* EffectActNw4rGetLeafActData();
+    virtual void EffectActNw4rStoreMgrScalePos(const void* other);
+    virtual u8* EffectActNw4rGetAct48() const;
+    virtual u8* EffectActNw4rGetAct78() const;
+    virtual u8* EffectActNw4rGetActB8() const;
+    virtual u8* EffectActNw4rGetActC4() const;
+    virtual CScnEffectAct* EffectActNw4rFindActGated(u32 idx) const;
+    // Retail slot +0x40 takes (out, self, idx); `this` is the out pointer.
+    virtual void EffectActNw4rGetActPosOut(const CScnEffectActNw4r* self, u32 idx);
+    virtual CScnEffectAct* EffectActNw4rFindActById(u32 idx) const;
+    virtual u32 EffectActNw4rGetActPosById(u32 idx, ml::CVec3* out) const;
+    virtual u32 EffectActNw4rGetActCount();
+    virtual CScnEffectAct* EffectActNw4rFindActIndexed(u32 idx) const;
+    virtual void EffectActNw4rPushWordBuf();
+    virtual void EffectActNw4rRemoveWordBuf();
+    virtual void EffectActNw4rPushXform();
+    virtual u32 EffectActNw4rCheckRange();
+    virtual u32 EffectActNw4rHasDirectAct();
 
     // 0x00: vptr
     /* 0x04 */ CScnEffectActMgr* mpMgr;

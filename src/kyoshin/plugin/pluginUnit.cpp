@@ -2,7 +2,7 @@
 // Plugin functions for the YGG VM "unit" subsystem (battle units, arts).
 // These are called from script via the function table registered in
 // pluginUnitRegist.
-
+#include "kyoshin/cf/CfCamSymbols.hpp"
 #include <math.h>
 #include "kyoshin/cf/CfMapItemManager.hpp"
 
@@ -34,7 +34,7 @@ extern "C" {
     void CtrlObjectParam_ClaimArtsSlotRow(cf::CfObjectActor*, int);
     cf::CfObjectActor* findObjB28ById(int);
     cf::CfObjectActor* findObjB48ById(int);
-    bool isGlobalCamFlagSet__Fi(int mask);
+
     cf::CfUnknownSub* CfCode_GetSubObject(cf::CfCode800F42AC* self);
 
     // 100.0f constant used by getPcHpRate / getEneHpRate (lives in .sdata2).
@@ -181,7 +181,7 @@ int onPcArtsAttack(VMThread* pThread) {
 
     // Gate on game-manager flag 0x400.
     cf::CfGameManager::getInstance();
-    if (isGlobalCamFlagSet__Fi(0x400) != 0) {
+    if (isGlobalCamFlagSet(0x400) != 0) {
         vmRetValSet(pThread, &result);
         return 1;
     }
@@ -301,7 +301,7 @@ int onEneArtsAttack(VMThread* pThread) {
 
     // Gate on game-manager flag 0x400.
     cf::CfGameManager::getInstance();
-    if (isGlobalCamFlagSet__Fi(0x400) != 0) {
+    if (isGlobalCamFlagSet(0x400) != 0) {
         vmRetValSet(pThread, &result);
         return 1;
     }

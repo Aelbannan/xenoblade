@@ -105,7 +105,6 @@ extern const f32 lbl_eu_806687C8;  // 10.0f - world-map timer cap
 #include <revolution/gx/GXPixel.h>
 #include "kyoshin/CTitleAHelp.hpp"
 #include "kyoshin/CTitleAHelpImports.hpp"
-#include "kyoshin/CFloorMapImports.hpp"
 
 struct S {
     int dummy;

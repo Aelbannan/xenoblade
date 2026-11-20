@@ -3,6 +3,7 @@
 
 // Inline-empty ~IWorkEvent: the retail destructor elides the base call.
 #define IWORK_EVENT_INLINE_DTOR
+#include "kyoshin/cf/CfBdat.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"  // canonical CItem_initItemImplInstances decl
 #include "kyoshin/makecrystal/CMCCrystalInfo.hpp"
 #include "kyoshin/code_80135FDC.hpp"
@@ -26,7 +27,6 @@ extern "C" void MCCrystal_StepAnim3(CMCCrystalInfo*);
 extern "C" void MCCrystal_RewindAnim3(CMCCrystalInfo*);
 
 // Small-data symbol (plain C++ extern; lives in another TU).
-extern u32 lbl_eu_806640D8;
 
 
 s16 sPane1Color0[4] = {0};
@@ -200,7 +200,7 @@ void MCCrystal_FillSlot(CMCCrystalInfo* self, u32 idxBase, u32 arg5, u8 arg6, u3
     char* msgName;
 
     // Crystal name for slot idx, then colour it (colour pair depends on arg7).
-    msgName = BdatGetPtrDirect((char*)lbl_eu_806640D8, "name", msgId);
+    msgName = BdatGetPtrDirect((char*)::cf::CfBdat::spBtlSkillListFileData, "name", msgId);
     idx = idxBase + 1;
     sprintf(buf, "txt_listname%02d", idx);
     LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)self->mLayout, buf, msgName, 0);
@@ -225,7 +225,7 @@ void MCCrystal_FillSlot(CMCCrystalInfo* self, u32 idxBase, u32 arg5, u8 arg6, u3
 
     // Pick the crystal picture to show for this slot based on the item code.
     void* res = 0;
-    u8 code = BdatGetU8Direct((const void*)lbl_eu_806640D8, "atr_type", msgId);
+    u8 code = BdatGetU8Direct((const void*)::cf::CfBdat::spBtlSkillListFileData, "atr_type", msgId);
     switch (code) {
     case 0:
         res = ((nw4r::lyt::ArcResourceAccessor*)self->mField30)
@@ -381,7 +381,7 @@ void MCCrystal_BuildItemBuf(CrystalItemBuf* out, CMCCrystalInfo* self, u32 data,
         CItemImplInstancesFacade* inst2 = (CItemImplInstancesFacade*)CItem_initItemImplInstances((CItemData*)item2);
         u16 n = inst2->GetName(item2, (u8)i);
         if (n > 0) {
-            buf.names[buf.field21] = BdatGetPtrDirect((char*)lbl_eu_806640D8,
+            buf.names[buf.field21] = BdatGetPtrDirect((char*)::cf::CfBdat::spBtlSkillListFileData,
                                                    "name", n);
             CItemImplInstancesFacade* inst3 = (CItemImplInstancesFacade*)CItem_initItemImplInstances((CItemData*)item2);
             buf.flags[buf.field21] = inst3->GetFlag(item2, (u8)i);

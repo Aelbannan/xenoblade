@@ -3,6 +3,7 @@
 
 // Inline-empty ~IWorkEvent: the retail destructor elides the base call.
 #define IWORK_EVENT_INLINE_DTOR
+#include "kyoshin/cf/CfBdat.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/CSysWin.hpp"
@@ -1898,7 +1899,7 @@ void CMCCrystalBox::setCrystalSlotTexture(u16 id, unsigned int* item, u8 i) {
                       this->mArcAcc1)
                       ->GetResource(
                           0x74696D67,
-                          MakeTplNameSysFile((u16)BdatGetU16Direct(lbl_eu_806640EC,
+                          MakeTplNameSysFile((u16)BdatGetU16Direct(::cf::CfBdat::spItmItemListFileData,
                                                        sMakeCrystalStrings + 0xbc,
                                                        id)),
                           0);
@@ -1979,7 +1980,7 @@ void CMCCrystalBox::setCrystalSlotTexAlt(u16 id, unsigned int* item, u8 i) {
                       this->mArcAcc1)
                       ->GetResource(
                           0x74696D67,
-                          MakeTplNameSysFile((u16)BdatGetU16Direct(lbl_eu_806640EC,
+                          MakeTplNameSysFile((u16)BdatGetU16Direct(::cf::CfBdat::spItmItemListFileData,
                                                        sMakeCrystalStrings + 0xbc,
                                                        id)),
                           0);
@@ -2066,7 +2067,7 @@ void CMCCrystalBox::setCrystalSlotCapacity(u16 id, unsigned int* item, u8 i) {
                       this->mArcAcc1)
                       ->GetResource(
                           0x74696D67,
-                          MakeTplNameSysFile((u16)BdatGetU16Direct(lbl_eu_806640EC,
+                          MakeTplNameSysFile((u16)BdatGetU16Direct(::cf::CfBdat::spItmItemListFileData,
                                                        sMakeCrystalStrings + 0xe2,
                                                        id)),
                           0);
@@ -2154,7 +2155,7 @@ void CMCCrystalBox::setCrystalSlotCapAlt(u16 id, unsigned int* item, u8 i) {
                       this->mArcAcc1)
                       ->GetResource(
                           0x74696D67,
-                          MakeTplNameSysFile((u16)BdatGetU16Direct(lbl_eu_806640EC,
+                          MakeTplNameSysFile((u16)BdatGetU16Direct(::cf::CfBdat::spItmItemListFileData,
                                                        sMakeCrystalStrings + 0xe2,
                                                        id)),
                           0);
@@ -2649,7 +2650,7 @@ void CMCCrystalBox::showCrystalBoxStatus() {
                       BdatTouchStringCell(sMakeCrystalStrings + 0x1d5, sMakeCrystalStrings + 0x1e1, (u8)v + 10), 0);
         LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)this->mLayout, sMakeCrystalStrings + 0x1f5,
                       BdatTouchStringCell(sMakeCrystalStrings + 0x1d5, sMakeCrystalStrings + 0x1e1, (u8)v + 18), 0);
-        char* msg = MakeTplNameSysFile((u16)BdatGetU16Direct(lbl_eu_80664090, sMakeCrystalStrings + 0x204, (u8)v));
+        char* msg = MakeTplNameSysFile((u16)BdatGetU16Direct(::cf::CfBdat::spBtlPcListFileData, sMakeCrystalStrings + 0x204, (u8)v));
         void* res = (void*)reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(this->mArcAcc0)
                         ->GetResource(0x74696D67, msg, 0);
         if (res != 0) {
@@ -2677,7 +2678,7 @@ void CMCCrystalBox::showCrystalBoxStatus() {
                       BdatTouchStringCell(sMakeCrystalStrings + 0x1d5, sMakeCrystalStrings + 0x1e1, row + 0x41), 0);
         LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)this->mLayout, sMakeCrystalStrings + 0x23b,
                       BdatTouchStringCell(sMakeCrystalStrings + 0x1d5, sMakeCrystalStrings + 0x1e1, row + 0x42), 0);
-        char* msg = MakeTplNameSysFile((u16)BdatGetU16Direct(lbl_eu_80664090, sMakeCrystalStrings + 0x204, (u8)v));
+        char* msg = MakeTplNameSysFile((u16)BdatGetU16Direct(::cf::CfBdat::spBtlPcListFileData, sMakeCrystalStrings + 0x204, (u8)v));
         void* res = (void*)reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(this->mArcAcc0)
                         ->GetResource(0x74696D67, msg, 0);
         if (res != 0) {
@@ -2977,7 +2978,7 @@ bool CMCCrystalBox::OnFileEvent(CEventFile* event) {
                       0);
 
         void* msg2 = MakeTplNameSysFile(
-            (u16)BdatGetU16Direct(lbl_eu_80664090, sMakeCrystalStrings + 0x204, (u8)v));
+            (u16)BdatGetU16Direct(::cf::CfBdat::spBtlPcListFileData, sMakeCrystalStrings + 0x204, (u8)v));
         void* res2 = ((nw4r::lyt::ArcResourceAccessor*)mArcAcc0)
                          ->GetResource(0x74696D67, (const char*)msg2, 0);
         if (res2 != 0) {

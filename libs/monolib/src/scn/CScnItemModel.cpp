@@ -52,8 +52,8 @@ CScnItemModel* __ct__CScnItemModel(CScnItemModel* self, CScnItemModelOwner* owne
     // switch MWCC to the _savegpr_27 helper). Declared reverse-order: MWCC
     // assigns the first-declared temp the LOWEST FPR here, so zero must be
     // declared first to land one in f1 (retail).
-    f32 zero = lbl_eu_8066A8C4;
-    f32 one = lbl_eu_8066A8C0;
+    f32 zero = 1.0f;
+    f32 one = 0.0f;
     ((CScnItemModelActData*)self->field_0x1F8)->transform.mFlags = 0;
     ((CScnItemModelActData*)self->field_0x1F8)->f2DC[0] = one;
     ((CScnItemModelActData*)self->field_0x1F8)->f2DC[1] = one;
@@ -77,16 +77,16 @@ CScnItemModel* __ct__CScnItemModel(CScnItemModel* self, CScnItemModelOwner* owne
     // (one2->f2, zero2->f1, c8->f0).
     self->flags7A4 = 0;
     self->flags7A8 = 0;
-    self->value7AC = lbl_eu_8066A8C0;
-    self->value7B0 = lbl_eu_8066A8C4;
+    self->value7AC = 0.0f;
+    self->value7B0 = 1.0f;
     self->field_0x7C4 = 0;
     self->field_0x7C8 = 0;
-    self->value7CC = lbl_eu_8066A8C0;
-    self->value7D0 = lbl_eu_8066A8C0;
-    self->value7D4 = lbl_eu_8066A8C0;
-    self->value7D8 = lbl_eu_8066A8C0;
-    self->value7DC = lbl_eu_8066A8C0;
-    self->value7E0 = lbl_eu_8066A8C0;
+    self->value7CC = 0.0f;
+    self->value7D0 = 0.0f;
+    self->value7D4 = 0.0f;
+    self->value7D8 = 0.0f;
+    self->value7DC = 0.0f;
+    self->value7E0 = 0.0f;
     self->value7E4 = param;
     self->value7E8 = 1;
     self->field_7EC = 0;
@@ -95,7 +95,7 @@ CScnItemModel* __ct__CScnItemModel(CScnItemModel* self, CScnItemModelOwner* owne
     self->member824.field_4 = 0;
     self->member824.field_C = -1;
     self->field_854 = 0;
-    self->value858 = lbl_eu_8066A8C8;
+    self->value858 = -1.0f;
     self->field_85C = 0;
     self->field_860 = 0;
     ((CScnItemModelActData*)self->field_0x1F8)->transform.clear();
@@ -1754,7 +1754,7 @@ extern "C" bool simRefreshFadeDist(CScnItemModel* self) {
     bool b = self->value7B0 >= lbl_eu_8066A8C0;
     f32 f31, d1, d2;
     if (b) {
-        f31 = CDeviceVI::isTvFormatPal() ? lbl_eu_8066A8CC : lbl_eu_8066A8C4;
+        f31 = CDeviceVI::isTvFormatPal() ? 1.5f : lbl_eu_8066A8C4;
         // walk 1: last node's distance (scn80496GetChild1Float leaves). Written as one
         // nested-ternary assignment (loads stay conditional via short-circuit)
         // so MWCC places the single fmr f30, f1 at the chain's join (retail
@@ -1850,7 +1850,7 @@ extern "C" bool simRefreshFadeDist2(CScnItemModel* self) {
     bool b = self->value7B0 >= lbl_eu_8066A8C0;
     f32 f31, d1, d2;
     if (b) {
-        f31 = CDeviceVI::isTvFormatPal() ? lbl_eu_8066A8CC : lbl_eu_8066A8C4;
+        f31 = CDeviceVI::isTvFormatPal() ? 1.5f : lbl_eu_8066A8C4;
         // walk 1: last node's distance (scn80496GetChild2Float leaves), nested-ternary
         // single assignment so MWCC shares the fmr f30, f1 at the join.
         CScnItemModel* n1 = self->field_0x7C4;
@@ -2339,7 +2339,7 @@ extern "C" void simFwdAnimReset(void* self) { scnImN4CreateModel(self); }
 
 // simGetTvFadeConst: return the TV-format dependent float constant.
 extern "C" float simGetTvFadeConst() {
-    return CDeviceVI::isTvFormatPal() ? lbl_eu_8066A8CC : lbl_eu_8066A8C4;
+    return CDeviceVI::isTvFormatPal() ? 1.5f : lbl_eu_8066A8C4;
 }
 
 extern "C" int simVtableFalse(u8* self) { return 0; }

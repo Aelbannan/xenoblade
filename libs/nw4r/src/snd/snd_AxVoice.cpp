@@ -33,13 +33,7 @@ struct AdpcmParam {
 // raw biquad selector; NULL entries mean "no provider -> clear the filter".
 extern void* lbl_eu_80637C20[];
 
-// AxVoice::IsNeedNextUpdate is not declared in snd_AxVoice.h (header is
-// read-only this session); the retail symbol is referenced verbatim so
-// SetMix emits the `bl` with the correct reloc.
-extern "C" bool IsNeedNextUpdate__Q44nw4r3snd6detail7AxVoiceCFRCQ54nw4r3snd6detail7AxVoice8MixParam(
-    const nw4r::snd::detail::AxVoice* pThis,
-    const nw4r::snd::detail::AxVoice::MixParam& rParam);
-
+// IsNeedNextUpdate is a real const member declared in snd_AxVoice.h.
 namespace nw4r {
 namespace snd {
 namespace detail {
@@ -538,8 +532,7 @@ bool AxVoice::SetMix(const MixParam& rParam) {
 
     // Retail keeps the "any field changed" test out-of-line in a const
     // member helper; declared below with its retail entry point.
-    bool needUpdate = ::IsNeedNextUpdate__Q44nw4r3snd6detail7AxVoiceCFRCQ54nw4r3snd6detail7AxVoice8MixParam(
-        this, rParam);
+    bool needUpdate = IsNeedNextUpdate(rParam);
 
     AXPBMIX mix;
 
@@ -1423,12 +1416,7 @@ struct AxBiquadData {
     u16 biquad[10];        // on,xn1,xn2,yn1,yn2,b0..a2
 };
 
-struct AxHeaderView {
-    void* pData;           // at 0x0 -> AxBiquadData
-    u32 sync;              // at 0x4
-};
 
-// Biquad coefficient set handed back by a provider.
 struct BiquadCoefs {
     u16 b0;
     u16 b1;
@@ -1463,31 +1451,8 @@ public:
 } // namespace
 
 
-// rParam field-by-field. The header is read-only this session, so the retail
-// entry point keeps its verbatim symbol and reads mMixPrev through a
-// layout-matched view instead of member access.
-namespace {
-struct MixPrevView {
-    u8 field_0x00[0x1E]; // AxVoice header up to mMixPrev
-    u16 vL;
-    u16 vR;
-    u16 vS;
-    u16 vAuxAL;
-    u16 vAuxAR;
-    u16 vAuxAS;
-    u16 vAuxBL;
-    u16 vAuxBR;
-    u16 vAuxBS;
-    u16 vAuxCL;
-    u16 vAuxCR;
-    u16 vAuxCS;
-};
-} // namespace
-
-extern "C" bool IsNeedNextUpdate__Q44nw4r3snd6detail7AxVoiceCFRCQ54nw4r3snd6detail7AxVoice8MixParam(
-    const nw4r::snd::detail::AxVoice* pThis,
-    const nw4r::snd::detail::AxVoice::MixParam& rParam) {
-    const MixPrevView& rPrev = *reinterpret_cast<const MixPrevView*>(pThis);
+bool nw4r::snd::detail::AxVoice::IsNeedNextUpdate(const MixParam& rParam) const {
+    const MixParam& rPrev = mMixPrev;
 
     if (rPrev.vL != rParam.vL) {
         return true;
@@ -1532,11 +1497,8 @@ AxBiquadData* GetAxPbOf(const nw4r::snd::detail::AxVoice* pVoice) {
     return reinterpret_cast<AxBiquadData*>(
         *reinterpret_cast<void* const*>(pVoice));
 }
-
-AxHeaderView* GetAxHeader(nw4r::snd::detail::AxVoice* pVoice) {
-    return reinterpret_cast<AxHeaderView*>(pVoice);
-}
 } // namespace
+
 void nw4r::snd::detail::AxVoice::SetBiquad(u8 biquad, f32 value) {
     nw4r::ut::AutoInterruptLock lock;
 
@@ -1573,7 +1535,7 @@ void nw4r::snd::detail::AxVoice::SetBiquad(u8 biquad, f32 value) {
             OSRestoreInterrupts(lock);
         } else {
             std::memcpy(GetAxPbOf(this)->biquad, &clear, sizeof(BiquadBlock));
-            GetAxHeader(this)->sync |= AX_PBSYNC_BIQUAD;
+            mVpb.mSync |= AX_PBSYNC_BIQUAD;
             OSRestoreInterrupts(lock);
         }
     } else {
@@ -1611,7 +1573,7 @@ void nw4r::snd::detail::AxVoice::SetBiquad(u8 biquad, f32 value) {
                 GetAxPbOf(this)->biquad[7] = b2;
                 GetAxPbOf(this)->biquad[8] = a1;
                 GetAxPbOf(this)->biquad[9] = a2;
-                GetAxHeader(this)->sync |= AX_PBSYNC_BIQUAD_COEFS;
+                mVpb.mSync |= AX_PBSYNC_BIQUAD_COEFS;
                 OSRestoreInterrupts(lock);
             }
         } else {
@@ -1635,7 +1597,7 @@ void nw4r::snd::detail::AxVoice::SetBiquad(u8 biquad, f32 value) {
             } else {
                 std::memcpy(GetAxPbOf(this)->biquad, &iir,
                             sizeof(BiquadBlock));
-                GetAxHeader(this)->sync |= AX_PBSYNC_BIQUAD;
+                mVpb.mSync |= AX_PBSYNC_BIQUAD;
                 OSRestoreInterrupts(lock);
             }
         }

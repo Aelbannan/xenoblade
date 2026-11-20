@@ -1,7 +1,7 @@
 #pragma once
 extern "C" int Counter_TestBit(void* data, u32 flag);
 #include "kyoshin/code_8025FB10.hpp"
-
+#include "kyoshin/cf/CtrlRemoteApi.hpp"
 #include <types.h>
 #include "kyoshin/CTaskGameEff.hpp"
 #include "kyoshin/code_80135FDC_Bdat.hpp"
@@ -175,9 +175,6 @@ extern const char* gQuestBdatTableNames[];
 
 // refreshQuestContent jump-table item-name pointers (.sdata): passed as the first
 // arg of BdatGetPtrDirect for the quest-slot name switch (cases 1, 3 and 4).
-extern u32 lbl_eu_806640D8;
-extern u32 lbl_eu_806640EC;
-extern u32 lbl_eu_80664104;
 
 // Shared string table (placeQuestCursor pane names, closeQuestWindow messages).
 extern char lbl_eu_804FEC84[];
@@ -224,7 +221,7 @@ extern u32 gmPauseFlags;
 // __F<argtypes> suffix to the call reloc names.
 extern "C" {
 // cursor visibility setter (CCur)
-u32 PTNotice_IsActive_3C10();                       // party-change notice screen active?
+extern "C" u32 PTNotice_IsActive_3C10();                       // party-change notice screen active?
 u32 menuPTStateIsActive();                       // party-state screen active?
 // cursor per-frame update (CCur)
 // cursor draw
@@ -260,7 +257,7 @@ void* getPlayer__Q22cf13CfGameManagerFi(int index);
 u32 GetItemMulti_IsActiveFlag();
 void CUICfManager_setTimeout30();
 void CtrlRemote_SetSharedBit(u32 owner, u32 flag);
-u32 CtrlRemote_TouchBitByArg(u32 resourceId);
+
 void UIWin_CreateSysWin0(char* msg, int a, int b);
 int Col6_ScanItemSlots_D310();
 void Col6_ReserveBoxSlot_D3A0();

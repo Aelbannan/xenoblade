@@ -3,6 +3,7 @@
 #include <types.h>
 #include "monolib/lib/UnkClass_8045F564.hpp"
 #include "monolib/work/IWorkEvent.hpp"
+#include "kyoshin/cf/object/CActorParam.hpp"
 #include <nw4r/math/math_types.h>
 #include "kyoshin/code_80135FDC_Bdat.hpp"
 #include "kyoshin/code_80135FDC_Lyt.hpp"
@@ -34,9 +35,14 @@ struct CItemBoxItem {
 // (the weapon sits at +0x26), and +0x3534 is the counter/arts area. Shared by
 // the item-box grid, equip box, info popup and line widgets.
 struct CItemBoxCharEntry {
-    u8 _00[0x1C];
+    u8 _00[0x08];
+    u32 mBdatTable;          // +0x08 // name-guess: bdat table handle paired with +0xC row key
+    u16 mBdatRow;            // +0x0C // name-guess: bdat row key copied into CItemBoxSlotEntry::h
+    u8 _0E[0x1C - 0x0E];
     s16 slotIds[6];          // +0x1C..+0x27
-    u8 _28[0x3534 - 0x28];
+    u8 _28[0x17C - 0x28];
+    cf::CActorParam mParam;  // +0x17C (embedded actor parameter block)
+    u8 _3500[0x3534 - 0x34FC]; // +0x3500..+0x3533
     u8 counterArea[0x8A0];   // +0x3534
 };
 

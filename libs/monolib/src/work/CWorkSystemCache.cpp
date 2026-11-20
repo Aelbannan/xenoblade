@@ -203,29 +203,8 @@ extern "C" void SysCacheDecLoginRef(CCacheItem* ths) {
     }
 }
 // ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
-// [.rodata] 0x80524568-0x805245B0 (72B): RTTI name strings. MWCC's .rodata
-// emission pads a non-last symbol to an 8-byte boundary when its end is
-// 4-mod-8, so the retail [20][24][28] symbol split is unreproducible with
-// three separate arrays. Instead the first string is padded to [24] and the
-// first four bytes of the second name ("resl") ride inside it, with the
-// remaining [20] following at +0x18; the combined bytes are byte-identical
-// to retail and the third string lands at +0x2C. (The middle symbol's VALUE
-// sits 4 bytes late; only typeid().name() output is affected, not the
-// dynamic_cast base-list walk.)
-extern "C" const char lbl_eu_80524568[24] = {
-    0x43,0x57,0x6F,0x72,0x6B,0x53,0x79,0x73,0x74,0x65,0x6D,0x43,0x61,0x63,0x68,0x65,
-    0x00,0x00,0x00,0x00, 0x72,0x65,0x73,0x6C,
-};  // "CWorkSystemCache\0" + 3 pad + "resl"
-extern "C" const char lbl_eu_8052457C[20] = {
-    0x69,0x73,0x74,0x3C,0x43,0x43,0x61,0x63,0x68,0x65,0x49,0x74,0x65,0x6D,0x20,0x2A,
-    0x3E,0x00,0x00,0x00,
-};  // "ist<CCacheItem *>\0" + 2 pad (completes "reslist...")
-extern "C" const char lbl_eu_80524594[28] = {
-    0x5F,0x72,0x65,0x73,0x6C,0x69,0x73,0x74,0x5F,0x62,0x61,0x73,0x65,0x3C,0x43,0x43,
-    0x61,0x63,0x68,0x65,0x49,0x74,0x65,0x6D,0x20,0x2A,0x3E,0x00,
-};  // "_reslist_base<CCacheItem *>\0"
-
-// Foreign .sdata strings referenced by the locators below.
+// [.rodata] 0x80524568-0x805245B0 (72B): RTTI name strings, spelled as source
+// literals so MWCC emits the names and their retail padding itself.
 
 // Forward declarations for the .data block below (referenced by the .sdata
 // locators above).
@@ -236,9 +215,9 @@ extern "C" u32 lbl_eu_8056FD3C[];
 
 // [.sdata] 0x80663B40-0x80663B58 (24B): RTTI locators + shared "ref"-style
 // string pointers (u32* slots; same bytes as void* pointer tables).
-extern "C" u32 __RTTI__16CWorkSystemCache[2] = { (u32)lbl_eu_80524568, (u32)lbl_eu_8056FD10 };
-extern "C" u32 lbl_eu_80663B48[2] = { (u32)lbl_eu_8052457C, (u32)lbl_eu_8056FD30 };
-extern "C" u32 lbl_eu_80663B50[2] = { (u32)lbl_eu_80524594, 0 };
+extern "C" u32 __RTTI__16CWorkSystemCache[2] = { (u32)&"CWorkSystemCache"[0], (u32)lbl_eu_8056FD10 };
+extern "C" u32 lbl_eu_80663B48[2] = { (u32)&"reslist<CCacheItem *>"[0], (u32)lbl_eu_8056FD30 };
+extern "C" u32 lbl_eu_80663B50[2] = { (u32)&"_reslist_base<CCacheItem *>"[0], 0 };
 
 // [.data] 0x8056FC70-0x8056FD48 (216B): CWorkSystemCache vtable + reslist
 // RTTI base-list + reslist<CCacheItem*>/_reslist_base vtables.

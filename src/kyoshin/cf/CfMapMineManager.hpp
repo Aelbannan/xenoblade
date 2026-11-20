@@ -1,5 +1,7 @@
 #pragma once
 
+#include "kyoshin/cf/CfBdat.hpp"
+
 #include <types.h>
 #include "kyoshin/code_8025FB10.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
@@ -72,7 +74,7 @@ extern "C" void CItemData_callVf0C(void* item, u16 v);
 extern "C" void CItem_resolveFamilyBdat(u16 v, void* outA, void* outB);
 extern "C" int* CtrlObjectParam_GetSlotTableBase();
 extern "C" void* CtrlObjectParam_GetCharEntry(u32 index);
-extern "C" u32 CtrlRemote_TouchBitByArg(u32 v);
+#include "kyoshin/cf/CtrlRemoteApi.hpp"
 extern "C" void* CItemData_lookupOrAlloc(void* item, int v);
 extern "C" void* getInstance__Fv();
 extern "C" void* spawnMaskedObject(void* a, u32 b, u32 c, u32 d);
@@ -94,7 +96,6 @@ extern "C" void queueEventId__Q22cf13CfGameManagerFv(u32 id);
 extern "C" CfMapMineManager* sMineManagerInstance;   // sbss: singleton instance
 extern "C" u16 gmGlobalFlag42;                 // sbss: current area id
 extern "C" u16 gmGlobalFlag44;                 // sbss: current area sub-id
-extern "C" BdatFilePointer* lbl_eu_806640C8;    // sbss: bdat file handle
 extern "C" s32 sMineNameLength;                 // sbss: cached name length
 extern "C" s8 sMineNameInitialized;                  // sbss: one-time init flag
 extern "C" char sMineItemNameScratch[8];            // sdata: scratch name buffer

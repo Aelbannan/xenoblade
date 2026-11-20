@@ -131,7 +131,7 @@ AnmObjChrRes* AnmObjChr::Detach(int idx) {
 void AnmObjChr::SetWeight(int idx, f32 weight) {}
 
 f32 AnmObjChr::GetWeight(int idx) const {
-    return 1.0f;
+    return 0.0f;
 }
 
 void AnmObjChr::DetachAll() {}
@@ -265,7 +265,7 @@ f32 AnmObjChrNode::GetFrame() const {
             return mpChildrenArray[i]->GetFrame();
         }
     }
-    return lbl_eu_80669B88;
+    return 0.0f;
 }
 
 void AnmObjChrNode::SetUpdateRate(f32 rate) {
@@ -282,7 +282,7 @@ f32 AnmObjChrNode::GetUpdateRate() const {
             return mpChildrenArray[i]->GetUpdateRate();
         }
     }
-    return lbl_eu_80669B8C;
+    return 1.0f;
 }
 
 void AnmObjChrNode::DetachAll() {
@@ -453,9 +453,9 @@ inline AnmObjChrBlend::AnmObjChrBlend(MEMAllocator* pAllocator,
     : AnmObjChrNode(pAllocator, pBindingBuf, numBinding, ppChildrenBuf,
                     numChildren),
       mpWeightArray(pWeightBuf) {
-    // All weights start fully bound (1.0f, the shared sdata2 constant).
+    // All weights start fully bound (1.0f).
     for (int i = 0; i < mChildrenArraySize; i++) {
-        mpWeightArray[i] = lbl_eu_80669B8C;
+        mpWeightArray[i] = 1.0f;
     }
 }
 
@@ -518,13 +518,13 @@ const ChrAnmResult* AnmObjChrBlend::GetResult(ChrAnmResult* pResult, u32 idx) {
     // First pass: collect contributing children and the total weight.
     AnmObjChrRes* pFirst = NULL;
     int count = 0;
-    f32 totalWeight = lbl_eu_80669B88;
+    f32 totalWeight = 0.0f;
 
     for (int i = 0; i < mChildrenArraySize; i++) {
         AnmObjChrRes* pRes = mpChildrenArray[i];
         f32 weight = mpWeightArray[i];
 
-        if (pRes == NULL || weight == lbl_eu_80669B88 ||
+        if (pRes == NULL || weight == 0.0f ||
             !pRes->TestExistence(idx)) {
             continue;
         }
@@ -553,26 +553,26 @@ const ChrAnmResult* AnmObjChrBlend::GetResult(ChrAnmResult* pResult, u32 idx) {
 
     // Start from "everything": all flags kept, zero scale/matrix, identity quat.
     pResult->flags = ~0u;
-    pResult->s.x = lbl_eu_80669B88;
-    pResult->s.y = lbl_eu_80669B88;
-    pResult->s.z = lbl_eu_80669B88;
+    pResult->s.x = 0.0f;
+    pResult->s.y = 0.0f;
+    pResult->s.z = 0.0f;
 
     math::MTX34Zero(&pResult->rt);
 
-    math::QUAT accQuat(lbl_eu_80669B88, lbl_eu_80669B88, lbl_eu_80669B88,
-                       lbl_eu_80669B8C);
+    math::QUAT accQuat(0.0f, 0.0f, 0.0f,
+                       1.0f);
     math::MTX33 firstRot;
     math::VEC3 logScale;
-    logScale.x = lbl_eu_80669B88;
-    logScale.y = lbl_eu_80669B88;
-    logScale.z = lbl_eu_80669B88;
-    f32 quatWeightSum = lbl_eu_80669B88;
+    logScale.x = 0.0f;
+    logScale.y = 0.0f;
+    logScale.z = 0.0f;
+    f32 quatWeightSum = 0.0f;
 
     for (int i = 0; i < mChildrenArraySize; i++) {
         AnmObjChrRes* pRes = mpChildrenArray[i];
         f32 weight = mpWeightArray[i];
 
-        if (pRes == NULL || weight == lbl_eu_80669B88 ||
+        if (pRes == NULL || weight == 0.0f ||
             !pRes->TestExistence(idx)) {
             continue;
         }
@@ -594,30 +594,30 @@ const ChrAnmResult* AnmObjChrBlend::GetResult(ChrAnmResult* pResult, u32 idx) {
                 pResult->s.z += w;
             }
         } else if (!(flags & ChrAnmResult::FLAG_SCALE_ONE)) {
-            // Domain-guarded log: non-positive child scales contribute NaN,
-            // loaded from the shared sdata2 slot.
+            // Domain-guarded log: non-positive child scales contribute the
+            // quiet NaN that nw4r::math::FLog returns.
             logScale.x +=
-                w * (pChild->s.x > lbl_eu_80669B88
+                w * (pChild->s.x > 0.0f
                          ? math::detail::FLog(pChild->s.x)
-                         : lbl_eu_80669B90);
+                         : NW4R_MATH_QNAN);
             logScale.y +=
-                w * (pChild->s.y > lbl_eu_80669B88
+                w * (pChild->s.y > 0.0f
                          ? math::detail::FLog(pChild->s.y)
-                         : lbl_eu_80669B90);
+                         : NW4R_MATH_QNAN);
             logScale.z +=
-                w * (pChild->s.z > lbl_eu_80669B88
+                w * (pChild->s.z > 0.0f
                          ? math::detail::FLog(pChild->s.z)
-                         : lbl_eu_80669B90);
+                         : NW4R_MATH_QNAN);
         }
 
         if (bQuatBlend) {
             math::QUAT q;
 
             if (flags & ChrAnmResult::FLAG_ROT_ZERO) {
-                q.x = lbl_eu_80669B88;
-                q.y = lbl_eu_80669B88;
-                q.z = lbl_eu_80669B88;
-                q.w = lbl_eu_80669B8C;
+                q.x = 0.0f;
+                q.y = 0.0f;
+                q.z = 0.0f;
+                q.w = 1.0f;
             } else {
                 math::MTX34ToQUAT(&q, &pChild->rt);
             }
@@ -691,7 +691,7 @@ const ChrAnmResult* AnmObjChrBlend::GetResult(ChrAnmResult* pResult, u32 idx) {
         f32 lenSq2 = pRow2->x * pRow2->x + pRow2->y * pRow2->y +
                      pRow2->z * pRow2->z;
 
-        if (lenSq0 == lbl_eu_80669B88 || lenSq2 == lbl_eu_80669B88) {
+        if (lenSq0 == 0.0f || lenSq2 == 0.0f) {
             pResult->rt._00 = firstRot._00;
             pResult->rt._01 = firstRot._01;
             pResult->rt._02 = firstRot._02;
@@ -726,7 +726,7 @@ inline AnmObjChrRes::AnmObjChrRes(MEMAllocator* pAllocator, ResAnmChr chr,
                                   u16* pBindingBuf, int numBinding,
                                   ChrAnmResult* pCacheBuf)
     : AnmObjChr(pAllocator, pBindingBuf, numBinding),
-      FrameCtrl(0.0f, chr.ref().info.numFrame,
+      FrameCtrl(0.0f, static_cast<f32>(static_cast<int>(chr.ref().info.numFrame)),
                 lbl_eu_80663458[chr.ref().info.policy]),
       mRes(chr), mpResultCache(pCacheBuf) {}
 
@@ -872,7 +872,7 @@ void AnmObjChrRes::SetUpdateRate(f32 rate) {
     SetRate(rate);
 
     // Only refresh the cache when the rate returns to exactly 1.0f.
-    if (lbl_eu_80669B88 == rate) {
+    if (0.0f == rate) {
         if (mpResultCache != NULL) {
             f32 f = GetFrm();
             // Explicit byte-offset IV keeps MWCC from deriving its own temp,
@@ -901,7 +901,7 @@ f32 AnmObjChrRes::GetUpdateRate() const {
 }
 
 void AnmObjChrRes::UpdateFrame() {
-    if (lbl_eu_80669B88 != GetRate()) {
+    if (0.0f != GetRate()) {
         UpdateFrm();
 
         if (mpResultCache != NULL) {

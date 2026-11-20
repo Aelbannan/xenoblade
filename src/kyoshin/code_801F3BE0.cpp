@@ -49,7 +49,7 @@ struct CGimmickDispatch {
 
 // Singleton instance (retail .sbss). Global-scope name - no extern "C" needed
 // (MWCC does not mangle global variable names).
-extern CGimmickGlobal* lbl_eu_80664658;
+CGimmickGlobal* spGimmickGlobal; // name-guess: TU-private singleton returned by getUnk80664658 (retail .sbss 0x80664658)
 
 // Shared 0.0f float-pool constant (retail .sdata2). Referenced by name so the
 // reloc lands on lbl_eu_80668158 instead of MWCC's auto pool label; const lets
@@ -89,13 +89,8 @@ extern "C" CGimmickEntry* __ct__cf_CfGimmickElv(CGimmickEntry* self, int row);
 extern "C" CGimmickEntry* __ct__cf_CfGimmickWarp(CGimmickEntry* self, int row);
 // Bdat table pointers for the lock / elevator / warp tables (sda21 globals).
 #include "kyoshin/cf/CfBdat.hpp"  // owning header for gLockBdatTable
-extern u8* lbl_eu_80664130;
-extern u8* lbl_eu_80664134;
 // Bdat table pointers for the object / jump / item / enemy tables (sda21
 // globals). u8* opaque buffers (no void* in this TU's imports).
-extern u8* lbl_eu_80664128;
-extern u8* lbl_eu_80664138;
-extern u8* lbl_eu_80664144;
 
 // CfGimmick ctors for the remaining gimmick types. These are C-linkage retail
 // names (no C++ mangling markers; the defining TUs emit them with extern "C"
@@ -114,14 +109,14 @@ extern "C" void CfGimmick_SetGlobalB8Value(u32 value);
 
 
 CGimmickGlobal* getUnk80664658(void) {
-    return lbl_eu_80664658;
+    return spGimmickGlobal;
 }
 
 // Constructor: register the singleton and clear the load-state fields.
 CGimmickGlobal* __ct__801F3BE8(CGimmickGlobal* self) {
-    lbl_eu_80664658 = self;
+    spGimmickGlobal = self;
     self->mGimmickCount = 0;
-    self->field_0x21C = lbl_eu_80668158;
+    self->field_0x21C = 0.0f;
     self->field_0x218 = 0;
     self->mFlags = 0;
     return self;
@@ -134,7 +129,7 @@ CGimmickGlobal* __dt__801F3C08(CGimmickGlobal* self, int flags) {
     if (self) {
         self->mFlags = 0;
         self->field_0x200 = 0;
-        self->field_0x21C = lbl_eu_80668158;
+        self->field_0x21C = 0.0f;
         for (s32 i = 0; i < self->mGimmickCount; i++) {
             CGimmickEntry* g = self->mGimmicks[i];
             if (g == NULL)
@@ -147,7 +142,7 @@ CGimmickGlobal* __dt__801F3C08(CGimmickGlobal* self, int flags) {
         self->field_0x218 = 0;
         self->field_0x210 = 0;
         CfGimmick_InitPartyGlobals();
-        lbl_eu_80664658 = 0;
+        spGimmickGlobal = 0;
         if (flags > 0)
             delete self;
     }
@@ -158,12 +153,12 @@ CGimmickGlobal* __dt__801F3C08(CGimmickGlobal* self, int flags) {
 // gimmick (dispatch slot 0x08 with 1) and resets the counters/state, then
 // re-spawns the object/lock/elevator/warp/jump/item families from their bdat
 // tables in order, stopping at the first failure. The save-off family is
-// spawned inline from lbl_eu_80664140 (0x88-byte objects); the enemy family
+// spawned inline from ::cf::CfBdat::spCurGimSvOffFileData (0x88-byte objects); the enemy family
 // (GimSpawnEnemies) runs only when every other family fit in the 0x80 slots.
 void GimSpawnAll(CGimmickGlobal* self, void* obj) {
     self->mFlags = 0;
     self->field_0x200 = 0;
-    self->field_0x21C = lbl_eu_80668158;
+    self->field_0x21C = 0.0f;
     // Walking-pointer teardown pass (retail advances a cursor by 4).
     CGimmickEntry** p = self->mGimmicks;
     for (s32 i = 0; i < self->mGimmickCount; i++, p++) {
@@ -192,7 +187,7 @@ void GimSpawnAll(CGimmickGlobal* self, void* obj) {
     // Spawn the save-off family inline; the enemy family only runs when
     // every family so far fit inside the 0x80-slot container.
     bool ok = true;
-    u8* bdat = lbl_eu_80664140;
+    u8* bdat = (u8*)::cf::CfBdat::spCurGimSvOffFileData;
     if (bdat != NULL) {
         Bdat_GetTable_AA34();
         s32 row = (s32)Bdat_GetRowBase_B41C(bdat);
@@ -219,7 +214,7 @@ void GimSpawnAll(CGimmickGlobal* self, void* obj) {
 // (row, &mGimmicks[count0], count-count0, column-buf) argument bundle.
 bool GimSpawnObjects(CGimmickGlobal* self) {
     self->field_0x208 = 0;
-    u8* bdat = lbl_eu_80664128;
+    u8* bdat = (u8*)::cf::CfBdat::spCurGimListFileData;
     if (bdat == NULL) {
         CfGimmick_SetGlobalB8Value(0);
         return true;
@@ -276,7 +271,7 @@ bool GimSpawnLocks(CGimmickGlobal* self) {
 // GimSpawnElevators: spawn the elevator gimmicks from the elevator bdat table;
 // same shape as GimSpawnLocks with the 0x400 flag and 0x1d8-byte objects.
 bool GimSpawnElevators(CGimmickGlobal* self) {
-    u8* bdat = lbl_eu_80664130;
+    u8* bdat = (u8*)::cf::CfBdat::spCurElvGmFileData;
     if (bdat == NULL)
         return true;
     self->mFlags |= 0x400;
@@ -299,7 +294,7 @@ bool GimSpawnElevators(CGimmickGlobal* self) {
 // GimSpawnWarps: spawn the warp gimmicks from the warp bdat table; same shape
 // as GimSpawnLocks with the 0x800 flag and 0x10c-byte objects.
 bool GimSpawnWarps(CGimmickGlobal* self) {
-    u8* bdat = lbl_eu_80664134;
+    u8* bdat = (u8*)::cf::CfBdat::spCurWarpGmFileData;
     if (bdat == NULL)
         return true;
     self->mFlags |= 0x800;
@@ -322,7 +317,7 @@ bool GimSpawnWarps(CGimmickGlobal* self) {
 // GimSpawnJumps: spawn the jump gimmicks from the jump bdat table; same
 // shape as GimSpawnLocks with the 0x1000 flag and 0x170-byte objects.
 bool GimSpawnJumps(CGimmickGlobal* self) {
-    u8* bdat = lbl_eu_80664138;
+    u8* bdat = (u8*)::cf::CfBdat::spCurJumpGmFileData;
     if (bdat == NULL)
         return true;
     self->mFlags |= 0x1000;
@@ -346,7 +341,7 @@ bool GimSpawnJumps(CGimmickGlobal* self) {
 // GimSpawnItems: spawn the item gimmicks from the item bdat table; same shape
 // as GimSpawnLocks with the 0x2000 flag and 0xa4-byte objects.
 bool GimSpawnItems(CGimmickGlobal* self) {
-    u8* bdat = (u8*)lbl_eu_8066413C;  // item bdat table (CfGimmickItem.hpp)
+    u8* bdat = (u8*)::cf::CfBdat::spCurItemGmFileData;  // item bdat table (CfGimmickItem.hpp)
     if (bdat == NULL)
         return true;
     self->mFlags |= 0x2000;
@@ -369,7 +364,7 @@ bool GimSpawnItems(CGimmickGlobal* self) {
 // table is non-empty the enemy run window [0x200, 0x204) is opened at the
 // current count; it is re-closed at the final count on both exit paths.
 bool GimSpawnEnemies(CGimmickGlobal* self) {
-    u8* bdat = lbl_eu_80664144;
+    u8* bdat = (u8*)::cf::CfBdat::spCurGimEneFileData;
     if (bdat == NULL)
         return true;
     self->mFlags |= 0x4000;
@@ -405,7 +400,7 @@ bool GimSpawnEnemies(CGimmickGlobal* self) {
 void GimTeardownAll(CGimmickGlobal* self) {
     self->mFlags = 0;
     self->field_0x200 = 0;
-    self->field_0x21C = lbl_eu_80668158;
+    self->field_0x21C = 0.0f;
     for (s32 i = 0; i < self->mGimmickCount; i++) {
         CGimmickEntry* g = self->mGimmicks[i];
         if (g == NULL)
@@ -430,7 +425,7 @@ void cf::CfGimmick::CfGimmick_Update() {}
 // every player gets the value pushed into its vtable slot 0x5C4, gated on the
 // testActorStatus actor-id check (flag 3).
 void GimSetVisionResumeDist(CGimmickGlobal* self, f32 value) {
-    if (lbl_eu_80668158 == value) {
+    if (0.0f == value) {
         self->mFlags |= 0x20;
     } else {
         if (!(self->mFlags & 0x20))

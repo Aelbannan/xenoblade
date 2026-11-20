@@ -20,7 +20,7 @@
 // per-gimmick-type bdat table pointers; the ctor loads the object-gimmick
 // table pointer through an sda21 member reloc.
 struct CfGimmickTableSet {
-    u8* lbl_eu_80664128;   // object-gimmick bdat table
+    u8* mObjectGimmickBdatTable;   // name-guess: object-gimmick bdat table
 };
 
 // NOTE: CtrlMovePC.hpp is not included here; only cf::CCtrlMovePC /

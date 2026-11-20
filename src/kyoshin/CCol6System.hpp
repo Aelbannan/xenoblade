@@ -1,5 +1,7 @@
 #pragma once
 
+#include "kyoshin/cf/CfBdat.hpp"
+
 #include "kyoshin/CSystemWindowApi.hpp"
 #include <types.h>
 #include "kyoshin/CSysWin.hpp"
@@ -239,7 +241,6 @@ extern char lbl_eu_80502050[];
 // CCol6Invite.cpp as common symbols; plain global-scope externs emit the same
 // unmangled symbols).
 extern u32 __ptmf_null[3];      // null pointer-to-member-function constant
-extern u32 lbl_eu_80664098;     // invite message-buffer base (.sdata)
 extern char lbl_eu_8052D238[];  // CProcess temp vtable (.data)
 extern char lbl_eu_8053001C[];  // CCol6System composite vtable (.data)
 extern char lbl_eu_8053011C[];  // CCol6Hint composite vtable (.data)
@@ -267,7 +268,7 @@ extern "C" const u8 lbl_eu_8066756E;
 extern "C" const u32 lbl_eu_80667570;
 extern "C" const u16 lbl_eu_80667574;
 extern "C" const u8 lbl_eu_80667576;
-extern "C" u32 CtrlRemote_TouchBitByArg(u32 resourceId);
+#include "kyoshin/cf/CtrlRemoteApi.hpp"
 extern "C" void __dt__7CSysWinFv(void*, int);
 extern "C" void __dt__17UnkClass_8045F564Fv(void*, int);
 extern "C" void __ct__17UnkClass_8045F564Fv(void* self);

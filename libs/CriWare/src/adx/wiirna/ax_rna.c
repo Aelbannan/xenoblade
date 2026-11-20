@@ -16,9 +16,9 @@ __attribute__((section(".rodata"), aligned(1))) const unsigned char gap_06_80519
     0x00, 0x00, 0x00
 };
 
-__declspec(section ".data") __attribute__((aligned(8))) u32 lbl_eu_80566050 = 1;
+__declspec(section ".data") __attribute__((aligned(8))) u32 axrna_src_type = 1; // name-guess: copied into AXRNA_OBJ::srcType at handle creation; value matches AX_SRC_TYPE_LINEAR
 
-__declspec(section ".data") __attribute__((aligned(4))) u32 lbl_eu_80566054[0x1F] = {
+__declspec(section ".data") __attribute__((aligned(4))) u32 axrna_pan_table[0x1F] = { // name-guess: MIX pan lookup indexed by pan+0xf in AXRNA_SetOutPan/Create
     0x00000000, 0x00000004, 0x00000008, 0x0000000C, 0x00000010, 0x00000014, 0x00000018, 0x0000001C, 0x00000021, 0x00000025, 0x00000029, 0x0000002D, 0x00000031, 0x00000035, 0x00000039, 0x00000040, 0x00000044, 0x00000048, 0x0000004C, 0x00000051, 0x00000055, 0x00000059, 0x0000005D, 0x00000062, 0x00000066, 0x0000006A, 0x0000006E, 0x00000073, 0x00000077, 0x0000007B, 0x0000007F
 };
 
@@ -329,7 +329,7 @@ AXRNA_OBJ* AXRNA_Create(void* obj_arr, s32 maxnch, u8* buf) {
         if (slot != NULL) {
             slot->field_0x9c = (u16)tbl;
         }
-        tbl = lbl_eu_80566050;
+        tbl = axrna_src_type;
         if (slot != NULL) {
             slot->srcType = tbl;
             slot->field_0x9e = 1;
@@ -347,7 +347,7 @@ AXRNA_OBJ* AXRNA_Create(void* obj_arr, s32 maxnch, u8* buf) {
                     slot->pan[0] = -0xf;
                     GCRNA_LockCs();
                     if (slot->voice[0] != 0) {
-                        MIXSetPan(slot->voice[0], (s32)lbl_eu_80566054[0]);
+MIXSetPan(slot->voice[0], (s32)axrna_pan_table[0]);
                     }
                     GCRNA_UnlockCs();
                 }
@@ -359,7 +359,7 @@ AXRNA_OBJ* AXRNA_Create(void* obj_arr, s32 maxnch, u8* buf) {
                     slot->pan[1] = 0xf;
                     GCRNA_LockCs();
                     if (slot->voice[1] != 0) {
-                        MIXSetPan(slot->voice[1], (s32)lbl_eu_80566054[0x1e]);
+MIXSetPan(slot->voice[1], (s32)axrna_pan_table[0x1e]);
                     }
                     GCRNA_UnlockCs();
                 }
@@ -372,7 +372,7 @@ AXRNA_OBJ* AXRNA_Create(void* obj_arr, s32 maxnch, u8* buf) {
                     slot->pan[0] = 0;
                     GCRNA_LockCs();
                     if (slot->voice[0] != 0) {
-                        MIXSetPan(slot->voice[0], (s32)lbl_eu_80566054[0xf]);
+MIXSetPan(slot->voice[0], (s32)axrna_pan_table[0xf]);
                     }
                     GCRNA_UnlockCs();
                 }
@@ -968,7 +968,7 @@ void AXRNA_SetOutPan(AXRNA_OBJ* self, s32 index, s32 pan) {
     {
         void* e = self->voice[index];
         if (e != NULL) {
-            MIXSetPan(e, (s32)lbl_eu_80566054[v + 0xf]);
+            MIXSetPan(e, (s32)axrna_pan_table[v + 0xf]);
         }
     }
     GCRNA_UnlockCs();

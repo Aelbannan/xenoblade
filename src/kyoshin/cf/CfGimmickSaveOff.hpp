@@ -34,7 +34,6 @@ extern "C" u32 getQueuedFileEventCount__Q22cf13CfGameManagerFv();
 
 // gGimmickBdatColumns is declared in CfGimmick.hpp (const void*[]).
 // Bdat file holder seed handed to the registration helpers (.sdata pointer).
-extern u8* lbl_eu_80664140;  // save-off gimmick bdat table (sda21)
 
 namespace cf {
 

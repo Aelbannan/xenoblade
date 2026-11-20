@@ -3,6 +3,7 @@
 
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/cf/CfMapEffectManager.hpp"
+#include "kyoshin/cf/CfBdat.hpp"
 #include "kyoshin/cf/CfResPcImpl.hpp"
 #include "kyoshin/cf/CfTFile.hpp"
 #include "kyoshin/cf/CfCamEventApi.hpp"

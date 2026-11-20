@@ -19,7 +19,7 @@ extern "C" CChainGimmickList* getReslistB48();
 // CBattleManager.hpp - keep it out of the header like the trio above.
 // (func_800F3970: single shared decl on kyoshin/cf/CBattleManager.hpp.)
 extern "C" void CfObjectMove_setAnimModeArgs(u8* obj, int a, int b, int c, int d);
-
+#include "kyoshin/cf/CfCamSymbols.hpp"
 // (The former TU-local voice-dispatch pads are gone. Their slots are
 // recovered: the first dispatched on the battle object's embedded voice
 // sub-object at +0x3E9C (slots +0x4C / +0x50 = cf::CChainVoiceSub::v17 /
@@ -1452,7 +1452,7 @@ setTimer:
 // every chain sub-object. Returns 1 on success.
 int CChain_TryActivateChain(cf::CChain* self, u32 param) {
     cf::CfGameManager::getInstance();
-    if (isGlobalCamFlagSet__Fi(0x4000000)) return 0;
+    if (isGlobalCamFlagSet(0x4000000)) return 0;
     if (param != 0 && (((cf::CChainFlag*)param)->field_0x3F00 & 4) != 0) {
         if (cf::CBattleManager::getInstance()->CBattleMan_FetchVisionObj() != 0) return 0;
     }

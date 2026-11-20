@@ -215,10 +215,6 @@ extern "C" void* readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii(unsig
 extern "C" int KyoshinHeap_GetField44(void);
 // per-frame update helpers (external retail symbols, same merged unit)
 
-extern "C" void* lbl_eu_80664104;
-extern "C" void* lbl_eu_806640A8;
-extern "C" void* lbl_eu_806640EC;
-extern "C" void* lbl_eu_806640D8;
 
 // Forward declarations for sibling functions resolved at link via the symbol map
 // (retail treats these as external relocs, not same-TU symbols). The C++
@@ -254,10 +250,9 @@ extern "C" u32 CtrlObjectParam_GetArtsDataWord(void*);
 extern const char lbl_eu_80506D90[];        // rodata name/format tables
 // ItemBoxLine_FormatDisplayName: language selector is the static member
 // CDeviceSC::getLanguage (monolib/device/CDeviceSC.hpp).
-extern u32 lbl_eu_80664098;
 extern u32 lbl_eu_80664184;                 // name-index byte (sda21)
 
-extern "C" u16 CtrlRemote_TouchBitByArg(u32);
+#include "kyoshin/cf/CtrlRemoteApi.hpp"
 extern "C" u32 ItemBoxLine_CalcCountKey(void*, unsigned int);
 
 // Tab-accessor C++ bodies are declared in kyoshin/CItemBoxLine.hpp.
@@ -293,11 +288,8 @@ extern "C" char* ItemBoxLine_FormatDisplayName(CIBLTabFull*, u16);    // tab-for
 // table globals are retyped.
 
 // .sbss item-kind owner tables (u32 values; SDA-accessed).
-extern void* lbl_eu_806640F4;
-extern void* lbl_eu_806640F8;
 
 // ItemBoxLine_ProbeAvailability: item-kind table base (character-data owner table).
-extern u32 lbl_eu_80664110;
 
 // ItemBoxLine_ProbePageSlot: character-data lookup helpers (C-ABI).
 extern "C" u32 CItemBlock_countEmpty(u8);

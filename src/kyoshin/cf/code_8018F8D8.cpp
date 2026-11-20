@@ -1,12 +1,12 @@
 // Auto-scaffolded catalog TU for kyoshin/cf/code_8018F8D8
 // Replace stubs with high-level C/C++ during decomp.
-
+#include "kyoshin/cf/CtrlRemoteApi.hpp"
 #include <types.h>
 #include "kyoshin/cf/CBattleManager.hpp"
 #include "kyoshin/cf/CfRes.hpp"  // real CfResBuffer (popRecord ring pump)
-
+#include "kyoshin/cf/CfCamSymbols.hpp"
 #include "kyoshin/cf/code_8018F8D8.hpp"
-
+#include "kyoshin/menu/CMenuZeal.hpp"
 #include "kyoshin/CTaskGameImports.hpp"
 // NOTE: CfObjectActor.hpp is deliberately NOT included here:
 // CAIAction.hpp (its line-5 include) still carries a stale 2-arg declaration
@@ -33,7 +33,6 @@
 #include "kyoshin/cf/CfSoundMan.hpp"
 
 // Imports used only by CfCmd_PickChain.
-extern float lbl_eu_80667A94;
 extern u32 lbl_eu_80532A28[3];   // 12-byte member-function-pointer pool entry
 
 
@@ -41,8 +40,6 @@ extern u32 lbl_eu_80532A28[3];   // 12-byte member-function-pointer pool entry
 // These retail symbols are defined in other TUs / the linked library.
 extern "C" {
     extern u32 gmPauseFlags;
-    extern float lbl_eu_80667A70;
-    extern float lbl_eu_80667A74;
     extern u16 gmTimerCounter;
     extern u8  gNandTeardownByte;
     int*  CtrlObjectParam_GetSlotTableBase();
@@ -50,8 +47,8 @@ extern "C" {
 extern "C" void CfRes_tryRefreshSlot298(u32 a, u32 b);
     void func_8008064C__Q22cf13CfGameManagerFv(void* element0, int idx, float* stk);
     void stubEmptyC__Q22cf13CfGameManagerFv(int flag);
-    bool isGlobalCamFlagSet__Fi(int mask);
-    u32  CtrlRemote_TouchBitByArg(u32 resource);
+
+
     int  isBattleStatusActive(void* obj, int id);
     int  ChainTmr_StartUsable_E018(volatile s16* obj, FuncActorRef* arg);
     int pushBackwards(u32 a, u32 b, u32 c, u32 d, u32 e, u32 f);
@@ -79,7 +76,7 @@ extern "C" int  CfRes_tryResolveSlot1E4(u16 a, u16 b, int c);
     int  resetCameraManager__Q22cf13CfGameManagerFv();
     void recoverFieldState__Q22cf13CfGameManagerFv(bool alternate);
 
-    long GetZealObjPtr();
+
     // getAnimModelId: canonical u32(void*) decl comes from CfObjectMove.hpp.
     long __ptmf_cmpr(u32* slot, u32* pmf1, u32* pmf2);
     // get__16CfEnumListHolderFv: canonical void*(void*) decl comes from CPartyStateWin.hpp
@@ -144,8 +141,8 @@ int CfCmd_PartyRebuild(CFuncHost* self, u32 p1, u32 p2, u32 p3, u32 p4) {
         // +0x68), then move each by an offset vector before the notify calls.
         float* base = reinterpret_cast<float*>(NandPartySnap());
         u8 tag = gNandTeardownByte;
-        float ox = lbl_eu_80667A70;
-        float oy = lbl_eu_80667A74;
+        float ox = 0.0f;
+        float oy = 0.01f;
         // Scratch buffers: component-wise sum of the fixed offset vector
         // {ox, oy, ox} and the per-player base entry (MWCC vectorizes the
         // summation with paired singles). Declared pos-first to match
@@ -224,8 +221,8 @@ int CfCmd_PartyMove(CFuncHost* self, u32 a, u32 b, u32 c, u32 d) {
             // stack window: pos@0x8, offset@0x14, sum@0x20.
             float* base = reinterpret_cast<float*>(NandPartySnap());
             u8 tag = gNandTeardownByte;
-            float ox = lbl_eu_80667A70;
-            float oy = lbl_eu_80667A74;
+            float ox = 0.0f;
+            float oy = 0.01f;
             float pos[3];
             float offset[3];
             float sum[3];
@@ -358,8 +355,10 @@ int CfCmd_Call86778(CFuncHost* self) {
 // the mode word is clear. Retail leaves arg2 (r4) unset at the call site, so
 // the local is intentionally uninitialized.
 int CfCmd_FadeColor(u32 p0, u32 p1, u32 color) {
-    const float scale = lbl_eu_80667A78;
     u8* c = reinterpret_cast<u8*>(&color);
+    // Kept as a pool label: writing the 1/255 literal here swaps the FPR
+    // colours of the conversion magic and scale (100% -> 98.41%).
+    const float scale = lbl_eu_80667A78;
     float cr = c[0] * scale;
     float cg = c[1] * scale;
     float cb = c[2] * scale;
@@ -442,7 +441,7 @@ int CfCmd_FadeSetup(void* self) {
     // request event when the colour-change latch (bit12) is set.
     // Bit 1 (0x2): colour-fade-active latch.
     if (!(gmPauseFlags & 0x2)) {
-        float f = lbl_eu_80667A70;
+        float f = 0.0f;
         UnkFloat4 v;
         v.field_0x0 = f;
         v.field_0x4 = f;
@@ -532,7 +531,7 @@ int CfCmd_Fwd1BIfLocal(u32 p0, u32 p1, u32 p2, u32 p3, u32 p4) {
 
 int CfCmd_FadeClear() {
     if (!(gmGameFlags & 0x400000)) {
-        float f = lbl_eu_80667A70;
+        float f = 0.0f;
         UnkFloat4 v;
         v.field_0x0 = f;
         v.field_0x4 = f;
@@ -598,6 +597,9 @@ int CfCmd_PumpRingBuf(CfResBuffer* buf, u32* outFlag) {
     return buf->field_404 == 0;
 }
 
+// The one .sdata2 slot shared by all chain-target gates and this getter is
+// kept as a pool label: a TU-local 2.5f literal is duplicated per function and
+// would grow the section past retail (recorded in MWCC_CASES).
 extern float lbl_eu_80667A90;
 // Flat retail name: CtrlAct.cpp declares it as `extern "C" f32 CfCmd_GetThreshold()`.
 extern "C" float CfCmd_GetThreshold() { return lbl_eu_80667A90; }
@@ -625,11 +627,11 @@ int CfCmd_PickChain(FuncResultRef* self, FuncActorRef* actor, int mode,
     if (probeGate90940(actor, 0x802) == 0) return 0;
     if (probeGate90940(actor, 1) == 0) return 0;
     cf::CfGameManager::getInstance();
-    if (!isGlobalCamFlagSet__Fi(0x100)) return 0;
+    if (!isGlobalCamFlagSet(0x100)) return 0;
     if (CtrlRemote_TouchBitByArg(0x335f) != 0) return 0;
     if (GetZealObjPtr() != 0) return 0;
-    if (!isGlobalCamFlagSet__Fi(0x400)) return 0;
-    if (!isGlobalCamFlagSet__Fi(0x1000)) return 0;
+    if (!isGlobalCamFlagSet(0x400)) return 0;
+    if (!isGlobalCamFlagSet(0x1000)) return 0;
     if (probeGate90940(actor, 0x1f) == 0) return 0;
     if (probeGate90940(actor, 0x1000) == 0) return 0;
     if (probeGate90940(actor, 0x806) == 0) return 0;
@@ -671,7 +673,7 @@ int CfCmd_PickChain(FuncResultRef* self, FuncActorRef* actor, int mode,
     // While in state 5 the actor's voice-height must stay below the cap.
     if (actor->field_3f28 == 5 &&
         reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_getArtsGauge() >=
-            lbl_eu_80667A94) {
+            100.0f) {
         return 0;
     }
 

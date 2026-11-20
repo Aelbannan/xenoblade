@@ -1,7 +1,10 @@
 #pragma once
 
 #include <types.h>
-// Member types of CModelDispMakeCrystal (the class owns them by value so that
+#define IWORK_EVENT_INLINE_DTOR
+#include "monolib/work/IWorkEvent.hpp"
+#include "kyoshin/cf/IActParamEvent.hpp"
+
 // their ctors/dtors run from the compiler-generated ctor/dtor).
 #include "monolib/lib/UnkClass_8045F564.hpp"
 #include "kyoshin/CBaseCur.hpp"
@@ -134,29 +137,41 @@ struct CMCCrySelfFields {
     f32 field_be0;             // +0xbe0
 };
 
-class CModelDispMakeCrystal {
+extern "C" void MakeCrystal_ClearAnimSlot(void*, u32);
+
+// Secondary interfaces of the crystal display (the retail object stores
+// their vptrs at +4 and +8). Slot names come from the retail vtable words.
+// The +4 base is the real IActParamEvent, declared in kyoshin/cf/IActParamEvent.hpp.
+class CModelDispCrystalAnimBase {
+public:
+    virtual ~CModelDispCrystalAnimBase() {}
+    // The base subobject starts 8 bytes into the owner; the retail slots are
+    // the this-adjusted release/clear calls.
+    virtual void releaseCrystalDisp() = 0;
+    virtual void clearAnimSlot() = 0;
+};
+
+class CModelDispMakeCrystal : public IWorkEvent,
+                              public IActParamEvent,
+                              public CModelDispCrystalAnimBase {
 public:
     CModelDispMakeCrystal(CScn* scene);
     ~CModelDispMakeCrystal();
-    int OnFileEvent(CEventFile* ev);
+    virtual bool OnFileEvent(CEventFile* ev);
 
     void initCrystalSubStruct();
     u32 getCrystalStateA();
     u32 getCrystalStateB();
     u32 getCrystalStateC();
     void setCrystalCursor(u32 val);
-    void destroyCrystalDispThunk4();
     void releaseCrystalDispThunk();
-    void destroyCrystalDispThunk8();
 
     // Retail layout. The class is not polymorphic in retail (the dtor resets no
     // vptr, cf. CModelDisp::mVtbl): the three vtable pointers are plain data
     // members written by the ctor. Everything up to +0x13BF is a real typed
     // member so that its ctor runs from the ctor init list in declaration
     // (= retail store) order; the tail is still raw.
-    u32* mVtbl;                   // 0x000 (lbl_eu_80535E70)
-    u32* mVtblRender;             // 0x004 (lbl_eu_80535E70 + 0x88)
-    u32* mVtblAnim;               // 0x008 (lbl_eu_80535E70 + 0xb4)
+    // +0x000/+0x004/+0x008 are the three base vptrs emitted by MWCC.
     CScn* mScene;                 // 0x00C owning scene
     void* mField10;               // 0x010
     void* mField14;               // 0x014
@@ -191,7 +206,7 @@ public:
     CMCEffUpRank mEffUpRank;      // 0xDCC
     CMCEffDivide mEffDivide;      // 0xDE4
     CMCEffCylinder mEffCylinder;  // 0xDFC
-    u32 field_E1C;                // 0xE1C
+    u8* mEntries;                 // 0xE1C // name-guess: dereferenced as u8** slot table at +0xE1C
     CCur18 mCurE20;               // 0xE20
     CScrollBar mScrollBar;        // 0xE38
     CSysWin mSysWin;              // 0xE78
@@ -250,7 +265,6 @@ extern "C" char* strcpy(char* dst, const char* src);
 unsigned long ItemMenu_IsPresent();
 
 // Constructor data imports.
-extern "C" const void* lbl_eu_80535E70[];   // CModelDispMakeCrystal vtable (+0x88/+0xb4 sub-vtables)
 // Non-const singletons would sink MWCC's SDA loads below aliasing stores
 // (see CModelDispMakeCrystal.cpp .sdata2 notes); each is a const [1] whose
 // [0] reads hoist like retail. Defined by the TU's .cpp pool block.

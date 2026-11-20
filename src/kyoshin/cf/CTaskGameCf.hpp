@@ -93,5 +93,5 @@ extern "C" void evtCreateTaskRegister(CProcess* pParent, CScnNw4r* pScene, CView
 namespace cf { struct CtrlObjectParamSlots; }
 extern "C" int CtrlObjectParam_InsertSlotEntry(cf::CtrlObjectParamSlots* self, int value, int type, int index);
 extern "C" void func_8007E514__Q22cf13CfGameManagerFv(int arg1, int arg2, const char* str, int arg4, u32 arg5);
-extern "C" u32 CtrlRemote_TouchBitByArg(u32 id);
+#include "kyoshin/cf/CtrlRemoteApi.hpp"
 extern "C" void CTaskGame_setLoadScreen(int a, int b);

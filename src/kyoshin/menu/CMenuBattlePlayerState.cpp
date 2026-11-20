@@ -1,3 +1,4 @@
+#include "kyoshin/cf/CfBdat.hpp"
 #include "kyoshin/menu/CMenuBattlePlayerState.hpp"
 #include "kyoshin/cf/CVision.hpp"
 #include "kyoshin/cf/CSuddenCommu.hpp"
@@ -6,26 +7,26 @@
 #include "kyoshin/cf/object/CfObjectActor.hpp"
 #include "kyoshin/cf/CBattleManager.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
-#undef GetZealObjPtr
+
 #undef isSceneLoading__Q22cf13CfGameManagerFv
 // code_80135FDC.hpp declares ml::epsilon as u32 (line 188);
 // CfObjectMove.hpp (via the CBattleManager.hpp include above) declares it
 // const float. This TU uses neither copy.
-#define GetZealObjPtr menuBpsFd44Get5
+
 #define isSceneLoading__Q22cf13CfGameManagerFv menuBpsCfGameMgrCond5
 // CfObjectModel.hpp (via CfObjectActor.hpp) declares this symbol as ml::CVec3;
 // code_80135FDC.hpp re-types it as nw4r::math::VEC3 -> MWCC 10563. This TU
 // never touches the zero vector, so rename the header-local decl away.
 #define zero__Q22ml5CVec3 menuBpsZeroVecDecl5
 #include "kyoshin/code_80135FDC.hpp"
-#undef GetZealObjPtr
+
 #undef isSceneLoading__Q22cf13CfGameManagerFv
 #undef zero__Q22ml5CVec3
 #include "monolib/device/CDeviceVI.hpp"
 #include "monolib/util/MemManager.hpp"
 #include "monolib/work/CWorkThreadSystem.hpp"
 #include "monolib/work/CProcess.hpp"
-
+#include "kyoshin/menu/CMenuZeal.hpp"
 #include <stdio.h>
 #include "decomp.h"
 #include "functions.hpp"
@@ -57,9 +58,6 @@ extern "C" void* __dt__8010B444(CMenuBattlePlayerStateSlot* self, s16 del) {
 extern "C" {
 extern CMenuBattlePlayerState* spBpsState;
 extern u32 gmPauseFlags;
-char lbl_eu_8052C1C0[];
-char lbl_eu_8052C330[];
-char lbl_eu_8052C42C[];
 u32 __ptmf_null[3];
 void __ct__8CProcessFv(CProcess*);
 void __dt__8CProcessFv(void* self, int flag);
@@ -80,15 +78,9 @@ void __construct_array(void* ptr, void* ctor, void* dtor, u32 size, u32 n);
 // Unmangled retail name (extern "C" in code_80135FDC.hpp).
 extern char lbl_eu_804FD720[];
 extern const f32 lbl_eu_80666F90; // 1.0f
-extern const f32 lbl_eu_80666F94; // 0.0f
 extern const f32 lbl_eu_80666F98; // 110.0f
 extern const f32 lbl_eu_80666F9C; // 86.0f
-extern const double lbl_eu_80666FA8; // 0x4330000000000000 (int->double bias)
 extern const f32 lbl_eu_80666FA0; // -178.0f
-extern const f32 lbl_eu_80666FB0; // -1.0f
-extern const f32 lbl_eu_80666FC0; // 100.0f
-extern const f32 lbl_eu_80666FC4; // 360.0f
-extern const f32 lbl_eu_80666FC8; // HP gauge width multiplier
 }
 
 extern "C" {
@@ -170,7 +162,6 @@ void CMenuBattlePlayerState::Init() {
         // Loop invariants kept live across the whole pass (retail pins them
         // to nonvolatile f28-f31 / r24-r26).
         const f32 zeroF = 0.0f;
-        const double intDbias = lbl_eu_80666FA8;
         const f32 yStep = lbl_eu_80666F9C;
         s16* colA = sBpsPaneColorWhite;
         s16* colB = sBpsPaneColorGold;
@@ -465,10 +456,8 @@ void CMenuBattlePlayerState::Init() {
         }
 
         {
-            // Fresh NV set for this pass (retail reloads FA8/F94/F90/FB8 here).
-            const double intDbias2 = lbl_eu_80666FA8;
+            // Fresh NV set for this pass.
             const f32 zeroF2 = 0.0f;
-            const double uIntBias = lbl_eu_80666FB8;
             const f32 oneF = 1.0f;
 
             for (u8 i = 0; i < 3; i++) {
@@ -1337,7 +1326,7 @@ void CMenuBattlePlayerState::BpsStateUpdateSlotArts(cf::CfObjectActor* actor, CM
             if (rec->unk30 != 0x800 && rec->unk0C != 0 && rec->unk0C != 0xF &&
                 rec->unk0C != 0x10 && rec->unk0C != 0x12) {
                 u16 nameId = static_cast<u16>(
-                    BdatGetU16Direct(lbl_eu_806640E0, tbl + 0x42B, rec->unk0C));
+                    BdatGetU16Direct(::cf::CfBdat::spBtlBuffListFileData, tbl + 0x42B, rec->unk0C));
                 if (nameId != 0) {
                     char* tex = MakeTplNameSysFile(nameId);
                     u32 bound = reinterpret_cast<u32>(
@@ -1406,7 +1395,7 @@ void CMenuBattlePlayerState::BpsStateUpdateSlotArts(cf::CfObjectActor* actor, CM
                     }
                 } else {
                     u16 nameId = static_cast<u16>(
-                        BdatGetU16Direct(lbl_eu_806640E0, tbl2 + 0x42B, v));
+                        BdatGetU16Direct(::cf::CfBdat::spBtlBuffListFileData, tbl2 + 0x42B, v));
                     if (nameId != 0) {
                         char* tex = MakeTplNameSysFile(nameId);
                         u32 bound = reinterpret_cast<u32>(

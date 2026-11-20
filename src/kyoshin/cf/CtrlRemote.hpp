@@ -1,10 +1,10 @@
 #pragma once
-
+#include "kyoshin/cf/CfCamSymbols.hpp"
 #include <types.h>
 #include "kyoshin/CTaskGameEff.hpp"
 #include "kyoshin/cf/CfObjectEnumList.hpp" // getObjectAt owner declaration
 #include "kyoshin/cf/CfMapEffectManager.hpp" // MapFx_ResolveOwner owner declaration
-
+#include "kyoshin/menu/CMenuZeal.hpp"
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" u32 CtrlRemote_TestSharedBit(u32* buffer, s32 index);
 extern "C" u32 CfRes_getHeapHandle();
@@ -18,7 +18,7 @@ extern "C" int isBattleStatusActive(void* obj, int id);
 // Global flag-bit probe on the game-manager state word. Retail symbol is the
 // C++-mangled isGlobalCamFlagSet__Fi, so this is a plain global C++ declaration
 // (CfCam.cpp defines it under C linkage with the same linker name).
-bool isGlobalCamFlagSet(int mask);
+
 
 namespace cf {
 class CtrlRemote;
@@ -139,7 +139,7 @@ void* findObjectById(int id);
 class Fd44State;
 // Retail call site passes no argument (r3 left over from the previous call);
 // matches the CtrlPc.hpp declaration.
-extern "C" Fd44State* GetZealObjPtr();
+
 
 // Actor-state gate probe (retail unmangled C-ABI name; see CfCam.hpp).
 

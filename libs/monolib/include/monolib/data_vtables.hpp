@@ -34,7 +34,6 @@ extern "C" u32 lbl_eu_806635D0[2];   // RTTI CWorkSystemMem
 extern "C" u32 lbl_eu_806635D8[2];   // RTTI TChildListHeader<CProcess>
 extern "C" u32 lbl_eu_806635E0[2];   // RTTI TChildListHeader<CChildListNode>
 extern "C" u32 lbl_eu_806635E8[2];   // RTTI CDeviceRemotePad
-extern "C" u32 lbl_eu_806635F0[2];   // RTTI CDeviceBase
 extern "C" u32 lbl_eu_806635F8[2];   // RTTI CDeviceSC
 extern "C" u32 __RTTI__8CProcess[2];   // RTTI CProcess
 extern "C" u32 __RTTI__14CChildListNode[2];   // RTTI CChildListNode

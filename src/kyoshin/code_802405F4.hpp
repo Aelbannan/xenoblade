@@ -1,5 +1,7 @@
 #pragma once
 
+#include "kyoshin/cf/CfBdat.hpp"
+
 #include <types.h>
 #include <monolib/work/CProcess.hpp>
 #include <monolib/scn/IScnRender.hpp>
@@ -7,16 +9,13 @@
 
 #include "kyoshin/CBgTex.hpp"
 #include "kyoshin/CTitleAHelp.hpp"
-#include "kyoshin/CMapSelImports.hpp"
 #include "kyoshin/CFade.hpp"
 
 // CFloorMap.hpp and CMapSel.hpp declare overlapping helpers with different
 // signatures; rename CFloorMap's versions while its header is processed.
 #define Bdat_GetMaxRow_B1EC Bdat_GetMaxRow_B1ECFloorMap
-#define lbl_eu_806640A8 lbl_eu_806640A8FloorMap
 #include "kyoshin/CFloorMap.hpp"
 #undef Bdat_GetMaxRow_B1EC
-#undef lbl_eu_806640A8
 
 class CScn;
 

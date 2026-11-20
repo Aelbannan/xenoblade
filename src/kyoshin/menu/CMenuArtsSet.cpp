@@ -8,7 +8,6 @@
 #include "monolib/lib/CLibLayout.hpp"
 
 #include "kyoshin/menu/CMenuArtsSet.hpp"
-#include "kyoshin/menu/CMenuArtsSetImports.hpp"
 #include "kyoshin/CMainMenu.hpp" // CMainMenu_GetInstancePtr
 #include "kyoshin/CBgTex.hpp"
 #include "kyoshin/CTitleAHelp.hpp"

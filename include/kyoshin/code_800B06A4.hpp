@@ -5,7 +5,7 @@
 #include "kyoshin/plugin/ocBdat.hpp"  // getBdatStringColumnValue (owner)
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 #include "kyoshin/code_801F3BE0.hpp"  // CGimmickGlobal, getUnk80664658, Gim* (owner)
-
+#include "kyoshin/cf/CfCamSymbols.hpp"
 // Unmangled retail symbols called by code_800B06A4.cpp.
 namespace cf { class CfObjectPc; }
 void CfObjectPc_setupFrame(cf::CfObjectPc* obj);
@@ -1423,7 +1423,6 @@ extern float sFactoryEventBaseReslistSize;
 extern float sTboxReslistSize;
 
 // BDAT table/row globals used by func_800B06C8 (see CfBdat.cpp).
-extern void* lbl_eu_806640A8;
 extern u32 lbl_eu_80664184;
 extern const double lbl_eu_806669D0;
 // getBdatStringColumnValue comes from kyoshin/plugin/ocBdat.hpp via the
@@ -2367,7 +2366,7 @@ struct B8524Sub {
 // Imports used by the batch targets (retail symbol names).
 extern "C" int testObj64bit16(void* obj);
 // C++ linkage so MWCC emits the retail-mangled isGlobalCamFlagSet__Fi reloc.
-bool isGlobalCamFlagSet(int mask);
+
 extern "C" int testObj68mask(void* obj, u32 mask);
 extern "C" void func_8004CB80(void* dst, void* a, void* b);
 extern "C" float cfCam_xzLength(const ml::CVec3* v);  // canonical CfCam.hpp view

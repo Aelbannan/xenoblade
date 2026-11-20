@@ -1040,18 +1040,18 @@ extern "C" int CfRes_registerTblHandle(int handle) {
     if (handle == 0) {
         return handle;
     }
-    int inst = CfRes_getInstance();
+    CfResInstance* inst = (CfResInstance*)CfRes_getInstance();
     if (inst != 0) {
         for (u32 i = 0; i < 3; i++) {
-            if ((u32)handle == CfResEntry_getHandle((u8*)CfRes_getTblEntry((u8*)(inst + 0x1ed8), i))) {
-                CfResEntry_incRefCount((u8*)CfRes_getTblEntry((u8*)(inst + 0x1ed8), i));
+            if ((u32)handle == CfResEntry_getHandle((u8*)CfRes_getTblEntry((u8*)inst->mTable3, i))) {
+                CfResEntry_incRefCount((u8*)CfRes_getTblEntry((u8*)inst->mTable3, i));
                 return (int)i;
             }
         }
         for (u32 i = 0; i < 3; i++) {
-            if ((int)CfResEntry_getField4((u8*)CfRes_getTblEntry((u8*)(inst + 0x1ed8), i)) == 0) {
-                CfResEntry_setHandle((u8*)CfRes_getTblEntry((u8*)(inst + 0x1ed8), i), (u32)handle);
-                CfResEntry_incRefCount((u8*)CfRes_getTblEntry((u8*)(inst + 0x1ed8), i));
+            if ((int)CfResEntry_getField4((u8*)CfRes_getTblEntry((u8*)inst->mTable3, i)) == 0) {
+                CfResEntry_setHandle((u8*)CfRes_getTblEntry((u8*)inst->mTable3, i), (u32)handle);
+                CfResEntry_incRefCount((u8*)CfRes_getTblEntry((u8*)inst->mTable3, i));
                 result = (int)i;
                 break;
             }
@@ -1101,7 +1101,7 @@ extern "C" int CfRes_acquireSlot(int id, int incRef, int incCount) {
     if (id == 0) {
         return -1;
     }
-    int inst = CfRes_getInstance();
+    CfResInstance* inst = (CfResInstance*)CfRes_getInstance();
     if (inst != 0) {
         idx = CfRes_findResByHandle(id);
         if (idx < 0) {
@@ -1112,9 +1112,9 @@ extern "C" int CfRes_acquireSlot(int id, int incRef, int incCount) {
                 }
                 idx = CfRes_findResByHandle(8);
                 if (idx >= 0) {
-                    CfRes_clearField4((u8*)CfRes_getResEntry((u8*)(inst + 0x1efc), (u32)idx));
-                    CfResEntry_clearField8((u8*)CfRes_getResEntry((u8*)(inst + 0x1efc), (u32)idx));
-                    CfResEntry_setHandle((u8*)CfRes_getResEntry((u8*)(inst + 0x1efc), (u32)idx), uid);
+                    CfRes_clearField4((u8*)CfRes_getResEntry((u8*)inst->mTable7, (u32)idx));
+                    CfResEntry_clearField8((u8*)CfRes_getResEntry((u8*)inst->mTable7, (u32)idx));
+                    CfResEntry_setHandle((u8*)CfRes_getResEntry((u8*)inst->mTable7, (u32)idx), uid);
                     cfResNopValueSink(0);
                 }
                 break;
@@ -1124,9 +1124,9 @@ extern "C" int CfRes_acquireSlot(int id, int incRef, int incCount) {
                 }
                 idx = CfRes_findResByHandle(3);
                 if (idx >= 0) {
-                    CfRes_clearField4((u8*)CfRes_getResEntry((u8*)(inst + 0x1efc), (u32)idx));
-                    CfResEntry_clearField8((u8*)CfRes_getResEntry((u8*)(inst + 0x1efc), (u32)idx));
-                    CfResEntry_setHandle((u8*)CfRes_getResEntry((u8*)(inst + 0x1efc), (u32)idx), uid);
+                    CfRes_clearField4((u8*)CfRes_getResEntry((u8*)inst->mTable7, (u32)idx));
+                    CfResEntry_clearField8((u8*)CfRes_getResEntry((u8*)inst->mTable7, (u32)idx));
+                    CfResEntry_setHandle((u8*)CfRes_getResEntry((u8*)inst->mTable7, (u32)idx), uid);
                     cfResNopValueSink(0);
                 }
                 break;
@@ -1137,10 +1137,10 @@ extern "C" int CfRes_acquireSlot(int id, int incRef, int incCount) {
 
         if (idx >= 0) {
             if (incRef != 0) {
-                CfResEntry_incRefCount((u8*)CfRes_getResEntry((u8*)(inst + 0x1efc), (u32)idx));
+                CfResEntry_incRefCount((u8*)CfRes_getResEntry((u8*)inst->mTable7, (u32)idx));
             }
             if (incCount != 0) {
-                CfRes_incField8((u8*)CfRes_getResEntry((u8*)(inst + 0x1efc), (u32)idx));
+                CfRes_incField8((u8*)CfRes_getResEntry((u8*)inst->mTable7, (u32)idx));
             }
             return idx;
         }
@@ -1152,13 +1152,13 @@ extern "C" int CfRes_acquireSlot(int id, int incRef, int incCount) {
             if (slot == 0) {
                 slot = 2;
             }
-            if (CfResEntry_getField4((u8*)CfRes_getResEntry((u8*)(inst + 0x1efc), slot)) == 0) {
-                CfResEntry_setHandle((u8*)CfRes_getResEntry((u8*)(inst + 0x1efc), slot), uid);
+            if (CfResEntry_getField4((u8*)CfRes_getResEntry((u8*)inst->mTable7, slot)) == 0) {
+                CfResEntry_setHandle((u8*)CfRes_getResEntry((u8*)inst->mTable7, slot), uid);
                 if (incRef != 0) {
-                    CfResEntry_incRefCount((u8*)CfRes_getResEntry((u8*)(inst + 0x1efc), slot));
+                    CfResEntry_incRefCount((u8*)CfRes_getResEntry((u8*)inst->mTable7, slot));
                 }
                 if (incCount != 0) {
-                    CfRes_incField8((u8*)CfRes_getResEntry((u8*)(inst + 0x1efc), slot));
+                    CfRes_incField8((u8*)CfRes_getResEntry((u8*)inst->mTable7, slot));
                 }
                 return (int)slot;
             }
@@ -1183,25 +1183,25 @@ extern "C" int CfRes_acquireSlot(int id, int incRef, int incCount) {
             default:
                 break;
             }
-            if (CfResEntry_getField4((u8*)CfRes_getResEntry((u8*)(inst + 0x1efc), slot)) == 0) {
-                CfResEntry_setHandle((u8*)CfRes_getResEntry((u8*)(inst + 0x1efc), slot), uid);
+            if (CfResEntry_getField4((u8*)CfRes_getResEntry((u8*)inst->mTable7, slot)) == 0) {
+                CfResEntry_setHandle((u8*)CfRes_getResEntry((u8*)inst->mTable7, slot), uid);
                 if (incRef != 0) {
-                    CfResEntry_incRefCount((u8*)CfRes_getResEntry((u8*)(inst + 0x1efc), slot));
+                    CfResEntry_incRefCount((u8*)CfRes_getResEntry((u8*)inst->mTable7, slot));
                 }
                 if (incCount != 0) {
-                    CfRes_incField8((u8*)CfRes_getResEntry((u8*)(inst + 0x1efc), slot));
+                    CfRes_incField8((u8*)CfRes_getResEntry((u8*)inst->mTable7, slot));
                 }
                 return (int)slot;
             }
         }
         for (u32 slot = 0; slot < 7; slot++) {
-            if (CfResEntry_getField4((u8*)CfRes_getResEntry((u8*)(inst + 0x1efc), slot)) == 0) {
-                CfResEntry_setHandle((u8*)CfRes_getResEntry((u8*)(inst + 0x1efc), slot), uid);
+            if (CfResEntry_getField4((u8*)CfRes_getResEntry((u8*)inst->mTable7, slot)) == 0) {
+                CfResEntry_setHandle((u8*)CfRes_getResEntry((u8*)inst->mTable7, slot), uid);
                 if (incRef != 0) {
-                    CfResEntry_incRefCount((u8*)CfRes_getResEntry((u8*)(inst + 0x1efc), slot));
+                    CfResEntry_incRefCount((u8*)CfRes_getResEntry((u8*)inst->mTable7, slot));
                 }
                 if (incCount != 0) {
-                    CfRes_incField8((u8*)CfRes_getResEntry((u8*)(inst + 0x1efc), slot));
+                    CfRes_incField8((u8*)CfRes_getResEntry((u8*)inst->mTable7, slot));
                 }
                 return (int)slot;
             }
@@ -1216,9 +1216,8 @@ extern "C" void CfRes_clearField4(u8* self) { ((CfResSlot*)self)->field_04 = 0; 
 // non-negative index (entry table lives at manager + 0x1ed8).
 extern "C" void CfRes_decTblRefByIdx(int idx) {
     int inst = CfRes_getInstance();
-    CfResInstance* tables = (CfResInstance*)inst;
     if (inst != 0 && idx >= 0) {
-        CfResEntry_decRefCount((u8*)CfRes_getTblEntry((u8*)tables->mTable3, idx));
+        CfResEntry_decRefCount((u8*)CfRes_getTblEntry((u8*)((CfResInstance*)inst)->mTable3, idx));
     }
 }
 
@@ -2813,47 +2812,47 @@ extern const void* lbl_eu_80526D00[];
 extern const void* lbl_eu_80526D60[];
 extern const void* lbl_eu_80526DC0[];
 // .sdata 0xA0: archive-key pointers + RTTI typeinfo pairs + "." separator.
-__declspec(section ".sdata") __attribute__((aligned(8), used))
+__attribute__((aligned(8), used))
 const char* gResKeyKyp = lbl_eu_806661F0;
-__declspec(section ".sdata") __attribute__((used))
+__attribute__((used))
 const char* gResKeyDap1 = lbl_eu_806661F4;
-__declspec(section ".sdata") __attribute__((used))
+__attribute__((used))
 const void* __RTTI__Q22cf9CfResTask[2] = { lbl_eu_804FB1E0, lbl_eu_805267C8 };
-__declspec(section ".sdata") __attribute__((used))
+__attribute__((used))
 const void* lbl_eu_80661A30[2] = { lbl_eu_804FB1F0, lbl_eu_80526810 };
-__declspec(section ".sdata") __attribute__((used))
+__attribute__((used))
 const void* __RTTI__Q22cf5CfRes[2] = { lbl_eu_804FB208, lbl_eu_805268B8 };
-__declspec(section ".sdata") __attribute__((used))
+__attribute__((used))
 char lbl_eu_80661A40[8] = ".";
-__declspec(section ".sdata") __attribute__((used))
+__attribute__((used))
 const void* lbl_eu_80661A48[2] = { lbl_eu_804FB258, lbl_eu_8052692C };
-__declspec(section ".sdata") __attribute__((used))
+__attribute__((used))
 const void* lbl_eu_80661A50[2] = { lbl_eu_804FB270, 0 };
-__declspec(section ".sdata") __attribute__((used))
+__attribute__((used))
 const void* __RTTI__Q22cf19IResInfoEneNpcEvent[2] = { lbl_eu_804FB290, lbl_eu_80526998 };
-__declspec(section ".sdata") __attribute__((used))
+__attribute__((used))
 const void* __RTTI__Q22cf14IResInfoEneNpc[2] = { lbl_eu_804FB2A8, lbl_eu_80526A00 };
-__declspec(section ".sdata") __attribute__((used))
+__attribute__((used))
 const void* __RTTI__Q22cf10IResInfoPc[2] = { lbl_eu_804FB2BC, lbl_eu_80526A60 };
-__declspec(section ".sdata") __attribute__((used))
+__attribute__((used))
 const void* __RTTI__Q22cf15IResInfoMapBdat[2] = { lbl_eu_804FB2CC, lbl_eu_80526AC0 };
-__declspec(section ".sdata") __attribute__((used))
+__attribute__((used))
 const void* __RTTI__Q22cf11IResInfoObj[2] = { lbl_eu_804FB2E0, lbl_eu_80526B20 };
-__declspec(section ".sdata") __attribute__((used))
+__attribute__((used))
 const void* __RTTI__Q22cf12IResInfoTBox[2] = { lbl_eu_804FB2F0, lbl_eu_80526B80 };
-__declspec(section ".sdata") __attribute__((used))
+__attribute__((used))
 const void* __RTTI__Q22cf10IResInfoSe[2] = { lbl_eu_804FB304, lbl_eu_80526BE0 };
-__declspec(section ".sdata") __attribute__((used))
+__attribute__((used))
 const void* __RTTI__Q22cf14IResInfoEffect[2] = { lbl_eu_804FB314, lbl_eu_80526C40 };
-__declspec(section ".sdata") __attribute__((used))
+__attribute__((used))
 const void* __RTTI__Q22cf11IResInfoLOD[2] = { lbl_eu_804FB328, lbl_eu_80526CA0 };
-__declspec(section ".sdata") __attribute__((used))
+__attribute__((used))
 const void* __RTTI__Q22cf10IResInfoID[2] = { lbl_eu_804FB338, lbl_eu_80526D00 };
-__declspec(section ".sdata") __attribute__((used))
+__attribute__((used))
 const void* __RTTI__Q22cf18IResInfoPreloadMap[2] = { lbl_eu_804FB348, lbl_eu_80526D60 };
-__declspec(section ".sdata") __attribute__((used))
+__attribute__((used))
 const void* __RTTI__Q22cf11IResInfoMap[2] = { lbl_eu_804FB360, lbl_eu_80526DC0 };
-__declspec(section ".sdata") __attribute__((used))
+__attribute__((used))
 const void* __RTTI__Q22cf8IResInfo[2] = { lbl_eu_804FB370, 0 };
 // .sbss 0x10: manager/instance state (retail sizes; 80663D84 has no named
 // users, covered by the static pad word).

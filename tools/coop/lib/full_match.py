@@ -80,7 +80,8 @@ def _symbol_aliases(root, region, mtime):
 
 
 def _named_address(name, layout):
-    if layout is None or not name or name.startswith(("@", "...", "$")):
+    if layout is None or not name or (name.startswith(("@", "...", "$"))
+                                      and not name.startswith("@STRING@")):
         return None
     _, address = layout.resolve_name(name)
     if address is not None:
@@ -158,7 +159,12 @@ def _target(function, reloc, layout, bases, canonical):
         name = canonical[name]
     if name in ("", "(null)"):
         return None
-    if layout is not None and not name.startswith(("@", "...", "$")):
+    # @STRING@<mangled fn>@N are named compiler string-pool symbols: unlike
+    # TU-local @N/.../$ labels, they are listed in symbols.txt and must resolve
+    # through the linker layout (including when weak dedup turned a copy into
+    # an UNDEF reference to the surviving retail copy).
+    named = not name.startswith(("@", "...", "$")) or name.startswith("@STRING@")
+    if layout is not None and named:
         address = _named_address(name, layout)
         if address is not None:
             return ("address", (address + addend) & 0xffffffff)
@@ -167,7 +173,7 @@ def _target(function, reloc, layout, bases, canonical):
         if section in bases:
             return ("address", (bases[section] + value + addend) & 0xffffffff)
         return ("local", section, value + addend)
-    if name.startswith(("@", "...", "$")):
+    if name.startswith(("@", "...", "$")) and not name.startswith("@STRING@"):
         return None
     return ("symbol", name, addend)
 

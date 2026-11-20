@@ -25,10 +25,7 @@
 
 // ---- Retail data labels (monolibdata2 dissolve) ----
 // Foreign RTTI / base-list objects referenced by the CDeviceFont vtable and
-// the reslist<IDeviceFontInfo> sub-vtables.
-extern "C" u32 __RTTI__10IWorkEvent;
-extern "C" u32 __RTTI__11CWorkThread;
-extern "C" u32 lbl_eu_806635F0;     // CWorkThread base-list
+// the reslist<CDeviceFontInfo> sub-vtables.
 // Foreign rodata RTTI name strings referenced by the .sdata locators.
 extern "C" u32 lbl_eu_80522D68;
 extern "C" u32 lbl_eu_80522D7C;
@@ -69,47 +66,10 @@ extern "C" void wkStandbyExceptionRetry__11CWorkThreadFUl();
 // In-TU C++ members referenced by the vtable (declared extern "C" so the
 // reloc name is the retail mangled name; resolves at link to the C++ member
 // definition with the same symbol string).
-extern "C" void __dt__11CDeviceFontFv();
-extern "C" void wkUpdate__11CDeviceFontFv();
-extern "C" void wkRender__11CDeviceFontFv();
-extern "C" bool wkStandbyLogin__11CDeviceFontFv();
-extern "C" bool wkStandbyLogout__11CDeviceFontFv();
-// In-TU reslist<IDeviceFontInfo> deleting destructors (defined later).
-extern "C" void __dt__reslist_IDeviceFontInfo();
-extern "C" void __dt___reslist_base_IDeviceFontInfo();
 
-// === .rodata size=0x70 align=8 ===
-extern "C" __declspec(align(8)) const char lbl_eu_80522D90[12] = {
-    0x43,0x44,0x65,0x76,0x69,0x63,0x65,0x46,0x6F,0x6E,0x74,0x00,
-};
-extern "C" const char lbl_eu_80522D9C[28] = {
-    0x72,0x65,0x73,0x6C,0x69,0x73,0x74,0x3C,0x49,0x44,0x65,0x76,0x69,0x63,0x65,0x46,
-    0x6F,0x6E,0x74,0x49,0x6E,0x66,0x6F,0x20,0x2A,0x3E,0x00,0x00,
-};
-extern "C" const char lbl_eu_80522DB8[36] = {
-    0x5F,0x72,0x65,0x73,0x6C,0x69,0x73,0x74,0x5F,0x62,0x61,0x73,0x65,0x3C,0x49,0x44,
-    0x65,0x76,0x69,0x63,0x65,0x46,0x6F,0x6E,0x74,0x49,0x6E,0x66,0x6F,0x20,0x2A,0x3E,
-    0x00,0x00,0x00,0x00,
-};
-
-// RTTI locators {name-ptr, base-list} + font-path string pointers.
+// Retail font-path pointers (.sdata), owned by this TU.
 extern "C" const char* lbl_eu_806636F8 = (const char*)&lbl_eu_80522D68;
 extern "C" const char* lbl_eu_806636FC = (const char*)&lbl_eu_80522D7C;
-extern "C" u32 lbl_eu_8056C700[];  // forward (incomplete): see .data note
-extern "C" u32 lbl_eu_8056C728[];  // forward (incomplete): see .data note
-extern "C" u32 __RTTI__11CDeviceFont[2] = { (u32)&lbl_eu_80522D90, (u32)&lbl_eu_8056C700 };
-extern "C" u32 lbl_eu_80663708[2] = { (u32)&lbl_eu_80522D9C, (u32)&lbl_eu_8056C728 };
-extern "C" u32 lbl_eu_80663710[2] = { (u32)&lbl_eu_80522DB8, 0x00000000 };
-
-// === .data size=0xE0 align=8 ===
-// NOTE: defined AFTER CDeviceFont::CDeviceFont below, via INCOMPLETE-type
-// forward declarations here. With complete types visible at the ctor,
-// MWCC commons the three label addresses the ctor takes (C660/C71C/C734)
-// into one .data section-base group (...data.0 + offsets); retail
-// materializes each independently.
-extern "C" u32 lbl_eu_8056C660[];
-extern "C" u32 lbl_eu_8056C71C[];
-extern "C" u32 lbl_eu_8056C734[];
 
 // === .sbss size=0x10 align=8 (zero-fill) ===
 CDeviceFont* spDeviceFont = 0;
@@ -120,19 +80,6 @@ u32 sDeviceFontFrameCount = 0;
 // ---- CDeviceFont constructor (0x80454FB0) ----
 CDeviceFont::CDeviceFont(const char* pName, CWorkThread* pParent)
     : CDeviceBase(pName, pParent, 0x200) {
-    // The retail class is non-virtual in this TU: store the retail rodata
-    // vtable manually (CDeviceFileDvd pattern).
-    *(u32**)this = (u32*)lbl_eu_8056C660;
-    // mInfoList construction (inlined reslist<IDeviceFontInfo> base + derived
-    // ctors: base sets its vtable, then the derived vtable overwrites it).
-    mInfoList.m_vtable = lbl_eu_8056C734;
-    mInfoList.mList = 0;
-    mInfoList.mCapacity = 0;
-    mInfoList.field_0x1C = 0;
-    mInfoList.mStartNodePtr = &mInfoList.mStartNode;
-    mInfoList.mStartNodePtr->mNext = mInfoList.mStartNodePtr;
-    mInfoList.mStartNodePtr->mPrev = mInfoList.mStartNodePtr;
-    mInfoList.m_vtable = lbl_eu_8056C71C;
     mFontId = 0;
     field_0x1EC = 0;
     spDeviceFont = this;
@@ -146,136 +93,14 @@ CDeviceFont::CDeviceFont(const char* pName, CWorkThread* pParent)
     sDeviceFontInitCount = 0;
 }
 
-// === .data definitions (moved below the ctor: see incomplete-decl note) ===
-// CDeviceFont vtable (160B): IWorkEvent dispatcher + CWorkThread overrides.
-extern "C" u32 lbl_eu_8056C660[40] = {
-    (u32)&__RTTI__11CDeviceFont, 0x00000000, (u32)&__dt__11CDeviceFontFv, (u32)&WorkEvent1__10IWorkEventFPvPCc,
-    (u32)&OnFileEvent__10IWorkEventFP10CEventFile, (u32)&WorkEvent3__10IWorkEventFPv, (u32)&WorkEvent4__10IWorkEventFv, (u32)&OnPauseTrigger__10IWorkEventFb,
-    (u32)&WorkEvent6__10IWorkEventFv, (u32)&WorkEvent7__10IWorkEventFv, (u32)&WorkEvent8__10IWorkEventFv, (u32)&WorkEvent9__10IWorkEventFv,
-    (u32)&WorkEvent10__10IWorkEventFv, (u32)&WorkEvent11__10IWorkEventFv, (u32)&WorkEvent12__10IWorkEventFv, (u32)&WorkEvent13__10IWorkEventFv,
-    (u32)&WorkEvent14__10IWorkEventFv, (u32)&WorkEvent15__10IWorkEventFv, (u32)&WorkEvent16__10IWorkEventFv, (u32)&WorkEvent17__10IWorkEventFv,
-    (u32)&WorkEvent18__10IWorkEventFv, (u32)&WorkEvent19__10IWorkEventFv, (u32)&WorkEvent20__10IWorkEventFv, (u32)&WorkEvent21__10IWorkEventFv,
-    (u32)&WorkEvent22__10IWorkEventFv, (u32)&WorkEvent23__10IWorkEventFv, (u32)&WorkEvent24__10IWorkEventFv, (u32)&WorkEvent25__10IWorkEventFv,
-    (u32)&WorkEvent26__10IWorkEventFv, (u32)&WorkEvent27__10IWorkEventFv, (u32)&WorkEvent28__10IWorkEventFv, (u32)&WorkEvent29__10IWorkEventFv,
-    (u32)&WorkEvent30__10IWorkEventFv, (u32)&WorkEvent31__10IWorkEventFv, (u32)&wkUpdate__11CDeviceFontFv, (u32)&wkRender__11CDeviceFontFv,
-    (u32)&wkRenderAfter__11CWorkThreadFv, (u32)&wkStandbyLogin__11CDeviceFontFv, (u32)&wkStandbyLogout__11CDeviceFontFv, (u32)&wkStandbyExceptionRetry__11CWorkThreadFUl,
-};
-// reslist<IDeviceFontInfo> vtable (28B): {RTTI, base, dtor, ...}.
-extern "C" u32 lbl_eu_8056C700[7] = {
-    (u32)&__RTTI__10IWorkEvent, 0x00000000, (u32)&__RTTI__11CWorkThread, 0x00000000,
-    (u32)&lbl_eu_806635F0, 0x00000000, 0x00000000,
-};
-// reslist<IDeviceFontInfo> sub-vtable (12B).
-extern "C" u32 lbl_eu_8056C71C[3] = {
-    (u32)&lbl_eu_80663708, 0x00000000, (u32)&__dt__reslist_IDeviceFontInfo,
-};
-// _reslist_base<IDeviceFontInfo> sub-vtable (12B).
-extern "C" u32 lbl_eu_8056C728[3] = {
-    (u32)&lbl_eu_80663710, 0x00000000, 0x00000000,
-};
-// _reslist_base<IDeviceFontInfo> tail (12B).
-extern "C" u32 lbl_eu_8056C734[3] = {
-    (u32)&lbl_eu_80663710, 0x00000000, (u32)&__dt___reslist_base_IDeviceFontInfo,
-};
-
-// ---------------------------------------------------------------------------
-// reslist<IDeviceFontInfo> deleting destructors (retail emits these under the
-// old unmangled template names, so they are written as free functions with
-// the exact retail identifiers; the item type never needs destroying).
-// ---------------------------------------------------------------------------
-
-// _reslist_base<IDeviceFontInfo>::~_reslist_base(int deleting): clear the
-// ring (unlink every node by nulling mNext), reset the sentinel, free the
-// node array unless externally owned, then free the object when deleting > 0.
-CDeviceFontInfoReslist* __dt___reslist_base_IDeviceFontInfo(
-    CDeviceFontInfoReslist* t, int deleting) {
-    if (t != 0) {
-        t->m_vtable = lbl_eu_8056C734;
-        CDeviceFontInfoListNode* node = t->mStartNodePtr->mNext;
-        while (node != t->mStartNodePtr) {
-            CDeviceFontInfoListNode* prev = node;
-            node = node->mNext;
-            prev->mNext = 0;
-        }
-        t->mStartNodePtr->mNext = t->mStartNodePtr;
-        t->mStartNodePtr->mPrev = t->mStartNodePtr;
-        if (t->field_0x1C == 0) {
-            if (t->mList != 0) {
-                delete[] t->mList;
-                t->mList = 0;
-            }
-        }
-        if (deleting > 0) {
-            delete t;
-        }
-    }
-    return t;
-}
-
-// reslist<IDeviceFontInfo>::~reslist(int deleting): the base dtor body is
-// inlined into the derived dtor; retail keeps both null checks.
-CDeviceFontInfoReslist* __dt__reslist_IDeviceFontInfo(
-    CDeviceFontInfoReslist* t, int deleting) {
-    if (t != 0) {
-        if (t != 0) {
-            t->m_vtable = lbl_eu_8056C734;
-            CDeviceFontInfoListNode* prev;
-            CDeviceFontInfoListNode* node = t->mStartNodePtr->mNext;
-            while (t->mStartNodePtr != node) {
-                prev = node;
-                node = node->mNext; prev->mNext = 0;
-            }
-            t->mStartNodePtr->mNext = t->mStartNodePtr;
-            t->mStartNodePtr->mPrev = t->mStartNodePtr;
-            if (t->field_0x1C == 0) {
-                if (t->mList != 0) {
-                    delete[] t->mList;
-                    t->mList = 0;
-                }
-            }
-        }
-        if (deleting > 0) {
-            delete t;
-        }
-    }
-    return t;
-}
-
-// ---- CDeviceFont destructor (0x80455204) ----
 CDeviceFont::~CDeviceFont() {
-    // Destroy the font-info list: the inlined reslist<IDeviceFontInfo> dtor
-    // null-checks twice (derived reslist dtor, then base), clears the ring
-    // and frees the node array unless externally owned. The CWorkThread base
-    // dtor call and the deleting-flag delete are emitted implicitly.
-    CDeviceFontInfoReslist* list = &mInfoList;
     spDeviceFont = 0;
-    if (list != 0) {
-        if (list != 0) {
-            list->m_vtable = lbl_eu_8056C734;
-            CDeviceFontInfoListNode* node = list->mStartNodePtr->mNext;
-            while (node != list->mStartNodePtr) {
-                CDeviceFontInfoListNode* prev = node;
-                node = node->mNext;
-                prev->mNext = 0;
-            }
-            list->mStartNodePtr->mNext = list->mStartNodePtr;
-            list->mStartNodePtr->mPrev = list->mStartNodePtr;
-            if (list->field_0x1C == 0) {
-                if (list->mList != 0) {
-                    delete[] list->mList;
-                    list->mList = 0;
-                }
-            }
-        }
-    }
 }
 
 CDeviceFont* CDeviceFont::getInstance() {
     return spDeviceFont;
 }
 
-// Getter for the device's current font id (used as the default lookup key by
-// the layer-search wrappers below).
 u32 CDeviceFont::getFontId() {
     CDeviceFont* font = spDeviceFont;
     if (font == 0) {
@@ -301,8 +126,8 @@ void dispatchLayerBB4__11CDeviceFontFv(u32 fontId, u32 a1, u32 a2, u32 a3) {
     CDeviceFontLayer* layer;
     CDeviceFontLayer* child;
     CDeviceFontLayer* candidate;
-    _reslist_node<CDeviceFontLayer*>* node;
-    _reslist_node<CDeviceFontLayer*>* startNode;
+    _reslist_node<CWorkThread*>* node;
+    _reslist_node<CWorkThread*>* startNode;
 
     if (spDeviceFont == 0) return;
     if (fontId == 0) fontId = spDeviceFont->mFontId;
@@ -315,7 +140,7 @@ void dispatchLayerBB4__11CDeviceFontFv(u32 fontId, u32 a1, u32 a2, u32 a3) {
     startNode = font->mChildren.mStartNodePtr;
     node = startNode->mNext;
     while (node != startNode) {
-        child = node->mItem;
+        child = (CDeviceFontLayer*)node->mItem;
         // candidate starts as `child`; zero it for null children and for
         // layers whose thread type is not a font layer.
         candidate = child;
@@ -343,8 +168,8 @@ void dispatchLayer3FF0__11CDeviceFontFv(u32 fontId, u32 a1) {
     CDeviceFontLayer* layer;
     CDeviceFontLayer* child;
     CDeviceFontLayer* candidate;
-    _reslist_node<CDeviceFontLayer*>* node;
-    _reslist_node<CDeviceFontLayer*>* startNode;
+    _reslist_node<CWorkThread*>* node;
+    _reslist_node<CWorkThread*>* startNode;
 
     if (spDeviceFont == 0) return;
     if (fontId == 0) fontId = spDeviceFont->mFontId;
@@ -356,7 +181,7 @@ void dispatchLayer3FF0__11CDeviceFontFv(u32 fontId, u32 a1) {
     startNode = font->mChildren.mStartNodePtr;
     node = startNode->mNext;
     while (node != startNode) {
-        child = node->mItem;
+        child = (CDeviceFontLayer*)node->mItem;
         // candidate starts as `child`; zero it for null children and for
         // layers whose thread type is not a font layer.
         candidate = child;
@@ -384,8 +209,8 @@ void dispatchLayer41F8__11CDeviceFontFv(u32 fontId) {
     CDeviceFontLayer* layer;
     CDeviceFontLayer* child;
     CDeviceFontLayer* candidate;
-    _reslist_node<CDeviceFontLayer*>* node;
-    _reslist_node<CDeviceFontLayer*>* startNode;
+    _reslist_node<CWorkThread*>* node;
+    _reslist_node<CWorkThread*>* startNode;
 
     if (spDeviceFont == 0) return;
     if (fontId == 0) fontId = spDeviceFont->mFontId;
@@ -396,7 +221,7 @@ void dispatchLayer41F8__11CDeviceFontFv(u32 fontId) {
     startNode = font->mChildren.mStartNodePtr;
     node = startNode->mNext;
     while (node != startNode) {
-        child = node->mItem;
+        child = (CDeviceFontLayer*)node->mItem;
         // candidate starts as `child`; zero it for null children and for
         // layers whose thread type is not a font layer.
         candidate = child;
@@ -423,8 +248,8 @@ void dispatchLayer438C__11CDeviceFontFv(u32 fontId, u32 a1) {
     CDeviceFontLayer* layer;
     CDeviceFontLayer* child;
     CDeviceFontLayer* candidate;
-    _reslist_node<CDeviceFontLayer*>* node;
-    _reslist_node<CDeviceFontLayer*>* startNode;
+    _reslist_node<CWorkThread*>* node;
+    _reslist_node<CWorkThread*>* startNode;
 
     if (spDeviceFont == 0) return;
     if (fontId == 0) fontId = spDeviceFont->mFontId;
@@ -435,7 +260,7 @@ void dispatchLayer438C__11CDeviceFontFv(u32 fontId, u32 a1) {
     startNode = font->mChildren.mStartNodePtr;
     node = startNode->mNext;
     while (node != startNode) {
-        child = node->mItem;
+        child = (CDeviceFontLayer*)node->mItem;
         // candidate starts as `child`; zero it for null children and for
         // layers whose thread type is not a font layer.
         candidate = child;
@@ -497,12 +322,12 @@ void dispatchLayer4508__11CDeviceFontFv(u32 fontId, u32 a1) {
     CDeviceFontLayer* layer;
     CDeviceFontLayer* child;
     CDeviceFontLayer* candidate;
-    _reslist_node<CDeviceFontLayer*>* node;
-    _reslist_node<CDeviceFontLayer*>* startNode;
+    _reslist_node<CWorkThread*>* node;
+    _reslist_node<CWorkThread*>* startNode;
     startNode = font->mChildren.mStartNodePtr;
     node = startNode->mNext;
     while (node != startNode) {
-        child = node->mItem;
+        child = (CDeviceFontLayer*)node->mItem;
         // candidate starts as `child`; zero it for null children and for
         // layers whose thread type is not a font layer.
         candidate = child;
@@ -537,12 +362,12 @@ void dispatchLayer4B70__11CDeviceFontFv(u32 fontId, u32 flag) {
     CDeviceFontLayer* layer;
     CDeviceFontLayer* child;
     CDeviceFontLayer* candidate;
-    _reslist_node<CDeviceFontLayer*>* node;
-    _reslist_node<CDeviceFontLayer*>* startNode;
+    _reslist_node<CWorkThread*>* node;
+    _reslist_node<CWorkThread*>* startNode;
     startNode = font->mChildren.mStartNodePtr;
     node = startNode->mNext;
     while (node != startNode) {
-        child = node->mItem;
+        child = (CDeviceFontLayer*)node->mItem;
         // candidate starts as `child`; zero it for null children and for
         // layers whose thread type is not a font layer.
         candidate = child;
@@ -575,12 +400,12 @@ u32 notifyLayerDestroy__11CDeviceFontFv(u32 key) {
     CDeviceFontLayer* layer;
     CDeviceFontLayer* child;
     CDeviceFontLayer* candidate;
-    _reslist_node<CDeviceFontLayer*>* node;
-    _reslist_node<CDeviceFontLayer*>* startNode;
+    _reslist_node<CWorkThread*>* node;
+    _reslist_node<CWorkThread*>* startNode;
     startNode = font->mChildren.mStartNodePtr;
     node = startNode->mNext;
     while (node != startNode) {
-        child = node->mItem;
+        child = (CDeviceFontLayer*)node->mItem;
         // candidate starts as `child`; zero it for null children and for
         // layers whose thread type is not a font layer.
         candidate = child;
@@ -613,12 +438,12 @@ u32 getLayerStatus__11CDeviceFontFv(u32 fontId) {
     CDeviceFontLayer* layer;
     CDeviceFontLayer* child;
     CDeviceFontLayer* candidate;
-    _reslist_node<CDeviceFontLayer*>* node;
-    _reslist_node<CDeviceFontLayer*>* startNode;
+    _reslist_node<CWorkThread*>* node;
+    _reslist_node<CWorkThread*>* startNode;
     startNode = font->mChildren.mStartNodePtr;
     node = startNode->mNext;
     while (node != startNode) {
-        child = node->mItem;
+        child = (CDeviceFontLayer*)node->mItem;
         // candidate starts as `child`; zero it for null children and for
         // layers whose thread type is not a font layer.
         candidate = child;
@@ -651,12 +476,12 @@ u32 getLayerData__11CDeviceFontFv(u32 fontId, u32 index) {
     CDeviceFontLayer* layer;
     CDeviceFontLayer* child;
     CDeviceFontLayer* candidate;
-    _reslist_node<CDeviceFontLayer*>* node;
-    _reslist_node<CDeviceFontLayer*>* startNode;
+    _reslist_node<CWorkThread*>* node;
+    _reslist_node<CWorkThread*>* startNode;
     startNode = font->mChildren.mStartNodePtr;
     node = startNode->mNext;
     while (node != startNode) {
-        child = node->mItem;
+        child = (CDeviceFontLayer*)node->mItem;
         // candidate starts as `child`; zero it for null children and for
         // layers whose thread type is not a font layer.
         candidate = child;
@@ -704,7 +529,7 @@ u32 CDeviceFont::func_804525F0() {
 // (0x34 slot returns 0); second pass falls back to the first available info
 // regardless of identity. Returns the matching provider or null. (The fontId
 // and layout parameters are unused in the body, as in retail.)
-IDeviceFontInfo* CDeviceFont::getFontInfo(u32 fontId,
+void* CDeviceFont::getFontInfo(u32 fontId,
                                             nw4r::lyt::Layout* layout) {
     CDeviceFont* font = spDeviceFont;
     if (font == 0) return 0;
@@ -712,15 +537,15 @@ IDeviceFontInfo* CDeviceFont::getFontInfo(u32 fontId,
     CDeviceFontInfoListNode* node = font->mInfoList.mStartNodePtr->mNext;
     while (node != spDeviceFont->mInfoList.mStartNodePtr) {
         if (node->mItem->isStateNonZero() == 0 &&
-            node->mItem->getFlags() == (s32)this) {
-            return node->mItem;
+            node->mItem->getFlags() == (s32)fontId) {
+            return (CDeviceFontInfo*)node->mItem;
         }
         node = node->mNext;
     }
     node = spDeviceFont->mInfoList.mStartNodePtr->mNext;
     while (node != spDeviceFont->mInfoList.mStartNodePtr) {
         if (node->mItem->isStateNonZero() == 0) {
-            return node->mItem;
+            return (CDeviceFontInfo*)node->mItem;
         }
         node = node->mNext;
     }
@@ -732,7 +557,7 @@ IDeviceFontInfo* CDeviceFont::getFontInfo(u32 fontId,
 // returned 0). Returns the matching provider or null. The item pointer is
 // re-read from the node at every use (retail reloads node->mItem per vtable
 // call).
-IDeviceFontInfo* CDeviceFont::findFontByDevice() {
+CDeviceFontInfo* CDeviceFont::findFontByDevice() {
     CDeviceFont* font = spDeviceFont;
     if (font == 0) return 0;
 
@@ -740,7 +565,7 @@ IDeviceFontInfo* CDeviceFont::findFontByDevice() {
     while (node != spDeviceFont->mInfoList.mStartNodePtr) {
         if (node->mItem->isStateNonZero() == 0 &&
             node->mItem->getFlags() == (s32)this) {
-            return node->mItem;
+            return (CDeviceFontInfo*)node->mItem;
         }
         node = node->mNext;
     }
@@ -771,7 +596,7 @@ u32 CDeviceFont::createFontInfo() {
         IDeviceFontInfo** itemPtr = &temp->mItem;
         if (itemPtr != 0) {
             try {
-                *itemPtr = info;
+                *itemPtr = (IDeviceFontInfo*)info;
             } catch (...) {
                 throw;
             }
@@ -811,7 +636,7 @@ void CDeviceFont::wkUpdate() {
     node = *(CDeviceFontInfoListNode* volatile*)&mInfoList.mStartNodePtr->mNext;
     while (node != *(CDeviceFontInfoListNode* volatile*)&mInfoList.mStartNodePtr) {
         if (node->mItem->isStateReady() != 0) {
-            IDeviceFontInfo* item = node->mItem;
+            CDeviceFontInfo* item = (CDeviceFontInfo*)node->mItem;
             if (item != 0) {
                 delete item;
             }
@@ -876,7 +701,6 @@ void CDeviceFont::wkUpdate() {
     }
 }
 
-CDeviceFontInfo::~CDeviceFontInfo() {}
 
 // Pointer-validation macros mirroring the nw4r db asserts inlined by retail
 // (same shapes as src/kyoshin/code_8025FB10.cpp).
@@ -1002,11 +826,11 @@ void CDeviceFont::wkRender() {
 
     // Fetch the bound font twice like retail (null check + use).
     nw4r::lyt::Layout* layout;  // unused second argument, uninitialized in retail
-    if (getFontInfo(0, layout)->getFont() == NULL) {
+    if (((CDeviceFontInfo*)getFontInfo(0, layout))->getFont() == NULL) {
         return;
     }
     const nw4r::ut::Font* font = static_cast<const nw4r::ut::Font*>(
-        getFontInfo(0, layout)->getFont());
+        ((CDeviceFontInfo*)getFontInfo(0, layout))->getFont());
 
     VALIDATE_NW4R_POINTER(&writer, lbl_eu_8053785C, 65, lbl_eu_80537828);
     VALIDATE_NW4R_POINTER(font, lbl_eu_80537818, 66, lbl_eu_805377E0);
@@ -1108,7 +932,7 @@ bool CDeviceFont::wkStandbyLogin() {
         // Register a fresh ROM font-info provider in the first free list
         // slot (reslist::push_back with the retail setItem try/catch frame).
         if (spDeviceFont != 0) {
-            IDeviceFontInfo* info = CDeviceFontInfoRom::create();
+            CDeviceFontInfo* info = CDeviceFontInfoRom::create();
             CDeviceFont* font = spDeviceFont;
 
             int i = 0;
@@ -1122,7 +946,7 @@ bool CDeviceFont::wkStandbyLogin() {
             IDeviceFontInfo** itemPtr = &temp->mItem;
             if (itemPtr != 0) {
                 try {
-                    *itemPtr = info;
+                    *itemPtr = (IDeviceFontInfo*)info;
                 } catch (...) {
                     throw;
                 }
@@ -1168,7 +992,7 @@ bool CDeviceFont::wkStandbyLogout() {
     // Delete every font-info provider still in the list, then clear the ring.
     CDeviceFontInfoListNode* node = mInfoList.mStartNodePtr->mNext;
     while (node != mInfoList.mStartNodePtr) {
-        IDeviceFontInfo* item = node->mItem;
+        CDeviceFontInfo* item = (CDeviceFontInfo*)node->mItem;
         if (item != 0) {
             delete item;
             node->mItem = 0;

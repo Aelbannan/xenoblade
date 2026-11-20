@@ -24,7 +24,7 @@
 // the CProcess base ctor, sets the interim CTTask vtable, NULLs the Move/Draw
 // PTMFs, installs the final CTaskGamePic vtable and member fields, zeroes the
 // trailing texture byte, and initialises the three colour vectors at
-// 0x90/0xA0/0xB0 to the shared sdata2 LOD-bias float.
+// 0x90/0xA0/0xB0 to a zero LOD bias.
 // ---------------------------------------------------------------------------
 // C-linkage so the emitted symbol is exactly the retail `__ct__CTaskGamePic`
 // (stripped symbol; a C++ declaration would mangle to __ct__CTaskGamePicFi),
@@ -63,11 +63,11 @@ extern "C" __declspec(noinline) CTaskGamePic* __ct__CTaskGamePic(CTaskGamePic* p
 
     // Three colour (RGBA) vectors - single shared float, four components.
     CTaskGame_setVec4(reinterpret_cast<CTaskGame_setVec4_tmp*>(p + 0x24),
-                  lbl_eu_80668BB0, lbl_eu_80668BB0, lbl_eu_80668BB0, lbl_eu_80668BB0);
+                  0.0f, 0.0f, 0.0f, 0.0f);
     CTaskGame_setVec4(reinterpret_cast<CTaskGame_setVec4_tmp*>(p + 0x28),
-                  lbl_eu_80668BB0, lbl_eu_80668BB0, lbl_eu_80668BB0, lbl_eu_80668BB0);
+                  0.0f, 0.0f, 0.0f, 0.0f);
     CTaskGame_setVec4(reinterpret_cast<CTaskGame_setVec4_tmp*>(p + 0x2c),
-                  lbl_eu_80668BB0, lbl_eu_80668BB0, lbl_eu_80668BB0, lbl_eu_80668BB0);
+                  0.0f, 0.0f, 0.0f, 0.0f);
     p[0x30] = 0;                   // param_C0
     p[0x31] = 0;                   // param_C4
 
@@ -173,14 +173,14 @@ void CTaskGamePic::Move() {
     s32 c4 = (s32)param_C4;
     // Size-opt (-O4,s) lowers signed % to the div-based srawi/addze/slwi/subf
     // form seen in retail (the -O4,p default gives an rlwinm pair instead).
-    // Spelled as one expression so MWCC interleaves the numerator/denominator
-    // slot stores like retail. NOTE: the int->f32 casts emit MWCC's internal
-    // magic-double pool item where retail references the shared .sdata2
-    // symbol lbl_eu_80668BC0; hand-spelling the slots to name that symbol
-    // perturbs the schedule (+16B), so the cast shape is kept.
-    f32 t = ((f32)(c1 % 256) * lbl_eu_80668BB4 + (f32)(c1 / 256)) /
-            ((f32)(c4 % 256) * lbl_eu_80668BB4 + (f32)(c4 / 256));
-    f32 inv = lbl_eu_80668BB8 - t;
+    // The low byte is divided by 256.0f and the high byte cast directly;
+    // MWCC folds the division into the retail 1/256 sdata2 slot and emits
+    // the int->f32 magic from the casts. Writing the scale as a named
+    // constant or as a multiply changes the fmadds operand order, so keep
+    // this arithmetic shape.
+    f32 t = ((f32)(c1 % 256) / 256.0f + (f32)(c1 / 256)) /
+            ((f32)(c4 % 256) / 256.0f + (f32)(c4 / 256));
+    f32 inv = 1.0f - t;
     f32* cur = reinterpret_cast<f32*>(&param_90);
     const f32* from = reinterpret_cast<const f32*>(&param_A0);
     const f32* to = reinterpret_cast<const f32*>(&param_B0);
@@ -233,9 +233,9 @@ void CTaskGamePic::cbRenderBefore() {
         dgx0.setZCompare(0);
         dgx0.setZWriteEnable(0);
         ml::CCol3 col;
-        col.r = lbl_eu_80668BB8;
-        col.g = lbl_eu_80668BB8;
-        col.b = lbl_eu_80668BB8;
+        col.r = 1.0f;
+        col.g = 1.0f;
+        col.b = 1.0f;
         dgx0.setCol(col);
         reinterpret_cast<CDrawGXFlagWord*>(&dgx0)->mFlags &= ~0x10u;
         ml::CRect16 rectB;
@@ -298,7 +298,7 @@ bool CTaskGamePic::OnFileEvent(CEventFile* pEvent) {
             this->field_68 = data;
             TPLBind((TPLPalette*)data);
             TPLGetGXTexObjFromPalette((TPLPalette*)this->field_68, &this->mTexObj, 0);
-            f32 bias = lbl_eu_80668BB0;
+            f32 bias = 0.0f;
             GXInitTexObjLOD(&this->mTexObj, GX_LINEAR, GX_LINEAR,
                             bias, bias, bias, GX_FALSE, GX_FALSE, GX_ANISO_1);
         }
@@ -341,42 +341,42 @@ void CTTask<CTaskGamePic>::Draw() {
     }
 }
 
-// NOTE (wave DL-r4, verified): the five data labels for this TU (80538AD8/
-// 80538BC0 in .data, 80668BB0/BB4/BB8 in .sdata2) cannot land in source this
-// wave. .data/.rodata/.sdata: the TU's C++ classes emit __vt__12CTaskGamePic
-// (global) + __RTTI__ weak pairs + string/float pools that retail does not
-// carry here, so removing the frozen extern_data_sections strip fails the
-// gate and risks a duplicate __vt__ at link (same structural block as
-// CTaskGameEffAfter). .sdata2: the int->f32 casts in Move pool MWCC's magic
-// double locally while retail reads the shared BC0 slot; hand-spelling the
-// casts to name BC0 perturbs Move's schedule (+16B, re-verified), and any
-// named definition without killing the pool misplaces the section (pool +
-// named = 0x20 vs retail 0x18 either order). Landing needs devirtualizing
-// the TU (breaks the 19/19 code match) or rule-side selective strips/pool
-// naming (frozen). Code use sites: vtbl/address-takes (58/65), float loads
-// (89-93/134-136/234/339).
+// NOTE (LBL-92): the .sdata2 float pool now lands in source.
+// 0.0f in the ctor/OnFileEvent, (c % 256) / 256.0f in Move and 1.0f
+// in Move/cbRenderBefore make MWCC emit the retail 0x18 pool exactly;
+// the int->f32 casts emit the 0x4330000080000000 magic entry.
+// Move stays 0x13c/0x13c and 19/19 functions remain checked.
 //
-// NOTE (wave DL5, re-verified with builds): BB0/BB4/BB8 cannot land in
-// source. Defining the three floats (any constness/position tried: const
-// pools anonymous copies MWCC actually uses, section 0x20; non-const
-// keeps uses named and the section byte-identical 0x18, but BB0 must be
-// non-const and then __ct__CTaskGamePic loses retail's early lfs hoist
-// (lfs f1,BB0 @+0x24): explicit-locals land the lfs @+0x20 (75.0%),
-// @+0x40 (78.1%) or late (54.7%), never @+0x24; __restrict on the
-// store pointers does not restore it. So: const = pools (uses detach),
-// non-const = ctor reschedule (54-78%), extern = UNDEF rows. Landing
-// needs rule-side pool naming (no pool_patterns field on this unit) or
-// devirtualizing the TU (breaks 19/19). Retail .sdata2 bytes for
-// reference: 00000000 3B800000 3F800000 00000000 | 43300000 80000000.
+// Remaining data labels are compiler/RTTI artifacts:
+// 80538AD8 (CTaskGamePic vtable, 0xC4) and 80538BC0
+// (CTTask<CTaskGamePic> vtable, 0x24) live in .data. The TU's C++ classes
+// emit __vt__12CTaskGamePic plus __RTTI__ weak pairs and string/float
+// pools the retail split does not carry here, so removing the frozen
+// extern_data_sections strip fails the gate and risks a duplicate __vt__
+// at link (same structural block as CTaskGameEffAfter).
+//
+// The .rodata type-name strings below are referenced only by the
+// .sdata locator pairs, not by code, and are kept as explicit definitions
+// to make the 0x28-byte section byte-exact.
+//
+// Historical negatives under the header freeze (kept to avoid retries):
+// defining BB0/BB4/BB8 as named floats does not work. const definitions
+// leave MWCC using anonymous copies (section 0x20), while non-const
+// definitions detach the ctor's early lfs hoist (75-78%, never @+0x24).
+// Multiplying by 0.00390625f, in either operand order, perturbs the
+// fmadds operand order; only dividing the low byte by 256.0f with the
+// casts in place reproduces both the instruction bytes and the pool order.
+//
+// Retail .sdata2 bytes for reference:
+// 00000000 3B800000 3F800000 00000000 | 43300000 80000000.
 //
 // Retail tables owned by this unit (wave DL8/x2 reconstruction).
 // .rodata (0x28): RTTI type-name strings. FDB0 "CTaskGamePic" (12 chars +
 // null + 3 pad = 0x10) and FDC0 "CTTask<CTaskGamePic>" (20 chars + null +
 // 3 pad = 0x18). Retail bytes: 435461736b47616d65506963 00000000 /
-// 43545461736b3c435461736b47616d655069633e 00000000. Unreferenced by code
-// (only the .sdata locator pairs point at them); defining them adds the
-// section byte-exact with no codegen impact. (.data/.sdata need the vtable
-// + RTTI-trailer rebuild: blocked (see residual notes above); .sdata2
-// needs BB0/BB4/BB8/BC0: blocked (ctor hoist + Move schedule).)
+// 43545461736b3c435461736b47616d655069633e 00000000.
+// (.data/.sdata still need the vtable + RTTI-trailer rebuild, which
+// requires unfreezing the class definition in the header; out of scope.)
+//
 extern const char lbl_eu_8050FDB0[0x10] = "CTaskGamePic";
 extern const char lbl_eu_8050FDC0[0x18] = "CTTask<CTaskGamePic>";

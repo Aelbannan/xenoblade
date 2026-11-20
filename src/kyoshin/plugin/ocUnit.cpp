@@ -12,6 +12,7 @@
 #include "kyoshin/plugin/ocBdat.hpp"
 #include "kyoshin/code_80135FDC_State.hpp"
 #include "kyoshin/cf/object/CfObjectMoveHelpers.hpp"
+#include "kyoshin/cf/CtrlPc.hpp"
 
 // .sdata2 pool plant: MWCC's implicit int->double conversion magic
 // (2^52 + 2^31). With this planted under its retail name AND the other
@@ -40,10 +41,10 @@ extern "C" {
     void setChildB59__(void* obj, s8 val);
     void CollObjStoreResIdRaw(void* obj, u16 param);
     void CollObjSetupVecsState5(void* obj, void* pos, void* offset, float f);
-    void UIWin_CreateTalkWin(void* subObj, const char* str, int flag);
-    void UIWin_CreateEveTalkWin(void* subObj, const char* str);
+    void UIWin_CreateTalkWin(u32 obj, const char* str, int flag);
+    void UIWin_CreateEveTalkWin(u32 obj, const char* str);
     unsigned int UIWin_GetTimer();
-    void* __dynamic_cast(void* obj, int offset, void* rtti, void* targetRtti, int flag);
+    void* __dynamic_cast(void* src, long offset, const void* src_type, const void* dst_type, void* src2dst);
     int strcmp(const char* s1, const char* s2);
     void* memset(void* ptr, int val, u32 size);
     void* getOrCreateBdatObj__Q22cf13CfGameManagerFv(const char* name, unsigned short param);
@@ -312,16 +313,13 @@ extern "C" int setPosX(VMThread* pThread, int handle) {
 // CfObject_syncMoveTarget (alias UnkVirtualFunc22).
 // Move-target triple at CfObject+0x3C (copied word-wise by
 // CfObject_UnkVirtualFunc22 / CfObject_setMoveTargetVec).
-struct CfObjectMoveTgt3C {
-    u8 _pad00[0x3C];
-    u32 mWords3C[3];
-};
 extern "C" void CfObject_syncMoveTarget__Q22cf8CfObjectFPCQ22ml5CVec3(void* self, const void* src) {
-    CfObjectMoveTgt3C* dst = (CfObjectMoveTgt3C*)self;
+    cf::CfObject* dst = (cf::CfObject*)self;
+    u32* words3C = (u32*)&dst->mPos3C;
     const u32* words = (const u32*)src;
-    dst->mWords3C[0] = words[0];
-    dst->mWords3C[1] = words[1];
-    dst->mWords3C[2] = words[2];
+    words3C[0] = words[0];
+    words3C[1] = words[1];
+    words3C[2] = words[2];
 }
 
 // us-8003cadc: same shape as setPosX but writes the computed angle to
@@ -429,9 +427,12 @@ extern "C" void CfObject_applyMoveOffset__Q22cf8CfObjectFPCQ22ml5CVec3f(cf::CfOb
 // (lwz r6/r5/r0 + stw 0x3C/0x40/0x44), byte-identical to
 // CfObject_UnkVirtualFunc22 below.
 void CfObject_setMoveTargetVec__Q22cf8CfObjectFv(void* self, const void* src) {
-    ((u32*)((u8*)self + 0x3C))[0] = *(const u32*)((const u8*)src + 0);
-    ((u32*)((u8*)self + 0x3C))[1] = *(const u32*)((const u8*)src + 4);
-    ((u32*)((u8*)self + 0x3C))[2] = *(const u32*)((const u8*)src + 8);
+    cf::CfObject* obj = (cf::CfObject*)self;
+    u32* dst = (u32*)&obj->mPos3C;
+    const u32* srcWords = (const u32*)src;
+    dst[0] = srcWords[0];
+    dst[1] = srcWords[1];
+    dst[2] = srcWords[2];
 }
 
 int dispOn(VMThread* pThread, int handle) {
@@ -522,6 +523,10 @@ extern "C" int setActorStatusSelect(VMThread* pThread, int handle) {
     return 0;
 }
 
+// name-guess: six event ids copied into execNpcAction's local arg array;
+// retail .rodata object 0x804FA4C0 (sole xref is execNpcAction).
+static const u32 sNpcActionEventArgs[6] = { 0, 2, 3, 1, 4, 5 };
+
 int execNpcAction(VMThread* pThread, int handle) {
     VMArg* ptr = vmArgPtrGet(pThread, 1);
     int index = vmArgIntGet(2, ptr);
@@ -530,7 +535,7 @@ int execNpcAction(VMThread* pThread, int handle) {
     // Copy the 6-entry event-arg table into a local buffer, then dispatch
     // the selected entry through vtable slot 0x114.
     u32 args[6];
-    const u32* src = lbl_eu_804FA4C0;
+    const u32* src = sNpcActionEventArgs;
     args[0] = *src++;
     args[1] = *src++;
     args[2] = *src++;
@@ -903,7 +908,6 @@ extern "C" int hasTalkFlag(VMThread* pThread, int handle) {
     return 1;
 }
 
-// Talk controller views removed - folded onto cf::CObjectState / cf::CObjectParam at +0x3E9C.
 
 // us-8003dfec: winTalk
 // Starts a talk window interaction
@@ -916,7 +920,7 @@ extern "C" int winTalk(VMThread* pThread, int handle) {
     if (player != NULL) {
         player = (cf::CfObjectMove*)((u8*)player - 0x3E9C);
     }
-    UIWin_CreateTalkWin(*(void**)((u8*)obj + 0x74), str, 1);
+    UIWin_CreateTalkWin((u32)((cf::CfObjectModel*)obj)->field_0x74, str, 1);
     u32 flags = obj->unk64;
     if (flags & 0x8) {
         if (((cf::CObjectState*)obj)->setStateBitMask0(1, 1) == 0) {
@@ -928,7 +932,7 @@ extern "C" int winTalk(VMThread* pThread, int handle) {
             u32 val = *(u32*)((cf::CObjectState*)*(cf::CfObject**)((u8*)player + 4))->getStateData();
             if (testActorStatus(player, &val, 1) == 0) {
                 ((cf::CObjectState*)((u8*)player + 0x3E9C))->setStateBitMask(1);
-                ((cf::CObjectParam*)((u8*)player + 0x3E9C))->CObjectParam_signalActionEnd((int)*(cf::CfObject**)((u8*)obj + 0x74));
+                ((cf::CObjectParam*)((u8*)player + 0x3E9C))->CObjectParam_signalActionEnd((int)((cf::CfObjectModel*)obj)->field_0x74);
             }
         }
     } else if ((flags & 0x4000) || (flags & 0x8000)) {
@@ -938,7 +942,7 @@ extern "C" int winTalk(VMThread* pThread, int handle) {
         u32 val = *(u32*)((cf::CObjectState*)*(cf::CfObject**)((u8*)player + 4))->getStateData();
         if (testActorStatus(player, &val, 1) == 0) {
             ((cf::CObjectState*)((u8*)player + 0x3E9C))->setStateBitMask(1);
-            ((cf::CObjectParam*)((u8*)player + 0x3E9C))->CObjectParam_signalActionEnd((int)*(cf::CfObject**)((u8*)obj + 0x74));
+            ((cf::CObjectParam*)((u8*)player + 0x3E9C))->CObjectParam_signalActionEnd((int)((cf::CfObjectModel*)obj)->field_0x74);
         }
     }
     return 0;
@@ -967,18 +971,13 @@ extern "C" int setState10(VMThread* pThread, int handle) {
 }
 
 // us-8003e2c0: talkMsg
-// Plugin-side data view over CfObject-family words not declared in the real
-// class (+0x6C pad, +0x74 sub-field, +0x94 word): per-statement use only.
-struct CfObjPluginView { u8 _00[0x6C]; u32 field6C; u32 _pad70; void* field74; u8 _78[0x94 - 0x78]; u32 field94; };
-struct Selector90E4View { u8 _00[0x90E4]; u32 h90E4; };
-
 // Gets a string arg and calls UIWin_CreateTalkWin on the object's sub-field
 extern "C" int talkMsg(VMThread* pThread, int handle) {
     VMArg* arg1 = vmArgPtrGet(pThread, 1);
     const char* str = vmArgStringGet(2, arg1);
     void* ctx = ArtsSelect_GetContainer();
     cf::CfObject* obj = (cf::CfObject*)ArtsSelect_Lookup(ctx, handle);
-    UIWin_CreateTalkWin(((CfObjPluginView*)obj)->field74, str, 1);
+    UIWin_CreateTalkWin((u32)((cf::CfObjectModel*)obj)->field_0x74, str, 1);
     return 0;
 }
 
@@ -1002,7 +1001,7 @@ extern "C" int sendNotify(VMThread* pThread, int handle) {
     str = vmArgStringGet(2, arg1);
     void* ctx = ArtsSelect_GetContainer();
     obj = (cf::CfObject*)ArtsSelect_Lookup(ctx, handle);
-    UIWin_CreateEveTalkWin(((CfObjPluginView*)obj)->field74, str);
+    UIWin_CreateEveTalkWin((u32)((cf::CfObjectModel*)obj)->field_0x74, str);
     if (obj->unk64 & 0x8) {
         if (!((cf::CObjectState*)obj)->setStateBitMask0(1, 1)) {
             ((cf::CObjectState*)obj)->setStateBitMask(1);
@@ -1095,7 +1094,7 @@ extern "C" int lookAt(VMThread* pThread, int handle) {
     }
     cf::CfObject* self = (cf::CfObject*)ArtsSelect_Lookup(ArtsSelect_GetContainer(), handle);
     if (targetOC != 0) {
-        cf::CfObject* target = (cf::CfObject*)ArtsSelect_Lookup(ArtsSelect_GetContainer(), *(int*)((u8*)targetOC + 4));
+        cf::CfObject* target = (cf::CfObject*)ArtsSelect_Lookup(ArtsSelect_GetContainer(), ((OcUnitHandle*)targetOC)->mObjId04);
         cf::CfObject* actor = (cf::CfObject*)__dynamic_cast(target, 0, __RTTI__Q22cf13CfObjectModel, __RTTI__Q22cf8CfObject, 0);
         if (actor == NULL) {
             // Target is not an actor: aim straight at its position vector.
@@ -1104,7 +1103,7 @@ extern "C" int lookAt(VMThread* pThread, int handle) {
         } else if ((((cf::CfObject*)actor)->unk64 & 0x2) || (((cf::CfObject*)actor)->unk64 & 0x8)) {
             // Talkable/event actor: only look when the self object has a bone
             // target set and the actor owns one of the known attach bones.
-            if (*(void**)((u8*)self + 0xC4) != NULL) {
+            if (((cf::CfObjectMove*)self)->mTargetC4 != NULL) {
                 if (((cf::CfObject*)actor)->CfObject_findNodeMatrix(&lbl_eu_804FA74C[0x3C])) {
                     lookAtBone(self, (cf::CfObject*)actor, snap, &lbl_eu_804FA74C[0x3C]);
                 } else if (((cf::CfObject*)actor)->CfObject_findNodeMatrix(&lbl_eu_804FA74C[0x43])) {
@@ -1146,7 +1145,7 @@ extern "C" int flagUnit80000(VMThread* pThread, int handle) {
     void* ctx = ArtsSelect_GetContainer();
     cf::CfObject* obj = (cf::CfObject*)ArtsSelect_Lookup(ctx, handle);
     if (obj && (obj->unk64 & 0x80000000)) {
-        ((CfObjPluginView*)obj)->field6C |= 0x00080000;
+        ((cf::CfObject*)obj)->field_0x6C |= 0x00080000;
     }
     return 0;
 }
@@ -1157,7 +1156,7 @@ extern "C" int flagUnit100000(VMThread* pThread, int handle) {
     void* ctx = ArtsSelect_GetContainer();
     cf::CfObject* obj = (cf::CfObject*)ArtsSelect_Lookup(ctx, handle);
     if (obj && (obj->unk64 & 0x80000000)) {
-        ((CfObjPluginView*)obj)->field6C |= 0x00100000;
+        ((cf::CfObject*)obj)->field_0x6C |= 0x00100000;
     }
     return 0;
 }
@@ -1172,7 +1171,7 @@ extern "C" int getPartyHandle(VMThread* pThread, int handle) {
     ocHandle = obj->CObjectParam_getSelfObjectId();
     if (!ocHandle) {
         if (obj == (cf::CfObject*)cf::CfGameManager::getPlayer(0)) {
-            ocHandle = ((Selector90E4View*)(uintptr_t)Selector_GetInstance())->h90E4;
+            ocHandle = ((CfObj90E4*)(uintptr_t)Selector_GetInstance())->mField90E4;
         }
     }
     VMArg retVal;
@@ -1721,12 +1720,6 @@ extern "C" int setChildVal(VMThread* pThread, int handle) {
 
 // us-8003fd48: followUnit
 // Sets a follow/attention relationship between two objects
-// OC instance handle (same layout as CamOCHandle in pluginCam.hpp):
-// the object id consumed by ArtsSelect_Lookup sits at +0x04.
-struct OcUnitHandle {
-    u8 _pad00[4];
-    u32 mObjId04;    // +0x04
-};
 extern "C" int followUnit(VMThread* pThread, int handle) {
     int targetOC;
     if (vmArgOmitChk(pThread, 1)) {
@@ -1762,17 +1755,14 @@ extern "C" int bindFollow(VMThread* pThread, int handle) {
     void* child = 0;
     if (targetOC) {
         ctx = ArtsSelect_GetContainer();
-        parent = ArtsSelect_Lookup(ctx, *(int*)((u8*)targetOC + 4));
+        parent = ArtsSelect_Lookup(ctx, ((OcUnitHandle*)targetOC)->mObjId04);
         if (parent) {
-            u32* fieldC8 = (u32*)((u8*)parent + 0xC8);
+            cf::CfObjectMove* follow = (cf::CfObjectMove*)parent;
             void* followTarget = 0;
-            if (*fieldC8) {
-                followTarget = *(void**)((u8*)parent + 0x6F8);
-            } else {
-                u32* fieldCC = (u32*)((u8*)parent + 0xCC);
-                if (*fieldCC) {
-                    followTarget = *(void**)((u8*)parent + 0x6FC);
-                }
+            if (follow->mTargetC8 != NULL) {
+                followTarget = follow->mField6F8[0];
+            } else if (follow->mTargetCC != NULL) {
+                followTarget = follow->mField6F8[1];
             }
             if (followTarget) {
                 // Retail leaves r4 = followTarget into UVF22, then takes the
@@ -1819,7 +1809,7 @@ extern "C" int startBattle(VMThread* pThread, int handle, int retType) {
     int param = vmArgIntGet(3, ptr2);
     void* battleMgr = createBdatCollisionObj__Q22cf13CfGameManagerFv();
     if (battleMgr) {
-        ((CfObjPluginView*)battleMgr)->field94 = 5;
+        ((cf::CfObjectModel*)battleMgr)->field_0x94 = 5;
         CollObjStoreResIdRaw(battleMgr, (u16)param);
         ((cf::CfObject*)battleMgr)->setPointEnabled(0);
     }
@@ -2014,8 +2004,6 @@ struct OcUnitPluginArea {
     OCData d4;
 };
 
-extern "C" const u32 lbl_eu_804FA4C0[6] = { 0, 2, 3, 1, 4, 5 };
-
 // Retail OC-unit tables/records, emitted as one aggregate in retail order.
 extern "C" OcUnitPluginArea ocUnitPluginArea = {
     {
@@ -2199,11 +2187,7 @@ void cf::CObjectState::setStateBitMask(u32 bits) {
 
 // Trailing word of CObjectParam at +0x34 (signalActionEnd payload /
 // getSelfObjectId return); the class spells it as u8 unk34[4].
-struct CObjectParamTail34 {
-    u8 _pad00[0x34];
-    u32 mWord34;
-};
-void cf::CObjectParam::CObjectParam_signalActionEnd(int val) { ((CObjectParamTail34*)this)->mWord34 = val; }
+void cf::CObjectParam::CObjectParam_signalActionEnd(int val) { *(u32*)this->unk34 = val; }
 
 void cf::CObjectState::setStateBitFlag(u32 mask) {
     ((cf::CObjectState*)this)->unk4 &= ~mask;
@@ -2211,7 +2195,7 @@ void cf::CObjectState::setStateBitFlag(u32 mask) {
 
 void cf::CfObjectModel::CfObjectModel_setBoneRotate(int val) { static_cast<cf::CfObjectModel*>(this)->field_BD = val; }
 
-BOOL cf::CObjectParam::CObjectParam_getSelfObjectId() { return ((CObjectParamTail34*)this)->mWord34; }
+BOOL cf::CObjectParam::CObjectParam_getSelfObjectId() { return *(u32*)this->unk34; }
 
 // us-8003f6d8: 12-byte word copy src -> this+0x48. Retail symbol is
 // Fv-mangled but the body consumes a pointer in r4. Element-wise u32 copy;

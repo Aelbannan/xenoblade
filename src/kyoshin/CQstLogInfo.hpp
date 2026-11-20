@@ -16,7 +16,7 @@
 // retail; a plain extern float schedules the load late (MWCC_CASES:8787).
 extern const float lbl_eu_80668590;   // animation-completion sentinel (.sdata2)
 extern char lbl_eu_8050A0B4[];  // quest-log string pool (split1 .rodata)
-extern char* lbl_eu_80536320[];  // quest-name table (30 entries, split1 .data)
+extern char* sQstLogTplNames[];  // quest TPL-name table (30 entries, split1 .data)
 
 struct CFileHandle;
 struct CEventFile;
@@ -25,7 +25,7 @@ class CQstLogInfo;
 // C-linkage imports used by QstLogInfo_LoadCommonArchive (retail names are unmangled).
 extern "C" u32 KyoshinHeap_GetField44();
 // Random / name-table helpers (retail unmangled).
-extern "C" u32 CtrlRemote_TouchBitByArg(u32);
+#include "kyoshin/cf/CtrlRemoteApi.hpp"
 
 // Real C++ linkage helpers defined in CQstLogInfo.cpp (retail symbols carry
 // these manglings).
@@ -46,11 +46,8 @@ extern "C" void* __ct__CTagProcessor(void*);
 extern "C" void* Bdat_GetTable_AA34();
 
 // BDAT table handles used by the quest-log sub-updates (.sbss).
-extern u32 lbl_eu_806640D8;
-extern u32 lbl_eu_806640EC;
-extern u32 lbl_eu_80664104;
 // Quest-category name table indexed by SearchThresholdIdx (split1 .data).
-extern char* lbl_eu_80536398[];
+extern char* sQstLogBdatColumnNames[];
 
 // View into a nw4r::lyt::Pane's trailing user-data region: OnFileEvent stores
 // the tag-processor pointer (field_0x2C) into each bound pane at +0xF8.

@@ -13,7 +13,10 @@
 #include <nw4r/db/db_assert.h>
 #include "libs/monolib/src/scn/CMdlAnmEye.hpp"
 
-// Minimal view of the owner model (CScnItemModelNw4r) fields used here.
+static const f32 sLeftEyeBlinkAngles[3] = { 0.0f, 0.335999995470047f, 0.671999990940094f }; // name-guess: CMdlAnmEye.hpp calls the first table the left-eye angles
+static const f32 sRightEyeBlinkAngles[3] = { 0.0f, -0.125f, -0.25f }; // name-guess: CMdlAnmEye.hpp calls the second table the negated right-eye angles
+
+// Minimal view of the owner model
 // 0x146C is the model resource data, 0x147C the g3d scene object (ScnMdl).
 // Forward owner view used at +0x04 (same role as CMdlMouth's
 // CScnItemModelNw4rOwner*); only passed to Scn_GetFrameDelta here.
@@ -169,7 +172,7 @@ extern "C" void EyeAnm_TickBlink(CMdlAnmEye* self) {
         if (!texSrt.IsValid()) continue;
         nw4r::math::MTX34 mtx;
         if (self->field_18[i] == 0) {
-            f32 ang = lbl_eu_805247E8[self->field_20];
+            f32 ang = sLeftEyeBlinkAngles[self->field_20];
             mtx._00 = 1.0f; mtx._01 = 0.0f; mtx._02 = 0.0f;
             mtx._03 = 0.0f;
             mtx._10 = 0.0f; mtx._11 = 1.0f; mtx._12 = 0.0f;
@@ -177,7 +180,7 @@ extern "C" void EyeAnm_TickBlink(CMdlAnmEye* self) {
             mtx._20 = 0.0f; mtx._21 = 0.0f; mtx._22 = 1.0f;
             mtx._23 = 0.0f;
         } else {
-            f32 ang = lbl_eu_805247F4[self->field_20];
+            f32 ang = sRightEyeBlinkAngles[self->field_20];
             mtx._00 = 1.0f; mtx._01 = 0.0f; mtx._02 = 0.0f;
             mtx._03 = -ang;
             mtx._10 = 0.0f; mtx._11 = 1.0f; mtx._12 = 0.0f;
@@ -199,8 +202,6 @@ extern "C" void EyeAnm_TickBlink(CMdlAnmEye* self) {
 
 // [.rodata] 0x805247E8-0x80524810 (40B): eye-blink angle tables + RTTI name.
 // Exact retail values (0x3EAC0831 / 0x3F2C0831 / 0xBE000000 / 0xBE800000).
-extern const f32 lbl_eu_805247E8[3] = { 0.0f, 0.335999995470047f, 0.671999990940094f };
-extern const f32 lbl_eu_805247F4[3] = { 0.0f, -0.125f, -0.25f };
 extern const char lbl_eu_80524800[0x10] = "CMdlAnmEye";
 // [.sdata] 0x80663C88-0x80663CA0 (24B): {name-ptr, 0} pair, RTTI locator
 // {name, 0}, "ref" string. The retail symbol at +0x0 is 8B (pointer + 0);

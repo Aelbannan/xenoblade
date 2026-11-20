@@ -396,32 +396,8 @@ mpfsys::MPFDrawDisplayList* sDisplayListInstances[0x18];
 // [.sbss] 0x80665888-0x80665890 (8B): getInstance init flag + pad.
 s8 sDisplayListInitialized[8];  // flag at [0], pad to the retail 8B
 
-// [.rodata] 0x80523D98-0x80523DC8 (0x30 = 48B): class name strings.
-extern "C" __declspec(align(8)) const char lbl_eu_80523D98[0x20] = {
-    0x6D,0x70,0x66,0x73,0x79,0x73,0x3A,0x3A,0x4D,0x50,0x46,0x44,0x72,0x61,0x77,0x44,
-    0x69,0x73,0x70,0x6C,0x61,0x79,0x4C,0x69,0x73,0x74,0x00,0x00,0x00,0x00,0x00,0x00,
-};
-extern "C" __declspec(align(8)) const char lbl_eu_80523DB8[0x10] = {
-    0x6D,0x70,0x66,0x73,0x79,0x73,0x3A,0x3A,0x4D,0x50,0x46,0x44,0x72,0x61,0x77,0x00,
-};
-
-// [.data] 0x8056DBA0-0x8056DBC0 (0x20 = 32B): prototype instance vtables.
-namespace MPFDrawBlob {
-extern "C" void deallocate__Q26mpfsys18MPFDrawDisplayListFv();
-extern "C" void destroy__Q26mpfsys18MPFDrawDisplayListFv();
-}
-extern "C" u32 __RTTI__Q26mpfsys18MPFDrawDisplayList[2];  // .sdata RTTI locators (defined below)
-extern "C" u32 __RTTI__Q26mpfsys7MPFDraw[2];
-extern "C" u32 lbl_eu_8056DBA0[4] = {
-    (u32)&__RTTI__Q26mpfsys18MPFDrawDisplayList, 0x00000000,
-    (u32)&MPFDrawBlob::deallocate__Q26mpfsys18MPFDrawDisplayListFv,
-    (u32)&MPFDrawBlob::destroy__Q26mpfsys18MPFDrawDisplayListFv,
-};
-extern "C" u32 lbl_eu_8056DBB0[4] = {
-    (u32)&__RTTI__Q26mpfsys7MPFDraw, 0x00000000, 0x00000000, 0x00000000,
-};
-extern "C" u32 __RTTI__Q26mpfsys18MPFDrawDisplayList[2] = { (u32)&lbl_eu_80523D98, (u32)&lbl_eu_8056DBB0 };
-extern "C" u32 __RTTI__Q26mpfsys7MPFDraw[2] = { (u32)&lbl_eu_80523DB8, 0x00000000 };
+// The retail prototype slot points at the compiler-emitted vtable.
+extern "C" u32 __vt__Q26mpfsys18MPFDrawDisplayList[4];
 
 // Prototype instance body defined by monolibdata2 (.data, 0x10 bytes).
 struct MPFDrawProto {
@@ -451,7 +427,7 @@ namespace mpfsys {
 MPFDrawDisplayList* MPFDrawDisplayList::getInstance() {
     if (!sDisplayListInitialized[0]) {
         // First call: point the instance slot at the prototype instance blob.
-        sDisplayListInstances[0] = (MPFDrawDisplayList*)&lbl_eu_8056DBA0;
+        sDisplayListInstances[0] = (MPFDrawDisplayList*)&__vt__Q26mpfsys18MPFDrawDisplayList;
         sDisplayListInitialized[0] = 1;
     }
     return (MPFDrawDisplayList*)&sDisplayListInstances;

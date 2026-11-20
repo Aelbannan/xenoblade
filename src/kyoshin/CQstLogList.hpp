@@ -1,5 +1,7 @@
 #pragma once
 
+#include "kyoshin/cf/CfBdat.hpp"
+
 #include <types.h>
 #include "kyoshin/code_80135FDC_Bdat.hpp"
 #include <nw4r/lyt.h>
@@ -121,11 +123,10 @@ extern "C" CQstLogListEntry* QstLogList_CopyEntry(CQstLogListEntry* pDst, const 
 
 // BDAT helpers / msg-manager imports (C-ABI retail symbols).
 extern "C" u32 Bdat_GetMaxRow_B1EC(void*);              // BDAT row count
-extern void* lbl_eu_806640A0;                      // BDAT table pointer (.sbss)
 
 // Layout/text helpers with unmangled retail names (declared here; the
 // code_80135FDC.hpp set is co-included for BdatGetPtrDirect/LayoutSetTextBoxFmtValue).
-extern "C" u32 CtrlRemote_TouchBitByArg(u32);
+#include "kyoshin/cf/CtrlRemoteApi.hpp"
 
 // C++ free functions - MWCC mangles these to the retail names
 // (drawLayout__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii,
@@ -140,7 +141,6 @@ extern u32 sSelectedQuestId;      // current quest id (.sbss)
 extern u32 sSelectedQuestIndex;      // current quest index (.sbss)
 extern u32 sSelectedQuestResource;      // current quest resource (.sbss)
 extern u32 lbl_eu_80662860;      // quest pane color (.sbss)
-extern u8* lbl_eu_806640A8;      // BDAT table pointer (.sbss)
 extern u32 lbl_eu_80573D18[];    // quest name table (split1 .rodata)
 // const routes into readonly sdata2 - MWCC hoists the lfs above the frame
 // stores (MWCC_CASES:8787); plain extern float schedules it late.

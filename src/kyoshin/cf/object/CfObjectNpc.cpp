@@ -4,7 +4,7 @@
 // CfObjectNpc represents an NPC in the game world. It extends CfObjectMove
 // and adds NPC-specific fields and behavior: icon type (from BDAT icon_type),
 // relationship meet value (rlt_meet), and a timer for dialogue triggers.
-
+#include "kyoshin/cf/CfCamSymbols.hpp"
 #include "kyoshin/cf/object/CfObjectNpc.hpp"
 #include "monolib/scn/CScn.hpp"
 #include "monolib/util/MemManager.hpp"
@@ -14,25 +14,13 @@
 
 // Imports from code_800F42AC.cpp (TU-local, as in the other callers).
 extern "C" void* getInstance__Q22cf13CfGameManagerFv(void);
-extern "C" bool isGlobalCamFlagSet__Fi(int mask);
+
 #include "kyoshin/plugin/ocBdat.hpp"
 
 
-// .sdata2 constants (retail lbl_eu_80666AE0..lbl_eu_80666AFC). Declared before
-// the code because MWCC lays .sdata2 out in declaration/first-use order: the
-// builtin u8/u16->float conversions in loadNpcParams append their 2^52 pool
-// double (retail lbl_eu_80666B00) after these eight floats, as in retail.
-// Every use goes through *(const float*)&lbl... - a plain reference to a const
-// scalar whose initializer is already visible is constant-folded into a second
-// anonymous @N pool copy (duplicate .sdata2 objects and an unnamed reloc).
-__attribute__((used)) const float lbl_eu_80666AE0 = 0.0f;
-__attribute__((used)) const float lbl_eu_80666AE4 = 0.6f;
-__attribute__((used)) const float lbl_eu_80666AE8 = 1.8f;
-__attribute__((used)) const float lbl_eu_80666AEC = 0.1f;
-__attribute__((used)) const float lbl_eu_80666AF0 = 30.0f;
-__attribute__((used)) const float lbl_eu_80666AF4 = 25.0f;
-__attribute__((used)) const float lbl_eu_80666AF8 = 12.5f;
-__attribute__((used)) const float lbl_eu_80666AFC = 100.0f;
+// The eight float constants are written at their use sites; MWCC pools them in
+// first-use order, then appends the 2^52 double used by the u8->float conversion
+// in CObjectParam_UnkVirtualFunc4, matching the retail .sdata2 layout.
 
 namespace cf {
 
@@ -58,7 +46,7 @@ CfObjectNpc::CfObjectNpc(int heapFlag) {
     // The 0x34 word is an unnamed CObjectParam gap word (cf. CfObjectModel
     // ctor Gap34); the header's unk34 lands at +0x24, so it cannot be used here.
     struct Gap34 { u8 _p00[0x34]; u32 w34; };   // 0x34 (unnamed gap word)
-    f32 timerInit = *(const float*)&lbl_eu_80666AE0;
+    f32 timerInit = 0.0f;
     int zero = 0;
     s16 invalid = -1;
     reinterpret_cast<Gap34*>(this)->w34 = (u32)zero;
@@ -79,7 +67,7 @@ int CfObjectNpc::CfObject_UnkVirtualFunc2() {
     mFlags68 |= 0x100000;
     CfObjectMove_setModelDisplayFlag((cf::CfObjectMove*)this, 1);
     CfObjectMove_setRegionAttached(this, 1);
-    ColiSetMoveVec2(_60C_region, 0, *(const float*)&lbl_eu_80666AE4, *(const float*)&lbl_eu_80666AE8);
+    ColiSetMoveVec2(_60C_region, 0, 0.6f, 1.8f);
     *(u16*)&_60C_region[0xB2] = 0x15E;
     return 1;
 }
@@ -99,7 +87,7 @@ void CfObjectNpc::CfObject_UnkVirtualFunc4() {
         // fall through to timer reset (resetTimer stays true)
     } else {
         getInstance__Q22cf13CfGameManagerFv();
-        if (isGlobalCamFlagSet__Fi(0x40000) == 0 &&
+        if (isGlobalCamFlagSet(0x40000) == 0 &&
             this->checkStateFlags8(1) == 0 &&
             this->checkStateFlags(1) == 0 &&
             this->checkStateFlags(0x10) == 0) {
@@ -110,33 +98,33 @@ void CfObjectNpc::CfObject_UnkVirtualFunc4() {
             }
             this->CfObject_refreshSubB0();
             this->CfObject_updateMoveRate();
-            this->mTimer = *(const float*)&lbl_eu_80666AE0;
+            this->mTimer = 0.0f;
             return;   // retail b .L_800C014C (skips the vfunc4 hook)
         }
 
         // Dialogue-decided path.
-        if (Scn_GetFrameDelta(gmScene) > *(const float*)&lbl_eu_80666AE0 &&
+        if (Scn_GetFrameDelta(gmScene) > 0.0f &&
             this->checkStateFlags8(1) != 0 &&
             this->checkStateFlags(1) == 0 &&
             this->checkStateFlags(0x10) == 0 &&
             UIWin_HasPendingUpdate(1) == 0) {
-            if (this->mTimer > *(const float*)&lbl_eu_80666AEC) {
+            if (this->mTimer > 0.1f) {
                 this->applyStateFlags(3);
                 static_cast<cf::CObjectParam*>(this)->CObjectParam_signalActionEnd(0);
                 static_cast<cf::CfObjectModel*>(this)->CfObjectModel_bindModelTo(nullptr, "JUhead");
-                this->mTimer = *(const float*)&lbl_eu_80666AE0;
+                this->mTimer = 0.0f;
             } else {
                 // Local forces the scene-pointer load before the slot call,
                 // matching retail's r31 hoist.
                 CScn* scene = gmScene;
                 this->mTimer += Scn_GetFrameDelta(scene) *
-                                static_cast<cf::CfObject*>(this)->CfObject_getMoveSpeedRate() / *(const float*)&lbl_eu_80666AF0;            }
+                                static_cast<cf::CfObject*>(this)->CfObject_getMoveSpeedRate() / 30.0f;            }
             resetTimer = false;
         }
     }
 
     if (resetTimer) {
-        this->mTimer = *(const float*)&lbl_eu_80666AE0;
+        this->mTimer = 0.0f;
     }
     // Direct (non-virtual) base call, matching retail's bl.
     this->CfObjectMove::CfObject_UnkVirtualFunc4();
@@ -160,14 +148,12 @@ void CfObjectNpc::CObjectParam_UnkVirtualFunc4() {
         static_cast<cf::CObjectParam*>(this)->CObjectParam_setObjectName((const char*)getBdatStringColumnValue(fp, "name", unk8C_3));
     }
 
-    static_cast<cf::CfObject*>(this)->CfObject_setMoveValue(*(const float*)&lbl_eu_80666AF4);
-    static_cast<cf::CfObjectMove*>(this)->CfObjectMove_recordMoveValue(*(const float*)&lbl_eu_80666AF8);
+    static_cast<cf::CfObject*>(this)->CfObject_setMoveValue(25.0f);
+    static_cast<cf::CfObjectMove*>(this)->CfObjectMove_recordMoveValue(12.5f);
 
     // Speed column (+0x11): byte payload scaled by the model's current scale.
-    // The (f32)(u32)(u8) casts are MWCC's builtin u8->float conversion: it
-    // builds the 0x4330000000000000 stack pair and subtracts the TU's 2^52
-    // pool double (retail lbl_eu_80666B00), which is emitted after the named
-    // .sdata2 floats below.
+    // (f32) on the byte is MWCC's builtin u8->float conversion: it subtracts
+    // the TU's 2^52 pool double, emitted after the eight float literals above.
     u32 col11 = getBdatStringColumnValue(
         fp, "move_speed", unk8C_3);
     static_cast<cf::CfObject*>(this)->CfObject_setMoveScale(
@@ -178,7 +164,7 @@ void CfObjectNpc::CObjectParam_UnkVirtualFunc4() {
     u32 col1c = getBdatStringColumnValue(
         fp, "scale", unk8C_3);
     static_cast<cf::CfObject*>(this)->CfObject_setObjScale(
-        (f32)*(u16*)&col1c / *(const float*)&lbl_eu_80666AFC);
+        (f32)*(u16*)&col1c / 100.0f);
 
     loadIconType();
 }

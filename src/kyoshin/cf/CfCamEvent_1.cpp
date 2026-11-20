@@ -1,6 +1,7 @@
 // Auto-scaffolded catalog TU for kyoshin/cf/CfCamEvent_1
 // Replace stubs with high-level C/C++ during decomp.
 
+#include "kyoshin/cf/CfBdat.hpp"
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/code_800AA008_Tok.hpp"
 #include "kyoshin/cf/CfCamSymbols.hpp"
@@ -22,13 +23,13 @@
 #include "kyoshin/code_802405F4.hpp"
 
 
-// Typed vtables + interleaved assert strings (retail .data 0x0..0x168).
-// lbl_eu_80527260 (0x88 = 34 words): CfCamFollow vtable - [typeinfo, 0,
-// dtor + 27 virtuals, typeinfo, 0,0,0]. lbl_eu_805272E8 (0xE0): CfCam
-// vtable (28 words) + inline assert strings (0x70). The strings are emitted
-// as one sized array so MWCC lays them contiguously with no inter-object
-// pad (0x70 % 8 == 0). Reloc slots emit zero bytes in the .o, matching
-// retail (data_match skips reloc-name comparison when bytes are identical).
+// Typed vtables only. The retail 0x70 assert-string tail at 0x80527358
+// belongs to CfCam.cpp's split (cfCam_quatSlerp / cfCam_xzLength) and is
+// no longer emitted here. lbl_eu_80527260 (0x88 = 34 words): CfCamFollow
+// vtable - [typeinfo, 0, dtor + 27 virtuals, typeinfo, 0,0,0].
+// lbl_eu_805272E8vt (0x70 = 28 words): CfCam vtable. Reloc slots emit zero
+// bytes in the .o, matching retail (data_match skips reloc-name comparison
+// when bytes are identical).
 extern "C" {
 extern char __RTTI__Q22cf11CfCamFollow[];
 // lbl_eu_80661B30 is owned by the header as `const void*` (pointer-object,
@@ -71,13 +72,6 @@ const void* lbl_eu_805272E8vt[28] = {
     0, 0, 0,
     (const void*)camPluginNoopV64, (const void*)camPluginNoopV68, (const void*)camPluginNoopV6C
 };
-__declspec(section ".data") __attribute__((aligned(8))) __attribute__((used)) const char lbl_eu_805272E8str[0x70] =
-    "AcosRad: Input is out of the domain.\0\0\0\0"
-    "triangular.h\0\0\0\0"
-    "FSqrt: Input is out of the domain.\0\0"
-    "arithmetic.h\0\0\0\0"
-    "\0\0\0";
-DECOMP_FORCEACTIVE(kyoshin_cf_CfCamEvent_1_vtstr, lbl_eu_805272E8str);
 // Typed float table cfCamEventWeightTable (0x168..0x3D8 = 12 x 0x34).
 // Retail static bytes decoded from the former absorb: v0/v1 are zeros,
 // f_1C is 0, _00 is 1.0 (entries 0-8) / 2.0 (9-11); f_20/f_24/f_28/_2C
@@ -2755,7 +2749,7 @@ int CamEvtSearchStateVal(int val) {
 //    follow column seeds another cam-table entry.
 void CamEvtProgramEventCam(int idx) {
     if (cfCamEventManagerPtr == 0) return;
-    void* mgr = lbl_eu_806640BC;
+    void* mgr = ::cf::CfBdat::spCurFldGimCamListFileData;
     if (idx < 1) return;
     if (idx > Bdat_GetMaxRow_B1EC(mgr)) return;
 
@@ -2764,19 +2758,19 @@ void CamEvtProgramEventCam(int idx) {
     // Probe chain: each deeper column is only read while all shallower ones
     // came back empty; `b` set means every probe column was empty.
     int b = 0, c = 0, d = 0, e = 0, f = 0;
-    if (getBdatStringColumnValue(mgr, colBase + 0xf4, idx) == 0 &&
-        getBdatStringColumnValue(mgr, colBase + 0xfa, idx) == 0)
+    if (getBdatStringColumnValue(mgr, "pos1X", idx) == 0 &&
+        getBdatStringColumnValue(mgr, "pos1Y", idx) == 0)
         f = 1;
-    if (f && getBdatStringColumnValue(mgr, colBase + 0x100, idx) == 0) e = 1;
-    if (e && getBdatStringColumnValue(mgr, colBase + 0x106, idx) == 0) d = 1;
-    if (d && getBdatStringColumnValue(mgr, colBase + 0x10d, idx) == 0) c = 1;
-    if (c && getBdatStringColumnValue(mgr, colBase + 0x114, idx) == 0) b = 1;
+    if (f && getBdatStringColumnValue(mgr, "pos1Z", idx) == 0) e = 1;
+    if (e && getBdatStringColumnValue(mgr, "look1X", idx) == 0) d = 1;
+    if (d && getBdatStringColumnValue(mgr, "look1Y", idx) == 0) c = 1;
+    if (c && getBdatStringColumnValue(mgr, "look1Z", idx) == 0) b = 1;
 
     if (b) {
         // Seed a single cam-table entry from the deep columns.
-        u8 v = getColB(mgr, colBase + 0x11b, idx);
-        u16 h3c = getColH(mgr, colBase + 0x126, idx);
-        u16 h38 = getColH(mgr, colBase + 0x132, idx);
+        u8 v = getColB(mgr, "shake1Type", idx);
+        u16 h3c = getColH(mgr, "shake1Stime", idx);
+        u16 h38 = getColH(mgr, "shake1Etime", idx);
         // Retail quirk: v == 0 and v == 0xfffa both bail out.
         if (v == 0 || (u16)(v + 6) == 0 || h38 == 0) return;
 
@@ -2802,7 +2796,7 @@ void CamEvtProgramEventCam(int idx) {
     notifyBattleSystem__Q22cf13CfGameManagerFv(8, mode, 0, 0, 0);
 
     // Mirror the dynamic-cast target's "busy" flag byte.
-    u8 dynFlag = (getColB(mgr, colBase + 0x13e, idx) != 0);
+    u8 dynFlag = (getColB(mgr, "collision", idx) != 0);
     UnkClass_800821F8* gm = getCameraDataBlock__Q22cf13CfGameManagerFv();
     void* casted = __dynamic_cast(gm, 0, (const void*)&lbl_eu_80661B00,
                                   (const void*)&lbl_eu_80661B30, 0);
@@ -2810,7 +2804,7 @@ void CamEvtProgramEventCam(int idx) {
         ((CfCamDynObj*)casted)->field_0x294 = dynFlag;
 
     u32 angle = 0;
-    if (getColB(mgr, colBase + 0x148, idx) == 1) {
+    if (getColB(mgr, "startCutChange", idx) == 1) {
         CfCamEventManager* m = (CfCamEventManager*)cfCamEventManagerPtr;
         CfCamEventSlot* slot0 = m->slots[0];
         if (slot0 != 0) {
@@ -2820,7 +2814,7 @@ void CamEvtProgramEventCam(int idx) {
             slotSnapRaw(snap, slot0);
             CamEvtDispatchState(m, 0, 1, (CamEventVecSrc*)&snap, 0);
         }
-        angle = getColH(mgr, colBase + 0x157, idx);
+        angle = getColH(mgr, "startFrame", idx);
     }
 
     // Runtime-built column-name buffers. A single POD struct of 11 raw
@@ -2855,23 +2849,23 @@ void CamEvtProgramEventCam(int idx) {
     // Walk the six per-frame rows. Loop exits early once row i (>1) has a
     // zero first-column value.
     for (int i = 1; i <= 6; i++) {
-        COLN(a).format(colBase + 0x162, i);
-        COLN(b).format(colBase + 0x169, i);
-        COLN(c).format(colBase + 0x170, i);
-        COLN(d).format(colBase + 0x177, i);
-        COLN(e).format(colBase + 0x17f, i);
-        COLN(f2).format(colBase + 0x187, i);
-        COLN(g).format(colBase + 0x18f, i);
-        COLN(h).format(colBase + 0x195, i);
-        COLN(i2).format(colBase + 0x19f, i);
-        COLN(j).format(colBase + 0x1ab, i);
-        COLN(k).format(colBase + 0x1b8, i);
+        COLN(a).format("pos%dX", i);
+        COLN(b).format("pos%dY", i);
+        COLN(c).format("pos%dZ", i);
+        COLN(d).format("look%dX", i);
+        COLN(e).format("look%dY", i);
+        COLN(f2).format("look%dZ", i);
+        COLN(g).format("fov%d", i);
+        COLN(h).format("cam%dTime", i);
+        COLN(i2).format("shake%dType", i);
+        COLN(j).format("shake%dStime", i);
+        COLN(k).format("shake%dEtime", i);
 
         u16 colA = getColH(mgr, COLN(h).mString, idx);
         int haveNext = 1;
         if (i < 6) {
             // Peek at row i+1's follow column to pick the blend mode.
-            COLN(h).format(colBase + 0x195, i + 1);
+            COLN(h).format("cam%dTime", i + 1);
             u16 colNext = getColH(mgr, COLN(h).mString, idx);
             haveNext = (colNext == 0);
         }
@@ -2918,10 +2912,10 @@ void CamEvtProgramEventCam(int idx) {
     }
 
     // Tail: program the final blend from the last row's values.
-    u8 col1c5 = getColB(mgr, colBase + 0x1c5, idx);
+    u8 col1c5 = getColB(mgr, "endCutChange", idx);
     CfCamEventManager* g = (CfCamEventManager*)cfCamEventManagerPtr;
     g->field_0x42 = (col1c5 != 0);
-    g->field_0x44 = getColH(mgr, colBase + 0x1d2, idx);
+    g->field_0x44 = getColH(mgr, "resetFrame", idx);
     g->field_0x46 = 1;
     if (g->field_0x42 != 0 && g->field_0x44 != 0) {
         isEffectReady__Q22cf13CfGameManagerFv((u32)(u16)angle,
@@ -3224,8 +3218,8 @@ void sinit_8007BE74() {
     tbl[11].v1.z = 0.05f;
 }
 
-// per-symbol absorb for kyoshin/cf/CfCamEvent_1
-__declspec(section ".rodata") __attribute__((aligned(8))) __attribute__((used)) const char cfCamEventAssertStrings[0x1E0] =
+// BDAT column names: prefix kept until the orphaned s_*/e_* columns get real use sites.
+__declspec(section ".rodata") __attribute__((aligned(8))) __attribute__((used)) const char cfCamEventAssertStrings[0xf4] =
     "camType\0"
     "enemy_size\0"
     "range\0"
@@ -3254,29 +3248,4 @@ __declspec(section ".rodata") __attribute__((aligned(8))) __attribute__((used)) 
     "e_lookx\0"
     "shakePOW\0"
     "shakeStart\0"
-    "shakeTIME\0"
-    "pos1X\0"
-    "pos1Y\0"
-    "pos1Z\0"
-    "look1X\0"
-    "look1Y\0"
-    "look1Z\0"
-    "shake1Type\0"
-    "shake1Stime\0"
-    "shake1Etime\0"
-    "collision\0"
-    "startCutChange\0"
-    "startFrame\0"
-    "pos%dX\0"
-    "pos%dY\0"
-    "pos%dZ\0"
-    "look%dX\0"
-    "look%dY\0"
-    "look%dZ\0"
-    "fov%d\0"
-    "cam%dTime\0"
-    "shake%dType\0"
-    "shake%dStime\0"
-    "shake%dEtime\0"
-    "endCutChange\0"
-    "resetFrame\0";
+    "shakeTIME";

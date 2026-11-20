@@ -5,20 +5,14 @@ extern "C" {
     mpfsys::MPFDrawBillboard* lbl_eu_806658A4;   // .sbss word 1
 }
 
-struct MPFDrawBillboard_Prototype {
-    mpfsys::MPFDrawBillboard obj;
-    u32 padding[4];
-};
-
-// Retail-owned prototype storage (bss lbl_eu_8056DC48, in the retail data
-// blob); declared extern so this TU defines no data.
-extern MPFDrawBillboard_Prototype lbl_eu_8056DC48;
+// The retail prototype is the compiler-emitted vtable of the dispatcher.
+extern "C" u32 __vt__Q26mpfsys16MPFDrawBillboard[4];
 
 namespace mpfsys {
 
 MPFDrawBillboard* MPFDrawBillboard::getInstance(){
     if(!lbl_eu_806658A0){
-        lbl_eu_806658A4 = &lbl_eu_8056DC48.obj;
+        lbl_eu_806658A4 = (mpfsys::MPFDrawBillboard*)&__vt__Q26mpfsys16MPFDrawBillboard;
         lbl_eu_806658A0 = 1;
     }
     return (mpfsys::MPFDrawBillboard*)&lbl_eu_806658A4;

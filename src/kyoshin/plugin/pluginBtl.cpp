@@ -2,7 +2,7 @@
 // Plugin functions for the YGG VM "btl" subsystem (battle management).
 // These are called from script via the function table registered in
 // pluginBtlRegist.
-
+#include "kyoshin/cf/CfCamSymbols.hpp"
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/menu/code_8018C5FC.hpp"
 #include "kyoshin/cf/IFactoryEvent.hpp"
@@ -76,7 +76,7 @@ extern "C" {
     void ResTbox_SetCellBit40(void* self, int, int, int);
 
     // Game state / flags
-    bool isGlobalCamFlagSet__Fi(s32 mask);
+
     u32 menuPTStateIsActive();
 
     // bdat helpers
@@ -272,7 +272,7 @@ int voiceEvent(VMThread* pThread) {
 int isVoiceEvent(VMThread* pThread) {
     int result = 0;
     cf::CfGameManager::getInstance();
-    if (isGlobalCamFlagSet__Fi(0x10000000) != 0) {
+    if (isGlobalCamFlagSet(0x10000000) != 0) {
         if (!CMenuArtsSelect_isCreated() && menuPTStateIsActive() == 0) {
             result = 1;
         }

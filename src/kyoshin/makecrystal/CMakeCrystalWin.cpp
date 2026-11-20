@@ -2,8 +2,9 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 // NOTE: do not include kyoshin/harness_catalog.hpp here - its CTaskGameEff ->
-// CfGameManager chain declares lbl_eu_80664090 as void*, which conflicts with
+// CfGameManager chain declares ::cf::CfBdat::spBtlPcListFileData as void*, which conflicts with
 // the char* declaration in CMCCrystalBox.hpp. Nothing in this TU needs it.
+#include "kyoshin/cf/CfBdat.hpp"
 #include <nw4r/lyt/lyt_drawInfo.h>
 #include "kyoshin/makecrystal/CMakeCrystalWin.hpp"
 #include "monolib/device/CDeviceVI.hpp"

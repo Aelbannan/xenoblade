@@ -23,17 +23,17 @@ extern "C" void setLightEnvEnable(CLightEnv* self, u8 val) {
 // intensity, disabled slot index (-1).
 // ---------------------------------------------------------------------------
 CVirtualLightObj::CVirtualLightObj() {
-    mField04 = lbl_eu_8066AA88;
-    mField08 = lbl_eu_8066AA88;
-    mField0C = lbl_eu_8066AA88;
-    mField10 = lbl_eu_8066AA88;
-    mField14 = lbl_eu_8066AA88;
+    mField04 = 1.0f;
+    mField08 = 1.0f;
+    mField0C = 1.0f;
+    mField10 = 1.0f;
+    mField14 = 1.0f;
     mByte18 = 1;
     mByte19 = 0;
-    mField1C = lbl_eu_8066AA88;
-    mField20 = lbl_eu_8066AA88;
-    mField24 = lbl_eu_8066AA88;
-    mField28 = lbl_eu_8066AA88;
+    mField1C = 1.0f;
+    mField20 = 1.0f;
+    mField24 = 1.0f;
+    mField28 = 1.0f;
     mField2C = 0;
     mField30 = -1;
 }
@@ -60,20 +60,20 @@ ml::CCol4 CVirtualLightObj::getColor() {
 // the "white" sentinel once any field has been customized.
 // ---------------------------------------------------------------------------
 f32 CVirtualLightObj::getSentinel() {
-    if (mField14 <= lbl_eu_8066AA8C) {
-        return lbl_eu_8066AA8C;
+    if (mField14 <= 0.0f) {
+        return 0.0f;
     }
-    if (lbl_eu_8066AA8C == mField1C &&
-        lbl_eu_8066AA8C == mField20 &&
-        lbl_eu_8066AA8C == mField24) {
-        return lbl_eu_8066AA8C;
+    if (0.0f == mField1C &&
+        0.0f == mField20 &&
+        0.0f == mField24) {
+        return 0.0f;
     }
-    if (lbl_eu_8066AA8C == mField04 &&
-        lbl_eu_8066AA8C == mField08 &&
-        lbl_eu_8066AA8C == mField0C) {
-        return lbl_eu_8066AA8C;
+    if (0.0f == mField04 &&
+        0.0f == mField08 &&
+        0.0f == mField0C) {
+        return 0.0f;
     }
-    return lbl_eu_8066AA88;
+    return 1.0f;
 }
 
 // ---------------------------------------------------------------------------
@@ -84,7 +84,7 @@ f32 CVirtualLightObj::getSentinel() {
 // ---------------------------------------------------------------------------
 extern "C" void blendSlotAmbient(CLightEnv* self, const f32 color[3]) {
     u32 count = self->mField1180;
-    f32 blend = lbl_eu_8066AA98 / (f32)(count + 1);
+    f32 blend = 1.0f / (f32)(count + 1);
     f32 countF = (f32)count;
 
     // Running average: new = blend*in + count*old*blend.
@@ -101,10 +101,10 @@ extern "C" void blendSlotAmbient(CLightEnv* self, const f32 color[3]) {
     nw4r::g3d::LightSet lightSet =
         self->mLightSetting.GetLightSet(self->mField117C);
     nw4r::g3d::AmbLightObj* amb = lightSet.GetAmbLightObj();
-    amb->r = (u8)(lbl_eu_8066AA9C * self->mSlotColors[self->mField117C].x);
-    amb->g = (u8)(lbl_eu_8066AA9C * self->mSlotColors[self->mField117C].y);
-    amb->b = (u8)(lbl_eu_8066AA9C * self->mSlotColors[self->mField117C].z);
-    amb->a = (u8)(lbl_eu_8066AA9C * self->mSlotColors[self->mField117C].w);
+    amb->r = (u8)(255.0f * self->mSlotColors[self->mField117C].x);
+    amb->g = (u8)(255.0f * self->mSlotColors[self->mField117C].y);
+    amb->b = (u8)(255.0f * self->mSlotColors[self->mField117C].z);
+    amb->a = (u8)(255.0f * self->mSlotColors[self->mField117C].w);
 
     self->mField1180 = count + 1;
 }
@@ -122,10 +122,10 @@ extern "C" void blendSlotAmbient(CLightEnv* self, const f32 color[3]) {
 extern "C" void initLightEnv(CLightEnv* self) {
     self->mField1180 = 0;
     for (int i = 0; i < 4; i++) {
-        self->mSlotColors[i].x = lbl_eu_8066AAA8;
-        self->mSlotColors[i].y = lbl_eu_8066AAA8;
-        self->mSlotColors[i].z = lbl_eu_8066AAA8;
-        self->mSlotColors[i].w = lbl_eu_8066AA98;
+        self->mSlotColors[i].x = 0.0f;
+        self->mSlotColors[i].y = 0.0f;
+        self->mSlotColors[i].z = 0.0f;
+        self->mSlotColors[i].w = 1.0f;
     }
     self->mSlotPtrs[0] = self->mSlotLights[0];
     self->mSlotPtrs[1] = self->mSlotLights[1];
@@ -423,7 +423,7 @@ extern "C" void drawFlatQuad(const ml::CRect16* rect, const ml::CCol4* color) {
 // ---------------------------------------------------------------------------
 extern "C" void drawTexturedQuad(const ml::CRect16* rect, const ml::CCol4* color, const f32 tex[4]) {
     GXBegin(GX_QUADS, GX_VTXFMT0, 4);
-    const f32 scale = lbl_eu_8066AA90;
+    const f32 scale = 255.0f;
     // Per-vertex texture coordinates: (u0,v0), (u1,v0), (u1,v1), (u0,v1).
     // MWCC materializes this array on the stack (retail keeps the dead stores)
     // while writing the FIFO from the register copies.

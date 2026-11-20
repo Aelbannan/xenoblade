@@ -564,7 +564,6 @@ extern "C" void func_8009EF9C(void* data, u32 value);
 extern "C" void CItem_findOrCreateRec(u32 value, void* result, s32 mode, void* other);
 // func_8007DCB8 bdat-table scratch globals (.sbss /.data).
 extern s8 gmBdatTableReady;
-extern void* lbl_eu_80664090;
 extern void* gmBdatTablePtr;
 
 // ---------------------------------------------------------------------------

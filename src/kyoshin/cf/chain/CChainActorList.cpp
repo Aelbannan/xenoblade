@@ -2,7 +2,7 @@
 #include "kyoshin/cf/chain/CChainApi.hpp"
 #include "kyoshin/code_8025FB10.hpp"
 #include "kyoshin/cf/chain/CChainEffect.hpp"
-
+#include "kyoshin/menu/CMenuZeal.hpp"
 #include "kyoshin/cf/chain/CChainTimer.hpp"
 #include "kyoshin/cf/CfMapItemManager.hpp"
 #include "kyoshin/cf/chain/CChainChance.hpp"
@@ -670,7 +670,7 @@ int Chain_CheckChanceRoll(cf::CChainChanceS* self,
 // action selected by GetZealResult; writes result to *out and returns 1.
 extern "C" int Chain_ReadPadAction(cf::CChainAction* self, u8* out){
     if (self->field_0 > 0) return 0;
-    int sel = GetZealObjPtr();
+    int sel = (int)GetZealObjPtr();
     if (sel == 0) {
         *out = 0;
         return 1;

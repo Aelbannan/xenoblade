@@ -1,5 +1,5 @@
 #pragma once
-
+#include "kyoshin/cf/CtrlRemoteApi.hpp"
 #include <types.h>
 #include "kyoshin/code_80135FDC_Bdat.hpp"
 
@@ -122,7 +122,7 @@ void __dt__9IUIWindowFv(void* self, int flags);
 // Unmangled in retail (unlike advanceAnimTransform's mangled form).
 // Layout/message/input helpers used by the file-load completion handler.
 void writePanePos(nw4r::lyt::Pane*, float*);
-u32 CtrlRemote_TouchBitByArg(u32);
+
 void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
 }
 
@@ -135,8 +135,6 @@ extern u32 lbl_eu_80664A00;  // CMenuPTChangeNotice singleton pointer
 // Strings / constants for the notice layout (retail data symbols).
 extern char lbl_eu_8050FC20[];     // notice layout path + pane-name table
 // .sbss pointer globals holding the character/affinity icon message tables.
-extern void* lbl_eu_80664090;
-extern void* lbl_eu_80664098;
 extern const f32 lbl_eu_80668B84;  // animation frame target (notice open)
 // 2^52 double used by the u32->float conversion (lfd pool constant).
 extern const f64 lbl_eu_80668B88;

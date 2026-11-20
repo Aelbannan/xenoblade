@@ -25,12 +25,12 @@ void MakeTexSrtMtx_S(math::MTX34* pMtx, const TexSrt& rSrt) {
 void MakeTexSrtMtx_R(math::MTX34* pMtx, const TexSrt& rSrt) {
     f32 r = rSrt.R;
     f32 sinR, cosR;
-    math::SinCosFIdx(&sinR, &cosR, lbl_eu_80669CA0 * r);
+    math::SinCosFIdx(&sinR, &cosR, 0.7111111f * r);
 
     // translation terms: t = 0.5*cos, h = 0.5*sin, base = 0.5 - t
-    f32 t = lbl_eu_80669CA4 * cosR;
-    f32 h = lbl_eu_80669CA4 * sinR;
-    f32 base = lbl_eu_80669CA4 - t;
+    f32 t = 0.5f * cosR;
+    f32 h = 0.5f * sinR;
+    f32 base = 0.5f - t;
 
     pMtx->m[0][0] = cosR;
     pMtx->m[0][1] = sinR;
@@ -55,7 +55,7 @@ void MakeTexSrtMtx_T(math::MTX34* pMtx, const TexSrt& rSrt) {
 
 void MakeTexSrtMtx_SR(math::MTX34* pMtx, const TexSrt& rSrt) {
     f32 r = rSrt.R;
-    f32 fidx = lbl_eu_80669CA0 * r;
+    f32 fidx = 0.7111111f * r;
     f32 sinR, cosR;
     math::SinCosFIdx(&sinR, &cosR, fidx);
 
@@ -76,21 +76,21 @@ void MakeTexSrtMtx_SR(math::MTX34* pMtx, const TexSrt& rSrt) {
     pMtx->m[1][0] = -svs;
     pMtx->m[1][1] = svc;
     pMtx->m[1][2] = lbl_eu_80669C98;
-    pMtx->m[1][3] = lbl_eu_80669C9C + lbl_eu_80669CA4 * (svs - svc - sv);
+    pMtx->m[1][3] = lbl_eu_80669C9C + 0.5f * (svs - svc - sv);
 }
 
 void MakeTexSrtMtx_RT(math::MTX34* pMtx, const TexSrt& rSrt) {
     f32 r = rSrt.R;
-    f32 fidx = lbl_eu_80669CA0 * r;
+    f32 fidx = 0.7111111f * r;
     f32 sinR, cosR;
     math::SinCosFIdx(&sinR, &cosR, fidx);
 
     // t = 0.5*cos and h = 0.5*sin feed both translation terms;
     // base = 0.5 - t. Named temporaries are required: MWCC does not CSE
     // duplicated float subproducts across statements in this TU.
-    f32 t = lbl_eu_80669CA4 * cosR;
-    f32 h = lbl_eu_80669CA4 * sinR;
-    f32 base = lbl_eu_80669CA4 - t;
+    f32 t = 0.5f * cosR;
+    f32 h = 0.5f * sinR;
+    f32 base = 0.5f - t;
 
     pMtx->m[0][0] = cosR;
     pMtx->m[0][1] = sinR;
@@ -115,7 +115,7 @@ void MakeTexSrtMtx_ST(math::MTX34* pMtx, const TexSrt& rSrt) {
 
 void MakeTexSrtMtx_SRT(math::MTX34* pMtx, const TexSrt& rSrt) {
     f32 r = rSrt.R;
-    f32 fidx = lbl_eu_80669CA0 * r;
+    f32 fidx = 0.7111111f * r;
     f32 sinR, cosR;
     math::SinCosFIdx(&sinR, &cosR, fidx);
 
@@ -124,10 +124,10 @@ void MakeTexSrtMtx_SRT(math::MTX34* pMtx, const TexSrt& rSrt) {
     // Temp SET is forced by the 0-structural schedule; colors are
     // allocator-determined (decl-perm was byte-identical => SSA vregs).
     f32 suc, sus, hs, nsv, u, t, lo, hi;
-    hs = lbl_eu_80669CA4 * sinR;
+    hs = 0.5f * sinR;
     nsv = -rSrt.Sv;
     u = (-0.5f) * cosR;
-    t = hs - lbl_eu_80669CA4;
+    t = hs - 0.5f;
     suc = rSrt.Su * cosR;
     lo = u - t;
     pMtx->m[0][0] = suc;
@@ -154,13 +154,13 @@ void ProductTexSrtMtx_S(math::MTX34* pMtx, const TexSrt& rSrt) {
 
 void ProductTexSrtMtx_R(math::MTX34* pMtx, const TexSrt& rSrt) {
     f32 r = rSrt.R;
-    f32 fidx = lbl_eu_80669CA0 * r;
+    f32 fidx = 0.7111111f * r;
     f32 sinR, cosR;
     math::SinCosFIdx(&sinR, &cosR, fidx);
 
-    f32 h = lbl_eu_80669CA4;
+    f32 h = 0.5f;
 
-    // Rotate each column pair in place; the translation column also folds in
+    // Rotate each column pair in place;
     // the Maya half-texel pivot correction h*(1-cos-sin). Column results are
     // held in temps so every matrix element is read before any write.
     f32 a0 = pMtx->m[0][0];
@@ -198,7 +198,7 @@ void ProductTexSrtMtx_T(math::MTX34* pMtx, const TexSrt& rSrt) {
 
 void ProductTexSrtMtx_SR(math::MTX34* pMtx, const TexSrt& rSrt) {
     f32 r = rSrt.R;
-    f32 fidx = lbl_eu_80669CA0 * r;
+    f32 fidx = 0.7111111f * r;
     // Split decl/assign: declaration order fixes temp register colors,
     // assignment order fixes emission order.
     f32 svs, svc, half, m13, m03, svh, su, m13h, m00, m03h, m10, suc, m01,
@@ -211,7 +211,7 @@ void ProductTexSrtMtx_SR(math::MTX34* pMtx, const TexSrt& rSrt) {
 
     svs = sinR * rSrt.Sv;
     svc = cosR * rSrt.Sv;
-    half = lbl_eu_80669CA4;
+    half = 0.5f;
     m13 = pMtx->m[1][3];
     m03 = pMtx->m[0][3];
     svh = half * rSrt.Sv;
@@ -239,7 +239,7 @@ void ProductTexSrtMtx_SR(math::MTX34* pMtx, const TexSrt& rSrt) {
 
 void ProductTexSrtMtx_RT(math::MTX34* pMtx, const TexSrt& rSrt) {
     f32 sinR, cosR;
-    math::SinCosFIdx(&sinR, &cosR, lbl_eu_80669CA0 * rSrt.R);
+    math::SinCosFIdx(&sinR, &cosR, 0.7111111f * rSrt.R);
 
     // pMtx = T(-Tu, Tv) * R_maya * pMtx; R_maya is the transposed Maya
     // rotation with the Maya half-texel pivot correction.
@@ -253,7 +253,7 @@ void ProductTexSrtMtx_RT(math::MTX34* pMtx, const TexSrt& rSrt) {
     f32 m13 = pMtx->m[1][3];
 
     // One syntactic mention per pooled constant -> one SDA reloc each.
-    f32 half = lbl_eu_80669CA4;
+    f32 half = 0.5f;
     f32 neghalf = (-0.5f);
 
     pMtx->m[0][0] = cosR * m00 + sinR * m10;
@@ -289,7 +289,7 @@ void ProductTexSrtMtx_ST(math::MTX34* pMtx, const TexSrt& rSrt) {
 void ProductTexSrtMtx_SRT(math::MTX34* pMtx, const TexSrt& rSrt) {
     f32 r = rSrt.R;
     f32 sinR, cosR;
-    math::SinCosFIdx(&sinR, &cosR, lbl_eu_80669CA0 * r);
+    math::SinCosFIdx(&sinR, &cosR, 0.7111111f * r);
 
     // Split decl/assign: declaration order fixes temp register colors,
     // assignment order fixes emission order (same idiom as ProductTexSrtMtx_SR).
@@ -299,7 +299,7 @@ void ProductTexSrtMtx_SRT(math::MTX34* pMtx, const TexSrt& rSrt) {
 
     sv_sin = sinR * rSrt.Sv;
     sv = rSrt.Sv;
-    half = lbl_eu_80669CA4;
+    half = 0.5f;
     m13 = pMtx->m[1][3];
     m13_5 = m13 - half;
     tv = rSrt.Tv;
@@ -373,11 +373,11 @@ void ProductTexSrtMtx_SRT(math::MTX34* pMtx, const TexSrt& rSrt) {
 // by -ipa file DCE, and external linkage would break the @unnamed@g3d_maya_cpp@
 // mangled names). The tables must also be removed from nw4r_data.s to avoid
 // duplicate globals at link.
-extern "C" const TexSrtMtxFunc lbl_eu_8051D6C0[7] = {
+extern "C" const TexSrtMtxFunc TexSrtMtxSetDispatchMaya[7] = { // name-guess: 7-pointer TexSrtMtx set dispatch at .rodata:0x8051D6C0, called by CalcTexMtx_Maya
     MakeTexSrtMtx_SRT, MakeTexSrtMtx_RT, MakeTexSrtMtx_ST,
     MakeTexSrtMtx_T, MakeTexSrtMtx_SR, MakeTexSrtMtx_R, MakeTexSrtMtx_S,
 };
-extern "C" const TexSrtMtxFunc lbl_eu_8051D6DC[7] = {
+extern "C" const TexSrtMtxFunc TexSrtMtxProductDispatchMaya[7] = { // name-guess: 7-pointer TexSrtMtx product dispatch at .rodata:0x8051D6DC, called by CalcTexMtx_Maya
     ProductTexSrtMtx_SRT, ProductTexSrtMtx_RT, ProductTexSrtMtx_ST,
     ProductTexSrtMtx_T, ProductTexSrtMtx_SR, ProductTexSrtMtx_R,
     ProductTexSrtMtx_S,
@@ -391,9 +391,9 @@ bool CalcTexMtx_Maya(math::MTX34* pMtx, bool bSet, const TexSrt& rSrt, TexSrt::F
     }
 
     if (bSet) {
-        lbl_eu_8051D6C0[idx](pMtx, rSrt);
+        TexSrtMtxSetDispatchMaya[idx](pMtx, rSrt);
     } else {
-        lbl_eu_8051D6DC[idx](pMtx, rSrt);
+        TexSrtMtxProductDispatchMaya[idx](pMtx, rSrt);
     }
 
     pMtx->m[2][0] = lbl_eu_80669C98;

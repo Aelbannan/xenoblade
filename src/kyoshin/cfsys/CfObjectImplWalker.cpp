@@ -1,6 +1,7 @@
 // Auto-scaffolded catalog TU for kyoshin/cfsys/CfObjectImplWalker
 // Replace stubs with high-level C/C++ during decomp.
 
+#include "kyoshin/cf/CfBdat.hpp"
 #include "kyoshin/cf/CBattleManager.hpp"
 #include "kyoshin/menu/code_8018C5FC.hpp"
 #include "kyoshin/code_801F3BE0.hpp"
@@ -1162,7 +1163,7 @@ int Walker_AdvanceBattleStep(cf::CfObjectImplWalker* self, u32 a, u32 b) {
     void* tbl98;
     cf::CfWalkTalkSrc* mgr = (cf::CfWalkTalkSrc*)CfObjectMove_getSelfIfActive(
         findObjectById((int)((cf::CfWalkGlobal*)Selector_GetInstance())->field_90E4));
-    tbl98 = lbl_eu_80664098;
+    tbl98 = ::cf::CfBdat::spFldNpcListFileData;
 
     int found = 0;
     {
@@ -1206,7 +1207,7 @@ int Walker_AdvanceBattleStep(cf::CfObjectImplWalker* self, u32 a, u32 b) {
                 (int)mgr->field_8C);
             u8 kind = *(u8*)p;
             char* col = (char*)getBdatStringColumnValue(
-                lbl_eu_806640C4, "exc_talk1", kind);
+                ::cf::CfBdat::spCurExTalkListFileData, "exc_talk1", kind);
             UIWin_ControlWindowLists(1, 1);
             self->field_394 = mgr->field_74;
             self->field_38C = kind;
@@ -1229,7 +1230,7 @@ int Walker_AdvanceBattleStep(cf::CfObjectImplWalker* self, u32 a, u32 b) {
         if (ItemEx_GetFlagByte() != 0) {
             UIWin_CreateTalkWin(self->field_394,
                           (char*)getBdatStringColumnValue(
-                              lbl_eu_806640C4, "exc_talk2",
+                              ::cf::CfBdat::spCurExTalkListFileData, "exc_talk2",
                               self->field_38C),
                           1);
             CfObjectMove_relaySubB0Slot54(mgr, 0x66, 0,
@@ -1239,7 +1240,7 @@ int Walker_AdvanceBattleStep(cf::CfObjectImplWalker* self, u32 a, u32 b) {
         } else {
             UIWin_CreateTalkWin(self->field_394,
                           (char*)getBdatStringColumnValue(
-                              lbl_eu_806640C4, "exc_talk3",
+                              ::cf::CfBdat::spCurExTalkListFileData, "exc_talk3",
                               self->field_38C),
                           1);
             self->field_388 = 5;
@@ -1256,7 +1257,7 @@ int Walker_AdvanceBattleStep(cf::CfObjectImplWalker* self, u32 a, u32 b) {
     case 4:
         UIWin_CreateTalkWin(self->field_394,
                       (char*)getBdatStringColumnValue(
-                          lbl_eu_806640C4, "exc_talk3",
+                          ::cf::CfBdat::spCurExTalkListFileData, "exc_talk3",
                           self->field_38C),
                       1);
         self->field_388++;

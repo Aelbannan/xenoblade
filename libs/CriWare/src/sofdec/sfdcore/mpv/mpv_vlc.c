@@ -7,30 +7,63 @@
 
 // Absorbed from criware_data (retail bytes) - generated
 __attribute__((aligned(8))) unsigned char __bss_fill_0[0x5E8]; // filler gap at 0x0 for .bss
-u16 lbl_eu_80602FF8[0x200]; // bss off 0x5E8
+// name-guess: mpvvlc_SetDflPtr / MPVVLC_Init index this 0x400-byte .bss block as the default VLC table workspace
+u16 sVlcTableWorkArea[0x200]; // bss off 0x5E8
 unsigned char __bss_fill_1[0x8]; // filler gap at 0x9E8 for .bss
-u8 lbl_eu_80603400[0x80]; // bss off 0x9F0
+// name-guess: mpvvlc_InitDcSizY fills this 0x80-byte block with luma DC-size codes
+u8 sDcSizeLuma[0x80]; // bss off 0x9F0
 unsigned char __bss_fill_2[0x8]; // filler gap at 0xA70 for .bss
-u8 lbl_eu_80603488[0x80]; // bss off 0xA78
+// name-guess: mpvvlc_InitDcSizC fills this 0x80-byte block with chroma DC-size codes
+u8 sDcSizeChroma[0x80]; // bss off 0xA78
 unsigned char __bss_fill_3[0x8]; // filler gap at 0xAF8 for .bss
-u8 lbl_eu_80603510[0x100]; // bss off 0xB00
+// name-guess: mpvvlc_InitMotion fills this block with the primary motion-vector codes
+u8 sMotionVectorTable[0x100]; // bss off 0xB00
 unsigned char __bss_fill_4[0x8]; // filler gap at 0xC00 for .bss
-u16 lbl_eu_80603618[0x20]; // bss off 0xC08
+// name-guess: mpvvlc_InitMotion fills this block with the secondary motion-vector codes
+u16 sMotionVectorTable2[0x20]; // bss off 0xC08
 unsigned char __bss_fill_5[0x8]; // filler gap at 0xC48 for .bss
-u16 lbl_eu_80603660[0x20]; // bss off 0xC50
+// name-guess: mpvvlc_InitMbTypePpic fills this block with P-picture macroblock-type codes
+u16 sMbTypePpicTable[0x20]; // bss off 0xC50
 unsigned char __bss_fill_6[0x8]; // filler gap at 0xC90 for .bss
-u16 lbl_eu_806036A8[0x40]; // bss off 0xC98
-u16 lbl_eu_80603728[0x100]; // bss off 0xD18
-u16 lbl_eu_80603928[0x40]; // bss off 0xF18
-u16 lbl_eu_806039A8[0x80]; // bss off 0xF98
-u16 lbl_eu_80603AA8[0x20]; // bss off 0x1098
-u16 lbl_eu_80603AE8[0x80]; // bss off 0x10D8
-u16 lbl_eu_80603BE8[0x20]; // bss off 0x11D8
-u8 lbl_eu_80603C28[0x400]; // bss off 0x1218
-u8 lbl_eu_80604028[0x400]; // bss off 0x1618
-u32 lbl_eu_80604428[0x80]; // bss off 0x1A18
-unsigned char __bss_fill_7[0x90]; // trailing filler for .bss
-__declspec(section ".rodata") __attribute__((aligned(8))) u32 lbl_eu_8051C2B8[0x2C] = {0x12011101, 0x10010F01, 0x03060210, 0x020F020E, 0x020D020C, 0x020B011F, 0x011E011D, 0x011C011B, 0x28002700, 0x26002500, 0x24002300, 0x22002100, 0x20000E01, 0x0D010C01, 0x0B010A01, 0x09010801, 0x1F001E00, 0x1D001C00, 0x1B001A00, 0x19001800, 0x17001600, 0x15001400, 0x13001200, 0x11001000, 0x020A0209, 0x03050403, 0x05020701, 0x06010F00, 0x0E000D00, 0x0C00011A, 0x01190118, 0x01170116, 0x0B000208, 0x03040A00, 0x04020207, 0x01150114, 0x09000113, 0x01120501, 0x03030800, 0x02060111, 0x01100205, 0x07000302, 0x0401010F, 0x010E0204}; // off 0x0
+// name-guess: mpvvlc_InitMbTypeBpic fills this block with B-picture macroblock-type codes
+u16 sMbTypeBpicTable[0x40]; // bss off 0xC98
+// name-guess: mpvvlc_InitMbaiIpic fills this block with the primary I-picture macroblock-address-increment codes
+u16 sMbaiIpicTable[0x100]; // bss off 0xD18
+// name-guess: mpvvlc_InitMbaiIpic fills this block with the secondary I-picture macroblock-address-increment codes
+u16 sMbaiIpicTable2[0x40]; // bss off 0xF18
+// name-guess: mpvvlc_InitMbaiPpic fills this block with the primary P-picture macroblock-address-increment codes
+u16 sMbaiPpicTable[0x80]; // bss off 0xF98
+// name-guess: mpvvlc_InitMbaiPpic fills this block with the secondary P-picture macroblock-address-increment codes
+u16 sMbaiPpicTable2[0x20]; // bss off 0x1098
+// name-guess: mpvvlc_InitMbaiBpic fills this block with the primary B-picture macroblock-address-increment codes
+u16 sMbaiBpicTable[0x80]; // bss off 0x10D8
+// name-guess: mpvvlc_InitMbaiBpic fills this block with the secondary B-picture macroblock-address-increment codes
+u16 sMbaiBpicTable2[0x20]; // bss off 0x11D8
+// name-guess: mpvvlc2_InitDcSizY fills this block with the expanded luma DC-size codes
+u8 sDcSizeLuma2[0x400]; // bss off 0x1218
+// name-guess: mpvvlc2_InitDcSizC fills this block with the expanded chroma DC-size codes
+u8 sDcSizeChroma2[0x400]; // bss off 0x1618
+// name-guess: mpvvlc_InitIntRunLevel fills this block with intra run/level VLC entries
+u32 sIntraRunLevelTable[0x80]; // bss off 0x1A18
+unsigned char __bss_fill_7[0x24]; // 0x80604628..0x8060464B, written via sVlcTableWorkArea
+// name-guess: g[0x595] in mpvvlc_SetDflPtr, read as MPVBDEC vlc_param[10] (0x0f table)
+u32 sVlcTablePtr0F;
+// name-guess: g[0x596] in mpvvlc_SetDflPtr, read as MPVBDEC vlc_param[8] (0x10 table)
+u32 sVlcTablePtr10;
+// name-guess: g[0x597] in mpvvlc_SetDflPtr, read as MPVBDEC vlc_param[6] (0x11 table)
+u32 sVlcTablePtr11;
+// name-guess: g[0x598] in mpvvlc_SetDflPtr, read as MPVBDEC vlc_param[4] (0x12 table)
+u32 sVlcTablePtr12;
+// name-guess: g[0x599] in mpvvlc_SetDflPtr, read as MPVBDEC vlc_param[2] (0x13 table)
+u32 sVlcTablePtr13;
+// name-guess: g[0x59a] in mpvvlc_SetDflPtr, read as MPVBDEC vlc_param[0] (0x15 table)
+u32 sVlcTablePtr15;
+// name-guess: g[0x59b] in mpvvlc_SetDflPtr, stored at MPV handle +0x990
+u32 sVlcTablePtrExtra;
+unsigned char __bss_fill_8[0x50]; // trailing filler for .bss
+// name-guess: mpvvlc_SetDflPtr / mpvvlc_SetVlcRunLevel use these packed u32
+// pairs as the default VLC table descriptor entries
+__declspec(section ".rodata") __attribute__((aligned(8))) u32 sVlcDefaultPtrs[0x2C] = {0x12011101, 0x10010F01, 0x03060210, 0x020F020E, 0x020D020C, 0x020B011F, 0x011E011D, 0x011C011B, 0x28002700, 0x26002500, 0x24002300, 0x22002100, 0x20000E01, 0x0D010C01, 0x0B010A01, 0x09010801, 0x1F001E00, 0x1D001C00, 0x1B001A00, 0x19001800, 0x17001600, 0x15001400, 0x13001200, 0x11001000, 0x020A0209, 0x03050403, 0x05020701, 0x06010F00, 0x0E000D00, 0x0C00011A, 0x01190118, 0x01170116, 0x0B000208, 0x03040A00, 0x04020207, 0x01150114, 0x09000113, 0x01120501, 0x03030800, 0x02060111, 0x01100205, 0x07000302, 0x0401010F, 0x010E0204}; // off 0x0
 
 
 extern int UTY_MemcpyDword(u32 *dst, const u32 *src, u32 n);
@@ -41,7 +74,7 @@ int MPVVLC_IsVlcSizErr(void) { return 0x0; }
 
 /* P-picture macroblock type VLC table (32 entries) */
 void mpvvlc_InitMbTypePpic(void) {
-    u16 *p = lbl_eu_80603660;
+    u16 *p = sMbTypePpicTable;
     int i;
 
     *p++ = 0x1106;
@@ -58,7 +91,7 @@ void mpvvlc_InitMbTypePpic(void) {
 
 /* B-picture macroblock type VLC table (48 entries) */
 void mpvvlc_InitMbTypeBpic(void) {
-    u16 *p = lbl_eu_806036A8;
+    u16 *p = sMbTypeBpicTable;
     int i;
 
     *p++ = 0x1f00;
@@ -233,7 +266,7 @@ u16 *mpvvlc_InitCbpSub2(u16 *tbl) {
 /* Luma DC size table */
 void mpvvlc_InitDcSizY(void) {
     int i;
-    s8 *p = (s8*)lbl_eu_80603400;
+    s8 *p = (s8*)sDcSizeLuma;
     s8 v = 0x12;
 
     for (i = 0; i < 32; i++) *p++ = v;
@@ -249,7 +282,7 @@ void mpvvlc_InitDcSizY(void) {
 
 /* Chroma DC size table */
 void mpvvlc_InitDcSizC(void) {
-    s8 *p = (s8*)lbl_eu_80603488;
+    s8 *p = (s8*)sDcSizeChroma;
     int i;
 
     for (i = 0; i < 32; i++) *p++ = 0x02;
@@ -265,7 +298,7 @@ void mpvvlc_InitDcSizC(void) {
 
 /* Luma DC size table (2nd form) */
 void mpvvlc2_InitDcSizY(void) {
-    s8 *p = (s8 *)lbl_eu_80603C28;
+    s8 *p = (s8 *)sDcSizeLuma2;
     int i;
 
     for (i = 0; i < 256; i++)
@@ -296,7 +329,7 @@ void mpvvlc2_InitDcSizY(void) {
 
 /* Chroma DC size table (2nd form) */
 void mpvvlc2_InitDcSizC(void) {
-    s8 *p = (s8 *)lbl_eu_80604028;
+    s8 *p = (s8 *)sDcSizeChroma2;
     int i;
 
     for (i = 0; i < 256; i++)
@@ -325,7 +358,7 @@ void mpvvlc2_InitDcSizC(void) {
 
 /* Intra run/level VLC table (128 dwords) */
 void mpvvlc_InitIntRunLevel(void) {
-    u32 *p = lbl_eu_80604428;
+    u32 *p = sIntraRunLevelTable;
     int i;
 
     for (i = 0; i < 4; i++) *p++ = 0x00000000;
@@ -356,7 +389,7 @@ void mpvvlc_InitIntRunLevel(void) {
 
 /* I-picture macroblock address increment VLC tables */
 void mpvvlc_InitMbaiIpic(void) {
-    s16 *p = (s16 *)lbl_eu_80603728;
+    s16 *p = (s16 *)sMbaiIpicTable;
     s16 *q;
     int v, i, j;
 
@@ -529,7 +562,7 @@ void mpvvlc_InitMbaiIpic(void) {
     }
 
     /* Second table address is materialized only here (matches retail); head unrolled */
-    q = (s16 *)lbl_eu_80603928;
+    q = (s16 *)sMbaiIpicTable2;
     *q++ = 0x0240;
     *q++ = 0x0240;
     *q++ = 0x0240;
@@ -562,7 +595,7 @@ void mpvvlc_InitMbaiIpic(void) {
 
 /* P-picture macroblock address increment VLC tables */
 void mpvvlc_InitMbaiPpic(void) {
-    s16 *p = (s16 *)lbl_eu_806039A8;
+    s16 *p = (s16 *)sMbaiPpicTable;
     s16 *q;
     int v, i, j;
 
@@ -642,7 +675,7 @@ void mpvvlc_InitMbaiPpic(void) {
     }
 
     /* Second table address is materialized only here (matches retail) */
-    q = (s16 *)lbl_eu_80603AA8;
+    q = (s16 *)sMbaiPpicTable2;
     *q++ = 0x0240;
     *q++ = 0x0240;
     *q++ = 0x0075;
@@ -671,7 +704,7 @@ void mpvvlc_InitMbaiPpic(void) {
 
 /* B-picture macroblock address increment VLC tables */
 void mpvvlc_InitMbaiBpic(void) {
-    s16 *p = (s16 *)lbl_eu_80603AE8;
+    s16 *p = (s16 *)sMbaiBpicTable;
     s16 *q;
     int v, i, j;
 
@@ -764,7 +797,7 @@ void mpvvlc_InitMbaiBpic(void) {
 
     /* Second table: plain literals, then a shared base 0x10 for the final
        group so retail emits ori chains off one register */
-    q = (s16 *)lbl_eu_80603BE8;
+    q = (s16 *)sMbaiBpicTable2;
     *q++ = 0x240;
     *q++ = 0x240;
     *q++ = 0x75;
@@ -801,7 +834,7 @@ void mpvvlc_InitMbaiBpic(void) {
    Entry for magnitude n is (n | base) or ((u8)-n | base); copy counts grow
    as magnitude shrinks (1/2/8/16), so MWCC fully unrolls every loop here. */
 void mpvvlc_InitMotion(void) {
-    s16 *p = (s16 *)lbl_eu_80603510;
+    s16 *p = (s16 *)sMotionVectorTable;
     s16 *q;
     int i;
     int n;
@@ -861,7 +894,7 @@ void mpvvlc_InitMotion(void) {
         *p++ = n | 0x0700;
 
     /* Second table address is materialized only here (matches retail) */
-    q = (s16 *)lbl_eu_80603618;
+    q = (s16 *)sMotionVectorTable2;
     *q++ = 0x7f;
     q[0] = 0x7f;
     n = 3;
@@ -887,8 +920,8 @@ void mpvvlc_InitMotion(void) {
    Each destination pointer is materialized into its own local first
    (retail's register-heavy schedule), then stored slot by slot. */
 void mpvvlc_SetDflPtr(void) {
-    u32 *d = lbl_eu_8051C2B8;
-    u32 *g = (u32 *)lbl_eu_80602FF8;
+    u32 *d = sVlcDefaultPtrs;
+    u32 *g = (u32 *)sVlcTableWorkArea;
     u32 *p_730 = g + 0x1cc;
     u32 *p_d20 = d + 0x08;
     u32 *p_930 = g + 0x24c;
@@ -938,7 +971,7 @@ void mpvvlc_SetDflPtr(void) {
 /* Master VLC table initialization; optionally installs per-context run/level
    copies starting 0x16c dwords into the supplied work area. */
 void MPVVLC_Init(u32 *work) {
-    u32 *g = (u32 *)lbl_eu_80602FF8;
+    u32 *g = (u32 *)sVlcTableWorkArea;
     mpvvlc_InitMbaiIpic();
     mpvvlc_InitMbaiPpic();
     mpvvlc_InitMbaiBpic();
@@ -973,8 +1006,8 @@ void MPVVLC_Init(u32 *work) {
 
 /* Install run/level VLC tables (copied from the default table image). */
 u32 *mpvvlc_SetVlcRunLevel(u32 *tbl) {
-    u32 *g = (u32 *)lbl_eu_80602FF8;
-    u32 *d = lbl_eu_8051C2B8;
+    u32 *g = (u32 *)sVlcTableWorkArea;
+    u32 *d = sVlcDefaultPtrs;
 
     g[0x59b] = (u32)(tbl - 0x80);
     UTY_MemcpyDword(tbl - 0x80, &g[0x50c], 0x80);

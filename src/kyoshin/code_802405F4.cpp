@@ -53,6 +53,44 @@ struct MapPointEntry {
     ml::CVec3 pos2;     // +0x17C - secondary position
 };
 
+// Initializes one landmark pulse channel from the shared parameter block.
+// Zeroes the channel first; when both duration reference and width are
+// non-zero, populates timing/amplitude fields and draws two random values
+// (phase base and wobble accumulator limit). Retail inlines this at every
+// call site, hence the forced inline.
+static inline void InitFxChannel(MapFxChannel* fx, const FxParams* p, float width,
+                                 float endScale) {
+    // Zero-fill order mirrors retail's scheduled stores; constants are read
+    // as source literals at every use (retail reloads them from its pool).
+    fx->field_00 = 0.0f;
+    fx->field_2c = 0.0f;
+    fx->field_04 = 0.0f;
+    fx->field_08 = 0.0f;
+    fx->field_0c = 0.0f;
+    fx->field_10 = 0.0f;
+    fx->field_14 = 0.0f;
+    fx->field_18 = 0;
+
+    if (p->field_20 == 0.0f || width == 0.0f) return;
+
+    fx->field_24 = width;
+    fx->field_20 = p->field_00;
+    fx->field_28 = 30.0f * p->field_1c;
+    fx->field_30 = 30.0f * p->field_24;
+    fx->field_34 = 30.0f * p->field_28;
+    fx->field_38 = endScale;
+    fx->field_2c = 30.0f * (p->field_1c + p->field_20);
+
+    float rnd1 = ml::MTRand::getInstance()->randFloat1();
+    fx->field_14 = rnd1 * 0.5f;
+
+    float rnd2 = ml::MTRand::getInstance()->randFloat1();
+    float amp = fx->field_20;
+    float lim = 0.25f * (amp * rnd2) + amp;
+    fx->field_1c = lim;
+    fx->field_04 = lim;
+}
+
 // Retail keeps this helper as an unmangled symbol.
 /* Per-landmark pulse channel step. Advances the playback time and computes
    the vertical offset (field_10) from a damped sine wobble with lead-in /
@@ -69,14 +107,13 @@ extern "C" bool MapFxStepPulseChannel(MapFxChannel* fx, float delta) {
     float dur = fx->field_2c;
     if (fx->field_00 >= dur) {
         // Playback reached the duration: reset the whole channel.
-        const float z = lbl_eu_80668708;
-        fx->field_00 = z;
-        fx->field_2c = z;
-        fx->field_04 = z;
-        fx->field_08 = z;
-        fx->field_0c = z;
-        fx->field_10 = z;
-        fx->field_14 = z;
+        fx->field_00 = 0.0f;
+        fx->field_2c = 0.0f;
+        fx->field_04 = 0.0f;
+        fx->field_08 = 0.0f;
+        fx->field_0c = 0.0f;
+        fx->field_10 = 0.0f;
+        fx->field_14 = 0.0f;
         fx->field_18 = 0;
         return false;
     }
@@ -90,13 +127,13 @@ extern "C" bool MapFxStepPulseChannel(MapFxChannel* fx, float delta) {
         fx->field_0c = fx->field_08;
         float rnd1 = ml::MTRand::getInstance()->randFloat1();
         float amp = fx->field_20 * rnd1;
-        fx->field_04 = lbl_eu_80668708;
-        float lim = lbl_eu_80668714 * amp + fx->field_20;
-        float scale = lbl_eu_80668718;
-        if (fx->field_08 > lbl_eu_80668708) scale = lbl_eu_8066871C;
+        fx->field_04 = 0.0f;
+        float lim = 0.25f * amp + fx->field_20;
+        float scale = 1.0f;
+        if (fx->field_08 > 0.0f) scale = -1.0f;
         fx->field_1c = lim;
         float rnd2 = ml::MTRand::getInstance()->randFloat1();
-        float w = (lbl_eu_80668720 * rnd2 - lbl_eu_80668718) * fx->field_24;
+        float w = (2.0f * rnd2 - 1.0f) * fx->field_24;
         w = (fx->field_38 * w + fx->field_24) * scale;
         fx->field_08 = w;
     }
@@ -105,9 +142,9 @@ extern "C" bool MapFxStepPulseChannel(MapFxChannel* fx, float delta) {
     if (fx->field_1c > ml::epsilon) {
         ph = fx->field_04 / fx->field_1c;
     } else {
-        ph = lbl_eu_80668718;
+        ph = 1.0f;
     }
-    float s = nw4r::math::SinFIdx(lbl_eu_80668724 *
+    float s = nw4r::math::SinFIdx(40.743664f *
                                   ((ph + fx->field_14) * ml::halfpi));
     float y = (fx->field_08 - fx->field_0c) * s + fx->field_0c;
     fx->field_10 = y;
@@ -115,13 +152,13 @@ extern "C" bool MapFxStepPulseChannel(MapFxChannel* fx, float delta) {
     dur = fx->field_2c;
     if (fx->field_00 >= dur) {
         // Finished during this frame: flatten the output offset.
-        fx->field_10 = lbl_eu_80668708;
+        fx->field_10 = 0.0f;
         return true;
     }
     if (fx->field_30 > ml::epsilon) {
         float lim = fx->field_28 + fx->field_30;
         if (fx->field_00 < lim) {
-            fx->field_10 = y * (lbl_eu_80668718 -
+            fx->field_10 = y * (1.0f -
                 (lim - fx->field_00) / fx->field_30);
             return true;
         }
@@ -129,7 +166,7 @@ extern "C" bool MapFxStepPulseChannel(MapFxChannel* fx, float delta) {
     if (fx->field_34 > ml::epsilon) {
         float lim = fx->field_2c - fx->field_34;
         if (fx->field_00 > lim) {
-            fx->field_10 = y * (lbl_eu_80668718 -
+            fx->field_10 = y * (1.0f -
                 (fx->field_34 - (fx->field_2c - fx->field_00)) /
                 fx->field_34);
         }
@@ -275,44 +312,6 @@ void MapFxApplyEntryPositions(MapPointEntry* entries, void* target) {
         ScnCamShiftBy(target, &acc[0]);
         ScnCamTurnAim(target, &acc[1]);
     }
-}
-
-// Initializes one landmark pulse channel from the shared parameter block.
-// Zeroes the channel first; when both duration reference and width are
-// non-zero, populates timing/amplitude fields and draws two random values
-// (phase base and wobble accumulator limit). Retail inlines this at every
-// call site, hence the forced inline.
-static inline void InitFxChannel(MapFxChannel* fx, const FxParams* p, float width,
-                                 float endScale) {
-    // Zero-fill order mirrors retail's scheduled stores; constants are read
-    // from sdata2 at every use (retail does not cache them in registers).
-    fx->field_00 = lbl_eu_80668708;
-    fx->field_2c = lbl_eu_80668708;
-    fx->field_04 = lbl_eu_80668708;
-    fx->field_08 = lbl_eu_80668708;
-    fx->field_0c = lbl_eu_80668708;
-    fx->field_10 = lbl_eu_80668708;
-    fx->field_14 = lbl_eu_80668708;
-    fx->field_18 = 0;
-
-    if (p->field_20 == lbl_eu_80668708 || width == lbl_eu_80668708) return;
-
-    fx->field_24 = width;
-    fx->field_20 = p->field_00;
-    fx->field_28 = lbl_eu_8066870C * p->field_1c;
-    fx->field_30 = lbl_eu_8066870C * p->field_24;
-    fx->field_34 = lbl_eu_8066870C * p->field_28;
-    fx->field_38 = endScale;
-    fx->field_2c = lbl_eu_8066870C * (p->field_1c + p->field_20);
-
-    float rnd1 = ml::MTRand::getInstance()->randFloat1();
-    fx->field_14 = rnd1 * lbl_eu_80668710;
-
-    float rnd2 = ml::MTRand::getInstance()->randFloat1();
-    float amp = fx->field_20;
-    float lim = lbl_eu_80668714 * (amp * rnd2) + amp;
-    fx->field_1c = lim;
-    fx->field_04 = lim;
 }
 
 // Resets/initializes all 8 landmark FX entries. Entries already flagged active

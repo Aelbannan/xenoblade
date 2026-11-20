@@ -1,5 +1,5 @@
 #pragma once
-
+extern "C" class CMenuZeal* GetZealObjPtr();  // plain retail name (CMenuZeal.cpp)
 #include <types.h>
 
 #include "kyoshin/IUICf.hpp"

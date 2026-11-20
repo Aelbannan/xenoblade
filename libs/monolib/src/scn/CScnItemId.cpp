@@ -1,6 +1,6 @@
 // Auto-scaffolded catalog TU for monolib/src/scn/CScnItemId
 #include <harness_catalog.h>
-#include "monolib/src/scn/CScnItemPool.hpp"
+#include "monolib/scn/CScnItemPool.hpp"
 #include <cstring>
 #include "libs/monolib/src/scn/CScnItemId.hpp"
 #include "monolib/util/MemManager.hpp"

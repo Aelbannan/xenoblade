@@ -390,7 +390,7 @@ extern "C" u32 GridSubMenu_GetOptionCount(void*);  // not yet decompiled (CItemB
 
 // pointer-arg form, matching every call site here directly - no cast needed.
 extern "C" void CItemData_initFromFamily(void*, u32);
-extern "C" void GridSubMenu_GetCursorPos(void*, void*);
+extern "C" void GridSubMenu_GetCursorPos(void*, CItemBoxGridSubMenu*);
 
 extern "C" int* CtrlObjectParam_GetSlotTableBase(void);
 extern "C" void CItemBlock_setFlag120EC(u8, u32);
@@ -403,7 +403,7 @@ extern "C" u32 CtrlObjectParam_GetCurrentRowKey(void*);
 
 extern "C" void copyVEC3(void*, const void*);
 extern "C" u32 Bdat_GetMaxRow_B1EC(void*);
-extern "C" u32 CtrlRemote_TouchBitByArg(u32);
+#include "kyoshin/cf/CtrlRemoteApi.hpp"
 extern "C" void startEnumObjects(void*, u32, u32);
 extern "C" void* getEntryAt(void*, u32);
 extern "C" void* getCfObjectPc__FPQ22cf12CfObjectMove(void*);

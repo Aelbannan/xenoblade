@@ -8,23 +8,23 @@ unsigned char lbl_eu_80653ED4[12] __attribute__((aligned(4)));
 // Absorbed .bss 0x80653EC8-0x80653EE0 (0x18) + .sbss 0x80665560-0x80665570 (0x10)
 
 
-// Retail .sbss data owned by this TU (monolibdata1 blob dissolve; the auto
-// __sinit__ below constructs the tag-processor objects and reads the guards):
+// Retail .sbss data owned by this TU (monolibdata1 blob dissolve): the real
+// static members below are the two 4-byte tag-processor objects at +0/+4, and
+// the compiler-generated __sinit_ constructs them with guards.
 //   lbl_eu_80665560 (.sbss 0x4) = TextWriterBase<char>::mDefaultTagProcessor
-//                                 (TagProcessorBase<char>, vptr storage)
 //   lbl_eu_80665564 (.sbss 0x4) = TextWriterBase<wchar_t>::mDefaultTagProcessor
-//                                 (TagProcessorBase<wchar_t>, vptr storage)
 //   lbl_eu_80665568 (.sbss 0x1) = __sinit__ init guard (char)
 //   lbl_eu_80665569 (.sbss 0x7) = __sinit__ init guard (wchar_t) - retail
 //                                 recovered symbol size is 7 (1 used byte)
-// The template static members below stay defined so MWCC emits the retail
-// 0x84 __sinit_ (guarded construction + __register_global_object); the raw
-// definitions here are the inert storage the coordinator's reloc retargets
-// point the __sinit__ at once the blob ranges move into this TU. u8 arrays
-// (not the class type) keep MWCC from auto-constructing a second copy.
+namespace nw4r {
+namespace ut {
+
+// Real static members; MWCC emits the guarded construction in __sinit_.
+template <> TagProcessorBase<char> TextWriterBase<char>::mDefaultTagProcessor;
+template <>
+TagProcessorBase<wchar_t> TextWriterBase<wchar_t>::mDefaultTagProcessor;
+
 extern "C" {
-    u8 lbl_eu_80665560[4];
-    u8 lbl_eu_80665564[4];
     u8 lbl_eu_80665568;
     // Retail symbol lbl_eu_80665569 is a 7-byte object at 0x80665569. MWCC
     // 4-aligns a u8[7] array (offset 0xC), overshooting the retail 0x10
@@ -38,10 +38,7 @@ extern "C" {
     u8 lbl_eu_8066556F;
 }
 
-namespace nw4r {
-namespace ut {
-
-// Shared nw4r .sdata2 float constants (retail ut_TextWriterBase.o has .sdata2
+// Shared nw4r .sdata2 float constants
 // size 0 -- every constant is referenced from the shared pool, no TU-local
 // copies). extern "C" so the relocs bind straight to the retail nw4r_data.s
 // linker names (plain C++ decls inside the namespace mangle as
@@ -62,20 +59,9 @@ inline f32 ConvF32S(s32 v) {
     return (f32)(u.d - lbl_eu_8066A168);
 }
 
-// The retail .sbss slots lbl_eu_80665560 / lbl_eu_80665564 ARE the
-// mDefaultTagProcessor storage (TagProcessorBase<T> is vptr-only, 4 bytes; the
-// retail __sinit_ constructs them in place). The template static member is
-// declared in the header but NOT defined here -- the ctor binds to the retail
-// slot instead, and mFormatBuffer / mFormatBufferSize are not defined either
-// (retail ut_TextWriterBase.o has .sdata/.bss size 0; the FormatV/VPrintf
-// family that references them is not part of the retail nw4r split).
-template <typename T> TagProcessorBase<T>* GetDefaultTagProcessor();
-template <> TagProcessorBase<char>* GetDefaultTagProcessor<char>() {
-    return (TagProcessorBase<char>*)&lbl_eu_80665560;
-}
-template <> TagProcessorBase<wchar_t>* GetDefaultTagProcessor<wchar_t>() {
-    return (TagProcessorBase<wchar_t>*)&lbl_eu_80665564;
-}
+// mFormatBuffer / mFormatBufferSize are not defined here (retail
+// ut_TextWriterBase.o has .sdata/.bss size 0; the FormatV/VPrintf family that
+// references them is not part of the retail nw4r split).
 
 template <typename T>
 TextWriterBase<T>::TextWriterBase()
@@ -84,7 +70,7 @@ TextWriterBase<T>::TextWriterBase()
       mLineSpace(lbl_eu_8066A164),
       mTabWidth(4),
       mDrawFlag(0),
-      mTagProcessor(GetDefaultTagProcessor<T>()) {}
+      mTagProcessor(&mDefaultTagProcessor) {}
 
 template <typename T> TextWriterBase<T>::~TextWriterBase() {}
 

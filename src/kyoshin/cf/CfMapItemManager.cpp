@@ -1,6 +1,6 @@
 // Auto-scaffolded catalog TU for kyoshin/cf/CfMapItemManager
 // Replace stubs with high-level C/C++ during decomp.
-
+#include "kyoshin/cf/CtrlRemoteApi.hpp"
 #include "kyoshin/cf/CBattleManager.hpp"
 #include "kyoshin/code_800A3B24.hpp"
 #include "kyoshin/cf/CHelpManager.hpp"
@@ -32,8 +32,6 @@ char sMapItemPerScratchKey[8] = "itm?Per";
 // KEEP (extern-C cleanup 2026-10-23): CfSoundMan.hpp cannot be included in this TU (its headers clash with local copies).
 extern "C" u16 playActorSound__Q22cf10CfSoundManFUlUlUlUlf(u32 a, u32 b, u32 c, u32 d, f32 e);
 
-extern u32 lbl_eu_806640C0;
-extern u32 lbl_eu_806640D0;
 // .sdata2 0x70 as one struct: MWCC reorders individually-declared floats by
 // first use, so the pool is frozen in retail order (floats, pads, doubles).
 // Code keeps using the retail label names via the macros below (read-only).
@@ -95,7 +93,7 @@ int VecMath_GroundProbeDown(ml::CVec3* a, ml::CVec3* b, int c, float d, float e)
 void* Bdat_GetTable_AA34();
 u32 Bdat_GetRowBase_B41C(void* p);
 u32 Bdat_GetMaxRow_B1EC(void* p);
-u32 CtrlRemote_TouchBitByArg(u32 v);
+
 void CtrlRemote_SetSharedBit(u32 v, u32 w);
 u32 getReloadParam0();
 void* MapFx_ResolveOwner(void* p);
@@ -350,10 +348,10 @@ int CfValueItemManager::placeItem(u32 row, void* item) {
 }
 
 // cf::CfMapItemManager +0x14: bdat table handle cached by CfBdat at 806640C0.
-u32 CfMapItemManager::getItemTable() { return lbl_eu_806640C0; }
+u32 CfMapItemManager::getItemTable() { return (u32)::cf::CfBdat::spCurLItemListFileData; }
 
 // cf::CfValueItemManager +0x14 override: table handle at 806640D0.
-u32 CfValueItemManager::getItemTable() { return lbl_eu_806640D0; }
+u32 CfValueItemManager::getItemTable() { return (u32)::cf::CfBdat::spFldValPopListFileData; }
 
 // cf::CfMapItemManager +0x08 slot: collect the current map's item entries
 // into mItems.  When gFixedMapItemFlag (fixed-position flag) is set, synthesize
@@ -787,7 +785,7 @@ void CfMapItemManager::tryPickupMapItem() {
     } else {
         // Event-driven respawn: read the timer column and arm the record.
         CUICfManager_queueGetItemMenuNarrowed(kind);
-        u8 secs = (u8)getBdatStringColumnValue((void*)lbl_eu_806640A8, "e_repoptime", lbl_eu_80664184);
+        u8 secs = (u8)getBdatStringColumnValue((void*)::cf::CfBdat::spFldMapListFileData, "e_repoptime", lbl_eu_80664184);
         if (secs != 0) {
             // u32->double via the 0x43300000 scratch double.
             union { double d; u32 w[2]; } cv;

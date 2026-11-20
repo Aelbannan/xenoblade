@@ -5,10 +5,13 @@
 // PartyStateWin_OpenWindow's shared header declares it with (self, u32, u32), but the
 // CMenuPTState::Move call site leaves r4/r5 unset in retail; shadow the
 // 3-arg declaration during include and re-declare the 1-arg form below.
-#include "kyoshin/CPartyStateWinImports.hpp"
+#include <types.h>
+#include "kyoshin/CBgTex.hpp"
+#include "kyoshin/CPartyStateWin.hpp"
 #include "kyoshin/CQuestWindow.hpp"
 #include "kyoshin/menu/CMenuPTState.hpp"
-#include "kyoshin/CMainMenu.hpp" // CMainMenu_GetInstancePtr
+
+#include "kyoshin/CMainMenu.hpp"
 #include "monolib/device/CDeviceVI.hpp"
 #include "monolib/scn/CScn.hpp"
 #include "monolib/work/CWorkThreadSystem.hpp"

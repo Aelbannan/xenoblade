@@ -1,5 +1,5 @@
 #pragma once
-
+#include "kyoshin/cf/CfCamSymbols.hpp"
 #include <types.h>
 #include "kyoshin/cf/object/CfObjectMove.hpp"
 #include "kyoshin/cf/object/CAIAction.hpp"
@@ -9,11 +9,9 @@
 // Retail float constants referenced by CfObjectActor functions (SDA2 access).
 extern const float lbl_eu_80667738;   // CActorParam_addHp / CfObjectActor_takeDamageValue threshold
 
-extern const float lbl_eu_8066776C;   // CfObjectActor_readActionScale fallback value
+extern const float lbl_eu_8066773C;   // CfObject_UnkVirtualFunc179 CfObjectMove vf70 arg
 
-extern const float lbl_eu_8066773C;   // CActorParam_UnkVirtualFunc179 CfObjectMove vf70 arg
-
-extern const float lbl_eu_80667740;   // CActorParam_setHp clamp threshold
+extern const float lbl_eu_80667740;
 
 
 extern u32 gmPauseFlags;     // mode bitfield (.sbss; bit 0x800 gates the 33 path)
@@ -27,15 +25,14 @@ extern const double lbl_eu_80667758;  // -0.5 rounding add (CActorParam_applyDam
 extern const float lbl_eu_80667760;         // CActorParam_applyDamage 0xC3 ratio divisor
 
 extern const float lbl_eu_80667764;         // CActorParam_applyDamage 0xFC/0x100 gauge scale
-
-extern const float lbl_eu_80667768;         // CActorParam_applyDamage 0x100 decay add
+extern const float lbl_eu_8066776C;         // CfObjectActor_readActionScale null-pointer fallback
 
 
 
 
 // ptmf constant (3 words: this-offset / fn / this) compared against
 // CBattleManager+0x28354 by CActorParam_applyDamage.
-extern const u32 lbl_eu_80531090[3];
+extern const u32 sVisionPairEngagePtmf[3];
 
 
 
@@ -66,7 +63,7 @@ extern "C" void BtlDmg_SetByte778(u8);
 
 extern "C" void BtlDmg_SetByte777(u8);
 
-extern "C" bool isGlobalCamFlagSet__Fi(int mask);
+
 
 
 extern "C" void* getInstance__Q22cf13CfGameManagerFv(void);
@@ -152,7 +149,7 @@ namespace cf {
     };
 
     // 12-byte ptmf copy built by CActorParam_applyDamage from
-    // lbl_eu_80531090 and compared against CBattleManager+0x28354.
+    // sVisionPairEngagePtmf and compared against CBattleManager+0x28354.
     struct CfPtmf3 {
         u32 field_0;  // 0x0
         u32 field_4;  // 0x4

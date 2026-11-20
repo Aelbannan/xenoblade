@@ -7,6 +7,7 @@
 // real CItemImpl*(CItemData*) form, so it is renamed away for this TU (same
 // workaround as CEquipChange.cpp).
 #define CItem_initItemImplInstances CItem_initItemImplInstances_staleVoid
+#include "kyoshin/cf/CfBdat.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/code_8025FB10.hpp"
@@ -73,7 +74,6 @@ extern const float lbl_eu_80667F98;
 extern const double lbl_eu_80667F60;
 extern const double lbl_eu_80667F68;
 
-extern u32 lbl_eu_80664098;
 extern u32 itemBoxGrid_slotLabelNeutralTop;
 extern u32 itemBoxGrid_slotLabelNeutralBottom;
 extern u32 itemBoxGrid_slotLabelUpTop;
@@ -303,7 +303,7 @@ void CVisionItem::Rebuild() {
     }
 }
 
-// Scan the skill-learn table (lbl_eu_80664110) for entries 1..count and
+// Scan the skill-learn table (::cf::CfBdat::spItmArtsListFileData) for entries 1..count and
 // push each one into the list when its per-party table cell has the
 // "learned" flag bit set. The cell address is charData + party * 0x49 +
 // dialogType * 2; bits at +0xE8/+0xE9 select the check by category.
@@ -315,7 +315,7 @@ CArtsBookItem::~CArtsBookItem() {
 }
 
 void CArtsBookItem::Rebuild() {
-    u32 bdat= (u32)lbl_eu_80664110;
+    u32 bdat= (u32)::cf::CfBdat::spItmArtsListFileData;
     s32 count = (s32)Bdat_GetMaxRow_B1EC((void*)bdat);
     u8 i;
     for (i = 1; i <= count; i++) {
@@ -495,8 +495,8 @@ void CItemBoxGridFull::PopulateGridEntries(u8 cat, int ownerIdx, int refItemId, 
             if (ownerIdx) {
                 u32 ownerTbl;
                 switch (cat) {
-                    case 2: ownerTbl = (u32)lbl_eu_806640F4; break;
-                    default: ownerTbl = (u32)lbl_eu_806640F8; break;
+                    case 2: ownerTbl = (u32)::cf::CfBdat::spItmWpnListFileData; break;
+                    default: ownerTbl = (u32)::cf::CfBdat::spItmEquipListFileData; break;
                 }
                 u32 kindId = (*(u32*)item) >> 20;
                 u16 shortKind = BdatGetItemId(kindId);
@@ -535,7 +535,7 @@ entry_done:
         if (cat != 3 && cat != 9) {
             if (!entry[3]) {
                 u32 kind2 = (*(u32*)item) >> 20;
-                u32 check = BdatGetU8Direct((const void*)lbl_eu_806640EC, "item_keep", kind2);
+                u32 check = BdatGetU8Direct((const void*)::cf::CfBdat::spItmItemListFileData, "item_keep", kind2);
                 u32 result = check;
                 u32 oneIfNonZero = (result != 0) ? 1 : 0;
                 entry[3] = (u8)oneIfNonZero;
@@ -1029,12 +1029,12 @@ char* CItemBoxGridFull::FormatCellItemName(u16 idx) {
         int sel = 0x9d;
         if ((u16)v != 0) sel = 0x9e;
         char* msg = BdatTouchStringCell((const char*)"MNU_item", (const char*)"name", sel);
-        sprintf((char*)(p + 0x2825), (const char*)"%s", msg);
+        sprintf((char*)field_2825, (const char*)"%s", msg);
     } else if (((*(u32*)item >> 12) & 0xF) == 9 && ((((u8*)item)[7] & 3) == 3)) {
         char* msg = BdatTouchStringCell((const char*)"MNU_item", (const char*)"name", 0x9c);
-        sprintf((char*)(p + 0x2825), (const char*)"%s", msg);
+        sprintf((char*)field_2825, (const char*)"%s", msg);
     } else if (p[0x2802] == 3) {
-        u32 tbl= (u32)lbl_eu_806640D8;
+        u32 tbl= (u32)::cf::CfBdat::spBtlSkillListFileData;
         CItemImpl* inst1 = CItem_initItemImplInstances((CItemData*)item);
         u16 slotStatus = CItem_initItemImplInstances((CItemData*)item)->vf54((CItemData*)item);
         CItemImpl* inst2 = CItem_initItemImplInstances((CItemData*)item);
@@ -1045,7 +1045,7 @@ char* CItemBoxGridFull::FormatCellItemName(u16 idx) {
         sprintf(buf48, (const char*)"%d", name90);
         u32 nameKey = BdatGetU8Direct((const void*)tbl, (const char*)"rvs_type", (u16)slotStatus);
         char* desc = BdatGetPtrDirect((const void*)tbl, "rvs_caption", (u16)slotStatus);
-        sprintf((char*)(p + 0x2825), (const char*)"%s", desc);
+        sprintf((char*)field_2825, (const char*)"%s", desc);
 
         int langFlag = 1;
         if (CDeviceSC::getLanguage() != 3) {
@@ -1056,7 +1056,7 @@ char* CItemBoxGridFull::FormatCellItemName(u16 idx) {
         // non-volatile registers across the whole scan loop.
         {
         u32 langIdx = slotByte << 2;
-        char* cur = (char*)(p + 0x2825);
+        char* cur = (char*)field_2825;
         while (*cur != '\0') {
             s8 ch = *cur;
             if (ch == '$') {
@@ -1125,12 +1125,12 @@ char* CItemBoxGridFull::FormatCellItemName(u16 idx) {
         // in range or exactly 2.
         u32 table = itemBoxGrid_shopSkillTable;
         if ((((u32)p[0x2802] + 0xFC) & 0xFF) <= 5 || p[0x2802] == 2) table = itemBoxGrid_shopItemTypeTable;
-        u16 v = BdatGetU16Direct((const void*)lbl_eu_806640EC, "comment",
+        u16 v = BdatGetU16Direct((const void*)::cf::CfBdat::spItmItemListFileData, "comment",
                               (*(u32*)item) >> 20);
         char* s = BdatGetPtrDirect((const void*)table, "comment", v);
-        sprintf((char*)(p + 0x2825), (const char*)"%s", s);
+        sprintf((char*)field_2825, (const char*)"%s", s);
     }
-    return (char*)(p + 0x2825);
+    return (char*)field_2825;
 fail:
     return NULL;
 }
@@ -1573,7 +1573,7 @@ u32 CItemBoxGridFull::GetItemBasePrice(void* item) {
     if (type == 3) {
         u16 key = CItem_initItemImplInstances((CItemData*)item)->vf54((CItemData*)item);
         u16 slot = (u16)CItem_initItemImplInstances((CItemData*)item)->vf08((CItemData*)item);
-        u16 lookup = BdatGetU16Direct((void*)lbl_eu_806640D8, "money", (u16)key);
+        u16 lookup = BdatGetU16Direct((void*)::cf::CfBdat::spBtlSkillListFileData, "money", (u16)key);
         CItemPriceScaleRow row;
         row = *(const CItemPriceScaleRow*)&itemBoxGridPriceScaleRow;
         result = (u32)((float)lookup * row.v[slot & 0x3F]);
@@ -1585,7 +1585,7 @@ u32 CItemBoxGridFull::GetItemBasePrice(void* item) {
         for (i = 0; i < 4; i++) {
             u16 v = (u16)CItem_initItemImplInstances((CItemData*)item)->vf4C((CItemData*)item, (u8)i);
             if (v == 0) continue;
-            u16 lookup = BdatGetU16Direct((void*)lbl_eu_806640D8, "money", v);
+            u16 lookup = BdatGetU16Direct((void*)::cf::CfBdat::spBtlSkillListFileData, "money", v);
             // Retail re-copies the row inside the loop before each scale.
             CItemPriceScaleRow rowB;
             rowB = rowA;
@@ -1594,14 +1594,14 @@ u32 CItemBoxGridFull::GetItemBasePrice(void* item) {
         result = (u32)((float)result * 0.1f);
     } else if (type >= 2 && type <= 8) {
         LookupItemTypeTable(kind);
-        u16 lookup = BdatGetU16Direct((void*)lbl_eu_806640D8, "money", (u16)shortKind);
+        u16 lookup = BdatGetU16Direct((void*)::cf::CfBdat::spBtlSkillListFileData, "money", (u16)shortKind);
         u8 count = (u8)CItem_initItemImplInstances((CItemData*)item)->vf30((CItemData*)item);
         float f = 1.0f;
         while (count-- != 0) f += 0.2f;
         result = (u32)((float)lookup * f);
     } else {
         LookupItemTypeTable(kind);
-        result = BdatGetU16Direct((void*)lbl_eu_806640D8, "money", (u16)shortKind);
+        result = BdatGetU16Direct((void*)::cf::CfBdat::spBtlSkillListFileData, "money", (u16)shortKind);
     }
     return result * 10;
 }
@@ -1632,9 +1632,9 @@ s32 CItemBoxGridFull::GetShopItemValue(u32 id, void* item) {
             slot = (u16)CItem_initItemImplInstances((CItemData*)obj)->vf08((CItemData*)obj);
         } else {
             key = shortKind;
-            slot = (u8)BdatGetU8Direct((const void*)lbl_eu_806640EC, "rankType", shortKind & 0xFFFF);
+            slot = (u8)BdatGetU8Direct((const void*)::cf::CfBdat::spItmItemListFileData, "rankType", shortKind & 0xFFFF);
         }
-        u16 lookup = BdatGetU16Direct((void*)lbl_eu_806640D8, "money", key & 0xFFFF);
+        u16 lookup = BdatGetU16Direct((void*)::cf::CfBdat::spBtlSkillListFileData, "money", key & 0xFFFF);
         u32 scale[7];
         u32 i;
         for (i = 0; i < 7; i++) scale[i] = ((const u32*)itemBoxGridPriceScaleRow)[i];
@@ -1643,7 +1643,7 @@ s32 CItemBoxGridFull::GetShopItemValue(u32 id, void* item) {
         // result stays 0
     } else if ((u32)(u16)type >= 2 && (u32)(u16)type <= 8) {
         u32 tbl = LookupItemTypeTable(kind & 0xFFFF);
-        u16 lookup = BdatGetU16Direct((void*)lbl_eu_806640D8, "money", shortKind & 0xFFFF);
+        u16 lookup = BdatGetU16Direct((void*)::cf::CfBdat::spBtlSkillListFileData, "money", shortKind & 0xFFFF);
         u32 count;
         if (item) count = (u16)CItem_initItemImplInstances((CItemData*)obj)->vf30((CItemData*)obj);
         else count = (u8)BdatGetU8Direct((const void*)tbl, "jwl_slot", shortKind & 0xFFFF);
@@ -1652,7 +1652,7 @@ s32 CItemBoxGridFull::GetShopItemValue(u32 id, void* item) {
         result = (u32)((float)lookup * f);
     } else {
         LookupItemTypeTable(kind & 0xFFFF);
-        result = BdatGetU16Direct((void*)lbl_eu_806640D8, "money", shortKind & 0xFFFF);
+        result = BdatGetU16Direct((void*)::cf::CfBdat::spBtlSkillListFileData, "money", shortKind & 0xFFFF);
     }
     return result * 10;
 }
@@ -1785,7 +1785,7 @@ void CItemBoxGridFull::SortByPriceDesc() {
 
 // Bubble-sort grid entries by kind-name sort key: each item's kind
 // (word>>20) is mapped through BdatGetItemId to a short id, which is
-// looked up in the message table (lbl_eu_80664104) with the "name" key
+// looked up in the message table (::cf::CfBdat::spItmCollectListFileData) with the "name" key
 // string; swap when the byte keys differ (descending). Same 3-slot temp
 // shuffle shape as SortByItemU16.
 void CItemBoxGridFull::SortByKindNameD() {
@@ -1803,8 +1803,8 @@ void CItemBoxGridFull::SortByKindNameD() {
             u16 k1 = BdatGetItemId(w1 >> 20);
             u32 w2 = ((CItemBoxItem*)obj2)->mWord;
             u16 k2 = BdatGetItemId(w2 >> 20);
-            u8 c1 = BdatGetU8Direct((const void*)lbl_eu_80664104, (const char*)&lbl_eu_8050566C[0x212], k1 & 0xFFFF);
-            u8 c2 = BdatGetU8Direct((const void*)lbl_eu_80664104, (const char*)&lbl_eu_8050566C[0x212], k2 & 0xFFFF);
+            u8 c1 = BdatGetU8Direct((const void*)::cf::CfBdat::spItmCollectListFileData, (const char*)&lbl_eu_8050566C[0x212], k1 & 0xFFFF);
+            u8 c2 = BdatGetU8Direct((const void*)::cf::CfBdat::spItmCollectListFileData, (const char*)&lbl_eu_8050566C[0x212], k2 & 0xFFFF);
             if ((u32)c1 <= (u32)c2) continue;
             CopyEntry9Bytes(tmp, (const char*)e1);
             CopyGridEntry9(e1, CopyEntry9Bytes(tmp + 12, (const char*)e2));
@@ -1963,7 +1963,7 @@ void CItemBoxGridFull::SortByItemVf08() {
 // `target` group at the front: an adjacent pair (j, j+1) is swapped when
 // entry j+1's key byte equals target but entry j's does not. Key = each
 // item's vtable+0x54 slot status, looked up in the message table
-// (lbl_eu_806640D8) with the "name" key at +0x217.
+// (::cf::CfBdat::spBtlSkillListFileData) with the "name" key at +0x217.
 void CItemBoxGridFull::GroupBySlotStat(u32 target) {
     u32 i;
     for (i = 0; (u16)i < this->field_2800 - 1; i++) {
@@ -1977,8 +1977,8 @@ void CItemBoxGridFull::GroupBySlotStat(u32 target) {
             void* obj2 = CItem_kindPtr(this->field_2802, e2->id);
             u32 v1 = CItem_initItemImplInstances((CItemData*)obj1)->vf54((CItemData*)obj1);
             u32 v2 = CItem_initItemImplInstances((CItemData*)obj2)->vf54((CItemData*)obj2);
-            u8 c1 = BdatGetU8Direct((const void*)lbl_eu_806640D8, (const char*)&lbl_eu_8050566C[0x217], (u16)v1);
-            u8 c2 = BdatGetU8Direct((const void*)lbl_eu_806640D8, (const char*)&lbl_eu_8050566C[0x217], (u16)v2);
+            u8 c1 = BdatGetU8Direct((const void*)::cf::CfBdat::spBtlSkillListFileData, (const char*)&lbl_eu_8050566C[0x217], (u16)v1);
+            u8 c2 = BdatGetU8Direct((const void*)::cf::CfBdat::spBtlSkillListFileData, (const char*)&lbl_eu_8050566C[0x217], (u16)v2);
             u32 m1 = c1 == target;
             u32 m2 = c2 == target;
             if (m1 < m2) {
@@ -2008,8 +2008,8 @@ void CItemBoxGridFull::GroupBySlotAlt(u32 target) {
             void* obj2 = CItem_kindPtr(this->field_2802, e2->id);
             u32 v1 = CItem_initItemImplInstances((CItemData*)obj1)->vf54((CItemData*)obj1);
             u32 v2 = CItem_initItemImplInstances((CItemData*)obj2)->vf54((CItemData*)obj2);
-            u8 c1 = BdatGetU8Direct((const void*)lbl_eu_806640D8, (const char*)&lbl_eu_8050566C[0x220], (u16)v1);
-            u8 c2 = BdatGetU8Direct((const void*)lbl_eu_806640D8, (const char*)&lbl_eu_8050566C[0x220], (u16)v2);
+            u8 c1 = BdatGetU8Direct((const void*)::cf::CfBdat::spBtlSkillListFileData, (const char*)&lbl_eu_8050566C[0x220], (u16)v1);
+            u8 c2 = BdatGetU8Direct((const void*)::cf::CfBdat::spBtlSkillListFileData, (const char*)&lbl_eu_8050566C[0x220], (u16)v2);
             u32 m1 = c1 == target;
             u32 m2 = c2 == target;
             if (m1 < m2) {
@@ -2158,7 +2158,7 @@ void CItemBoxGridFull::SortGridBySlotStatus() {
 
 // Bubble-sort grid entries ascending by the byte value of each item's kind
 // name lookup: the item's kind (word>>20) is mapped through BdatGetItemId to
-// a short id, which is looked up in the owner table (lbl_eu_806640F4) with
+// a short id, which is looked up in the owner table (::cf::CfBdat::spItmWpnListFileData) with
 // the sort-key string; swap when item j's key byte is strictly lower. Same
 // 3-slot temp shuffle shape as SortByItemU16.
 void CItemBoxGridFull::SortGridByKindName() {
@@ -2173,11 +2173,11 @@ void CItemBoxGridFull::SortGridByKindName() {
             void* obj1 = CItem_kindPtr(this->field_2802, e1->id);
             void* obj2 = CItem_kindPtr(this->field_2802, e2->id);
             u32 w1 = ((CItemBoxItem*)obj1)->mWord;
-            u32 t1 = (u32)(size_t)lbl_eu_806640F4;
+            u32 t1 = (u32)(size_t)::cf::CfBdat::spItmWpnListFileData;
             u32 k1 = BdatGetItemId(w1 >> 20);
             u8 c1 = BdatGetU8Direct((const void*)t1, (const char*)"att_lev", k1 & 0xFFFF);
             u32 w2 = ((CItemBoxItem*)obj2)->mWord;
-            u32 t2 = (u32)(size_t)lbl_eu_806640F4;
+            u32 t2 = (u32)(size_t)::cf::CfBdat::spItmWpnListFileData;
             u32 k2 = BdatGetItemId(w2 >> 20);
             u8 c2 = BdatGetU8Direct((const void*)t2, (const char*)"att_lev", k2 & 0xFFFF);
             if ((u32)c1 >= (u32)c2) continue;
@@ -2207,11 +2207,11 @@ void CItemBoxGridFull::SortGridByKindNameAlt() {
             // Owner-table row is selected by the raw item word used as a
             // byte offset into the table data.
             u32 w1 = ((CItemBoxItem*)obj1)->mWord;
-            u8 c1 = BdatGetU8Direct((const void*)(*(u32*)((u8*)lbl_eu_806640F4 + w1)),
+            u8 c1 = BdatGetU8Direct((const void*)(*(u32*)((u8*)::cf::CfBdat::spItmWpnListFileData + w1)),
                                    (const char*)"grd_rate",
                                    BdatGetItemId(w1 >> 20));
             u32 w2 = ((CItemBoxItem*)obj2)->mWord;
-            u8 c2 = BdatGetU8Direct((const void*)(*(u32*)((u8*)lbl_eu_806640F4 + w2)),
+            u8 c2 = BdatGetU8Direct((const void*)(*(u32*)((u8*)::cf::CfBdat::spItmWpnListFileData + w2)),
                                    (const char*)"grd_rate",
                                    BdatGetItemId(w2 >> 20));
             if (c1 >= c2) continue;
@@ -2225,7 +2225,7 @@ void CItemBoxGridFull::SortGridByKindNameAlt() {
 }
 
 // Bubble-sort grid entries ascending by the byte value of each item's kind
-// name lookup in the capacity table (lbl_eu_806640F8). Both kinds are
+// name lookup in the capacity table (::cf::CfBdat::spItmEquipListFileData). Both kinds are
 // computed first, then both lookups - the SortByKindNameD ordering. Same
 // 3-slot temp shuffle shape as SortByItemU16.
 void CItemBoxGridFull::SortByCapKeyAsc() {
@@ -2243,8 +2243,8 @@ void CItemBoxGridFull::SortByCapKeyAsc() {
             u16 k1 = BdatGetItemId(w1 >> 20);
             u32 w2 = ((CItemBoxItem*)obj2)->mWord;
             u16 k2 = BdatGetItemId(w2 >> 20);
-            u8 c1 = BdatGetU8Direct((const void*)lbl_eu_806640F8, (const char*)&lbl_eu_8050566C[0x238], k1 & 0xFFFF);
-            u8 c2 = BdatGetU8Direct((const void*)lbl_eu_806640F8, (const char*)&lbl_eu_8050566C[0x238], k2 & 0xFFFF);
+            u8 c1 = BdatGetU8Direct((const void*)::cf::CfBdat::spItmEquipListFileData, (const char*)&lbl_eu_8050566C[0x238], k1 & 0xFFFF);
+            u8 c2 = BdatGetU8Direct((const void*)::cf::CfBdat::spItmEquipListFileData, (const char*)&lbl_eu_8050566C[0x238], k2 & 0xFFFF);
             if ((u32)c1 >= (u32)c2) continue;
             CopyEntry9Bytes(tmp, (const char*)e1);
             CopyGridEntry9(e1, CopyEntry9Bytes(tmp + 12, (const char*)e2));
@@ -2256,7 +2256,7 @@ void CItemBoxGridFull::SortByCapKeyAsc() {
 }
 
 // Bubble-sort grid entries ascending by the byte value of each item's kind
-// name lookup in the capacity table (lbl_eu_806640F8), key string offset
+// name lookup in the capacity table (::cf::CfBdat::spItmEquipListFileData), key string offset
 // 0x240. Same ordering and temp shuffle shape as SortByCapKeyAsc.
 void CItemBoxGridFull::SortByCapKey2Asc() {
     u16 i;
@@ -2273,8 +2273,8 @@ void CItemBoxGridFull::SortByCapKey2Asc() {
             u16 k1 = BdatGetItemId(w1 >> 20);
             u32 w2 = ((CItemBoxItem*)obj2)->mWord;
             u16 k2 = BdatGetItemId(w2 >> 20);
-            u8 c1 = BdatGetU8Direct((const void*)lbl_eu_806640F8, (const char*)&lbl_eu_8050566C[0x240], k1 & 0xFFFF);
-            u8 c2 = BdatGetU8Direct((const void*)lbl_eu_806640F8, (const char*)&lbl_eu_8050566C[0x240], k2 & 0xFFFF);
+            u8 c1 = BdatGetU8Direct((const void*)::cf::CfBdat::spItmEquipListFileData, (const char*)&lbl_eu_8050566C[0x240], k1 & 0xFFFF);
+            u8 c2 = BdatGetU8Direct((const void*)::cf::CfBdat::spItmEquipListFileData, (const char*)&lbl_eu_8050566C[0x240], k2 & 0xFFFF);
             if ((u32)c1 >= (u32)c2) continue;
             CopyEntry9Bytes(tmp, (const char*)e1);
             CopyGridEntry9(e1, CopyEntry9Bytes(tmp + 12, (const char*)e2));
@@ -2286,7 +2286,7 @@ void CItemBoxGridFull::SortByCapKey2Asc() {
 }
 
 // Partition-style bubble pass: move every entry whose kind-name lookup key
-// (kind mapped through BdatGetItemId then looked up in table lbl_eu_806640F8
+// (kind mapped through BdatGetItemId then looked up in table ::cf::CfBdat::spItmEquipListFileData
 // with the string at lbl_eu_8050566C+0x248) equals `target` toward the front.
 // Swap fires when the earlier entry mismatches and the later one matches
 // (retail compares the two "== target" booleans); the whole sort aborts as
@@ -2309,8 +2309,8 @@ void CItemBoxGridFull::GroupByCapKey(u32 target) {
             // retail keeps the first lookup result live across the second call.
             u16 k1 = BdatGetItemId(*(u32*)obj1 >> 20);
             u16 k2 = BdatGetItemId(*(u32*)obj2 >> 20);
-            u8 c1 = BdatGetU8Direct((const void*)lbl_eu_806640F8, strBase + 0x248, k1 & 0xFFFF);
-            u8 c2 = BdatGetU8Direct((const void*)lbl_eu_806640F8, strBase + 0x248, k2 & 0xFFFF);
+            u8 c1 = BdatGetU8Direct((const void*)::cf::CfBdat::spItmEquipListFileData, strBase + 0x248, k1 & 0xFFFF);
+            u8 c2 = BdatGetU8Direct((const void*)::cf::CfBdat::spItmEquipListFileData, strBase + 0x248, k2 & 0xFFFF);
             // Swap only when entry j+1 matches the target and entry j doesn't:
             // this drives all target-matching entries to the front.
             u32 m2 = (c2 == target);
@@ -2327,7 +2327,7 @@ void CItemBoxGridFull::GroupByCapKey(u32 target) {
 }
 
 // Bubble-sort grid entries DESCENDING by the byte value of each item's kind
-// name lookup in the capacity table (lbl_eu_806640F8), key string offset
+// name lookup in the capacity table (::cf::CfBdat::spItmEquipListFileData), key string offset
 // 0x251 (swap when item j's key byte is strictly higher). Same ordering
 // and temp shuffle shape as SortByCapKeyAsc.
 void CItemBoxGridFull::SortByCapKeyDesc() {
@@ -2345,8 +2345,8 @@ void CItemBoxGridFull::SortByCapKeyDesc() {
             u16 k1 = BdatGetItemId(w1 >> 20);
             u32 w2 = ((CItemBoxItem*)obj2)->mWord;
             u16 k2 = BdatGetItemId(w2 >> 20);
-            u8 c1 = BdatGetU8Direct((const void*)lbl_eu_806640F8, (const char*)&lbl_eu_8050566C[0x251], k1 & 0xFFFF);
-            u8 c2 = BdatGetU8Direct((const void*)lbl_eu_806640F8, (const char*)&lbl_eu_8050566C[0x251], k2 & 0xFFFF);
+            u8 c1 = BdatGetU8Direct((const void*)::cf::CfBdat::spItmEquipListFileData, (const char*)&lbl_eu_8050566C[0x251], k1 & 0xFFFF);
+            u8 c2 = BdatGetU8Direct((const void*)::cf::CfBdat::spItmEquipListFileData, (const char*)&lbl_eu_8050566C[0x251], k2 & 0xFFFF);
             if ((u32)c1 <= (u32)c2) continue;
             CopyEntry9Bytes(tmp, (const char*)e1);
             CopyGridEntry9(e1, CopyEntry9Bytes(tmp + 12, (const char*)e2));
@@ -2387,7 +2387,7 @@ void CItemBoxGridFull::SortByItemVf90() {
 // lookup key (string at lbl_eu_8050566C+0x115): adjacent pair (j, j+1) is
 // swapped when entry j's key byte exceeds entry j+1's. Lookup is inlined
 // (same chain as the 100% sibling GroupByKindName) so the SDA load of
-// lbl_eu_80664110 and the 39358/361E8 calls stay in this function.
+// ::cf::CfBdat::spItmArtsListFileData and the 39358/361E8 calls stay in this function.
 void CItemBoxGridFull::SortGridByMsgKeyDesc() {
     u32 i;
     for (i = 0; (u16)i < this->field_2800 - 1; i++) {
@@ -2404,10 +2404,10 @@ void CItemBoxGridFull::SortGridByMsgKeyDesc() {
             void* obj1 = CItem_kindPtr(this->field_2802, *(s16*)((u8*)this + (u16)j * 10));
             void* obj2 = CItem_kindPtr(this->field_2802, e2->id);
             u32 w1 = ((CItemBoxItem*)obj1)->mWord;
-            tbl= (u32)lbl_eu_80664110;
+            tbl= (u32)::cf::CfBdat::spItmArtsListFileData;
             u8 c1 = BdatGetU8Direct((const void*)tbl, (const char*)"pc_type", (u16)BdatGetItemId(w1 >> 20));
             u32 w2 = ((CItemBoxItem*)obj2)->mWord;
-            u32 tbl2= (u32)lbl_eu_80664110;
+            u32 tbl2= (u32)::cf::CfBdat::spItmArtsListFileData;
             u8 c2 = BdatGetU8Direct((const void*)tbl2, (const char*)"pc_type", (u16)BdatGetItemId(w2 >> 20));
             if (c1 <= c2) continue;
             CopyEntry9Bytes(tmp, (const char*)e1);
@@ -2422,7 +2422,7 @@ void CItemBoxGridFull::SortGridByMsgKeyDesc() {
 // Bubble-sort grid entries so items whose kind-name lookup matches `target`
 // group at the front: an adjacent pair (j, j+1) is swapped when entry j+1's
 // key byte equals target but entry j's does not. Key = message-table
-// (lbl_eu_80664110) lookup of the kind's short id ("name" key at +0x109).
+// (::cf::CfBdat::spItmArtsListFileData) lookup of the kind's short id ("name" key at +0x109).
 void CItemBoxGridFull::GroupByKindName(u32 target) {
     u32 i;
     for (i = 0; (u16)i < this->field_2800 - 1; i++) {
@@ -2435,10 +2435,10 @@ void CItemBoxGridFull::GroupByKindName(u32 target) {
             void* obj1 = CItem_kindPtr(this->field_2802, e1->id);
             void* obj2 = CItem_kindPtr(this->field_2802, e2->id);
             u32 w1 = ((CItemBoxItem*)obj1)->mWord;
-            u32 tbl= (u32)lbl_eu_80664110;
+            u32 tbl= (u32)::cf::CfBdat::spItmArtsListFileData;
             u8 c1 = BdatGetU8Direct((const void*)tbl, (const char*)&lbl_eu_8050566C[0x109], (u16)BdatGetItemId(w1 >> 20));
             u32 w2 = ((CItemBoxItem*)obj2)->mWord;
-            u32 tbl2= (u32)lbl_eu_80664110;
+            u32 tbl2= (u32)::cf::CfBdat::spItmArtsListFileData;
             u8 c2 = BdatGetU8Direct((const void*)tbl2, (const char*)&lbl_eu_8050566C[0x109], (u16)BdatGetItemId(w2 >> 20));
             u32 m1 = c1 == target;
             u32 m2 = c2 == target;
@@ -2454,14 +2454,14 @@ void CItemBoxGridFull::GroupByKindName(u32 target) {
 }
 
 // Item sort value for an entry: look up the kind's index in the owner table
-// (lbl_eu_806640F4); when the kind's flag entry has bit 2 set, scale the
+// (::cf::CfBdat::spItmWpnListFileData); when the kind's flag entry has bit 2 set, scale the
 // index by party member 1's CtrlObjectParam_GetArtsDataWord value, then scale by the 0x67F80
 // factor, clamp to 999 and return as a float.
 // -O4,s: retail uses the bl _savegpr_28/_restgpr_28 helper-call
 // prologue, which only size-opt emits on this unit.
 float CItemBoxGridFull::GetItemValueFloat(void* entry) {
     u32 word = *(u32*)entry;
-    u32 tbl = (u32)(size_t)lbl_eu_806640F4;
+    u32 tbl = (u32)(size_t)::cf::CfBdat::spItmWpnListFileData;
     u16 kind = BdatGetItemId(word >> 20);
     u32 idx = BdatGetU16Direct((void*)tbl, (const char*)"dmg_hi", (u16)kind);
     // Bit 2 of the kind flag entry gates a party-bonus multiplier.
@@ -2497,7 +2497,7 @@ u32 CItemBoxGridFull::HasEquippedSlot(void* item) {
 // Check if entry kind exists in pool.
 u32 CItemBoxGridFull::FindKindPoolIdx(void* entry) {
     u32 val = *(u32*)entry;
-    u32 obj = (u32)lbl_eu_806640F4;
+    u32 obj = (u32)::cf::CfBdat::spItmWpnListFileData;
     u16 kind = BdatGetItemId(val >> 20);
     u32 i;
     for (i = 1; i <= 10; i++) {
@@ -2969,7 +2969,7 @@ void CItemBoxGrid::GridMoveCursorLeft() {
         if (((CItemBoxGridSubMenu*)(p + 0x418))->GridSubMenu_IsOpenedFlag()) {
             ((CItemBoxGridSubMenu*)(p + 0x418))->GridSubMenu_MoveSelectionPrev();
             u8 temp[12];
-            GridSubMenu_GetCursorPos(temp, p + 0x418);
+            GridSubMenu_GetCursorPos(temp, (CItemBoxGridSubMenu*)(p + 0x418));
             ((CBaseCur*)(p + 0xa0))->setRootPaneTranslate((const nw4r::math::VEC3*)(temp));
             playUISound(1);
         }
@@ -3116,7 +3116,7 @@ void CItemBoxGrid::GridMoveCursorRight() {
         if (((CItemBoxGridSubMenu*)(p + 0x418))->GridSubMenu_IsOpenedFlag()) {
             ((CItemBoxGridSubMenu*)(p + 0x418))->GridSubMenu_MoveSelectionNext();
             u32 buf2c[3];
-            GridSubMenu_GetCursorPos(buf2c, p + 0x418);
+            GridSubMenu_GetCursorPos(buf2c, (CItemBoxGridSubMenu*)(p + 0x418));
             ((CBaseCur*)(p + 0xa0))->setRootPaneTranslate((const nw4r::math::VEC3*)(buf2c));
             playUISound(1);
         }
@@ -3186,7 +3186,7 @@ void CItemBoxGrid::GridMoveCursorRight() {
             if ((s8)val == -1) {
                 p[0x525] = 0;
             } else {
-                u8 max = (u8)((CItemBoxGridFull*)((char*)(p + 0x54c)))->LookupIndexedByte();
+                u8 max = (u8)mGrid.LookupIndexedByte();
                 if ((s8)p[0x525] >= max) *(s8*)&p[0x525] = -2;
             }
             UpdateCursors();
@@ -3195,7 +3195,7 @@ void CItemBoxGrid::GridMoveCursorRight() {
         }
         {
             p[0x525] = p[0x525] + 1;
-            u8 max = (u8)((CItemBoxGridFull*)((char*)(p + 0x54c)))->LookupIndexedByte();
+            u8 max = (u8)mGrid.LookupIndexedByte();
             if ((s8)p[0x525] >= max) *(s8*)&p[0x525] = -1;
             UpdateCursors();
             RefreshSelectedCellText();
@@ -3621,7 +3621,7 @@ void CItemBoxGrid::func_801CCAF0() {
                     }
                     if ((s32)val > 0) {
                         void* obj = (void*)CtrlObjectParam_GetCharEntry(val & 0xFFFF);
-                        if (*(s32*)((u8*)obj + 0x176c) != 1) count2++;
+                        if (((CItemBoxCharEntry*)obj)->mParam.unk15F0 != 1) count2++;
                     }
                 }
                 if (count2 <= 1) {
@@ -3656,7 +3656,7 @@ void CItemBoxGrid::func_801CCAF0() {
                 u32 teachType = getPresentRankA(p + 0x468);
                 u32 teachState = getPresentRankB(p + 0x468);
                 if ((u8)teachState == 1) {
-                    u32 table= (u32)lbl_eu_80664104;
+                    u32 table= (u32)::cf::CfBdat::spItmCollectListFileData;
                     if ((BdatGetU8Direct((const void*)table, (const char*)"type",
                                        BdatGetItemId(kind & 0xFFFF) & 0xFFFF) & 0xFF) == 7) {
                         incrementEventCounter(0x87);
@@ -3666,7 +3666,7 @@ void CItemBoxGrid::func_801CCAF0() {
                 } else if ((u8)teachState == 4) {
                     if ((*(u32*)item >> 20) == 0x775) incrementEventCounter(0x8a);
                 } else if ((u8)teachState == 5) {
-                    u32 table= (u32)lbl_eu_80664104;
+                    u32 table= (u32)::cf::CfBdat::spItmCollectListFileData;
                     if ((BdatGetU8Direct((const void*)table, (const char*)"type",
                                        BdatGetItemId(kind & 0xFFFF) & 0xFFFF) & 0xFF) == 2) {
                         incrementEventCounter(0x8b);
@@ -3675,7 +3675,7 @@ void CItemBoxGrid::func_801CCAF0() {
                 if ((u8)teachType == 3 || (u8)teachType == 8) {
                     if ((u8)teachState == 1) incrementEventCounter(0x89);
                 } else if ((u8)teachType == 6) {
-                    u32 table= (u32)lbl_eu_80664104;
+                    u32 table= (u32)::cf::CfBdat::spItmCollectListFileData;
                     if ((BdatGetU8Direct((const void*)table, (const char*)"type",
                                        BdatGetItemId(kind & 0xFFFF) & 0xFFFF) & 0xFF) == 5) {
                         incrementEventCounter(0x8d);
@@ -3884,7 +3884,7 @@ void CItemBoxGrid::func_801CCAF0() {
                 u32 v1 = ((CItemBoxGridFull*)(sub))->GetScaledItemValue(*(u16*)(p + 0x52e), 0, *(u16*)(p + 0x52a));
                 u32 v2 = ((CItemBoxGridFull*)(sub))->GetScaledItemValue((u16)kind, item, *(u16*)(p + 0x52a));
                 if (v1 > v2) return;
-                u16 nVal = BdatGetU16Direct((void*)lbl_eu_80664098, (const char*)"present", *(u16*)(p + 0x52a));
+                u16 nVal = BdatGetU16Direct((void*)::cf::CfBdat::spFldNpcListFileData, (const char*)"present", *(u16*)(p + 0x52a));
                 u32 test = ((CItemBoxGridFull*)(sub))->GetScaledItemValue(nVal, 0, 0);
                 s8 leftover = (s8)count;
                 s32 neg = -((s32)(v2 - v1) < (s32)test);
@@ -4192,7 +4192,7 @@ void CItemBoxGrid::ShowSubMenuCur() {
     if (!((CItemBoxGridSubMenu*)(p + 0x418))->GridSubMenu_IsOpenedFlag()) return;
     this->field_58 = 7;
     u8 temp[16];
-    GridSubMenu_GetCursorPos(temp, p + 0x418);
+    GridSubMenu_GetCursorPos(temp, (CItemBoxGridSubMenu*)(p + 0x418));
     ((CBaseCur*)(p + 0xa0))->setRootPaneTranslate((const nw4r::math::VEC3*)(temp));
     ((CBaseCur*)(p + 0xa0))->SetVisible(1);
 }
@@ -4225,7 +4225,7 @@ void CItemBoxGrid::DispatchSubmenuConfirm() {
         BdatGetItemType(kind & 0xFFFF);
         u32 kindShort = BdatGetItemId(kind & 0xFFFF);
 
-        u32 tbl= (u32)lbl_eu_80664110;
+        u32 tbl= (u32)::cf::CfBdat::spItmArtsListFileData;
         u32 catVal = BdatGetU8Direct((const void*)tbl, "memory_type", kindShort & 0xFFFF);
         u32 nameIdx = BdatGetU8Direct((const void*)tbl, "pc_type", kindShort & 0xFFFF);
         u32 paramVal = BdatGetU8Direct((const void*)tbl, "get_arts", kindShort & 0xFFFF);
@@ -4451,7 +4451,7 @@ void CItemBoxGrid::ShowCellIcon(u32 kind, void* item, u16 idx, u32 bt) {
             msgId = 0;
             CItemImpl* inst = CItem_initItemImplInstances((CItemData*)obj);
             u32 st = inst->vf54((CItemData*)obj);
-            u8 c = (u8)BdatGetU8Direct((const void*)lbl_eu_806640D8, (const char*)&lbl_eu_8050566C[0x331], (u16)st);
+            u8 c = (u8)BdatGetU8Direct((const void*)::cf::CfBdat::spBtlSkillListFileData, (const char*)&lbl_eu_8050566C[0x331], (u16)st);
             switch (c) {
             case 4: msgId = (u32)MakeTplNameSysFile(0x144); break;
             case 5: msgId = (u32)MakeTplNameSysFile(0x145); break;
@@ -4521,7 +4521,7 @@ void CItemBoxGrid::ShowCellIcon(u32 kind, void* item, u16 idx, u32 bt) {
 done:
     if (!msgId) {
         if (kind) {
-            u16 v = BdatGetU16Direct((const void*)lbl_eu_806640EC, &lbl_eu_8050566C[0x34d], kind);
+            u16 v = BdatGetU16Direct((const void*)::cf::CfBdat::spItmItemListFileData, &lbl_eu_8050566C[0x34d], kind);
             msgId = (u32)MakeTplNameSysFile(v);
             msgId = (u32)this->field_40->GetResource(
                 0x74696d67, (char*)msgId, 0);
@@ -4638,7 +4638,7 @@ void CItemBoxGrid::ShowCellBadge(u32 kind, void* item, u16 idx) {
 done_item:
     if (!msgId) {
         if (kind) {
-            u16 v = BdatGetU16Direct((const void*)lbl_eu_806640EC, &lbl_eu_8050566C[0x391], kind);
+            u16 v = BdatGetU16Direct((const void*)::cf::CfBdat::spItmItemListFileData, &lbl_eu_8050566C[0x391], kind);
             msgId = (u32)MakeTplNameSysFile(v);
             msgId = (u32)this->field_40->GetResource(
                 0x74696d67, (char*)msgId, 0);
@@ -4922,7 +4922,7 @@ void CItemBoxGrid::RebuildGridUI() {
         float tRows = (float)(convRows.d - lbl_eu_80667F40);
         float offset = step * tPage + step * tRows;
         v[0] += offset;
-        copyVEC3((u8*)ret3 + 0x2c, v);
+        copyVEC3((u8*)&((nw4r::lyt::Pane*)ret3)->GetTranslate(), v);
     } else {
         void* pane = *(void**)(*(u32**)(p + 0x44) + 4);
         nw4r::lyt::Pane* ret = ((nw4r::lyt::Pane*)pane)->FindPaneByName((char*)"nul_pg", 1);
@@ -5306,11 +5306,11 @@ u32 CItemBoxGrid::GetCatLabelMsg() {
 }
 
 // Check item teachability: look up the short-kind row in the arts table
-// (lbl_eu_80664110) and test the character's learned-arts flags at
+// (::cf::CfBdat::spItmArtsListFileData) and test the character's learned-arts flags at
 // charData + count*0x49 + (table byte << 1). Returns 1 when the flag test
 // fails (item not yet learned); 0 when it is already learned.
 u32 CItemBoxGrid::IsItemTeachable(u32 kind) {
-    u32 bdat= (u32)lbl_eu_80664110;
+    u32 bdat= (u32)::cf::CfBdat::spItmArtsListFileData;
     BdatGetItemType(kind);
     u16 shortKind = BdatGetItemId(kind);
     u8 flag = BdatGetU8Direct((const void*)bdat, (const char*)"memory_type", (u16)shortKind);
@@ -5405,7 +5405,7 @@ bool CItemBoxGrid::OnFileEvent(CEventFile* pEventFile) {
     BuildSlotItemLists(0);
     // Bind the tag processor to the message pane.
     void* tpPane = paneHost->FindPaneByName((char*)"txt_comment", 1);
-    if (tpPane != NULL) *(u32*)((u8*)tpPane + 0xf8) = *(u32*)(p + 0x5c);
+    if (tpPane != NULL) ((nw4r::lyt::TextBox*)tpPane)->SetTagProcessor((nw4r::ut::WideTagProcessor*)field_5C);
     // Window title / caption strings.
     char* msgA = BdatTouchStringCell("MNU_item", "name", 5);
     LayoutSetTextBoxFmtValue(layout, (char*)"txt_buyvalue01", msgA, 0);
@@ -5427,8 +5427,7 @@ bool CItemBoxGrid::OnFileEvent(CEventFile* pEventFile) {
             CibgTexData* tex = *(CibgTexData**)mat->field_00;
             u16 w = tex->field_02;
             u16 h = tex->field_00;
-            ((float*)((u8*)pane2 + 0x4c))[0] = (float)(s32)w;
-            ((float*)((u8*)pane2 + 0x50))[0] = (float)(s32)h;
+            ((nw4r::lyt::Pane*)pane2)->SetSize(nw4r::lyt::Size((float)(s32)w, (float)(s32)h));
         }
     }
     // Hide the icons that do not apply to this box mode.
@@ -5442,7 +5441,7 @@ bool CItemBoxGrid::OnFileEvent(CEventFile* pEventFile) {
     }
     // Snapshot the cursor pane's initial translation.
     void* posPane = paneHost->FindPaneByName((char*)"pic_pghole10", 1);
-    copyVEC3(p + 0x534, (u8*)posPane + 0x2c);
+    copyVEC3(p + 0x534, (u8*)&((nw4r::lyt::Pane*)posPane)->GetTranslate());
     // Snapshot both cursor colour states into the global colour tables.
     GXColorS10 colA = PaneMatGetS16QuadByName(layout, "pic_tbbcof01", 0);
     CopyVec4s((GXColorS10*)&itemBoxGrid_slotLabelNeutralTop, &colA);

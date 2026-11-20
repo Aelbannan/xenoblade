@@ -9,55 +9,34 @@
 struct BdatFileData;
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
-extern "C" const char lbl_eu_80500FA4[];
-extern "C" const char* lbl_eu_8052E6F0[];
+extern const char lbl_eu_80500FA4[0x3E4];
+extern "C" u32 lbl_eu_8052E6F0[10];
 
 // C-linkage imports for the bdat helpers.  These are retail-unmangled globals;
+extern "C" u32 Tok_ParseFile(const char* path);
 // the CBdat static-member forms in ocBdat.hpp mangle the reloc name, so the
 // free-function forms are used here where reloc-name-exact codegen is needed.
-extern "C" void* Bdat_GetTable_AA34();
-extern "C" u32 Bdat_GetRowBase_B41C(void* bdat);
-extern "C" u32 Bdat_GetMaxRow_B1EC(void* bdat);
 
-extern "C" int Tok_FormatStr(ml::FixStr<64>& buf, u32 packed, int prefixFlag, int suffixFlag);
-extern "C" u32 Tok_ParseFile(const char* path);
 
-extern "C" u32 getGlobalWord640F4__Q22cf13CfGameManagerFv();
 
 // Retail sbss bdat file-pointer globals (anonymous lbl_eu_* labels in retail).
 // The CfBdat static members are kept for the file-data assignment functions.
-extern void* lbl_eu_806640A0;   // spLandmarkListFileData
-extern void* lbl_eu_806640A8;   // spFldMapListFileData
-extern void* lbl_eu_806640F4;   // spItmWpnListFileData
-extern void* lbl_eu_806640F8;   // spItmEquipListFileData
-extern void* lbl_eu_80664114;   // spItmHeadListFileData
-extern void* lbl_eu_80664118;   // spItmBodyListFileData
-extern void* lbl_eu_8066411C;   // spItmArmListFileData
-extern void* lbl_eu_80664120;   // spItmWaistListFileData
-extern void* lbl_eu_80664124;   // spItmLeggListFileData
 extern u8* gLockBdatTable;      // lock-gimmick BDAT table (.sbss)
 extern void* lbl_eu_80664190;   // sinit instance pointer
 // Additional sbss bdat file-data globals used by bdatGetItemName.
-extern void* lbl_eu_806640D8;
-extern void* lbl_eu_806640EC;
 extern void* lbl_eu_806640F0;
-extern void* lbl_eu_806640FC;
-extern void* lbl_eu_80664104;
-extern void* lbl_eu_80664108;
-extern void* lbl_eu_8066410C;
-extern void* lbl_eu_80664110;
 
 extern u32 lbl_eu_80664184;     // cached fld-map row index
 extern u32 gCachedFldMapRow;     // cached fld-map row (mirror of 80664184)
 extern float lbl_eu_8066418C;   // fld-map cache float
 // .data block whose address is stored into lbl_eu_80664194 by the sinit.
-extern u8 lbl_eu_8052E718[0x88];
+extern "C" u32 lbl_eu_8052E718[34];
 
 namespace cf{
 
-    class CfBdat : IWorkEvent {
+    class CfBdat : public IWorkEvent {
     public:
-        CfBdat(){}
+        CfBdat();
         virtual ~CfBdat();
         virtual bool OnFileEvent(CEventFile* pEventFile);
 
@@ -113,29 +92,29 @@ namespace cf{
         static void* spItmWaistListFileData;
         static void* spItmLeggListFileData;
 
-        static void* spCurGimListFileData;
+        static void* spCurGimListFileData;  // name-guess: file-data pointer loaded from the matching BDAT table name
         static void* spCurFieldLockFileData;
-        static void* spCurElvGmFileData;
-        static void* spCurWarpGmFileData;
-        static void* spCurJumpGmFileData;
-        static void* spCurItemGmFileData;
-        static void* spCurGimSvOffFileData;
-        static void* spCurGimEneFileData;
+        static void* spCurElvGmFileData;  // name-guess: file-data pointer loaded from the matching BDAT table name
+        static void* spCurWarpGmFileData;  // name-guess: file-data pointer loaded from the matching BDAT table name
+        static void* spCurJumpGmFileData;  // name-guess: file-data pointer loaded from the matching BDAT table name
+        static void* spCurItemGmFileData;  // name-guess: file-data pointer loaded from the matching BDAT table name
+        static void* spCurGimSvOffFileData;  // name-guess: file-data pointer loaded from the matching BDAT table name
+        static void* spCurGimEneFileData;  // name-guess: file-data pointer loaded from the matching BDAT table name
         static void* spCurGimMessFileData;
-        static void* spCurDropNmlListFileData;
-        static void* spCurDropRarListFileData;
-        static void* spCurDropSprListFileData;
+        static void* spCurDropNmlListFileData;  // name-guess: file-data pointer loaded from the matching BDAT table name
+        static void* spCurDropRarListFileData;  // name-guess: file-data pointer loaded from the matching BDAT table name
+        static void* spCurDropSprListFileData;  // name-guess: file-data pointer loaded from the matching BDAT table name
 
-        static void* spBtlPsvSkillFileData;
+        static void* spBtlPsvSkillFileData;  // name-guess: file-data pointer loaded from the matching BDAT table name
         static void* spBtlPsvLinkFileData;
-        static void* spBtlPssListFileData;
+        static void* spBtlPssListFileData;  // name-guess: file-data pointer loaded from the matching BDAT table name
         static void* spBtlCamListFileData;
         static void* spBtlCamDataListFileData;
-        static void* spBtlCrystalNameListFileData;
+        static void* spBtlCrystalNameListFileData;  // name-guess: file-data pointer loaded from the matching BDAT table name
 
-        static void* spMnuItemFileData;
-        static void* spMnuEveStartFileData;
-        static void* spMnuEveTableFileData;
+        static void* spMnuItemFileData;  // name-guess: file-data pointer loaded from the matching BDAT table name
+        static void* spMnuEveStartFileData;  // name-guess: file-data pointer loaded from the matching BDAT table name
+        static void* spMnuEveTableFileData;  // name-guess: file-data pointer loaded from the matching BDAT table name
 
         static CFileHandle* lbl_80666A6C;
         static void* lbl_80666A70;
@@ -153,14 +132,14 @@ namespace cf{
 // Data-pool constants referenced by CfBdat.cpp free functions (global scope so
 // MWCC emits them unmangled).
 extern float lbl_eu_80667368;
-extern char lbl_eu_80662228[4];  // fixed size so MWCC keeps the .sdata SDA21 reloc
+extern __attribute__((aligned(8))) char lbl_eu_80662228[8];
 
 // ---- static-initializer support (retail __sinit_\CfBdat_cpp) ----
 // The retail sinit initializes an anonymous 4-byte prototype object at
 // lbl_eu_80664194 (first word = address of the lbl_eu_8052E718 data block)
 // and stores the object's address into lbl_eu_80664190.  The inline ctor
 // lets MWCC emit the auto-sinit with the ctor body inlined (see CfBdat.cpp).
-extern u8 lbl_eu_8052E718[0x88];
+extern "C" u32 lbl_eu_8052E718[34];
 extern void* lbl_eu_80664190;
 
 struct CfBdatSinitProto {

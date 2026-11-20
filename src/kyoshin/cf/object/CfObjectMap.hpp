@@ -1,5 +1,7 @@
 #pragma once
 
+#include "kyoshin/cf/CfBdat.hpp"
+
 #include <types.h>
 #include "kyoshin/cf/object/CfObjectModel.hpp"
 #include "kyoshin/plugin/ocBdat.hpp"
@@ -11,12 +13,8 @@ class CScnEnvLgtCtrlListItem;
 class CScn;
 class CView;
 
-// ---------------------------------------------------------------------------
-// External imports used by CfObjectMap.cpp
-//
-// Several retail symbols are annotated Fv (or unmangled) although they really
-// take register/float arguments (PLAN.md §17.6 relocation-name pattern), so
-// the mangled names are spelled out verbatim with extern "C" linkage.
+// External imports used by CfObjectMap.cpp: retail Fv/unmangled symbols
+// are declared with their verbatim mangled names (PLAN.md §17.6).
 // ---------------------------------------------------------------------------
 
 // Map resource managers returned by CfRes_getInstPtr80/60/A8/FF0.
@@ -36,7 +34,11 @@ struct UnkRes866A0 {
 struct UnkMapSubF0 {
     u8 field_0x0[0x10];
     u32 flags_0x10;                  // 0x100 (bit 0x8 toggled by func_800BA66C)
-    u8 field_0x14[0x2E3C - 0x14];    // 0x104-0x2F2B
+    u32 field_0x14;                  // 0x104
+    u8 unk18[0x20 - 0x18];           // 0x108-0x10F
+    u32 field_0x20;                  // 0x110
+    u8 unk24[0x2E38 - 0x24];         // 0x114-0x2F27
+    u32 field_0x2E38;                // 0x2F28
 };
 
 // Node-pool manager embedded at +0x2F2C (UnkClass_8047CD0C in retail).
@@ -143,7 +145,6 @@ void Scn_SetTimeScale(CScn* scene, float value);
 // ---- data symbols
 extern CView* gmCurrentView;     // global scene object (secondary)
 extern u32 gmPauseFlags;        // global flag word
-extern void* lbl_eu_806640A8;      // bdat table pointer
 extern u32 lbl_eu_80664184;        // bdat row index
 extern char lbl_eu_804FC538[];     // map file-name suffix
 extern const float lbl_eu_80666A38;

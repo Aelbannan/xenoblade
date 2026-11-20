@@ -1,6 +1,7 @@
 // Auto-scaffolded catalog TU for kyoshin/menu/CMenuGetItemMulti
 // Replace stubs with high-level C/C++ during decomp.
 
+#include "kyoshin/cf/CfBdat.hpp"
 #include "kyoshin/menu/CMenuGetItemMulti.hpp"
 
 #include "kyoshin/code_80135FDC_Bdat.hpp"
@@ -142,8 +143,6 @@ struct CMenuGetItemTextureResource {
 
 extern "C" {
 extern char lbl_eu_80504A3C[];
-extern u32 lbl_eu_806640EC;
-extern void* lbl_eu_80664108;
 
 // Ctor-only imports (see __ct__CMenuGetItemMulti below).
 extern char lbl_eu_8052D238[]; // interim composite vtable
@@ -197,127 +196,91 @@ extern "C" void cbRenderBefore__17CMenuGetItemMultiFv(void*);
 // IWorkEvent/IScnRender sub-vtables (+0x24/+0xac from the same base table),
 // then constructs the UnkClass_8045F564 render region (+0x78), zero-inits the
 // entry array and cursor/system-window sub-objects, and arms the state bytes.
-CMenuGetItemMulti* __ct__CMenuGetItemMulti(
-    CMenuGetItemMulti* pThis, CScn* scn, u32 item0, u32 item1, u32 item2,
-    u32 item3, u8 argF6, u8 arg201, u8 argSpecial) {
+CMenuGetItemMulti::CMenuGetItemMulti(CScn* scn, u32 item0, u32 item1,
+                                     u32 item2, u32 item3, u32 argF6,
+                                     u32 arg201, u8 argSpecial) {
     // Zero constant declared up front: its live range then starts at entry
     // (like MWCC's implicit member-init sequence) and wins the lowest
     // callee-saved register, matching retail r22.
     u32 zero = 0;
 
-    __ct__8CProcessFv(reinterpret_cast<CProcess*>(pThis));
-
-    // Interim composite vtable label first (retail materializes its @ha
-    // before the final base's @ha, folding the @l into the store), then the
-    // final composite vtable base + its two interface sub-vtable offsets
-    // (retail holds base in r5, +0x24 in r4, +0xac in r0).
-    char* interimVt = lbl_eu_8052D238;
-    char* vtBase = lbl_eu_805338BC;
-    u32 workEvtVt = (u32)(vtBase + 0x24);
-    u32 scnVt = (u32)(vtBase + 0xac);
-
-    pThis->field_10 = reinterpret_cast<u32>(interimVt);
-
-    // NULL PTMF -> callback slots 0x3C / 0x48 in the retail store order
-    // 0x40,0x3C,0x44 then 0x4C,0x48,0x50. Post-increment derefs fold the
-    // first access of each slot into `lwzu`; re-fetching src between slots
-    // forces the retail reloads.
-    const u32* src = __ptmf_null;
-    u32 w0 = *src++;
-    u32 w1 = *src++;
-    pThis->mPtmfSlot3C[1] = w1; // 0x40
-    pThis->mPtmfSlot3C[0] = w0; // 0x3C
-    u32 w2 = *src++;
-    pThis->mPtmfSlot3C[2] = w2; // 0x44
-    src = __ptmf_null;
-    w1 = *src++;
-    w0 = *src++;
-    pThis->mPtmfSlot48[1] = w1; // 0x4C
-    pThis->mPtmfSlot48[0] = w0; // 0x48
-    w2 = *src++;
-    pThis->mPtmfSlot48[2] = w2; // 0x50
-
     // Zero constants drive most of the clear stores (retail keeps it in a
     // callee-saved reg across the UnkClass_8045F564 ctor call).
 
-    pThis->mLayout = reinterpret_cast<nw4r::lyt::Layout*>(zero); // 0x54
-    pThis->field_58 = zero;
-    pThis->field_5C = zero;
-    pThis->field_60 = -1;
-    pThis->field_64 = 0;
-    pThis->field_65 = 0;
-    pThis->field_66 = 0;
-    pThis->field_67 = 1;
-    pThis->field_68 = zero;
-    pThis->field_10 = reinterpret_cast<u32>(vtBase); // final composite vtable
-    pThis->mIWorkEventVtable = workEvtVt; // 0x6C IWorkEvent sub-vtable
-    pThis->mIScnRenderVtable = scnVt;     // 0x70 IScnRender sub-vtable
-    pThis->mScn = scn;
+    this->mLayout = reinterpret_cast<nw4r::lyt::Layout*>(zero); // 0x54
+    this->mField58 = (void*)zero;
+    this->mField5C = (void*)zero;
+    this->mField60 = -1;
+    this->mField64 = 0;
+    this->mField65 = 0;
+    this->mField66 = 0;
+    this->mField67 = 1;
+    this->mField68 = zero;
+    this->mScn = scn;
 
-    __ct__17UnkClass_8045F564Fv(reinterpret_cast<UnkClass_8045F564*>(&pThis->mRegion[0]));
+    __ct__17UnkClass_8045F564Fv(reinterpret_cast<UnkClass_8045F564*>(&this->mRegion[0]));
 
-    pThis->mAnim = reinterpret_cast<nw4r::lyt::AnimTransform*>(zero);
-    pThis->mInitialItems[0] = item0;
-    pThis->mInitialItems[1] = item1;
-    pThis->mInitialItems[2] = item2;
-    pThis->mInitialItems[3] = item3;
-    pThis->mVisibleItemCount = zero;
+    this->mAnim = reinterpret_cast<nw4r::lyt::AnimTransform*>(zero);
+    this->mInitialItems[0] = item0;
+    this->mInitialItems[1] = item1;
+    this->mInitialItems[2] = item2;
+    this->mInitialItems[3] = item3;
+    this->mVisibleItemCount = zero;
 
     // Entry 0 is a standalone member (ctor inlined); entries 1..3 form the
     // array MWCC clears via its guarded divwu/bdnz array-init loop.
-    pThis->mFirstEntry.value = (u16)zero;
-    pThis->mFirstEntry.packed = zero;
-    for (CMenuGetItemMultiEntry* cur = &pThis->mRestEntries[0];
-         cur < &pThis->mRestEntries[3]; cur++) {
+    this->mFirstEntry.value = (u16)zero;
+    this->mFirstEntry.packed = zero;
+    for (CMenuGetItemMultiEntry* cur = &this->mRestEntries[0];
+         cur < &this->mRestEntries[3]; cur++) {
         cur->value = (u16)zero;
         cur->packed = zero;
     }
 
-    pThis->mEntryCount = zero;
+    this->mEntryCount = zero;
 
-    __ct__6CCur18FPQ34nw4r3lyt19ArcResourceAccessor(&pThis->mCursor, NULL);
-    __ct__7CSysWinFUc(reinterpret_cast<CSysWin*>(&pThis->mSystemWindow[0]), 0);
+    __ct__6CCur18FPQ34nw4r3lyt19ArcResourceAccessor(&this->mCursor, NULL);
+    __ct__7CSysWinFUc(reinterpret_cast<CSysWin*>(&this->mSystemWindow[0]), 0);
 
     // Second zero constant for the tail clear (retail reuses the freed scn
     // register slot as a fresh zero, r24).
     u32 tailZero = 0;
-    pThis->mMaxVisibleItems = 4;
-    pThis->mHasSpecialItem = argSpecial;
-    pThis->field_1F4 = 1;
-    pThis->field_1F5 = (u8)tailZero;
-    pThis->field_1F6 = argF6;
-    pThis->field_1F8 = tailZero;
-    pThis->field_1FC = tailZero;
-    pThis->field_200 = (u8)tailZero;
-    pThis->field_201 = arg201;
-    pThis->mFileHandle = 0;
-    pThis->field_208 = tailZero;
-    pThis->field_20C = (u8)tailZero;
-    pThis->field_20D = (u8)tailZero;
-    pThis->field_20E = (u8)tailZero;
-    pThis->field_20F = argSpecial;
+    this->mMaxVisibleItems = 4;
+    this->mHasSpecialItem = argSpecial;
+    this->field_1F4 = 1;
+    this->field_1F5 = (u8)tailZero;
+    this->field_1F6 = argF6;
+    this->field_1F8 = tailZero;
+    this->field_1FC = tailZero;
+    this->field_200 = (u8)tailZero;
+    this->field_201 = arg201;
+    this->mFileHandle = 0;
+    this->field_208 = tailZero;
+    this->field_20C = (u8)tailZero;
+    this->field_20D = (u8)tailZero;
+    this->field_20E = (u8)tailZero;
+    this->field_20F = argSpecial;
     // Retail fully unrolls this clear (interleaved stb/stw/sth per slot).
-    pThis->mPaneVisible[0] = (u8)tailZero;
-    pThis->mVisibleEntries[0] = reinterpret_cast<CMenuGetItemMultiEntry*>(tailZero);
-    pThis->mVisibleItemIds[0] = (u16)tailZero;
-    pThis->mPaneVisible[1] = (u8)tailZero;
-    pThis->mVisibleEntries[1] = reinterpret_cast<CMenuGetItemMultiEntry*>(tailZero);
-    pThis->mVisibleItemIds[1] = (u16)tailZero;
-    pThis->mPaneVisible[2] = (u8)tailZero;
-    pThis->mVisibleEntries[2] = reinterpret_cast<CMenuGetItemMultiEntry*>(tailZero);
-    pThis->mVisibleItemIds[2] = (u16)tailZero;
-    pThis->mPaneVisible[3] = (u8)tailZero;
-    pThis->mVisibleEntries[3] = reinterpret_cast<CMenuGetItemMultiEntry*>(tailZero);
-    pThis->mVisibleItemIds[3] = (u16)tailZero;
-    pThis->mPaneVisible[4] = (u8)tailZero;
-    pThis->mVisibleEntries[4] = reinterpret_cast<CMenuGetItemMultiEntry*>(tailZero);
-    pThis->mVisibleItemIds[4] = (u16)tailZero;
-    pThis->mPaneVisible[5] = (u8)tailZero;
-    pThis->mVisibleEntries[5] = reinterpret_cast<CMenuGetItemMultiEntry*>(tailZero);
-    pThis->mVisibleItemIds[5] = (u16)tailZero;
-    pThis->mEntryCount = tailZero;
-    pThis->mEntryCount = 0;
-    return pThis;
+    this->mPaneVisible[0] = (u8)tailZero;
+    this->mVisibleEntries[0] = reinterpret_cast<CMenuGetItemMultiEntry*>(tailZero);
+    this->mVisibleItemIds[0] = (u16)tailZero;
+    this->mPaneVisible[1] = (u8)tailZero;
+    this->mVisibleEntries[1] = reinterpret_cast<CMenuGetItemMultiEntry*>(tailZero);
+    this->mVisibleItemIds[1] = (u16)tailZero;
+    this->mPaneVisible[2] = (u8)tailZero;
+    this->mVisibleEntries[2] = reinterpret_cast<CMenuGetItemMultiEntry*>(tailZero);
+    this->mVisibleItemIds[2] = (u16)tailZero;
+    this->mPaneVisible[3] = (u8)tailZero;
+    this->mVisibleEntries[3] = reinterpret_cast<CMenuGetItemMultiEntry*>(tailZero);
+    this->mVisibleItemIds[3] = (u16)tailZero;
+    this->mPaneVisible[4] = (u8)tailZero;
+    this->mVisibleEntries[4] = reinterpret_cast<CMenuGetItemMultiEntry*>(tailZero);
+    this->mVisibleItemIds[4] = (u16)tailZero;
+    this->mPaneVisible[5] = (u8)tailZero;
+    this->mVisibleEntries[5] = reinterpret_cast<CMenuGetItemMultiEntry*>(tailZero);
+    this->mVisibleItemIds[5] = (u16)tailZero;
+    this->mEntryCount = tailZero;
+    this->mEntryCount = 0;
 }
 
 // Retail __dt__801B2754: deleting destructor of the 0x36c get-item-multi
@@ -375,7 +338,7 @@ void CMenuGetItemMulti::Init() {
 
     IWorkEvent* workEvent = reinterpret_cast<IWorkEvent*>(this);
     if (this != NULL) {
-        workEvent = reinterpret_cast<IWorkEvent*>(&mIWorkEventVtable);
+        workEvent = static_cast<IWorkEvent*>(this);
     }
     mFileHandle = CDeviceFile::readFile(memHandle, "common/jp/bdat_menu_mes.bin", workEvent, 0, 0);
 
@@ -570,7 +533,7 @@ void CMenuGetItemMulti::Init() {
                 case 9: textureName = "mf00_reg20_cat06.tpl"; break;
                 case 10: textureName = "mf00_reg20_cat09.tpl"; break;
                 case 11: {
-                    u32 fontCheck = (u32)lbl_eu_80664108;
+                    u32 fontCheck = (u32)::cf::CfBdat::spItmMaterialListFileData;
                     // Retail: clrlwi into r3, set default texture, then
                     // neg/or/rlwinm bool-normalize (not rlwinm.+beq on a u8 local).
                     u32 fontHit = (u8)BdatGetU8Direct(
@@ -670,7 +633,7 @@ void CMenuGetItemMulti::Init() {
                     u32 catN = (entry->packed >> 16) & 0xf;
                     if (catN != 3 && catN != 9) {
                         u32 hit = (u8)BdatGetU8Direct(
-                            (const void*)lbl_eu_806640EC, "item_keep",
+                            (const void*)::cf::CfBdat::spItmItemListFileData, "item_keep",
                             (u16)(entry->packed >> 20));
                         special = (u32)(-(s32)hit | hit) >> 31;
                     }
@@ -751,7 +714,7 @@ void CMenuGetItemMulti::Init() {
                 LayoutSetTextBoxFmtValue(mLayout, initialTextPaneName, BuildItemNameStr(itemId), 0);
                 u32 special = 0;
                 if (category != 3 && category != 9) {
-                    u32 hit = (u8)BdatGetU8Direct((const void*)lbl_eu_806640EC,
+                    u32 hit = (u8)BdatGetU8Direct((const void*)::cf::CfBdat::spItmItemListFileData,
                                                 "item_keep",
                                                 itemId);
                     special = (u32)(-(s32)hit | hit) >> 31;
@@ -827,7 +790,7 @@ void CMenuGetItemMulti::Init() {
             case 9: textureName = "mf00_reg20_cat06.tpl"; break;
             case 10: textureName = "mf00_reg20_cat09.tpl"; break;
             case 11: {
-                u32 fontCheck = (u32)lbl_eu_80664108;
+                u32 fontCheck = (u32)::cf::CfBdat::spItmMaterialListFileData;
                 char* fontKey = "rare";
                 u32 fontHit = (u8)BdatGetU8Direct(
                     (const void*)fontCheck, fontKey, (u16)tableId);
@@ -897,7 +860,7 @@ void CMenuGetItemMulti::Init() {
                 goto after_initial_cat;
             do_initial_rank:
                 {
-                    u8 rankCount = BdatGetU8Direct((const void*)lbl_eu_806640EC,
+                    u8 rankCount = BdatGetU8Direct((const void*)::cf::CfBdat::spItmItemListFileData,
                                                   "rankType", itemId);
                     LayoutSetTextBoxFmtValue(mLayout, initialItemPaneName,
                                    BdatTouchStringCell("MNU_item",
@@ -979,7 +942,7 @@ void CMenuGetItemMulti::Init() {
 
     IScnRender* render = reinterpret_cast<IScnRender*>(this);
     if (this != NULL) {
-        render = reinterpret_cast<IScnRender*>(&mIScnRenderVtable);
+        render = static_cast<IScnRender*>(this);
     }
     mScn->addRenderCB(render, 13, 0);
     reinterpret_cast<UnkClass_8045F564*>(&mRegion[0])->validateHeap();
@@ -990,10 +953,7 @@ void CMenuGetItemMulti::Init() {
 
 void CMenuGetItemMulti::Term() {
     CDeviceVI::waitForDrawDone();
-    IScnRender* render = reinterpret_cast<IScnRender*>(this);
-    if (this != 0) {
-        render = reinterpret_cast<IScnRender*>(&mIScnRenderVtable);
-    }
+    IScnRender* render = static_cast<IScnRender*>(this);
     mScn->removeRenderCB(render);
     CBdat::getEntry(5);
     closeFileHandle(&mFileHandle);
@@ -1083,7 +1043,7 @@ body:
         break;
     case 3:  // closing animation: flag the fade-out
         if (AnimRewindFrame(mAnim, lbl_eu_80667E10) == 0) break;
-        field_64 = 1;
+        mField64 = 1;
         break;
     case 4:  // closing: teardown handler
         GetItemMulti_PruneEntries(this);
@@ -1221,20 +1181,20 @@ extern "C" void GetItemMulti_FitPanes(CMenuGetItemMulti* self) {
 // here once the owning CFileHandle matches (event->mFileHandle == this->mFileHandle).
 // Steals the loaded buffer, publishes it to field_208, then re-reads the
 // BDAT file pointer and clears the handle. Returns 1 on success.
-int GetItemMulti_OnFileEvent(CMenuGetItemMulti* self, CEventFile* event) {
-    if (self->mFileHandle == event->mFileHandle) {
-        u8* data = self->mFileHandle->mData;
-        self->mFileHandle->mData = 0;
-        self->field_208 = reinterpret_cast<u32>(data);
+bool CMenuGetItemMulti::OnFileEvent(CEventFile* event) {
+    if (this->mFileHandle == event->mFileHandle) {
+        u8* data = this->mFileHandle->mData;
+        this->mFileHandle->mData = 0;
+        this->field_208 = reinterpret_cast<u32>(data);
         Bdat_GetTable_AA34();
         if (getFP(&lbl_eu_80504A3C[0x3e5]) == 0) {
-            CBdat::setBdatEntry(5, reinterpret_cast<u8*>(self->field_208));
+            CBdat::setBdatEntry(5, reinterpret_cast<u8*>(this->field_208));
         }
         gpItemMultiSkillBdat = reinterpret_cast<u32>(getFP(&lbl_eu_80504A3C[0x3e5]));
-        self->mFileHandle = 0;
-        return 1;
+        this->mFileHandle = 0;
+        return true;
     }
-    return 0;
+    return false;
 }
 
 // Render-callback: gate prefix (task busy / global bit 21 / scene active),
@@ -1274,13 +1234,8 @@ IUIWindow* GetItemMulti_CreateInstance(CProcess* pParent, CScn* pScene, u32 a, u
     if (gpItemMultiInstance != 0) {
         return 0;
     }
-    u8* obj = reinterpret_cast<u8*>(
-        mtl::MemManager::allocate(0x36c, CWorkThreadSystem::getWorkMem()));
-    if (obj != 0) {
-        // Ctor returns `this`, re-establishing obj in r3 across the call
-        // (keeps the object in a volatile register, matching retail).
-        obj = __ct__CMenuGetItemMulti(obj, pScene, a, b, c, d, e, f, g);
-    }
+    CMenuGetItemMulti* obj = new (CWorkThreadSystem::getWorkMem())
+        CMenuGetItemMulti(pScene, a, b, c, d, e, f, g);
     gpItemMultiInstance = reinterpret_cast<u32>(obj);
     reinterpret_cast<CProcess*>(obj)->Regist(pParent, false);
     return reinterpret_cast<IUIWindow*>(gpItemMultiInstance);
@@ -1400,7 +1355,7 @@ void GetItemMulti_RefreshList(CMenuGetItemMulti* self) {
             u32 cat2 = (raw >> 12) & 0xF;
             int special2 = 0;
             if (cat2 != 3 && cat2 != 9) {
-                special2 = BdatGetU8Direct((const void*)lbl_eu_806640EC, "item_keep",
+                special2 = BdatGetU8Direct((const void*)::cf::CfBdat::spItmItemListFileData, "item_keep",
                                          raw >> 20) != 0;
             }
             if (cat2 == 12 || special2 != 0) {
@@ -1425,7 +1380,7 @@ void GetItemMulti_RefreshList(CMenuGetItemMulti* self) {
             case 9: textureName = "mf00_reg20_cat06.tpl"; break;
             case 10: textureName = "mf00_reg20_cat09.tpl"; break;
             case 11: {
-                u32 fontCheck = (u32)lbl_eu_80664108;
+                u32 fontCheck = (u32)::cf::CfBdat::spItmMaterialListFileData;
                 textureName = "mf00_reg20_cat10.tpl";
                 if (BdatGetU8Direct((const void*)fontCheck, "rare",
                                  BdatGetItemId((u16)(entry->packed >> 20)))) {
@@ -1533,7 +1488,7 @@ void GetItemMulti_RefreshList(CMenuGetItemMulti* self) {
 
             int special2 = 0;
             if (category != 3 && category != 9) {
-                special2 = BdatGetU8Direct((const void*)lbl_eu_806640EC, "item_keep",
+                special2 = BdatGetU8Direct((const void*)::cf::CfBdat::spItmItemListFileData, "item_keep",
                                          itemId) != 0;
             }
             if (category == 12 || special2 != 0) {
@@ -1560,7 +1515,7 @@ void GetItemMulti_RefreshList(CMenuGetItemMulti* self) {
             case 9: textureName = "mf00_reg20_cat06.tpl"; break;
             case 10: textureName = "mf00_reg20_cat09.tpl"; break;
             case 11: {
-                u32 fontCheck = (u32)lbl_eu_80664108;
+                u32 fontCheck = (u32)::cf::CfBdat::spItmMaterialListFileData;
                 textureName = "mf00_reg20_cat10.tpl";
                 if (BdatGetU8Direct((const void*)fontCheck, "rare", tableId)) {
                     textureName = "mf00_reg20_cat12.tpl";
@@ -1605,7 +1560,7 @@ void GetItemMulti_RefreshList(CMenuGetItemMulti* self) {
                     }
                 }
             } else if (category == 3 || category == 9) {
-                u8 rankCount = BdatGetU8Direct((const void*)lbl_eu_806640EC, "rankType",
+                u8 rankCount = BdatGetU8Direct((const void*)::cf::CfBdat::spItmItemListFileData, "rankType",
                                              itemId);
                 LayoutSetTextBoxFmtValue(self->mLayout, paneName,
                                BdatTouchStringCell("MNU_item",
@@ -1880,7 +1835,7 @@ void GetItemMulti_ShowEquipped(CMenuGetItemMulti* self, int arg2,
     // Item-window font pointer + id -> table id (retail keeps both in saved
     // regs across all the lookups; results stay full-width u32 with masks
     // only at the use sites).
-    u32 font = (u32)lbl_eu_806640F4;
+    u32 font = (u32)::cf::CfBdat::spItmWpnListFileData;
     BdatGetItemType(arg2);
     u16 tableId = BdatGetItemId(arg2);
 
@@ -2017,7 +1972,7 @@ void GetItemMulti_ShowEntryDetailPanes(CMenuGetItemMulti* self, int arg2, CMenuG
     // in r24 across the pane calls); the rank block below re-reads the global.
     // Results stay full-width (retail saves each with a plain mr; the byte
     // mask happens only when passed as the u8 arg of setLayoutTextBoxNumber).
-    u32 itemFont = (u32)lbl_eu_806640F8;
+    u32 itemFont = (u32)::cf::CfBdat::spItmEquipListFileData;
     BdatGetItemType(arg2);
     u16 tableId = BdatGetItemId(arg2);
     u8 v1 = BdatGetU8Direct((const void*)itemFont, &lbl_eu_80504A3C[0x4f0], (u16)tableId);
@@ -2031,7 +1986,7 @@ void GetItemMulti_ShowEntryDetailPanes(CMenuGetItemMulti* self, int arg2, CMenuG
     // raw lookup result in a saved reg AND takes a byte view once: the
     // comparison chain runs on the byte view (unsigned range test), while the
     // suffix switch below re-masks the raw value.
-    u32 rankFont = (u32)lbl_eu_806640F8;
+    u32 rankFont = (u32)::cf::CfBdat::spItmEquipListFileData;
     u8 rankVal = BdatGetU8Direct((const void*)rankFont, &lbl_eu_80504A3C[0x543],
                                 BdatGetItemId(arg2));
     // Signed local: MWCC rewrites the 4..13 range test as an unsigned
@@ -2147,12 +2102,12 @@ void GetItemMulti_ShowItemRank(CMenuGetItemMulti* self, int arg2, CMenuGetItemMu
         &lbl_eu_80504A3C[0x1c1], &lbl_eu_80504A3C[0x182],
         30 - ((u8)((arg3 != 0)
                        ? (u16)CItem_initItemImplInstances(arg3)->getRankCount(arg3)
-                       : (u16)BdatGetU8Direct((const void*)lbl_eu_806640EC, &lbl_eu_80504A3C[0x3b3],
+                       : (u16)BdatGetU8Direct((const void*)::cf::CfBdat::spItmItemListFileData, &lbl_eu_80504A3C[0x3b3],
                                             (u16)itemId)) -
               1));
     LayoutSetTextBoxFmtValue(self->mLayout, &lbl_eu_80504A3C[0xd3], rankName, 0);
 
-    u16 v = BdatGetU16Direct(lbl_eu_806640D8, &lbl_eu_80504A3C[0x554], (u16)itemId2);
+    u16 v = BdatGetU16Direct(::cf::CfBdat::spBtlSkillListFileData, &lbl_eu_80504A3C[0x554], (u16)itemId2);
     char* rankText = BdatTouchStringCell(&lbl_eu_80504A3C[0x558], &lbl_eu_80504A3C[0x182], 0xf);
     if (arg3 != 0) {
         setLayoutTextBoxNumber(self->mLayout, &lbl_eu_80504A3C[0xdf],
@@ -2162,10 +2117,10 @@ void GetItemMulti_ShowItemRank(CMenuGetItemMulti* self, int arg2, CMenuGetItemMu
                       (v == 1) ? &lbl_eu_80504A3C[0x19f] : rankText, 0);
     }
 
-    char* itemName = BdatGetPtrDirect(lbl_eu_806640D8, &lbl_eu_80504A3C[0x182], (u16)itemId2);
+    char* itemName = BdatGetPtrDirect(::cf::CfBdat::spBtlSkillListFileData, &lbl_eu_80504A3C[0x182], (u16)itemId2);
     LayoutSetTextBoxFmtValue(self->mLayout, &lbl_eu_80504A3C[0x4a3], itemName, 0);
 
-    u8 n = (u8)BdatGetU8Direct((const void*)lbl_eu_806640D8, &lbl_eu_80504A3C[0x561], (u16)itemId2);
+    u8 n = (u8)BdatGetU8Direct((const void*)::cf::CfBdat::spBtlSkillListFileData, &lbl_eu_80504A3C[0x561], (u16)itemId2);
     char* rankStr = BdatTouchStringCell(&lbl_eu_80504A3C[0x1c1], &lbl_eu_80504A3C[0x182],
                                   n + 0x15);
     LayoutSetTextBoxFmtValue(self->mLayout, &lbl_eu_80504A3C[0x568], rankStr, 0);
@@ -2200,7 +2155,7 @@ void GetItemMulti_ShowIdCategoryPanes(CMenuGetItemMulti* self, int arg2) {
     pane->SetVisible(true);
 
     // Item id -> table id, then fill the rank-name and description panes.
-    void* tbl = lbl_eu_80664104;
+    void* tbl = ::cf::CfBdat::spItmCollectListFileData;
     BdatGetItemType(arg2);
     u16 tableId = BdatGetItemId(arg2);
     // Separate statement: retail keeps the lookup result live in r0 across
@@ -2220,7 +2175,7 @@ void GetItemMulti_ShowIdCategoryPanes(CMenuGetItemMulti* self, int arg2) {
         text = BdatTouchStringCell(&lbl_eu_80504A3C[0x1ac], &lbl_eu_80504A3C[0x182], 20);
     } else {
         // Third arg rides in r5 from the lookup above (retail leaves it live).
-        text = BdatGetPtrDirect(lbl_eu_806640A8, &lbl_eu_80504A3C[0x182], (u8)descId);
+        text = BdatGetPtrDirect(::cf::CfBdat::spFldMapListFileData, &lbl_eu_80504A3C[0x182], (u8)descId);
     }
     LayoutSetTextBoxFmtValue(self->mLayout, &lbl_eu_80504A3C[0x4ba], text, 0);
 }
@@ -2255,7 +2210,7 @@ void GetItemMulti_FillEntryRankPane(CMenuGetItemMulti* self, CMenuGetItemMultiEn
         }
         char paneName[32];
         sprintf(paneName, &lbl_eu_80504A3C[0x4c6], paneNo * 2 + 0x1f);
-        char* itemName = BdatGetPtrDirect(lbl_eu_806640D8, &lbl_eu_80504A3C[0x182], itemId);
+        char* itemName = BdatGetPtrDirect(::cf::CfBdat::spBtlSkillListFileData, &lbl_eu_80504A3C[0x182], itemId);
         LayoutSetTextBoxFmtValue(self->mLayout, paneName, itemName, 0);
 
         nw4r::lyt::Pane* slotPane =
@@ -2291,7 +2246,7 @@ void GetItemMulti_FillEntryRankPane(CMenuGetItemMulti* self, CMenuGetItemMultiEn
 }
 
 // Category-13 display update: show the pane, then build the rank-name string
-// from the art/skill record tables (lbl_eu_80664110): three lookups keyed by
+// from the art/skill record tables (::cf::CfBdat::spItmArtsListFileData): three lookups keyed by
 // the item's table id select the rank index, the record-set and a flag byte,
 // and the per-character record (+0xE8/+0xE9 flags) switches the rank suffix
 // between string 44 and 43.
@@ -2300,7 +2255,7 @@ void GetItemMulti_ShowCat13(CMenuGetItemMulti* self, int arg2) {
         &lbl_eu_80504A3C[0x43c], true);
     pane->SetVisible(true);
 
-    void* tbl = (void*)lbl_eu_80664110;
+    void* tbl = (void*)::cf::CfBdat::spItmArtsListFileData;
     // No-entry path validates the id through the item table (result unused).
     BdatGetItemType(arg2);
     u16 tableId = BdatGetItemId(arg2);
@@ -2377,7 +2332,7 @@ void GetItemMulti_FillRankSlots(CMenuGetItemMulti* self, int arg2, CMenuGetItemM
                     CItem_initItemImplInstances(arg3)->getSlot(arg3, i));
                 if (slot != 0 && (slot->bits04 & 1) != 0) {
                     slotItemId = (slot->bits04 >> 4) & 0xFFF;
-                    void* fontTbl = lbl_eu_806640D8;
+                    void* fontTbl = ::cf::CfBdat::spBtlSkillListFileData;
                     slotRank = (slot->bits04 >> 7) & 7;
                     slotVal = (s16)((slot->bits04 >> 10) & 0x7FF);
                     char* rankStr = BdatTouchStringCell(
@@ -2493,11 +2448,11 @@ void GetItemMulti_FillRankSlots(CMenuGetItemMulti* self, int arg2, CMenuGetItemM
                                BdatTouchStringCell(&lbl_eu_80504A3C[0x1c1],
                                              &lbl_eu_80504A3C[0x182], 0x2a));
                 } else {
-                    altFlag = BdatGetU8Direct((const void*)lbl_eu_806640EC,
+                    altFlag = BdatGetU8Direct((const void*)::cf::CfBdat::spItmItemListFileData,
                                             &lbl_eu_80504A3C[0x66b], id);
-                    rankCnt = BdatGetU8Direct((const void*)lbl_eu_806640EC,
+                    rankCnt = BdatGetU8Direct((const void*)::cf::CfBdat::spItmItemListFileData,
                                             &lbl_eu_80504A3C[0x3b3], id);
-                    void* fontTbl2 = lbl_eu_806640D8;
+                    void* fontTbl2 = ::cf::CfBdat::spBtlSkillListFileData;
                     switch ((u8)BdatGetU8Direct(
                         (const void*)fontTbl2, &lbl_eu_80504A3C[0x5b9],
                         (u16)BdatGetItemId(id))) {
@@ -3372,7 +3327,6 @@ void GetItemMulti_HandleWindowPadOnce(CMenuGetItemMulti* self) {
     }
 }
 
-void CMenuGetItemMulti::OnFileEvent(CEventFile* pEvent) { ((void (*)(char*))GetItemMulti_OnFileEvent)((char*)this - 0x6c); }
 
 void GetItemMulti_ThunkDtor6C(void* self) { ((void(*)(void*))__dt__17CMenuGetItemMultiFv)((char*)self - 0x6c); }
 

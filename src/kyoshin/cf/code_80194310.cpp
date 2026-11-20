@@ -5,7 +5,6 @@
 // a separate translation unit).
 
 #include "kyoshin/cf/CBattleManager.hpp"
-#include "kyoshin/CPartyStateWinImports.hpp"
 #include "monolib/scn/CScn.hpp"
 #include "monolib/scn/CScn.hpp"
 #include "kyoshin/CTaskGame.hpp"

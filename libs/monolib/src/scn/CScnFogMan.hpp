@@ -25,6 +25,9 @@ class CScnFogMan {
 public:
     CScnFogMan(u32 param);
     virtual ~CScnFogMan();
+    // CScn tears every scene manager down through ScnTermRelease::release;
+    // the fourth vtable word is this unimplemented slot.
+    virtual void release(int flag) = 0;
 
     union {                           // 0x4 scene-view object
         u32 field_0x04;               // raw view (ctor param)

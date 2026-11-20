@@ -45,8 +45,7 @@ struct VoiceIdListEntry {
     s16 valsB[22];   // 0x0C: pool for BmVoice_FindPoolB
     s16 valsC[2];    // 0x38: pool for BmVoice_FindPoolC
 };
-
-extern VoiceIdListEntry lbl_eu_8053A4B8[];
+extern VoiceIdListEntry bmVoiceIdTable[];
 
 // Phantom vtable view over a CVoiceHandle vtable (vptr at +0x00) so the
 // idle-check slot at byte offset 0x2BC (declared slot 173, MWCC places
@@ -101,15 +100,6 @@ struct BmStateTriple {
 
 // This subclass's vtable.
 extern u32 lbl_eu_8053AA7C[7];
-
-// Float thresholds and the double bias constant used by BmVoice_FindRatio.
-// lbl_eu_80668EB8 is the int->float conversion magic (0x4330000080000000);
-// the builtin cast's pooled literal is addend-equal to it.
-extern float lbl_eu_80668EA8;
-extern float lbl_eu_80668EAC;
-extern float lbl_eu_80668EB0;
-extern float lbl_eu_80668EB4;
-extern double lbl_eu_80668EB8;
 
 // Battle-main voice thread object (0x24 bytes): derives from CVS_THREAD
 // (init triple at +0x00, hand-placed vtable pointer at +0x1C) plus a flag
@@ -224,12 +214,12 @@ extern "C" int BmVoice_FindPoolB(CVoiceHandle* owner);
 extern "C" int BmVoice_FindPoolC(CVoiceHandle* owner);
 int BmVoice_HasEntry(CVoiceHandle* owner);
 
-// Scan the 60-stride list at lbl_eu_8053A4B8 for the entry whose id matches
+// Scan the 60-stride list at bmVoiceIdTable for the entry whose id matches
 // the owner's +0x3F28 sub-state, then draw a random voice from pool A.
 // Goto shapes pin MWCC's branch layout: two-way exit at 'top' (bne/b) and a
 // pre-tested walk loop whose counter is tested before each pool halfword.
 int BmVoice_FindPoolA(CVoiceHandle* owner) {
-    VoiceIdListEntry* e = lbl_eu_8053A4B8;
+    VoiceIdListEntry* e = bmVoiceIdTable;
     int cur;
     // Structured scan: the shared 'cur' feeds both the terminator test and
     // the match compare; the continue-arm pins retail's bne/b branch split.
@@ -290,7 +280,7 @@ int BmVoice_Play0A(CVoiceHandle* self) {
 // walk here instead of via the helper keeps MWCC's register colours equal
 // to retail.
 int BmVoice_FindPoolB(CVoiceHandle* owner) {
-    VoiceIdListEntry* e = lbl_eu_8053A4B8;
+    VoiceIdListEntry* e = bmVoiceIdTable;
     int cur;
     // Terminator on the freshly loaded word; negated match arm uses
     // continue-in-block so the two-way exit survives (any goto out of the
@@ -335,7 +325,7 @@ wdone:
 // MWCC's -O4 inliner copies the body into BmVoice_Play32.
 // Same goto-shaped body as BmVoice_FindPoolA (pool C at +0x38).
 int BmVoice_FindPoolC(CVoiceHandle* owner) {
-    VoiceIdListEntry* e = lbl_eu_8053A4B8;
+    VoiceIdListEntry* e = bmVoiceIdTable;
     int cur;
     // Terminator on the freshly loaded word; negated match arm uses
     // continue-in-block (best-known shape for retail's branch layout -
@@ -374,7 +364,7 @@ wdone:
 }
 
 // ── us-802b1a9c (BmVoice_FindEquip) ─────────────────────────────────────────────
-// Scan the 60-stride list at lbl_eu_8053A4B8 for the entry matching the
+// Scan the 60-stride list at bmVoiceIdTable for the entry matching the
 // owner's +0x3F28 sub-state, validate the 0x3F60 -> 0x08 -> 0x18 chain
 // (value must lie in [0x10,0x18]), fetch the equipment-data pool selected
 // by the work object's byte at +0x77, and draw a random halfword from the
@@ -383,7 +373,7 @@ wdone:
 // `return p` lowers to retail's branch-over-branch `bne next; b found`
 // split, which every direct loop form folds into a single beq.
 static __inline VoiceIdListEntry* bmFindEntry(CVoiceHandle* owner) {
-    VoiceIdListEntry* p = lbl_eu_8053A4B8;
+    VoiceIdListEntry* p = bmVoiceIdTable;
     int cur;
     while ((cur = p->id) != 0) {
         if (cur == (s32)owner->field_0x3F28)
@@ -447,7 +437,7 @@ wdone:
     return ((s16*)p)[ml::math::mtRand(n)];
 }
 
-// Bit-2 gate on +0x3F00, then scan the 60-stride list at lbl_eu_8053A4B8 for
+// Bit-2 gate on +0x3F00, then scan the 60-stride list at bmVoiceIdTable for
 // an entry matching the +0x3F28 id; returns whether a match was found.
 int BmVoice_HasEntry(CVoiceHandle* self) {
     if (!(self->field_0x3F00 & 4))
@@ -456,7 +446,7 @@ int BmVoice_HasEntry(CVoiceHandle* self) {
     // clear it so the final boolean reports whether anything matched.
     // The +0x3F28 halfword is reloaded every iteration (retail lhz inside
     // the loop), so the match test sits in the loop body.
-    const VoiceIdListEntry* p = lbl_eu_8053A4B8;
+    const VoiceIdListEntry* p = bmVoiceIdTable;
     int cur;
     goto check;
 top:
@@ -788,7 +778,7 @@ int BmVoice_Cap270() { return 270; }
 // Same-TU inline search helper (bmFindEntry pattern): the inlined `return p`
 // lowers to retail's branch-over-branch `bne next; b found` split.
 static __inline VoiceIdListEntry* bmFindEntryBM(CVoiceHandle* owner) {
-    VoiceIdListEntry* p = lbl_eu_8053A4B8;
+    VoiceIdListEntry* p = bmVoiceIdTable;
     int cur;
     while ((cur = p->id) != 0) {
         if (cur == (s32)owner->field_0x3F28)
@@ -807,9 +797,9 @@ extern "C" int BmVoice_FindRatio(CVoiceHandle* owner, int arg) {
     float num = vtv->get12C();
     float den = vtv->get128();
     // Builtin int->float cast: MWCC lowers this to the 0x4330 trick whose
-    // final single-rounded fsubs both removes the bias and rounds; the
-    // pooled magic constant aliases lbl_eu_80668EB8 (same value,
-    // addend-equal reloc).
+    // final single-rounded fsubs both removes the bias and rounds. The
+    // thresholds are plain source literals; MWCC pools them in first-use
+    // order, matching the retail .sdata2 layout.
     float ratio = ((float)arg + den) / num;
     // Third virtual is fetched after the ratio; each threshold must also
     // exceed this value for its bucket to win.
@@ -819,13 +809,13 @@ extern "C" int BmVoice_FindRatio(CVoiceHandle* owner, int arg) {
     // Guard shape: test1 is a plain inverted `ratio < T` branch (bge);
     // test2 must stay as negated `T <= c` - folding it to `T > c` loses
     // the cror eq,lt,eq fusion MWCC emits for the le-test.
-    if (ratio < lbl_eu_80668EA8 && lbl_eu_80668EA8 <= c)
+    if (ratio < 0.2f && 0.2f <= c)
         idx = 3;
-    else if (ratio < lbl_eu_80668EAC && lbl_eu_80668EAC <= c)
+    else if (ratio < 0.5f && 0.5f <= c)
         idx = 2;
-    else if (ratio < lbl_eu_80668EB0 && lbl_eu_80668EB0 <= c)
+    else if (ratio < 0.8f && 0.8f <= c)
         idx = 1;
-    else if (ratio < lbl_eu_80668EB4 && lbl_eu_80668EB4 <= c)
+    else if (ratio < 0.9f && 0.9f <= c)
         idx = 0;
     else
         idx = -1;
@@ -852,3 +842,32 @@ int BmVoice_PlayGated(CVoiceHandle* self, int param, int size) {
     RequestVoicePlayback(voicePtr, param, size);
     return 0;
 }
+
+// name-guess: 0x8053A4B8 table: 22 rows keyed by CVoiceHandle::field_0x3F28
+// (0 terminates), each with three voice-id pools; consumed by BmVoice_Find*.
+VoiceIdListEntry bmVoiceIdTable[24] = {
+    { 268, { 211, 201, 202, 203 }, { -1, 205, 206, 205, 206, 205, 206, 205, 206, 205, 206, 205, 206, -1, -1, -1, -1, -1, -1, -1, -1, -1 }, { -1, 0 } },
+    { 416, { 211, 201, 202, 203 }, { -1, 206, -1, 207, -1, 205, -1, 208, -1, 209, -1, -1, -1, -1, -1, -1, -1, 212, 213, -1, -1, 214 }, { -1, 0 } },
+    { 417, { 211, 201, 202, 203 }, { 203, 205, -1, 206, -1, 205, -1, 208, -1, 207, -1, 207, -1, 213, -1, -1, -1, -1, -1, 212, 204, -1 }, { -1, 0 } },
+    { 905, { 211, 201, 202, 203 }, { 204, 206, 208, 206, 208, 207, -1, 205, -1, 209, -1, 210, -1, -1, -1, -1, -1, -1, -1, 212, 213, -1 }, { -1, 0 } },
+    { 1205, { 211, 201, 202, 203 }, { 204, 206, 208, 205, -1, 208, -1, 207, -1, 206, -1, -1, -1, -1, -1, -1, -1, -1, 213, 214, 215, 212 }, { -1, 0 } },
+    { 1436, { 211, 201, 202, 203 }, { 204, 206, 207, 208, -1, 205, 208, 206, -1, 208, 205, 209, -1, 205, -1, -1, -1, -1, -1, 212, 213, -1 }, { -1, 0 } },
+    { 1535, { 211, 201, 202, 203 }, { 204, 209, 207, 205, 208, 206, -1, 209, 211, 212, -1, 209, -1, -1, -1, -1, -1, -1, -1, 214, 215, -1 }, { -1, 0 } },
+    { 1622, { 211, 201, 202, 203 }, { -1, 207, -1, 205, -1, 205, -1, 206, -1, 205, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 }, { -1, 0 } },
+    { 1914, { 211, 201, 202, 203 }, { -1, 205, -1, 206, -1, 205, -1, 206, -1, 205, 206, 205, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 }, { -1, 0 } },
+    { 2115, { 211, 201, 202, 203 }, { -1, 209, 207, 208, 205, 205, 208, 206, -1, 205, -1, 209, 207, -1, -1, -1, -1, -1, -1, -1, -1, -1 }, { -1, 0 } },
+    { 2116, { 212, 201, 202, 203 }, { 204, 209, 207, 208, 205, 205, 208, 206, -1, 205, -1, 209, 207, -1, -1, -1, -1, -1, -1, 213, -1, -1 }, { -1, 0 } },
+    { 2117, { 211, 201, 202, 203 }, { 204, 208, -1, 209, -1, 205, 206, 207, -1, 208, -1, 208, -1, -1, -1, -1, -1, -1, -1, 212, 213, -1 }, { -1, 0 } },
+    { 2123, { 211, 201, 202, 203 }, { -1, 209, -1, 207, 208, 206, -1, 207, 205, 205, 209, 205, -1, -1, -1, -1, -1, 212, -1, -1, -1, -1 }, { -1, 0 } },
+    { 2501, { 207, 201, 202, 203 }, { 204, 208, 205, 208, 205, 208, 205, 205, 206, 205, -1, 207, -1, 207, -1, -1, -1, -1, -1, 213, 212, -1 }, { 204, 0 } },
+    { 2505, { 211, 201, 202, 203 }, { -1, 208, -1, 208, -1, 206, -1, 205, 207, 205, 207, 206, -1, 206, -1, -1, -1, 212, -1, -1, -1, -1 }, { -1, 0 } },
+    { 2309, { 211, 201, 202, 203 }, { 204, 207, -1, 205, -1, 207, -1, 209, 206, 210, -1, 208, -1, -1, -1, -1, -1, -1, 213, 214, 215, -1 }, { -1, 0 } },
+    { 1316, { 211, 201, 202, 203 }, { -1, 205, 206, 205, 206, 205, 206, 205, 206, 205, 206, 208, -1, 207, -1, 209, -1, -1, 213, -1, -1, -1 }, { -1, 0 } },
+    { 1317, { 212, 201, 202, 203 }, { 204, 209, -1, 206, 205, 208, 207, 207, 206, 210, -1, 207, -1, 208, -1, 209, -1, -1, 213, 214, 215, -1 }, { -1, 0 } },
+    { 2411, { 211, 201, 202, 203 }, { -1, 207, -1, -1, -1, -1, -1, 206, -1, -1, -1, -1, -1, 205, -1, -1, -1, -1, -1, -1, 213, -1 }, { 212, 0 } },
+    { 2407, { 214, 201, 202, 203 }, { -1, 205, 206, 205, 208, 209, -1, 206, -1, 205, 208, 209, -1, 208, 206, 210, 207, -1, -1, -1, -1, -1 }, { -1, 0 } },
+    { 2408, { 211, 201, 202, 203 }, { 204, 205, 206, 205, 208, 209, -1, 206, -1, 205, 208, 209, -1, 208, 206, 210, 207, -1, 212, 213, 214, -1 }, { -1, 0 } },
+    { 1619, { -1, 201, 202, 203 }, { -1, 211, 213, 211, 213, 204, -1, 216, 213, -1, -1, -1, -1, -1, -1, -1, -1, 216, 215, -1, -1, -1 }, { 216, 0 } },
+    { 0, { 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, { 0, 0 } },
+    { 0, { 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, { 0, 0 } },
+};

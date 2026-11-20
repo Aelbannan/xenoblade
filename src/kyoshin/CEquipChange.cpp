@@ -7,6 +7,7 @@
 // Real item-impl owner first (before CItemBoxInfo.hpp's shim macro exists,
 // which would otherwise rewrite this header's own declaration). Its decls are
 // canonical for the item tables, CItem_kindPtr and CItem_slotCnt.
+#include "kyoshin/cf/CfBdat.hpp"
 #include "kyoshin/cf/CItem.hpp"
 #include "monolib/lib/CLibLayout.hpp"
 #include "kyoshin/code_80135FDC_State.hpp"
@@ -417,7 +418,7 @@ int CEquipChange::RunMainFlow() {
         void* item = CItem_kindPtr(2, id);
         if (item != NULL && *(u32*)item != 0) {
             u32 word = *(u32*)item;
-            u8 v = (u8)BdatGetU8Direct((const void*)lbl_eu_806640EC, &lbl_eu_80508168[0x34], word >> 20);
+            u8 v = (u8)BdatGetU8Direct((const void*)::cf::CfBdat::spItmItemListFileData, &lbl_eu_80508168[0x34], word >> 20);
             u32 isOne = v - 1;
             isOne = (isOne == 0) ? 1u : 0u;
             if (isOne && CtrlRemote_TouchBitByArg(0x3508) == 0)
@@ -433,7 +434,7 @@ int CEquipChange::RunMainFlow() {
         void* item = CItem_kindPtr(4, id);
         if (item != NULL && *(u32*)item != 0) {
             u32 word = *(u32*)item;
-            u8 v = (u8)BdatGetU8Direct((const void*)lbl_eu_806640EC, &lbl_eu_80508168[0x34], word >> 20);
+            u8 v = (u8)BdatGetU8Direct((const void*)::cf::CfBdat::spItmItemListFileData, &lbl_eu_80508168[0x34], word >> 20);
             u32 isOne = v - 1;
             isOne = (isOne == 0) ? 1u : 0u;
             if (isOne && CtrlRemote_TouchBitByArg(0x3508) == 0)
@@ -449,7 +450,7 @@ int CEquipChange::RunMainFlow() {
         void* item = CItem_kindPtr(5, id);
         if (item != NULL && *(u32*)item != 0) {
             u32 word = *(u32*)item;
-            u8 v = (u8)BdatGetU8Direct((const void*)lbl_eu_806640EC, &lbl_eu_80508168[0x34], word >> 20);
+            u8 v = (u8)BdatGetU8Direct((const void*)::cf::CfBdat::spItmItemListFileData, &lbl_eu_80508168[0x34], word >> 20);
             u32 isOne = v - 1;
             isOne = (isOne == 0) ? 1u : 0u;
             if (isOne && CtrlRemote_TouchBitByArg(0x3508) == 0)
@@ -465,7 +466,7 @@ int CEquipChange::RunMainFlow() {
         void* item = CItem_kindPtr(6, id);
         if (item != NULL && *(u32*)item != 0) {
             u32 word = *(u32*)item;
-            u8 v = (u8)BdatGetU8Direct((const void*)lbl_eu_806640EC, &lbl_eu_80508168[0x34], word >> 20);
+            u8 v = (u8)BdatGetU8Direct((const void*)::cf::CfBdat::spItmItemListFileData, &lbl_eu_80508168[0x34], word >> 20);
             u32 isOne = v - 1;
             isOne = (isOne == 0) ? 1u : 0u;
             if (isOne && CtrlRemote_TouchBitByArg(0x3508) == 0)
@@ -481,7 +482,7 @@ int CEquipChange::RunMainFlow() {
         void* item = CItem_kindPtr(7, id);
         if (item != NULL && *(u32*)item != 0) {
             u32 word = *(u32*)item;
-            u8 v = (u8)BdatGetU8Direct((const void*)lbl_eu_806640EC, &lbl_eu_80508168[0x34], word >> 20);
+            u8 v = (u8)BdatGetU8Direct((const void*)::cf::CfBdat::spItmItemListFileData, &lbl_eu_80508168[0x34], word >> 20);
             u32 isOne = v - 1;
             isOne = (isOne == 0) ? 1u : 0u;
             if (isOne && CtrlRemote_TouchBitByArg(0x3508) == 0)
@@ -497,7 +498,7 @@ int CEquipChange::RunMainFlow() {
         void* item = CItem_kindPtr(8, id);
         if (item != NULL && *(u32*)item != 0) {
             u32 word = *(u32*)item;
-            u8 v = (u8)BdatGetU8Direct((const void*)lbl_eu_806640EC, &lbl_eu_80508168[0x34], word >> 20);
+            u8 v = (u8)BdatGetU8Direct((const void*)::cf::CfBdat::spItmItemListFileData, &lbl_eu_80508168[0x34], word >> 20);
             u32 isOne = v - 1;
             isOne = (isOne == 0) ? 1u : 0u;
             if (isOne && CtrlRemote_TouchBitByArg(0x3508) == 0)
@@ -1502,7 +1503,7 @@ void* CEquipChange::ResolveEquipItem() {
         sEquipChangeWorkItem.field_00 = 0;
         sEquipWorkItemInitialized = 1;
     }
-    void* table = (void*)lbl_eu_806640EC;
+    void* table = (void*)::cf::CfBdat::spItmItemListFileData;
     u32 cnt = Bdat_GetMaxRow_B1EC(table);
     u16 row = (u16)(cnt - 1);
     while (row != 0) {

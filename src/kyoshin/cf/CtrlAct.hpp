@@ -1,5 +1,5 @@
 #pragma once
-
+#include "kyoshin/cf/CfCamSymbols.hpp"
 #include <types.h>
 #include "kyoshin/cf/CtrlActApi.hpp"
 #include <nw4r/math/math_types.h>
@@ -226,7 +226,7 @@ struct CtrlActSub2A4 {
     // (0x82-0x83 unnamed alignment padding: skipped by member-wise copies,
     // matching retail)
     u8 _84[0x34];           // 0x84..0xB7 (bulk-cleared by parseActEntry)
-    u32 mFieldB8;            // 0xB8
+    u32 mFieldB8;
 };
 
 // Real player/source dispatch for ctrlActDispatchEntry. In the retail tables
@@ -659,7 +659,7 @@ void* findObjectById(int id);
 
 // cf::CfGameManager singleton accessor (mangles to getInstance__Q22cf13CfGameManagerFv)
 // and the presentation/event flag probe isGlobalCamFlagSet__Fi.
-bool isGlobalCamFlagSet(int mask);
+
 
 // In-TU action-handler entry points: C linkage so the call relocs carry the
 // retail plain names (testFacingGap convention).

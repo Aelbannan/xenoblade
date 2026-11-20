@@ -15,32 +15,7 @@ extern int CRICRW_Vsprintf(char* s, void* ignored, const char* fmt, va_list ap);
 
 void SVM_CallErr(const char* fmt, ...);
 
-// Message pool. Entry offsets are the retail byte offsets into this array.
-const char svm_mes[] =
-    "2103102:SVM:svm_unlock:lock type miss match.(type org=%d, type now=%d)\0"
-    "1071205:SVM_SetCbSvrId:illegal svtype\0"
-    "Unknown\0"
-    "1051001:SVM_SetCbSvr:too many server function\0"
-    "1051002:SVM_DelCbSvr:illegal id\0"
-    "1071206:SVM_SetCbSvrId:illegal svtype\0"
-    "1071201:SVM_SetCbSvrId:illegal id\0"
-    "1071202:SVM_SetCbSvrId:illegal svtype\0"
-    "2100801:SVM_SetCbSvrId:over write callback function.\0"
-    "1071301:SVM_ExecSvrFuncId:illegal id\0"
-    "1071302:SVM_ExecSvrFuncId:illegal svtype\0"
-    "\0\0\0";
 
-#define SVM_MES_NONE        0x000 // "2103102:SVM:svm_unlock:..."
-#define SVM_MES_SVRTYPE1    0x047 // "1071205:SVM_SetCbSvrId:illegal svtype"
-#define SVM_MES_UNKNOWN     0x06d // "Unknown"
-#define SVM_MES_TOOMANY     0x075 // "1051001:SVM_SetCbSvr:too many server function"
-#define SVM_MES_ILLEGAL_ID  0x0a3 // "1051002:SVM_DelCbSvr:illegal id"
-#define SVM_MES_SVRTYPE2    0x0c3 // "1071206:SVM_SetCbSvrId:illegal svtype"
-#define SVM_MES_ID1         0x0e9 // "1071201:SVM_SetCbSvrId:illegal id"
-#define SVM_MES_SVRTYPE3    0x10b // "1071202:SVM_SetCbSvrId:illegal svtype"
-#define SVM_MES_OVERWRITE   0x131 // "2100801:SVM_SetCbSvrId:over write callback function."
-
-// User callback pair (function + its context pointer).
 typedef struct SvmCb {
     void (*func)(void*);
     void* object;
@@ -104,7 +79,7 @@ void SVM_Unlock(void) {
         svm_ctrl.lock_count--;
         if (svm_ctrl.lock_count == 0) {
             if (svm_ctrl.lock_flag != 1)
-                SVM_CallErr(svm_mes, svm_ctrl.lock_flag, 1);
+                SVM_CallErr("2103102:SVM:svm_unlock:lock type miss match.(type org=%d, type now=%d)", svm_ctrl.lock_flag, 1);
             svm_ctrl.lock_flag = 0;
         }
         svm_unlock_cb.func(svm_unlock_cb.object);
@@ -146,7 +121,7 @@ s32 SVM_SetCbSvrWithString(u32 svrId, void* func, void* object, const char* name
 s32 svm_SetCbSvr(u32 svrId, void* func, void* object, const char* name) {
     s32 i;
     if (svrId > 7) {
-        SVM_CallErr1(svm_mes + SVM_MES_SVRTYPE1);
+        SVM_CallErr1("1071205:SVM_SetCbSvrId:illegal svtype");
         return -1;
     }
     for (i = 0; i < 6; i++) {
@@ -157,12 +132,12 @@ s32 svm_SetCbSvr(u32 svrId, void* func, void* object, const char* name) {
             if (name != 0)
                 ent->name = name;
             else
-                ent->name = svm_mes + SVM_MES_UNKNOWN;
+                ent->name = "Unknown";
             break;
         }
     }
     if (i == 6) {
-        SVM_CallErr1(svm_mes + SVM_MES_TOOMANY);
+        SVM_CallErr1("1051001:SVM_SetCbSvr:too many server function");
         return -1;
     }
     return i;
@@ -172,9 +147,9 @@ s32 svm_SetCbSvr(u32 svrId, void* func, void* object, const char* name) {
 void SVM_DelCbSvr(u32 svrId, u32 slot) {
     SVM_Lock();
     if (slot > 5) {
-        SVM_CallErr1(svm_mes + SVM_MES_ILLEGAL_ID);
+        SVM_CallErr1("1051002:SVM_DelCbSvr:illegal id");
     } else if (svrId > 7) {
-        SVM_CallErr1(svm_mes + SVM_MES_SVRTYPE2);
+        SVM_CallErr1("1071206:SVM_SetCbSvrId:illegal svtype");
     } else {
         SvmSvrEntry* ent = &svm_svr[svrId][slot];
         ent->func = 0;
@@ -195,22 +170,22 @@ void SVM_SetCbSvrIdWithString(u32 svrId, u32 slot, void* func, void* object, con
 void svm_SetCbSvrId(u32 svrId, u32 slot, void* func, void* object, const char* name) {
     SvmSvrEntry* ent;
     if (slot > 5) {
-        SVM_CallErr1(svm_mes + SVM_MES_ID1);
+        SVM_CallErr1("1071201:SVM_SetCbSvrId:illegal id");
         return;
     }
     if (svrId > 7) {
-        SVM_CallErr1(svm_mes + SVM_MES_SVRTYPE3);
+        SVM_CallErr1("1071202:SVM_SetCbSvrId:illegal svtype");
         return;
     }
     ent = &svm_svr[svrId][slot];
     if (ent->func != 0)
-        SVM_CallErr1(svm_mes + SVM_MES_OVERWRITE);
+        SVM_CallErr1("2100801:SVM_SetCbSvrId:over write callback function.");
     ent->func = func;
     ent->object = object;
     if (name != 0)
         ent->name = name;
     else
-        ent->name = svm_mes + SVM_MES_UNKNOWN;
+        ent->name = "Unknown";
 }
 
 // Register a border callback.
@@ -360,4 +335,19 @@ s32 SVM_TestAndSet(u32* flag) {
         SVM_Unlock();
     }
     return result;
+}
+
+// Execute one server function by id. The public name comes from the two
+// error strings. name-guess: the parameter list and checks below follow the
+// same pattern as svm_SetCbSvrId / SVM_DelCbSvr.
+void SVM_ExecSvrFuncId(u32 id, u32 svtype) {
+    if (id > 7) {
+        SVM_CallErr1("1071301:SVM_ExecSvrFuncId:illegal id");
+        return;
+    }
+    if (svtype > 7) {
+        SVM_CallErr1("1071302:SVM_ExecSvrFuncId:illegal svtype");
+        return;
+    }
+    svm_ExecSvr((s32)id);
 }

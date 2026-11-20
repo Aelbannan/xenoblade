@@ -65,7 +65,7 @@ cf::CtrlEnemy::~CtrlEnemy() {
 // +0x8C gauge, run the self vtable slots 0x8C then 0x58.
 void CtrlEnemy_UnkFunc_8008772C(cf::CtrlEnemy* self) {
     self->field_0x04 = 0;
-    if (self->field_0x80->mSub.s08C() > lbl_eu_80666570) {
+    if (self->field_0x80->mSub.s08C() > 0.0f) {
         self->v08C();
         self->v058();
     }
@@ -114,13 +114,13 @@ void CtrlEnemy_UnkFunc_800877A8(cf::CtrlEnemy* self) {
     if (actor->field_3374 & 0x2000) goto fail;
 fail:
     CtrlMoveEne_UpdateBattleMove(&self->mSub84);
-    self->field_0x14 = lbl_eu_80666570;
+    self->field_0x14 = 0.0f;
     goto end;
 gateOk:
     // Attack-gauge reset when the actor's flag word shows it; then drive the
     // embedded move sub-object by battle-cmd state. (actor survives the fail
     // block in r3 - retail reuses the pre-fail load for the +0x45CA read.)
-    if (actor->field_45CA & 0x6) self->field_0x14 = lbl_eu_80666570;
+    if (actor->field_45CA & 0x6) self->field_0x14 = 0.0f;
     if (self->field_0x80->mSub.s00C(0x200) == 0) goto L_8839C;
     if (self->field_0x80->field_3F60 == 0) {
         if (self->field_0x80->field_3374 & 0x08000000) {
@@ -184,8 +184,8 @@ L_8854C:
             if (self->field_0x80->mSub.s00C(0x100) == 0) {
                 self->field_0x80->mSub.s008(0x100);
                 void* obj = MapFx_ResolveOwner(findObjectById((int)enemy));
-                self->field_0x80->v2C4(obj, lbl_eu_80666574, lbl_eu_80666570,
-                                       lbl_eu_80666570);
+                self->field_0x80->v2C4(obj, 10.0f, 0.0f,
+                                       0.0f);
             }
             goto L_886DC;
         }
@@ -195,13 +195,13 @@ L_88600:
     actor = self->field_0x80;
     w20 = *actor->field_04->b030();
     if (testActorStatus(actor, &w20, 0x5) != 0) {
-        self->field_0x14 = lbl_eu_80666570;
+        self->field_0x14 = 0.0f;
         goto L_886D4;
     }
     actor = self->field_0x80;
     w1C = *actor->field_04->b030();
     if (testActorStatus(actor, &w1C, 0x19) != 0) {
-        self->field_0x14 = lbl_eu_80666578;
+        self->field_0x14 = 4.0f;
         goto L_886D4;
     }
     actor = self->field_0x80;
@@ -217,7 +217,7 @@ L_886DC:
     if (isBattleStatusActive((u8*)self->field_0x80 + 0x8, 0x6) != 0) goto L_88744;
     if (isBattleStatusActive((u8*)self->field_0x80 + 0x8, 0xcd) == 0) goto L_8874C;
 L_88744:
-    self->field_0x14 = lbl_eu_80666570;
+    self->field_0x14 = 0.0f;
 L_8874C:
     actor = self->field_0x80;
     w10 = *actor->field_04->b030();
@@ -230,11 +230,11 @@ L_8874C:
     if (testActorStatus(actor, &w08, 0x806) == 0) goto end;
 L_887F4:
     if (self->field_0x80->mSub.s00C(0x4) == 0) goto end;
-    if (self->field_0x80->mSub.s140() == lbl_eu_80666570) {
+    if (self->field_0x80->mSub.s140() == 0.0f) {
         self->field_0x80->mSub.s010(0x4);
         goto end;
     }
-    self->field_0x14 = lbl_eu_80666570;
+    self->field_0x14 = 0.0f;
     self->field_0x80->mSub.s0C4(self->field_0x0C);
     CfObjectMove_setAnimModeArgs((u8*)&self->field_0x80->mSub, 0x3, 0, -0x1, 0x1);
     self->field_0x80->mSub.s010(0x4);
@@ -294,9 +294,9 @@ void* CtrlEnemy_UnkFunc_80087EEC(cf::CtrlEnemy* self) {
             probePos[2] = pos->z;
             src = &probePos[0];
         } else {
-            upVec[0] = lbl_eu_80666570;
-            upVec[1] = lbl_eu_8066657C;
-            upVec[2] = lbl_eu_80666570;
+            upVec[0] = 0.0f;
+            upVec[1] = 1.0f;
+            upVec[2] = 0.0f;
             cf::CtrlEnemyPos4* base =
                 (cf::CtrlEnemyPos4*)self->field_0x80->mSub.s0AC();
             sumTmp[0] = base->e0 + upVec[0];
@@ -351,7 +351,7 @@ void* CtrlEnemy_UnkFunc_80087EEC(cf::CtrlEnemy* self) {
             f32 f268 = *self->field_0x80->v268();
             __ct__800FB044(holder.get(), f268, sub, 0);
         }
-        __ct__800FC4FC(holder.get(), lbl_eu_80666580, 0);
+        __ct__800FC4FC(holder.get(), 0.15f, 0);
         break;
     }
     // Scan candidates: nearest eligible enemy wins.
@@ -403,7 +403,7 @@ void* CtrlEnemy_UnkFunc_80087EEC(cf::CtrlEnemy* self) {
                 // Remaining-power ratio, squared, as a double wall.
                 f32 scale = *actor->v268();
                 powTmp = (f64)(0x64 - (s32)info->field_10);
-                powTmp = powTmp * scale / lbl_eu_80666584;
+                powTmp = powTmp * scale / 100.0f;
                 powTmp = powTmp * powTmp;
                 if (powTmp < (f64)distSq) {
                     continue;
@@ -472,9 +472,8 @@ int CtrlEnemy_UnkFunc_80088800(cf::CtrlEnemy* self, ml::CVec3* out, u8* outFlag,
     return moveBaseSeekTo((cf::CCtrlMoveBase*)&self->mSub84, out, outFlag, src, flag);
 }
 
-extern f32 lbl_eu_80666590;
 extern "C" void cachedMoveReq(void* a, float f);
-extern "C" void CtrlEnemy_UnkFunc_8008884C(void* self) { cachedMoveReq(((cf::CtrlEnemy*)self)->mSub84, lbl_eu_80666590); }
+extern "C" void CtrlEnemy_UnkFunc_8008884C(void* self) { cachedMoveReq(((cf::CtrlEnemy*)self)->mSub84, 30.0f); }
 
 void cf::CtrlEnemy::delegateTo80089B24() { moveBaseSway(this->mSub84); }
 

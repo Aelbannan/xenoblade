@@ -1,6 +1,7 @@
 // Auto-scaffolded catalog TU for kyoshin/CPartyState
 // Replace stubs with high-level C/C++ during decomp.
 
+#include "kyoshin/cf/CfBdat.hpp"
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/CPartyState.hpp"
 #include "kyoshin/cf/CfTFile.hpp"
@@ -447,7 +448,7 @@ extern "C" void rebuildPartySelect(CPartyState* self) {
         positionPartyPane(self, (float)v3, (float)v4, member, (u32)buf78);
 
         if (i >= 3) {
-            u16 id = BdatGetU16Direct(lbl_eu_80664090, strs + 0x7d, member);
+            u16 id = BdatGetU16Direct(::cf::CfBdat::spBtlPcListFileData, strs + 0x7d, member);
             char* name = MakeTplNameSysFile((u16)id);
             u32 tex = (u32)self->mArcResAcc->GetResource(0x74696D67, name, 0);
             if (tex != 0) {
@@ -483,7 +484,7 @@ extern "C" void rebuildPartySelect(CPartyState* self) {
         }
         u8 m2 = GetCollectedFlagWord8(k);
         if (m2 == 0) continue;
-        u16 id = BdatGetU16Direct(lbl_eu_80664098, strs + 0xe1, m2);
+        u16 id = BdatGetU16Direct(::cf::CfBdat::spFldNpcListFileData, strs + 0xe1, m2);
         char* name = MakeTplNameSysFile((u16)id);
         u32 tex = (u32)CUICfManager_getArcResourceAccessor()->GetResource(0x74696D67, name, 0);
         if (tex != 0) {

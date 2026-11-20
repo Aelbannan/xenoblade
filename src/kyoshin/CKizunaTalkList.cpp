@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #define IWORK_EVENT_INLINE_DTOR
+#include "kyoshin/cf/CfBdat.hpp"
 #include "kyoshin/CKizunaTalkList.hpp"
 #include "kyoshin/CScrollBar.hpp"
 #include "monolib/lib/CLibLayout.hpp"
@@ -9,10 +10,32 @@
 #include "kyoshin/code_80135FDC.hpp"
 #include "kyoshin/code_80135FDC_State.hpp"
 #include "kyoshin/plugin/ocBdat.hpp"
-#include "kyoshin/CKizunaTalkListImports.hpp"
-#include "monolib/device/CDeviceFont.hpp"
+// Single definitions of this TU's retail .sbss globals.
+extern "C" void* sKizunaTalkBdatData = nullptr;
+extern "C" void* sKizunaTalkRowColorNeutralA = nullptr;
+extern "C" void* sKizunaTalkRowColorNeutralB = nullptr;
+extern "C" void* sKizunaTalkRowColorSelectedA = nullptr;
+extern "C" void* sKizunaTalkRowColorSelectedB = nullptr;
+
+// Retail-unmangled helper (canonical spelling from the calling TUs).
+#include "kyoshin/cf/CtrlRemoteApi.hpp"
+
+// Retail-unmangled callees that have no canonical header declaration yet.
+extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv();
+extern "C" void* readFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, const char*, void*, int, int);
+extern "C" void* readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, const char*, void*, int, int);
+extern "C" int KyoshinHeap_GetField44();
+extern "C" void deleteRegion(UnkClass_8045F564* self);
+extern "C" void setMemInitFlag__Q23mtl10MemManagerFb(bool value);
+extern "C" bool Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(nw4r::lyt::ArcResourceAccessor* self, void* data, const char* name);
+extern "C" void* Bdat_GetTable_AA34();
+extern "C" u32 Bdat_GetMaxRow_B1EC(void* fp);
+
 #include "kyoshin/code_80135FDC_Lyt.hpp"
-#include "kyoshin/CTitleAHelp.hpp"  // setGXColorS10 (defined in CTitleAHelp.cpp)
+#include "kyoshin/CUICfManager_Res.hpp"
+#include "monolib/device/CDeviceFont.hpp"
+#include "kyoshin/CTitleAHelp.hpp"  // setGXColorS10
+
 
 // Entry table constructor: all 256 entries are default-constructed
 // (cleared, subtype -1), the count is reset and the owning resource accessor
@@ -70,7 +93,7 @@ void TalkListEntryArray::Build() {
         u32 v1 = FindIcon(m1);
         u32 v2 = FindIcon(m2);
         u8 x = (u8)BdatGetU8Direct((const void*)fp, "mapID", id);
-        char* cond = BdatGetPtrDirect((const void*)lbl_eu_806640A8, "name", (int)x);
+        char* cond = BdatGetPtrDirect((const void*)::cf::CfBdat::spFldMapListFileData, "name", (int)x);
         u8 y = (u8)BdatGetU8Direct((const void*)fp, "list", id);
 
         mEntries[mCount++] = TalkListEntry((u32)fmt12, (u32)cond, v1, v2, (s8)1, (s16)n4, y);
@@ -102,7 +125,7 @@ void TalkListEntryArray::Build() {
         u32 v1 = FindIcon(m1);
         u32 v2 = FindIcon(m2);
         u8 x = (u8)BdatGetU8Direct((const void*)fp, "mapID", id);
-        char* cond = BdatGetPtrDirect((const void*)lbl_eu_806640A8, "name", (int)x);
+        char* cond = BdatGetPtrDirect((const void*)::cf::CfBdat::spFldMapListFileData, "name", (int)x);
         u8 y = (u8)BdatGetU8Direct((const void*)fp, "list", id);
 
         mEntries[mCount++] = TalkListEntry((u32)fmt12, (u32)cond, v1, v2, (s8)2, (s16)n4, y);
@@ -128,7 +151,7 @@ void TalkListEntryArray::Build() {
         u32 v1 = FindIcon(0);
         u32 v2 = FindIcon(0);
         u8 x = (u8)BdatGetU8Direct((const void*)fp, "mapID", id);
-        char* cond = BdatGetPtrDirect((const void*)lbl_eu_806640A8, "name", (int)x);
+        char* cond = BdatGetPtrDirect((const void*)::cf::CfBdat::spFldMapListFileData, "name", (int)x);
         u8 y = (u8)BdatGetU8Direct((const void*)fp, "list", id);
 
         mEntries[mCount++] = TalkListEntry((u32)fmt12, (u32)cond, v1, v2, (s8)3, (s16)-1, y);
@@ -155,7 +178,7 @@ void TalkListEntryArray::Build() {
         u32 v1 = FindIcon(m1);
         u32 v2 = FindIcon(m2);
         u8 x = (u8)BdatGetU8Direct((const void*)fp, "mapID", id);
-        char* cond = BdatGetPtrDirect((const void*)lbl_eu_806640A8, "name", (int)x);
+        char* cond = BdatGetPtrDirect((const void*)::cf::CfBdat::spFldMapListFileData, "name", (int)x);
         u8 y = (u8)BdatGetU8Direct((const void*)fp, "list", id);
 
         mEntries[mCount++] = TalkListEntry((u32)name0, (u32)cond, v1, v2, (s8)0, (s16)n4, y);
@@ -211,7 +234,7 @@ u32 TalkListEntryArray::FindIcon(u8 v) {
             return (u32)found;
         return 0;
     }
-    u16 id = BdatGetU16Direct(lbl_eu_80664090, "tag_icon", v);
+    u16 id = BdatGetU16Direct(::cf::CfBdat::spBtlPcListFileData, "tag_icon", v);
     char* name = MakeTplNameSysFile(id);
     void* resAcc = CUICfManager_getArcResourceAccessor();
     void* found = ((KtlResView*)resAcc)->v01(

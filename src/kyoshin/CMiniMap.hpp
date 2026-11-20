@@ -1,5 +1,5 @@
 #pragma once
-
+#include "kyoshin/cf/CfCamSymbols.hpp"
 #include <types.h>
 #include "monolib/work/CEventFile.hpp"
 #include "monolib/device/CFileHandle.hpp"
@@ -62,7 +62,6 @@ extern u32 spMiniMap2;
 extern char lbl_eu_8052C958[];
 extern char lbl_eu_8052C9F0[];
 // Current BDAT table pointer / per-row name-pointer table used by the ctor.
-extern char* lbl_eu_806640A8;
 extern char* sMiniMapLayoutNames[];
 
 #include "kyoshin/CTaskGame.hpp"
@@ -82,7 +81,7 @@ extern "C" int isVisionAnimating();
 // Move() gate/state helpers (unmangled retail symbols - C linkage).
 extern "C" u32 isMapSelectActive();
 extern "C" bool MapSelectSCIsCreated();
-bool isGlobalCamFlagSet(int mask);   // isGlobalCamFlagSet__Fi (mangled C++)
+
 // (getCameraDataBlock__Q22cf13CfGameManagerFv: single winning decl on
 // CfGameManagerApi.hpp; this TU uses the CfGameManager.hpp member form.)
 // cf::CfGameManager pad-mode probe with an explicit int arg: the retail symbol
@@ -151,12 +150,7 @@ struct CMMTableBlock {
     u32 mW[0x4F];    // 0x3C..0x178 (MiniMapBuildMarkerPanes marker table)
 };
 
-// Gimmick-view region 0x178..0x820.
-struct CMMViewBlock {
-    u32 mW[0x1AA];   // MiniMapInitGimmickTables gimmick view
-};
 
-// Stack mirror of CMMClock used by CMenuMiniMap2::Init: retail hand-builds the
 // temp (vtable + zeroed fields + gate bytes), member-copies it into mClock,
 // then runs the embedded UnkClass dtor, so the UnkClass storage stays raw here
 // and is placement-new'd by Init.
@@ -184,6 +178,61 @@ struct CMMMapImg {
     u8 mRow;                    // 0x0D - selected BDAT row (forced min 1)
     u8 mMode;                   // 0x0E - selected unlock-gated resource variant
     void MiniMapRequestMapImage();
+};
+
+// Gimmick/marker view tables used by MiniMapResetGimmickTables / MiniMapFillMarkerEntry /
+// MiniMapUpdateGimmickRows (subobject of the minimap object at +0x17C).
+// Pane-entry record written by MiniMapUpdateGimmickRows: integer-truncated grid coords
+// at +0x2C/+0x30, constant at +0x34, and a per-entry enable byte at +0xB7
+// (bit0 cleared when a row exceeds the grid radius).
+struct CMMMapEntry {
+    u8 pad_00[0x2C];
+    f32 field_2C;
+    f32 field_30;
+    f32 field_34;
+    u8 pad_38[0xBB - 0x38];
+    u8 field_BB;
+};
+
+// name-guess: embedded gimmick table at CMiniMap+0x178; retail name not recovered.
+struct CMiniMapGimmickData {
+    const char* field_0x00;            // 0x00 - bdat table pointer
+    u32 field_0x04;                    // 0x04
+    f32 field_0x08;                    // 0x08
+    s32 field_0x0C;                    // 0x0C - row budget (signed)
+    s32 field_0x10;                    // 0x10 - fill cursor (signed)
+    u32 field_0x14;                    // 0x14
+    u8 field_0x18[0xE0 - 0x18];        // 0x18..0xE0 - per-row enable flags
+    s16 field_0xE0[25];                 // 0xE0..0x112 - per-row display ids
+    u8 field_0x112[0x270 - 0x112];      // 0x112..0x270
+    u8 field_0x270[25];                 // 0x270..0x289 - per-row valid flags
+    u8 field_0x289[0x338 - 0x289];      // 0x289..0x338
+    u8 field_0x338[25 * 8];             // 0x338..0x400
+    u8 field_0x400[25 * 8];             // 0x400..0x4C8
+    u8 field_0x4C8[0x590 - 0x4C8];     // 0x4C8..0x590
+    u32 field_0x590;                   // 0x590
+    // Per-row working set (0x594..0x6A4). Three interleaved views over the
+    // same storage: pane-entry pointers stride 4 from 0x594, marker world
+    // positions stride 0xC from 0x5D4, and per-row flags stride 1 from 0x694.
+    union {
+        u8 field_0x594[0x110];                 // 0x594..0x6A4 raw view
+        struct {
+            u8 pad_0x594[0x40];
+            ml::CVec3 field_0x5D4[17];         // 0x5D4.. per-row world positions
+        };
+        struct {
+            CMMMapEntry* field_0x594_entries[64]; // 0x594.. per-row pane records
+            u8 field_0x694[16];                // 0x694.. per-row update flags
+        };
+    };
+    u32 field_0x6A4;                   // 0x6A4 - live row count
+    u32 FillMarkerEntry();
+    void InitGimmickTables(u32 table, void* layout, f32 scale);
+};
+
+// Gimmick-view region 0x178..0x820.
+struct CMMViewBlock {
+    u32 mW[0x1AA];   // MiniMapInitGimmickTables gimmick view
 };
 
 class CMiniMap {
@@ -283,61 +332,12 @@ struct MiniMapTable {
     void BuildMarkerPanes(void* table, void* layout, f32 scale);
 };
 
-// Pane-entry record written by MiniMapUpdateGimmickRows: integer-truncated grid coords
-// at +0x2C/+0x30, constant at +0x34, and a per-entry enable byte at +0xB7
-// (bit0 cleared when a row exceeds the grid radius).
-struct CMMMapEntry {
-    u8 pad_00[0x2C];
-    f32 field_2C;
-    f32 field_30;
-    f32 field_34;
-    u8 pad_38[0xBB - 0x38];
-    u8 field_BB;
-};
-
-// Gimmick/marker view tables used by MiniMapResetGimmickTables / MiniMapFillMarkerEntry /
-// MiniMapUpdateGimmickRows (subobject of the minimap object at +0x17C).
-struct CMiniMapGimmickView {
-    const char* field_0x00;            // 0x00 - bdat table pointer
-    u32 field_0x04;                    // 0x04
-    f32 field_0x08;                    // 0x08
-    s32 field_0x0C;                    // 0x0C - row budget (signed)
-    s32 field_0x10;                    // 0x10 - fill cursor (signed)
-    u32 field_0x14;                    // 0x14
-    u8 field_0x18[0xE0 - 0x18];        // 0x18..0xE0 - per-row enable flags
-    s16 field_0xE0[25];                 // 0xE0..0x112 - per-row display ids
-    u8 field_0x112[0x270 - 0x112];      // 0x112..0x270
-    u8 field_0x270[25];                 // 0x270..0x289 - per-row valid flags
-    u8 field_0x289[0x338 - 0x289];      // 0x289..0x338
-    u8 field_0x338[25 * 8];             // 0x338..0x400
-    u8 field_0x400[25 * 8];             // 0x400..0x4C8
-    u8 field_0x4C8[0x590 - 0x4C8];     // 0x4C8..0x590
-    u32 field_0x590;                   // 0x590
-    // Per-row working set (0x594..0x6A4). Three interleaved views over the
-    // same storage: pane-entry pointers stride 4 from 0x594, marker world
-    // positions stride 0xC from 0x5D4, and per-row flags stride 1 from 0x694.
-    union {
-        u8 field_0x594[0x110];                 // 0x594..0x6A4 raw view
-        struct {
-            u8 pad_0x594[0x40];
-            ml::CVec3 field_0x5D4[17];         // 0x5D4.. per-row world positions
-        };
-        struct {
-            CMMMapEntry* field_0x594_entries[64]; // 0x594.. per-row pane records
-            u8 field_0x694[16];                // 0x694.. per-row update flags
-        };
-    };
-    u32 field_0x6A4;                   // 0x6A4 - live row count
-    u32 FillMarkerEntry();
-    void InitGimmickTables(u32 table, void* layout, f32 scale);
-};
-
 // Same-unit minimap helpers whose retail symbols are unmangled (func_*):
 // extern "C" keeps the emitted call relocs matching retail
 // (MiniMapTeardownMarkerPanes / __ct__CMiniMap) instead of re-deriving mangled names.
 extern "C" void MiniMapTeardownMarkerPanes(CMiniMap* self);
 extern "C" void __ct__CMiniMap(CMiniMap* self);
 MiniMapTable* MiniMapInitTable3x5(MiniMapTable* self);
-void MiniMapResetGimmickTables(CMiniMapGimmickView* self);
+void MiniMapResetGimmickTables(CMiniMapGimmickData* self);
 // Per-frame gimmick-view updater (retail unmangled symbol).
-extern "C" void MiniMapUpdateGimmickRows(CMiniMapGimmickView* self);
+extern "C" void MiniMapUpdateGimmickRows(CMiniMapGimmickData* self);

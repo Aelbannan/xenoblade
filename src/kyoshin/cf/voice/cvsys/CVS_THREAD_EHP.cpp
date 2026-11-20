@@ -8,12 +8,6 @@
 #include "monolib/math/Random.hpp"
 #include <string.h>
 
-// 0x4330000080000000 s32->float conversion magic (2^52 + 2^31), defined in
-// .sdata2 under its retail pool name so MWCC's implicit-conversion literal
-// pool relocates to lbl_eu_80668C98 instead of a synthesised @N label.
-__declspec(section ".sdata2") extern const f64 lbl_eu_80668C98 =
-    4503601774854144.0;
-
 // Init-data tables (3 u32s each: {0, -1, callback}). Each slot state carries
 // a {field_0, field_4, callback} triple that the rotation function copies into
 // unk0/unk4/unk8 when the rotating index is not at the stop index.
@@ -238,7 +232,7 @@ CVS_THREAD_EHP* CVS_THREAD_EHP::create(CVoiceHandle* handle, CVoiceHandle* owner
     // Retail materializes the branch condition into a bool with the zero init
     // hoisted above the comparisons.
     ok = 0;
-    if (frac > lbl_eu_80668C90 && lbl_eu_80668C90 < ratio) {
+    if (frac > 0.0f && 0.0f < ratio) {
         ok = 1;
     }
     if (ok == 0) {
@@ -249,7 +243,7 @@ CVS_THREAD_EHP* CVS_THREAD_EHP::create(CVoiceHandle* handle, CVoiceHandle* owner
         frac = gauge->getMax() / cur;
 
         ok = 0;
-        if (frac > lbl_eu_80668C94 && lbl_eu_80668C94 < ratio) {
+        if (frac > 0.3f && 0.3f < ratio) {
             ok = 1;
         }
         if (ok == 0) {
@@ -319,7 +313,7 @@ extern "C" void selectEhpVoiceByHp(CVS_THREAD_EHP* self) {
         float frac = ((CVoiceChainVTV*)gauge)->getMax() / cur;
 
         // Retail materializes the branch condition into a boolean.
-        int lowGauge = frac <= lbl_eu_80668C90 && lbl_eu_80668C90 < ratio;
+        int lowGauge = frac <= 0.0f && 0.0f < ratio;
         if (lowGauge != 0) {
             // Low-gauge path: install the slot-state triple, collect free
             // rotating handles, pick a random index among them.
@@ -349,7 +343,7 @@ extern "C" void selectEhpVoiceByHp(CVS_THREAD_EHP* self) {
             cur = ((CVoiceChainVTV*)gauge)->getCur();
             float frac = ((CVoiceChainVTV*)gauge)->getMax() / cur;
 
-            int highGauge = frac <= lbl_eu_80668C94 && lbl_eu_80668C94 < ratio;
+            int highGauge = frac <= 0.3f && 0.3f < ratio;
             if (highGauge != 0) {
                 u32 v0;
                 const u32* p = lbl_eu_80539AD0;

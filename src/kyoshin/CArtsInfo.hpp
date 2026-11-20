@@ -2,6 +2,7 @@
 #include "kyoshin/code_8025FB10.hpp"
 
 #include <types.h>
+#include "monolib/work/IWorkEvent.hpp"
 #include "monolib/work/CEventFile.hpp"
 #include "kyoshin/CBaseCur.hpp"
 #include "monolib/lib/UnkClass_8045F564.hpp"
@@ -27,13 +28,11 @@ namespace math {
 }
 }
 
-class CArtsInfo {
+class CArtsInfo : public IWorkEvent {
 public:
     CArtsInfo();
-    // Virtual in retail; keeps the implicit vtable pointer slot at 0x00 so
-    // member offsets match (the free-function ctor emits no extra vtable store).
     virtual ~CArtsInfo();
-    int OnFileEvent(CEventFile* event);
+    virtual bool OnFileEvent(CEventFile* event);
     u8 getField48();
     u8 getField49();
     void setField54(u8 val);
@@ -73,6 +72,10 @@ public:
     /* 0x5B */ u8 _5B;          // padding
     /* 0x5C */ CCur18 mCursor;
 };
+
+// Defined in CMainMenu.cpp with the retail (unmangled) symbol. Callers keep
+// the live CArtsInfo in r3, so the declaration intentionally has no argument.
+extern "C" void ArtsInfo_SetReadyFlag();
 
 // Overlay structs for the 'timg' message resource consumed by OnFileEvent:
 // the resource object holds a chain whose first field points at the u16
@@ -254,7 +257,6 @@ extern u16 lbl_eu_8066868C;
 // Arts bdat file pointer used by CArtsInfo_GetEquipValue's final row lookup
 // (BdatGetU16Direct, value passed as the first argument).
 // void* (not u32): shared with kyoshin/cf/CItem.hpp (MWCC 10197).
-extern void* lbl_eu_806640D8;
 
 // --- CArtsInfo::OnFileEvent imports (retail C-linkage names) ---
 extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv(); // already above? keep single decl

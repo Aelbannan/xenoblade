@@ -1,4 +1,5 @@
 #pragma once
+
 #include "kyoshin/code_8025FB10.hpp"
 
 #include <types.h>
@@ -13,7 +14,6 @@
 // `extern float` leaves the lfs after the GPR saves (4-byte shift).
 extern const float lbl_eu_806677E4; // sdata2: default gauge value (CActorParam_resetGaugeBattleEntry)
 extern const float lbl_eu_806677E0; // sdata2: gauge default (CActorParam_resetGaugeEntry/resetAllGaugeEntries)
-extern void* lbl_eu_806640DC; // .sbss arts bdat file pointer (CActorParam_getLevelExp)
 extern char lbl_eu_80503438[]; // rodata column-name string block (CActorParam_getLevelExp)
 extern double lbl_eu_80667848; // sdata2: +0.5 rounding constant (CActorParam_findMaxGaugeEntry/findMinGaugeEntry)
 extern double lbl_eu_80667850; // sdata2: -0.5 rounding constant (CActorParam_findMaxGaugeEntry/findMinGaugeEntry)

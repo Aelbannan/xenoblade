@@ -10,18 +10,10 @@
 // .sdata 0x80663560-0x80663568: CToken RTTI base list {&"CToken", 0}.
 // ============================================================================
 
-// Pooled token strings owned by FloatUtils (.sdata2 range 0x8066A178+).
-extern "C" const char lbl_eu_8066A288[5];  // "????"
-extern "C" const char lbl_eu_8066A290[3];  // "%f"
-extern "C" const char lbl_eu_8066A294[3];  // "%d"
-extern "C" const char lbl_eu_8066A298[3];  // "%x"
-extern "C" const char lbl_eu_8066A29C[4];  // "%v3"
-extern "C" const char lbl_eu_8066A2A0[4];  // "%va"
-extern "C" const char lbl_eu_8066A2A4[4];  // "%v4"
-extern "C" const char lbl_eu_8066A2A8[4];  // "%i3"
-extern "C" const char lbl_eu_8066A2AC[4];  // "%i4"
-extern "C" const char lbl_eu_8066A2B0[6];  // "%rect"
-extern "C" const char lbl_eu_8066A2B8[3];  // "%s"
+// The type-name string and the int->float magic word are compiler pools of
+// the still-unmatched matchKeyWords/RTTI code; keep their retail labels until
+// those functions are reconstructed. The eleven format strings below are
+// TU-owned and emitted by MWCC in first-use order from the table initializer.
 extern "C" const char lbl_eu_8066A2C8[7];  // "CToken"
 // .sdata 0x80663560: CToken RTTI base list (defined below).
 extern "C" u32 lbl_eu_80663560[2];
@@ -32,11 +24,10 @@ extern "C" void __dt__6CTokenFv();
 extern "C" int matchKeyWords__6CTokenFPCcPCc(const char*, const char*);
 
 // .data 0x8056B4D0: tokenizer format-string table (11 pointers + null).
-extern "C" u32 lbl_eu_8056B4D0[12] = {
-    (u32)&lbl_eu_8066A288[0], (u32)&lbl_eu_8066A290[0], (u32)&lbl_eu_8066A294[0],
-    (u32)&lbl_eu_8066A298[0], (u32)&lbl_eu_8066A29C[0], (u32)&lbl_eu_8066A2A0[0],
-    (u32)&lbl_eu_8066A2A4[0], (u32)&lbl_eu_8066A2A8[0], (u32)&lbl_eu_8066A2AC[0],
-    (u32)&lbl_eu_8066A2B0[0], (u32)&lbl_eu_8066A2B8[0], 0,
+// name-guess: format identifiers accepted by findTokenName/matchKeyWords.
+static const char* sTokenFormatStrings[12] = {
+    "????", "%f", "%d", "%x", "%v3", "%va",
+    "%v4", "%i3", "%i4", "%rect", "%s", 0,
 };
 
 // .data 0x8056B500: matchKeyWords switch jumptable (function + case offset).
@@ -60,18 +51,19 @@ extern "C" u32 lbl_eu_8056B52C[3] = {
 };
 
 // .rodata 0x80522558: token-size table for findTokenName's lookup.
-extern "C" const u32 lbl_eu_80522558[12] = {
+// name-guess: length of each format identifier above; 0 terminates the walk.
+static const u32 sTokenNameLengths[12] = {
     4, 2, 2, 2, 3, 3, 3, 3, 3, 5, 2, 0,
 };
 
 // .sdata 0x80663560: CToken RTTI base list.
 extern "C" u32 lbl_eu_80663560[2] = { (u32)&lbl_eu_8066A2C8[0], 0 };
 
-// NOTE: retail findTokenName reads the CToken format-string table
-// (lbl_eu_8056B4D0, .data) with the size table lbl_eu_80522558 (.rodata,
-// 12th entry 0 = terminator) -- there is no TU-local Vtx* attribute-name
-// table (the old kAttributeNames array was decomp-invented and polluted
-// .rodata; removed so CToken.o matches its retail .rodata 0x30 range).
+// NOTE: retail findTokenName reads the CToken format-string table (.data)
+// with the size table sTokenNameLengths (.rodata, 12th entry 0 = terminator)
+// -- there is no TU-local Vtx* attribute-name table (the old kAttributeNames
+// array was decomp-invented and polluted .rodata; removed so CToken.o matches
+// its retail .rodata 0x30 range).
 
 CToken::CToken() {
     *(void**)this = (void*)lbl_eu_8056B52C;
@@ -148,15 +140,15 @@ void CToken::clear() {
 
 void CToken::findTokenName(char* pOutBuffer, int bufferLen, const char* pName) {
     // Looks up a name in the format-string table (retail layout: pointer
-    // table lbl_eu_8056B4D0 + size table lbl_eu_80522558, whose 12th entry
-    // (0) terminates the walk). If found, writes the matching index byte to
+    // table sTokenFormatStrings + size table sTokenNameLengths, whose 12th
+    // entry (0) terminates the walk). If found, writes the matching index byte to
     // pOutBuffer. If not found, copies the original name and null-terminates
     // at the name's length.
     int nameLen = strlen(pName);
 
-    for (int i = 0; lbl_eu_80522558[i] != 0; i++) {
-        if (strlen((const char*)lbl_eu_8056B4D0[i]) == static_cast<u32>(nameLen) &&
-            strncmp((const char*)lbl_eu_8056B4D0[i], pName, nameLen) == 0) {
+    for (int i = 0; sTokenNameLengths[i] != 0; i++) {
+        if (strlen(sTokenFormatStrings[i]) == static_cast<u32>(nameLen) &&
+            strncmp(sTokenFormatStrings[i], pName, nameLen) == 0) {
             pOutBuffer[0] = static_cast<char>(i);
             return;
         }

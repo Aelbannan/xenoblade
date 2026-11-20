@@ -1608,7 +1608,7 @@ extern "C" void* getAnimChain(CActParamAnim* self) {
     return reinterpret_cast<void*>(self->field4B4);
 }
 
-void CActParamAnim::func_8004DAE0() {}
+int CActParamAnim::func_8004DAE0() { return 0; }
 
 // Retail symbol is Fv but the body reads r4 (one extra param) -- forced-name
 // free function, same scheme as initAnimBlendVectors__13CActParamAnimFv.

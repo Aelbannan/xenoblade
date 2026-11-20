@@ -2,9 +2,15 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include <harness_catalog.h>
+#include "libs/CriWare/src/sofdec/sfdcore/mpv/mpv_types.h"
 extern int mpvcdec_IntraBlocksInt1(void* self);
 extern int mpvcdec_NintraBlocksInt1(void* self);
-__declspec(section ".rodata") __attribute__((aligned(8))) const void* lbl_eu_8051C080[2] = { (void*)mpvcdec_IntraBlocksInt1, (void*)mpvcdec_NintraBlocksInt1 };
+typedef int (*MpvCdecIntraBlockFn)(void*);
+// name-guess: the two-entry retail table holds the intra-block decoders.
+__attribute__((aligned(8))) const MpvCdecIntraBlockFn sMpvCdecIntraBlocks[2] = {
+    mpvcdec_IntraBlocksInt1,
+    mpvcdec_NintraBlocksInt1,
+};
 
 #include <string.h>
 
@@ -15,9 +21,9 @@ extern void DCT_IsrInitScaleTbl(void* tbl);
 extern volatile u32 lbl_eu_80602A68[];
 extern volatile u32 lbl_eu_80602A6C[];
 
-void MPVCDEC_Init(void* self) {
+void MPVCDEC_Init(MpvHn* self) {
     u32* arr = (u32*)lbl_eu_80602A6C;
-    u32 val = (u32)&lbl_eu_8051C080;
+    u32 val = (u32)&sMpvCdecIntraBlocks;
     lbl_eu_80602A68[0] = (u32)self;
     fn_803BDF3C((void*)fn_803A7770, 0);
     DCT_IsrInit();
@@ -29,7 +35,7 @@ void fn_803A7770(void) { MPVERR_SetCode(0); }
 
 extern void DCT_IsrTrans(void* self, s32 val);
 
-void MPVCDEC_StartFrame(void* self) {
+void MPVCDEC_StartFrame(MpvHn* self) {
     *(u32*)((u8*)self + 0xc84) = (u32)DCT_IsrTrans;
     *(u32*)((u8*)self + 0x9b4) = lbl_eu_80602A68[0] + 0x1160;
     /* Table entry re-read for each store (matches retail's double load). */

@@ -124,21 +124,6 @@ void CScheduleItem::StepSlots(f32 delta) {
     }
 }
 
-// us-804e8390: per-frame item step used by CSchedule::StepEntries.
-int CScheduleItem::TickLifetime(f32 time, f32 delta, ScheduleEntry* entries, CSchedule* sched) {
-    if (!((this->mFlags >> 7) & 1)) {
-        this->LoadSlots(entries, sched);
-        this->mFlags |= 0x80;
-    }
-    if (this->mLifetime != 0) {
-        if (time < (f32)this->mLifetime) {
-            return 1;
-        }
-    }
-    this->StepSlots(delta);
-    return this->mCount != 0;
-}
-
 // us-804e8650: emit/update all slot objects (two passes).
 void CScheduleItem::ReleaseObjects() {
     if (this->mCount == 0) {
@@ -208,8 +193,8 @@ void CSchedule::Update(f32 dt) {
     }
 
     if (this->mEntryCount == 0) {
-        this->field_0x90 = 0.0f;
         this->field_0x94 = 1.0f;
+        this->field_0x90 = 0.0f;
         return;
     }
 
@@ -234,8 +219,8 @@ void CSchedule::Update(f32 dt) {
                 }
             }
         }
-        this->field_0x90 = 0.0f;
         this->field_0x94 = 1.0f;
+        this->field_0x90 = 0.0f;
     }
 
     this->StepEntries(step);
@@ -365,4 +350,19 @@ extern "C" void* __dt__804E42F4(void* self, s32 freeIt) {
         operator delete(self);
     }
     return self;
+}
+
+// us-804e8390: per-frame item step used by CSchedule::StepEntries.
+int CScheduleItem::TickLifetime(f32 time, f32 delta, ScheduleEntry* entries, CSchedule* sched) {
+    if (!((this->mFlags >> 7) & 1)) {
+        this->LoadSlots(entries, sched);
+        this->mFlags |= 0x80;
+    }
+    if (this->mLifetime != 0) {
+        if (time < (f32)this->mLifetime) {
+            return 1;
+        }
+    }
+    this->StepSlots(delta);
+    return this->mCount != 0;
 }

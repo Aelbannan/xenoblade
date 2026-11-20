@@ -75,7 +75,7 @@ struct Pane {
  * Pane
  *
  ******************************************************************************/
-class __declspec(novtable) Pane : public detail::PaneBase {
+class Pane : public detail::PaneBase {
 public:
     NW4R_UT_RTTI_DECL(Pane);
 

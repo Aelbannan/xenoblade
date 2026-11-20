@@ -67,7 +67,7 @@ CVS_THREAD_BATTLE_BEGIN* CVS_THREAD_BATTLE_BEGIN::create(CVoiceHandle* handle, C
     }
 
     // Install the initial voice-event handler from its typed PTMF constant.
-    obj->mState = lbl_eu_8053AC88;
+    obj->mState = static_cast<BattleBeginState>(&CVS_THREAD_BATTLE_BEGIN::initSlots);
     return obj;
 }
 
@@ -77,7 +77,7 @@ CVS_THREAD_BATTLE_BEGIN* CVS_THREAD_BATTLE_BEGIN::create(CVoiceHandle* handle, C
 // non-positive.
 void CVS_THREAD_BATTLE_BEGIN::initSlots() {
     CVS_THREAD_BATTLE_BEGIN* self = this;
-    mState = lbl_eu_8053AC94;
+    mState = static_cast<BattleBeginState>(&CVS_THREAD_BATTLE_BEGIN::reinitSlots);
 
     int cnt = HpVoice_CollectIdle((CVoiceHandle**)&self->field_0x28[0], 3, 0);
     s16 scnt = (s16)cnt;
@@ -87,7 +87,7 @@ void CVS_THREAD_BATTLE_BEGIN::initSlots() {
 }
 
 void CVS_THREAD_BATTLE_BEGIN::reinitSlots(){
-    mState = lbl_eu_8053ACA0;
+    mState = static_cast<BattleBeginState>(&CVS_THREAD_BATTLE_BEGIN::advanceSlot);
 }
 
 // us-802b2b5c (BtlBeg_AdvanceSlot_00EC)
@@ -97,7 +97,7 @@ void CVS_THREAD_BATTLE_BEGIN::advanceSlot() {
     CVS_THREAD_BATTLE_BEGIN* self = this;
     if (IsThreadVoiceActive(self) != 0) return;
 
-    mState = lbl_eu_8053ACAC;
+    mState = static_cast<BattleBeginState>(&CVS_THREAD_BATTLE_BEGIN::reinitSlots);
 
     if (self->field_0x3a == 0) {
         // forward direction: bump the counter, wrap to 0 at the limit
@@ -266,12 +266,6 @@ extern const char lbl_eu_805134C4[0x14] = "cf::EVS_THREAD_LIB";
 extern const char lbl_eu_805134D8[0x18] = "cf::CVS_THREAD_LIB";
 
 typedef void (CVS_THREAD::*BattleBeginState)();
-
-// Compiler-emitted pointer-to-member constants (the retail init-state triples).
-extern "C" const BattleBeginState lbl_eu_8053AC88 = &CVS_THREAD_BATTLE_BEGIN::initSlots;
-extern "C" const BattleBeginState lbl_eu_8053AC94 = &CVS_THREAD_BATTLE_BEGIN::reinitSlots;
-extern "C" const BattleBeginState lbl_eu_8053ACA0 = &CVS_THREAD_BATTLE_BEGIN::advanceSlot;
-extern "C" const BattleBeginState lbl_eu_8053ACAC = &CVS_THREAD_BATTLE_BEGIN::reinitSlots;
 
 u32 lbl_eu_8053ACB8[8] = {
     (u32)__RTTI__Q22cf23CVS_THREAD_BATTLE_BEGIN,

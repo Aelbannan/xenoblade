@@ -237,12 +237,12 @@ extern "C" u32 CfScript_TestFlags(CfScriptManager* mgr, int index, int mask) {
 }
 
 // CfScript_MakeName - format or copy string based on condition
-// retail: pure tail calls (b CfScript_CopyName / b format); format string is base of lbl_eu_804FB3A4.
+// retail: pure tail calls (b CfScript_CopyName / b format); format literal is first in the TU string pool.
 extern "C" void CfScript_MakeName(char* dest, const char* src1, const char* src2, const char* src3) {
     if (src3 != nullptr) {
         CfScript_CopyName(dest, src3);
     } else {
-        ((ml::FixStr<64>*)dest)->format(lbl_eu_804FB3A4, src1, src2);
+        ((ml::FixStr<64>*)dest)->format("%02d%02df", src1, src2);
     }
 }
 
@@ -258,8 +258,8 @@ extern "C" bool CfScript_LoadScript(CfScript* script, const char* name) {
 
     // Ignore the two reserved "no-op" script names.
     if (name != nullptr) {
-        if (strcmp(name, &lbl_eu_804FB3A4[0xA]) == 0 ||
-            strcmp(name, &lbl_eu_804FB3A4[0x14]) == 0) {
+        if (strcmp(name, "eventView") == 0 ||
+            strcmp(name, "abcd_00") == 0) {
             return false;
         }
     }
@@ -292,12 +292,9 @@ extern "C" bool CfScript_LoadScript(CfScript* script, const char* name) {
     // Build "dir + bare-name" into path (format varargs).
     ml::CPathUtil::getNoPathExtName(*(ml::FixStr<64>*)&extBuffer, (*(ml::FixStr<128>*)pathStorage).mString);
     ml::FixStr<128>& path = *(ml::FixStr<128>*)pathStorage;
-    path.format(&lbl_eu_804FB3A4[0x1C], cf::CfScriptManager::sPathBuffer, extBuffer.mString);
+    path.format("%s%s", cf::CfScriptManager::sPathBuffer, extBuffer.mString);
 
-    // Retail derives the archive extension from the live pool base (addi
-    // off the format pool register) and reuses it for strlen/strcat.
-    const char* dotSb = &lbl_eu_804FB3A4[0x21];
-    (*(ml::FixStr<128>*)pathStorage) += dotSb;
+    (*(ml::FixStr<128>*)pathStorage) += ".sb";
 
     // If the current directory already matches, sanity-check the file exists.
     // Retail materializes the strcmp == 0 test into a named int temp
@@ -305,8 +302,8 @@ extern "C" bool CfScript_LoadScript(CfScript* script, const char* name) {
     int sameDir = strcmp(cf::CfScriptManager::sPathBuffer, cf::CfScriptManager::spDirPointer) == 0;
     if (sameDir) {
         if (getFileSize__11CDeviceFileFPCc((*(ml::FixStr<128>*)pathStorage).mString, 1) < 0) {
-            if (strstr((*(ml::FixStr<128>*)pathStorage).mString, &lbl_eu_804FB3A4[0x25]) == nullptr) {
-                strstr((*(ml::FixStr<128>*)pathStorage).mString, &lbl_eu_804FB3A4[0x2B]);
+            if (strstr((*(ml::FixStr<128>*)pathStorage).mString, "am.sb") == nullptr) {
+                strstr((*(ml::FixStr<128>*)pathStorage).mString, "pm.sb");
             }
             return false;
         }
@@ -395,8 +392,8 @@ extern "C" bool OnFileEvent__8CfScriptFP10CEventFile(cf::CfScript* self, ::CEven
             // Failed/other event: look for fallback names, mark "ready".
             const char* path = event->mName;
             if (strstr(path, cf::CfScriptManager::spDirPointer) != nullptr &&
-                strstr(path, &lbl_eu_804FB3A4[0x25]) == nullptr) {
-                strstr(path, &lbl_eu_804FB3A4[0x2B]);
+                strstr(path, "am.sb") == nullptr) {
+                strstr(path, "pm.sb");
             }
             self->mFlags |= 0x10;
         }
@@ -564,7 +561,7 @@ void sinit_800696C8() {
 //   base-descriptor the .sdata typeinfo points at (CfBdat 8052E7A0 shape).
 // - .rodata head: "/script/jp/" (sdata pointer target) + "cf::CfScript"
 //   (typeinfo name, referenced by the .sdata typeinfo), then the 0x34
-//   script-name/extension string pool the code indexes as lbl_eu_804FB3A4+N.
+//   script-name/extension literals form the compiler-owned string pool.
 // - .sdata: script-dir string pointer (8-byte slot: pointer + pad so the
 //   typeinfo pair lands at +8), {name, base} typeinfo pair, "." separator.
 // - .bss: path buffer (0x48), manager storage (0x108 = 3 x 0x58 CfScript),
@@ -686,16 +683,6 @@ char lbl_eu_804FB388[0x0C] = "/script/jp/";
 // retail). No aligned() attributes: they can only widen the footprint.
 __declspec(section ".rodata") __attribute__((used))
 char lbl_eu_804FB394[13] = "cf::CfScript";
-__declspec(section ".rodata") __attribute__((used))
-char lbl_eu_804FB3A4[0x34] =
-    "%02d%02df\0"
-    "eventView\0"
-    "abcd_00\0"
-    "%s%s\0"
-    ".sb\0"
-    "am.sb\0"
-    "pm.sb\0";
-
 // --- .sdata (retail 0x18) ---
 __declspec(section ".sdata") __attribute__((used, aligned(8)))
 char* cf::CfScriptManager::spDirPointer = (char*)lbl_eu_804FB388;  // name-guess: pointer to the script directory string

@@ -145,7 +145,7 @@ struct LodDrawHeader {
     u8  field_0x19;   // 0x19
     u16 field_0x1A;   // 0x1A
     u16 field_0x1C;   // 0x1C
-    u8  field_0x1E[2];// 0x1E
+    u16 start;       // 0x1E range start
     u16 field_0x20;   // 0x20
     u16 field_0x22;   // 0x22
     u8  field_0x24;   // 0x24

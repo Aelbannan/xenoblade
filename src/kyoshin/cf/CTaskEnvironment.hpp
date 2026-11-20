@@ -2,6 +2,7 @@
 
 #include <types.h>
 #include "monolib/math/CVec3.hpp"
+#include "monolib/scn/CVirtualLightObj.hpp"
 
 // Environment-light-control object layout used by CTaskEnvironment::Init
 // (reached through the scene manager slot at +0x7C; retail monolib
@@ -56,15 +57,6 @@ struct CTaskEnvScene {
 // Opaque monolib light-group objects created by Env_BuildLights.
 class CTimeLightGrp;
 
-// Monolib virtual light object registered into scene-manager slots. Only the
-// +0x19 byte is known: Env_BuildLights sets it through the pointer returned by
-// the registration helpers (retail stores through r3 after the call).
-class CVirtualLightObj {
-public:
-    u8 pad00[0x19];
-    u8 field_0x19;
-};
-
 // Object pointed to by CTaskEnvironment +0xE0/+0xE4 (Term calls its vtable
 // slot-1 method with 1; retail r12 indirect dispatch).
 struct CTaskEnvUnk {
@@ -106,7 +98,6 @@ struct CTaskEnvRotMtx {
 };
 
 // sdata2 constants shared by the clock/rotation/light helpers.
-extern const float lbl_eu_80665FA0;
 extern const float lbl_eu_80666030;
 extern const float lbl_eu_80665FEC;
 
@@ -260,8 +251,8 @@ extern "C" void Env_AdvanceClock(CTaskEnvTime* time, float delta);
 extern "C" void Env_ApplyRotX(CTaskEnvRotMtx* mtx, float angle);
 
 // Flat-name accessors shared with Move (retail unmangled symbols).
-extern "C" u32 getSubField78(void* self);
-extern "C" void* Env_GetSub64(void* self);
-extern "C" float Env_GetFloat54(void* self);
-extern "C" float Env_GetFloat58(void* self);
+extern "C" CTaskEnvWorld* getSubField78(CTaskEnvScene* self);
+extern "C" u32* Env_GetSub64(CTaskEnvWorld* self);
+extern "C" f32 Env_GetFloat54(CTaskEnvWorld* self);
+extern "C" f32 Env_GetFloat58(CTaskEnvWorld* self);
 extern "C" void nopFunc();

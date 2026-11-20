@@ -16,6 +16,7 @@
 #include <nw4r/math/math_triangular.h>
 #include <PowerPC_EABI_Support/Runtime/MWCPlusLib.h>
 #include "monolib/math/CVec3.hpp"
+#include "libs/monolib/src/lod/code_80468434.hpp"
 
 extern "C" {
 
@@ -158,15 +159,7 @@ typedef struct LodPickObj {
     u16 kind;    // 0x06
 } LodPickObj;
 
-typedef struct LodRangeObj {
-    u8 gap[0x1E];
-    u16 start;   // 0x1E
-    u16 end;     // 0x20
-    u8 gap22[2];
-    u8 mode;     // 0x24
-} LodRangeObj;
-
-extern "C" s32 isRangeActive__Q23LOD17UnkClass_8046368CFv(const LodRangeObj*);
+extern "C" s32 isRangeActive__Q23LOD17UnkClass_8046368CFv(const LOD::LodDrawHeader*);
 // [.data] 0x8056D71C-0x8056D728 (12B): retail pick-dispatch table.  Retail
 // split object's .data section is align 4; MWCC would otherwise emit align 8
 // for a u32[3], so force __declspec(align(4)).
@@ -451,10 +444,10 @@ void setLodFadeScalars(f32 a, f32 b, f32 c) {
 // ===========================================================================
 // us-80467fc8  func_80463FF8  (range crosses the distance limit?)
 // ===========================================================================
-extern "C" s32 isRangeActive__Q23LOD17UnkClass_8046368CFv(const LodRangeObj* obj) {
-    if (obj->mode & 0x2) {
+extern "C" s32 isRangeActive__Q23LOD17UnkClass_8046368CFv(const LOD::LodDrawHeader* obj) {
+    if (obj->field_0x24 & 0x2) {
         s32 lim;
-        if ((s32)obj->start * 60 <= (s32)obj->end * 60) {
+        if ((s32)obj->start * 60 <= (s32)obj->field_0x20 * 60) {
             goto ordered;
         }
 
@@ -462,7 +455,7 @@ extern "C" s32 isRangeActive__Q23LOD17UnkClass_8046368CFv(const LodRangeObj* obj
         if ((s32)obj->start * 60 <= lim) {
             return 1;
         }
-        if ((s32)obj->end * 60 < lim) {
+        if ((s32)obj->field_0x20 * 60 < lim) {
             goto return_zero;
         }
         return 1;
@@ -472,7 +465,7 @@ ordered:
         if ((s32)obj->start * 60 > lim) {
             goto return_zero;
         }
-        if ((s32)obj->end * 60 < lim) {
+        if ((s32)obj->field_0x20 * 60 < lim) {
             goto return_zero;
         }
         return 1;

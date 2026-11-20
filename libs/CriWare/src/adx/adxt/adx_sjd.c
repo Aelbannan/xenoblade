@@ -55,10 +55,9 @@ void ADXCRS_Unlock(void);
 void ADXERR_CallErrFunc2_(void* a, void* b);
 void criware_eu_8038A864(void* self);
 
-extern volatile u32 lbl_eu_805E3340[5];
-extern u8 lbl_eu_805E3358[0xB40];
-extern u32 lbl_eu_805E3354;
-__declspec(section ".rodata") __attribute__((aligned(8))) u8 lbl_eu_805160B8[0x90] = {0x45,0x30,0x33,0x30,0x31,0x30,0x39,0x30,0x31,0x20,0x41,0x44,0x58,0x42,0x5F,0x44,0x65,0x63,0x6F,0x64,0x65,0x48,0x65,0x61,0x64,0x65,0x72,0x3A,0x20,0x00,0x43,0x61,0x6E,0x20,0x6E,0x6F,0x74,0x20,0x64,0x65,0x63,0x6F,0x64,0x65,0x20,0x74,0x68,0x69,0x73,0x20,0x66,0x69,0x6C,0x65,0x20,0x66,0x6F,0x72,0x6D,0x61,0x74,0x2E,0x00,0x45,0x30,0x37,0x30,0x32,0x31,0x39,0x30,0x31,0x20,0x61,0x64,0x78,0x73,0x6A,0x64,0x5F,0x64,0x65,0x63,0x65,0x78,0x65,0x63,0x5F,0x73,0x74,0x61,0x72,0x74,0x3A,0x20,0x00,0x38,0x20,0x6F,0x72,0x20,0x34,0x62,0x69,0x74,0x20,0x57,0x41,0x56,0x20,0x66,0x69,0x6C,0x65,0x20,0x63,0x61,0x6E,0x27,0x74,0x20,0x70,0x6C,0x61,0x79,0x62,0x61,0x63,0x6B,0x20,0x63,0x6F,0x6E,0x74,0x69,0x6E,0x75,0x6F,0x75,0x73,0x6C,0x79,0x2E,0x00};
+extern volatile u32 adxsjd_init_cnt[5];              // JP map names word 0; US retail groups the adjacent 0x14 state words
+extern u8 adxsjd_obj[0xB40];                  // real JP-map name for the 0xB40 work area
+extern u32 adxsjd_link_sw_cb;                 // name-guess: 4-byte state word holding a global callback pointer
 
 /* Forward declarations */
 void adxsjd_decode_prep(ADXSJD* self);
@@ -72,17 +71,17 @@ void ADXSJD_ExecServer(void);
 /* The SJ/ADXB objects use a "class" pointer at +0x0 with function pointers at word offsets */
 
 void ADXSJD_Init(void) {
-    if (lbl_eu_805E3340[0] == 0) {
+    if (adxsjd_init_cnt[0] == 0) {
         ADXB_Init();
-        memset(lbl_eu_805E3358, 0, 0xB40);
+        memset(adxsjd_obj, 0, 0xB40);
     }
-    lbl_eu_805E3340[0]++;
+    adxsjd_init_cnt[0]++;
 }
 
 void ADXSJD_Finish(void) {
-    lbl_eu_805E3340[0]--;
-    if (lbl_eu_805E3340[0] == 0) {
-        memset(lbl_eu_805E3358, 0, 0xB40);
+    adxsjd_init_cnt[0]--;
+    if (adxsjd_init_cnt[0] == 0) {
+        memset(adxsjd_obj, 0, 0xB40);
     }
 }
 
@@ -97,14 +96,14 @@ void* ADXSJD_Create(void* stream, s32 numChan, void* sjArray) {
     ADXB* adxb;
 
     /* Find a free slot in the 16-entry work area (0xB4 bytes per entry) */
-    p = (ADXSJD*)lbl_eu_805E3358;
+    p = (ADXSJD*)adxsjd_obj;
     sj0 = *(void**)sjArray;
     for (i = 0; i < 16; i++) {
         if (p->inUse == 0) break;
         p++;
     }
     if (i == 16) return NULL;
-    sjd = (ADXSJD*)lbl_eu_805E3358 + i;
+    sjd = (ADXSJD*)adxsjd_obj + i;
 
     bufPtr = SJRBF_GetBufPtr(sj0);
     halfBuf = SJRBF_GetBufSize(sj0) / 2;
@@ -247,8 +246,7 @@ void adxsjd_decode_prep(ADXSJD* self) {
             ((void (*)(void*, s32, void*))(*(void***)inSj)[7])(inSj, 1, &chk.head);
             /* NOTE: retail emits no argument setup here */
             if (ADXB_GetDecErrMode() == 0) {
-                u8* errStr = lbl_eu_805160B8;
-                ADXERR_CallErrFunc2_(errStr, errStr + 0x1E);
+                ADXERR_CallErrFunc2_("E03010901 ADXB_DecodeHeader: ", "Can not decode this file format.");
             }
             self->status = 4;
             return;
@@ -299,7 +297,7 @@ void adxsjd_decode_prep(ADXSJD* self) {
 
     /* Link-switch hook, registered globally */
     if (adxb->field_0xe0 != 0) {
-        void (*cb)(void*, u32) = *(void (**)(void*, u32))&lbl_eu_805E3354;
+        void (*cb)(void*, u32) = *(void (**)(void*, u32))&adxsjd_link_sw_cb;
         if (cb != NULL) {
             cb(adxb, adxb->sfreq);
         }
@@ -482,7 +480,7 @@ void adxsjd_decexec_start(ADXSJD* sjd) {
                 ((void (*)(void*, s32, void*))(*(void***)inSj)[7])(inSj, 1, &mid);
             }
         } else {
-            ADXERR_CallErrFunc2_(lbl_eu_805160B8 + 0x3F, lbl_eu_805160B8 + 0x60);
+            ADXERR_CallErrFunc2_("E07021901 adxsjd_decexec_start: ", "8 or 4bit WAV file can't playback continuously.");
         }
     }
 
@@ -708,7 +706,7 @@ void adxsjd_discard_proc(ADXSJD* self) {
 }
 
 void ADXSJD_ExecServer(void) {
-    u8* work = (u8*)lbl_eu_805E3340;
+    u8* work = (u8*)adxsjd_init_cnt;
     int i;
 
     /* Pre-server callback (indirect through stored function pointer) */
@@ -883,6 +881,6 @@ void ADXSJD_RestoreSnapshot(ADXSJD* self) {
 }
 
 /* .bss: reverse retail order for MWCC emission. */
-u8 lbl_eu_805E3358[0xB40];
-u32 lbl_eu_805E3354;
-volatile u32 lbl_eu_805E3340[5];
+u8 adxsjd_obj[0xB40];
+u32 adxsjd_link_sw_cb;                        // name-guess: see forward declaration
+volatile u32 adxsjd_init_cnt[5];

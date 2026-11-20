@@ -12,7 +12,6 @@
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" const float lbl_eu_80668300; // 80.0f
-extern "C" const float lbl_eu_80668304; // 0.0f
 extern "C" const float lbl_eu_80668308; // 3.0f
 extern "C" const float lbl_eu_8066830C; // 100.0f
 extern "C" const float lbl_eu_80668310; // -17.0f
@@ -211,9 +210,9 @@ void CItemBoxGridSubMenu::GridSubMenu_SetupOptions(int arg) {
         pane1->SetSize(sz);
 
         nw4r::math::VEC3 v;
-        v.x = lbl_eu_80668304;
+        v.x = 0.0f;
         v.y = lbl_eu_80668308;
-        v.z = lbl_eu_80668304;
+        v.z = 0.0f;
         CBaseCur::SetPaneTranslate(pane2, &v);
         break;
     }
@@ -223,9 +222,9 @@ void CItemBoxGridSubMenu::GridSubMenu_SetupOptions(int arg) {
         pane1->SetSize(sz);
 
         nw4r::math::VEC3 v;
-        v.x = lbl_eu_80668304;
+        v.x = 0.0f;
         v.y = lbl_eu_80668310;
-        v.z = lbl_eu_80668304;
+        v.z = 0.0f;
         CBaseCur::SetPaneTranslate(pane2, &v);
         break;
     }
@@ -235,9 +234,9 @@ void CItemBoxGridSubMenu::GridSubMenu_SetupOptions(int arg) {
         pane1->SetSize(sz);
 
         nw4r::math::VEC3 v;
-        v.x = lbl_eu_80668304;
+        v.x = 0.0f;
         v.y = lbl_eu_80668318;
-        v.z = lbl_eu_80668304;
+        v.z = 0.0f;
         CBaseCur::SetPaneTranslate(pane2, &v);
         break;
     }

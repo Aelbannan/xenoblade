@@ -31,7 +31,8 @@ struct ErrMesLangEntry {
 extern u32 lbl_eu_8053A420[];
 
 // Extended language-entry pointer tables (split-1 .data). Each element points
-// to an ErrMesLangEntry record mutated by setErrMesLanguage.
-extern ErrMesLangEntry* lbl_eu_8053A438[];
-extern ErrMesLangEntry* lbl_eu_8053A458[];
-extern ErrMesLangEntry* lbl_eu_8053A478[];
+// to an 8-byte .sdata2 string whose +4..+6 bytes are rewritten by
+// setErrMesLanguage.
+extern ErrMesLangEntry* sErrMesLangTable0[];
+extern ErrMesLangEntry* sErrMesLangTable1[];
+extern ErrMesLangEntry* sErrMesLangTable2[];

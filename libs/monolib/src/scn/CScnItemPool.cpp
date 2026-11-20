@@ -346,7 +346,7 @@ extern "C" void CScnItemPool_releaseItemByKind(CScnItemPool* self, CScnItem* ite
         scene->apply(item);
         item->vfuncCC();
         simSetFlag2OnTree(item, 0);
-        CScnItemPool_pushItemToList((u32)((char*)self + 0xAC), (u32*)&item);
+        CScnItemPool_pushItemToList((u32)self->mListAC, (u32*)&item);
     } else if (CScnItemPool_getItemKind((u8*)item) == 2) {
         item->vfunc08(-1);
         self->mFlagsCC[((u32)item - (u32)self->mSlotsD0) / 0x58] = 0;
@@ -750,7 +750,6 @@ CScnItemPool::CScnItemPool(CScn* scene, u32 cnt0C, u32 cnt2C, u32 cnt4C,
 }
 
 // __dt__12CScnItemPoolFv: complete-object destructor.
-extern "C" u32 lbl_eu_8056E488[];
 extern "C" CScnItemPool* __dt__12CScnItemPoolFv(CScnItemPool* self, int flags) {
     if (self != nullptr) {
         u32 vt = (u32)&lbl_eu_8056E488;
@@ -781,12 +780,12 @@ extern "C" CScnItemPool* __dt__12CScnItemPoolFv(CScnItemPool* self, int flags) {
             mtl::MemManager::deallocate(self->mSlotsD8);
             self->mSlotsD8 = nullptr;
         }
-        ((reslist<CScnItem*>*)((char*)self + 0xAC))->reslist<CScnItem*>::~reslist();
-        ((reslist<CScnItem*>*)((char*)self + 0x8C))->reslist<CScnItem*>::~reslist();
-        ((reslist<CScnItem*>*)((char*)self + 0x6C))->reslist<CScnItem*>::~reslist();
-        ((reslist<CScnItem*>*)((char*)self + 0x4C))->reslist<CScnItem*>::~reslist();
-        ((reslist<CScnItem*>*)((char*)self + 0x2C))->reslist<CScnItem*>::~reslist();
-        ((reslist<CScnItem*>*)((char*)self + 0x0C))->reslist<CScnItem*>::~reslist();
+        ((reslist<CScnItem*>*)&self->mListAC)->reslist<CScnItem*>::~reslist();
+        ((reslist<CScnItem*>*)&self->mList8C)->reslist<CScnItem*>::~reslist();
+        ((reslist<CScnItem*>*)&self->mList6C)->reslist<CScnItem*>::~reslist();
+        ((reslist<CScnItem*>*)&self->mList4C)->reslist<CScnItem*>::~reslist();
+        ((reslist<CScnItem*>*)&self->mList2C)->reslist<CScnItem*>::~reslist();
+        ((reslist<CScnItem*>*)&self->mList0C)->reslist<CScnItem*>::~reslist();
         __dt__11CDeviceVICbFv((void*)((char*)self + 4), 0);
         __dt__10IWorkEventFv((void*)self, 0);
         if (flags > 0) {
@@ -810,8 +809,6 @@ extern "C" CScnItemPool* __dt__12CScnItemPoolFv(CScnItemPool* self, int flags) {
 extern "C" {
 extern u32 __RTTI__12CScnItemPool[];  // RTTI locator ti(CScnItemPool) (.sdata)
 extern u32 __RTTI__11CDeviceVICb[];  // RTTI locator ti(CDeviceVICb) (.sdata 0x80663618)
-extern u32 lbl_eu_80663940[];  // RTTI locator (reslist<CScnItem*> base-list head)
-extern u32 lbl_eu_80663948[];  // RTTI locator ti(_reslist_base<CScnItem*>) (.sdata)
 extern void vicbDtorThunk__12CScnItemPoolFv();
 extern void vicbCleanupAC__12CScnItemPoolFv();
 extern void viBeforeDrawDone__11CDeviceVICbFv();

@@ -30,9 +30,9 @@
 extern "C" u32 lbl_eu_80522D68;
 extern "C" u32 lbl_eu_80522D7C;
 
-// Retail font-path pointers (.sdata), owned by this TU.
-extern "C" const char* lbl_eu_806636F8 = (const char*)&lbl_eu_80522D68;
-extern "C" const char* lbl_eu_806636FC = (const char*)&lbl_eu_80522D7C;
+// name-guess: sdata pointer to the "font/font_eu5.brfna" pool entry.
+const char* sEuFontPath = (const char*)&lbl_eu_80522D68;
+const char* sMenuFontPath = (const char*)&lbl_eu_80522D7C; // name-guess: "font/MenuFont.brfna" pool entry
 
 // === .sbss size=0x10 align=8 (zero-fill) ===
 CDeviceFont* spDeviceFont = 0;
@@ -635,10 +635,10 @@ void CDeviceFont::wkUpdate() {
                                      false);
                 if (func_eu_8044A600()) {
                     setFontPath__17CDeviceFontLoaderFv(loader, (void*)1,
-                                                          lbl_eu_806636FC);
+                                                          sMenuFontPath);
                 } else {
                     setFontPath__17CDeviceFontLoaderFv(loader, (void*)1,
-                                                          lbl_eu_806636F8);
+                                                          sEuFontPath);
                 }
                 field_0x1EC = 1;
             }

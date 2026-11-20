@@ -23,12 +23,10 @@ public:
 extern "C" TPLPalette* lbl_eu_80665700;
 
 //size: 0x268
-// novtable: the retail vtable/RTTI objects (__vt__7CLibHbm = lbl_eu_8056D1A8,
-// lbl_eu_806637C8 / lbl_eu_8056D248) are defined manually in CLibHbm.cpp.
-class __declspec(novtable) CLibHbm : public CWorkThread {
+class CLibHbm : public CWorkThread {
 public:
     CLibHbm(const char* pName, CWorkThread* pParent);
-    ~CLibHbm();
+    virtual ~CLibHbm();
 
     DECL_WORKTHREAD_CREATE(CLibHbm);
 

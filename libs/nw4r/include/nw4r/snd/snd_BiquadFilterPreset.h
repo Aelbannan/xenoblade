@@ -23,6 +23,7 @@ public:
     virtual ~BiquadFilterLpf() {}
 
     virtual void GetCoef(int order, f32 freq, BiquadCoef* pCoef) const;
+    static const BiquadCoef coefTable[];
 };
 
 class BiquadFilterHpf : public BiquadFilterCallback {
@@ -30,6 +31,7 @@ public:
     virtual ~BiquadFilterHpf() {}
 
     virtual void GetCoef(int order, f32 freq, BiquadCoef* pCoef) const;
+    static const BiquadCoef coefTable[];
 };
 
 class BiquadFilterBpf512 : public BiquadFilterCallback {
@@ -37,6 +39,7 @@ public:
     virtual ~BiquadFilterBpf512() {}
 
     virtual void GetCoef(int order, f32 freq, BiquadCoef* pCoef) const;
+    static const BiquadCoef coefTable[];
 };
 
 class BiquadFilterBpf1024 : public BiquadFilterCallback {
@@ -44,6 +47,7 @@ public:
     virtual ~BiquadFilterBpf1024() {}
 
     virtual void GetCoef(int order, f32 freq, BiquadCoef* pCoef) const;
+    static const BiquadCoef coefTable[];
 };
 
 class BiquadFilterBpf2048 : public BiquadFilterCallback {
@@ -51,14 +55,8 @@ public:
     virtual ~BiquadFilterBpf2048() {}
 
     virtual void GetCoef(int order, f32 freq, BiquadCoef* pCoef) const;
+    static const BiquadCoef coefTable[];
 };
-
-// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
-extern "C" const BiquadFilterCallback::BiquadCoef lbl_eu_8051E808[];
-extern "C" const BiquadFilterCallback::BiquadCoef lbl_eu_8051EC68[];
-extern "C" const BiquadFilterCallback::BiquadCoef lbl_eu_8051F034[];
-extern "C" const BiquadFilterCallback::BiquadCoef lbl_eu_8051F4F8[];
-extern "C" const BiquadFilterCallback::BiquadCoef lbl_eu_8051F89C[];
 
 } // namespace detail
 } // namespace snd

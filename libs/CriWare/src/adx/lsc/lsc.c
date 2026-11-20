@@ -14,7 +14,7 @@ extern int ADXSTM_Start(void *);
 extern int ADXSTM_GetStat(void *);
 extern int ADXSTM_ReleaseFileNw(void *);
 
-__declspec(section ".rodata") __attribute__((aligned(8))) const char lsc_mes[] =
+__attribute__((aligned(8))) const char lsc_mes[] =
     "E2005012801: Invalid parameter=sj (LSC_Create)\n\0"
     "E2005012802: Not enough instance (LSC_Create)\n\0"
     "E2005012807: Invalid parameter lsc=NULL\n\0"
@@ -38,14 +38,13 @@ __declspec(section ".rodata") __attribute__((aligned(8))) const char lsc_mes[] =
     "E2005012821: Invalid parameter lsc=NULL\n\0"
     "E2005012822: Invalid parameter lsc=NULL\n\0"
     "\0\0\0\0\0";
-__declspec(section ".rodata") __attribute__((aligned(8))) const char lbl_eu_80518810[0x30] = "\nMFCI/WII Ver.1.23 Build:Oct 28 2009 21:11:24\n";
+__attribute__((aligned(8))) const char lbl_eu_80518810[0x30] = "\nMFCI/WII Ver.1.23 Build:Oct 28 2009 21:11:24\n";
 extern u8 lbl_eu_805E7D40[];
 
 #define LSE_MAX   0x20
 #define LSE_SIZE  0x238
 
 void *lsc_Create(void *);
-void LSC_Stop(void *);
 
 void *LSC_Create(void *handle) {
     void *r;
@@ -92,6 +91,8 @@ typedef struct LscEntry {
     s32    f34;             /* +0x34 */
     LscSlot slots[16];      /* +0x38 */
 } LscEntry;
+
+void LSC_Stop(LscEntry *);
 
 int lsc_EntryFileRange(LscEntry *, char *, int, int, int);
 
@@ -173,9 +174,9 @@ void LSC_Destroy(LscEntry *entry) {
     LSC_Leave();
 }
 
-void LSC_SetStmHndl(void *entry, void *stm) {
+void LSC_SetStmHndl(LscEntry *entry, void *stm) {
     LSC_Enter();
-    *(void **)((u8 *)entry + 0x28) = stm;
+    entry->stm = stm;
     LSC_Leave();
 }
 
@@ -244,8 +245,7 @@ int lsc_EntryFileRange(LscEntry *e, char *fname, int off_lo, int off_hi, int siz
     return cnt;
 }
 
-void LSC_Start(void *entry) {
-    u8 *e = (u8 *)entry;
+void LSC_Start(LscEntry *entry) {
     s32 crs;
 
     LSC_Enter();
@@ -253,76 +253,76 @@ void LSC_Start(void *entry) {
         LSC_CallErrFunc_((lsc_mes + 0x103));
     } else {
         LSC_LockCrs(&crs);
-        if ((s8)e[0x01] != 0) {
+        if (entry->stat != 0) {
             LSC_Enter();
             if (entry == NULL) {
                 LSC_CallErrFunc_((lsc_mes + 0x5F));
             } else {
-                if (*(void **)((u8 *)entry + 0x28) != NULL) {
-                    ADXSTM_Stop(*(void **)((u8 *)entry + 0x28));
-                    ((u8 *)entry)[0x02] = 0;
+                if (entry->stm != NULL) {
+                    ADXSTM_Stop(entry->stm);
+                    entry->pause = 0;
                 }
-                if ((s8)((u8 *)entry)[0x01] != 0) {
-                    ((u8 *)entry)[0x01] = 0;
-                    *(s32 *)((u8 *)entry + 0x2C) = 0;
+                if (entry->stat != 0) {
+                    entry->stat = 0;
+                    entry->f2c = 0;
                     LSC_Enter();
                     if (entry == NULL) {
                         LSC_CallErrFunc_((lsc_mes + 0x88));
-                    } else if ((s8)((u8 *)entry)[0x01] == 0) {
-                        *(s32 *)((u8 *)entry + 0x1C) = 0;
-                        *(s32 *)((u8 *)entry + 0x20) = 0;
-                        *(s32 *)((u8 *)entry + 0x24) = 0;
+                    } else if (entry->stat == 0) {
+                        entry->cur = 0;
+                        entry->idx = 0;
+                        entry->num = 0;
                     }
                     LSC_Leave();
-                    *(s32 *)((u8 *)entry + 0x34) = 0;
+                    entry->f34 = 0;
                 }
             }
             LSC_Leave();
         }
-        if (*(s32 *)(e + 0x24) > 0)
-            e[0x01] = 2;
+        if (entry->num > 0)
+            entry->stat = 2;
         else
-            e[0x01] = 1;
+            entry->stat = 1;
         LSC_UnlockCrs(&crs);
     }
     LSC_Leave();
 }
 
-void LSC_Stop(void *entry) {
+void LSC_Stop(LscEntry *entry) {
     LSC_Enter();
     if (entry == NULL) {
         LSC_CallErrFunc_((lsc_mes + 0x5F));
     } else {
-        if (*(void **)((u8 *)entry + 0x28) != NULL) {
-            ADXSTM_Stop(*(void **)((u8 *)entry + 0x28));
-            ((u8 *)entry)[0x02] = 0;
+        if (entry->stm != NULL) {
+            ADXSTM_Stop(entry->stm);
+            entry->pause = 0;
         }
-        if ((s8)((u8 *)entry)[0x01] != 0) {
-            ((u8 *)entry)[0x01] = 0;
-            *(s32 *)((u8 *)entry + 0x2C) = 0;
+        if (entry->stat != 0) {
+            entry->stat = 0;
+            entry->f2c = 0;
             LSC_Enter();
             if (entry == NULL) {
                 LSC_CallErrFunc_((lsc_mes + 0x88));
-            } else if ((s8)((u8 *)entry)[0x01] == 0) {
-                *(s32 *)((u8 *)entry + 0x1C) = 0;
-                *(s32 *)((u8 *)entry + 0x20) = 0;
-                *(s32 *)((u8 *)entry + 0x24) = 0;
+            } else if (entry->stat == 0) {
+                entry->cur = 0;
+                entry->idx = 0;
+                entry->num = 0;
             }
             LSC_Leave();
-            *(s32 *)((u8 *)entry + 0x34) = 0;
+            entry->f34 = 0;
         }
     }
     LSC_Leave();
 }
 
-void LSC_Pause(void *entry, int pause) {
+void LSC_Pause(LscEntry *entry, int pause) {
     LSC_Enter();
     if (entry == NULL) {
         LSC_CallErrFunc_((lsc_mes + 0x12C));
     } else if (pause == 1) {
-        ((u8 *)entry)[0x04] = 1;
+        entry->dummy = 1;
     } else {
-        ((u8 *)entry)[0x04] = 0;
+        entry->dummy = 0;
     }
     LSC_Leave();
 }
@@ -345,40 +345,40 @@ void LSC_ExecServer(void) {
     LSC_Leave();
 }
 
-int LSC_GetStat(void *entry) {
+int LSC_GetStat(LscEntry *entry) {
     int r;
     LSC_Enter();
     if (entry == NULL) {
         LSC_CallErrFunc_((lsc_mes + 0x155));
         r = -1;
     } else {
-        r = *(s8 *)((u8 *)entry + 0x01);
+        r = entry->stat;
     }
     LSC_Leave();
     return r;
 }
 
-int LSC_GetNumStm(void *entry) {
+int LSC_GetNumStm(LscEntry *entry) {
     int r;
     LSC_Enter();
     if (entry == NULL) {
         LSC_CallErrFunc_((lsc_mes + 0x17E));
         r = -1;
     } else {
-        r = *(s32 *)((u8 *)entry + 0x24);
+        r = entry->num;
     }
     LSC_Leave();
     return r;
 }
 
-void LSC_SetFlowLimit(void *entry, int limit) {
+void LSC_SetFlowLimit(LscEntry *entry, int limit) {
     LSC_Enter();
     if (entry == NULL) {
         LSC_CallErrFunc_((lsc_mes + 0x2EC));
-    } else if (limit < 0 || limit > *(s32 *)((u8 *)entry + 0x18)) {
+    } else if (limit < 0 || limit > entry->total) {
         LSC_CallErrFunc_((lsc_mes + 0x315), limit);
     } else {
-        *(s32 *)((u8 *)entry + 0x14) = limit;
+        entry->limit = limit;
     }
     LSC_Leave();
 }
@@ -402,12 +402,12 @@ void *LSC_CallStatFunc(void *h) {
 }
 #pragma peephole on
 
-void LSC_SetLpFlg(void *entry, int flag) {
+void LSC_SetLpFlg(LscEntry *entry, int flag) {
     LSC_Enter();
     if (entry == NULL) {
         LSC_CallErrFunc_((lsc_mes + 0x369));
     } else {
-        ((u8 *)entry)[0x03] = (u8)flag;
+        entry->loop = (u8)flag;
     }
     LSC_Leave();
 }

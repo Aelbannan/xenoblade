@@ -6,10 +6,6 @@
 // VLC tables are pointer variables in .bss filled at MPVVLC_Init time.
 
 #include <harness_catalog.h>
-// Retail .rodata 0x8051C088-0x8051C090 (8 B): "2.067" + 2-byte pad (balign 8)
-__declspec(section ".rodata") __attribute__((aligned(8))) char lbl_eu_8051C088[0x8] = {
-    0x32,0x2E,0x30,0x36,0x37,0x00,0x00,0x00
-};
 
 
 typedef struct MpvSjChunk {
@@ -105,7 +101,7 @@ s32 MPVDEC_CheckVersion(const char* version, unsigned int size, s32 v) {
     // signed cmpi under GC/3.0a5.2 (retail cmplwi). Every if/else/ternary
     // variant emits unsigned cmpli but CSE-merges the two `li r3,-1`
     // blocks into one (116B vs 120B). No shape found emits both together.
-    if (strcmp(lbl_eu_8051C088, version) != 0)
+    if (strcmp("2.067", version) != 0)
         return -1;
     switch ((unsigned long)size) {
     default:
@@ -473,16 +469,20 @@ s32 MPVDEC_DecPpicMb(MpvDec* self, SjObj* sj) {
 }
 
 void MPVDEC_ResetMv(void* self) {
-    *(u32*)((u8*)self + 0x10) = 0;
-    *(u32*)((u8*)self + 0x14) = 0;
-    *(u32*)((u8*)self + 0x18) = 0;
-    *(u32*)((u8*)self + 0x1c) = 0;
+    /* The caller passes the base of the forward/backward motion-parameter
+     * array; the four predictor words follow its first four entries. */
+    s32* mv = self;
+    mv[4] = 0;
+    mv[5] = 0;
+    mv[6] = 0;
+    mv[7] = 0;
 }
 
 void MPVDEC_ResetDc(void* self) {
-    *(u32*)((u8*)self + 0xcf4) = 0x400;
-    *(u32*)((u8*)self + 0xcf8) = 0x400;
-    *(u32*)((u8*)self + 0xcf0) = 0x400;
+    MpvDec* dec = self;
+    dec->cf4 = 0x400;
+    dec->cf8 = 0x400;
+    dec->cf0 = 0x400;
 }
 
 s32 mpvdec_MotionSub(MpvDec* self, s32* mv, s32* out1, s32* out2) {

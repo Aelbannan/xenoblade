@@ -42,14 +42,9 @@ void EffFxRenderDispatch(EffectInit* self, void* arg);
 void EffFxEmptyStub();
 
 // C-linkage imports
-extern "C" f64 lbl_eu_8066B0F0;
 extern "C" f32 lbl_eu_8066B0D8;
-extern "C" f64 lbl_eu_8066B0E8;
-extern "C" f32 lbl_eu_8066B140;
 extern "C" f32 lbl_eu_8066B158;
 extern "C" f32 lbl_eu_8066B15C;
-extern "C" f32 lbl_eu_8066B14C;
-extern "C" f32 lbl_eu_8066B150;
 extern "C" const u8 sEffectPosPalette0[];
 extern "C" const u8 sEffectPosPalette1[];
 extern "C" void* Scn_FindCamItem(void* src, int index);

@@ -836,12 +836,8 @@ void advanceMCGetItemBox(CMCGetItemBox* self) {
         }
         if (found != 0) {
             u8 v = arr->mSelSlot;
-            // Retail's named-pool u32->f64 conversion (0x43300000 trick with
-            // lbl_eu_80668BD8 as the subtracted 2^52 constant).
-            union { double d; u32 w[2]; } cvt;
-            cvt.w[1] = v;
-            cvt.w[0] = 0x43300000u;
-            s32 rowN = (s32)(0.25f * (f32)(cvt.d - lbl_eu_80668BD8));
+            u32 slot = v;
+            s32 rowN = (s32)(0.25f * (f32)slot);
             self->mField303 = 1;
             self->field_304 = (u8)rowN;
             self->field_305 = (u8)(v - (s8)rowN * 4);
@@ -1182,17 +1178,11 @@ extern "C" void refreshMCGetItemBoxSlots(CMCGetItemBox* self) {
         pos.y = (float&)self->field_30C;
         pos.x = (float&)self->field_308;
         u8 nextPage = (u8)(sub->counter + 1);
-        // One shared conversion scratch (retail materializes 0x4330 once).
-        union { double d; u32 w[2]; } cvt;
-        cvt.w[1] = 0x43300000u;
-        cvt.w[0] = (u32)(nextPage - 1) ^ 0x8000u;
-        double counterD = cvt.d;
         pos.z = (float&)self->field_310;
         // Retail parks the scale in f2 right after the z-store.
         float scale = 16.0f;
-        cvt.w[0] = pagesLow;
-        pos.x += scale * (float)(counterD - lbl_eu_80668BE0) +
-                 scale * (float)(cvt.d - lbl_eu_80668BD8);
+        pos.x += scale * (f32)(s32)(nextPage - 1) +
+                 scale * (f32)pagesLow;
         copyVEC3((void*)&pagePane->GetTranslate(), (float*)&pos);
     } else {
         setPaneVisible((*(nw4r::lyt::Pane**)((u8*)self->layout40 + 0x10))->FindPaneByName(&lbl_eu_8050FF8C[0x19a], true), 0);
@@ -1339,7 +1329,7 @@ bool CMCGetItemBox::OnFileEvent(CEventFile* pEventFile) {
         nw4r::math::VEC3 v2;
         code80135FDC_setVec3((nw4r::math::VEC3*)((float*)&s1), -58.0f, -51.0f, 0.0f);
         v1 = s1;
-        code80135FDC_setVec3((nw4r::math::VEC3*)((float*)&s2), lbl_eu_80668C00, -51.0f, 0.0f);
+        code80135FDC_setVec3((nw4r::math::VEC3*)((float*)&s2), 371.0f, -51.0f, 0.0f);
         v2 = s2;
         this->subObj_70.SetTwoPanes(&v2, &v1);
 

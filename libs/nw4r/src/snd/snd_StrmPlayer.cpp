@@ -111,10 +111,6 @@ extern "C" bool SetupPlayer__Q44nw4r3snd6detail10StrmPlayerFv(
 extern "C" bool CalcStartOffset__Q44nw4r3snd6detail10StrmPlayerFPlPUlPl(
     StrmPlayer* pStrmPlayer, s32* pBlockIndex, u32* pBlockOffset,
     s32* pLoopCount);
-extern "C" void SetBiquadFilter__Q44nw4r3snd6detail5VoiceFif(Voice* pVoice,
-                                                             int type,
-                                                             f32 value);
-
 // Defined later in this TU (retail-mangled member emitted as a free function).
 extern "C" void UpdateVoiceParams__Q44nw4r3snd6detail10StrmPlayerFPQ54nw4r3snd6detail10StrmPlayer9StrmTrack(
     StrmPlayer* pStrmPlayer, StrmPlayer::PlayerTrack* pTrack);
@@ -1502,15 +1498,6 @@ void StrmPlayer::StrmDataLoadTask::OnCancel() {
 
 using nw4r::snd::detail::StrmPlayer;
 
-// Referenced by AllocVoices below: the retail address of the StrmPlayer
-// static voice callback. StrmPlayer::VoiceCallbackFunc is a private member, so
-// it cannot be named from the global-scope AllocVoices free function; C
-// linkage keeps the pre-mangled identifier verbatim (MWCC re-mangles C++
-// free functions). Declaration only -- the definition is the member below.
-extern "C" void VoiceCallbackFunc__Q44nw4r3snd6detail10StrmPlayerFPQ44nw4r3snd6detail5VoiceQ54nw4r3snd6detail5Voice19VoiceCallbackStatusPv(
-    nw4r::snd::detail::Voice*, nw4r::snd::detail::Voice::VoiceCallbackStatus,
-    void*);
-
 bool StrmPlayer::AllocVoices(int voices) {
     StrmPlayer* self = this;
 
@@ -1525,7 +1512,7 @@ bool StrmPlayer::AllocVoices(int voices) {
             nw4r::snd::detail::Voice* pVoice =
                 nw4r::snd::detail::VoiceManager::GetInstance().AllocVoice(
                     pTrack->fileInfo.channelCount, voices, 0xFF,
-                    &VoiceCallbackFunc__Q44nw4r3snd6detail10StrmPlayerFPQ44nw4r3snd6detail5VoiceQ54nw4r3snd6detail5Voice19VoiceCallbackStatusPv,
+                    &StrmPlayer::VoiceCallbackFunc,
                     pTrack);
 
             if (pVoice == NULL) {
@@ -1815,8 +1802,7 @@ extern "C" void UpdateVoiceParams__Q44nw4r3snd6detail10StrmPlayerFPQ54nw4r3snd6d
         pVoice->SetPan(pan);
         pVoice->SetSurroundPan(surroundPan);
         pVoice->SetLpfFreq(lpfFreq);
-        SetBiquadFilter__Q44nw4r3snd6detail5VoiceFif(pVoice, biquadType,
-                                                    biquadValue);
+        pVoice->SetBiquadFilter(biquadType, biquadValue);
         pVoice->SetRemoteFilter(remoteFilter);
         pVoice->SetOutputLine(self->GetOutputLine());
         pVoice->SetMainOutVolume(self->GetMainOutVolume());
@@ -1838,11 +1824,5 @@ extern "C" void UpdateVoiceParams__Q44nw4r3snd6detail10StrmPlayerFPQ54nw4r3snd6d
     }
     OSRestoreInterrupts(level);
 }
-extern "C" void OnUpdateFrameSoundThread__Q44nw4r3snd6detail10StrmPlayerFv() {}
-extern "C" void OnUpdateVoiceSoundThread__Q44nw4r3snd6detail10StrmPlayerFv() {}
-
-extern "C" u8 IsPause__Q44nw4r3snd6detail10StrmPlayerCFv(StrmPlayer* self) { return self->IsPause(); }
-extern "C" u8 IsStarted__Q44nw4r3snd6detail10StrmPlayerCFv(StrmPlayer* self) { return self->IsStarted(); }
-extern "C" u8 IsActive__Q44nw4r3snd6detail10StrmPlayerCFv(StrmPlayer* self) { return self->IsActive(); }
 unsigned char absorb_pad_snd_StrmPlayer_sbss_4[4];
 

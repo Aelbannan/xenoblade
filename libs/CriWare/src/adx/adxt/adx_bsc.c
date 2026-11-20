@@ -7,14 +7,14 @@
 /* AHX callback pointers at 0x5348..0x5354 now belong to adx_bahx. */
 /* adxb_ahx_in_sj / dec_smpl / term_supply / exec_one are imported there. */
 /* No local storage here; keep these four lines for stable source lines. */
-/* (The callback pool starts at lbl_eu_805E5358.)                        */
-extern u32 lbl_eu_805E5358;
+/* (The callback pool starts at skg_init_count/ahxsetextfunc.)          */
+static u32 skg_init_count;
 extern void (*lbl_eu_805E535C)(void*, void*);
-extern void (*lbl_eu_805E5360)(void*, s16, void*, void*);
-extern void (*lbl_eu_805E5364)(void*);
+extern void (*pl2encodefunc)(void*, s16, void*, void*);
+extern void (*pl2resetfunc)(void*);
 extern unsigned char _pad_805E5368[8];
 extern u32 adxb_err_mode[2];
-extern u8 lbl_eu_805E5378[0x1000];
+extern u8 adxb_obj[0x1000];
 __declspec(section ".data") __attribute__((aligned(8))) u32 adxb_force_flag[2] = {1,0};
 
 
@@ -84,8 +84,8 @@ static s16 SKG_GenerateKey(u8* data, s16 len, s16* key1, s16* key2, s16* key3) {
     s16 x3;
     int i;
 
-    if (lbl_eu_805E5358 == 0) {
-        lbl_eu_805E5358 = lbl_eu_805E5358 + 1;
+    if (skg_init_count == 0) {
+        skg_init_count = skg_init_count + 1;
     }
 
     *key1 = 0;
@@ -139,7 +139,7 @@ static s16 SKG_GenerateKey(u8* data, s16 len, s16* key1, s16* key2, s16* key3) {
 u32 ADXB_GetDecErrMode(void) { return adxb_err_mode[0]; }
 
 void ADXB_Init(void) {
-    u8* p = (u8*)&lbl_eu_805E5358;
+    u8* p = (u8*)&skg_init_count;
     ADXPD_Init();
     (*(volatile u32*)p)++;
     memset(p + 0x20, 0, 0x1000);
@@ -163,14 +163,14 @@ void* ADXB_Create(void* arg0, void* pcmBuf, void* workBuf, void* workSize) {
     ADXB* slot;
     ADXB* p;
 
-    p = (ADXB*)lbl_eu_805E5378;
+    p = (ADXB*)adxb_obj;
     for (i = 0; i < 16; i++) {
         if (p->state == 0) break;
         p++;
     }
     if (i == 16) return NULL;
 
-    slot = (ADXB*)lbl_eu_805E5378 + i;
+    slot = (ADXB*)adxb_obj + i;
     memset(slot, 0, 0x100);
     slot->state = 1;
 
@@ -219,7 +219,7 @@ int adxb_get_key(ADXB* adxb, void* data, void* out_key1, void* out_key2, void* o
     s16* k3 = (s16*)out_key3;
     s16* k2 = (s16*)out_key2;
     s16* k1 = (s16*)out_key1;
-    s16* defKeys = (s16*)((u8*)&lbl_eu_805E5358 + 0x10);
+    s16* defKeys = (s16*)((u8*)&skg_init_count + 0x10);
 
     if (adxb_force_flag[0] == 0) {
         if (p->version < 4) {
@@ -564,7 +564,7 @@ void ADXB_Start(ADXB* self) {
 
 void ADXB_Stop(ADXB* self) {
     if (self->field_0xe0 != 0) {
-        lbl_eu_805E5364(self);
+        pl2resetfunc(self);
     }
     ADXPD_Stop(self->pd);
     self->stat = 0;
@@ -723,7 +723,7 @@ void ADXB_ExecOneAdx(ADXB* adxb) {
                 for (i = 0; i < (int)(pd2->numBlk << 5); i++) {
                     s16* buf1 = pd2->out1;
                     s16* buf2 = pd2->out2;
-                    lbl_eu_805E5360(adxb,
+                    pl2encodefunc(adxb,
                         buf1[i],
                         (u8*)buf1 + (i << 1), (u8*)buf2 + (i << 1));
                 }
@@ -780,13 +780,12 @@ void ADXB_ExecHndl(ADXB* adxb) {
 }
 
 /* .bss: definitions after the code, reverse retail order for MWCC emission. */
-u8 lbl_eu_805E5378[0x1000];
+u8 adxb_obj[0x1000];
 u32 adxb_err_mode[2];
 unsigned char _pad_805E5368[8];
-void (*lbl_eu_805E5364)(void*);
-void (*lbl_eu_805E5360)(void*, s16, void*, void*);
+void (*pl2resetfunc)(void*);
+void (*pl2encodefunc)(void*, s16, void*, void*);
 void (*lbl_eu_805E535C)(void*, void*);
-u32 lbl_eu_805E5358;
 
 /* Retail .rodata 0x80516B30..0x80517408: shared AHX key table and
  * ADXB error/version strings, emitted by this TU in link order. */

@@ -102,7 +102,6 @@ struct CDrawCtx {
 };
 
 extern "C" void* getScnRootSlot10(void* sceneEnv);
-extern "C" void* GetFog__Q34nw4r3g3d7ScnRootFi(void* self, int idx);
 
 // resolveEffectFog: resolve the active fog into lbl_eu_8065FCD0. While a fade is
 // running (lbl_eu_806659BC > 0) the saved fog (lbl_eu_8065FCA0) is blended
@@ -195,8 +194,8 @@ void resolveEffectFog() {
 // desktop's tex-work pointer at +0x6C and forward it (callee ignores r3).
 extern "C" void TexMan_SnapCursor_0314(void* x);
 extern "C" void TexMan_RestoreCursor_032C(void* x);
-extern "C" void snapTexCursor(void* desktop) { TexMan_SnapCursor_0314(*(void**)((u8*)desktop + 0x6C)); }
-extern "C" void restoreTexCursor(void* desktop) { TexMan_RestoreCursor_032C(*(void**)((u8*)desktop + 0x6C)); }
+extern "C" void snapTexCursor(TexSrc* desktop) { TexMan_SnapCursor_0314(desktop->field_0x6c); }
+extern "C" void restoreTexCursor(TexSrc* desktop) { TexMan_RestoreCursor_032C(desktop->field_0x6c); }
 
 
 // pushEffectFog: push fog state (or a cleared/default fog).

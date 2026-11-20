@@ -386,7 +386,6 @@ void ScnRes_Notify2Word_E458(u32 a1, u32 a2) {
 }
 
 void ScnRes_Notify5Ptr_E470(void* a1, void* a2, void* a3, void* a4, void* a5) {
-    extern char lbl_eu_8065F32C[];
     scanVertQuery(lbl_eu_8065F32C, a1, a2, a3, a4, a5);
 }
 
@@ -395,13 +394,11 @@ u32 ScnRes_IsStateActive_E4A0() {
 }
 
 u32 ScnRes_GetEntryCount_E4AC(void) {
-    extern u32 lbl_eu_80665988;
     return lbl_eu_80665988;
 }
 
 // Copy the 12-byte header of resource entry [index] into dst.
 void ScnRes_CopyEntryHead(ScnResHead* dst, int index) {
-    extern unsigned char lbl_eu_8065F428[];
     ScnResourceEntry* entries = (ScnResourceEntry*)lbl_eu_8065F428;
     u32 head0 = entries[index].head.field_0x00;
     dst->field_0x04 = entries[index].head.field_0x04;
@@ -411,7 +408,6 @@ void ScnRes_CopyEntryHead(ScnResHead* dst, int index) {
 
 // Copy the 12-byte secondary header of resource entry [index] into dst.
 void ScnRes_CopyEntryMid(ScnResHead* dst, int index) {
-    extern unsigned char lbl_eu_8065F428[];
     ScnResourceEntry* entries = (ScnResourceEntry*)lbl_eu_8065F428;
     u32 mid0 = entries[index].mid.field_0x00;
     dst->field_0x04 = entries[index].mid.field_0x04;
@@ -419,11 +415,9 @@ void ScnRes_CopyEntryMid(ScnResHead* dst, int index) {
     dst->field_0x08 = entries[index].mid.field_0x08;
 }
 
-extern "C" { extern unsigned char lbl_eu_8065F428[]; }
 extern "C" void* ScnRes_GetEntryPtr_E50C(u32 idx) { return &((ScnResourceEntry*)lbl_eu_8065F428)[idx]; }
 
 void* ScnRes_GetEntryHead2_E520(int index) {
-    extern unsigned char lbl_eu_8065F428[];
     return &((ScnResourceEntry*)lbl_eu_8065F428)[index].mid;
 }
 
@@ -458,15 +452,12 @@ int ScnRes_HasHighFlagEntry_E5AC() {
     return ScnRes_ScanFlaggedEntry_EE54(0x8000);
 }
 
-extern u8 ScnResGroundCrossFlag;
-extern u8 ScnResCrossNotifyFlag;
 int ScnRes_GetCrossFlagA_E5B8() { return ScnResGroundCrossFlag; }
 
 int ScnRes_GetCrossFlagB_E5C0() { return ScnResCrossNotifyFlag; }
 
 // Scan the resource entries for one whose info selects an enabled mask bit.
 s32 ScnRes_AnyEntryValued_E5C8() {
-    extern unsigned char lbl_eu_8065F428[];
     s32 count = lbl_eu_80665988;
     ScnResourceEntry* entries = (ScnResourceEntry*)lbl_eu_8065F428;
     for (; count > 0; --count) {
@@ -479,7 +470,6 @@ s32 ScnRes_AnyEntryValued_E5C8() {
 }
 
 int ScnRes_IsEntryValued_E604(int index) {
-    extern unsigned char lbl_eu_8065F428[];
     ScnResourceEntry* entries = (ScnResourceEntry*)lbl_eu_8065F428;
     return entries[index].value != 0;
 }
@@ -680,7 +670,6 @@ s32 ScnRes_ProjectTracked(ml::CVec3* out) {
 // Report whether resource entry [index]'s info selects a mask bit enabled by
 // 'mask', and store the following table record's byte at 'offset' into *dst.
 extern "C" s32 ScnRes_ReadTableByte_EDFC(u32* dst, u32 mask, u32 index, u32 offset) {
-    extern unsigned char lbl_eu_8065F428[];
     ScnResourceEntry* entries = (ScnResourceEntry*)lbl_eu_8065F428;
     u32* table = ((ScnStateObj2*)lbl_eu_8065F32C)->table;
     u32 sel = ((ScnTriInfo*)entries[index].field_0x18)->field_0x12;
@@ -696,7 +685,6 @@ extern "C" s32 ScnRes_ReadTableByte_EDFC(u32* dst, u32 mask, u32 index, u32 offs
 // Scan every active resource entry; report 1 when any entry's info selects a
 // mask bit enabled by 'flags'.
 extern "C" int ScnRes_ScanFlaggedEntry_EE54(u32 flags) {
-    extern unsigned char lbl_eu_8065F428[];
     s32 count = lbl_eu_80665988;
     if (count != 0) {
         ScnResourceEntry* p = (ScnResourceEntry*)lbl_eu_8065F428;
@@ -717,7 +705,6 @@ extern "C" int ScnRes_ScanFlaggedEntry_EE54(u32 flags) {
 // Report whether resource entry [index]'s info selects a mask bit enabled by
 // 'flags' (result shifted left by one like retail).
 extern "C" int ScnRes_IsEntryFlagged_EEAC(u32 flags, u32 index) {
-    extern unsigned char lbl_eu_8065F428[];
     ScnResourceEntry* entries = (ScnResourceEntry*)lbl_eu_8065F428;
     u32* table = ((ScnStateObj2*)lbl_eu_8065F32C)->table;
     u32 sel = ((ScnTriInfo*)entries[index].field_0x18)->field_0x12;
@@ -728,7 +715,6 @@ extern "C" int ScnRes_IsEntryFlagged_EEAC(u32 flags, u32 index) {
 // Dissolved monolibdata2 sdata slot: word 0 is the ScnRes_RecordCrossing pointer
 // called by ScnRes_DispatchCrossCb_EEEC (retail loads the data word, not the address).
 extern "C" u32 ScnResCrossCallback[2];
-extern "C" u32 lbl_eu_80663AE0[2];
 
 void ScnRes_DispatchCrossCb_EEEC() {
     ((void (*)())*(u32*)&ScnResCrossCallback)();

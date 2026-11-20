@@ -12,9 +12,7 @@
 // even though the real code passes register parameters.  Functions that
 // take register parameters are therefore defined with extern "C" linkage
 // using the exact retail mangled name (PLAN.md §17.6 relocation-name
-// pattern).  Float constants use `extern const f32 lbl_eu_*` so the load
-// schedules like a pooled literal AND the relocation keeps the retail name
-// (MWCC_CASES §1b).
+// pattern).
 
 #include <harness_catalog.h>
 #include <types.h>
@@ -76,8 +74,6 @@ extern "C" {
 
 extern u8 lbl_eu_80658560[]; // UnkClass_8047E110 scene manager (bss 0xA8)
 extern u8 sWalkTableLocator[]; // UnkClass_8047CD0C node pool (bss)
-
-extern const f64 lbl_eu_8066A888; // 2^52 (int->float magic)
 
 // UnkClass_8047CD0C
 void* getNodeBlock__17UnkClass_8047CD0CFv(void* self);

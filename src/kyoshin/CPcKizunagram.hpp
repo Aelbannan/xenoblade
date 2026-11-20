@@ -83,8 +83,8 @@ public:
 // so it cannot be expressed as a real member ctor (MWCC would mangle the
 // call-site reloc to __ct__12CPcKizunaCurFP...). The C-linkage form below
 // reproduces the retail name and keeps the call site a direct bl.
-extern "C" void __declspec(noinline) __ct__CPcKizunaCur(CPcKizunaCur* self,
-                                                        nw4r::lyt::ArcResourceAccessor* accessor);
+extern "C" void __ct__CPcKizunaCur(CPcKizunaCur* self,
+                                   nw4r::lyt::ArcResourceAccessor* accessor);
 
 // ---------------------------------------------------------------------------
 // Support types for the free functions in this TU (not part of CPcKizunagram).

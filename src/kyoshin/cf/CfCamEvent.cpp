@@ -2,6 +2,7 @@
 #include "kyoshin/cf/CfCamSymbols.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"  // canonical isTimerActive declaration
 #include "monolib/util/MemManager.hpp"  // canonical mtl::MemManager::allocate
+#include "nw4r/db/db_assert.h"  // canonical nw4r::db::Warning
 
 #include "kyoshin/cf/CfGameManagerData.hpp"
 #include <string.h>
@@ -59,17 +60,11 @@ extern "C" cf::CfCamDispatch* CfCamEvent_initCamIntfInstances(cf::CfCamEvent* se
     return result;
 }
 
-// Byte view of the opaque camera-event handle's float factor at +0x280.
-struct CfCamFactorView {
-    u8 _00[0x280];
-    float factor280;
-};
-
-extern "C" void CfCamEvt_StoreFactor280(u8* self, float value) {
-    ((CfCamFactorView*)self)->factor280 = value;
+extern "C" void CfCamEvt_StoreFactor280(cf::CfCamEvent* self, float value) {
+    self->unk280 = value;
 }
-extern "C" float CfCamEvt_LoadFactor280(u8* self) {
-    return ((CfCamFactorView*)self)->factor280;
+extern "C" float CfCamEvt_LoadFactor280(cf::CfCamEvent* self) {
+    return self->unk280;
 }
 
 using namespace cf;
@@ -306,8 +301,8 @@ void CfCamEvt_Update(CfCamEvent* self) {
         ang = 1.0f;
     }
     if (!(ang <= 1.0f && ang >= -1.0f)) {
-        Warning__Q24nw4r2dbFPCciPCce((const char*)lbl_eu_805262F0, 0xEF,
-                                     (const char*)lbl_eu_805262C8);
+        nw4r::db::Warning((const char*)lbl_eu_805262F0, 0xEF,
+                          (const char*)lbl_eu_805262C8);
     }
     // acos result is narrowed to f32 before the scaling multiply.
     if ((f32)acos(ang) * ml::rad2deg < 5.0f) {
@@ -356,7 +351,6 @@ void CfCamDirectionIntf_setPos();
 void CfCamDirectionIntf_setDir();
 void CfCamDirectionIntf_setLookat();
 extern char __RTTI__Q22cf11CfCamFollow[];
-extern char lbl_eu_80661B30[];
 extern const void* lbl_eu_80661B00[];
 extern const void* __RTTI__Q22cf15CfCamTargetIntf[];
 extern const void* __RTTI__Q22cf15CfCamLookatIntf[];

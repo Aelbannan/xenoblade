@@ -1981,13 +1981,13 @@ extern u8 __RTTI__9CColiProc[];
 // to lbl_eu_80663AA8 by UNIT_RULES exact_renames.
 enum { sdata_ref_needle_size = 4 };
 extern __declspec(section ".sdata") __attribute__((aligned(8))) const char sdata_ref_needle[sdata_ref_needle_size] = "ref";
-extern __declspec(section ".sdata") __attribute__((aligned(8))) u32 __RTTI__16CTaskColiManager[2] = {
+extern __attribute__((aligned(8))) u32 __RTTI__16CTaskColiManager[2] = {
     (u32)&"CTaskColiManager"[0], (u32)&lbl_eu_8056F48C,
 };
-extern __declspec(section ".sdata") __attribute__((aligned(8))) u32 lbl_eu_80663AB8[2] = {
+extern __attribute__((aligned(8))) u32 lbl_eu_80663AB8[2] = {
     (u32)&"CTTask<CTaskColiManager>"[0], (u32)&lbl_eu_8056F4D4,
 };
-extern __declspec(section ".sdata") __attribute__((aligned(8))) u32 __RTTI__12CColiManCall[2] = {
+extern __attribute__((aligned(8))) u32 __RTTI__12CColiManCall[2] = {
     (u32)&"CColiManCall\0\0\0"[0], (u32)&lbl_eu_8056F4FC,
 };
 

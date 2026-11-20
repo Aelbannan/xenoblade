@@ -43,7 +43,7 @@ u8 KizunagramIsHidden(CPcKizunagram* pKizunagram) { return pKizunagram->mIsHidde
 
 
 
-extern "C" void __declspec(noinline) KizunaCurAdvanceSwapAnim(CPcKizunaCur* self) {
+extern "C" void KizunaCurAdvanceSwapAnim(CPcKizunaCur* self) {
     if (advanceAnimTransform(self->mpAnim1, 1.0f) == 0) return;
     self->mField14 = 0;
     self->mField15 = 1;
@@ -53,7 +53,7 @@ extern "C" void __declspec(noinline) KizunaCurAdvanceSwapAnim(CPcKizunaCur* self
 }
 
 // Step the current sub-state of the cursor, then always re-animate its layout.
-extern "C" void __declspec(noinline) KizunaCurUpdate(CPcKizunaCur* self) {
+extern "C" void KizunaCurUpdate(CPcKizunaCur* self) {
     if (self->mpLayout == 0) return;
     switch (self->mField14) {
     case 0:
@@ -87,7 +87,7 @@ extern "C" void KizunagramUpdateMainState(CPcKizunagram* self) {
 // Destroy the cursor's layout: delete it through its vtable (deleting dtor,
 // slot 2) and null out the pointer. The double null-check is MWCC's `delete`
 // lowering for this class (same shape as KizunagramTerm's mLayout delete).
-extern "C" void __declspec(noinline) KizunaCurDestroyLayout(CPcKizunaCur* self) {
+extern "C" void KizunaCurDestroyLayout(CPcKizunaCur* self) {
     if (self->mpLayout != 0) {
         delete self->mpLayout;
         self->mpLayout = 0;
@@ -122,10 +122,10 @@ int KizunagramIsOpen(CPcKizunagram* pKizunagram) { return pKizunagram->mIsOpen; 
 
 // CPcKizunaCur constructor: paint the fixed layout with the vtable and the
 // embedded accessor, then zero the following fields (visible flag = 1).
-// C-linkage (retail symbol __ct__CPcKizunaCur is unmangled) and noinline so
-// retail's __ct__CPcKizunagram call stays a direct bl.
-extern "C" void __declspec(noinline) __ct__CPcKizunaCur(CPcKizunaCur* self,
-                                                         nw4r::lyt::ArcResourceAccessor* accessor) {
+// C-linkage (retail symbol __ct__CPcKizunaCur is unmangled), so retail's
+// __ct__CPcKizunagram call stays a direct bl.
+extern "C" void __ct__CPcKizunaCur(CPcKizunaCur* self,
+                                   nw4r::lyt::ArcResourceAccessor* accessor) {
     self->mVtable = lbl_eu_805376AC;
     self->mAccessor = accessor;
     self->mpLayout = 0;
@@ -216,7 +216,7 @@ void KizunagramCursorPageDown(CPcKizunagram* self) {
     playUISound(1);
 }
 
-extern "C" void __declspec(noinline) KizunagramFinishOpening(CPcKizunagram* self) {
+extern "C" void KizunagramFinishOpening(CPcKizunagram* self) {
     if (advanceAnimTransform(self->mAnimTransform, 1.0f) == 0) return;
     self->mStateByte2 = 2;
     self->mIsOpen = 1;
@@ -227,7 +227,7 @@ extern "C" void __declspec(noinline) KizunagramFinishOpening(CPcKizunagram* self
 }
 
 // Dispatch on the state byte at +0x44; each branch is a tail call.
-extern "C" void __declspec(noinline) KizunagramTickPulse(CPcKizunagram* self) {
+extern "C" void KizunagramTickPulse(CPcKizunagram* self) {
     switch (self->mByte44) {
     case 0:
         KizunagramPulseRise(self);
@@ -248,7 +248,7 @@ void KizunagramBeginFileRead(CPcKizunagram* self) {
 
 // When the opening animation (mAnimTransform at +0x20) finishes, mark the
 // window as open (sub-state 0, mIsOpen = 1).
-extern "C" void __declspec(noinline) KizunagramFinishClosing(CPcKizunagram* self) {
+extern "C" void KizunagramFinishClosing(CPcKizunagram* self) {
     if (AnimRewindFrame(self->mAnimTransform, 1.0f) != 0) {
         self->mStateByte2 = 0;
         self->mIsOpen = 1;
@@ -256,10 +256,10 @@ extern "C" void __declspec(noinline) KizunagramFinishClosing(CPcKizunagram* self
 }
 
 // These three are large retail functions (0x100/0xc8/0x3dc) not yet
-// implemented here; noinline keeps callers emitting real bl instructions, and
+// implemented here; callers emit real bl instructions, and
 // extern "C" keeps the unmangled retail symbol names.
 // KizunagramRefreshRows: refresh all 6 affinity rows for the current character.
-extern "C" __declspec(noinline) void KizunagramRefreshRows(CPcKizunagram* self) {
+extern "C" void KizunagramRefreshRows(CPcKizunagram* self) {
     void* table = getFP(lbl_eu_8050D868 + 0x7f);
     u8 count = (u8)Bdat_GetMaxRow_B1EC(table);
     CtrlRemote_TouchBitByArg(0x20);
@@ -406,8 +406,8 @@ void KizunagramBuildRowLookup(CPcKizunagram* self) {
 
 // Initialise the per-character cursor widget: load its layout and two animation
 // transforms, enable the idle anim, pin down two named panes, then reset the
-// root pane scale. noinline: retail callers (OnFileEvent) emit a real bl.
-extern "C" void __declspec(noinline) KizunaCurInitLayout(CPcKizunaCur* self) {
+// root pane scale; retail callers (OnFileEvent) emit a real bl.
+extern "C" void KizunaCurInitLayout(CPcKizunaCur* self) {
     buildLayout(&self->mpLayout, self->mAccessor, lbl_eu_8050D868 + 0x00);
     bindLayoutAnimTransform(self->mpLayout, &self->mpAnim0, self->mAccessor, lbl_eu_8050D868 + 0x18);
     bindLayoutAnimTransform(self->mpLayout, &self->mpAnim1, self->mAccessor, lbl_eu_8050D868 + 0x35);
@@ -463,7 +463,7 @@ extern "C" void KizunagramStepRow(CPcKizunagram* self, u32 arg) {
 }
 
 // Target a text pane by name, then move the cursor so it sits over the row
-void __declspec(noinline) KizunagramPlaceCursor(CPcKizunagram* self) {
+void KizunagramPlaceCursor(CPcKizunagram* self) {
     char* path =
         (char*)BdatTouchStringCell(lbl_eu_8050D868 + 0x7f, lbl_eu_8050D868 + 0x90, (s8)self->mField28 + 1);
     nw4r::lyt::Pane* pane1 = self->mLayout->GetRootPane()->FindPaneByName(path, true);
@@ -480,7 +480,7 @@ void __declspec(noinline) KizunagramPlaceCursor(CPcKizunagram* self) {
     KizunaTreeSetLeafPos((CPcKizunaTreeRoot*)self->mKizunaCur, (CPcKizunaVec3*)tmp);
 }
 
-extern "C" void __declspec(noinline) KizunagramPulseRise(CPcKizunagram* self) {
+extern "C" void KizunagramPulseRise(CPcKizunagram* self) {
     self->mFloat48 += 1.0f;
     if (self->mFloat48 >= 17.0f) {
         self->mByte44 = 1;
@@ -489,7 +489,7 @@ extern "C" void __declspec(noinline) KizunagramPulseRise(CPcKizunagram* self) {
     }
 }
 
-extern "C" void __declspec(noinline) KizunagramPulseFall(CPcKizunagram* self) {
+extern "C" void KizunagramPulseFall(CPcKizunagram* self) {
     self->mFloat48 += 1.0f;
     if (self->mFloat48 >= 9.0f) {
         self->mByte44 = 0;
@@ -594,8 +594,8 @@ extern "C" int KizunagramCheckMappedRowValid(CPcKizunagram* self, const void* ta
 }
 
 // BDAT range check: random row must fall between two bounded column values.
-// noinline: retail callers emit a real bl (KizunagramCheckMappedRowValid etc).
-extern "C" int __declspec(noinline) KizunagramCheckRowAvailable(CPcKizunagram* self, const void* table, int id) {
+// Retail callers emit a real bl (KizunagramCheckMappedRowValid etc).
+extern "C" int KizunagramCheckRowAvailable(CPcKizunagram* self, const void* table, int id) {
     const char* base = lbl_eu_8050D868;
     u16 v1 = BdatGetU16Direct(table, base + 0xdd, id);
     u16 v2 = BdatGetU16Direct(table, base + 0x256, id);
@@ -985,7 +985,7 @@ void CPcKizunagramBig::PersistSlotEntry(CPcKizunaSlotEntry* entry) {
 // register rotation (n1=r4, n2=r5, n3=r3, n4=r4, n5=r3) and the bottom
 // ret-blocks (beq-down for n1/n2/n4, beqlr for p/n3); the fully-flat or
 // fully-nested forms give different layouts (probe-verified).
-extern "C" __declspec(noinline) CPcKizunaSlotEntry* KizunaEntryFindListHead(CPcKizunaSlotEntry* p) {
+extern "C" CPcKizunaSlotEntry* KizunaEntryFindListHead(CPcKizunaSlotEntry* p) {
     CPcKizunaSlotEntry* n1 = p->pField1C;
     if (n1 == 0) return p;
     CPcKizunaSlotEntry* n2 = n1->pField1C;

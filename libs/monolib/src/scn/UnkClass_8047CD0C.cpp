@@ -2,7 +2,7 @@
 //
 // Node-pool manager shared by the scene path/walker classes (UnkClass_8047D2AC,
 // UnkClass_8047E064 -- see code_8047D2AC.cpp).  It tracks a single allocation
-// in the global lbl_eu_806658C8 slot, exposes a set of "get/clear" helpers on
+// in the global sWalkNodeStorage slot, exposes a set of "get/clear" helpers on
 // the pool object at sWalkTableLocator, and is initialised by sinit_8047D290.
 //
 // Retail main.dol is stripped; symbols.txt annotates every method as Fv even
@@ -102,7 +102,7 @@ extern "C" u8* allocateNodeStorage__17UnkClass_8047CD0CFv(UnkClass_8047CD0C* sel
 // ------------------------------------------------------------------
 
 extern UnkClass_8047CD0C sWalkTableLocator; // node pool (bss)
-extern u8* lbl_eu_806658C8;              // owned allocation slot (sbss)
+u8* sWalkNodeStorage;    // name-guess: walk-node storage pointer; owned allocation slot (sbss)
 
 // ------------------------------------------------------------------
 // initFromConfig -- constructor from a scene-config blob.
@@ -260,7 +260,7 @@ void UnkClass_8047CD0C::clearPoolFlags() {
 extern "C" u8* allocateNodeStorage__17UnkClass_8047CD0CFv(UnkClass_8047CD0C* self,
                                                       mtl::ALLOC_HANDLE handle,
                                                       u32 size, u32 nodeCount) {
-    if (!lbl_eu_806658C8) {
+    if (!sWalkNodeStorage) {
         // Nested identical null-tests -> one cmp + two beq (dead second
         // branch), matching retail's double-beq shape.
         if (self->mData) {
@@ -272,7 +272,7 @@ extern "C" u8* allocateNodeStorage__17UnkClass_8047CD0CFv(UnkClass_8047CD0C* sel
         self->mData =
             (u8*)mtl::MemManager::allocate_head(handle, size, 0x20);
     } else {
-        self->mData = lbl_eu_806658C8;
+        self->mData = sWalkNodeStorage;
     }
     self->mNodeCount = nodeCount;
     self->mField04 = size - nodeCount * 0x28;
@@ -335,7 +335,7 @@ extern "C" u16* getNodeBlock__17UnkClass_8047CD0CFv(UnkClass_8047CD0C* self, u32
 
 // freePoolAllocation -- release owned allocation and reset pool fields
 void UnkClass_8047CD0C::freePoolAllocation() {
-    if (!lbl_eu_806658C8) {
+    if (!sWalkNodeStorage) {
         if (mData) {
             mtl::MemManager::deallocate(mData);
             mData = 0;
@@ -351,13 +351,13 @@ void UnkClass_8047CD0C::freePoolAllocation() {
 void UnkClass_8047CD0C::createGlobalHeap() {
     // Nested identical null-tests so MWCC emits two beq-skip branches (dead second
     // branch) before the deallocate, matching retail's double-beq shape.
-    if (lbl_eu_806658C8) {
-        if (lbl_eu_806658C8) {
-            mtl::MemManager::deallocate(lbl_eu_806658C8);
-            lbl_eu_806658C8 = 0;
+    if (sWalkNodeStorage) {
+        if (sWalkNodeStorage) {
+            mtl::MemManager::deallocate(sWalkNodeStorage);
+            sWalkNodeStorage = 0;
         }
     }
-    lbl_eu_806658C8 = static_cast<u8*>(
+    sWalkNodeStorage = static_cast<u8*>(
         mtl::MemManager::allocate_head(mtl::MemManager::getHandleMEM1(), 0xAF000, 0x20));
 }
 
@@ -367,12 +367,12 @@ void UnkClass_8047CD0C::createGlobalHeap() {
 void UnkClass_8047CD0C::freeGlobalHeap() {
     // Nested identical null-tests -> two beq-skip branches (dead second branch),
     // matching retail's double-beq before deallocate.
-    if (lbl_eu_806658C8) {
-        if (lbl_eu_806658C8) {
-            mtl::MemManager::deallocate(lbl_eu_806658C8);
+    if (sWalkNodeStorage) {
+        if (sWalkNodeStorage) {
+            mtl::MemManager::deallocate(sWalkNodeStorage);
         }
     }
-    lbl_eu_806658C8 = 0;
+    sWalkNodeStorage = 0;
 }
 
 // ------------------------------------------------------------------
@@ -400,6 +400,5 @@ f32 sMaruShadowCenter[4];
 // [.sbss] 0x806658C8-0x806658D8 (0x10 = 16B): owned-allocation slot (used
 // as a 4-byte pointer) + pad to the retail 8-byte symbol + the 8-byte
 // partner slot.
-u8* lbl_eu_806658C8;    // owned allocation slot
 u32 lbl_eu_806658C8x;     // retail symbol tail (unused)
 u8 sWalkWaypointInitFlags[8];

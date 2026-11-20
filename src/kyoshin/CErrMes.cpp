@@ -94,27 +94,32 @@ extern "C" void getErrMesText20() {
     getBdatStringColumnValue(sErrMesBdatData, (char*)&lbl_eu_80513420[9], 20);
 }
 
-extern "C" void* getErrMesLangTable0(void) { return (void*)lbl_eu_8053A438; }
+// name-guess: retail table has no real name in any region symbols.txt.
+ErrMesLangEntry* sErrMesLangTable0[8] = { (ErrMesLangEntry*)"ime/jp1", (ErrMesLangEntry*)"ime/en2", (ErrMesLangEntry*)"ime/en3", (ErrMesLangEntry*)"ime/en4", (ErrMesLangEntry*)"ime/en5", (ErrMesLangEntry*)"ime/en6", (ErrMesLangEntry*)"ime/en7" };
 
-extern "C" void* getErrMesLangTable1(void) { return (void*)lbl_eu_8053A458; }
+// name-guess: retail table has no real name in any region symbols.txt.
+ErrMesLangEntry* sErrMesLangTable1[8] = { (ErrMesLangEntry*)"ahx/jp1", (ErrMesLangEntry*)"ahx/en2", (ErrMesLangEntry*)"ahx/en3", (ErrMesLangEntry*)"ahx/en4", (ErrMesLangEntry*)"ahx/en5", (ErrMesLangEntry*)"ahx/en6", (ErrMesLangEntry*)"ahx/en7" };
 
-extern "C" void* getErrMesLangTable2(void) { return (void*)lbl_eu_8053A478; }
+// name-guess: retail table has no real name in any region symbols.txt.
+ErrMesLangEntry* sErrMesLangTable2[8] = { (ErrMesLangEntry*)"chr/jp1", (ErrMesLangEntry*)"chr/en2", (ErrMesLangEntry*)"chr/en3", (ErrMesLangEntry*)"chr/en4", (ErrMesLangEntry*)"chr/en5", (ErrMesLangEntry*)"chr/en6", (ErrMesLangEntry*)"chr/en7" };
+
+extern "C" void* getErrMesLangTable0(void) { return sErrMesLangTable0; }
+
+extern "C" void* getErrMesLangTable1(void) { return sErrMesLangTable1; }
+
+extern "C" void* getErrMesLangTable2(void) { return sErrMesLangTable2; }
 
 // Language codes patched into the extended language-entry tables.
 extern "C" void removePackFile(char* pStr);
 extern "C" void registerPackFile(char* pStr, s32 flag);
 
 void setErrMesLanguage(s32 lang) {
-    // The bdat-table array and the three language-entry arrays are contiguous
-    // in .data; walk them all through one base pointer (retail codegen).
-    ErrMesLangEntry** pEntries = (ErrMesLangEntry**)&lbl_eu_8053A420[6];
-
     // Reset the '/' separator byte on every entry of all three tables.
     int i;
     for (i = 0; i < 7; i++) {
-        pEntries[i]->mSep = '/';
-        pEntries[i + 7]->mSep = '/';
-        pEntries[i + 14]->mSep = '/';
+        sErrMesLangTable0[i]->mSep = '/';
+        sErrMesLangTable1[i]->mSep = '/';
+        sErrMesLangTable2[i]->mSep = '/';
     }
 
     // Pick the two-char language code ('en' or 'jp') from the argument.
@@ -123,16 +128,16 @@ void setErrMesLanguage(s32 lang) {
 
     bool changed = false;
     for (i = 1; i < 7; i++) {
-        pEntries[i]->mLang0 = c0;
-        pEntries[i]->mLang1 = c1;
+        sErrMesLangTable0[i]->mLang0 = c0;
+        sErrMesLangTable0[i]->mLang1 = c1;
         // Only the middle table reports whether anything actually changed.
-        if (pEntries[i + 7]->mLang0 != c0 || pEntries[i + 7]->mLang1 != c1) {
+        if (sErrMesLangTable1[i]->mLang0 != c0 || sErrMesLangTable1[i]->mLang1 != c1) {
             changed = true;
         }
-        pEntries[i + 7]->mLang0 = c0;
-        pEntries[i + 7]->mLang1 = c1;
-        pEntries[i + 14]->mLang0 = c0;
-        pEntries[i + 14]->mLang1 = c1;
+        sErrMesLangTable1[i]->mLang0 = c0;
+        sErrMesLangTable1[i]->mLang1 = c1;
+        sErrMesLangTable2[i]->mLang0 = c0;
+        sErrMesLangTable2[i]->mLang1 = c1;
     }
 
     if (changed) {

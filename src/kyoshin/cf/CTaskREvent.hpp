@@ -248,7 +248,6 @@ extern u32 gAutoSleepState; // auto-sleep/dimming state word written by the ctor
 // Frame-target word: getTargetFramerate() * 300 (ctor + evtSyncBusyDimming/80166150).
 extern u32 gEventFrameCounter[2];
 extern u32 gmPauseFlags; // event flag word (bit7 tested by isEventPending)
-extern s16 lbl_eu_80502F90[]; // event-id table walked by evtFillCharRange (32 entries)
 extern const char lbl_eu_80503008[];  // Init: base string copied into each entry
 // Init: 0xAE suffix strings appended to each entry (walked by pointer).
 extern const char* lbl_eu_80530458[];

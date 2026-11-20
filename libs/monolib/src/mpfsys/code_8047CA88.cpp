@@ -14,8 +14,6 @@ struct SFlag_806658C0 {
 extern "C" {
     struct SFlag_806658C0 lbl_eu_806658C0;
     u8 lbl_eu_80658518[sizeof(UnkClass_8047CA88)];
-    extern float lbl_eu_8066A870;
-    extern float lbl_eu_8066A874;
     extern float lbl_eu_80665884;
 }
 
@@ -47,8 +45,8 @@ extern "C" void mpfQueryRadiusNodes__17UnkClass_8047CA88Fv(
     f32 dot = nw4r::math::VEC3Dot((nw4r::math::VEC3*)&self->field_08, &tmp);
 
     f32 clamped = self->field_14 * dot;
-    if (lbl_eu_8066A870 > clamped) clamped = lbl_eu_8066A870;
-    if (lbl_eu_8066A874 < clamped) clamped = lbl_eu_8066A874;
+    if (0.0f > clamped) clamped = 0.0f;
+    if (1.0f < clamped) clamped = 1.0f;
 
     nw4r::math::VEC3Scale(&tmp, (nw4r::math::VEC3*)&self->field_08, clamped);
 
@@ -79,7 +77,7 @@ extern "C" void mpfQueryRadiusNodes__17UnkClass_8047CA88Fv(
 extern "C" void mpfRunDescQuery__17UnkClass_8047CA88Fv(
     UnkClass_8047CA88* self, void* desc, void* dataPtr, nw4r::math::VEC3* vec, f32 scale)
 {
-    f32 inv = lbl_eu_8066A874;
+    f32 inv = 1.0f;
     u32 off = *(u32*)((u8*)desc + 0x24);
     self->field_04 = dataPtr;
     u8* base = (u8*)desc + off;

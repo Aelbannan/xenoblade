@@ -2134,28 +2134,3 @@ void CArrow3D::Init() {
     lay->GetRootPane()->FindPaneByName(S + 0x14, true)->SetVisible(false);
     lay->GetRootPane()->FindPaneByName(S + 0x26, true)->SetVisible(false);
 }
-
-// ---------- Thunk functions ----------
-// These are vtable thunks for multiple inheritance.
-// When called through the IWorkEvent vtable (offset 0x58) or IScnRender vtable (offset 0x5C),
-// the this pointer needs adjustment before calling the actual implementation.
-// Retail emits 8-byte tail calls (addi this-adjust + branch). The C++ member-scoped
-// call form would inline the tiny bodies, so call the retail symbols directly as
-// extern "C" functions (same pattern as the CMenuMapSelect/CMapSel dtors).
-// Note: thunks call the dtors through a one-arg pointer view (matching the
-// retail thunk ABI - only r3 is set before the tail branch; the flags arg is
-// caller-leftover, as retail).
-extern "C" void* __dt__15CMenuSymbolMarkFv(CMenuSymbolMark* self, int flags);
-
-extern "C" void SymMark_ThunkDtor58(void* self) {
-    // One-arg pointer view: retail thunk leaves r4 (delete flag) untouched.
-    ((void (*)(CMenuSymbolMark*))__dt__15CMenuSymbolMarkFv)((CMenuSymbolMark*)((char*)self - 0x58));
-}
-
-extern "C" void SymMark_ThunkRender5C(void* self) {
-    ((CMenuSymbolMark*)((char*)self - 0x5C))->cbRenderBefore();
-}
-
-extern "C" void SymMark_ThunkDtor5C(void* self) {
-    ((void (*)(CMenuSymbolMark*))__dt__15CMenuSymbolMarkFv)((CMenuSymbolMark*)((char*)self - 0x5C));
-}

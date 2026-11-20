@@ -6,9 +6,10 @@
 
 #include "functions.hpp"
 
+class CTaskEnvLgtCtrlAccess;
 extern "C" void nopFunc();  // retail no-op helper defined below
 extern "C" float scaleByGlobal(float val);
-extern "C" u32 checkBitFlag(u8* self);
+extern "C" u32 checkBitFlag(CTaskEnvLgtCtrlAccess* self);
 extern "C" void Env_CopyLightPreset(void* dst, const void* src);
 extern "C" void Env_CopyLightGate(void* self, const void* src);
 extern "C" void Env_AddVec4(ml::CVec4* out, const ml::CVec4* a,
@@ -40,10 +41,10 @@ extern "C" void copyWord4Offset(u32* dst, const u32* src);
 // ---------------------------------------------------------------------------
 
 // .rodata: RTTI names.
-__declspec(section ".rodata") __attribute__((aligned(8))) __attribute__((used))
-char lbl_eu_804FB098[] = "CTaskEnvironment";
-__declspec(section ".rodata") __attribute__((used))
-char lbl_eu_804FB0AC[] = "CTTask<CTaskEnvironment>";
+__attribute__((aligned(8))) __attribute__((used))
+const char lbl_eu_804FB098[] = "CTaskEnvironment";
+__attribute__((used))
+const char lbl_eu_804FB0AC[] = "CTTask<CTaskEnvironment>";
 
 // Foreign slots/labels referenced by the tables below. Reset/Tail and the
 // monolib RTTI pairs live in other TUs (CTaskManager.cpp precedent); the
@@ -64,9 +65,9 @@ extern "C" u32 __RTTI__16CTaskEnvironment[2];
 extern "C" u32 lbl_eu_806619D0[2];
 
 // .data: NW4R assert strings.
-__declspec(section ".data") __attribute__((aligned(8))) __attribute__((used))
+__attribute__((aligned(8))) __attribute__((used))
 char lbl_eu_80526354[] = "NW4R:Failed assertion !((u32)p & 0x1f)";
-__declspec(section ".data") __attribute__((used))
+__attribute__((used))
 char lbl_eu_8052637C[] = "g3d_resfile_ac.h";
 
 // .data: CTaskEnvironment vtable (0x24). Member slots that MWCC did not
@@ -155,38 +156,37 @@ __declspec(noinline) CTaskEnvironment* __ct__CTaskEnvironment(
 
     // Final CTaskEnvironment vtable, then scalar member init.
     p[4] = reinterpret_cast<u32>(lbl_eu_80526390);
-    const u32 zero = 0;
     self->mScene = scene;
-    self->field_0x58 = (u8)zero;
+    self->field_0x58 = (u8)0;
     self->field_0x5C = 2000;
-    self->field_0x60 = zero;
-    self->field_0x64 = zero;
+    self->field_0x60 = 0;
+    self->field_0x64 = 0;
     self->field_0x68 = 0x10;
-    self->field_0x6C = zero;
-    self->field_0x70 = lbl_eu_80665FA0;
+    self->field_0x6C = 0;
+    self->field_0x70 = 0.0f;
     self->field_0x74 = 23.4f;
     self->field_0x78 = 30.0f;
-    self->field_0x7C = lbl_eu_80665FA0;
-    self->field_0x80 = lbl_eu_80665FA0;
+    self->field_0x7C = 0.0f;
+    self->field_0x80 = 0.0f;
     self->field_0x84 = 1.0f;
-    self->field_0x88 = lbl_eu_80665FA0;
-    self->field_0x8C = lbl_eu_80665FA0;
-    self->field_0xA8 = (u8)zero;
-    p[0x2B] = zero;   // 0xAC
-    p[0x2C] = zero;   // 0xB0
-    p[0x2D] = zero;   // 0xB4
-    p[0x2E] = zero;   // 0xB8
-    p[0x2F] = zero;   // 0xBC
-    p[0x30] = zero;   // 0xC0
-    p[0x31] = zero;   // 0xC4
-    p[0x32] = zero;   // 0xC8
-    p[0x33] = zero;   // 0xCC
-    p[0x34] = zero;   // 0xD0
-    p[0x35] = zero;   // 0xD4
-    p[0x36] = zero;   // 0xD8
-    p[0x37] = zero;   // 0xDC
-    p[0x38] = zero;   // 0xE0
-    p[0x39] = zero;   // 0xE4
+    self->field_0x88 = 0.0f;
+    self->field_0x8C = 0.0f;
+    self->field_0xA8 = (u8)0;
+    p[0x2B] = 0;   // 0xAC
+    p[0x2C] = 0;   // 0xB0
+    p[0x2D] = 0;   // 0xB4
+    p[0x2E] = 0;   // 0xB8
+    p[0x2F] = 0;   // 0xBC
+    p[0x30] = 0;   // 0xC0
+    p[0x31] = 0;   // 0xC4
+    p[0x32] = 0;   // 0xC8
+    p[0x33] = 0;   // 0xCC
+    p[0x34] = 0;   // 0xD0
+    p[0x35] = 0;   // 0xD4
+    p[0x36] = 0;   // 0xD8
+    p[0x37] = 0;   // 0xDC
+    p[0x38] = 0;   // 0xE0
+    p[0x39] = 0;   // 0xE4
     self->field_0xE8 = 0;
     self->field_0xE9 = 0;
     self->field_0xEA = 0;
@@ -218,12 +218,12 @@ extern "C" void copyWord4(u32* dst, const u32* src) {
     d[3] = s[3];
 }
 
-extern "C" void* Env_GetSub64(void* self) { return (char*)self + 0x64; }
-extern "C" u32 getSubField78(void* self) { return *(u32*)((u8*)self + 0x78); }
+extern "C" u32* Env_GetSub64(CTaskEnvWorld* self) { return &self->field_0x64; }
+extern "C" CTaskEnvWorld* getSubField78(CTaskEnvScene* self) { return self->field_0x78; }
 
-extern "C" float Env_GetFloat54(void* self) { return *(float*)((char*)self + 0x54); }
+extern "C" f32 Env_GetFloat54(CTaskEnvWorld* self) { return self->field_0x54; }
 
-extern "C" float Env_GetFloat58(void* self) { return *(float*)((char*)self + 0x58); }
+extern "C" f32 Env_GetFloat58(CTaskEnvWorld* self) { return self->field_0x58; }
 
 // CTaskEnvironment::~CTaskEnvironment() - extern "C" free-function form
 // (CCol6CheckBat/CCol6Invite precedent): outer null-check covers the delete;
@@ -246,9 +246,9 @@ extern "C" void* __dt__16CTaskEnvironmentFv(CTaskEnvironment* self, int flags) {
 
 extern "C" void* getGlobalSda() { return spTaskEnvironmentManager; }
 
-extern "C" u32 getField68(u8* self) { return *(u32*)((u8*)self + 0x68); }
+extern "C" u32 getField68(CTaskEnvironment* self) { return self->field_0x68; }
 
-extern "C" u32 getSubField7C(u8* self) { return *(u32*)((u8*)self + 0x7C); }
+extern "C" CTaskEnvLgtCtrlAccess* getSubField7C(CTaskEnvScene* self) { return self->mEnvLgtCtrl; }
 
 // Clock helper: hours = minute/c + second/c/c (c = sdata2 rate constant,
 // 60.0f; the int->float conversion uses the retail double trick).
@@ -272,7 +272,7 @@ extern "C" float Env_DayFraction(CTaskEnvTime* time) {
            time->second / 60.0f / 60.0f;
 }
 
-extern "C" u32 getField5C(u8* self) { return *(u32*)((u8*)self + 0x5C); }
+extern "C" CTaskEnvScnMgr* getField5C(CTaskEnvScene* self) { return self->field_0x5C; }
 
 // Build the environment lights: two CTimeLightGrp groups from the work heap
 // (constructed with the scene as parent), then colour/ambient/directional
@@ -309,7 +309,7 @@ extern "C" __declspec(noinline) void Env_BuildLights(CTaskEnvironment* self) {
         self->mScene->field_0x5C, self->mScene->field_0x5C->field_0x6C,
         &ml::CVec4(FC0, FC0, FC0, FAC));
     // Retail sets the +0x19 flag through the pointer scnVlCreateAmb returned.
-    self->mLgtDC->field_0x19 = 1;
+    self->mLgtDC->mByte19 = 1;
     self->mLgtAC = scnVlCreateAmb(
         self->mScene->field_0x5C, self->mScene->field_0x5C->field_0x0C,
         &ml::CVec4(FAC, FAC, FAC, FAC));
@@ -417,12 +417,8 @@ void CTaskEnvironment::Move() {
         Env_AdvanceClock(time, delta);
     }
 
-    scnLgtSetSinkBit1(reinterpret_cast<CTaskEnvLgtCtrlAccess*>(
-                      getSubField7C(reinterpret_cast<u8*>(mScene))),
-                  1);
-    scnLgtSetParamIdle(reinterpret_cast<CTaskEnvLgtCtrlAccess*>(
-                      getSubField7C(reinterpret_cast<u8*>(mScene))),
-                  1);
+    scnLgtSetSinkBit1(getSubField7C(mScene), 1);
+    scnLgtSetParamIdle(getSubField7C(mScene), 1);
 
     // Sun elevation factor: month/day/hour progress through the year scaled
     // by the .data rate constant. Integer fields are converted to float via
@@ -465,7 +461,7 @@ void CTaskEnvironment::Move() {
     float dirSrc[3];   // sp+0x230 in retail
     float dirOut[3];   // sp+0x23C
     ml::CVec3* v = reinterpret_cast<ml::CVec3*>(
-        writeVec3f((ml::CVec3*)dirSrc, lbl_eu_80665FA0, lbl_eu_80665FA0,
+        writeVec3f((ml::CVec3*)dirSrc, 0.0f, 0.0f,
                       -1.0f));
     Env_MtxMulVec(reinterpret_cast<ml::CVec3*>(dirOut), &mtx, v);
     copyVec3Words(reinterpret_cast<void*>(&field_0x7C),
@@ -476,41 +472,37 @@ void CTaskEnvironment::Move() {
         ((int)this->field_0x6C + (int)this->field_0x68 * 60) * 60;
     conv.w[1] = (u32)secsOfDay ^ 0x80000000;
     float fsod = (float)(conv.d - lbl_eu_80665FB8);
-    scnLgtBindLightArg(
-        reinterpret_cast<CTaskEnvLgtCtrlAccess*>(
-            getSubField7C(reinterpret_cast<u8*>(mScene))),
-        (void*)(int)(fsod + field_0x70));
+    scnLgtBindLightArg(getSubField7C(mScene),
+                   (void*)(int)(fsod + field_0x70));
 
     if (field_0xE8 != 0 ||
-        checkBitFlag(
-            reinterpret_cast<u8*>(getSubField7C(reinterpret_cast<u8*>(mScene)))) !=
+        checkBitFlag(getSubField7C(mScene)) !=
         0) {
         goto postUpdate;
     }
 
     {
-        u32 hr = getField68(reinterpret_cast<u8*>(this));
-        if (hr >= 6 && getField68(reinterpret_cast<u8*>(this)) <= 0x10) {
+        u32 hr = getField68(this);
+        if (hr >= 6 && getField68(this) <= 0x10) {
             // Full daytime: copy preset rows directly.
             Env_CopyLightPreset(mUnkE0, tbl + 0x20);
             Env_CopyLightPreset(mUnkE4, tbl + 0x50);
             copyWord4(&this->field_0x90,
-                      reinterpret_cast<const u32*>(Env_GetSub64(
-                          (void*)getSubField78(mScene))));
-            field_0xA0 = Env_GetFloat54((void*)getSubField78(mScene));
-            field_0xA4 = Env_GetFloat58((void*)getSubField78(mScene));
+                      Env_GetSub64(getSubField78(mScene)));
+            field_0xA0 = Env_GetFloat54(getSubField78(mScene));
+            field_0xA4 = Env_GetFloat58(getSubField78(mScene));
             scnVlApplyDir4C(
                 static_cast<CVirtualLightObj*>(
-                    (void*)getField5C(reinterpret_cast<u8*>(mScene))),
+                    (void*)getField5C(mScene)),
                 reinterpret_cast<const ml::CVec4*>(tbl + 0x90), FAC);
             Env_CopyLightGate(mLgtB8, tbl + 0x20);
             goto postUpdate;
         }
-        if (getField68(reinterpret_cast<u8*>(this)) < 0x11 ||
-            getField68(reinterpret_cast<u8*>(this)) > 0x12) {
+        if (getField68(this) < 0x11 ||
+            getField68(this) > 0x12) {
             goto nightBlock;
         }
-        if (getField68(reinterpret_cast<u8*>(this)) == 0x11 &&
+        if (getField68(this) == 0x11 &&
             !(Env_DayFraction(reinterpret_cast<CTaskEnvTime*>(this)) >= FC0)) {
             // Hour 17 before the threshold: dusk blend begins.
             // Reuse the sun-angle slot so MWCC pins k to f31 like retail.
@@ -530,16 +522,15 @@ void CTaskEnvironment::Move() {
             Env_ScaleVec4((ml::CVec4*)v1d0,
                           reinterpret_cast<const ml::CVec4*>(tbl + 0x60), k);
             Env_ScaleVec4((ml::CVec4*)v1e0,
-                          reinterpret_cast<const ml::CVec4*>(Env_GetSub64(
-                              (void*)getSubField78(mScene))),
+                          reinterpret_cast<const ml::CVec4*>(Env_GetSub64(getSubField78(mScene))),
                           FAC - k);
             Env_AddVec4((ml::CVec4*)v1f0, (const ml::CVec4*)v1e0,
                           (const ml::CVec4*)v1d0);
             copyWord4(&this->field_0x90, reinterpret_cast<const u32*>(v1f0));
             field_0xA0 = 0.1f * k +
-                         (FAC - k) * Env_GetFloat54((void*)getSubField78(mScene));
+                         (FAC - k) * Env_GetFloat54(getSubField78(mScene));
             field_0xA4 = 20000.0f * k +
-                         (FAC - k) * Env_GetFloat58((void*)getSubField78(mScene));
+                         (FAC - k) * Env_GetFloat58(getSubField78(mScene));
             float va[4], vb[4], vc[4];
             Env_ScaleVec4((ml::CVec4*)va, reinterpret_cast<const ml::CVec4*>(tbl + 0x00),
                           k);
@@ -553,11 +544,11 @@ void CTaskEnvironment::Move() {
             goto postUpdate;
         }
         // L_597D0: noon hold / evening transition selection for hours 17-18.
-        if (getField68(reinterpret_cast<u8*>(this)) == 0x11 &&
+        if (getField68(this) == 0x11 &&
             Env_DayFraction(reinterpret_cast<CTaskEnvTime*>(this)) >= FC0) {
             goto noonBlock;
         }
-        if (getField68(reinterpret_cast<u8*>(this)) == 0x12 &&
+        if (getField68(this) == 0x12 &&
             !(Env_DayFraction(reinterpret_cast<CTaskEnvTime*>(this)) >= FC0)) {
         noonBlock:
             Env_CopyLightPreset(mUnkE0, tbl + 0x00);
@@ -571,7 +562,7 @@ void CTaskEnvironment::Move() {
             Env_CopyLightGate(mLgtB8, tbl + 0x20);
             goto postUpdate;
         }
-        if (getField68(reinterpret_cast<u8*>(this)) != 0x12 ||
+        if (getField68(this) != 0x12 ||
             !(Env_DayFraction(reinterpret_cast<CTaskEnvTime*>(this)) >= FC0)) {
             goto postUpdate;
         }
@@ -616,8 +607,8 @@ void CTaskEnvironment::Move() {
         goto postUpdate;
 
     nightBlock:
-        if (getField68(reinterpret_cast<u8*>(this)) >= 0x13 ||
-            getField68(reinterpret_cast<u8*>(this)) <= 4) {
+        if (getField68(this) >= 0x13 ||
+            getField68(this) <= 4) {
             // Night: direct night rows.
             Env_CopyLightPreset(mUnkE0, tbl + 0x50);
             Env_CopyLightPreset(mUnkE4, tbl + 0x40);
@@ -628,7 +619,7 @@ void CTaskEnvironment::Move() {
             copyWord4Offset(reinterpret_cast<u32*>(mLgtB8),
                             reinterpret_cast<const u32*>(tbl + 0x40));
             Env_CopyLightGate(mLgtB8, tbl + 0x20);
-        } else if (getField68(reinterpret_cast<u8*>(this)) == 5) {
+        } else if (getField68(this) == 5) {
             // Dawn blend at hour 5 (no FCC scaling on the factor).
             float& k = sunAngle;
             k = Env_DayFraction(reinterpret_cast<CTaskEnvTime*>(this));
@@ -652,8 +643,7 @@ void CTaskEnvironment::Move() {
             Env_CopyLightPreset(mUnkE4, va0);
             float v50[4], v60[4], v70[4];
             Env_ScaleVec4((ml::CVec4*)v50,
-                          reinterpret_cast<const ml::CVec4*>(Env_GetSub64(
-                              (void*)getSubField78(mScene))),
+                          reinterpret_cast<const ml::CVec4*>(Env_GetSub64(getSubField78(mScene))),
                           k);
             Env_ScaleVec4((ml::CVec4*)v60, reinterpret_cast<const ml::CVec4*>(tbl + 0x80),
                           FAC - k);
@@ -661,9 +651,9 @@ void CTaskEnvironment::Move() {
                           (const ml::CVec4*)v50);
             copyWord4(&this->field_0x90, reinterpret_cast<const u32*>(v70));
             field_0xA0 = 0.1f * (FAC - k) +
-                         k * Env_GetFloat54((void*)getSubField78(mScene));
+                         k * Env_GetFloat54(getSubField78(mScene));
             field_0xA4 = 10000.0f * (FAC - k) +
-                         k * Env_GetFloat58((void*)getSubField78(mScene));
+                         k * Env_GetFloat58(getSubField78(mScene));
             float v20b[4], v30b[4], v40b[4];
             Env_ScaleVec4((ml::CVec4*)v20b,
                           reinterpret_cast<const ml::CVec4*>(tbl + 0x90), k);
@@ -684,8 +674,7 @@ postUpdate:
     FogManSetNearFar(reinterpret_cast<u8*>((void*)getSubField78(mScene)),
                   field_0xA0, field_0xA4);
 
-    if (checkBitFlag(reinterpret_cast<u8*>(
-            getSubField7C(reinterpret_cast<u8*>(mScene)))) == 0) {
+    if (checkBitFlag(getSubField7C(mScene)) == 0) {
         if (field_0xA8 != 0) {
             CTaskGame_setVec4_tmp tmp;
             void* fogColour = CTaskGame_setVec4(
@@ -712,13 +701,13 @@ extern "C" CTaskEnvRotMtx* Env_BuildRotY(CTaskEnvRotMtx* mtx, float angle) {
     float s = nw4r::math::SinFIdx(lbl_eu_80665FEC * angle);
     float c = nw4r::math::CosFIdx(lbl_eu_80665FEC * angle);
     mtx->m00 = c;
-    mtx->m01 = lbl_eu_80665FA0;
+    mtx->m01 = 0.0f;
     mtx->m02 = s;
-    mtx->m10 = lbl_eu_80665FA0;
+    mtx->m10 = 0.0f;
     mtx->m11 = 1.0f;
-    mtx->m12 = lbl_eu_80665FA0;
+    mtx->m12 = 0.0f;
     mtx->m20 = -s;
-    mtx->m21 = lbl_eu_80665FA0;
+    mtx->m21 = 0.0f;
     mtx->m22 = c;
     return mtx;
 }
@@ -733,12 +722,12 @@ static void BuildRotX(CTaskEnvRotMtx* m, float angle) {
     float s = nw4r::math::SinFIdx(40.743664f * angle);
     float c = nw4r::math::CosFIdx(40.743664f * angle);
     m->m00 = 1.0f;
-    m->m01 = lbl_eu_80665FA0;
-    m->m02 = lbl_eu_80665FA0;
-    m->m10 = lbl_eu_80665FA0;
+    m->m01 = 0.0f;
+    m->m02 = 0.0f;
+    m->m10 = 0.0f;
     m->m11 = c;
     m->m12 = -s;
-    m->m20 = lbl_eu_80665FA0;
+    m->m20 = 0.0f;
     m->m21 = s;
     m->m22 = c;
 }
@@ -765,12 +754,12 @@ extern "C" void Env_ApplyRotX(CTaskEnvRotMtx* mtx, float angle) {
     float ns = -s;
     CTaskEnvRotMtx rot;
     rot.m00 = 1.0f;
-    rot.m01 = lbl_eu_80665FA0;
-    rot.m02 = lbl_eu_80665FA0;
-    rot.m10 = lbl_eu_80665FA0;
+    rot.m01 = 0.0f;
+    rot.m02 = 0.0f;
+    rot.m10 = 0.0f;
     rot.m11 = c;
     rot.m12 = ns;
-    rot.m20 = lbl_eu_80665FA0;
+    rot.m20 = 0.0f;
     rot.m21 = s;
     rot.m22 = c;
     CTaskEnvRotMtx out;
@@ -798,7 +787,7 @@ extern "C" void Env_MtxMulVec(ml::CVec3* out, const CTaskEnvRotMtx* m,
     out->y = yc;
 }
 
-extern "C" u32 checkBitFlag(u8* self) { return (*(u32*)((u8*)self + 0) >> 1) & 0x1u; }
+extern "C" u32 checkBitFlag(CTaskEnvLgtCtrlAccess* self) { return (self->field_0 >> 1) & 0x1u; }
 
 // Converted to inline member function in header
 
@@ -852,7 +841,7 @@ extern "C" void Env_SetClock(CTaskEnvTime* time, int hour, int minute, int secon
     }
     time->second = (float)(u32)second;
     if (time->second >= 60.0f) {
-        time->second = lbl_eu_80665FA0;
+        time->second = 0.0f;
     }
 }
 
@@ -985,9 +974,9 @@ void sinit_80059D60() {
     t[0x11] = 0.40784314f;
     t[0x12] = 0.59607846f;
     t[0x13] = 1.0f;
-    t[0x14] = lbl_eu_80665FA0;
-    t[0x15] = lbl_eu_80665FA0;
-    t[0x16] = lbl_eu_80665FA0;
+    t[0x14] = 0.0f;
+    t[0x15] = 0.0f;
+    t[0x16] = 0.0f;
     t[0x17] = 1.0f;
     t[0x18] = 0.6f;
     t[0x19] = 0.35686275f;

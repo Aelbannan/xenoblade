@@ -106,12 +106,6 @@ struct PcResFlagsObj {
     u32 field_0x4EC;
 };
 
-// Object returned by findBattleStatusEntry (holds a word at +0x10).
-struct Res10View {
-    u8 _0[0x10];
-    u32 field_0x10;
-};
-
 // Imports used by CfObjectPc_refreshGauge.
 extern u16 gmGlobalFlag42;
 extern u16 gmGlobalFlag44;

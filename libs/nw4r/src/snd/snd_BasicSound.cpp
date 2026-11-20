@@ -13,6 +13,12 @@ namespace {
 
 } // namespace
 
+// name-guess: retail pool starts with 1.0f; a default-volume accessor is
+// plausible and is link-dead in this unit.
+f32 BasicSound_GetDefaultVolume() {
+    return 1.0f;
+}
+
 BasicSound::BasicSound(int priority, int arg)
     : mHeap(NULL),
       mGeneralHandle(NULL),
@@ -20,24 +26,26 @@ BasicSound::BasicSound(int priority, int arg)
       mSoundPlayer(NULL),
       mSoundActor(NULL),
       mExtSoundPlayer(NULL) {
-    mAmbientParam.volume = lbl_eu_80669EE8;
-    mAmbientParam.pitch = lbl_eu_80669EE8;
-    mAmbientParam.pan = lbl_eu_80669EEC;
-    mAmbientParam.surroundPan = lbl_eu_80669EEC;
-    mAmbientParam.fxSend = lbl_eu_80669EEC;
-    mAmbientParam.lpf = lbl_eu_80669EEC;
-    mAmbientParam.unk18 = lbl_eu_80669EEC;
+    f32 zero = 0.0f;
+    f32 one = 1.0f;
+    mAmbientParam.volume = one;
+    mAmbientParam.pitch = one;
+    mAmbientParam.pan = zero;
+    mAmbientParam.surroundPan = zero;
+    mAmbientParam.fxSend = zero;
+    mAmbientParam.lpf = zero;
+    mAmbientParam.unk18 = zero;
     mAmbientParam.priority = 0;
 
-    mUnk0x54 = lbl_eu_80669EE8;
-    mUnk0x58 = lbl_eu_80669EE8;
-    mUnk0x5C = lbl_eu_80669EEC;
+    mUnk0x54 = one;
+    mUnk0x58 = one;
+    mUnk0x5C = zero;
 
-    mFadeVolume.InitValue(lbl_eu_80669EEC);
-    mPauseFadeVolume.InitValue(lbl_eu_80669EEC);
+    mFadeVolume.InitValue(zero);
+    mPauseFadeVolume.InitValue(zero);
 
     mId = INVALID_ID;
-    mExtMoveVolume.InitValue(lbl_eu_80669EEC);
+    mExtMoveVolume.InitValue(zero);
 
     // Link-list nodes (retail zeros after ExtMoveVolume).
     nodePrio.Init();
@@ -72,7 +80,7 @@ void BasicSound::UpdateMoveValue() {
 
 void BasicSound::UpdateParam() {
     // Volume: 1.0 * init * player * move/fade chains * ambient * unk54.
-    f32 volume = lbl_eu_80669EE8;
+    f32 volume = 1.0f;
     volume *= mInitVolume;
     volume *= mSoundPlayer->GetVolume();
     volume *= mExtMoveVolume.GetValue();
@@ -81,16 +89,16 @@ void BasicSound::UpdateParam() {
     volume *= mAmbientParam.volume;
     volume *= mUnk0x54;
 
-    f32 pan = lbl_eu_80669EEC;
+    f32 pan = 0.0f;
     pan += mExtPan;
     pan += mAmbientParam.pan;
     pan += mUnk0x5C;
 
-    f32 surroundPan = lbl_eu_80669EEC;
+    f32 surroundPan = 0.0f;
     surroundPan += mExtSurroundPan;
     surroundPan += mAmbientParam.surroundPan;
 
-    f32 pitch = lbl_eu_80669EE8;
+    f32 pitch = 1.0f;
     pitch *= mExtPitch;
     pitch *= mAmbientParam.pitch;
     pitch *= mUnk0x58;
@@ -112,7 +120,7 @@ void BasicSound::UpdateParam() {
         }
     }
 
-    f32 mainOutVol = lbl_eu_80669EE8;
+    f32 mainOutVol = 1.0f;
     mainOutVol *= mMainOutVolume;
     mainOutVol *= mSoundPlayer->detail_GetMainOutVolume();
 
@@ -121,15 +129,16 @@ void BasicSound::UpdateParam() {
 
     f32 remoteOutVol[WPAD_MAX_CONTROLLERS];
     for (int i = 0; i < WPAD_MAX_CONTROLLERS; i++) {
-        remoteOutVol[i] = lbl_eu_80669EE8;
+        remoteOutVol[i] = 1.0f;
         remoteOutVol[i] *= mSoundPlayer->GetRemoteOutVolume(i);
         remoteOutVol[i] *= mRemoteOutVolume[i];
     }
 
     // Main send + aux sends: sound's own (mUnk0xCC) + player sends + ambient.
-    f32 mainSend = lbl_eu_80669EEC;
-    f32 fxSend[AUX_BUS_NUM] = { lbl_eu_80669EEC, lbl_eu_80669EEC,
-                                lbl_eu_80669EEC };
+    f32 zero = 0.0f;
+    f32 mainSend = zero;
+    f32 fxSend[AUX_BUS_NUM] = { zero, zero,
+                                zero };
     mainSend += mUnk0xCC[0];
     fxSend[0] += mUnk0xCC[1];
     fxSend[1] += mUnk0xCC[2];
@@ -171,39 +180,39 @@ void BasicSound::InitParam() {
     mAutoStopCounter = 0;
     mUpdateCounter = 0;
 
-    mFadeVolume.InitValue(lbl_eu_80669EEC);
-    mPauseFadeVolume.InitValue(lbl_eu_80669EE8);
-    mFadeVolume.SetTarget(lbl_eu_80669EE8, 1);
+    mFadeVolume.InitValue(0.0f);
+    mPauseFadeVolume.InitValue(1.0f);
+    mFadeVolume.SetTarget(1.0f, 1);
 
-    mInitVolume = lbl_eu_80669EE8;
-    mExtPitch = lbl_eu_80669EE8;
-    mExtPan = lbl_eu_80669EEC;
-    mExtSurroundPan = lbl_eu_80669EEC;
-    mExtMoveVolume.InitValue(lbl_eu_80669EE8);
+    mInitVolume = 1.0f;
+    mExtPitch = 1.0f;
+    mExtPan = 0.0f;
+    mExtSurroundPan = 0.0f;
+    mExtMoveVolume.InitValue(1.0f);
 
-    mUnk0xBC = lbl_eu_80669EEC;
+    mUnk0xBC = 0.0f;
     mOutputLineFlagEnable = false;
-    mUnk0xC0 = lbl_eu_80669EEC;
+    mUnk0xC0 = 0.0f;
 
     mOutputLineFlag =
         (mSoundPlayer != NULL) ? mSoundPlayer->detail_GetOutputLine()
                                : OUTPUT_LINE_MAIN;
 
-    mMainOutVolume = lbl_eu_80669EE8;
+    mMainOutVolume = 1.0f;
     for (int i = 0; i < 4; i++) {
-        mUnk0xCC[i] = lbl_eu_80669EEC;
+        mUnk0xCC[i] = 0.0f;
     }
     for (int i = 0; i < WPAD_MAX_CONTROLLERS; i++) {
-        mRemoteOutVolume[i] = lbl_eu_80669EE8;
+        mRemoteOutVolume[i] = 1.0f;
     }
 
-    mAmbientParam.volume = lbl_eu_80669EE8;
-    mAmbientParam.pitch = lbl_eu_80669EE8;
-    mAmbientParam.pan = lbl_eu_80669EEC;
-    mAmbientParam.surroundPan = lbl_eu_80669EEC;
-    mAmbientParam.fxSend = lbl_eu_80669EEC;
-    mAmbientParam.lpf = lbl_eu_80669EEC;
-    mAmbientParam.unk18 = lbl_eu_80669EEC;
+    mAmbientParam.volume = 1.0f;
+    mAmbientParam.pitch = 1.0f;
+    mAmbientParam.pan = 0.0f;
+    mAmbientParam.surroundPan = 0.0f;
+    mAmbientParam.fxSend = 0.0f;
+    mAmbientParam.lpf = 0.0f;
+    mAmbientParam.unk18 = 0.0f;
     mAmbientParam.priority = 0;
     mUnk0x50 = 0;
 }
@@ -224,7 +233,7 @@ void BasicSound::Stop(int frames) {
     }
 
     int t = frames * mFadeVolume.GetValue();
-    mFadeVolume.SetTarget(lbl_eu_80669EEC, t);
+    mFadeVolume.SetTarget(0.0f, t);
 
     // Inlined SetPlayerPriority(0) - retail does not bl.
     mPriority = 0;
@@ -250,7 +259,7 @@ void BasicSound::Pause(bool flag, int frames) {
             if (t <= 0) {
                 t = 1;
             }
-            mPauseFadeVolume.SetTarget(lbl_eu_80669EEC, t);
+            mPauseFadeVolume.SetTarget(0.0f, t);
             mPauseState = PAUSE_STATE_PAUSING;
             mPauseFadeFlag = false;
             break;
@@ -267,11 +276,11 @@ void BasicSound::Pause(bool flag, int frames) {
         case PAUSE_STATE_PAUSING:
         case PAUSE_STATE_PAUSED:
         case PAUSE_STATE_UNPAUSING: {
-            int t = frames * (lbl_eu_80669EE8 - mPauseFadeVolume.GetValue());
+            int t = frames * (1.0f - mPauseFadeVolume.GetValue());
             if (t <= 0) {
                 t = 1;
             }
-            mPauseFadeVolume.SetTarget(lbl_eu_80669EE8, t);
+            mPauseFadeVolume.SetTarget(1.0f, t);
             mPauseState = PAUSE_STATE_UNPAUSING;
             mPauseFadeFlag = true;
             break;
@@ -446,7 +455,7 @@ void BasicSound::Shutdown() {
 
     if (rPlayer.IsActive()) {
         if (mFadeOutFlag) {
-            rPlayer.SetVolume(lbl_eu_80669EEC);
+            rPlayer.SetVolume(0.0f);
         }
 
         rPlayer.Stop();
@@ -500,15 +509,15 @@ void BasicSound::SetPlayerPriority(int priority) {
 void BasicSound::OnUpdatePlayerPriority() {}
 
 void BasicSound::SetInitialVolume(f32 vol) {
-    mInitVolume = ut::Clamp(vol, lbl_eu_80669EEC, lbl_eu_80669EE8);
+    mInitVolume = ut::Clamp(vol, 0.0f, 1.0f);
 }
 
 void BasicSound::SetVolume(f32 vol, int frames) {
     f32 target;
-    if (vol > lbl_eu_80669EE8) {
-        target = lbl_eu_80669EE8;
-    } else if (vol < lbl_eu_80669EEC) {
-        target = lbl_eu_80669EEC;
+    if (vol > 1.0f) {
+        target = 1.0f;
+    } else if (vol < 0.0f) {
+        target = 0.0f;
     } else {
         target = vol;
     }

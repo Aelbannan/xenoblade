@@ -266,15 +266,16 @@ struct CSuddenCommuCamView {
     f32 field_C;    // 0xC
 };
 
-// Voice-id / voice-act tables (@sda21 in SuddenCommuPlayCue / SuddenCommuTryStart).
-// Declared as leading-element scalars so MWCC emits the retail `li rX,
-// lbl@sda21 / lbzx` indexed form instead of lis/addi HA/LO addressing.
+// Voice/id tables owned by this TU (retail .sdata 0x806625E8..0x80662608;
+// the retail section is writable, so these are not const arrays).
 extern int lbl_eu_806625E4;
-extern u8 lbl_eu_806625E8;
-extern u8 lbl_eu_806625F0;
-extern u8 lbl_eu_806625F8;
-extern u8 lbl_eu_80662600;
-extern u16 lbl_eu_80662608[1];
+// name-guess: behavioural names from their only readers; byte values and
+// order are taken from the retail split object.
+u8 sSuddenCommuType0Thresholds[8] = { 0, 0, 0, 50, 0, 0, 0, 4 };
+u8 sSuddenCommuType1Thresholds[8] = { 15, 10, 5, 10, 15, 0, 0, 0 };
+u8 sSuddenCommuType2Thresholds[8] = { 0, 3, 5, 10, 0, 0, 0, 0 };
+u8 sSuddenCommuType3Thresholds[8] = { 20, 15, 5, 10, 0, 0, 0, 0 };
+u16 sSuddenCommuCompanionVoiceIds[4] = { 10, 0xF32, 0, 0 };
 extern const u8 lbl_eu_805050B0[];
 extern u32 lbl_eu_80575870[];   // .bss: state-handler PMF table (12-byte ptmf stride)
 // Battle-actor enum-list helpers are declared by CfObjectImplMove.hpp
@@ -834,13 +835,13 @@ __declspec(noinline) void SuddenCommuTryStart(CSuddenCommu* self, int playerIdx,
     int thresh; // int: retail keeps the table byte in a full register
     // (no rlwinm re-mask after the += below).
     if (type == 0) {
-        thresh = (&lbl_eu_806625E8)[((cf::CActorParam*)player)->CActorParam_getStatusCount()];
+        thresh = sSuddenCommuType0Thresholds[((cf::CActorParam*)player)->CActorParam_getStatusCount()];
     }
     if (type == 1) {
-        thresh = (&lbl_eu_806625F0)[((cf::CActorParam*)player)->CActorParam_getStatusCount()];
+        thresh = sSuddenCommuType1Thresholds[((cf::CActorParam*)player)->CActorParam_getStatusCount()];
     }
     if (type == 2) {
-        thresh = (&lbl_eu_806625F8)[((cf::CActorParam*)player)->CActorParam_getStatusCount()];
+        thresh = sSuddenCommuType2Thresholds[((cf::CActorParam*)player)->CActorParam_getStatusCount()];
         void* obj = player->field_15E0;
         if (obj != 0) {
             u32 v;
@@ -848,7 +849,7 @@ __declspec(noinline) void SuddenCommuTryStart(CSuddenCommu* self, int playerIdx,
         }
     }
     if (type == 3) {
-        thresh = (&lbl_eu_80662600)[((cf::CActorParam*)player)->CActorParam_getStatusCount()];
+        thresh = sSuddenCommuType3Thresholds[((cf::CActorParam*)player)->CActorParam_getStatusCount()];
         self->field_E = 1;
     }
     if (arg5 >= thresh) return;
@@ -1325,7 +1326,7 @@ __declspec(noinline) void SuddenCommuPlayCue(CSuddenCommu* self, int playerIdx, 
             rand = ml::math::mtRand(3);
         else
             rand = ml::math::mtRand(2);
-        result = lbl_eu_80662608[rand] + self->field_E * 100;
+        result = sSuddenCommuCompanionVoiceIds[rand] + self->field_E * 100;
         break;
     case 2:
         result = self->field_E * 100 + 0x3EE;

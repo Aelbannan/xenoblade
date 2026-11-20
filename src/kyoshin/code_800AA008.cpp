@@ -7,10 +7,7 @@
 #include "monolib/util/CPathUtil.hpp"
 
 extern "C" {
-extern const char lbl_eu_804FC044[];
 extern const u8 lbl_eu_805283B0[];
-extern const u32 jumptable_eu_805285A0[];
-extern const u32 jumptable_eu_805285C4[];
 extern char lbl_eu_80572C80[0x44];
 extern char lbl_eu_80661A40;
 }
@@ -34,35 +31,35 @@ void Tok_AppendTxt(ml::FixStr<64>& buf, int type, u32 arg1, u32 arg2, u32 arg3) 
 
     switch (type) {
     case 0:
-        sprintf(tmp, &lbl_eu_804FC044[0]);
+        sprintf(tmp, "%02d%02d%02d");
         break;
     case 1:
-        sprintf(tmp, &lbl_eu_804FC044[0x0D]);
+        sprintf(tmp, "%03d");
         break;
     case 2:
-        sprintf(tmp, &lbl_eu_804FC044[0x12]);
+        sprintf(tmp, "%02d");
         break;
     case 3:
     case 4:
-        sprintf(tmp, &lbl_eu_804FC044[0x17]);
+        sprintf(tmp, "%03d%03d");
         break;
     case 5:
-        sprintf(tmp, &lbl_eu_804FC044[0x17], arg2, arg3);
+        sprintf(tmp, "%03d%03d", arg2, arg3);
         break;
     case 6:
-        sprintf(tmp, &lbl_eu_804FC044[0x20]);
+        sprintf(tmp, "%02d%03d%03d");
         break;
     case 7:
-        sprintf(tmp, &lbl_eu_804FC044[0x2D]);
+        sprintf(tmp, "%02d%03d");
         break;
     default:
         if ((type) == 8) {
-            sprintf(tmp, &lbl_eu_804FC044[0x36]);
+            sprintf(tmp, "%02d%02d");
         } else {
             if (arg3 != 0) {
-                sprintf(tmp, &lbl_eu_804FC044[0]);
+                sprintf(tmp, "%02d%02d%02d");
             } else {
-                sprintf(tmp, &lbl_eu_804FC044[0x36]);
+                sprintf(tmp, "%02d%02d");
             }
         }
         break;

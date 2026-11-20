@@ -5,6 +5,7 @@
 
 #include <string.h>
 
+#include "monolib/core/CSchedule.hpp"
 #include "monolib/core/CScheduleItem.hpp"
 #include "monolib/core/code_804DEDA8.hpp"
 #include "monolib/effect/CERand.hpp"
@@ -708,13 +709,6 @@ struct CSchedNodeC {
     void* mObj;         // 0x08
 };
 
-// Effect object carrying the priority byte at +0x58 used by SchedElem_ClaimNode's
-// sorted insertion.
-struct CSchedFxObjView {
-    u8 _00[0x58];
-    u8 mKind58; // 0x58
-};
-
 void* lbl_eu_80665A30;
 CSchedElem14* spSchedElemArray;
 CSchedNodeC* spSchedNodeArray;
@@ -819,7 +813,8 @@ extern "C" void SchedRes_ClearLiveCount() { lbl_eu_80665A30 = 0; }
 //   and the live counter is bumped.
 // `obj` carries a priority byte at +0x58: entries with kind 0x40 are ordered
 // by the float priority, all others by the signed kind byte.
-extern "C" void SchedElem_ClaimNode(u32 key, CSchedFxObjView* obj, void* owner, f32 prio) {
+extern "C" void SchedElem_ClaimNode(u32 key, void* arg, void* owner, f32 prio) {
+    CSchedule* obj = static_cast<CSchedule*>(arg);
     s32 count = sSchedElemCount;
     s32 i;
     bool claimed = false;
@@ -877,13 +872,13 @@ extern "C" void SchedElem_ClaimNode(u32 key, CSchedFxObjView* obj, void* owner, 
         CSchedNodeC* prev = NULL;
         CSchedNodeC* cur = (CSchedNodeC*)lbl_eu_80665A30;
         while (cur != NULL) {
-            CSchedFxObjView* curo = (CSchedFxObjView*)cur->mObj;
-            if (obj->mKind58 == 0x40 && curo->mKind58 == 0x40) {
+            CSchedule* curo = static_cast<CSchedule*>(cur->mObj);
+            if (obj->field_0x58 == 0x40 && curo->field_0x58 == 0x40) {
                 if (prio > *(f32*)&cur->mObj) {
                     break;
                 }
             } else {
-                if ((s8)obj->mKind58 < (s8)curo->mKind58) {
+                if ((s8)obj->field_0x58 < (s8)curo->field_0x58) {
                     break;
                 }
             }
@@ -933,7 +928,7 @@ extern "C" void* SchedItem_AllocPool(u32 size, s32 count) {
 // mPoolIndex is negative, re-initialize it, stamp its pool index and
 // advance the handle cursor. Returns its index, or -1 when the pool is
 // full / fully scanned / entry resolution fails.
-extern "C" s32 SchedItem_ClaimFree(u32 a, u32 b, u32 c) {
+extern "C" s16 SchedItem_ClaimFree(void* a, void* b, void* c) {
     CScheduleItem* node = NULL;
     if (sScheduleItemPool.freeCount < sScheduleItemPool.count) {
         s32 last = sScheduleItemPool.lastHandle;
@@ -955,7 +950,7 @@ extern "C" s32 SchedItem_ClaimFree(u32 a, u32 b, u32 c) {
     if (node == NULL) {
         return -1;
     }
-    if (node->InitFromData((u8*)a, (const CScheduleEntryData*)b, (CSchedule*)c) != 0) {
+    if (node->InitFromData(static_cast<u8*>(a), static_cast<const CScheduleEntryData*>(b), static_cast<CSchedule*>(c)) != 0) {
         return node->mPoolIndex;
     }
     return -1;
@@ -1286,8 +1281,8 @@ struct CEntryVec10 {
 // quantizes mField00 modulo the chosen element's limit, and advances
 // mField00 by the caller rate. Returns the resolved element pointer.
 extern "C" CEntryElem* SchedEntry_ResolveElem(CScheduleItem* itemArg, CEntryElem* entries,
-                                     s32 index, u8* arg4, f32 f1) {
-    u8* obj = arg4;
+                                     s32 index, void* arg4, f32 f1) {
+    CSchedule* obj = static_cast<CSchedule*>(arg4);
     CSchedAnimItem* item = (CSchedAnimItem*)itemArg;
     u8* base = (u8*)entries;
     u32 stride = (u32)index;
@@ -1314,7 +1309,7 @@ extern "C" CEntryElem* SchedEntry_ResolveElem(CScheduleItem* itemArg, CEntryElem
                 u8 entryMask = ((u8*)ret)[3];
                 u8 take = 1;
                 if (entryMask != 0) {
-                    s8 m = (s8)*(u8*)(obj + 0x59);
+                    s8 m = (s8)obj->field_0x59;
                     u8 hit = 0;
                     if (m != 0) {
                         if ((entryMask & (1 << (m - 1))) != 0) {
@@ -1360,7 +1355,7 @@ extern "C" CEntryElem* SchedEntry_ResolveElem(CScheduleItem* itemArg, CEntryElem
             do {
                 i++;
             } while ((((s32)b3) >> i) & 1);
-            *(u8*)(obj + 0x59) = (u8)(i + 1);
+            obj->field_0x59 = (u8)(i + 1);
         }
         break;
     }

@@ -170,6 +170,7 @@ struct MPFDrawSlot {
     f32 field_0x24;           // +0x24
     u16 field_0x28;           // +0x28
     u16 field_0x2a;           // +0x2a
+    MPFDrawPos mPos;          // +0x2c embedded walk position/color
 };
 
 // 0xC-byte walk cells (self+0x34).  The grid at self+0x20 holds indices into
@@ -654,7 +655,7 @@ bool shiftDrawSlot__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
             // area; x/z are read from the old position after the allocation.
             f32 x = d->field_0x14->x;
             f32 z = d->field_0x14->z;
-            d->field_0x14 = (MPFDrawPos*)((u8*)slot + 0x2c);
+            d->field_0x14 = &slot->mPos;
             slot->field_0xc = (u8)off;
             d->field_0x50->field_0x24 = height;
             d->field_0x14->x = x;
@@ -1618,7 +1619,7 @@ bool trackGridStep__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
                 if (slot == 0) {
                     goto failReset;
                 }
-                d->field_0x14 = (MPFDrawPos*)((u8*)slot + 0x2c);
+                d->field_0x14 = &slot->mPos;
                 slot->field_0x24 = scale;
                 f32 f2 = f20 + f26;
                 f32 f1 = f18 + f26;
@@ -2014,7 +2015,7 @@ bool buildDrawItem__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
                         }
                     } else {
                         // Sub-step: just position and store the slot.
-                        d->field_0x14 = (MPFDrawPos*)((u8*)slot + 0x2c);
+                        d->field_0x14 = &slot->mPos;
                         slot->field_0x24 = f17;
                         createSlotFromPool__Q26mpfsys18MPFDrawDisplayListFv(self, (MPFDrawListHdr*)slot);
                     }
@@ -2351,7 +2352,7 @@ void paintDrawNode__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
     // arena gets the larger 0x900-per-cell reservation.
     MPFDrawCfg* cfg = MpfDrawWalkConfig;
     u8* entries = (u8*)cfg->field_0x10;
-    d->field_0x28 = (u32)((u8*)cfg + 0x20);
+    d->field_0x28 = (u32)&cfg->field_0x20;
     u32 flags = cfg->field_0x8;
     if (flags & 1) {
         cfg->field_0x8 = (u16)((flags & ~0xFFFFu) | 4);

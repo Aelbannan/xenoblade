@@ -432,11 +432,6 @@ namespace cf { class CfObjectPc; }
 void CfObjectPc_setupFrame(cf::CfObjectPc* obj);
 typedef void (*CfObjectPcSetupFrameFn)(cf::CfObjectPc*, u32);  // DEBT(callcast): retail passes live r4 to 1-arg CfObjectPc_setupFrame (mangled arity 1; LOSTFIX proof)
 
-// 3-word name-table read by PartyStateWin_StateEquipRefresh's item-filter block (.rodata,
-// retail unmangled). const so MWCC can keep one base register for the three
-// loads (retail: lis + lwzu + +4/+8 displacements).
-extern const u32 lbl_eu_80507C78[3];
-
 // 0x18-byte cursor-like sub-object embedded at +0x34 of the PartyStateWin_CopyStateBlob58
 // blob. MenuShopSellCopyCursor copies its +0x4..+0x15 region (4 words + 2 bytes); the
 // +0x0 word is not copied (same shape as ShopSellCursor18 in

@@ -41,10 +41,8 @@ extern u32 spColiSeenBits;
 // Zeroing-window base for the seen-bit array (sdata).
 extern u8* spColiZeroWindow;
 
-// 0.0/1.0 are literals; the -1.0 normal flip is still needed by the two
-// constant-vector initializers near the end of the TU.
-extern const f32 lbl_eu_8066AED0;
-extern const f32 lbl_eu_8066AED8;  // normal-orientation flip scale
+// The 0.0/-1.0 normal flip used by the constant-vector setup near the end of
+// the TU is written as plain literals; MWCC pools them with its other .sdata2 values.
 
 
 
@@ -2575,8 +2573,14 @@ extern "C" u32 scanVertQuery(CColiMoverState* self, Vec* src, Vec* dst, f32* ang
         *(u32*)&dst->z = *(u32*)&d4.z;
     }
     if (angle != 0) {
-        Vec3 up1 = { lbl_eu_8066AED0, lbl_eu_8066AED0, lbl_eu_8066AED8 };
-        Vec3 up2 = { lbl_eu_8066AED0, lbl_eu_8066AED0, lbl_eu_8066AED8 };
+        Vec3 up1;
+        up1.x = 0.0f;
+        up1.y = 0.0f;
+        up1.z = -1.0f;
+        Vec3 up2;
+        up2.x = 0.0f;
+        up2.y = 0.0f;
+        up2.z = -1.0f;
         Vec3 v1;
         Vec3 v2;
         PSMTXMultVec(last->savedMtx.m, (const Vec*)&up1, (Vec*)&v1);

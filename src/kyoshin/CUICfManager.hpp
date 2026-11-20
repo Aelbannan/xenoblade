@@ -41,8 +41,6 @@ extern u8 lbl_eu_8052E3B0[];
 // Derived event-queue vtable (retail .data) installed by the ctor after the
 // reslist base vtable.
 extern u8 lbl_eu_8052E398[];
-// Move/draw PTMF table re-installed at the end of the ctor.
-extern u32 lbl_eu_8052E288[3];
 // CTTask vtable / CProcess vtable constants used by the ctor's base setup.
 extern u8 lbl_eu_8052E2A0[];
 extern u8 lbl_eu_8052E444[];
@@ -52,7 +50,6 @@ extern u8 lbl_eu_8052E444[];
 // CMainMenu.hpp) so TUs that include several of these headers stay legal.
 class IUIWindow;
 
-extern const f32 lbl_eu_806672C8; // proximity float constant (.sdata2, r2-sda21)
 extern "C" int CMainMenu_IsOpen();  // matches CTaskGame.hpp
 extern "C" u32 GetItemMulti_IsActiveFlag();  // canonical u32 form (per CMenuGetItemMulti.cpp def / CVision.hpp)
 extern "C" u32 PTNotice_IsActive_3C10();  // definition: CMenuPTChangeNotice.cpp
@@ -101,9 +98,6 @@ extern "C" IUIWindow* UIWin_CreateSysWin1(u32 arg0, void* arg1, void* arg2, u32 
 // __ct__16CfEnumListHolderFUlUl takes the holder itself (declared in the .cpp next to the
 // CUICfEnumListHolder type).
 extern "C" u8* __ct__800FC32C(u8* list, int a, int b, int c);
-// .sdata2 float constants (r2-sda21 loads; const routes them into .sdata2).
-extern const f32 lbl_eu_806672C8;      // proximity constant
-extern const f32 lbl_eu_806672D0;      // player-pose constant
 // .sdata slot-list format strings (4-byte entries, sda21 li loads).
 extern char lbl_eu_806621EC[4];
 extern char lbl_eu_806621E8[4];

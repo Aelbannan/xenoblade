@@ -8,7 +8,6 @@ struct CFileHandle;
 // Retail data labels (.data/.sdata) used by the cf script manager.  Declared
 // at global scope so MWCC keeps the retail names unmangled (no extern "C"
 // needed - global-scope data names are not mangled).
-extern char lbl_eu_804FB3A4[];   // .data:0x804FB3A4 script-name / extension string table
 extern char lbl_eu_80661AD0[8];  // .sdata:0x80661AD0 extension separator "." (+ section-tail fill to 0x18)
 extern char lbl_eu_80570918[];   // .bss  manager instance storage
 extern s8 lbl_eu_80663D88;       // .sdata singleton-init flag

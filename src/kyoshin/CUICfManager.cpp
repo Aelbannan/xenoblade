@@ -649,7 +649,6 @@ extern "C" u32 CUICfManager_createQueuedMenus(CUICfManager*);
 extern "C" {
 u32 gmGameFlags;
 u32 gmPauseFlags;
-f32 lbl_eu_806672CC;
 
 
 void* __ct__800FB044(void* list, f32, void* obj, int);

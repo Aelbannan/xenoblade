@@ -38,36 +38,15 @@ extern "C" {
     u8 lbl_eu_8066556F;
 }
 
-// Shared nw4r .sdata2 float constants
-// size 0 -- every constant is referenced from the shared pool, no TU-local
-// copies). extern "C" so the relocs bind straight to the retail nw4r_data.s
-// linker names (plain C++ decls inside the namespace mangle as
-// lbl_eu_8066A164__Q24nw4r2ut and need postprocess renames).
-extern "C" const f32 lbl_eu_8066A160; // 0x7F7FFFFF (FLT_MAX)
-extern "C" const f32 lbl_eu_8066A164; // 0.0f
-extern "C" const f64 lbl_eu_8066A168; // 0x4330000080000000 (signed int->f32 magic)
-extern "C" const f32 lbl_eu_8066A170; // 0.5f
-
-// int -> f32 conversion matching retail (MWCC_CASES 7i): build the 2^52+x
-// double on the stack (low word = x ^ 0x80000000, high word = 0x43300000) and
-// subtract the shared signed magic. Statement order matters: the value word
-// first, then 0x43300000.
-inline f32 ConvF32S(s32 v) {
-    union { f64 d; u32 w[2]; } u;
-    u.w[1] = (u32)v ^ 0x80000000;
-    u.w[0] = 0x43300000;
-    return (f32)(u.d - lbl_eu_8066A168);
-}
-
 // mFormatBuffer / mFormatBufferSize are not defined here (retail
 // ut_TextWriterBase.o has .sdata/.bss size 0; the FormatV/VPrintf family that
 // references them is not part of the retail nw4r split).
 
 template <typename T>
 TextWriterBase<T>::TextWriterBase()
-    : mWidthLimit(lbl_eu_8066A160),
-      mCharSpace(lbl_eu_8066A164),
-      mLineSpace(lbl_eu_8066A164),
+    : mWidthLimit(NW4R_MATH_FLT_MAX),
+      mCharSpace(0.0f),
+      mLineSpace(0.0f),
       mTabWidth(4),
       mDrawFlag(0),
       mTagProcessor(&mDefaultTagProcessor) {}
@@ -77,9 +56,6 @@ template <typename T> TextWriterBase<T>::~TextWriterBase() {}
 template <typename T> f32 TextWriterBase<T>::GetLineHeight() const {
     const Font* pFont = GetFont();
     int lf = pFont != NULL ? pFont->GetLineFeed() : 0;
-    // Plain int->f32 conversion: MWCC's native signed path (xoris + 0x4330
-    // stack double + fsubs vs lbl_eu_8066A168) is exactly the retail body.
-    // The hand-rolled ConvF32S adds an frsp the retail doesn't have.
     return mLineSpace + GetScaleV() * lf;
 }
 
@@ -112,10 +88,10 @@ template <typename T> f32 TextWriterBase<T>::PrintMutable(const T* pStr, int len
 
 template <typename T>
 f32 TextWriterBase<T>::CalcLineWidth(const T* pStr, int len) {
-    Rect rect(lbl_eu_8066A164, lbl_eu_8066A164, lbl_eu_8066A164, lbl_eu_8066A164);
+    Rect rect(0.0f, 0.0f, 0.0f, 0.0f);
     TextWriterBase<T> clone(*this);
 
-    clone.SetCursor(lbl_eu_8066A164, lbl_eu_8066A164);
+    clone.SetCursor(0.0f, 0.0f);
     clone.CalcLineRectImpl(&rect, &pStr, len);
 
     return rect.GetWidth();
@@ -126,26 +102,26 @@ bool TextWriterBase<T>::CalcLineRectImpl(Rect* pRect, const T** ppStr,
                                          int len) {
     const T* pStrBegin = *ppStr;
     const T* pStrEnd = pStrBegin + len;
-    bool useLimit = mWidthLimit < lbl_eu_8066A160;
+    bool useLimit = mWidthLimit < NW4R_MATH_FLT_MAX;
 
     PrintContext<T> context = {
         this,     // writer
         pStrBegin // str
     };
 
-    f32 x = lbl_eu_8066A164;
+    f32 x = 0.0f;
     bool charSpace = false;
     bool overLimit = false;
 
     const T* pPrevStream = NULL;
-    Rect prevRect(lbl_eu_8066A164, lbl_eu_8066A164, lbl_eu_8066A164, lbl_eu_8066A164);
+    Rect prevRect(0.0f, 0.0f, 0.0f, 0.0f);
 
     CharStrmReader reader = GetFont()->GetCharStrmReader();
 
-    pRect->left = lbl_eu_8066A164;
-    pRect->right = lbl_eu_8066A164;
-    pRect->top = Min(lbl_eu_8066A164, GetLineHeight());
-    pRect->bottom = Max(lbl_eu_8066A164, GetLineHeight());
+    pRect->left = 0.0f;
+    pRect->right = 0.0f;
+    pRect->top = Min(0.0f, GetLineHeight());
+    pRect->bottom = Max(0.0f, GetLineHeight());
     prevRect = *pRect;
 
     reader.Set(pStrBegin);
@@ -155,7 +131,7 @@ bool TextWriterBase<T>::CalcLineRectImpl(Rect* pRect, const T** ppStr,
 
     while (static_cast<const T*>(reader.GetCurrentPos()) <= pStrEnd) {
         if (ch < ' ') {
-            Rect r(x, lbl_eu_8066A164, lbl_eu_8066A164, lbl_eu_8066A164);
+            Rect r(x, 0.0f, 0.0f, 0.0f);
             context.str = static_cast<const T*>(reader.GetCurrentPos());
             context.flags = charSpace ? 0 : PrintContext<T>::FLAGS_CHARSPACE;
 
@@ -165,11 +141,11 @@ bool TextWriterBase<T>::CalcLineRectImpl(Rect* pRect, const T** ppStr,
                 PrintContext<T> context2 = context;
                 TextWriterBase<T> clone(*this);
 
-                Rect r(lbl_eu_8066A164, lbl_eu_8066A164, lbl_eu_8066A164, lbl_eu_8066A164);
+                Rect r(0.0f, 0.0f, 0.0f, 0.0f);
                 context2.writer = &clone;
                 mTagProcessor->CalcRect(&r, ch, &context2);
 
-                if (r.GetWidth() > lbl_eu_8066A164 &&
+                if (r.GetWidth() > 0.0f &&
                     clone.GetCursorX() - context.x > mWidthLimit) {
                     overLimit = true;
                     ch = '\n';
@@ -203,7 +179,7 @@ bool TextWriterBase<T>::CalcLineRectImpl(Rect* pRect, const T** ppStr,
                 break;
             }
         } else {
-            f32 dx = lbl_eu_8066A164;
+            f32 dx = 0.0f;
 
             if (charSpace) {
                 dx += GetCharSpace();
@@ -212,7 +188,7 @@ bool TextWriterBase<T>::CalcLineRectImpl(Rect* pRect, const T** ppStr,
             if (IsWidthFixed()) {
                 dx += GetFixedWidth();
             } else {
-                dx += ConvF32S(GetFont()->GetCharWidth(ch)) * GetScaleH();
+                dx += (f32)GetFont()->GetCharWidth(ch) * GetScaleH();
             }
 
             if (useLimit && pPrevStream != NULL && x + dx > mWidthLimit) {
@@ -246,15 +222,15 @@ void TextWriterBase<T>::CalcStringRectImpl(Rect* pRect, const T* pStr,
     const T* pEnd = pStr + len;
     int remain = len;
 
-    pRect->left = lbl_eu_8066A164;
-    pRect->right = lbl_eu_8066A164;
-    pRect->top = lbl_eu_8066A164;
-    pRect->bottom = lbl_eu_8066A164;
+    pRect->left = 0.0f;
+    pRect->right = 0.0f;
+    pRect->top = 0.0f;
+    pRect->bottom = 0.0f;
 
-    SetCursor(lbl_eu_8066A164, lbl_eu_8066A164);
+    SetCursor(0.0f, 0.0f);
 
     do {
-        Rect r(lbl_eu_8066A164, lbl_eu_8066A164, lbl_eu_8066A164, lbl_eu_8066A164);
+        Rect r(0.0f, 0.0f, 0.0f, 0.0f);
         CalcLineRectImpl(&r, &pStr, remain);
         remain = pEnd - pStr;
 
@@ -269,13 +245,13 @@ template <typename T> f32 TextWriterBase<T>::PrintImpl(const T* pStr, int len, b
     f32 cursorX = GetCursorX();
     f32 cursorY = GetCursorY();
 
-    bool useLimit = mWidthLimit < lbl_eu_8066A160;
+    bool useLimit = mWidthLimit < NW4R_MATH_FLT_MAX;
 
     f32 orgCursorX = cursorX;
     f32 orgCursorY = cursorY;
 
-    f32 cursorXAdj = lbl_eu_8066A164;
-    f32 cursorYAdj = lbl_eu_8066A164;
+    f32 cursorXAdj = 0.0f;
+    f32 cursorYAdj = 0.0f;
 
     bool charSpace = false;
 
@@ -308,12 +284,12 @@ template <typename T> f32 TextWriterBase<T>::PrintImpl(const T* pStr, int len, b
             if (useLimit && ch != '\n' && pPrevStream != pPrevNewLine) {
                 PrintContext<T> context2 = context;
                 TextWriterBase<T> clone(*this);
-                Rect rect(lbl_eu_8066A164, lbl_eu_8066A164, lbl_eu_8066A164, lbl_eu_8066A164);
+                Rect rect(0.0f, 0.0f, 0.0f, 0.0f);
 
                 context2.writer = &clone;
                 oper = mTagProcessor->CalcRect(&rect, ch, &context2);
 
-                if (rect.GetWidth() > lbl_eu_8066A164 &&
+                if (rect.GetWidth() > 0.0f &&
                     clone.GetCursorX() - context.x > mWidthLimit) {
                     ch = '\n';
                     reader.Set(pPrevStream);
@@ -329,7 +305,7 @@ template <typename T> f32 TextWriterBase<T>::PrintImpl(const T* pStr, int len, b
                     int remain = len - (context.str - pStr);
                     f32 width = CalcLineWidth(context.str, remain);
 
-                    f32 offset = (textWidth - width) * lbl_eu_8066A170;
+                    f32 offset = (textWidth - width) * 0.5f;
                     SetCursorX(context.x + offset);
                 } else if (IsDrawFlagSet(DRAWFLAG_MASK_ALIGN_TEXT,
                                          DRAWFLAG_ALIGN_TEXT_RIGHT)) {
@@ -364,11 +340,11 @@ template <typename T> f32 TextWriterBase<T>::PrintImpl(const T* pStr, int len, b
             f32 baseY = GetCursorY();
             if (useLimit && pPrevStream != pPrevNewLine) {
                 f32 baseX = GetCursorX();
-                f32 space = charSpace ? GetCharSpace() : lbl_eu_8066A164;
+                f32 space = charSpace ? GetCharSpace() : 0.0f;
 
                 f32 width = IsWidthFixed()
                                 ? GetFixedWidth()
-                                : ConvF32S(GetFont()->GetCharWidth(ch)) *
+                                : (f32)GetFont()->GetCharWidth(ch) *
                                       GetScaleH();
 
                 if (baseX - cursorX + space + width > mWidthLimit) {
@@ -384,7 +360,7 @@ template <typename T> f32 TextWriterBase<T>::PrintImpl(const T* pStr, int len, b
 
             charSpace = true;
 
-            f32 adj = -ConvF32S(GetFont()->GetBaselinePos()) * GetScaleV();
+            f32 adj = -(f32)GetFont()->GetBaselinePos() * GetScaleV();
             MoveCursorY(adj);
             CharWriter::Print(ch);
             SetCursorY(baseY);
@@ -416,13 +392,13 @@ template <typename T> f32 TextWriterBase<T>::PrintImpl(const T* pStr, int len, b
 
 template <typename T>
 f32 TextWriterBase<T>::AdjustCursor(f32* pX, f32* pY, const T* pStr, int len) {
-    f32 textWidth = lbl_eu_8066A164;
-    f32 textHeight = lbl_eu_8066A164;
+    f32 textWidth = 0.0f;
+    f32 textHeight = 0.0f;
 
     if (!IsDrawFlagSet(DRAWFLAG_MASK_ALL, DRAWFLAG_MASK_ALIGN_V) &&
         !IsDrawFlagSet(DRAWFLAG_MASK_ALL, 0)) {
 
-        Rect rect(lbl_eu_8066A164, lbl_eu_8066A164, lbl_eu_8066A164, lbl_eu_8066A164);
+        Rect rect(0.0f, 0.0f, 0.0f, 0.0f);
         CalcStringRect(&rect, pStr, len);
 
         textWidth = rect.left + rect.right;
@@ -430,20 +406,20 @@ f32 TextWriterBase<T>::AdjustCursor(f32* pX, f32* pY, const T* pStr, int len) {
     }
 
     if (IsDrawFlagSet(DRAWFLAG_MASK_ALIGN_H, DRAWFLAG_ALIGN_H_CENTER)) {
-        *pX -= textWidth * lbl_eu_8066A170;
+        *pX -= textWidth / 2.0f;
     } else if (IsDrawFlagSet(DRAWFLAG_MASK_ALIGN_H, DRAWFLAG_ALIGN_H_RIGHT)) {
         *pX -= textWidth;
     }
 
     if (IsDrawFlagSet(DRAWFLAG_MASK_ALIGN_V, DRAWFLAG_ALIGN_V_CENTER)) {
-        *pY -= textHeight * lbl_eu_8066A170;
+        *pY -= textHeight / 2.0f;
     } else if (IsDrawFlagSet(DRAWFLAG_MASK_ALIGN_V, DRAWFLAG_ALIGN_V_TOP)) {
         *pY -= textHeight;
     }
 
     if (IsDrawFlagSet(DRAWFLAG_MASK_ALIGN_TEXT, DRAWFLAG_ALIGN_TEXT_CENTER)) {
         f32 adjusted = textWidth - CalcLineWidth(pStr, len);
-        SetCursorX(*pX + adjusted * lbl_eu_8066A170);
+        SetCursorX(*pX + adjusted / 2.0f);
     } else if (IsDrawFlagSet(DRAWFLAG_MASK_ALIGN_TEXT,
                              DRAWFLAG_ALIGN_TEXT_RIGHT)) {
         SetCursorX(*pX + (textWidth - CalcLineWidth(pStr, len)));
@@ -463,7 +439,7 @@ f32 TextWriterBase<T>::AdjustCursor(f32* pX, f32* pY, const T* pStr, int len) {
 
 template <typename T>
 f32 TextWriterBase<T>::CalcStringWidth(const T* pStr, int len) const {
-    Rect rect(lbl_eu_8066A164, lbl_eu_8066A164, lbl_eu_8066A164, lbl_eu_8066A164);
+    Rect rect(0.0f, 0.0f, 0.0f, 0.0f);
     CalcStringRect(&rect, pStr, len);
     return rect.GetWidth();
 }
@@ -480,6 +456,8 @@ void TextWriterBase<T>::CalcStringRect(Rect* pRect, const T* pStr,
 // `template struct TextWriterBase<T>;` drags in both twins' full member sets
 // (VPrintf/CalcStringRect/GetCharSpace/IsDrawFlagSet/...) and overruns the
 // 0x2054 split by 0x2C28.
+template TextWriterBase<char>::TextWriterBase();
+
 template f32 TextWriterBase<char>::GetLineHeight() const;
 
 template TextWriterBase<wchar_t>::TextWriterBase();

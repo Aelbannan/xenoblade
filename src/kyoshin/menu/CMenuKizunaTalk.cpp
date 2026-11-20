@@ -10,18 +10,18 @@
 #include "functions.hpp"
 
 #include "monolib/util/MemManager.hpp"
+#include "monolib/lib/CLibLayout.hpp"
+#include "monolib/device/CDeviceVI.hpp"
+#include "monolib/device/CDeviceFont.hpp"
 #include "monolib/work/CProcess.hpp"
 #include "monolib/work/CWorkThreadSystem.hpp"
 #include "monolib/work/CEventFile.hpp"
 #include <nw4r/lyt.h>
+#include <revolution/tpl/TPL.h>
 #include "kyoshin/code_80135FDC_Bdat.hpp"
 #include "kyoshin/code_80135FDC_Lyt.hpp"
 #include "kyoshin/code_80135FDC_State.hpp"
 #include "kyoshin/CUICfManager_Res.hpp"
-
-// KEEP (extern-C cleanup 2026-10-23): CLibLayout.hpp cannot be included here
-// (it brings the canonical IWorkEvent, which clashes with this TU's KEEP copy).
-extern "C" nw4r::lyt::ArcResourceAccessor* createArcResourceAccessor__10CLibLayoutFv();
 
 #include "kyoshin/cf/CfGameManager.hpp"  // CtrlRemote_SetSharedBit
 extern "C" void SplitU32ToS16s(short*, unsigned long);
@@ -101,7 +101,7 @@ void CMenuKizunaTalk::Init() {
 // remove the render callback, run the embedded widget teardowns and clear the
 // singleton / BDAT globals.
 void CMenuKizunaTalk::Term() {
-    waitForDrawDone__9CDeviceVIFv();
+    CDeviceVI::waitForDrawDone();
     CBdat::getEntry(2);
     closeFileHandle((CFileHandle**)&mFile1);
     closeFileHandle((CFileHandle**)&mFile2);
@@ -178,7 +178,7 @@ void kickoffKizunaWindow(CMenuKizunaTalk* self) {
         __ct__7CSysWinFUc(&scratch.mWin0[0], 0);
         *reinterpret_cast<CSysWin*>(&self->mSysWin[0]) = *reinterpret_cast<const CSysWin*>(&scratch.mWin0[0]);
         __dt__7CSysWinFv(&scratch.mWin0[0], -1);
-        reinterpret_cast<KizunaSysWinView*>(&self->mSysWin[0])->v20();
+        reinterpret_cast<CSysWin*>(&self->mSysWin[0])->loadSystemArc();
         break;
     case 1: {
         // Null-safe IWorkEvent subobject address (retail beq/addi shape).
@@ -196,7 +196,7 @@ void kickoffKizunaWindow(CMenuKizunaTalk* self) {
         __ct__7CSysWinFUc(&scratch.mWin2[0], 3);
         *reinterpret_cast<CSysWin*>(&self->mSysWin[0]) = *reinterpret_cast<const CSysWin*>(&scratch.mWin2[0]);
         __dt__7CSysWinFv(&scratch.mWin2[0], -1);
-        reinterpret_cast<KizunaSysWinView*>(&self->mSysWin[0])->v20();
+        reinterpret_cast<CSysWin*>(&self->mSysWin[0])->loadSystemArc();
 
         self->mCur = CCur18(CUICfManager_getArcResourceAccessor());
         self->mCur.initLayout();
@@ -448,7 +448,7 @@ int handleKizunaFileEvent(CMenuKizunaTalk* self, CEventFile* evt) {
         Class_8045F858 regionHandle(&self->mMemRegion);
         void* data = self->mFile1->getData();
         mtl::MemManager::setMemInitFlag(false);
-        nw4r::lyt::ArcResourceAccessor* acc = createArcResourceAccessor__10CLibLayoutFv();
+        nw4r::lyt::ArcResourceAccessor* acc = CLibLayout::createArcResourceAccessor();
         self->mArcAccessor = acc;
         acc->Attach(data, &lbl_eu_80505118[0x7e]);
         buildLayout(&self->mLayout, acc, &lbl_eu_80505118[0x82]);
@@ -456,7 +456,7 @@ int handleKizunaFileEvent(CMenuKizunaTalk* self, CEventFile* evt) {
 
         nw4r::lyt::Layout* layout = self->mLayout;
         nw4r::lyt::Pane* rootPane = layout->GetRootPane();
-        void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, layout);
+        void* fontObj = CDeviceFont::getFontInfo(1, layout);
         u32 fontVal = ((u32 (*)(void*))((void**)fontObj)[0x24 / 4])(fontObj);
         ApplyFontToTxtPanes(rootPane, (const nw4r::ut::Font*)fontVal);
 
@@ -526,15 +526,15 @@ int handleKizunaFileEvent(CMenuKizunaTalk* self, CEventFile* evt) {
         u16 msgId = BdatGetU16ByTableKey(&lbl_eu_80505118[0x1aa], name, 0x2c);
         char* texName = MakeTplNameSysFile((u32)msgId);
         void* sys = CUICfManager_getArcResourceAccessor();
-        KizunaTextureView* tex = (KizunaTextureView*)((void* (*)(void*, u32, void*, u32))(
+        TPLDescriptor* tex = (TPLDescriptor*)((void* (*)(void*, u32, void*, u32))(
             (void**)sys)[0xc / 4])(sys, 0x74696d67, texName, 0);
         if (tex != 0) {
             PaneSetTexPaletteByName(layout, &lbl_eu_80505118[0x1db], (TPLPalette*)tex);
             nw4r::lyt::Pane* picPane = layout->GetRootPane();
-            u16 w = tex->mHeader->mWidth;
-            u16 h = tex->mHeader->mHeight;
+            u16 w = tex->textureHeader->width;
+            u16 h = tex->textureHeader->height;
             u32 res = ((u32 (*)(nw4r::lyt::Pane*, const char*, u32, void*))(
-                (void**)picPane)[0x3c / 4])(picPane, &lbl_eu_80505118[0x1db], 1, tex->mHeader);
+                (void**)picPane)[0x3c / 4])(picPane, &lbl_eu_80505118[0x1db], 1, tex->textureHeader);
             if (res != 0) {
                 // Size the picture pane from the texture's u16 dimensions.
                 nw4r::lyt::Size size;

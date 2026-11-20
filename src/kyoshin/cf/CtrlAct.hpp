@@ -38,15 +38,6 @@ using cf::CActorParam10Arg;
 using cf::CActorParam11Arg;
 using cf::CActorParam12Arg;
 
-// u32 -> double conversion magic: the retail code builds the 0x43300000-
-// prefixed bit pattern in memory and subtracts the shared sdata2 magic
-// double (lbl_eu_80666D78) so the pool reloc matches the retail constant
-// instead of an MWCC-synthesised @N entry (CfMapEffectManager.hpp convention).
-union F64Conv {
-    u32 w[2];
-    double d;
-};
-
 // 4-byte flag word at cf::CtrlAct+0x58. MWCC lays bitfields out MSB-first:
 // the first-declared field occupies the most significant bits, so
 // mKind(28-31)/mPhase(26-27)/mAngleState(24-25)/mParam(16-23) map to the
@@ -692,59 +683,6 @@ extern "C" CtrlActorObj* func_800BBC0C(void* param);
 
 // sdata2 float constants (const so MWCC references the retail pool slots).
 extern const f32 lbl_eu_80666CF8;   // 0.0f
-extern const f32 lbl_eu_80666CFC;
-extern const f32 lbl_eu_80666D00;
-extern const f32 lbl_eu_80666D04;
-extern const f32 lbl_eu_80666D08;
-extern const f32 lbl_eu_80666D0C;
-extern const f32 lbl_eu_80666D10;
-extern const f32 lbl_eu_80666D14;
-extern const f32 lbl_eu_80666D18;
-extern const f32 lbl_eu_80666D1C;
-extern const f32 lbl_eu_80666D20;
-extern const f32 lbl_eu_80666D24;
-extern const f32 lbl_eu_80666D28;
-extern const f32 lbl_eu_80666D2C;
-extern const f64 lbl_eu_80666D30;   // 0.1 (double)
-extern const f32 lbl_eu_80666D38;
-extern const f32 lbl_eu_80666D3C;
-extern const f32 lbl_eu_80666D40;
-extern const f32 lbl_eu_80666D44;
-extern const f32 lbl_eu_80666D48;
-extern const f32 lbl_eu_80666D4C;
-extern const f64 lbl_eu_80666D50;   // 2^52 (u32->double conversion magic)
-extern const f32 lbl_eu_80666D58;
-extern const f32 lbl_eu_80666D5C;
-extern const f32 lbl_eu_80666D60;
-extern const f32 lbl_eu_80666D64;
-extern const f32 lbl_eu_80666D68;
-extern const f32 lbl_eu_80666D6C;
-extern const f32 lbl_eu_80666D70;
-extern const f64 lbl_eu_80666D78;   // 2^52 (u32->double conversion magic)
-extern const f32 lbl_eu_80666D80;
-extern const f32 lbl_eu_80666D84;
-extern const f32 lbl_eu_80666D88;
-extern const f32 lbl_eu_80666D8C;
-extern const f32 lbl_eu_80666D90;
-extern const f32 lbl_eu_80666DB4;
-extern const f32 lbl_eu_80666DB8;
-extern const f32 lbl_eu_80666DBC;
-extern const f32 lbl_eu_80666DC0;
-extern const f32 lbl_eu_80666DC8;
-extern const f32 lbl_eu_80666DCC;
-extern const f32 lbl_eu_80666D94;
-extern const f32 lbl_eu_80666D98;
-extern const f32 lbl_eu_80666D9C;
-extern const f32 lbl_eu_80666DA0;
-extern const f32 lbl_eu_80666DA4;
-extern const f32 lbl_eu_80666DA8;
-extern const f32 lbl_eu_80666DAC;
-extern const f32 lbl_eu_80666DB0;
-extern const f32 lbl_eu_80666DC4;
-extern const f32 lbl_eu_80666DA4;
-extern const f32 lbl_eu_80666DA8;
-extern const f32 lbl_eu_80666DAC;
-extern const f32 lbl_eu_80666DB0;
 
 // 2-float blocks (base + f2 offset pairs for the facing-state table).
 // Non-const: sinit_800D79B4 writes these at static-init time.

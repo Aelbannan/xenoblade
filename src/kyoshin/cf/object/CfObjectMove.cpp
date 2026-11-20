@@ -26,6 +26,7 @@
 #include "kyoshin/cf/CtrlNpc.hpp"
 
 #include "monolib/math.hpp"
+#include "monolib/util/MemManager.hpp"
 #include <nw4r/math.h>
 #include <math.h>
 
@@ -496,29 +497,29 @@ void cf::CfObjectMove::CfObject_createMoveTarget(int arg) {
     if (arg == 8) {
         // Single target variable: retail assigns the allocation result
         // straight into the tracked slot (no intermediate temporary).
-        obj = allocate__Q23mtl10MemManagerFUlUl(0x224, CfRes_getAllocHandle());
+        obj = mtl::MemManager::allocate(0x224, CfRes_getAllocHandle());
         if (obj != 0) {
             __ct__cf_CtrlEnemy(obj, this);
         }
     } else if (arg == 9) {
-        obj = allocate__Q23mtl10MemManagerFUlUl(0x180, CfRes_getAllocHandle());
+        obj = mtl::MemManager::allocate(0x180, CfRes_getAllocHandle());
         if (obj != 0) {
             __ct__CtrlNpc(obj, this);
         }
     } else if (arg == 10) {
-        obj = allocate__Q23mtl10MemManagerFUlUl(0x1DC, CfRes_getHeapHandle());
+        obj = mtl::MemManager::allocate(0x1DC, CfRes_getHeapHandle());
         if (obj != 0) {
             __ct__cf_CtrlPc(obj, this, 0);
         }
     } else {
         float f = this->CfObject_getMoveHeadAngle();
         if (arg >= 0 && arg <= 3) {
-            obj = allocate__Q23mtl10MemManagerFUlUl(0x264, heap);
+            obj = mtl::MemManager::allocate(0x264, heap);
             if (obj != 0) {
                 __ct__CtrlRemote(obj, this, arg);
             }
         } else if (arg >= 4 && arg <= 7) {
-            obj = allocate__Q23mtl10MemManagerFUlUl(0x264, heap);
+            obj = mtl::MemManager::allocate(0x264, heap);
             if (obj != 0) {
                 __ct__cf_CtrlPad(obj, this, arg);
             }
@@ -1818,9 +1819,9 @@ extern "C" void CfObjectMove_resetMoveTarget(cf::CfObjectMove* self) {
         rate = 0.009259259f * sx;
         f32 ang = 40.743664f * angle;
         ml::CVec3 step;
-        step.x = rate * SinFIdx__Q24nw4r4mathFf(ang);
+        step.x = rate * nw4r::math::SinFIdx(ang);
         step.y = 0.0f;
-        step.z = rate * CosFIdx__Q24nw4r4mathFf(ang);
+        step.z = rate * nw4r::math::CosFIdx(ang);
         const ml::CVec3* base = (const ml::CVec3*)self->CfObject_getPosVector();
         ml::CVec3 tmp;
         ColiResolveNodeMove(self->_60C_region, &tmp, base, &step);
@@ -2044,7 +2045,7 @@ void CfObjectMove_ensureAnimTargets(cf::CfObjectMove* self) {
                 // scheme as CfObject_createMoveTarget) so MWCC colours the
                 // alloc result deterministically.
                 void* obj = 0;
-                obj = allocate__Q23mtl10MemManagerFUlUl(0x53C, CfRes_getHeapHandle());
+                obj = mtl::MemManager::allocate(0x53C, CfRes_getHeapHandle());
                 if (obj != 0) {
                     __ct__8005A3FC(obj, self);
                 }

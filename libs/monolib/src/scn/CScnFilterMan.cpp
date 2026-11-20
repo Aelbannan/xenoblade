@@ -7,6 +7,7 @@
 #include "monolib/scn/CScn.hpp"
 #include "monolib/util/MemManager.hpp"
 #include "monolib/device/CGXCache.hpp"
+#include "monolib/device/CDeviceGX.hpp"
 #include "monolib/core/CViewRoot.hpp"
 
 // Setter helpers are declared here but defined at the BOTTOM of this file;
@@ -28,7 +29,6 @@ extern "C" void ScnFilterList_countNodes(CScnFilterListNode** cur, CScnFilterLis
 
 // CGXCache helpers reached by their flat retail symbols (the member decls in
 // CGXCache.hpp are zero-param; updateCmd1Words actually lives on r4-r8).
-extern "C" void resetGXStateA__8CGXCacheFv(CGXCache* cache);
 extern "C" void updateCmd1Words__8CGXCacheFv(CGXCache* cache, u32 w0, u32 w1, u32 w2,
                                            u32 w3, int flag);
 extern "C" u32 ScnFilterList_size(CScnFilterReslist* list);
@@ -256,7 +256,6 @@ namespace FMDtorCalls {
 extern "C" CScnFilterReslist* __dt__reslist_CScnFilter(CScnFilterReslist* obj, int mode);
 }
 extern "C" void __dt__10IScnRenderFv(void* self, int flag);
-extern "C" u32 lbl_eu_8056EB78[4];
 extern "C" void ScnFilterList_destroy(void* self);
 // (memberized: ScnFilterIterList_destroy -> CScnFilterIteratorReslist::IterList_destroy; declaration moved into class CScnFilterIteratorReslist)
 
@@ -266,7 +265,6 @@ extern "C" void ScnFilterList_destroy(void* self);
 extern "C" void __ct__IScnRender(void* self);
 extern "C" void zeroFirstWord(void* self);
 extern "C" void* Scn_CallUnk8C_V8(CScn* scene);
-extern "C" u32 lbl_eu_8056EB78[4];
 
 extern "C" u32 __vt__13CScnFilterMan[];
 
@@ -700,7 +698,7 @@ extern "C" void ScnFilterMan_preRender(CScnFilterMan* self) {
     if (ScnFilterList_size(&self->field_08) == 0) {
         return;
     }
-    resetGXStateA__8CGXCacheFv(ScnFilterMan_getGXCache());
+    ScnFilterMan_getGXCache()->resetGXStateA();
     updateCmd1Words__8CGXCacheFv(ScnFilterMan_getGXCache(), 1, 4, 5, 0, 1);
     ScnFilterMan_sortByState(self);
 
@@ -720,10 +718,9 @@ extern "C" void ScnFilterMan_preRender(CScnFilterMan* self) {
     }
 }
 
-// Retail refs the CDeviceGX static (extern; defined in retail data object)
-// by its mangled name cacheInstance__9CDeviceGX via SDA21.
-extern "C" { extern void* cacheInstance__9CDeviceGX; }
-extern "C" CGXCache* ScnFilterMan_getGXCache(void) { return (CGXCache*)cacheInstance__9CDeviceGX; }
+// The CDeviceGX class owns the cache instance as a private static; its real
+// inline getter emits the same SDA21 load as the retail accessor.
+extern "C" CGXCache* ScnFilterMan_getGXCache(void) { return CDeviceGX::getCacheInstance(); }
 
 // True when the filter's mFlags has bit 1 set (flag-test helper tail call).
 extern "C" s32 ScnFilter_isRenderEnabled(CScnFilter* filter) {
@@ -769,7 +766,8 @@ extern "C" CScnFilterListNode* ScnFilterList_getFirst(CScnFilterList* list) {
 }
 
 extern "C" void* ScnFilterNode_store(void* self, u32 val) {
-    *(u32*)((u8*)self + 0x0) = val;
+    u32* out = static_cast<u32*>(self);
+    *out = val;
     return self;
 }
 

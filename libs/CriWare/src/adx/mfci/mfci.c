@@ -3,12 +3,8 @@
 
 extern const char lbl_eu_80518810[];
 
-__declspec(section ".rodata") __attribute__((aligned(8))) const void *lbl_eu_80518840[1] = {
+__attribute__((aligned(8))) const void * const lbl_eu_80518840[1] = {
     lbl_eu_80518810
-};
-
-__declspec(section ".rodata") __attribute__((aligned(4))) const char lbl_eu_80518844[0x214] = {
-    0x45, 0x30, 0x31, 0x31, 0x30, 0x30, 0x33, 0x30, 0x38, 0x3A, 0x6C, 0x65, 0x6E, 0x67, 0x74, 0x68, 0x20, 0x6F, 0x66, 0x20, 0x27, 0x25, 0x73, 0x27, 0x20, 0x69, 0x73, 0x20, 0x6F, 0x76, 0x65, 0x72, 0x20, 0x25, 0x64, 0x20, 0x62, 0x79, 0x74, 0x65, 0x73, 0x2E, 0x28, 0x6D, 0x66, 0x63, 0x69, 0x5F, 0x67, 0x65, 0x74, 0x5F, 0x61, 0x64, 0x72, 0x5F, 0x73, 0x69, 0x7A, 0x65, 0x29, 0x00, 0x45, 0x30, 0x31, 0x31, 0x30, 0x30, 0x33, 0x30, 0x31, 0x3A, 0x66, 0x6E, 0x61, 0x6D, 0x65, 0x20, 0x69, 0x73, 0x20, 0x6E, 0x75, 0x6C, 0x6C, 0x2E, 0x28, 0x6D, 0x66, 0x43, 0x69, 0x4F, 0x70, 0x65, 0x6E, 0x29, 0x00, 0x45, 0x30, 0x31, 0x31, 0x30, 0x30, 0x33, 0x30, 0x32, 0x3A, 0x72, 0x77, 0x20, 0x69, 0x73, 0x20, 0x69, 0x6C, 0x6C, 0x69, 0x67, 0x61, 0x6C, 0x2E, 0x28, 0x6D, 0x66, 0x43, 0x69, 0x4F, 0x70, 0x65, 0x6E, 0x29, 0x00, 0x45, 0x30, 0x31, 0x31, 0x30, 0x30, 0x33, 0x30, 0x33, 0x3A, 0x6E, 0x6F, 0x74, 0x20, 0x65, 0x6E, 0x6F, 0x75, 0x67, 0x68, 0x20, 0x68, 0x61, 0x6E, 0x64, 0x6C, 0x65, 0x20, 0x72, 0x65, 0x73, 0x6F, 0x75, 0x72, 0x63, 0x65, 0x2E, 0x28, 0x6D, 0x66, 0x43, 0x69, 0x4F, 0x70, 0x65, 0x6E, 0x29, 0x00, 0x45, 0x30, 0x30, 0x39, 0x32, 0x39, 0x31, 0x32, 0x3A, 0x68, 0x61, 0x6E, 0x64, 0x6C, 0x20, 0x69, 0x73, 0x20, 0x6E, 0x75, 0x6C, 0x6C, 0x2E, 0x00, 0x45, 0x30, 0x31, 0x31, 0x30, 0x30, 0x33, 0x30, 0x35, 0x3A, 0x68, 0x61, 0x6E, 0x64, 0x6C, 0x20, 0x69, 0x73, 0x20, 0x6E, 0x75, 0x6C, 0x6C, 0x2E, 0x00, 0x45, 0x30, 0x31, 0x31, 0x30, 0x30, 0x33, 0x30, 0x36, 0x3A, 0x68, 0x61, 0x6E, 0x64, 0x6C, 0x20, 0x69, 0x73, 0x20, 0x6E, 0x75, 0x6C, 0x6C, 0x2E, 0x00, 0x45, 0x30, 0x31, 0x31, 0x30, 0x30, 0x33, 0x30, 0x37, 0x3A, 0x68, 0x61, 0x6E, 0x64, 0x6C, 0x20, 0x69, 0x73, 0x20, 0x6E, 0x75, 0x6C, 0x6C, 0x2E, 0x00, 0x45, 0x30, 0x31, 0x31, 0x30, 0x30, 0x33, 0x30, 0x38, 0x3A, 0x6E, 0x73, 0x63, 0x74, 0x20, 0x3C, 0x20, 0x30, 0x2E, 0x28, 0x6D, 0x66, 0x43, 0x69, 0x52, 0x65, 0x71, 0x52, 0x64, 0x29, 0x00, 0x45, 0x30, 0x31, 0x31, 0x30, 0x30, 0x33, 0x30, 0x39, 0x3A, 0x62, 0x75, 0x66, 0x20, 0x69, 0x73, 0x20, 0x6E, 0x75, 0x6C, 0x6C, 0x2E, 0x28, 0x6D, 0x66, 0x43, 0x69, 0x52, 0x65, 0x71, 0x52, 0x64, 0x29, 0x00, 0x45, 0x30, 0x30, 0x34, 0x30, 0x33, 0x30, 0x31, 0x3A, 0x68, 0x61, 0x6E, 0x64, 0x6C, 0x20, 0x69, 0x73, 0x20, 0x6E, 0x75, 0x6C, 0x6C, 0x2E, 0x00, 0x45, 0x30, 0x30, 0x34, 0x30, 0x33, 0x30, 0x32, 0x3A, 0x68, 0x61, 0x6E, 0x64, 0x6C, 0x20, 0x69, 0x73, 0x20, 0x6E, 0x75, 0x6C, 0x6C, 0x2E, 0x00, 0x45, 0x31, 0x30, 0x34, 0x31, 0x30, 0x30, 0x31, 0x3A, 0x69, 0x6E, 0x76, 0x61, 0x6C, 0x69, 0x64, 0x20, 0x65, 0x6E, 0x74, 0x72, 0x79, 0x20, 0x6E, 0x75, 0x6D, 0x62, 0x65, 0x72, 0x2E, 0x28, 0x6D, 0x66, 0x43, 0x69, 0x4F, 0x70, 0x65, 0x6E, 0x45, 0x6E, 0x74, 0x72, 0x79, 0x29, 0x00, 0x45, 0x31, 0x30, 0x34, 0x31, 0x30, 0x30, 0x32, 0x3A, 0x72, 0x77, 0x20, 0x69, 0x73, 0x20, 0x69, 0x6C, 0x6C, 0x69, 0x67, 0x61, 0x6C, 0x2E, 0x28, 0x6D, 0x66, 0x43, 0x69, 0x4F, 0x70, 0x65, 0x6E, 0x45, 0x6E, 0x74, 0x72, 0x79, 0x29, 0x00, 0x45, 0x31, 0x30, 0x34, 0x31, 0x30, 0x30, 0x32, 0x3A, 0x6E, 0x6F, 0x74, 0x20, 0x65, 0x6E, 0x6F, 0x75, 0x67, 0x68, 0x20, 0x68, 0x61, 0x6E, 0x64, 0x6C, 0x65, 0x20, 0x72, 0x65, 0x73, 0x6F, 0x75, 0x72, 0x63, 0x65, 0x2E, 0x28, 0x6D, 0x66, 0x43, 0x69, 0x4F, 0x70, 0x65, 0x6E, 0x45, 0x6E, 0x74, 0x72, 0x79, 0x29, 0x00, 0x00, 0x00, 0x00
 };
 
 extern void mfCiExecServer();
@@ -26,7 +22,7 @@ extern void mfCiSetSctLen();
 extern int mfCiGetNumTr();
 extern int mfCiOptFn1();
 
-__declspec(section ".data") __attribute__((aligned(8))) void *lbl_eu_80565B98[26] = {
+__attribute__((aligned(8))) void *lbl_eu_80565B98[26] = {
     mfCiExecServer,
     mfCiEntryErrFunc,
     mfCiGetFileSize,
@@ -119,7 +115,7 @@ int mfCiGetFileSize(const char* name) {
     int size = 0;
     const char* p;
     if (strlen(name) >= 0x12) {
-        CRICRW_Sprintf(g->errbuf, 0x12C, lbl_eu_80518844, name, 0x12);
+        CRICRW_Sprintf(g->errbuf, 0x12C, "E01100308:length of '%s' is over %d bytes.(mfci_get_adr_size)", name, 0x12);
         if (g->errfn != NULL)
             g->errfn(g->errarg, g->errbuf, 0);
     }
@@ -136,13 +132,13 @@ void* mfCiOpen(const char* path, int mode) {
     int i;
 
     if (path == NULL) {
-        const char* msg = lbl_eu_80518844 + 0x3E;
+        const char* msg = "E01100301:fname is null.(mfCiOpen)";
         if (g->errfn != NULL)
             g->errfn(g->errarg, msg, 0);
         return NULL;
     }
     if (mode != 0) {
-        const char* msg = lbl_eu_80518844 + 0x61;
+        const char* msg = "E01100302:rw is illigal.(mfCiOpen)";
         if (g->errfn != NULL)
             g->errfn(g->errarg, msg, 0);
         return NULL;
@@ -159,7 +155,7 @@ void* mfCiOpen(const char* path, int mode) {
         }
     }
     if (sct == NULL) {
-        const char* msg = lbl_eu_80518844 + 0x84;
+        const char* msg = "E01100303:not enough handle resource.(mfCiOpen)";
         if (g->errfn != NULL)
             g->errfn(g->errarg, msg, 0);
         return NULL;
@@ -167,7 +163,7 @@ void* mfCiOpen(const char* path, int mode) {
     CRICRW_Strcpy(sct->name, 0x12, path);
     sct->sctsize = 0x800;
     if (strlen(sct->name) >= 0x12) {
-        CRICRW_Sprintf(g->errbuf, 0x12C, lbl_eu_80518844, sct->name, 0x12);
+        CRICRW_Sprintf(g->errbuf, 0x12C, "E01100308:length of '%s' is over %d bytes.(mfci_get_adr_size)", sct->name, 0x12);
         if (g->errfn != NULL)
             g->errfn(g->errarg, g->errbuf, 0);
     }
@@ -188,7 +184,7 @@ void* mfCiOpen(const char* path, int mode) {
 
 void mfCiClose(MfCiFile* sct) {
     if (sct == NULL) {
-        const char* msg = lbl_eu_80518844 + 0xB4;
+        const char* msg = "E0092912:handl is null.";
         if (mfci_errfn != NULL)
             mfci_errfn(mfci_errarg, msg, 0);
         return;
@@ -204,7 +200,7 @@ void mfCiClose(MfCiFile* sct) {
 
 int mfCiSeek(MfCiFile* sct, int offset, int whence) {
     if (sct == NULL) {
-        const char* msg = lbl_eu_80518844 + 0xCC;
+        const char* msg = "E01100305:handl is null.";
         if (mfci_errfn != NULL)
             mfci_errfn(mfci_errarg, msg, 0);
         return 0;
@@ -230,7 +226,7 @@ int mfCiSeek(MfCiFile* sct, int offset, int whence) {
 
 int mfCiTell(MfCiFile* sct) {
     if (sct == NULL) {
-        const char* msg = lbl_eu_80518844 + 0xE5;
+        const char* msg = "E01100306:handl is null.";
         if (mfci_errfn != NULL)
             mfci_errfn(mfci_errarg, msg, 0);
         return 0;
@@ -258,19 +254,19 @@ int mfCiReqRd(MfCiFile* sct, int size, void* buf) {
     int n2;
 
     if (sct == NULL) {
-        const char* msg = lbl_eu_80518844 + 0xFE;
+        const char* msg = "E01100307:handl is null.";
         if (g->errfn != NULL)
             g->errfn(g->errarg, msg, 0);
         return 0;
     }
     if (size < 0) {
-        const char* msg = lbl_eu_80518844 + 0x117;
+        const char* msg = "E01100308:nsct < 0.(mfCiReqRd)";
         if (g->errfn != NULL)
             g->errfn(g->errarg, msg, (u32)sct);
         return 0;
     }
     if (buf == NULL) {
-        const char* msg = lbl_eu_80518844 + 0x136;
+        const char* msg = "E01100309:buf is null.(mfCiReqRd)";
         if (g->errfn != NULL)
             g->errfn(g->errarg, msg, (u32)sct);
         return 0;
@@ -299,7 +295,7 @@ int mfCiReqRd(MfCiFile* sct, int size, void* buf) {
     sct->rdOff = rdOff;
     sct->rdSize = rdSize;
     if (strlen(sct->name) >= 0x12) {
-        CRICRW_Sprintf(g->errbuf, 0x12C, lbl_eu_80518844, sct->name, 0x12);
+        CRICRW_Sprintf(g->errbuf, 0x12C, "E01100308:length of '%s' is over %d bytes.(mfci_get_adr_size)", sct->name, 0x12);
         if (g->errfn != NULL)
             g->errfn(g->errarg, g->errbuf, 0);
     }
@@ -323,7 +319,7 @@ int mfCiReqRd(MfCiFile* sct, int size, void* buf) {
 
 void mfCiStopTr(MfCiFile* sct) {
     if (sct == NULL) {
-        const char* msg = lbl_eu_80518844 + 0xB4;
+        const char* msg = "E0092912:handl is null.";
         if (mfci_errfn != NULL)
             mfci_errfn(mfci_errarg, msg, 0);
         return;
@@ -335,7 +331,7 @@ void mfCiStopTr(MfCiFile* sct) {
 
 int mfCiGetStat(MfCiFile* sct) {
     if (sct == NULL) {
-        const char* msg = lbl_eu_80518844 + 0xB4;
+        const char* msg = "E0092912:handl is null.";
         if (mfci_errfn != NULL)
             mfci_errfn(mfci_errarg, msg, 0);
         return 0;
@@ -345,7 +341,7 @@ int mfCiGetStat(MfCiFile* sct) {
 
 int mfCiGetSctLen(MfCiFile* sct) {
     if (sct == NULL) {
-        const char* msg = lbl_eu_80518844 + 0x158;
+        const char* msg = "E0040301:handl is null.";
         if (mfci_errfn != NULL)
             mfci_errfn(mfci_errarg, msg, 0);
         return 0;
@@ -366,7 +362,7 @@ typedef struct MfCiSectInfo {
 void mfCiSetSctLen(MfCiSectInfo* sct, int sctsize)
 {
     if (sct == NULL) {
-        const char* msg = lbl_eu_80518844 + 0x170;
+        const char* msg = "E0040302:handl is null.";
         if (mfci_errfn != NULL)
             mfci_errfn(mfci_errarg, msg, 0);
         return;
@@ -380,7 +376,7 @@ void mfCiSetSctLen(MfCiSectInfo* sct, int sctsize)
 
 int mfCiGetNumTr(MfCiFile* sct) {
     if (sct == NULL) {
-        const char* msg = lbl_eu_80518844 + 0xB4;
+        const char* msg = "E0092912:handl is null.";
         if (mfci_errfn != NULL)
             mfci_errfn(mfci_errarg, msg, 0);
         return 0;
@@ -401,7 +397,7 @@ int mfCiOptFn1(MfCiFile* sct, int op) {
         return 0;
     case 0xC9:
         if (sct == NULL) {
-            const char* msg = lbl_eu_80518844 + 0xB4;
+            const char* msg = "E0092912:handl is null.";
             if (g->errfn != NULL)
                 g->errfn(g->errarg, msg, 0);
             return 0;
@@ -411,7 +407,7 @@ int mfCiOptFn1(MfCiFile* sct, int op) {
         return 0;
     case 0xCB:
         if (strlen(sct->name) >= 0x12) {
-            CRICRW_Sprintf(g->errbuf, 0x12C, lbl_eu_80518844, sct->name, 0x12);
+            CRICRW_Sprintf(g->errbuf, 0x12C, "E01100308:length of '%s' is over %d bytes.(mfci_get_adr_size)", sct->name, 0x12);
             if (g->errfn != NULL)
                 g->errfn(g->errarg, g->errbuf, 0);
         }
@@ -424,7 +420,7 @@ int mfCiOptFn1(MfCiFile* sct, int op) {
         return 0;
     case 0xCD:
         if (strlen(sct->name) >= 0x12) {
-            CRICRW_Sprintf(g->errbuf, 0x12C, lbl_eu_80518844, sct->name, 0x12);
+            CRICRW_Sprintf(g->errbuf, 0x12C, "E01100308:length of '%s' is over %d bytes.(mfci_get_adr_size)", sct->name, 0x12);
             if (g->errfn != NULL)
                 g->errfn(g->errarg, g->errbuf, 0);
         }
@@ -447,4 +443,25 @@ int mfCiOptFn1(MfCiFile* sct, int op) {
     default:
         return -1;
     }
+}
+
+// The three trailing retail error strings name a link-dead mfCiOpenEntry path:
+// no symbol exists for it in config/*/symbols.txt and no retained TU calls it.
+int mfCiOpenEntry(int entry, int rw, void** out) {
+    if ((unsigned int)entry > 0x20) {
+        if (mfci_errfn != NULL)
+            mfci_errfn(mfci_errarg, "E1041001:invalid entry number.(mfCiOpenEntry)", 0);
+        return 0;
+    }
+    if (rw != 0) {
+        if (mfci_errfn != NULL)
+            mfci_errfn(mfci_errarg, "E1041002:rw is illigal.(mfCiOpenEntry)", 0);
+        return 0;
+    }
+    if (out == NULL) {
+        if (mfci_errfn != NULL)
+            mfci_errfn(mfci_errarg, "E1041002:not enough handle resource.(mfCiOpenEntry)", 0);
+        return 0;
+    }
+    return 1;
 }

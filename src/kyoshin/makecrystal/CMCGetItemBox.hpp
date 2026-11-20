@@ -186,9 +186,7 @@ extern "C" const float lbl_eu_80668BF0;
 // lbl_eu_80668BEC is the 0.25f row divisor used when converting a flat
 // cursor index to row/column (field_304 / field_305).
 // lbl_eu_80668BD8 (double) is MWCC's unsigned 2^52 conversion magic.
-extern const double lbl_eu_80668BD8;
 // lbl_eu_80668BE0 (double) is MWCC's signed int->f64 2^52 conversion magic.
-extern const double lbl_eu_80668BE0;
 extern "C" void moveMCGetItemBoxCursor(CMCGetItemBox*);
 extern "C" void initMCGetItemBoxList(CMCGetItemBox*, u16, void*, u8);
 extern "C" void setMCSlotIconTex(CMCGetItemBox*, u32, CMCItemBoxEntry*, u8);
@@ -207,4 +205,3 @@ extern "C" void* Bdat_GetTable_AA34();  // canonical decl: CMCCrystalBox.hpp
    (indexed by the item's kind byte). */
 struct CMCItemMsgTbl { u32 v[7]; };
 extern "C" CMCItemMsgTbl sMCItemMsgFmtTbl;
-extern const float lbl_eu_80668C00;

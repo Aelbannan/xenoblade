@@ -33,7 +33,6 @@ extern "C" void cerandRotateX90Wrapper(Mtx mtx);
 extern "C" void cerandTransposeObjCC(Mtx mtx, const void* obj);
 extern "C" void cerandAimMatrix(Mtx mtx, const u8* obj);
 #include "monolib/math/FloatUtils.hpp"
-extern f32 lbl_eu_8066B138;
 extern const char lbl_eu_80526324[];
 extern const char lbl_eu_80526300[];
 
@@ -160,20 +159,20 @@ inline f32 s32ToF_b170(s32 v) {
 }
 
 // s16 -> float through the magic constant 0x4330000080000000 (2^52 + 2^31,
-// the signed-conversion pool entry at lbl_eu_8066B0F0). Retail func_804CD9EC
-// references that named pool entry for its s16 tone-node conversions.
+// the signed-conversion pool entry). Retail func_804CD9EC references
+// that pool entry for its s16 tone-node conversions.
 inline f32 s16ToF_b0f0(s16 v) {
     return (f32)(s32)v;
 }
 
-// u8/u32 -> float through the 2^52 magic constant (lbl_eu_8066B0E8).
+// u8/u32 -> float through the 2^52 magic constant.
 // Used by EffFxBuildScaleMatrix's byte-scale fallback conversions.
 inline f32 u8ToF_b0e8(u32 v) {
     return (f32)v;
 }
 
-// s32 -> float through the 2^52 + 2^31 magic constant at lbl_eu_8066B0F0.
-// (EffFxBuildScaleMatrix converts its i5/i6 params with this named entry.)
+// s32 -> float through the 2^52 + 2^31 magic constant.
+// (EffFxBuildScaleMatrix converts its i5/i6 params with this entry.)
 inline f32 s32ToF_b0f0(s32 v) {
     return (f32)v;
 }
@@ -2647,7 +2646,7 @@ extern "C" void EffFxRenderTypeCWalk(EffectNode* nodeRaw, void* res) {
     } else {
         ang = -3.0f * *(f32*)&self->field_0x10;
     }
-    const f32 step = lbl_eu_8066B138;
+    f32 step = 360.0f;
     const f32 limit = lbl_eu_8066B0DC;
     while (ang < limit) ang += step;
     while (limit <= ang) ang -= step;
@@ -3456,7 +3455,7 @@ void func_804D401C(EffectNode* self, f32 f) {
     } else {
         node = 0;
     }
-    f32 lim = lbl_eu_8066B140;
+    f32 lim = 0.0f;
     while (node) {
         EffFxUpdateNodeToneLight(node, f);
         if (!(f <= lim)) {
@@ -3490,7 +3489,7 @@ void EffectNode::EffFxProcessNodeChain() {
     } else {
         node = 0;
     }
-    f32 lim = lbl_eu_8066B140;
+    f32 lim = 0.0f;
     while (node) {
         EffFxAccumNodeWeight((EffectStruct*)(void*)node);
         if (this->field_0x04 >= 0) {
@@ -4012,19 +4011,19 @@ void RenderObj::EffFxPushPolyPass() {
         mult.set(scaled.r * 2.0f, scaled.g * 2.0f,
                  scaled.b * 2.0f, scaled.a);
         ml::CCol4 c = mult;
-        if (c.r > lbl_eu_8066B14C) c.r = lbl_eu_8066B14C;
-        else if (c.r < lbl_eu_8066B140) c.r = lbl_eu_8066B140;
-        if (c.g > lbl_eu_8066B14C) c.g = lbl_eu_8066B14C;
-        else if (c.g < lbl_eu_8066B140) c.g = lbl_eu_8066B140;
-        if (c.b > lbl_eu_8066B14C) c.b = lbl_eu_8066B14C;
-        else if (c.b < lbl_eu_8066B140) c.b = lbl_eu_8066B140;
-        if (c.a > lbl_eu_8066B14C) c.a = lbl_eu_8066B14C;
-        else if (c.a < lbl_eu_8066B140) c.a = lbl_eu_8066B140;
+        if (c.r > 1.0f) c.r = 1.0f;
+        else if (c.r < 0.0f) c.r = 0.0f;
+        if (c.g > 1.0f) c.g = 1.0f;
+        else if (c.g < 0.0f) c.g = 0.0f;
+        if (c.b > 1.0f) c.b = 1.0f;
+        else if (c.b < 0.0f) c.b = 0.0f;
+        if (c.a > 1.0f) c.a = 1.0f;
+        else if (c.a < 0.0f) c.a = 0.0f;
         GXColor col;
-        col.r = (u8)(s32)(lbl_eu_8066B150 * c.r);
-        col.g = (u8)(s32)(lbl_eu_8066B150 * c.g);
-        col.b = (u8)(s32)(lbl_eu_8066B150 * c.b);
-        col.a = (u8)(s32)(lbl_eu_8066B150 * c.a);
+        col.r = (u8)(s32)(255.0f * c.r);
+        col.g = (u8)(s32)(255.0f * c.g);
+        col.b = (u8)(s32)(255.0f * c.b);
+        col.a = (u8)(s32)(255.0f * c.a);
         GXColor col2 = col;
         GXSetChanAmbColor(GX_COLOR0A0, col);
         GXSetChanAmbColor(GX_COLOR1A1, col2);
@@ -4124,19 +4123,19 @@ void RenderObj::EffFxPushPalettePass() {
         c[1] = d[1] * 2.0f;
         c[2] = d[2] * 2.0f;
         c[3] = d[3];
-        if (c[0] > lbl_eu_8066B14C) c[0] = lbl_eu_8066B14C;
-        else if (c[0] < lbl_eu_8066B140) c[0] = lbl_eu_8066B140;
-        if (c[1] > lbl_eu_8066B14C) c[1] = lbl_eu_8066B14C;
-        else if (c[1] < lbl_eu_8066B140) c[1] = lbl_eu_8066B140;
-        if (c[2] > lbl_eu_8066B14C) c[2] = lbl_eu_8066B14C;
-        else if (c[2] < lbl_eu_8066B140) c[2] = lbl_eu_8066B140;
-        if (c[3] > lbl_eu_8066B14C) c[3] = lbl_eu_8066B14C;
-        else if (c[3] < lbl_eu_8066B140) c[3] = lbl_eu_8066B140;
+        if (c[0] > 1.0f) c[0] = 1.0f;
+        else if (c[0] < 0.0f) c[0] = 0.0f;
+        if (c[1] > 1.0f) c[1] = 1.0f;
+        else if (c[1] < 0.0f) c[1] = 0.0f;
+        if (c[2] > 1.0f) c[2] = 1.0f;
+        else if (c[2] < 0.0f) c[2] = 0.0f;
+        if (c[3] > 1.0f) c[3] = 1.0f;
+        else if (c[3] < 0.0f) c[3] = 0.0f;
         GXColor col;
-        col.r = (u8)(s32)(lbl_eu_8066B150 * c[0]);
-        col.g = (u8)(s32)(lbl_eu_8066B150 * c[1]);
-        col.b = (u8)(s32)(lbl_eu_8066B150 * c[2]);
-        col.a = (u8)(s32)(lbl_eu_8066B150 * c[3]);
+        col.r = (u8)(s32)(255.0f * c[0]);
+        col.g = (u8)(s32)(255.0f * c[1]);
+        col.b = (u8)(s32)(255.0f * c[2]);
+        col.a = (u8)(s32)(255.0f * c[3]);
         GXSetChanAmbColor(GX_COLOR0A0, col);
         GXSetChanAmbColor(GX_COLOR1A1, col);
     }

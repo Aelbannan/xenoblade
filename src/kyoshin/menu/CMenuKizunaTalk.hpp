@@ -77,46 +77,6 @@ public:
     virtual void vf02(int flag) = 0;   // vtable + 0x8 - release/unbind
 };
 
-// CSysWin vtable view exposing the layout-build virtual at +0x88 (slot 34).
-// Same shape as the CSysWinView classes in CSysWinSave.hpp / CCol6System.hpp,
-// renamed to avoid ODR collisions.
-class KizunaSysWinView {
-public:
-    virtual void v00() = 0;
-    virtual void v01() = 0;
-    virtual void v02() = 0;
-    virtual void v03() = 0;
-    virtual void v04() = 0;
-    virtual void v05() = 0;
-    virtual void v06() = 0;
-    virtual void v07() = 0;
-    virtual void v08() = 0;
-    virtual void v09() = 0;
-    virtual void v0A() = 0;
-    virtual void v0B() = 0;
-    virtual void v0C() = 0;
-    virtual void v0D() = 0;
-    virtual void v0E() = 0;
-    virtual void v0F() = 0;
-    virtual void v10() = 0;
-    virtual void v11() = 0;
-    virtual void v12() = 0;
-    virtual void v13() = 0;
-    virtual void v14() = 0;
-    virtual void v15() = 0;
-    virtual void v16() = 0;
-    virtual void v17() = 0;
-    virtual void v18() = 0;
-    virtual void v19() = 0;
-    virtual void v1A() = 0;
-    virtual void v1B() = 0;
-    virtual void v1C() = 0;
-    virtual void v1D() = 0;
-    virtual void v1E() = 0;
-    virtual void v1F() = 0;
-    virtual void v20() = 0;  // index 32 -> vtable +0x88
-};
-
 // kickoffKizunaWindow stack scratch laid out like the retail frame:
 // cursor @sp+0x08, case-2 CSysWin @sp+0x20, case-0 CSysWin @sp+0x5c.
 struct KizunaScratch {
@@ -182,7 +142,6 @@ public:
 // ctor); the rest come from CItemBoxGrid.hpp / functions.hpp.
 extern "C" void __dt__7CSysWinFv(void*, int);
 extern "C" void __ct__8CProcessFv(void*);
-extern "C" void waitForDrawDone__9CDeviceVIFv();
 
 // Flat cf pad-data view for the kizuna talk input handling (offsets match
 // retail, same as CSysPadData / KizunaPadData views elsewhere).
@@ -210,25 +169,11 @@ extern "C" void* readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, 
 extern "C" void __ct__7CSysWinFUc(void*, int);
 extern "C" void* readFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, const char*, void*, int, int);
 #include "kyoshin/cf/CtrlRemoteApi.hpp"
-extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
 //@@KIZUNA_DECLS@@
-
-// Minimal nw4r texture view returned by the arc accessor's texture lookup:
-// +0x08 points at the texture header (u16 height/width pair).
-struct KizunaTexHeader {
-    u16 mHeight;   // 0x00
-    u16 mWidth;    // 0x02
-};
-struct KizunaTextureView {
-    u8 _00[0x8];
-    KizunaTexHeader* mHeader;   // 0x08
-};
 
 // Global data imports (MWCC does not mangle global-scope data names).
 extern char lbl_eu_80505118[];            // shared-archive path string (.rodata)
 extern u8* sKizunaBdatTable;               // BDAT character table pointer (.sbss)
-extern const f32 lbl_eu_80667E68;         // .sdata2 float (anim check)
-extern const f32 lbl_eu_80667E6C;         // .sdata2 float (anim frame reset 0.0f)
 extern char lbl_eu_8052D238[];            // CTTask_IUIWindow vtable (.data)
 extern char lbl_eu_80533A98[];
 extern u32 __ptmf_null[3];                // null pointer-to-member-function

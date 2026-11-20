@@ -52,15 +52,11 @@ extern u8 lbl_eu_8052CBCC[];
 
 // Global data imports (MWCC does not mangle global-scope data names).
 extern u32 __ptmf_null[3];      // null pointer-to-member-function constant
-extern char lbl_eu_8052C858[];  // CMenuMiniMap2 composite vtable block (+0x24/+0xAC slots)
-extern char lbl_eu_8052CA88[];  // CMMClock vtable
 // Presentation/mode flag words (.sbss) tested by cbRenderBefore.
 extern u32 gmPauseFlags;
 // Minimap process singleton instance pointer (.sbss).
 extern u32 spMiniMap2;
 // CMiniMap vtable + the +0x2C subobject vtable (ctor stores).
-extern char lbl_eu_8052C958[];
-extern char lbl_eu_8052C9F0[];
 // Current BDAT table pointer / per-row name-pointer table used by the ctor.
 extern const char* sMiniMapLayoutNames[];
 

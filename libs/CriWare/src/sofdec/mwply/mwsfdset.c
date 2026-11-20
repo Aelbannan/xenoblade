@@ -2,6 +2,8 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include <harness_catalog.h>
+#include "libs/CriWare/src/sofdec/mwply/mwsfd_types.h"
+
 __declspec(section ".rodata") __attribute__((aligned(8))) char lbl_eu_8051B7B0[0x6B8] = {
     0x45,0x31,0x31,0x32,0x32,0x36,0x31,0x37,0x20,0x6D,0x77,0x50,
     0x6C,0x79,0x53,0x65,0x74,0x41,0x75,0x64,0x69,0x6F,0x53,0x77,
@@ -150,116 +152,105 @@ __declspec(section ".rodata") __attribute__((aligned(8))) char lbl_eu_8051B7B0[0
 };
 
 
-/* Movie player handle (MWSFDPLY). Partial layout covering the fields touched
- * by the helpers in this TU; unknown gaps are opaque byte runs. */
-typedef struct MWSFDPLY {
-    s32  field_0x00;        /* 0x00 signature */
-    u8   field_0x04[0x54];  /* 0x04..0x57 */
-    void* field_0x58;       /* 0x58 SFD decode handle */
-    u8   field_0x5c[0x57c]; /* 0x5c..0x5d7 */
-    u8   field_0x5d8[0x28]; /* 0x5d8 stream-set A (SstHn) */
-    u8   field_0x600[0x20]; /* 0x600 stream-set B (SstHn) */
-} MWSFDPLY;
-
 void SFD_SetCond(void* a, u32 b, u32 c);
-void MWSFD_SetAudioSw(void* self, u32 sw) {
-    SFD_SetCond(*(void**)((u8*)self + 0x58), 6, sw);
+void MWSFD_SetAudioSw(MWSFDPLY* self, u32 sw) {
+    SFD_SetCond(self->sfd, 6, sw);
 }
 
 void SFD_SetCond(void* a, u32 b, u32 c);
-void MWSFD_SetVideoSw(void* self, u32 sw) {
-    SFD_SetCond(*(void**)((u8*)self + 0x58), 5, sw);
+void MWSFD_SetVideoSw(MWSFDPLY* self, u32 sw) {
+    SFD_SetCond(self->sfd, 5, sw);
 }
 
 extern void MWSFSVM_Error(const char*, ...);
 extern s32 MWSST_GetStat(void *);
 
-void* mwPlyGetSfdHn(void* self) {
+void* mwPlyGetSfdHn(MWSFDPLY* self) {
     s32 sig;
     if (self == NULL) {
         sig = 0;
     } else {
-        sig = *(u32*)self;
+        sig = (s32)self->enable;
     }
     if (sig != 1) {
         MWSFSVM_Error(lbl_eu_8051B7B0 + 0x5A);
         return NULL;
     }
-    return *(void**)((u8*)self + 0x58);
+    return self->sfd;
 }
 
 void SFD_SetCond();
-void MWSFD_SetCond(void* self, u32 sw) {
-    void* obj = (self != NULL) ? *(void**)((u8*)self + 0x58) : NULL;
+void MWSFD_SetCond(MWSFDPLY* self, u32 sw) {
+    void* obj = (self != NULL) ? self->sfd : NULL;
     SFD_SetCond(obj, sw);
 }
 
 u32 SFD_GetCond(void* a);
-u32 MWSFD_GetCond(void* self) {
-    return SFD_GetCond(self ? *(void**)((u8*)self + 0x58) : NULL);
+u32 MWSFD_GetCond(MWSFDPLY* self) {
+    return SFD_GetCond(self ? self->sfd : NULL);
 }
 
-u32 MWSFD_GetStmHn(void* self) { return *(u32*)((u8*)self + 0x5c); }
+u32 MWSFD_GetStmHn(MWSFDPLY* self) { return (u32)self->stm; }
 
 void MWSTM_SetFlowLimit(void* h, u32 limit);
-void MWSFLSC_SetFlowLimit(void* self, u32 limit);
-void MWSFD_SetFlowLimit(void* self, u32 limit) {
-    void* h = *(void**)((u8*)self + 0x5c);
+void MWSFLSC_SetFlowLimit(MWSFDPLY* self, u32 limit);
+void MWSFD_SetFlowLimit(MWSFDPLY* self, u32 limit) {
+    void* h = self->stm;
     MWSTM_SetFlowLimit(h, limit);
     MWSFLSC_SetFlowLimit(self, limit);
 }
 
-u32 MWSFD_IsEnableHndl(void* self) {
+u32 MWSFD_IsEnableHndl(MWSFDPLY* self) {
     if (self == NULL) return 0;
-    return *(u32*)self;
+    return (u32)self->enable;
 }
 
-s32 mwPlyGetRareStat(void* self);
-int mwPlyGetStat(void *h) {
-    int stat = ((int (*)(void *))mwPlyGetRareStat)(h);
-    if ((s32)*(u32 *)((u8 *)h + 0x63C) == 1 &&
-        (s32)*(u32 *)((u8 *)h + 0x640) == 1 &&
-        *(u32 *)((u8 *)h + 0x64C) - 2 <= 1 &&
+s32 mwPlyGetRareStat(MWSFDPLY* self);
+int mwPlyGetStat(MWSFDPLY *h) {
+    int stat = mwPlyGetRareStat(h);
+    if ((s32)h->field_0x63c == 1 &&
+        (s32)h->field_0x640 == 1 &&
+        h->field_0x64c - 2 <= 1 &&
         (stat == 1 || stat == 3)) {
         return 2;
     }
     return stat;
 }
 
-extern int criware_803A2258(void* sst);
+extern int criware_803A2258(MWSFDPLY* sst);
 extern s32 SFD_GetHnStat(void* self);
 extern void MWSFLIB_SetErrCode(s32 code);
 extern void MWSFSVM_Error(const char* fmt, ...);
 
-s32 mwPlyGetRareStat(void* self) {
-    s32 state = (self == NULL) ? 0 : *(s32*)self;
+s32 mwPlyGetRareStat(MWSFDPLY* self) {
+    s32 state = (self == NULL) ? 0 : (s32)self->enable;
     if (state != 1) {
         MWSFLIB_SetErrCode(-12);
         MWSFSVM_Error(lbl_eu_8051B7B0 + 0x2B8);
         return 0;
     }
     {
-        s32 r = SFD_GetHnStat(*(void**)((u8*)self + 0x58));
+        s32 r = SFD_GetHnStat(self->sfd);
         if (r < 0) return 4;
         if (criware_803A2258(self) != 0) return 4;
-        if (*(s32*)((u8*)self + 4) == 2) {
+        if ((s32)self->prm.field_0x00 == 2) {
             if (r == 4 || r == 6) return 2;
             return 1;
         }
-        return *(s32*)((u8*)self + 4);
+        return (s32)self->prm.field_0x00;
     }
 }
 
-void MWSFSET_ExecSetCyclicFrameOutput(void *h) {
-    void *sfd = *(void **)((u8 *)h + 0x58);
-    if ((s32)*(u32 *)((u8 *)h + 0x66C) == 1) {
+void MWSFSET_ExecSetCyclicFrameOutput(MWSFDPLY *h) {
+    void *sfd = h->sfd;
+    if ((s32)h->field_0x66c == 1) {
         s32 fps;
         SFD_GetFps(sfd, &fps);
         if (fps != -1) {
             s32 num, den;
             SFD_CalcCycleFromFps(fps, &num, &den);
             SFD_SetCyclicFrameOutput(sfd, num, den);
-            *(u32 *)((u8 *)h + 0x66C) = 0;
+            h->field_0x66c = 0;
         }
     }
 }
@@ -272,11 +263,11 @@ void mwPlyGetTime(MWSFDPLY* self, s32* out1, s32* out2) {
     *out1 = 0;
     *out2 = 1;
     /* NULL handle reads as invalid state 0 */
-    if (((self == NULL) ? 0 : self->field_0x00) != 1) {
+    if (((self == NULL) ? 0 : (s32)self->enable) != 1) {
         MWSFSVM_Error(lbl_eu_8051B7B0 + 0x40D);
         return;
     }
-    sfd = self->field_0x58;
+    sfd = self->sfd;
     if (sfd != NULL) {
         if (SFD_GetTime(sfd, out1, out2) != 0) {
             MWSFLIB_SetErrCode(-309);
@@ -293,14 +284,14 @@ extern void MWSFSVM_Error(const char* fmt, ...);
 extern void MWSST_SetOutVol(void* sst, s32 vol);
 extern void MWSFRNA_SetOutVol(void* rna, s32 vol);
 
-void mwPlySetOutVol(void* self, s32 vol) {
-    s32 state = (self == NULL) ? 0 : *(s32*)self;
+void mwPlySetOutVol(MWSFDPLY* self, s32 vol) {
+    s32 state = (self == NULL) ? 0 : (s32)self->enable;
     if (state != 1) {
         MWSFSVM_Error(lbl_eu_8051B7B0 + 0x45C);
     } else {
         MWSFRNA_SetOutVol(self, vol);
-        MWSST_SetOutVol((u8*)self + 0x5D8, vol);
-        MWSST_SetOutVol((u8*)self + 0x600, vol);
+        MWSST_SetOutVol(&self->sst[0], vol);
+        MWSST_SetOutVol(&self->sst[1], vol);
     }
 }
 
@@ -308,16 +299,16 @@ extern s32 MWSFRNA_GetOutVol(void* rna);
 extern s32 MWSST_GetOutVol(void* sst);
 
 s32 mwPlyGetOutVol(MWSFDPLY* self) {
-    s32 state = (self == NULL) ? 0 : self->field_0x00;
+    s32 state = (self == NULL) ? 0 : (s32)self->enable;
     if (state != 1) {
         MWSFSVM_Error(lbl_eu_8051B7B0 + 0x488);
         return 0;
     }
-    if (self->field_0x58 == NULL) return 0;
+    if (self->sfd == NULL) return 0;
     s32 ret;
     s32 a = MWSFRNA_GetOutVol(self);
-    s32 b = MWSST_GetOutVol(&self->field_0x5d8);
-    s32 c = MWSST_GetOutVol(&self->field_0x600);
+    s32 b = MWSST_GetOutVol(&self->sst[0]);
+    s32 c = MWSST_GetOutVol(&self->sst[1]);
     if (a == b || a == c) {
         ret = a;
     } else if (a != 0) {
@@ -331,8 +322,9 @@ s32 mwPlyGetOutVol(MWSFDPLY* self) {
     return ret;
 }
 
-int criware_803A2258(void *h) {
-    if ((s32)*(u32 *)((u8 *)h + 0x5D8) == 1 && MWSST_GetStat((u8 *)h + 0x5D8) == 4)
+int criware_803A2258(MWSFDPLY *h) {
+    MwsfSstHn* sst0 = &h->sst[0];
+    if (sst0->state == 1 && MWSST_GetStat(sst0) == 4)
         return 1;
     if ((s32)*(u32 *)((u8 *)h + 0x600) == 1 && MWSST_GetStat((u8 *)h + 0x600) == 4)
         return 1;

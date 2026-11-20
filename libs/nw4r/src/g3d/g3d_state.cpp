@@ -190,12 +190,7 @@ ZCompLocState sZCompLocCache;
 // Float constants in g3d_state.o's retail .sdata2 (IndMtxOpStd::SetNrmMapMtx
 // and ScnDependentMtxFunc::EnvironmentMapping).
 extern const float lbl_eu_80669BEC;  // 0.0f
-extern const float lbl_eu_80669BF0; // 1.0f (environment-mapping up vector)
-extern const float lbl_eu_80669BF4; // epsilon (environment-mapping dir test)
 extern const float lbl_eu_80669BF8;  // 1.0f
-extern const float lbl_eu_80669BFC;  // 0.5f (ind normal-map scale)
-extern const float lbl_eu_80669C00;  // 1.0f/255.0f (channel-color scale)
-extern const double lbl_eu_80669C08; // 2^52 + 2^31 (u32 -> double magic)
 
 extern "C" u32 sIndMtxOp; // .sdata pointer at 8066346C, read by GetIndMtxOp
 extern const float lbl_eu_80669BE8; // cull-mode -> genMode bit remap table
@@ -960,14 +955,14 @@ void G3DState::LoadResMatChan(const ResMatChan chan, u32 maskDiffColor,
     // the resource's ambColor bytes (value * scale / 255, rounded). The u32 ->
     // f64 cast makes MWCC emit its shared 2^52 magic-double conversion
     // (xoris/stw/lfd/fsub vs the pooled magic constant, retail .sdata2
-    // lbl_eu_80669C08).
+    // pooled magic double).
     u32 ambFlag = pData->chan[0].flag;
     GXColor scaled;
     // Amb color 0 (XF 0x100A): the runtime color is scaled component-wise by
     // the resource's ambColor bytes (value * scale / 255, rounded). The u32 ->
     // f64 cast makes MWCC emit its shared 2^52 magic-double conversion
     // (xoris/stw/lfd/fsub vs the pooled magic constant, retail .sdata2
-    // lbl_eu_80669C08).
+    // pooled magic double).
     scaled.r = (u8)(0.5f +
                     (f32)((f64)(u32)((u32)amb.r * (u32)pData->chan[0].ambColor.r)) *
                         0.003921569f);
@@ -2178,13 +2173,13 @@ void EnvironmentSpecularMapping(math::MTX34* pMtx, s8 camRef, s8 lightRef) {
 // Absorbed data for g3d_state: sdata, rodata, bss, sbss
 // sdata 0x80663468 (8) + rodata 0x8051D660 (48) + bss/sbss pads to reach retail sizes
 extern "C" const char sIndMtxOpStdInstance[];
-extern "C" __declspec(section ".sdata") u32 lbl_eu_80663468 = 0xFFFFFFFF;
+extern "C" u32 lbl_eu_80663468 = 0xFFFFFFFF;
 // name-guess: .sdata pointer at 0x8066346C, loaded by G3DState::GetIndMtxOp
 // and initialized with sIndMtxOpStdInstance.
-extern "C" __declspec(section ".sdata") u32 sIndMtxOp = (u32)sIndMtxOpStdInstance;
+extern "C" u32 sIndMtxOp = (u32)sIndMtxOpStdInstance;
 // name-guess: 0x30-byte .rodata matrix concatenated after the environment
 // transform in ScnDependentMtxFunc::EnvironmentMapping.
-extern "C" __declspec(section ".rodata") const unsigned char sEnvMapMtx[48] = {0x3F,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x3F,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0xBF,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x3F,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x3F,0x80,0x00,0x00};
+extern "C" const unsigned char sEnvMapMtx[48] = {0x3F,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x3F,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0xBF,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x3F,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x3F,0x80,0x00,0x00};
 // Retail bss 0x55E0 (21984) -- pad from end of actual bss symbols
 // (0x44D8) to reach retail size; sbss 0x20 via 8 small u32s.
 __declspec(align(8)) unsigned char bss_pad_g3d_state_bss[0x1108];

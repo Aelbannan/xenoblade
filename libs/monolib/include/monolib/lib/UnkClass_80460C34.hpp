@@ -108,12 +108,6 @@ struct z_inflate_state {
 extern "C" {
 extern const char     lbl_eu_80523AF0[]; // "1.2.3" + inflate message pool
 extern const z_code   lbl_80526B70[];    // fixed literal/length table (512)
-extern const z_code   lbl_eu_80523A48[]; // fixed distance table (32)
-extern const z_ushort lbl_eu_80523AC8[]; // code-length permutation (order[19])
-extern const z_ushort lbl_eu_80523C60[]; // lbase (indexed from sym 257)
-extern const z_ushort lbl_eu_80523CA0[]; // lext
-extern const z_ushort lbl_eu_80523CE0[]; // dbase
-extern const z_ushort lbl_eu_80523D20[]; // dext
 
 // adler32 / inflate_fast live in the sibling TU UnkClass_80460308.
 z_ulong processData__17UnkClass_80460308Fv(z_ulong adler, const z_uchar* buf, z_uint len);

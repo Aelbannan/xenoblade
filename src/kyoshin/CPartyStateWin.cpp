@@ -29,6 +29,10 @@
 #include "kyoshin/code_80135FDC_State.hpp"
 #include "kyoshin/code_80135FDC_Lyt.hpp"
 
+// 3-word item-filter enum table used by PartyStateWin_StateEquipRefresh.
+// name-guess: three enum ids passed to startEnumObjects in retail order.
+static const u32 sPartyStateWinEnumIds[3] = {0x10, 0x100000, 0x200000};
+
 CPartyStateWin::CPartyStateWin(u32 arg1, u32 arg2) {
     mArg1 = arg1;
     mArg2 = arg2;
@@ -1114,7 +1118,7 @@ extern "C" void PartyStateWin_StateEquipRefresh(CPartyStateWin* self) {
             // Post-increment loads fold the base materialization into the
             // first access (retail: lis + lwzu + +4/+8 displacements) - same
             // trick as btm_sco_init in MWCC_CASES.
-            const u32* src = lbl_eu_80507C78;
+            const u32* src = sPartyStateWinEnumIds;
             names[0] = *src++;
             names[1] = *src++;
             names[2] = *src++;

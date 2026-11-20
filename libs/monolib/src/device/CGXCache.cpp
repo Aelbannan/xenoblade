@@ -287,7 +287,6 @@ u8 sdata2_pool_CGXCache[4534] = {
 // retail symbols (the in-TU definitions are members / extern free functions
 // with the same C-level names; these just declare them for the initializer).
 class CGXCache;
-extern "C" void execGXCmd__8CGXCacheFv(CGXCache*, u32, void*);
 extern "C" void* __dt__CMsgParam_32(void*, int);
 extern "C" void __dt__8CGXCacheFv(void*);
 extern "C" void __dt__11IStateCacheFv(void*);
@@ -775,7 +774,6 @@ extern u32 sTevColorTxWid;
 // mangled names are imported directly like the other extern "C" imports in
 // this file.
 extern "C" f32 getWidthScale__9CDeviceVIFv(void);
-extern "C" GXRenderModeObj* getRenderModeObj__9CDeviceVIFv(void);
 
 // Ring search helper: the explicit `inline` keyword is what makes -ipa off
 // expand the loop at every call site (retail expands it). The inlined
@@ -1010,7 +1008,6 @@ end:
 
 void CGXCache::clearStubFunc(u32 cmd) {}
 
-extern "C" void dispatchCmdGX__8CGXCacheFv(void* self, u32 cmd);
 struct C1FCMsgEntry {
     u32 command;
     union {
@@ -1407,12 +1404,8 @@ void CGXCache::resetTevState() {
     }
 }
 
-extern "C" GXRenderModeObj* getRenderModeObj__9CDeviceVIFv(void);
-extern u32 sTevColorNoWid;
 extern "C" void disableTexGen__8CGXCacheFv(void* self);
 extern "C" void resetTevState__8CGXCacheFv(void* self);
-extern "C" void dispatchCmdGX__8CGXCacheFv(void* self, u32 cmd);
-extern "C" void* getCmdPayload__8CGXCacheFv(void* self, u32 cmd);
 
 // Inline ring-entry search: the mid-loop return yields retail's two-branch
 // exit and the runtime member bound compiles to mtctr/bdnz. Defined before

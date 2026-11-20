@@ -17,6 +17,12 @@
 
 extern "C" void cbRenderBefore__Q22cf11CTaskREventFv(void*);
 
+// name-guess: retail .rodata:0x80502F90 is a 32-entry event-id table walked by evtFillCharRange.
+extern const s16 sEventIdTable[0x20] = {
+    4, 10, 14, 15, 35, 56, 98, 101, 102, 141, 213, 214, 253, 271, 338, 357,
+    358, 116, 338, 338, 338, 338, 338, 338, 338, 338, 338, 338, 338, 338, 338, 338
+};
+
 namespace cf {}
 using namespace cf;
 
@@ -280,7 +286,7 @@ void evtFillCharEntry(u32 index) {
 void evtFillCharRange(cf::CTaskREvent* self, int type, int upper, int lower) {
     if (type != 0x20) return;
     for (u32 i = 0; i < 0x20; i++) {
-        s16 v = lbl_eu_80502F90[i];
+        s16 v = sEventIdTable[i];
         if (v > lower && v <= upper) {
             evtFillCharEntry(i);
         }
@@ -1422,6 +1428,6 @@ u8 gEventShuffleOrder[0x28] = {
     0x1C, 0x1D, 0x1E, 0x1F, 0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0, 0,
 };
 
-extern const char lbl_eu_80502FD0[];
-const char* gpEventBaseName = lbl_eu_80502FD0;
+const char* gpEventBaseName =
+    "/ev/realtime/";
 u32 gStreamVolumeLevel = 100;

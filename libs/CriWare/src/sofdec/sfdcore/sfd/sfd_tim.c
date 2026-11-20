@@ -22,14 +22,27 @@ extern char lbl_eu_8051C628[];
 extern char lbl_eu_8051C89C[];
 extern char lbl_eu_8051C8A4[];
 
-/* Absorbed .bss 0x80619BB0-0x80619BC8 (0x18) */
-__attribute__((aligned(8))) u32 lbl_eu_80619BB0[2];
-u32 lbl_eu_80619BB8[1];
-u32 lbl_eu_80619BBC[1];
-__attribute__((aligned(8))) u32 lbl_eu_80619BC0[2];
+/* Debug snapshots written by the audio/video start-sample getters.
+ * name-guess: field roles come from SFTIM_GetAudioStartSample /
+ * SFTIM_GetVideoStartSample and the adjacent BSS layout. */
+typedef struct SfdAudioStartTime {
+    u32 hi;
+    u32 lo;
+} SfdAudioStartTime;
 
-/* Absorbed .data 0x80568EA0 (0x70) */
-__declspec(section ".data") __attribute__((aligned(8))) const unsigned int lbl_eu_80568EA0[28] = {
+typedef struct SfdVideoStartSample {
+    u32 sample;
+    u32 unit;
+} SfdVideoStartSample;
+
+__attribute__((aligned(8))) SfdAudioStartTime sSfdAudioStartTime;
+u32 sSfdAudioStartSample;
+u32 sSfdVideoStartTime;
+__attribute__((aligned(8))) SfdVideoStartSample sSfdVideoStartSample;
+
+/* name-guess: the trace-record block is named from its sole user
+ * SFTIM_VbIn and the retail "sftim_UpdateTime" record string. */
+__attribute__((aligned(8))) unsigned int sSfdTimTraceData[28] = {
     (unsigned int)lbl_eu_8051C888, 0, 3, 0, 0xB, (unsigned int)lbl_eu_8051C628, 0, 4,
     (unsigned int)lbl_eu_8051C89C, 0, 4, (unsigned int)lbl_eu_8051C8A4, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
@@ -43,14 +56,17 @@ void sftim_Tc2Time29N(s32, void*, s32*, s32*, s32);
 void sftim_Tc2Time29D(s32, void*, s32*, s32*, s32);
 void sftim_Tc2Time59N(s32, void*, s32*, s32*, s32);
 void sftim_Tc2Time59D(s32, void*, s32*, s32*, s32);
-__declspec(section ".rodata") __attribute__((aligned(8))) const unsigned int lbl_eu_8051CC20[18] = {
-    0, 0,
-    (unsigned int)sftim_Tc2Time23N, (unsigned int)sftim_Tc2Time23D,
-    (unsigned int)sftim_Tc2TimeN, (unsigned int)sftim_Tc2TimeN, (unsigned int)sftim_Tc2TimeN, (unsigned int)sftim_Tc2TimeN,
-    (unsigned int)sftim_Tc2Time29N, (unsigned int)sftim_Tc2Time29D,
-    (unsigned int)sftim_Tc2TimeN, (unsigned int)sftim_Tc2TimeN, (unsigned int)sftim_Tc2TimeN, (unsigned int)sftim_Tc2TimeN,
-    (unsigned int)sftim_Tc2Time59N, (unsigned int)sftim_Tc2Time59D,
-    (unsigned int)sftim_Tc2TimeN, (unsigned int)sftim_Tc2TimeN,
+
+/* name-guess: conversion dispatch table named from its sole user
+ * SFTIM_Tc2Time. */
+void (*const sSfdTc2TimeTable[18])(s32, void*, s32*, s32*, s32) = {
+    NULL, NULL,
+    sftim_Tc2Time23N, sftim_Tc2Time23D,
+    sftim_Tc2TimeN, sftim_Tc2TimeN, sftim_Tc2TimeN, sftim_Tc2TimeN,
+    sftim_Tc2Time29N, sftim_Tc2Time29D,
+    sftim_Tc2TimeN, sftim_Tc2TimeN, sftim_Tc2TimeN, sftim_Tc2TimeN,
+    sftim_Tc2Time59N, sftim_Tc2Time59D,
+    sftim_Tc2TimeN, sftim_Tc2TimeN,
 };
 
 /* Forward declarations for function pointers */
@@ -345,7 +361,7 @@ void SFTIM_VbIn(void) {
     wk = (u8*)sSfdGlob;
     ppHn = (u32**)(wk + 0x1FC);
     *(u32*)(wk + 0x19C) = *(u32*)(wk + 0x19C) + 1;
-    cb = (u8*)lbl_eu_80568EA0;
+    cb = (u8*)sSfdTimTraceData;
 
     for (i = 0; i < 8; i++, ppHn++) {
         h = (void*)*ppHn;
@@ -480,9 +496,9 @@ s32 SFTIM_GetAudioStartSample(SfdTim* tim, s32 sampleRate) {
 
     {
         s32 result = (s32)(startTime * sampleRate / 90000);
-        lbl_eu_80619BB0[0] = (u32)(startTime >> 32);
-        lbl_eu_80619BB0[1] = (u32)startTime;
-        *lbl_eu_80619BB8 = result;
+        sSfdAudioStartTime.hi = (u32)(startTime >> 32);
+        sSfdAudioStartTime.lo = (u32)startTime;
+        sSfdAudioStartSample = result;
         return result;
     }
 }
@@ -507,8 +523,8 @@ s32 SFTIM_GetVideoStartSample(SfdTim* tim, s32 mul, s32* out2) {
     }
 
     r = UTY_MulDiv(num, mul, den);
-    lbl_eu_80619BBC[0] = num;
-    lbl_eu_80619BC0[0] = r;
+    sSfdVideoStartTime = num;
+    sSfdVideoStartSample.sample = r;
     return r;
 }
 
@@ -767,7 +783,7 @@ void SFTIM_SetTimeFn(SfdHandle* h, void* fn, u32 idx) {
 
 void SFTIM_Tc2Time(void* tcdata, s32* out1, s32* out2) {
     s32 format = *(s32*)tcdata;
-    Tc2TimeFn fn = *(Tc2TimeFn*)((u8*)lbl_eu_8051CC20 + format * 8 + *(s32*)((u8*)tcdata + 4) * 4);
+    Tc2TimeFn fn = *(Tc2TimeFn*)((u8*)sSfdTc2TimeTable + format * 8 + *(s32*)((u8*)tcdata + 4) * 4);
     s32 rate;
 
     if (fn == NULL) {

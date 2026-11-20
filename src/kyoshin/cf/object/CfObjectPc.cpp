@@ -599,8 +599,8 @@ extern "C" int CfObjectPc_refreshGauge(cf::CfObjectPc* self, int flag) {
             float dmg = lbl_eu_80666B38 *
                 (base * self->CActorParam_getDamageScale());
             if (isBattleStatusActive((u8*)self + 8, 0xE9)) {
-                Res10View* e = (Res10View*)findBattleStatusEntry((u8*)self + 8, 0xE9);
-                double dT = (double)(int)e->field_0x10;
+                cf::CBattleStateEntry* e = static_cast<cf::CBattleStateEntry*>(findBattleStatusEntry((u8*)self + 8, 0xE9));
+                double dT = (double)(int)e->unk10;
                 dmg = dmg * (lbl_eu_80666B24 -
                     ((dT - lbl_eu_80666B30) / lbl_eu_80666B28));
             }
@@ -664,32 +664,32 @@ void cf::CfObjectPc::triggerActionRefreshA() { this->dispatchPlayerBranch(); }
 
 void cf::CfObjectPc::triggerActionRefreshB() { this->dispatchPlayerBranch(); }
 
-__declspec(section ".rodata") __attribute__((used, aligned(4)))
+__attribute__((used, aligned(4)))
 const char lbl_eu_804FC5EC[0x5C] = "tp_atk\0tp_arts\0tp_atkdmg\0tp_artsdmg\0wpn_type\0JUhead\0level_exp\0mat_no\0map\0interval\0dmg";
 
 // .sdata2 pool (retail 0x40) as typed consts in retail declaration order.
 // lbl_eu_80666B08 has no code use in this TU; it is still part of the retail
 // pool. The two doubles are the int/uint-double conversion magic (HI + 2^52).
-__declspec(section ".sdata2") __attribute__((used))
+__attribute__((used))
 const float lbl_eu_80666B08 = 32.2f;
-__declspec(section ".sdata2") __attribute__((used))
+__attribute__((used))
 const float lbl_eu_80666B0C = 0.6f;
-__declspec(section ".sdata2") __attribute__((used))
+__attribute__((used))
 const float lbl_eu_80666B10 = 1.8f;
-__declspec(section ".sdata2") __attribute__((used))
+__attribute__((used))
 const float lbl_eu_80666B14 = 0.0f;
-__declspec(section ".sdata2") __attribute__((used))
+__attribute__((used))
 const float lbl_eu_80666B18 = 32.2f;
-__declspec(section ".sdata2") __attribute__((used))
+__attribute__((used))
 const float lbl_eu_80666B1C = 0.1552795f;
-__declspec(section ".sdata2") __attribute__((used))
+__attribute__((used))
 const float lbl_eu_80666B20 = 16.1f;
-__declspec(section ".sdata2") __attribute__((used))
+__attribute__((used))
 const float lbl_eu_80666B24 = 1.0f;
-__declspec(section ".sdata2") __attribute__((used))
+__attribute__((used))
 const float lbl_eu_80666B28 = 100.0f;
-__declspec(section ".sdata2") __attribute__((used))
+__attribute__((used))
 const double lbl_eu_80666B30 = 4503601774854144.0;
-__declspec(section ".sdata2") __attribute__((used))
+__attribute__((used))
 const float lbl_eu_80666B38 = 0.01f;
 

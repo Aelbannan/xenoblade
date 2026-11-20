@@ -18,11 +18,11 @@ u16 gEventWindowFlags = 0;
 float sMenuSndFadeTarget = 0.0f;
 
 extern "C" {
-    extern float lbl_eu_80662490;
-    extern float lbl_eu_80662494;
-    extern float lbl_eu_80662498;
-    extern float lbl_eu_8066249C;
-    extern float lbl_eu_806624A0;
+    float sMenuSndMasterVol = 1.0f; // name-guess: MenuSnd_GetMasterVol_95EC returns this .sdata float
+    float sMenuSndPushVol = 1.0f; // name-guess: push/multiplier volume in the MenuSnd volume product
+    float sMenuSndSeVol = 1.0f; // name-guess: MenuSnd_GetSeVol_96A0 returns this .sdata float
+    float sMenuSndMasterCurVol = 1.0f; // name-guess: ramped current master volume in MenuSnd_RampMasterVol_889D0
+    float sMenuSndFadeStep = 0.2f; // name-guess: per-frame fade clamp/step in MenuSnd_RampMasterVol_889D0
     extern s32* gmSubManager60;
 }
 
@@ -114,8 +114,8 @@ extern "C" s32 MenuSnd_DispatchPlay_87F14(SoundSlot* slot, SoundPlayParams* para
 // MATCHED FUNCTIONS
 // ============================================================
 
-float MenuSnd_GetMasterVol_95EC() { return lbl_eu_80662490; }
-float MenuSnd_GetSeVol_96A0() { return lbl_eu_80662498; }
+float MenuSnd_GetMasterVol_95EC() { return sMenuSndMasterVol; }
+float MenuSnd_GetSeVol_96A0() { return sMenuSndSeVol; }
 
 s32* MenuSnd_GetNameBufB_9C34() { return (s32*)&sMenuSndSeNameBuffer; }
 
@@ -258,7 +258,7 @@ extern "C" void MenuSnd_SetSlotVolume_88488(SoundSlot* slot, u32 type, float f1,
 }
 
 void MenuSnd_SetBalancePush_96A8(s32 index, float f1, float f2) {
-    lbl_eu_80662494 = f1;
+    sMenuSndPushVol = f1;
     if (index != 0) return;
     // Offset cursor declared before the counter -> off gets r31, i gets r30.
     s32 off = 0;
@@ -276,8 +276,8 @@ void MenuSnd_SetBalancePush_96A8(s32 index, float f1, float f2) {
                     inRange = 1;
             }
             float vol;
-            if (inRange) vol = lbl_eu_80662490 * lbl_eu_80662494;
-            else vol = lbl_eu_80662498;
+            if (inRange) vol = sMenuSndMasterVol * sMenuSndPushVol;
+            else vol = sMenuSndSeVol;
             // Fresh base read: recompute the slot pointer before the call.
             SoundSlot* s2 = sptr(i);
             if (s2 != nullptr) MenuSnd_SetSlotVolume_88488(s2, 0, x, vol, f2);
@@ -288,7 +288,7 @@ void MenuSnd_SetBalancePush_96A8(s32 index, float f1, float f2) {
 }
 
 void MenuSnd_SetMasterAndPush_9510(float f1) {
-    lbl_eu_80662490 = f1;
+    sMenuSndMasterVol = f1;
     // Offset cursor declared before the counter -> off gets r31, i gets r30
     // (retail allocation, 0x10 frame - no other callee-saved saves).
     s32 off = 0;
@@ -309,8 +309,8 @@ void MenuSnd_SetMasterAndPush_9510(float f1) {
                 else
                     inRange = 1;
             }
-            if (inRange) vol = lbl_eu_80662490 * lbl_eu_80662494;
-            else vol = lbl_eu_80662498;
+            if (inRange) vol = sMenuSndMasterVol * sMenuSndPushVol;
+            else vol = sMenuSndSeVol;
             // Fresh base read: recompute the slot pointer before the call.
             b = gmSubManager60;
             SoundSlot* s2;
@@ -324,7 +324,7 @@ void MenuSnd_SetMasterAndPush_9510(float f1) {
 }
 
 void MenuSnd_SetSeVolPush_95F4(float f1) {
-    lbl_eu_80662498 = f1;
+    sMenuSndSeVol = f1;
     // Offset cursor declared before the counter -> off gets r31, i gets r30.
     s32 off = 0x170;
     s32 i = 2;
@@ -338,8 +338,8 @@ void MenuSnd_SetSeVolPush_95F4(float f1) {
             else
                 inRange = 1;
         }
-        if (inRange) vol = lbl_eu_80662490 * lbl_eu_80662494;
-        else vol = lbl_eu_80662498;
+        if (inRange) vol = sMenuSndMasterVol * sMenuSndPushVol;
+        else vol = sMenuSndSeVol;
         s32* b = gmSubManager60;
         SoundSlot* s;
         if (b != nullptr) s = (SoundSlot*)((u8*)b + off);
@@ -442,15 +442,15 @@ extern "C" void MenuSnd_ClearSlot_88584(SoundSlot* slot) {
         q->backupNameLen = 0;
     }
     // Reset the two stored sound names and the volume ramp state.
-    lbl_eu_80662494 = 1.0f;
+    sMenuSndPushVol = 1.0f;
     sMenuSndBgmNameBuffer.mString[0] = '\0';
     sMenuSndBgmNameBuffer.mLength = 0;
     sMenuSndSeNameBuffer.mString[0] = '\0';
     sMenuSndSeNameBuffer.mLength = 0;
     gEventWindowFlags = 0;
-    lbl_eu_8066249C = 1.0f;
+    sMenuSndMasterCurVol = 1.0f;
     sMenuSndFadeTarget = 0.0f;
-    lbl_eu_806624A0 = 0.3f;
+    sMenuSndFadeStep = 0.3f;
     // Full clear of every slot, written out longhand so MWCC emits the
     // unrolled displaced stores off the single base pointer.
     slot->handle = -1;
@@ -571,20 +571,20 @@ void MenuSnd_RampMasterVol_889D0(SoundSlot* base) {
     } while (i < 5u);
 
     // Ramp the master volume by the per-frame delta, clamped to the
-    // target (lbl_eu_806624A0) and to 1.0; push the result to slot 1 with
+    // target (sMenuSndFadeStep) and to 1.0; push the result to slot 1 with
     // the freshly computed value and to slot 0 with the stored one.
     float cur = sMenuSndFadeTarget;
     if (0.0f != cur) {
-        float max = lbl_eu_806624A0;
-        float v = lbl_eu_8066249C + cur;
-        lbl_eu_8066249C = v;
+        float max = sMenuSndFadeStep;
+        float v = sMenuSndMasterCurVol + cur;
+        sMenuSndMasterCurVol = v;
         if (v < max) {
             v = max;
-            lbl_eu_8066249C = max;
+            sMenuSndMasterCurVol = max;
             sMenuSndFadeTarget = 0.0f;
         } else if (1.0f <= v) {
             v = 1.0f;
-            lbl_eu_8066249C = 1.0f;
+            sMenuSndMasterCurVol = 1.0f;
             sMenuSndFadeTarget = 0.0f;
         }
         SoundSlot* s1 = sptr(1);
@@ -599,7 +599,7 @@ void MenuSnd_RampMasterVol_889D0(SoundSlot* base) {
         }
         SoundSlot* s0 = sptr(0);
         if (s0 != nullptr) {
-            float cv = lbl_eu_8066249C;
+            float cv = sMenuSndMasterCurVol;
             h = s0->handle;
             if (((u32)h == 0xFFFFFFFF)
                     ? 0
@@ -787,8 +787,8 @@ s32 MenuSnd_RequestPlay_88B80(s32 index, const char* name, float f1, float f2, s
         }
     }
     float vol;
-    if (inRange) vol = lbl_eu_80662490 * lbl_eu_80662494;
-    else vol = lbl_eu_80662498;
+    if (inRange) vol = sMenuSndMasterVol * sMenuSndPushVol;
+    else vol = sMenuSndSeVol;
     params.vol3 = vol;
     params.vol2 = f2;
     params.vol3 = f1;
@@ -868,7 +868,7 @@ s32 MenuSnd_SetBGM_89034(const char* name, s32 flag, float f1, float f2) {
         s0b->backupF1 = quiet;
         // Single load feeds both clear stores; keep as a temp so the lfs
         // lands before the clear-store run (retail position).
-        float vol = lbl_eu_80662490 * lbl_eu_80662494;
+        float vol = sMenuSndMasterVol * sMenuSndPushVol;
         SoundSlot* s1b = sptr(1);
         if (s1b != nullptr) {
             MenuSnd_SetSlotVolume_88488(s1b, 0, f2, vol, f1);
@@ -1047,8 +1047,8 @@ void MenuSnd_PushSlotVolume_896C(s32 index, u32 type, float f1, float f2) {
         else
             inRange = 1;
     }
-    if (inRange) vol = lbl_eu_80662490 * lbl_eu_80662494;
-    else vol = lbl_eu_80662498;
+    if (inRange) vol = sMenuSndMasterVol * sMenuSndPushVol;
+    else vol = sMenuSndSeVol;
     s32* b = gmSubManager60;
     SoundSlot* s;
     if (b != nullptr) s = ((SoundSlot*)b) + index;

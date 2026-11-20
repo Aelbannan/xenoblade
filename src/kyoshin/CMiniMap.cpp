@@ -2224,7 +2224,6 @@ CMenuMiniMap2* __ct__8011C1B8(CProcess* parent, CScn* scene) {
     return (CMenuMiniMap2*)spMiniMap2;
 }
 
-extern u32 lbl_eu_80663F20;
 extern u32 spMiniMap2;
 s32 MiniMapHasGlobalData() {
     u32 v = spMiniMap2;

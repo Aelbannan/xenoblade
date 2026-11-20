@@ -57,7 +57,6 @@ extern void* lbl_eu_80529690[];
 extern "C" void __dt__804B095C(void* self, int flag);
 extern "C" void __ct__Q22cf17CActParamAnimGameFv(cf::CActParamAnimGame* self);
 extern "C" void __dt__Q22cf17CActParamAnimGameFv(void* self, int flag);
-extern "C" void __dt__Q22cf13CfObjectModelFv(void* self, int flag);
 // CfGameManager resource loader (defined in CfGameManagerUnityHelpers.hpp as
 // extern "C" with Unk8187CData* return; declared void* here to avoid pulling
 // that unity-TU header into this TU).
@@ -114,10 +113,6 @@ extern "C" void setTurnAngle(void* target, f32 value);
 // position vector). extern "C" keeps the call-site reloc at the unmangled
 // retail name (CfObject_UnkVirtualFunc26 forwards its hidden r4 through).
 extern "C" void CfObject_snapMoveTarget__Q22cf8CfObjectFPQ22ml5CVec3f(cf::CfObject* self, const ml::CVec3* vec);
-// Base +0x178 forced-name implementation (defined in CfObjectModel.cpp as the
-// CfObjectModel member; the retail symbol is Fv). CfObjectModel_UnkVirtualFunc1
-// (CfObjectMove) calls it before tearing down its own state.
-extern "C" void CfObjectModel_UnkVirtualFunc1__Q22cf13CfObjectModelFv(cf::CfObjectModel* self);
 // Base +0x17C forced-name stub (retail symbol UnkVirtualFunc2; Model also
 // exposes it as releaseModelList). Move's override body calls this Fv so the
 // call-site reloc keeps the Unk retail name.
@@ -181,10 +176,8 @@ extern "C" void ScnEnvLgt_EnableFlag100(void* self, int flag);
 // CfObjectMove_resetMoveTarget (ColiSetAxisBlockInverse) and CfObjectMove_initAnimTarget (simSetLeafDist7B0).
 extern "C" void ColiSetAxisBlockInverse(void* region, const float* vec);
 extern "C" void simSetLeafDist7B0(void* self, f32 value);
-// nw4r math sweep functions used by CfObjectMove_resetMoveTarget (retail names keep the
-// call relocs unmangled).
-extern "C" f32 SinFIdx__Q24nw4r4mathFf(f32);
-extern "C" f32 CosFIdx__Q24nw4r4mathFf(f32);
+// nw4r math sweep functions come from <nw4r/math.h>; the real C++ declarations
+// emit the retail mangled symbols.
 // Enemy-state query (mangled global C++ symbol func_800AD860__FPv; defined
 // outside this repo's src tree) used by CfObjectMove_resetMoveTarget.
 void* getEffOwner(void* obj);
@@ -275,7 +268,6 @@ extern "C" u32 getAnimModelId(void* self);
 // construction (defined in CfRes.cpp / monolib; same declarations as
 // CfCamEvent.hpp, which is not included here).
 extern "C" u32 CfRes_getHeapHandle();
-extern "C" void* allocate__Q23mtl10MemManagerFUlUl(u32 size, u32 heap);
 // +0xC8 target ctor (retail 0x8005A3FC, defined in
 // kyoshin/cf/CActParamAnimGame.cpp): CfObjectMove_ensureAnimTargets constructs the target
 // with the owning CfObjectMove as the parent.

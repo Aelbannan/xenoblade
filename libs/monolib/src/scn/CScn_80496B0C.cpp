@@ -35,8 +35,8 @@ extern const char lbl_eu_8056E1A8[];
 extern const char lbl_eu_8056E194[];   // file (node-name assert, line 0x2c)
 extern const char lbl_eu_8056E178[];   // fmt
 extern const char lbl_eu_80663910[8];  // arg (sda2 string)
-extern const char lbl_eu_806639E0[4];  // arg (sda2 string)
-extern const char lbl_eu_806639E4[4];  // arg (sda2 string)
+extern "C" char sScnRefNode8049[4] = "ref"; // name-guess: "ref" Panic vararg at the ResNode validity assert
+extern "C" char sScnRefAnm80496[4] = "ref"; // name-guess: adjacent "ref" Panic vararg at the chr-anm asserts
 extern const char lbl_eu_80530F08[];   // file (ResDic alignment assert, line 0x54)
 extern const char lbl_eu_80530EE0[];   // fmt
 
@@ -334,7 +334,7 @@ void scn80496RefreshTRS(CScn80496B0C* self, ml::CVec3* outA, ml::CVec3* outB,
             // unreachable fall-through.
             if (!node.IsValid()) {
                 nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
-                                lbl_eu_80663910, lbl_eu_806639E0);
+                                lbl_eu_80663910, sScnRefNode8049);
             }
             const nw4r::math::VEC3& gv = node.GetTranslate();
             // Direct CVec3 view of the resource vector: MWCC buffers the
@@ -703,7 +703,7 @@ u32 scn80496BindChrAnim(CScnChild80496B0C* self, s32* pFrame, VTarget* pAnmObj,
     nw4r::g3d::ResAnmChrData* data = ((VTarget*)pAnmObj)->field_0x2C;
     if (data == NULL) {
         nw4r::db::Panic(lbl_eu_8056E9D0, 0x27, lbl_eu_8056E9B4,
-                        lbl_eu_8056E9A8, lbl_eu_806639E4);
+                        lbl_eu_8056E9A8, sScnRefAnm80496);
     }
     rec->field_0x1C = (f32)(s16)((VTarget*)data)->field_0x20;
     rec->field_0x2 = 0;
@@ -716,7 +716,7 @@ u32 scn80496BindChrAnim(CScnChild80496B0C* self, s32* pFrame, VTarget* pAnmObj,
 
     if (data == NULL) {
         nw4r::db::Panic(lbl_eu_8056E9D0, 0x27, lbl_eu_8056E9B4,
-                        lbl_eu_8056E9A8, lbl_eu_806639E4);
+                        lbl_eu_8056E9A8, sScnRefAnm80496);
     }
     if (((VTarget*)data)->field_0x24 == 1) {
         rec->field_0x2 |= 2;
@@ -1064,7 +1064,7 @@ nw4r::g3d::ChrAnmResult* scn80496FindChrAnm(CScn80496B0C* self, const char* name
         nw4r::g3d::ResAnmChr anm(node->field_0x10->field_0x2C);
         if (!anm.IsValid()) {
             nw4r::db::Panic(lbl_eu_8056E9D0, 0x27, lbl_eu_8056E9B4,
-                            lbl_eu_8056E9A8, lbl_eu_806639E4);
+                            lbl_eu_8056E9A8, sScnRefAnm80496);
         }
         u32 ofs = anm.ref().toChrDataDic;
         nw4r::g3d::ResDicData* pDicData;

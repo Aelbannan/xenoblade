@@ -1,3 +1,6 @@
+#include <typeinfo>
+#include <monolib/scn/CScnItemCamera.hpp>
+#include <monolib/scn/CScnItemCameraNw4r.hpp>
 #include "monolib/mpfsys/MPFDrawBillboard.hpp"
 #include "monolib/mpfsys/MPFDrawCross.hpp"
 #include "monolib/mpfsys/MPFDrawBillLayTex.hpp"
@@ -707,3 +710,10 @@ void mpfsys::MPFDrawBillLayTex::drawPaired(MPFDrawBillData* billboard, MPFDrawBi
 // that follow in retail are emitted by MWCC from the real dispatcher classes.
 extern "C" __declspec(align(4)) const u32 sBillBlendOrderAsc[4] = { 0x00000000, 0x00000001, 0x00000002, 0x00000003 };
 extern "C" __declspec(align(4)) const u32 sBillBlendOrderDesc[4] = { 0x00000003, 0x00000002, 0x00000001, 0x00000000 };
+
+// name-guess: the dead-stripped RTTI locators __RTTI__18CScnItemCameraNw4r /
+// __RTTI__14CScnItemCamera and their orphan name strings prove this TU had a
+// real RTTI-based camera type query; no retail symbol survives for it.
+extern "C" bool scnCamIsNw4r(const CScnItemCamera* cam) {
+    return cam != 0 && &typeid(*cam) == &typeid(CScnItemCameraNw4r);
+}

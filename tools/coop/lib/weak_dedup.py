@@ -507,8 +507,13 @@ def compute_exclusions(elf: _Elf, unit_ranges, symbol_addrs: dict[str, int],
         if addr is None:
             continue
         owner = owner_of(unit_ranges, addr)
-        if owner is None or owner == this_unit:
+        if owner == this_unit:
             continue
+        if owner is None:
+            # The retail copy lives outside every split (an unassigned
+            # auto_* object), so it is still not this unit's: mwld kept that
+            # copy and discarded ours.
+            owner = f"an unsplit retail object at 0x{addr:08X}"
         a, b = ranges[i]
         excl.setdefault(s[5], []).append((a, b))
         weak.add(i)

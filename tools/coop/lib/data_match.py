@@ -308,6 +308,46 @@ def _linker_tail_pad(r, d, r_bytes, d_bytes, r_parsed, sec) -> int:
     return pad
 
 
+def link_tail_padding(
+    retail: ParsedObject,
+    decomp: ParsedObject,
+    retail_bytes: bytes,
+    decomp_bytes: bytes,
+    section: str,
+) -> int:
+    """Proven retail tail padding for *section*, or 0 (no credit).
+
+    This is the post-pass counterpart of :func:`check_data_sections`: the
+    extra retail bytes must satisfy :func:`_linker_tail_pad` **and** the
+    decomp-sized prefix must agree byte-for-byte (or, for zero-fill sections,
+    the section alignment must agree).  Nothing is credited on a guess: a
+    non-zero byte, a relocation inside the tail, a misaligned split end, a
+    padding run >= the section alignment, or a differing prefix all fail
+    closed.
+    """
+    r = retail.sections.get(section)
+    d = decomp.sections.get(section)
+    pad = _linker_tail_pad(r, d, retail_bytes, decomp_bytes, retail, section)
+    if not pad:
+        return 0
+    if section in NOBITS:
+        # Zero-fill has no bytes to compare; the alignment is the only
+        # remaining evidence that both sides describe the same object.
+        return pad if (r or {}).get("align") == (d or {}).get("align") else 0
+    rsz, dsz = r["size"], d["size"]  # type: ignore[index]
+    if retail_bytes[r["off"]: r["off"] + dsz] != decomp_bytes[d["off"]: d["off"] + dsz]:  # type: ignore[index]
+        return 0
+    return pad
+
+
+def proven_tail_padding(retail_object: Path, decomp_object: Path, section: str) -> int:
+    """:func:`link_tail_padding` for two object paths (diagnostic helper)."""
+    return link_tail_padding(
+        _parse(retail_object), _parse(decomp_object),
+        retail_object.read_bytes(), decomp_object.read_bytes(), section,
+    )
+
+
 def check_data_sections(
     retail_object: Path,
     decomp_object: Path,
@@ -334,7 +374,7 @@ def check_data_sections(
         d = d_secs.get(sec)
         rsz = r["size"] if r else 0
         dsz = d["size"] if d else 0
-        tail = _linker_tail_pad(r, d, r_bytes, d_bytes, r_parsed, sec) if rsz != dsz else 0
+        tail = link_tail_padding(r_parsed, d_parsed, r_bytes, d_bytes, sec) if rsz != dsz else 0
         if rsz != dsz and not tail:
             result.sections.append(SectionResult(
                 sec, False, rsz, dsz,

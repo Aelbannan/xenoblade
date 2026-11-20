@@ -1050,13 +1050,13 @@ extern "C" CColiObject* ColiInitFlatSegment(CColiObject* self, const VEC3* a,
     da[2] = sa[2];
     db[2] = sb[2];
     VEC3Sub(&self->field_0x68, &self->field_0x50, &self->field_0x44);
-    self->field_0x68.y = lbl_eu_8066AE44;
+    self->field_0x68.y = 0.0f;
     self->field_0x5c = f;
     double sq = VEC3Dot(&self->field_0x68, &self->field_0x68);
     self->field_0x308 = sq;
     f32 fsq = (f32)sq;
-    if (fsq != lbl_eu_8066AE44) {
-        self->field_0x308 = lbl_eu_8066AE3C / fsq;
+    if (fsq != 0.0f) {
+        self->field_0x308 = 1.0f / fsq;
     }
     self->field_0x8c = 0;
     return self;
@@ -1800,17 +1800,17 @@ extern "C" int ColiSweepSphereCylinder(CColiObject* self) {
 
     // Sphere centre inside the cylinder band (0 <= diff.y <= height): radial
     // contact on the side surface.
-    if (diff.y > self->field_0x60 || diff.y < lbl_eu_8066AE44) goto BEYOND;
+    if (diff.y > self->field_0x60 || diff.y < 0.0f) goto BEYOND;
 
-    if (dist2 != lbl_eu_8066AE44) {
-        if (!(dist2 >= lbl_eu_8066AE44)) {
+    if (dist2 != 0.0f) {
+        if (!(dist2 >= 0.0f)) {
             nw4r::db::Warning(lbl_eu_80526324, 0x273, lbl_eu_80526300);
         }
-        f32 dist = dist2 <= lbl_eu_8066AE44
-                       ? lbl_eu_8066AE44
+        f32 dist = dist2 <= 0.0f
+                       ? 0.0f
                        : dist2 * nw4r::math::FrSqrt(dist2);
         pen = rsum - dist;
-        f32 inv = lbl_eu_8066AE3C / dist;
+        f32 inv = 1.0f / dist;
         n->x = -diff.x * inv;
         n->z = -diff.z * inv;
     } else {
@@ -1818,15 +1818,15 @@ extern "C" int ColiSweepSphereCylinder(CColiObject* self) {
         f32 rz = s32ToF_ae48(convA, (u32)(rand() % 200 - 100));
         f32 rx = s32ToF_ae48(convB, (u32)(rand() % 200 - 100));
         n->x = rx;
-        n->y = lbl_eu_8066AE44;
+        n->y = 0.0f;
         n->z = rz;
-        if (n->x == lbl_eu_8066AE44 && n->z == lbl_eu_8066AE44) {
-            n->x = lbl_eu_8066AE44;
-            n->y = lbl_eu_8066AE44;
-            n->z = lbl_eu_8066AE3C;
+        if (n->x == 0.0f && n->z == 0.0f) {
+            n->x = 0.0f;
+            n->y = 0.0f;
+            n->z = 1.0f;
         } else {
             f32 len2 = n->y * n->y + n->x * n->x + n->z * n->z;
-            if (len2 == lbl_eu_8066AE44) {
+            if (len2 == 0.0f) {
                 *n = ml::CVec3::zero;
             } else {
                 PSVECNormalize((const Vec*)n, (Vec*)n);
@@ -1838,7 +1838,7 @@ extern "C" int ColiSweepSphereCylinder(CColiObject* self) {
     point->x = n->x * partner->field_0x10 + partner->field_0x04.x;
     point->z = n->z * partner->field_0x10 + partner->field_0x04.z;
     point->y = partner->field_0x04.y;
-    n->y = lbl_eu_8066AE44;
+    n->y = 0.0f;
     goto EPILOGUE;
 
 BEYOND:
@@ -1852,37 +1852,37 @@ BEYOND:
         // cap contact with y = 1 uplift).
         if (diff.y > 0.5f * self->field_0x60) {
             // Above the cylinder's top: straight-down normal on the top cap.
-            n->x = lbl_eu_8066AE44;
+            n->x = 0.0f;
             n->y = -1.0f;
-            n->z = lbl_eu_8066AE44;
+            n->z = 0.0f;
             pen = self->field_0x60 + partner->field_0x10 - diff.y;
             point->y = partner->field_0x04.y - partner->field_0x10;
             goto EPILOGUE;
         }
         if (partner->field_0x10 * partner->field_0x10 > dist2) goto AXIS;
-        if (dist2 != lbl_eu_8066AE44) {
-            if (!(dist2 >= lbl_eu_8066AE44)) {
+        if (dist2 != 0.0f) {
+            if (!(dist2 >= 0.0f)) {
                 nw4r::db::Warning(lbl_eu_80526324, 0x273, lbl_eu_80526300);
             }
-            f32 dist = dist2 <= lbl_eu_8066AE44
-                           ? lbl_eu_8066AE44
+            f32 dist = dist2 <= 0.0f
+                           ? 0.0f
                            : dist2 * nw4r::math::FrSqrt(dist2);
-            f32 inv = lbl_eu_8066AE3C / dist;
+            f32 inv = 1.0f / dist;
             n->x = -diff.x * inv;
             n->z = -diff.z * inv;
         } else {
             f32 rz = s32ToF_ae48(convA, (u32)(rand() % 200 - 100));
             f32 rx = s32ToF_ae48(convB, (u32)(rand() % 200 - 100));
             n->x = rx;
-            n->y = lbl_eu_8066AE44;
+            n->y = 0.0f;
             n->z = rz;
-            if (n->x == lbl_eu_8066AE44 && n->z == lbl_eu_8066AE44) {
-                n->x = lbl_eu_8066AE44;
-                n->y = lbl_eu_8066AE44;
-                n->z = lbl_eu_8066AE3C;
+            if (n->x == 0.0f && n->z == 0.0f) {
+                n->x = 0.0f;
+                n->y = 0.0f;
+                n->z = 1.0f;
             } else {
                 f32 len2 = n->y * n->y + n->x * n->x + n->z * n->z;
-                if (len2 == lbl_eu_8066AE44) {
+                if (len2 == 0.0f) {
                     *n = ml::CVec3::zero;
                 } else {
                     PSVECNormalize((const Vec*)n, (Vec*)n);
@@ -1890,10 +1890,10 @@ BEYOND:
             }
         }
         // Uplift the horizontal normal to y = 1 and re-normalise.
-        n->y = lbl_eu_8066AE3C;
+        n->y = 1.0f;
         {
             f32 len2 = n->y * n->y + n->x * n->x + n->z * n->z;
-            if (len2 == lbl_eu_8066AE44) {
+            if (len2 == 0.0f) {
                 *n = ml::CVec3::zero;
             } else {
                 PSVECNormalize((const Vec*)n, (Vec*)n);
@@ -1903,9 +1903,9 @@ BEYOND:
 AXIS:
         // Sphere centre horizontally inside the cylinder radius: straight-up
         // axis contact on the top cap.
-        n->x = lbl_eu_8066AE44;
-        n->y = lbl_eu_8066AE3C;
-        n->z = lbl_eu_8066AE44;
+        n->x = 0.0f;
+        n->y = 1.0f;
+        n->z = 0.0f;
 NEAR_TAIL:
         point->y = partner->field_0x04.y + partner->field_0x10;
         pen = diff.y + partner->field_0x10;
@@ -1914,14 +1914,14 @@ NEAR_TAIL:
     } else {
         // Bit 1 clear: normal pre-scaled by 8066AE54 * sphere radius, then
         // length-normalised (penetration = pre-normalisation length).
-        if (dist2 != lbl_eu_8066AE44) {
-            if (!(dist2 >= lbl_eu_8066AE44)) {
+        if (dist2 != 0.0f) {
+            if (!(dist2 >= 0.0f)) {
                 nw4r::db::Warning(lbl_eu_80526324, 0x273, lbl_eu_80526300);
             }
-            f32 dist = dist2 <= lbl_eu_8066AE44
-                           ? lbl_eu_8066AE44
+            f32 dist = dist2 <= 0.0f
+                           ? 0.0f
                            : dist2 * nw4r::math::FrSqrt(dist2);
-            f32 inv = lbl_eu_8066AE3C / dist;
+            f32 inv = 1.0f / dist;
             f32 s = 0.2f * (inv * self->field_0x5c);
             n->x = -diff.x * s;
             n->z = -diff.z * s;
@@ -1929,15 +1929,15 @@ NEAR_TAIL:
             f32 rz = s32ToF_ae48(convA, (u32)(rand() % 200 - 100));
             f32 rx = s32ToF_ae48(convB, (u32)(rand() % 200 - 100));
             n->x = rx;
-            n->y = lbl_eu_8066AE44;
+            n->y = 0.0f;
             n->z = rz;
-            if (n->x == lbl_eu_8066AE44 && n->z == lbl_eu_8066AE44) {
-                n->x = lbl_eu_8066AE44;
-                n->y = lbl_eu_8066AE44;
-                n->z = lbl_eu_8066AE3C;
+            if (n->x == 0.0f && n->z == 0.0f) {
+                n->x = 0.0f;
+                n->y = 0.0f;
+                n->z = 1.0f;
             } else {
                 f32 len2 = n->y * n->y + n->x * n->x + n->z * n->z;
-                if (len2 == lbl_eu_8066AE44) {
+                if (len2 == 0.0f) {
                     *n = ml::CVec3::zero;
                 } else {
                     PSVECNormalize((const Vec*)n, (Vec*)n);
@@ -1955,7 +1955,7 @@ NEAR_TAIL:
         }
         double mag = PSVECMag((const Vec*)n);
         pen = (f32)mag;
-        f32 inv = lbl_eu_8066AE3C / (f32)mag;
+        f32 inv = 1.0f / (f32)mag;
         VEC3Scale((VEC3*)n, (const VEC3*)n, inv);
         goto EPILOGUE;
     }
@@ -1964,30 +1964,30 @@ FAR:
     // Sphere centre farther than its own radius: pick a point on the sphere
     // surface toward the cylinder axis, then check it against the partner
     // radius (sphere-surface contact when inside).
-    if (dist2 != lbl_eu_8066AE44) {
-        if (!(dist2 >= lbl_eu_8066AE44)) {
+    if (dist2 != 0.0f) {
+        if (!(dist2 >= 0.0f)) {
             nw4r::db::Warning(lbl_eu_80526324, 0x273, lbl_eu_80526300);
         }
-        f32 dist = dist2 <= lbl_eu_8066AE44
-                       ? lbl_eu_8066AE44
+        f32 dist = dist2 <= 0.0f
+                       ? 0.0f
                        : dist2 * nw4r::math::FrSqrt(dist2);
-        f32 inv = lbl_eu_8066AE3C / dist;
+        f32 inv = 1.0f / dist;
         f32 t = inv * self->field_0x5c;
         diff.x = diff.x * t;
         diff.z = diff.z * t;
     } else {
         f32 rz = s32ToF_ae48(convA, (u32)(rand() % 200 - 100));
         f32 rx = s32ToF_ae48(convB, (u32)(rand() % 200 - 100));
-        diff.y = lbl_eu_8066AE44;
+        diff.y = 0.0f;
         diff.z = rz;
         diff.x = rx;
-        if (diff.x == lbl_eu_8066AE44 && diff.z == lbl_eu_8066AE44) {
-            diff.x = lbl_eu_8066AE44;
-            diff.y = lbl_eu_8066AE44;
-            diff.z = lbl_eu_8066AE3C;
+        if (diff.x == 0.0f && diff.z == 0.0f) {
+            diff.x = 0.0f;
+            diff.y = 0.0f;
+            diff.z = 1.0f;
         } else {
             f32 len2 = diff.y * diff.y + diff.x * diff.x + diff.z * diff.z;
-            if (len2 == lbl_eu_8066AE44) {
+            if (len2 == 0.0f) {
                 *(ml::CVec3*)&diff = ml::CVec3::zero;
             } else {
                 PSVECNormalize((const Vec*)&diff, (Vec*)&diff);
@@ -2008,14 +2008,14 @@ FAR:
     VEC3Sub(&diff, &partner->field_0x04, &diff);
     f32 dist2b = diff.x * diff.x + diff.y * diff.y + diff.z * diff.z;
     if (partner->field_0x10 * partner->field_0x10 < dist2b) return 0;
-    if (dist2b != lbl_eu_8066AE44) {
-        if (!(dist2b >= lbl_eu_8066AE44)) {
+    if (dist2b != 0.0f) {
+        if (!(dist2b >= 0.0f)) {
             nw4r::db::Warning(lbl_eu_80526324, 0x273, lbl_eu_80526300);
         }
-        f32 distb = dist2b <= lbl_eu_8066AE44
-                        ? lbl_eu_8066AE44
+        f32 distb = dist2b <= 0.0f
+                        ? 0.0f
                         : dist2b * nw4r::math::FrSqrt(dist2b);
-        f32 invb = lbl_eu_8066AE3C / distb;
+        f32 invb = 1.0f / distb;
         n->x = -diff.x * invb;
         n->y = -diff.y * invb;
         n->z = -diff.z * invb;
@@ -2024,15 +2024,15 @@ FAR:
         f32 rz = s32ToF_ae48(convA, (u32)(rand() % 200 - 100));
         f32 rx = s32ToF_ae48(convB, (u32)(rand() % 200 - 100));
         n->x = rx;
-        n->y = lbl_eu_8066AE44;
+        n->y = 0.0f;
         n->z = rz;
-        if (n->x == lbl_eu_8066AE44 && n->z == lbl_eu_8066AE44) {
-            n->x = lbl_eu_8066AE44;
-            n->y = lbl_eu_8066AE44;
-            n->z = lbl_eu_8066AE3C;
+        if (n->x == 0.0f && n->z == 0.0f) {
+            n->x = 0.0f;
+            n->y = 0.0f;
+            n->z = 1.0f;
         } else {
             f32 len2 = n->y * n->y + n->x * n->x + n->z * n->z;
-            if (len2 == lbl_eu_8066AE44) {
+            if (len2 == 0.0f) {
                 *n = ml::CVec3::zero;
             } else {
                 PSVECNormalize((const Vec*)n, (Vec*)n);
@@ -3414,21 +3414,21 @@ int ColiCastSegmentSphere(CColiObject* self, const _VEC3* a, const _VEC3* b) {
                         proc->field_0x0c.y = f5;
                         proc->field_0x0c.z = self->field_0x44.z;
                     }
-                    n->x = lbl_eu_8066AE44;
-                    n->y = lbl_eu_8066AE3C;
-                    n->z = lbl_eu_8066AE44;
+                    n->x = 0.0f;
+                    n->y = 1.0f;
+                    n->z = 0.0f;
                 } else {
-                    int nonzero = lbl_eu_8066AE44 != f27;
-                    if (f27 != lbl_eu_8066AE44) {
-                        if (!(f27 >= lbl_eu_8066AE44)) {
+                    int nonzero = 0.0f != f27;
+                    if (f27 != 0.0f) {
+                        if (!(f27 >= 0.0f)) {
                             nw4r::db::Warning(lbl_eu_80526324, 0x273,
                                               lbl_eu_80526300);
                         }
-                        f32 dist = f27 <= lbl_eu_8066AE44
-                                       ? lbl_eu_8066AE44
+                        f32 dist = f27 <= 0.0f
+                                       ? 0.0f
                                        : f27 * nw4r::math::FrSqrt(f27);
                         f30 = f31 - dist;
-                        f32 inv = lbl_eu_8066AE3C / dist;
+                        f32 inv = 1.0f / dist;
                         n->x = v.x * inv;
                         n->z = v.z * inv;
                     } else {
@@ -3437,15 +3437,15 @@ int ColiCastSegmentSphere(CColiObject* self, const _VEC3* a, const _VEC3* b) {
                         f32 rz = f32FromS32_ae48(rand() % 200 - 100);
                         f32 rx = f32FromS32_ae48(rand() % 200 - 100);
                         n->x = rx;
-                        n->y = lbl_eu_8066AE44;
+                        n->y = 0.0f;
                         n->z = rz;
-                        if (n->x == lbl_eu_8066AE44 && n->z == lbl_eu_8066AE44) {
-                            n->x = lbl_eu_8066AE44;
-                            n->y = lbl_eu_8066AE44;
-                            n->z = lbl_eu_8066AE3C;
+                        if (n->x == 0.0f && n->z == 0.0f) {
+                            n->x = 0.0f;
+                            n->y = 0.0f;
+                            n->z = 1.0f;
                         } else {
                             f32 len2 = n->y * n->y + n->x * n->x + n->z * n->z;
-                            if (len2 == lbl_eu_8066AE44) {
+                            if (len2 == 0.0f) {
                                 *n = ml::CVec3::zero;
                             } else {
                                 PSVECNormalize((const Vec*)n, (Vec*)n);
@@ -3453,7 +3453,7 @@ int ColiCastSegmentSphere(CColiObject* self, const _VEC3* a, const _VEC3* b) {
                         }
                     }
                     if (f28 < f29) {
-                        n->y = lbl_eu_8066AE3C;
+                        n->y = 1.0f;
                     } else {
                         f28 = f29;
                         n->y = -1.0f;
@@ -3466,9 +3466,9 @@ int ColiCastSegmentSphere(CColiObject* self, const _VEC3* a, const _VEC3* b) {
                         n->y *= f28;
                         f32 mag = PSVECMag((const Vec*)n);
                         f30 = mag;
-                        VEC3Scale((VEC3*)n, (VEC3*)n, lbl_eu_8066AE3C / mag);
+                        VEC3Scale((VEC3*)n, (VEC3*)n, 1.0f / mag);
                     } else {
-                        n->y = lbl_eu_8066AE44;
+                        n->y = 0.0f;
                     }
                 }
                 // Contact point and the penetration-scaled normal.
@@ -3708,17 +3708,17 @@ extern "C" int func_804AE388(CColiObject* self, const _VEC3* vec, f32 x, f32 y) 
     ml::CVec3* n = &proc->field_0x18;
     f32 pen = rsum;
     f32 dist2b;
-    if (diff.y <= y && diff.y >= lbl_eu_8066AE44) {
+    if (diff.y <= y && diff.y >= 0.0f) {
         // Sphere centre vertically inside the segment: radial normal.
-        if (dist2 != lbl_eu_8066AE44) {
-            if (!(dist2 >= lbl_eu_8066AE44)) {
+        if (dist2 != 0.0f) {
+            if (!(dist2 >= 0.0f)) {
                 nw4r::db::Warning(lbl_eu_80526324, 0x273, lbl_eu_80526300);
             }
-            f32 dist = dist2 <= lbl_eu_8066AE44
-                           ? lbl_eu_8066AE44
+            f32 dist = dist2 <= 0.0f
+                           ? 0.0f
                            : dist2 * nw4r::math::FrSqrt(dist2);
             pen = rsum - dist;
-            f32 inv = lbl_eu_8066AE3C / dist;
+            f32 inv = 1.0f / dist;
             n->x = diff.x * inv;
             n->z = diff.z * inv;
         } else {
@@ -3726,32 +3726,32 @@ extern "C" int func_804AE388(CColiObject* self, const _VEC3* vec, f32 x, f32 y) 
             f32 rz = f32FromS32_ae48_bl(rand() % 200 - 100);
             f32 rx = f32FromS32_ae48_bl(rand() % 200 - 100);
             n->x = rx;
-            n->y = lbl_eu_8066AE44;
+            n->y = 0.0f;
             n->z = rz;
-            if (n->x == lbl_eu_8066AE44 && n->z == lbl_eu_8066AE44) {
-                n->x = lbl_eu_8066AE44;
-                n->y = lbl_eu_8066AE44;
-                n->z = lbl_eu_8066AE3C;
+            if (n->x == 0.0f && n->z == 0.0f) {
+                n->x = 0.0f;
+                n->y = 0.0f;
+                n->z = 1.0f;
             } else {
                 f32 len2 = n->y * n->y + n->x * n->x + n->z * n->z;
-                if (len2 == lbl_eu_8066AE44) {
+                if (len2 == 0.0f) {
                     *n = ml::CVec3::zero;
                 } else {
                     PSVECNormalize((const Vec*)n, (Vec*)n);
                 }
             }
         }
-        n->y = lbl_eu_8066AE44;
+        n->y = 0.0f;
         proc->field_0x0c.x = vec->x + n->x * x;
         proc->field_0x0c.z = vec->z + n->z * x;
         proc->field_0x0c.y = self->field_0x44.y;
     } else if (self->field_0x5c * self->field_0x5c >= dist2) {
         // Sphere centre above/below the segment but horizontally within
         // its own radius: contact along the segment axis.
-        n->x = lbl_eu_8066AE44;
-        n->z = lbl_eu_8066AE44;
+        n->x = 0.0f;
+        n->z = 0.0f;
         if (diff.y > 0.5f * y) {
-            n->y = lbl_eu_8066AE3C;
+            n->y = 1.0f;
             pen = y + self->field_0x5c - diff.y;
             proc->field_0x0c.y = vec->y + y;
         } else {
@@ -3769,13 +3769,13 @@ extern "C" int func_804AE388(CColiObject* self, const _VEC3* vec, f32 x, f32 y) 
         // retail's second return-0 block) and the contact normal is the
         // (3D) offset from the contact point to the sphere centre
         // normalised by its length, with the penetration r minus it.
-        if (!(dist2 >= lbl_eu_8066AE44)) {
+        if (!(dist2 >= 0.0f)) {
             nw4r::db::Warning(lbl_eu_80526324, 0x273, lbl_eu_80526300);
         }
-        f32 dist = dist2 <= lbl_eu_8066AE44
-                       ? lbl_eu_8066AE44
+        f32 dist = dist2 <= 0.0f
+                       ? 0.0f
                        : dist2 * nw4r::math::FrSqrt(dist2);
-        f32 inv = lbl_eu_8066AE3C / dist;
+        f32 inv = 1.0f / dist;
         f32 nx = diff.x * inv;
         f32 nz = diff.z * inv;
         proc->field_0x0c.x = x * nx + vec->x;
@@ -3789,33 +3789,33 @@ extern "C" int func_804AE388(CColiObject* self, const _VEC3* vec, f32 x, f32 y) 
         VEC3Sub(&diff, &self->field_0x44, (const VEC3*)&proc->field_0x0c);
         dist2b = VEC3LenSq(&diff);
         if (pen * pen < dist2b) return 0;
-        if (dist2b == lbl_eu_8066AE44) {
+        if (dist2b == 0.0f) {
             // Random direction when the sphere centre is on the axis.
             f32 rz = f32FromS32_ae48_bl(rand() % 200 - 100);
             f32 rx = f32FromS32_ae48_bl(rand() % 200 - 100);
             n->x = rx;
-            n->y = lbl_eu_8066AE44;
+            n->y = 0.0f;
             n->z = rz;
-            if (n->x == lbl_eu_8066AE44 && n->z == lbl_eu_8066AE44) {
-                n->x = lbl_eu_8066AE44;
-                n->y = lbl_eu_8066AE44;
-                n->z = lbl_eu_8066AE3C;
+            if (n->x == 0.0f && n->z == 0.0f) {
+                n->x = 0.0f;
+                n->y = 0.0f;
+                n->z = 1.0f;
             } else {
                 f32 len2 = n->y * n->y + n->x * n->x + n->z * n->z;
-                if (len2 == lbl_eu_8066AE44) {
+                if (len2 == 0.0f) {
                     *n = ml::CVec3::zero;
                 } else {
                     PSVECNormalize((const Vec*)n, (Vec*)n);
                 }
             }
         } else {
-            if (!(dist2b >= lbl_eu_8066AE44)) {
+            if (!(dist2b >= 0.0f)) {
                 nw4r::db::Warning(lbl_eu_80526324, 0x273, lbl_eu_80526300);
             }
-            f32 distb = dist2b <= lbl_eu_8066AE44
-                            ? lbl_eu_8066AE44
+            f32 distb = dist2b <= 0.0f
+                            ? 0.0f
                             : dist2b * nw4r::math::FrSqrt(dist2b);
-            f32 invb = lbl_eu_8066AE3C / distb;
+            f32 invb = 1.0f / distb;
             VEC3Scale((VEC3*)&proc->field_0x18, &diff, invb);
             pen = self->field_0x5c - distb;
         }
@@ -5727,15 +5727,15 @@ extern "C" int ColiSweepSphere(CColiObject* self) {
     f32 dist2 = VEC3LenSq(&diff);
     if (rsum * rsum < dist2) return 0;
     f32 pen = rsum;
-    if (dist2 != lbl_eu_8066AE44) {
-        if (!(dist2 >= lbl_eu_8066AE44)) {
+    if (dist2 != 0.0f) {
+        if (!(dist2 >= 0.0f)) {
             nw4r::db::Warning(lbl_eu_80526324, 0x273, lbl_eu_80526300);
         }
-        f32 dist = dist2 <= lbl_eu_8066AE44
-                       ? lbl_eu_8066AE44
+        f32 dist = dist2 <= 0.0f
+                       ? 0.0f
                        : dist2 * nw4r::math::FrSqrt(dist2);
         pen = rsum - dist;
-        f32 inv = lbl_eu_8066AE3C / dist;
+        f32 inv = 1.0f / dist;
         CColiObj3C* proc = (CColiObj3C*)(uintptr_t)self->field_0x3c_u;
         VEC3Scale((VEC3*)&proc->field_0x18, &diff, inv);
     } else {
@@ -5745,15 +5745,15 @@ extern "C" int ColiSweepSphere(CColiObject* self) {
         f32 rz = f32FromS32_ae48_bl(rand() % 200 - 100);
         f32 rx = f32FromS32_ae48_bl(rand() % 200 - 100);
         n->x = rx;
-        n->y = lbl_eu_8066AE44;
+        n->y = 0.0f;
         n->z = rz;
-        if (n->x == lbl_eu_8066AE44 && n->z == lbl_eu_8066AE44) {
-            n->x = lbl_eu_8066AE44;
-            n->y = lbl_eu_8066AE44;
-            n->z = lbl_eu_8066AE3C;
+        if (n->x == 0.0f && n->z == 0.0f) {
+            n->x = 0.0f;
+            n->y = 0.0f;
+            n->z = 1.0f;
         } else {
             f32 len2 = n->y * n->y + n->x * n->x + n->z * n->z;
-            if (len2 == lbl_eu_8066AE44) {
+            if (len2 == 0.0f) {
                 *n = ml::CVec3::zero;
             } else {
                 PSVECNormalize((const Vec*)n, (Vec*)n);
@@ -5807,15 +5807,15 @@ extern "C" int ColiSweepSegmentSphere(CColiObject* self) {
                ((CColiSegment804ABAF0*)self->field_0x00_obj)->field_0x28;
     if (rsum * rsum < dist2) return 0;
     f32 pen = rsum;
-    if (dist2 != lbl_eu_8066AE44) {
-        if (!(dist2 >= lbl_eu_8066AE44)) {
+    if (dist2 != 0.0f) {
+        if (!(dist2 >= 0.0f)) {
             nw4r::db::Warning(lbl_eu_80526324, 0x273, lbl_eu_80526300);
         }
-        f32 dist = dist2 <= lbl_eu_8066AE44
-                       ? lbl_eu_8066AE44
+        f32 dist = dist2 <= 0.0f
+                       ? 0.0f
                        : dist2 * nw4r::math::FrSqrt(dist2);
         pen = rsum - dist;
-        f32 inv = lbl_eu_8066AE3C / dist;
+        f32 inv = 1.0f / dist;
         CColiObj3C* proc = (CColiObj3C*)(uintptr_t)self->field_0x3c_u;
         VEC3Scale((VEC3*)&proc->field_0x18, &diff, inv);
     } else {
@@ -5825,15 +5825,15 @@ extern "C" int ColiSweepSegmentSphere(CColiObject* self) {
         f32 rz = f32FromS32_ae48(rand() % 200 - 100);
         f32 rx = f32FromS32_ae48(rand() % 200 - 100);
         n->x = rx;
-        n->y = lbl_eu_8066AE44;
+        n->y = 0.0f;
         n->z = rz;
-        if (n->x == lbl_eu_8066AE44 && n->z == lbl_eu_8066AE44) {
-            n->x = lbl_eu_8066AE44;
-            n->y = lbl_eu_8066AE44;
-            n->z = lbl_eu_8066AE3C;
+        if (n->x == 0.0f && n->z == 0.0f) {
+            n->x = 0.0f;
+            n->y = 0.0f;
+            n->z = 1.0f;
         } else {
             f32 len2 = n->y * n->y + n->x * n->x + n->z * n->z;
-            if (len2 == lbl_eu_8066AE44) {
+            if (len2 == 0.0f) {
                 *n = ml::CVec3::zero;
             } else {
                 PSVECNormalize((const Vec*)n, (Vec*)n);
@@ -6070,28 +6070,28 @@ extern "C" int ColiSweepSphereClip(CColiObject* self, const _VEC3* vec, f32 x,
     }
     proc = (CColiObj3C*)(uintptr_t)self->field_0x3c_u;
     if (base.y == proc->field_0x0c.y) {
-        proc->field_0x18.x = lbl_eu_8066AE44;
-        proc->field_0x18.y = lbl_eu_8066AE3C;
-        proc->field_0x18.z = lbl_eu_8066AE44;
+        proc->field_0x18.x = 0.0f;
+        proc->field_0x18.y = 1.0f;
+        proc->field_0x18.z = 0.0f;
     } else if (top.y == proc->field_0x0c.y) {
-        proc->field_0x18.x = lbl_eu_8066AE44;
+        proc->field_0x18.x = 0.0f;
         proc->field_0x18.y = -1.0f;
-        proc->field_0x18.z = lbl_eu_8066AE44;
+        proc->field_0x18.z = 0.0f;
     } else {
         f32 dz = proc->field_0x0c.z - top.z;
         f32 dx = proc->field_0x0c.x - top.x;
         f32 dist2 = dz * dz + dx * dx;
-        if (dist2 != lbl_eu_8066AE44) {
-            if (!(dist2 >= lbl_eu_8066AE44)) {
+        if (dist2 != 0.0f) {
+            if (!(dist2 >= 0.0f)) {
                 nw4r::db::Warning(lbl_eu_80526324, 0x273, lbl_eu_80526300);
             }
-            f32 dist = dist2 <= lbl_eu_8066AE44
-                           ? lbl_eu_8066AE44
+            f32 dist = dist2 <= 0.0f
+                           ? 0.0f
                            : dist2 * nw4r::math::FrSqrt(dist2);
-            f32 inv = lbl_eu_8066AE3C / dist;
+            f32 inv = 1.0f / dist;
             CColiObj3C* p3 = (CColiObj3C*)(uintptr_t)self->field_0x3c_u;
             p3->field_0x18.x = dx * inv;
-            p3->field_0x18.y = lbl_eu_8066AE44;
+            p3->field_0x18.y = 0.0f;
             p3->field_0x18.z = dz * inv;
         } else {
             // Random horizontal direction (y = 0) when the clip is degenerate.
@@ -6099,15 +6099,15 @@ extern "C" int ColiSweepSphereClip(CColiObject* self, const _VEC3* vec, f32 x,
             f32 rz = f32FromS32_ae48_bl(rand() % 200 - 100);
             f32 rx = f32FromS32_ae48_bl(rand() % 200 - 100);
             n->x = rx;
-            n->y = lbl_eu_8066AE44;
+            n->y = 0.0f;
             n->z = rz;
-            if (n->x == lbl_eu_8066AE44 && n->z == lbl_eu_8066AE44) {
-                n->x = lbl_eu_8066AE44;
-                n->y = lbl_eu_8066AE44;
-                n->z = lbl_eu_8066AE3C;
+            if (n->x == 0.0f && n->z == 0.0f) {
+                n->x = 0.0f;
+                n->y = 0.0f;
+                n->z = 1.0f;
             } else {
                 f32 len2 = n->y * n->y + n->x * n->x + n->z * n->z;
-                if (len2 == lbl_eu_8066AE44) {
+                if (len2 == 0.0f) {
                     *n = ml::CVec3::zero;
                 } else {
                     PSVECNormalize((const Vec*)n, (Vec*)n);

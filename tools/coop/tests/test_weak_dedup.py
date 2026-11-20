@@ -109,6 +109,14 @@ class WeakDedupTest(unittest.TestCase):
         self.assertEqual(v.removed.get(".text"), 0x10)
         self.assertTrue(any("__dt__4BaseFv" in n for n in v.excluded))
 
+    def test_weak_copy_retail_keeps_in_unsplit_object_is_excluded(self):
+        # Retail address outside every split range (an unassigned auto_* object):
+        # still not this unit's copy, so mwld discarded ours.
+        obj = unit_object(self.d / "u.o")
+        v = self.view(obj, {"__dt__4BaseFv": 0x8FFF0000})
+        self.assertEqual(v.removed.get(".text"), 0x10)
+        self.assertTrue(any("__dt__4BaseFv" in n and "unsplit" in n for n in v.excluded))
+
     def test_weak_symbol_retail_places_in_this_unit_is_kept(self):
         obj = unit_object(self.d / "u.o")
         v = self.view(obj, {"__dt__4BaseFv": 0x80001010, "__RTTI__4Base": 0x80601004})

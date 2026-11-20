@@ -4023,7 +4023,7 @@ extern "C" f32 CBattleMan_ApplyStatusRate(u8* obj, void* target) {
     // 0x290); each IdTable_GetSum receives its return value as arg1
     if (((cf::CActorParam*)(void*)obj)->CActorParam_getStatusTable() != nullptr) {
         // Reload flags from target (retail: lwz r0, 0x78(r31))
-        if (((volatile BattleTargetData*)target)->field_78 & 0xC00) {
+        if (targetData->field_78 & 0xC00) {
             if (IdTable_GetSum(((cf::CActorParam*)(void*)obj)->CActorParam_getStatusTable(), 0x64, &stackVal)) {
                 result -= 0.001f * (f32)(s32)stackVal;
             }

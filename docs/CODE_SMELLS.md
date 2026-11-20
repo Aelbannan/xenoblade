@@ -11,9 +11,9 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 
 | metric | count |
 |---|---|
-| extern "C" (total lines) | 13435 |
+| extern "C" (total lines) | 13436 |
 | extern "C" declarations (non-lbl_*, imports) | 5703 |
-| extern "C" definitions (forced names) | 4524 |
+| extern "C" definitions (forced names) | 4525 |
 | `self`/register-style params | 9803 |
 | `void*` (params + locals) | 6523 |
 | raw pointer offset arithmetic | 2569 |
@@ -218,7 +218,7 @@ Top TUs by view debt:
 | libs/monolib/src/lod/code_804645CC.cpp | 7 | 1 | 1 | 4 | 3 | 1 | 0 | 0 | 7 | 0 | 0 | 0 | 4 | 1 |
 | libs/monolib/src/lod/code_80468434.cpp | 14 | 1 | 13 | 0 | 15 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 20 | 0 |
 | libs/monolib/src/lod/code_8046A530.cpp | 5 | 6 | 28 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 7 | 0 |
-| libs/monolib/src/mpfsys/MPFDrawBillLayTex.cpp | 13 | 6 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/monolib/src/mpfsys/MPFDrawBillLayTex.cpp | 13 | 7 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/mpfsys/MPFDrawCross.cpp | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/mpfsys/MPFDrawDisplayList.cpp | 25 | 4 | 66 | 2 | 10 | 0 | 0 | 0 | 21 | 0 | 0 | 0 | 15 | 0 |
 | libs/monolib/src/mpfsys/MPFDrawMdlColor.cpp | 16 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -1535,7 +1535,7 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  "libs/monolib/src/mpfsys/MPFDrawBillLayTex.cpp": {
   "asm_insn_shim": 0,
   "extern_c_nonlbl_decl": 13,
-  "extern_c_nonlbl_def": 6,
+  "extern_c_nonlbl_def": 7,
   "init_side_effect": 0,
   "schedule_pragma": 0,
   "void_ptr": 1

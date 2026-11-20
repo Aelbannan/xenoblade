@@ -1,10 +1,12 @@
 #pragma once
 
 #include <types.h>
+#include <monolib/scn/CScnItemCamera.hpp>
 
-// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
-
-class CScnItemCameraNw4r;
+class CScnItemCameraNw4r : public CScnItemCamera {
+public:
+    virtual ~CScnItemCameraNw4r();
+};
 
 void ScnCamNw4r_RefreshFrustumA(CScnItemCameraNw4r* self);
 void ScnCamNw4r_RefreshFrustumB(CScnItemCameraNw4r* self);

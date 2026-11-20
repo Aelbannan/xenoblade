@@ -7,9 +7,10 @@ Usage (from repository root):
   python3 tools/coop/run.py baseline
   python3 tools/coop/run.py configure
   python3 tools/coop/run.py progress
+  python3 tools/coop/run.py report-credit-padding  # adjusted report COPY, never raw
   python3 tools/coop/run.py ctx src/kyoshin/cf/CfPadTask.cpp
   python3 tools/coop/run.py build kyoshin/cf/CfPadTask
-  python3 tools/coop/run.py diff kyoshin/cf/CfPadTask --symbol copyInputFlag__Q22cf9CfPadTaskFP4CPadUlUl
+
   python3 tools/coop/run.py size monolib/src/core/CViewRectDataCore
   python3 tools/coop/run.py size --all
   python3 tools/coop/run.py cycle pad-copy-input-flag
@@ -190,10 +191,66 @@ def cmd_progress(project: Project, config: CoopConfig, fancy: Optional[bool]) ->
     return result.returncode
 
 
+def cmd_report_credit(
+    project: Project,
+    config: CoopConfig,
+    *,
+    input_path: Path,
+    output_path: Path,
+    objdiff_json: Path,
+    unit_filter: Optional[str],
+    credit_anonymous_relocs: bool,
+    json_output: bool,
+) -> int:
+    """Write an adjusted *copy* of an objdiff report (never the raw one)."""
+    from tools.coop.lib.atomic_write import atomic_write_text
+    from tools.coop.lib.report_credit import credit_report
+
+    report_path = config.resolve(input_path)
+    out_path = config.resolve(output_path)
+    if report_path.resolve() == out_path.resolve():
+        print("ERROR: --output must differ from --input (raw reports are read-only)",
+              file=sys.stderr)
+        return 2
+    if not report_path.is_file():
+        print(f"ERROR: missing objdiff report: {report_path}", file=sys.stderr)
+        return 1
+    objdiff_path = config.resolve(objdiff_json)
+    try:
+        objdiff = json.loads(objdiff_path.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as exc:
+        print(f"ERROR: cannot read {objdiff_path}: {exc}", file=sys.stderr)
+        return 1
+    unit_objects: dict[str, tuple[Path, Path]] = {}
+    for entry in objdiff.get("units", []):
+        target, base = entry.get("target_path"), entry.get("base_path")
+        if not target or not base:
+            continue
+        unit_objects[entry.get("name", "")] = (
+            config.resolve(target), config.resolve(base))
+    with report_path.open(encoding="utf-8") as handle:
+        report = json.load(handle)
+    if unit_filter:
+        report["units"] = [u for u in report.get("units", []) if u.get("name") == unit_filter]
+        unit_objects = {k: v for k, v in unit_objects.items() if k == unit_filter}
+    adjusted, census = credit_report(
+        report, unit_objects,
+        credit_anonymous_relocs=credit_anonymous_relocs,
+        source_report=report_path,
+    )
+    atomic_write_text(out_path, json.dumps(adjusted, indent=2) + "\n")
+    if json_output:
+        print(json.dumps(census.as_dict(), indent=2))
+    else:
+        print(f"report-credit-padding: {report_path} -> {out_path}")
+        print(census.render())
+    return 0
+
+
 def cmd_ctx(project: Project, source: Path, output: Optional[Path]) -> int:
     source_path = source if source.is_absolute() else project.root / source
     if not source_path.is_file():
-        print(f"ERROR: source not found: {source_path}", file=sys.stderr)
+
         return 1
     out = output or source_path.with_suffix(".ctx.c")
     project.run(
@@ -2425,8 +2482,24 @@ def main() -> int:
         help="Suppress fancy progress output",
     )
 
+    p_credit = sub.add_parser(
+        "report-credit-padding", aliases=["report-credit"],
+        help="Write an adjusted objdiff report copy crediting proven linker padding / @N relocs",
+    )
+    p_credit.add_argument("--input", type=Path, default=None,
+                          help="raw report (default: build/<region>/report.json)")
+    p_credit.add_argument("--output", type=Path, default=None,
+                          help="adjusted copy (default: build/<region>/report_padcredit.json)")
+    p_credit.add_argument("--objdiff-json", type=Path, default=None,
+                          help="unit -> retail/decomp object map (default: objdiff.json)")
+    p_credit.add_argument("--unit", help="only credit this unit name")
+    p_credit.add_argument("--no-anonymous-relocs", action="store_true",
+                          help="only credit linker tail padding")
+    p_credit.add_argument("--json", action="store_true",
+                          help="print the census as JSON")
+
     p_ctx = sub.add_parser("ctx", help="Generate decomp.me context for a source file")
-    p_ctx.add_argument("source", type=Path)
+
     p_ctx.add_argument("-o", "--output", type=Path)
 
     p_build = sub.add_parser("build", help="Build one translation unit")
@@ -2876,11 +2949,21 @@ def main() -> int:
         return cmd_configure(project, config)
     if args.command == "progress":
         return cmd_progress(project, config, args.fancy)
+    if args.command in ("report-credit-padding", "report-credit"):
+        return cmd_report_credit(
+            project, config,
+            input_path=args.input or config.build_dir / "report.json",
+            output_path=args.output or config.build_dir / "report_padcredit.json",
+            objdiff_json=args.objdiff_json or config.objdiff_json,
+            unit_filter=args.unit,
+            credit_anonymous_relocs=not args.no_anonymous_relocs,
+            json_output=args.json,
+        )
     if args.command == "ctx":
         return cmd_ctx(project, args.source, args.output)
     if args.command == "build":
         return cmd_build(project, args.unit)
-    if args.command == "diff":
+
         return cmd_diff(
             project, config, args.unit, args.symbol,
             write_function_diff=False, linked=args.linked, smt=not args.no_smt,

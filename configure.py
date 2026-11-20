@@ -371,6 +371,7 @@ cflags_criware = [
     "-i libs/CriWare/src/",
     "-i libs/RVL_SDK/include/",
     "-func_align 4",
+    "-str reuse,pool,readonly",
 ]
 
 config.linker_version = "Wii/1.1"
@@ -1496,7 +1497,7 @@ config.libs = [
             Object(Matching, "CriWare/src/adx/ahx/ahx_cmn.c", mw_version = "Wii/1.1"),
             Object(NonMatching, "CriWare/src/adx/ahx/ahx_dcd.c", mw_version = "Wii/1.1"),
             Object(Matching, "CriWare/src/adx/cricfg/cfg_lib.c", mw_version = "Wii/1.1"),
-            Object(NonMatching, "CriWare/src/adx/cvfs/cri_cvfs.c", mw_version = "Wii/1.1", extra_cflags = ["-str reuse,pool,readonly"]),
+            Object(NonMatching, "CriWare/src/adx/cvfs/cri_cvfs.c", mw_version = "Wii/1.1"),
             Object(NonMatching, "CriWare/src/adx/gcci/gcci.c", mw_version = "Wii/1.1"),
             Object(Matching, "CriWare/src/adx/gcci/gcci_sub.c", mw_version = "Wii/1.1"),
             Object(Matching, "CriWare/src/adx/lsc/lsc_err.c", mw_version = "Wii/1.1"),
@@ -1511,7 +1512,7 @@ config.libs = [
             Object(NonMatching, "CriWare/src/adx/sj/sj_utl.c", mw_version = "Wii/1.1"),
             Object(Matching, "CriWare/src/adx/sj/sj_crs.c", mw_version = "Wii/1.1"),
             Object(Matching, "CriWare/src/adx/sj/sj_err.c", mw_version = "Wii/1.1"),
-            Object(NonMatching, "CriWare/src/adx/svm/svm.c", mw_version = "Wii/1.1", extra_cflags = ["-str reuse,pool,readonly"]),
+            Object(NonMatching, "CriWare/src/adx/svm/svm.c", mw_version = "Wii/1.1"),
             Object(NonMatching, "CriWare/src/adx/adxt/adx_dcd3.c", mw_version = "Wii/1.1"),
             Object(Matching, "CriWare/src/adx/adxt/adx_bsps.c", mw_version = "Wii/1.1"),
             Object(NonMatching, "CriWare/src/adx/adxt/adx_bau.c", mw_version = "Wii/1.1"),
@@ -1529,7 +1530,7 @@ config.libs = [
         [
             Object(NonMatching, "CriWare/src/sofdec/cft/srcgc/cftyp422_ppc.c"),
             Object(Matching, "CriWare/src/sofdec/cft/cft_common.c"),
-            Object(NonMatching, "CriWare/src/sofdec/mwply/mwsfdfrm.c", mw_version = "Wii/1.1", extra_cflags = ["-str reuse,pool,readonly"]),
+            Object(NonMatching, "CriWare/src/sofdec/mwply/mwsfdfrm.c", mw_version = "Wii/1.1"),
             Object(Matching, "CriWare/src/sofdec/mwply/mwsfdrna.c"),
             Object(Matching, "CriWare/src/sofdec/mwply/mwsfdrsc.c"),
             Object(NonMatching, "CriWare/src/sofdec/mwply/mwsfdsl.c", mw_version = "Wii/1.1"),

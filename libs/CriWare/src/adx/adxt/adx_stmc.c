@@ -1,12 +1,12 @@
 // Decompiled adx_stmc.c - ADX stream management (CriWare)
 #include <harness_catalog.h>
 
-extern volatile s32 sStmInitCount;
+extern s32 sStmInitCount;
 extern u8 sStmHandles[0x1040];
-extern volatile s32 sStmDefaultIndex;
-extern volatile s32 sStmServerBusy;
-extern volatile s32 sStmMaxRetry;
-extern volatile s32 sStmEmptyErrorCount[2];
+extern s32 sStmDefaultIndex;
+extern s32 sStmServerBusy;
+extern s32 sStmMaxRetry;
+extern s32 sStmEmptyErrorCount[2];
 
 /* Retail error-string pool (lbl_eu_80516148): both cvFsOpen failure paths
  * pass the same "E02110501 adxstmf_stat_exec: can't open " message. */
@@ -926,9 +926,9 @@ int ADXSTM_IsOpenedFile(ADXSTMHndl* h) {
 }
 
 /* .bss: reverse retail order for MWCC emission. */
-volatile s32 sStmEmptyErrorCount[2]; // name-guess: incremented by adxstmf_stat_exec when h->fileSectors == 0
+s32 sStmEmptyErrorCount[2]; // name-guess: incremented by adxstmf_stat_exec when h->fileSectors == 0
 u8 sStmHandles[0x1040];
-volatile s32 sStmMaxRetry; // name-guess: compared with h->retryCount on cvFs read failures in adxstmf_stat_exec
-volatile s32 sStmServerBusy; // name-guess: SVM_TestAndSet/clear guard around ADXSTM_ExecServer's handle walk
-volatile s32 sStmDefaultIndex; // name-guess: multiplied by 0x68 to choose the first default handle in ADXSTM_Create
-volatile s32 sStmInitCount; // name-guess: incremented/decremented by ADXSTM_Init/Finish; first init clears the handle pool
+s32 sStmMaxRetry; // name-guess: compared with h->retryCount on cvFs read failures in adxstmf_stat_exec
+s32 sStmServerBusy; // name-guess: SVM_TestAndSet/clear guard around ADXSTM_ExecServer's handle walk
+s32 sStmDefaultIndex; // name-guess: multiplied by 0x68 to choose the first default handle in ADXSTM_Create
+s32 sStmInitCount; // name-guess: incremented/decremented by ADXSTM_Init/Finish; first init clears the handle pool

@@ -9,8 +9,6 @@
 #include "monolib/data_vtables.hpp"
 
 extern "C" {
-// Work-thread display name pool: "CRsrcData" (not empty string).
-extern const char lbl_eu_80522534[];
 // Retail's (unmangled) inlined-ctor entry point, defined below.
 CRsrcData* __ct__CRsrcData(CRsrcData* ths, const char* name, CWorkThread* parent);
 // Base ctor called on raw storage by __ct__CRsrcData.
@@ -27,7 +25,6 @@ extern const char lbl_eu_80522528[];
 extern void* __RTTI__9CRsrcData[2];
 
 const char lbl_eu_80522528[12] = {0x43,0x52,0x73,0x72,0x63,0x44,0x61,0x74,0x61,0x00,0x00,0x00};  /* "CRsrcData" + pad */
-const char lbl_eu_80522534[12] = {0x43,0x52,0x73,0x72,0x63,0x44,0x61,0x74,0x61,0x00,0x00,0x00};  /* "CRsrcData" + pad */
 
 // CRsrcData vtable (.data, 0xA0): [rtti, 0, dtor, IWorkEvent 1-31, wkUpdate
 // (CRsrcData), wkRender/wkRenderAfter (CWorkThread slots), wkStandbyLogin/Logout
@@ -151,7 +148,7 @@ void CRsrcData::setRsrcFile(const char* name, void* path, void* data, u32 length
 }
 
 void CRsrcData::build(void* pParent, const char* name, void* path, void* data, u32 length, bool flag) {
-    const char* threadName = lbl_eu_80522534;
+    const char* threadName = "CRsrcData";
     mtl::ALLOC_HANDLE handle = CWorkThreadSystem::getWorkMem();
     CRsrcData* rsrc = static_cast<CRsrcData*>(mtl::MemManager::allocate(sizeof(CRsrcData), handle));
 

@@ -868,10 +868,8 @@ extern "C" int ColiProc_ClassifyEntries(CColiProcLocal* work, u16* outIndex,
                              void** outBuf, void* arg4);
 // (memberized: ColiProc_IsTargetFlagged -> CColiProc::IsTargetFlagged; declaration moved into class CColiProc)
 // (memberized: ColiProc_TestBit18State -> CColiProc::TestBit18State; declaration moved into class CColiProc)
-// Local-object ctor: the trailing params default so ColiCheckStateGate's retail
-// no-setup call (`&local` only) still compiles.
-extern "C" CColiObject* ColiInitFlatSegment(CColiObject* self, const VEC3* a = 0,
-                                      const VEC3* b = 0, f32 f = 0.0f);
+extern "C" CColiObject* ColiInitFlatSegment(CColiObject* self, const VEC3* a,
+                                      const VEC3* b, f32 f);
 extern "C" int ColiSweepPointBox(CColiObject* self, const f32* a, const VEC3* b,
                              const Mtx m, f32 f);
 extern "C" void ColiGrowMoveAabb(CColiObject* self);
@@ -5261,9 +5259,7 @@ fail:
 // (bit 1 clear) or (bit 2 clear), with bit 4 set. On success, construct a
 // local object via ColiInitFlatSegment, link it to self, seed a local proc and
 // forward both to ColiProc_CheckEntries, returning its status.
-typedef CColiObject* (*LocalObjCtor1)(CColiObject*);
-
-extern "C" bool ColiCheckStateGate(CColiObject* self) {
+extern "C" bool ColiCheckStateGate(CColiObject* self, const VEC3* a, const VEC3* b, f32 f) {
     CColiProcLocal proc;   // +0x8
     CColiObject local;     // +0x18 (0x318 bytes)
     if (self->field_0x04 == 0) goto fail;
@@ -5283,10 +5279,7 @@ extern "C" bool ColiCheckStateGate(CColiObject* self) {
     if (v != 0) return false;
     if (!(flags & 0x8)) goto fail;
 
-    // Retail call site passes only the object pointer (its TU saw a
-    // one-parameter declaration); route through the 1-arg view so MWCC emits
-    // no default-argument setup.
-    ((LocalObjCtor1)&ColiInitFlatSegment)(&local);  // DEBT(callcast): C symbol; retail caller passes only this, shared decl has 3 defaulted params
+    ColiInitFlatSegment(&local, a, b, f);
     local.field_0x314 = (u32)self;
     CColiObject* tgt = self->field_0x00_obj;
     proc.InitQuad((CColiProcTarget*)tgt, self->field_0x08, self->field_0x04);

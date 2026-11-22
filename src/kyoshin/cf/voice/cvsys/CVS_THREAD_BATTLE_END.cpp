@@ -7,6 +7,14 @@
 #include "monolib/math/Random.hpp"
 #include <cstring>
 
+// Real typed voice-ID tables defined at the end of this TU (name-guess markers
+// are attached to the definitions). The private header still carries the old
+// retail-label externs; these are the canonical declarations for the new names.
+extern u32 BattleEndVoiceIds[];
+extern u32 BattleEndAltVoiceIds[];
+extern u32 BattleEndForcedVoiceIdsA[2];
+extern u32 BattleEndForcedVoiceIdsB[2];
+
 // Vtable shape for the CVoiceHandle polymorphic voice objects; method at
 // Cast-only virtual iface: real member call so MWCC emits lwz r12,0(r3)
 // dispatch (a VoiceVtbl* FP temp colors the vptr load as r4). With -RTTI,
@@ -231,7 +239,7 @@ CVS_THREAD_BATTLE_END* CVS_THREAD_BATTLE_END::create(int owner) {
     }
 
     // Install the initial voice-event handler from its typed PTMF constant.
-    self->mState = lbl_eu_80539958;
+    self->mState = static_cast<BattleEndState>(&CVS_THREAD_BATTLE_END::initSlots);
     return self;
 }
 
@@ -240,7 +248,7 @@ CVS_THREAD_BATTLE_END* CVS_THREAD_BATTLE_END::create(int owner) {
 // slot, and set the active flag based on whether any listed voice is live.
 void CVS_THREAD_BATTLE_END::initSlots() {
     CVS_THREAD_BATTLE_END* self = this;
-    mState = lbl_eu_80539964;
+    mState = static_cast<BattleEndState>(&CVS_THREAD_BATTLE_END::playVoice);
 
     int cnt = HpVoice_CollectIdle((CVoiceHandle**)self->field_0x20, 3, 0);
     self->field_0x34 = cnt;
@@ -287,7 +295,7 @@ store:
 // HpVoice_MapSubState mode) and play the appropriate variant ID.
 void CVS_THREAD_BATTLE_END::playVoice() {
     CVS_THREAD_BATTLE_END* self = this;
-    mState = lbl_eu_80539970;
+    mState = static_cast<BattleEndState>(&CVS_THREAD_BATTLE_END::advanceSlot);
 
     int idx = self->field_0x30;
     CVoiceHandle* handle = self->field_0x20[idx];
@@ -319,8 +327,8 @@ void CVS_THREAD_BATTLE_END::playVoice() {
                 voiceId = -1;
             }
         } else {
-            if (self->field_0x39 != 0) voiceId = lbl_eu_80662CC8[ml::math::mtRand(2)];
-            else voiceId = lbl_eu_80539988[ml::math::mtRand(7)];
+            if (self->field_0x39 != 0) voiceId = BattleEndForcedVoiceIdsA[ml::math::mtRand(2)];
+            else voiceId = BattleEndVoiceIds[ml::math::mtRand(7)];
         }
         CVoiceHandle* sl = self->field_0x20[self->field_0x30];
         CCharVoice* vp = (CCharVoice*)sl;
@@ -332,8 +340,8 @@ void CVS_THREAD_BATTLE_END::playVoice() {
         }
     } else {
         // Counter not at limit: simpler random pick.
-        if (self->field_0x39 != 0) voiceId = lbl_eu_80662CD0[ml::math::mtRand(2)];
-        else voiceId = lbl_eu_805399A8[ml::math::mtRand(4)];
+        if (self->field_0x39 != 0) voiceId = BattleEndForcedVoiceIdsB[ml::math::mtRand(2)];
+        else voiceId = BattleEndAltVoiceIds[ml::math::mtRand(4)];
         CVoiceHandle* sl = self->field_0x20[self->field_0x30];
         CCharVoice* vp = (CCharVoice*)sl;
         if (sl != NULL) {
@@ -369,7 +377,7 @@ void CVS_THREAD_BATTLE_END::advanceSlot() {
         // Pointer increment reproduces the lwzu/spread load-with-update.
         // v0 declared first so MWCC colours the lwzu destination into r3
         // and the base pointer into r4, matching retail.
-        mState = lbl_eu_8053997C;
+        mState = static_cast<BattleEndState>(&CVS_THREAD_BATTLE_END::playVoice);
     } else {
         // Advance/process virtual (vtable offset 8 = PlayThreadVoice), not the
         // size-getter blank1 (offset 0x10).
@@ -433,12 +441,9 @@ extern u32 __RTTI__Q22cf14CVS_THREAD_BUF[2];
 extern const char lbl_eu_80510700[0x20] = "cf::CVS_THREAD_BATTLE_END";
 extern const char lbl_eu_80510720[0x18] = "cf::CVS_THREAD_BUF";
 
-BattleEndState const lbl_eu_80539958 = &CVS_THREAD_BATTLE_END::initSlots;
-BattleEndState const lbl_eu_80539964 = &CVS_THREAD_BATTLE_END::playVoice;
-BattleEndState const lbl_eu_80539970 = &CVS_THREAD_BATTLE_END::advanceSlot;
-BattleEndState const lbl_eu_8053997C = &CVS_THREAD_BATTLE_END::playVoice;
 
-u32 lbl_eu_80539988[8] = {
+// name-guess: battle-end voice ID table used by playVoice()
+u32 BattleEndVoiceIds[8] = {
     0xB55,
     0xB56,
     0xB61,
@@ -449,7 +454,8 @@ u32 lbl_eu_80539988[8] = {
     0,
 };
 
-u32 lbl_eu_805399A8[4] = {
+// name-guess: alternate battle-end voice ID table used by playVoice()
+u32 BattleEndAltVoiceIds[4] = {
     0xB5B,
     0xB5C,
     0xB5F,
@@ -474,12 +480,14 @@ u32 lbl_eu_805399D4[3] = {
 
 extern BattleEndState lbl_eu_805399E0 = &CVS_THREAD_BUF::advanceSlot;
 
-__declspec(section ".sdata") extern u32 lbl_eu_80662CC8[2] = {
+// name-guess: forced-direction battle-end voice ID pair
+extern u32 BattleEndForcedVoiceIdsA[2] = {
     0xB57,
     0xB58,
 };
 
-__declspec(section ".sdata") extern u32 lbl_eu_80662CD0[2] = {
+// name-guess: forced-direction battle-end voice ID pair
+extern u32 BattleEndForcedVoiceIdsB[2] = {
     0xB5D,
     0xB5E,
 };

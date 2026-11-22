@@ -30,10 +30,8 @@ struct CVirtualLightObjFields {
 extern "C" u8 lbl_eu_80526418[];
 extern "C" u8 lbl_eu_80526430[];
 extern "C" u8 lbl_eu_80526448[];
-extern "C" const float lbl_eu_80666038;
 
 extern "C" mtl::ALLOC_HANDLE func_80496004(void* ptr);
-extern "C" void* allocate_array__Q23mtl10MemManagerFUlUl(u32 size, u32 handle);
 
 // Time-light group: owns a reslist of virtual light object pointers.
 // Layout: own vptr @0x00, parent @0x04, embedded reslist subobject @0x08

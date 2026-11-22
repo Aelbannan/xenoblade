@@ -9,39 +9,39 @@ namespace {
 
 void MakeTexSrtMtx_S(math::MTX34* pMtx, const TexSrt& rSrt) {
     pMtx->m[0][0] = rSrt.Su;
-    pMtx->m[0][1] = lbl_eu_80669CB0;
-    pMtx->m[0][2] = lbl_eu_80669CB0;
-    pMtx->m[0][3] = lbl_eu_80669CB0;
-    pMtx->m[1][0] = lbl_eu_80669CB0;
+    pMtx->m[0][1] = 0.0f;
+    pMtx->m[0][2] = 0.0f;
+    pMtx->m[0][3] = 0.0f;
+    pMtx->m[1][0] = 0.0f;
     pMtx->m[1][1] = rSrt.Sv;
-    pMtx->m[1][2] = lbl_eu_80669CB0;
-    pMtx->m[1][3] = lbl_eu_80669CB4 - rSrt.Sv;
+    pMtx->m[1][2] = 0.0f;
+    pMtx->m[1][3] = 1.0f - rSrt.Sv;
 }
 void MakeTexSrtMtx_R(math::MTX34* pMtx, const TexSrt& rSrt) {
     f32 r = rSrt.R;
-    f32 fidx = lbl_eu_80669CB8 * r;
+    f32 fidx = 0.7111111f * r;
     f32 sinR, cosR;
     math::SinCosFIdx(&sinR, &cosR, fidx);
 
     // XSI rotation: cos on the diagonal, translation = (sin, 1 - cos)
     pMtx->m[0][0] = cosR;
     pMtx->m[0][1] = -sinR;
-    pMtx->m[0][2] = lbl_eu_80669CB0;
+    pMtx->m[0][2] = 0.0f;
     pMtx->m[0][3] = sinR;
     pMtx->m[1][0] = sinR;
     pMtx->m[1][1] = cosR;
-    pMtx->m[1][2] = lbl_eu_80669CB0;
-    pMtx->m[1][3] = lbl_eu_80669CB4 - cosR;
+    pMtx->m[1][2] = 0.0f;
+    pMtx->m[1][3] = 1.0f - cosR;
 }
 
 void MakeTexSrtMtx_T(math::MTX34* pMtx, const TexSrt& rSrt) {
-    pMtx->m[0][0] = lbl_eu_80669CB4;
-    pMtx->m[0][1] = lbl_eu_80669CB0;
-    pMtx->m[0][2] = lbl_eu_80669CB0;
+    pMtx->m[0][0] = 1.0f;
+    pMtx->m[0][1] = 0.0f;
+    pMtx->m[0][2] = 0.0f;
     pMtx->m[0][3] = -rSrt.Tu;
-    pMtx->m[1][0] = lbl_eu_80669CB0;
-    pMtx->m[1][1] = lbl_eu_80669CB4;
-    pMtx->m[1][2] = lbl_eu_80669CB0;
+    pMtx->m[1][0] = 0.0f;
+    pMtx->m[1][1] = 1.0f;
+    pMtx->m[1][2] = 0.0f;
     pMtx->m[1][3] = rSrt.Tv;
 }
 
@@ -49,7 +49,7 @@ void MakeTexSrtMtx_SR(math::MTX34* pMtx, const TexSrt& rSrt) {
     // Declaration order fixes the stack slots: retail passes &sin at r1+0xC
     // and &cos at r1+0x8, so cosR must sit below sinR.
     f32 r = rSrt.R;
-    f32 fidx = lbl_eu_80669CB8 * r;
+    f32 fidx = 0.7111111f * r;
     f32 sinR, cosR;
     math::SinCosFIdx(&sinR, &cosR, fidx);
 
@@ -64,12 +64,12 @@ void MakeTexSrtMtx_SR(math::MTX34* pMtx, const TexSrt& rSrt) {
 
     pMtx->m[0][0] = su_cos;
     pMtx->m[0][1] = -su_sin;
-    pMtx->m[0][2] = lbl_eu_80669CB0;
+    pMtx->m[0][2] = 0.0f;
     pMtx->m[0][3] = su_sin;
     pMtx->m[1][0] = sv_sin;
     pMtx->m[1][1] = sv_cos;
-    pMtx->m[1][2] = lbl_eu_80669CB0;
-    pMtx->m[1][3] = lbl_eu_80669CB4 + (-sv_cos);
+    pMtx->m[1][2] = 0.0f;
+    pMtx->m[1][3] = 1.0f + (-sv_cos);
 }
 
 void MakeTexSrtMtx_RT(math::MTX34* pMtx, const TexSrt& rSrt) {
@@ -77,7 +77,7 @@ void MakeTexSrtMtx_RT(math::MTX34* pMtx, const TexSrt& rSrt) {
     // load scheduling, and declaration order puts cosR at sp+0x8 / sinR at
     // sp+0xC as retail passes them to SinCosFIdx.
     f32 r = rSrt.R;
-    f32 fidx = lbl_eu_80669CB8 * r;
+    f32 fidx = 0.7111111f * r;
     f32 sinR, cosR;
     math::SinCosFIdx(&sinR, &cosR, fidx);
 
@@ -87,23 +87,23 @@ void MakeTexSrtMtx_RT(math::MTX34* pMtx, const TexSrt& rSrt) {
 
     pMtx->m[0][0] = cosR;
     pMtx->m[0][1] = -sinR;
-    pMtx->m[0][2] = lbl_eu_80669CB0;
+    pMtx->m[0][2] = 0.0f;
     pMtx->m[0][3] = sinR - cosR * tu - sinR * tv;
     pMtx->m[1][0] = sinR;
     pMtx->m[1][1] = cosR;
-    pMtx->m[1][2] = lbl_eu_80669CB0;
-    pMtx->m[1][3] = lbl_eu_80669CB4 + (-cosR - sinR * tu + cosR * tv);
+    pMtx->m[1][2] = 0.0f;
+    pMtx->m[1][3] = 1.0f + (-cosR - sinR * tu + cosR * tv);
 }
 
 void MakeTexSrtMtx_ST(math::MTX34* pMtx, const TexSrt& rSrt) {
     pMtx->m[0][0] = rSrt.Su;
-    pMtx->m[0][1] = lbl_eu_80669CB0;
-    pMtx->m[0][2] = lbl_eu_80669CB0;
+    pMtx->m[0][1] = 0.0f;
+    pMtx->m[0][2] = 0.0f;
     pMtx->m[0][3] = (-rSrt.Su) * rSrt.Tu;
-    pMtx->m[1][0] = lbl_eu_80669CB0;
+    pMtx->m[1][0] = 0.0f;
     pMtx->m[1][1] = rSrt.Sv;
-    pMtx->m[1][2] = lbl_eu_80669CB0;
-    pMtx->m[1][3] = lbl_eu_80669CB4 + rSrt.Sv * (rSrt.Tv - lbl_eu_80669CB4);
+    pMtx->m[1][2] = 0.0f;
+    pMtx->m[1][3] = 1.0f + rSrt.Sv * (rSrt.Tv - 1.0f);
 }
 
 void MakeTexSrtMtx_SRT(math::MTX34* pMtx, const TexSrt& rSrt) {
@@ -129,13 +129,13 @@ void MakeTexSrtMtx_SRT(math::MTX34* pMtx, const TexSrt& rSrt) {
     f32 su_sin_tv = su_sin * tv;
 
     pMtx->m[0][0] = su_cos;
-    pMtx->m[0][2] = lbl_eu_80669CB0;
+    pMtx->m[0][2] = 0.0f;
     pMtx->m[1][0] = sv_sin;
     pMtx->m[1][1] = sv_cos;
-    pMtx->m[1][2] = lbl_eu_80669CB0;
+    pMtx->m[1][2] = 0.0f;
     pMtx->m[0][1] = -su_sin;
     pMtx->m[0][3] = su_sin - su_cos_tu - su_sin_tv;
-    pMtx->m[1][3] = lbl_eu_80669CB4 + (-sv_cos - sv_sin_tu + sv_cos_tv);
+    pMtx->m[1][3] = 1.0f + (-sv_cos - sv_sin_tu + sv_cos_tv);
 }
 
 void ProductTexSrtMtx_S(math::MTX34* pMtx, const TexSrt& rSrt) {
@@ -146,7 +146,7 @@ void ProductTexSrtMtx_S(math::MTX34* pMtx, const TexSrt& rSrt) {
     pMtx->m[1][0] *= rSrt.Sv;
     pMtx->m[1][1] *= rSrt.Sv;
     pMtx->m[1][2] *= rSrt.Sv;
-    pMtx->m[1][3] = rSrt.Sv * (pMtx->m[1][3] - lbl_eu_80669CB4) + lbl_eu_80669CB4;
+    pMtx->m[1][3] = rSrt.Sv * (pMtx->m[1][3] - 1.0f) + 1.0f;
 }
 
 void ProductTexSrtMtx_R(math::MTX34* pMtx, const TexSrt& rSrt) {
@@ -206,7 +206,7 @@ void ProductTexSrtMtx_R(math::MTX34* pMtx, const TexSrt& rSrt) {
         f32 ad = q2 + q1 - cosR;
         f32 sb = q3 - q4;
         f32 b = sinR + sb;
-        f32 a = lbl_eu_80669CB4 + ad;
+        f32 a = 1.0f + ad;
         pMtx->m[0][3] = b;
         pMtx->m[1][3] = a;
     }}
@@ -218,7 +218,7 @@ void ProductTexSrtMtx_T(math::MTX34* pMtx, const TexSrt& rSrt) {
 
 void ProductTexSrtMtx_SR(math::MTX34* pMtx, const TexSrt& rSrt) {
     f32 sinR, cosR;
-    math::SinCosFIdx(&sinR, &cosR, rSrt.R * lbl_eu_80669CB8);
+    math::SinCosFIdx(&sinR, &cosR, rSrt.R * 0.7111111f);
 
     // Creation order mirrors retail's value sequence to steer MWCC register
     // coloring.
@@ -241,7 +241,7 @@ void ProductTexSrtMtx_SR(math::MTX34* pMtx, const TexSrt& rSrt) {
     f32 m12 = pMtx->m[1][2];
 
     // Store order matches retail: m13, m00, m03, m10, m01, m11, m02, m12.
-    pMtx->m[1][3] = lbl_eu_80669CB4 + (svs * m03 + svc * m13 - svc);
+    pMtx->m[1][3] = 1.0f + (svs * m03 + svc * m13 - svc);
     pMtx->m[0][0] = suc * m00 - sus * m10;
     pMtx->m[0][3] = sus + (suc * m03 - sus * m13);
     pMtx->m[1][0] = svs * m00 + svc * m10;
@@ -293,7 +293,7 @@ void ProductTexSrtMtx_RT(math::MTX34* pMtx, const TexSrt& rSrt) {
         f32 q3 = cosR * a;
         f32 q4 = sinR * b;
         // Compute the m13 sum first (retail order); stores stay column-ordered
-        f32 t13 = lbl_eu_80669CB4 + (q2 + q1 - cosR);
+        f32 t13 = 1.0f + (q2 + q1 - cosR);
         pMtx->m[0][3] = sinR + (q3 - q4);
         pMtx->m[1][3] = t13;
     }
@@ -308,7 +308,7 @@ void ProductTexSrtMtx_ST(math::MTX34* pMtx, const TexSrt& rSrt) {
     f32 tu = rSrt.Tu;
     f32 sv = rSrt.Sv;
 
-    pMtx->m[1][3] = lbl_eu_80669CB4 + sv * (m13 + tv - lbl_eu_80669CB4);
+    pMtx->m[1][3] = 1.0f + sv * (m13 + tv - 1.0f);
     pMtx->m[0][3] = rSrt.Su * (m03 - tu);
     pMtx->m[1][0] *= sv;
     pMtx->m[0][0] *= rSrt.Su;
@@ -343,7 +343,7 @@ void ProductTexSrtMtx_SRT(math::MTX34* pMtx, const TexSrt& rSrt) {
 
     pMtx->m[0][3] = suSin + (suCos * d03 - suSin * t13);
     pMtx->m[0][0] = suCos * m00 - suSin * m01;
-    pMtx->m[1][3] = lbl_eu_80669CB4 + ((svSin * d03 + svCos * t13) - svCos);
+    pMtx->m[1][3] = 1.0f + ((svSin * d03 + svCos * t13) - svCos);
     pMtx->m[1][0] = svSin * m00 + svCos * m01;
     pMtx->m[0][1] = suCos * m10 - suSin * m11;
     pMtx->m[1][1] = svSin * m10 + svCos * m11;
@@ -386,10 +386,10 @@ bool CalcTexMtx_Xsi(math::MTX34* pMtx, bool bSet, const TexSrt& rSrt,
         TexSrtMtxProductDispatchXsi[idx](pMtx, rSrt);
     }
 
-    pMtx->m[2][0] = lbl_eu_80669CB0;
-    pMtx->m[2][1] = lbl_eu_80669CB0;
-    pMtx->m[2][2] = lbl_eu_80669CB4;
-    pMtx->m[2][3] = lbl_eu_80669CB0;
+    pMtx->m[2][0] = 0.0f;
+    pMtx->m[2][1] = 0.0f;
+    pMtx->m[2][2] = 1.0f;
+    pMtx->m[2][3] = 0.0f;
 
     return true;
 }
@@ -450,7 +450,7 @@ u32 CalcWorldMtx_Xsi(math::MTX34* pW, math::VEC3* pS, const math::MTX34* pW1,
 } // namespace g3d
 } // namespace nw4r
 
-// The literal-pool constants lbl_eu_80669CB0/B4/B8 are owned by the shared
+// The literal-pool constants 0.0f/B4/B8 are owned by the shared
 // nw4r_data.s blob in retail (.sdata2 0x248-0x250); this TU references them
 // through the extern "C" declarations in include/nw4r/g3d/dcc/g3d_xsi.h.
 // Do not define them here: local .sdata2 copies fail the unit data gate

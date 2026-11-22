@@ -31,12 +31,6 @@ extern "C" bool isInitialized__12CDeviceClockFv();
 u32* CWorkThreadSystem::sAllocFlags;
 CWorkThread** CWorkThreadSystem::sWorkThreads[2];
 
-// Reslist/CMsgParam subobject vtables (blob monolibdata labels, retail .data;
-// see owning absorb/typed defs in the defining TU). Referenced by the flat ctor below.
-extern "C" u32 lbl_eu_8056B1B0[];
-extern "C" u32 lbl_eu_8056B1BC[];
-extern "C" u32 lbl_eu_8056B1D4[];
-
 // CWorkThreadSystem::sAllocHandle is defined at the bottom of this TU; the
 // flat ctor below is a CWorkThread member, which CWorkThreadSystem befriends.
 
@@ -125,25 +119,13 @@ extern "C" void* __ct__11CWorkThreadFPCcP11CWorkThreadi(
 
     // Inlined _reslist_base<CWorkThread*> ctor: base vtable, fields,
     // sentinel node links; then the reslist ctor overrides the vptr.
-    *(void**)&self->mChildren = (void*)lbl_eu_8056B1D4;
-    self->mChildren.mList = nullptr;
-    self->mChildren.mCapacity = 0;
-    self->mChildren.unk1C = false;
-    self->mChildren.mStartNodePtr = &self->mChildren.mStartNode;
-    self->mChildren.mStartNodePtr->mNext = &self->mChildren.mStartNode;
-    self->mChildren.mStartNodePtr->mPrev = self->mChildren.mStartNode.mNext;
-    *(void**)&self->mChildren = (void*)lbl_eu_8056B1BC;
+    new (&self->mChildren) reslist<CWorkThread*>();
 
     self->mFlags = 0;
 
     // Inlined CMsgParam<8>() ctor + the thread's own unk1B8/unk1BC clear.
     CWorkThreadQueueLayout* q = reinterpret_cast<CWorkThreadQueueLayout*>(self);
-    q->queueVtbl = lbl_eu_8056B1B0;
-    q->mCapacity = 8;
-    q->mArrayPtr = q->mEntries;
-    q->mSize = 0;
-    q->mFront = 0;
-    q->field6 = 0;
+    new (&self->mMsgQueue) CMsgParam<8>();
     self->unk1BC = 0;
     q->unk1B8 = 0;
 
@@ -875,20 +857,3 @@ IWorkEventVtbl lbl_eu_8056B110 = {
 // - blob monolibdata1 dissolve. CWorkThreadSystem.cpp is its user; the
 // definition lives here because its retail storage is in this TU's range.
 mtl::ALLOC_HANDLE CWorkThreadSystem::sAllocHandle = 0xFFFFFFFF;
-
-// Dissolved .data vtables (retail 0x8056B1B0/1BC/1C8) - explicit to fill the 0x24 gap
-// The sdata RTTI structs (80663520/28/30) and rodata strings are still handled
-// via the UNIT_RULES postprocess (rename_pool + drop pad), so we leave them
-// as auto-generated. Only the three missing .data vtables are defined here.
-extern "C" u32 lbl_eu_8056B1C8[3];
-extern "C" const char lbl_eu_80522474[] = "CMsgParam<8>";
-extern "C" const char lbl_eu_80522484[] = "reslist<CWorkThread *>";
-extern "C" const char lbl_eu_8052249C[]; // (def auto-emitted; pool_patterns renames it to this label)
-extern "C" u32 lbl_eu_80663520[2] = { (u32)lbl_eu_80522474, 0 };
-extern "C" u32 lbl_eu_80663528[2] = { (u32)lbl_eu_80522484, (u32)lbl_eu_8056B1C8 };
-extern "C" u32 lbl_eu_80663530[2] = { (u32)lbl_eu_8052249C, 0 };
-extern "C" void __dt__12CMsgParam__8Fv();
-extern "C" void __dt__23reslist__P11CWorkThreadFv();
-extern "C" u32 lbl_eu_8056B1B0[3] = { (u32)lbl_eu_80663520, 0, (u32)&__dt__12CMsgParam__8Fv };
-extern "C" u32 lbl_eu_8056B1BC[3] = { (u32)lbl_eu_80663528, 0, (u32)&__dt__23reslist__P11CWorkThreadFv };
-extern "C" u32 lbl_eu_8056B1C8[3] = { (u32)lbl_eu_80663530, 0, 0 };

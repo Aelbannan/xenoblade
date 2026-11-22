@@ -48,7 +48,7 @@ extern "C" CMenuPTChangeNotice* __dt__19CMenuPTChangeNoticeFv(CMenuPTChangeNotic
         self->mVtab = (u32)&lbl_eu_80538888[0];
         self->mWorkEventVt = (u32)&lbl_eu_80538888[0x24 / 4];
         self->mScnRenderVt = (u32)&lbl_eu_80538888[0xac / 4];
-        setInputDisableTime__Q22cf9CfPadTaskFf(lbl_eu_80668B80);
+        setInputDisableTime__Q22cf9CfPadTaskFf(4.0f);
         __dt__17UnkClass_8045F564Fv(&self->mMemRegion, -1);
         __dt__9IUIWindowFv(self, 0);
         if (flags > 0) {
@@ -112,7 +112,7 @@ extern "C" int PTNotice_BuildLayout_348C(CMenuPTChangeNotice* self, CEventFile* 
     ApplyFontToTxtPanes(rootPane, (const nw4r::ut::Font*)fontResult);
 
     self->mLayout90->SetAnimationEnable(self->mAnim94, true);
-    self->mAnim94->SetFrame(lbl_eu_80668B84);
+    self->mAnim94->SetFrame(0.0f);
     self->mLayout90->Animate(0);
 
     // Default-0 text fields.
@@ -314,7 +314,7 @@ void stub_us_8029620c() {}
 // frame, switch the notice state to 2 (party-change applied).
 // ---------------------------------------------------------------------------
 extern "C" void PTNotice_Advance_3C20(CMenuPTChangeNotice* self) {
-    if (advanceAnimTransform(self->mAnim94, lbl_eu_80668B90) != 0) {
+    if (advanceAnimTransform(self->mAnim94, 1.0f) != 0) {
         self->mField98 = 2;
     }
 }
@@ -326,7 +326,7 @@ void PTNotice_HandleInput_3C64(){}
 // frame, raise the party-change trigger flag at +0x64.
 // ---------------------------------------------------------------------------
 extern "C" void PTNotice_Rewind_3D2C(CMenuPTChangeNotice* self) {
-    if (AnimRewindFrame(self->mAnim94, lbl_eu_80668B90) != 0) {
+    if (AnimRewindFrame(self->mAnim94, 1.0f) != 0) {
         self->mField64 = 1;
     }
 }

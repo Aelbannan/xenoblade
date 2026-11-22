@@ -1,15 +1,6 @@
 #include <nw4r/snd.h>
 #include <nw4r/ut.h>
 
-// Retail-owned data referenced by name so the ctor's relocations match the
-// stripped retail object (MWCC_CASES 1b float pools / retail vtables).
-// Global scope: MWCC does not mangle file-scope names, so plain extern emits
-// the exact retail symbols.
-//
-// FxDelayDpl2's vtable is emitted by MWCC from the real class below.
-
-extern const f32 lbl_eu_80669F90; // feedback clamp bound
-
 namespace nw4r {
 namespace snd {
 
@@ -156,14 +147,6 @@ void FxDelayDpl2::Shutdown() {
     GetAxfxImpl()->RestoreAlloc(allocHook, freeHook);
 }
 
-// SetParam clamp constants. Retail keeps each clamp bound as its own sdata2
-// object: the delay/delayTimeMax lower bound is lbl_eu_80669F8C (0.0f), the
-// feedback cap is lbl_eu_80669F90 (0.9f). Referencing the blob labels
-// directly stops MWCC from value-merging them with the plain 0.0f/1.0f
-// literals (which retail pools separately as 0.0f / 80669F88).
-extern "C" const f32 lbl_eu_80669F8C; // 0.0f
-extern "C" const f32 lbl_eu_80669F90; // 0.9f
-
 bool FxDelayDpl2::SetParam(const detail::FxDelayParam& rParam) {
     // Register-allocation-sensitive: MWCC assigns callee-saved locals in reverse
     // declaration order (last-declared live local -> lowest r30/r31), so `memSize`
@@ -180,28 +163,28 @@ bool FxDelayDpl2::SetParam(const detail::FxDelayParam& rParam) {
     mIir = rParam.iir;
 
     // Clamp delayTimeMax: max(x, minDelay)
-    f32 clampedMax = ut::Max(rParam.delayTimeMax, lbl_eu_80669F8C);
+    f32 clampedMax = ut::Max(rParam.delayTimeMax, 0.04f);
     bool changed = (clampedMax != mDelayExp.delayTimeMax);
     mDelayExpDpl2.delayTimeMax = clampedMax;
     mDelayExp.delayTimeMax = clampedMax;
 
     // Clamp delayTime into [minDelay, delayTimeMax]
-    f32 clampedDelay = ut::Clamp(rParam.delay, lbl_eu_80669F8C, rParam.delayTimeMax);
+    f32 clampedDelay = ut::Clamp(rParam.delay, 0.04f, rParam.delayTimeMax);
     mDelayExpDpl2.delayTime = clampedDelay;
     mDelayExp.delayTime = clampedDelay;
 
     // Clamp feedback to [maxFeedback]
-    f32 clampedFeedback = ut::Clamp(rParam.feedback, lbl_eu_80669F90, 0.0f);
+    f32 clampedFeedback = ut::Clamp(rParam.feedback, 0.0f, 0.99f);
     mDelayExpDpl2.feedback = clampedFeedback;
     mDelayExp.feedback = clampedFeedback;
 
     // Clamp iir to [1, max]
-    f32 clampedIir = ut::Clamp(rParam.iir, 1.0f, 0.0f);
+    f32 clampedIir = ut::Clamp(rParam.iir, 0.0f, 1.0f);
     mDelayExpDpl2.iir = clampedIir;
     mDelayExp.iir = clampedIir;
 
     // Clamp outGain to [1, max]
-    f32 clampedOutGain = ut::Clamp(rParam.outGain, 1.0f, 0.0f);
+    f32 clampedOutGain = ut::Clamp(rParam.outGain, 0.0f, 1.0f);
     mDelayExpDpl2.outGain = clampedOutGain;
     mDelayExp.outGain = clampedOutGain;
 

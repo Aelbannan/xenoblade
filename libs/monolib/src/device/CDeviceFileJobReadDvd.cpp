@@ -23,7 +23,7 @@ bool CDeviceFileJobReadDvd::cancel(const char* pFilename) {
 
     if (!wkIsCurrent()) {
         CDeviceFile::removeFileJob(this);
-    } else if (CDeviceFile::func_8044E768()) {
+    } else if (CDeviceFile::isStandbyReady()) {
         CDeviceFileCri::abortRead();
     } else {
         CDeviceFileDvd::cancelCurrent();
@@ -36,7 +36,7 @@ bool CDeviceFileJobReadDvd::cancel(CFileHandle* pHandle) {
 
     if (!wkIsCurrent()) {
         CDeviceFile::removeFileJob(this);
-    } else if (CDeviceFile::func_8044E768()) {
+    } else if (CDeviceFile::isStandbyReady()) {
         CDeviceFileCri::abortRead();
     } else {
         CDeviceFileDvd::cancelCurrent();

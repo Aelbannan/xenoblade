@@ -127,10 +127,6 @@ struct CChainBigObj {
 // Shared external declarations
 extern "C" void ColiSetMoveEnableFlag(void*, int);
 extern u8* findChainBattleActor(cf::CChainActorPc*);
-__declspec(section ".sdata2") __attribute__((aligned(8))) const float lbl_eu_80668AE8 = 1.0f;
-__declspec(section ".sdata2") const float lbl_eu_80668AEC = 0.0f;
-__declspec(section ".sdata2") const float lbl_eu_80668AF0 = 0.01f;
-__declspec(section ".sdata2") __attribute__((aligned(8))) const double lbl_eu_80668AF8 = 4503601774854144.0;
 
 // Main per-frame update for chain actor PC.
 // Uses multi-exit guard pattern to match retail control flow.
@@ -170,7 +166,7 @@ state5_check:
         float f87 = ((float(*)(u8*))(*(u8***)obj)[87])(obj);
         if (f87 <= f86) {
             f87 = ((float(*)(u8*))(*(u8***)obj)[87])(obj);
-            ((void(*)(u8*, float))(*(u8***)obj)[84])(obj, f87 - lbl_eu_80668AE8);
+            ((void(*)(u8*, float))(*(u8***)obj)[84])(obj, f87 - 1.0f);
         }
     }
 state6_check:
@@ -194,7 +190,7 @@ store_455a:
 tail_check:
     if ((self->unk6C & 1) || (self->unk6C & 2)) {
         float f1 = ((float(*)(u8*))(*(u8***)((u8*)big + 0x3e9c))[35])((u8*)big + 0x3e9c);
-        if (f1 > lbl_eu_80668AEC) {
+        if (f1 > 0.0f) {
             ColiSetMoveEnableFlag(big->field_44a8, 1);
         } else {
             ColiSetMoveEnableFlag(big->field_44a8, 0);
@@ -251,11 +247,11 @@ arg0:
     float f30;
     if (((int(*)(u8*))(*(u8***)unk0obj)[164])(unk0obj) != 0) {
         u8* param = (u8*)((int(*)(u8*))(*(u8***)unk0obj)[164])(unk0obj);
-        f30 = lbl_eu_80668AF0 * (float)(s16)IdTable_SumValues((CUnkObj8025FB10*)param, 0x44);
+        f30 = 0.01f * (float)(s16)IdTable_SumValues((CUnkObj8025FB10*)param, 0x44);
     } else {
-        f30 = lbl_eu_80668AEC;
+        f30 = 0.0f;
     }
-    if (lbl_eu_80668AEC < f30) {
+    if (0.0f < f30) {
         if (((int(*)(u8*))(*(u8***)unk0obj)[175])(unk0obj) == 0) {
             u8* list = getListB28();
             u8* sentinel = *(u8**)(list + 4);

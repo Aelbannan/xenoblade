@@ -22,11 +22,6 @@ bool CalcTexMtx_3dsmax(math::MTX34* pMtx, bool set, const TexSrt& rSrt,
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 typedef void (*TexSrtMtxFunc)(nw4r::math::MTX34* pMtx,
                               const nw4r::g3d::TexSrt& rSrt);
-extern "C" const float lbl_eu_80669CC0; // 0.0f
-extern "C" const float lbl_eu_80669CC4; // 0.5f
-extern "C" const float lbl_eu_80669CC8; // 1.0f
-extern "C" const float lbl_eu_80669CCC; // 256.0f/360.0f (deg_to_fidx)
-extern "C" const float lbl_eu_80669CD0; // -0.5f
 extern "C" const TexSrtMtxFunc TexSrtMtxSetDispatch[];
 extern "C" const TexSrtMtxFunc TexSrtMtxProductDispatch[];
 

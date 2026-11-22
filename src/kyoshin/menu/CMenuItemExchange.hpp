@@ -118,7 +118,5 @@ extern "C" void BgTex_Tick_3D54(CBgTex* self);          // bg per-frame update
 
 // Shared data imports (MWCC does not mangle global-scope data names).
 extern char lbl_eu_80505324[];   // split1 .rodata string pool (Init title name)
-extern u8 lbl_eu_8066442C;       // .sbss (item-box line tab mode latch)
 extern const f32 lbl_eu_80667E78; // .sdata2 (fade-out/state float)
 extern const f32 lbl_eu_80667E7C; // .sdata2 (timer increment)
-extern const f32 lbl_eu_80667E80; // .sdata2 (timer clamp)

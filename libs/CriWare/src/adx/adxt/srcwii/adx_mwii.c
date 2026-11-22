@@ -19,9 +19,9 @@ extern void SVM_SetCbLock(void* cb, void* ctx);
 extern void SVM_SetCbUnlock(void* cb, void* ctx);
 extern void SVM_SetCbBdr(s32 idx, void* fn, void* ctx);
 extern char lbl_eu_805196A0[];
-__declspec(section ".rodata") __attribute__((aligned(8))) const void* lbl_eu_805196D0 = lbl_eu_805196A0;
-__declspec(section ".rodata") __attribute__((aligned(1))) const char lbl_eu_805196D4[49] = "1060102: Internal Error: adxm_goto_mwidle_border";
-__declspec(section ".rodata") __attribute__((aligned(8))) const char lbl_eu_80519708[60] = "\nADXWIISDK Ver.30Jul2008Patch04 Build:Oct 28 2009 21:11:25\n";
+const void* const lbl_eu_805196D0 = lbl_eu_805196A0;
+__attribute__((aligned(1))) const char lbl_eu_805196D4[49] = "1060102: Internal Error: adxm_goto_mwidle_border";
+__attribute__((aligned(8))) const char lbl_eu_80519708[60] = "\nADXWIISDK Ver.30Jul2008Patch04 Build:Oct 28 2009 21:11:25\n";
 
 // Callback pair stored in the framework state (fn at 0x68, context at 0x6C).
 struct AdxMwCb {
@@ -128,23 +128,23 @@ void ADXM_Unlock(void) { SVM_Unlock(); }
 
 
 void adxm_lock(void) {
-    u8* g = (u8*)&adxm_frm;
-    volatile u32* lockcnt = (volatile u32*)((u8*)g + 0x40);
+    struct AdxmBase* g = &adxm_frm;
+    volatile s32* lockcnt = &g->field_0x40;
     if (*lockcnt == 0) {
         u32 irq;
         OSThread* t;
         s32 p;
         irq = OSDisableInterrupts();
         OSDisableScheduler();
-        *(u32*)((u8*)g + 0x70) = 1;
+        g->field_0x70 = 1;
         t = OSGetCurrentThread();
         p = OSGetThreadPriority(t);
-        OSSetThreadPriority(t, *(s32*)((u8*)g + 0x10));
-        *(s32*)((u8*)g + 0x74) = p;
-        *(u32*)((u8*)g + 0x70) = 0;
+        OSSetThreadPriority(t, g->field_0x10.field_0x00);
+        g->field_0x74 = p;
+        g->field_0x70 = 0;
         OSEnableScheduler();
         OSRestoreInterrupts(irq);
-        OSResumeThread((OSThread*)((u8*)g + 0x78));
+        OSResumeThread(&g->field_0x78);
     }
     *lockcnt += 1;
 }

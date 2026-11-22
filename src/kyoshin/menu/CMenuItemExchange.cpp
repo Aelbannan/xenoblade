@@ -19,6 +19,11 @@
 extern "C" void cbRenderBefore__17CMenuItemExchangeFv(void*);
 extern "C" void __dt__17CMenuItemExchangeFv(void*, int);
 
+// name-guess: ItemEx_Create/HasInstance treat this as the screen singleton at 0x80664428.
+CMenuItemExchange* sItemExInstance = NULL;
+// name-guess: item-box line tab mode latch at 0x8066442C, read by ItemEx_GetFlagByte.
+u8 sItemExTabMode = 0;
+
 /**
  * Offset from the OC thunk interface (CMenuItemExchangeOC*) to the
  * containing CMenuItemExchange object. The OC system passes a pointer
@@ -40,7 +45,7 @@ CMenuItemExchange::CMenuItemExchange(CScn* scene, u32 arg)
     mFloat511C = initTimer;
     mFloat5120 = initTimer;
     field_5118 = 0;
-    lbl_eu_8066442C = 0;
+    sItemExTabMode = 0;
 }
 
 // Destructor: members are destroyed in reverse order (grid, line, title,
@@ -95,7 +100,6 @@ void CMenuItemExchange::Init() {
 
 extern "C" void waitForDrawDone__9CDeviceVIFv();
 extern "C" void BgTex_Release_3D9C(void*);
-extern u32 lbl_eu_80664428;
 
 // Detach the render callback, tear down the embedded widgets, clear the
 // global active flag, and reset the CfGameManager state.
@@ -107,7 +111,7 @@ void CMenuItemExchange::Term() {
     mTitleAHelp.teardown();
     mItemBoxLine.UnloadFiles();
     mItemBoxGrid.UnloadItemBox();
-    lbl_eu_80664428 = 0;
+    sItemExInstance = 0;
     setPresentationFlag__Q22cf13CfGameManagerFv(0);
 }
 
@@ -181,23 +185,21 @@ body:
  * process and store/return the instance (0 when one already exists). */
 extern "C" CMenuItemExchange* ItemEx_Create(CProcess* registParent, CScn* scene,
                                             u32 arg) {
-    if (lbl_eu_80664428 != 0) {
+    if (sItemExInstance != NULL) {
         return NULL;
     }
     CMenuItemExchange* obj = new (mtl::MemManager::allocate(
         0x5124, reinterpret_cast<u32>(getWorkMem__17CWorkThreadSystemFv())))
         CMenuItemExchange(scene, arg);
-    lbl_eu_80664428 = reinterpret_cast<u32>(obj);
-    Regist__8CProcessFP8CProcessb(reinterpret_cast<CProcess*>(lbl_eu_80664428),
-                                  registParent, false);
-    return reinterpret_cast<CMenuItemExchange*>(lbl_eu_80664428);
+    sItemExInstance = obj;
+    Regist__8CProcessFP8CProcessb(sItemExInstance, registParent, false);
+    return sItemExInstance;
 }
 
-// (lbl_eu_80664428 != 0)
-extern "C" bool ItemEx_HasInstance() { extern u32 lbl_eu_80664428; return lbl_eu_80664428 != 0; }
+// (sItemExInstance != 0)
+extern "C" bool ItemEx_HasInstance() { return sItemExInstance != NULL; }
 
-extern u8 lbl_eu_8066442C;
-u8 ItemEx_GetFlagByte() { return lbl_eu_8066442C; }
+u8 ItemEx_GetFlagByte() { return sItemExTabMode; }
 
 /* Load-finish hook: once the background layout and item-box line are ready,
  * hide the title/help bar prompt, finish the line load, ready the grid and
@@ -314,7 +316,7 @@ void CMenuItemExchange::Phase6Input() {
     // Help bar follows the grid's current mode.
     mTitleAHelp.func_801C41E8(mItemBoxGrid.GetPromptState());
     if (mItemBoxGrid.GetExchFlag52C() != 0) {
-        lbl_eu_8066442C = mItemBoxGrid.GetField52D();
+        sItemExTabMode = mItemBoxGrid.GetField52D();
         mTitleAHelp.beginClose();
         mItemBoxGrid.AdvanceBoxState();
         field_5118 = 3;

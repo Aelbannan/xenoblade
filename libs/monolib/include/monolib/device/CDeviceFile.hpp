@@ -23,7 +23,7 @@ public:
     bool clearParent();
     static void cancelJobsForPath(const char* pPath);
     static int isInitialized();
-    static bool func_8044E768();
+    static bool isStandbyReady();
     static bool tryUpdateJobPriority(CFileHandle* pFileHandle, int param);
     bool updateJobPriority(CFileHandle* pFileHandle, int param);
     static void setHandleParam(CFileHandle* pHandle, unsigned long param);

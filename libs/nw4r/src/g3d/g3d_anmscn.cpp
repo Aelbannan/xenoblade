@@ -72,7 +72,7 @@ void AnmScn::GetLightSetting(LightSetting* pSetting) {
     }
 }
 
-extern "C" const nw4r::g3d::G3dObj::ResNameDataT<sizeof("AnmScn")> lbl_eu_8051D620 = {sizeof("AnmScn"), "AnmScn"};
+NW4R_G3D_RTTI_DEF(AnmScn);
 
 // G3dObj base-chain check as an inlined by-value helper: the parameter copy
 // is the CSE barrier that makes MWCC reload `other` at the base link, the
@@ -82,14 +82,14 @@ static bool anmScnBaseIsDerivedFrom(G3dObj::TypeObj other) {
 }
 
 bool AnmScn::IsDerivedFrom(G3dObj::TypeObj other) const {
-    if (other == TypeObj(lbl_eu_8051D620)) {
+    if (other == TypeObj(TYPE_NAME)) {
         return true;
     }
     return anmScnBaseIsDerivedFrom(other);
 }
 
 const G3dObj::TypeObj AnmScn::GetTypeObj() const {
-    return TypeObj(lbl_eu_8051D620);
+    return TypeObj(TYPE_NAME);
 }
 
 const char* AnmScn::GetTypeName() const {
@@ -97,7 +97,7 @@ const char* AnmScn::GetTypeName() const {
 }
 
 
-extern "C" const nw4r::g3d::G3dObj::ResNameDataT<sizeof("AnmScnRes")> lbl_eu_8051D630 = {sizeof("AnmScnRes"), "AnmScnRes"};
+NW4R_G3D_RTTI_DEF(AnmScnRes);
 
 extern "C" const nw4r::g3d::G3dObj::ResNameDataT<11> lbl_eu_8051D640 = {7, "G3dObj"};
 extern "C" const nw4r::g3d::G3dObj::ResNameDataT<11> lbl_eu_8051D650 = {7, "AnmObj"};
@@ -105,19 +105,19 @@ extern "C" const nw4r::g3d::G3dObj::ResNameDataT<11> lbl_eu_8051D650 = {7, "AnmO
 // AnmScn/G3dObj base-chain check, same inlined-helper convention as
 // anmScnBaseIsDerivedFrom above.
 static bool anmScnResBaseIsDerivedFrom(G3dObj::TypeObj other) {
-    return other == G3dObj::TypeObj(lbl_eu_8051D620) ? true
+    return other == AnmScn::GetTypeObjStatic() ? true
          : (other == G3dObj::TypeObj(lbl_eu_8051D640));
 }
 
 bool AnmScnRes::IsDerivedFrom(G3dObj::TypeObj other) const {
-    if (other == TypeObj(lbl_eu_8051D630)) {
+    if (other == TypeObj(TYPE_NAME)) {
         return true;
     }
     return anmScnResBaseIsDerivedFrom(other);
 }
 
 const G3dObj::TypeObj AnmScnRes::GetTypeObj() const {
-    return TypeObj(lbl_eu_8051D630);
+    return TypeObj(TYPE_NAME);
 }
 
 const char* AnmScnRes::GetTypeName() const {
@@ -396,7 +396,7 @@ void AnmScnRes::SetFrame(f32 frame) {
 
 
 float nw4r::g3d::AnmScnRes::GetFrame() const {
-    return *(const float*)((const unsigned char*)this + 0xC);
+    return GetFrm();
 }
 namespace nw4r {
 namespace g3d {
@@ -418,11 +418,7 @@ void AnmScnRes::SetUpdateRate(f32 rate) {
 } // namespace nw4r
 
 
-float nw4r::g3d::AnmScnRes::GetUpdateRate() const { return *(const float*)((const char*)this + 0x10); }
-// FrameCtrl::smBaseUpdateRate (1.0f), shipped in retail .sdata2 as this named
-// object (file scope so the symbol stays unmangled).
-extern const f32 lbl_eu_80663460;
-
+float nw4r::g3d::AnmScnRes::GetUpdateRate() const { return GetRate(); }
 // Retail .sdata2 float 2.0f used by AnmScnRes::GetCamera's ortho height calc.
 extern const f32 lbl_eu_80669BB8;
 
@@ -874,15 +870,3 @@ void AnmScnRes::UpdateCache() {
 
 } // namespace g3d
 } // namespace nw4r
-
-
-void IsDerivedFrom__Q34nw4r3g3d9AnmScnResCFQ44nw4r3g3d6G3dObj7TypeObj(){}
-void IsDerivedFrom__Q34nw4r3g3d6AnmScnCFQ44nw4r3g3d6G3dObj7TypeObj(){}
-void GetTypeName__Q34nw4r3g3d9AnmScnResCFv(){}
-extern const char lbl_eu_8051D630[];
-
-const void* GetTypeObj__Q34nw4r3g3d9AnmScnResCFv() {
-    return lbl_eu_8051D630;
-}
-void GetTypeName__Q34nw4r3g3d6AnmScnCFv(){}
-extern "C" void* GetTypeObj__Q34nw4r3g3d6AnmScnCFv(void) { return (void*)lbl_eu_8051D620; }

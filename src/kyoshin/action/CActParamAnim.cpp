@@ -420,8 +420,9 @@ float CActParamAnim::getAttachedAnimTime() {
     return 0.0f;
 }
 
+extern "C" float simGetLeafAnimDist2(void*);
+
 float CActParamAnim::getAttachedAnimRate() {
-    extern float simGetLeafAnimDist2(void*);
     void* obj = this->object3A0;
     if (obj != 0) return simGetLeafAnimDist2(obj);
     return 0.0f;
@@ -434,9 +435,8 @@ void CActParamAnim::callObjUpdate() {
 }
 
 float CActParamAnim::getAttachedAnimScale() {
-    extern float simGetLeafDist7B0(void*);
     void* obj = this->object3A0;
-    if (obj != 0) return simGetLeafDist7B0(obj);
+    if (obj != 0) return simGetLeafDist7B0((u8*)obj);
     return 0.0f;
 }
 

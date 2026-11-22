@@ -4,26 +4,21 @@
 #include <revolution/OS.h>
 #include <revolution/SC.h>
 
+const char* NW4R_SND_Version_ =
+    "<< NW4R    - SND \tfinal   build: Nov 20 2008 03:40:00 (0x4199_60831) >>";
+
 namespace nw4r {
 namespace snd {
 
-extern "C" {
-__declspec(section ".data") __attribute__((aligned(8))) const unsigned char lbl_eu_8056AC30[0x48] = {
-    0x3c, 0x3c, 0x20, 0x4e, 0x57, 0x34, 0x52, 0x20, 0x20, 0x20, 0x20, 0x2d, 0x20, 0x53, 0x4e, 0x44,
-    0x20, 0x09, 0x66, 0x69, 0x6e, 0x61, 0x6c, 0x20, 0x20, 0x20, 0x62, 0x75, 0x69, 0x6c, 0x64, 0x3a,
-    0x20, 0x4e, 0x6f, 0x76, 0x20, 0x32, 0x30, 0x20, 0x32, 0x30, 0x30, 0x38, 0x20, 0x30, 0x33, 0x3a,
-    0x34, 0x30, 0x3a, 0x30, 0x30, 0x20, 0x28, 0x30, 0x78, 0x34, 0x31, 0x39, 0x39, 0x5f, 0x36, 0x30,
-    0x38, 0x33, 0x31, 0x29, 0x20, 0x3e, 0x3e, 0x00
-};
-__declspec(section ".sdata") __attribute__((aligned(4))) const char* lbl_eu_806634E8[2] = { (const char*)lbl_eu_8056AC30, nullptr };
+namespace {
+bool sInitialized;
 }
+
+int SoundSystem::sMaxVoices;
 
 // Retail bss companions for this TU (the large work buffer and the cookie)
 extern "C" {
 char lbl_eu_80638900[0x10];
-char lbl_eu_80638C40[0x16E00];
-bool lbl_eu_80665508;
-int lbl_eu_8066550C;
 // Real name from the owning header: SoundSystem::sTaskThread.
 detail::TaskThread sTaskThread;
 }
@@ -35,20 +30,21 @@ void SoundSystem::InitSoundSystem(s32 soundThreadPriority,
     param.soundThreadStackSize = 0x4000;
     param.dvdThreadPriority = dvdThreadPriority;
     param.dvdThreadStackSize = 0x4000;
-    InitSoundSystem(param, lbl_eu_80638C40, 0x16E00);
+    static char defaultSoundSystemWork[0x16E00];
+    InitSoundSystem(param, defaultSoundSystemWork, 0x16E00);
 }
 
 void SoundSystem::InitSoundSystem(const SoundSystemParam& rParam, void* pWork,
                                   u32 workSize) {
 #pragma unused(workSize)
 
-    if (lbl_eu_80665508) {
+    if (sInitialized) {
         return;
     }
 
-    lbl_eu_80665508 = true;
+    sInitialized = true;
 
-    OSRegisterVersion(lbl_eu_806634E8[0]);
+    OSRegisterVersion(NW4R_SND_Version_);
 
     detail::AxManager::GetInstance().Init();
 
@@ -87,34 +83,34 @@ void SoundSystem::InitSoundSystem(const SoundSystemParam& rParam, void* pWork,
     u8* pSoundThreadStack = pPtr;
     pPtr += rParam.soundThreadStackSize;
 
-    lbl_eu_8066550C = AXGetMaxVoices();
+    SoundSystem::sMaxVoices = AXGetMaxVoices();
 
     // AxVoiceManager: save pointer, advance after first GetRequiredMemSize,
     // call again for setup size
     u8* pAxVoiceWork = pPtr;
     pPtr += detail::AxVoiceManager::GetInstance().GetRequiredMemSize(
-        lbl_eu_8066550C);
+        SoundSystem::sMaxVoices);
     detail::AxVoiceManager::GetInstance().Setup(
         pAxVoiceWork,
         detail::AxVoiceManager::GetInstance().GetRequiredMemSize(
-            lbl_eu_8066550C));
+            SoundSystem::sMaxVoices));
 
     // VoiceManager: same pattern
     u8* pVoiceWork = pPtr;
     pPtr += detail::VoiceManager::GetInstance().GetRequiredMemSize(
-        lbl_eu_8066550C);
+        SoundSystem::sMaxVoices);
     detail::VoiceManager::GetInstance().Setup(
         pVoiceWork,
         detail::VoiceManager::GetInstance().GetRequiredMemSize(
-            lbl_eu_8066550C));
+            SoundSystem::sMaxVoices));
 
     // ChannelManager: do NOT advance pPtr; pass maxVoices, use current pPtr for Setup
     detail::ChannelManager::GetInstance().GetRequiredMemSize(
-        lbl_eu_8066550C);
+        SoundSystem::sMaxVoices);
     detail::ChannelManager::GetInstance().Setup(
         pPtr,
         detail::ChannelManager::GetInstance().GetRequiredMemSize(
-            lbl_eu_8066550C));
+            SoundSystem::sMaxVoices));
 
     // Initialize the sequence player subsystem before creating threads
     detail::SeqPlayer::InitSeqPlayer();
@@ -128,7 +124,7 @@ void SoundSystem::InitSoundSystem(const SoundSystemParam& rParam, void* pWork,
 }
 
 void SoundSystem::ShutdownSoundSystem() {
-    if (!lbl_eu_80665508) {
+    if (!sInitialized) {
         return;
     }
 
@@ -142,11 +138,11 @@ void SoundSystem::ShutdownSoundSystem() {
     detail::AxVoiceManager::GetInstance().Shutdown();
     detail::AxManager::GetInstance().Shutdown();
 
-    lbl_eu_80665508 = false;
+    sInitialized = false;
 }
 
 bool SoundSystem::IsInitializedSoundSystem() {
-    return lbl_eu_80665508;
+    return sInitialized;
 }
 
 } // namespace snd

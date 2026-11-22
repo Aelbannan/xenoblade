@@ -196,8 +196,8 @@ extern u32 adxf_ftbl_idx;                         /* 0x868 */
 extern struct AdxFsPt* adxf_curpt;             /* 0x86C current partition */
 extern u32 adxf_pt_id;                         /* 0x870 */
 extern u32 adxf_pt_stat;                         /* 0x874 */
-extern u32 lbl_eu_805E0628;                         /* 0x878 */
-extern u32 lbl_eu_805E062C;                         /* 0x87C */
+extern u32 adxf_ftbl_buf;                         /* 0x878 */
+extern u32 adxf_ftbl_nsct;                         /* 0x87C */
 extern unsigned char adxf_workarea[0x2080];       /* 0x880 work area */
 
 struct AdxFsCb {
@@ -310,8 +310,8 @@ int adxf_GetPtStat(int a) {
     if (status == 1) {
         /* partition open: issue a buffered read of the file table */
         {
-            u32 rdsz = (u32)lbl_eu_805E0628;
-            void *rdst = (void *)lbl_eu_805E062C;
+            u32 rdsz = (u32)adxf_ftbl_buf;
+            void *rdst = (void *)adxf_ftbl_nsct;
             void *rsrc = (void *)adxf_curpt;
             if (rdsz & 0x1F) {
                 ADXERR_CallErrFunc1_(adxf_mes.e0120401);
@@ -397,7 +397,7 @@ int adxf_GetPtStat(int a) {
         htbl = htot + 1;
     }
     if (pt->sectCnt == 0) {
-        buf = (u8 *)lbl_eu_805E0628;
+        buf = (u8 *)adxf_ftbl_buf;
         if (memcmp(buf, adxf_mes.afs, 3) != 0) {
             ADXERR_CallErrFunc1_(adxf_mes.e0040701);
             /* bad header: close the partition and reset */
@@ -456,7 +456,7 @@ int adxf_GetPtStat(int a) {
             }
             adxf_curpt = 0;
             adxf_ftbl_idx = 0;
-            lbl_eu_805E062C = 0;
+            adxf_ftbl_nsct = 0;
             return (int)adxf_pt_stat;
         }
         nfiles = (int)ADX_RD32(buf + 4);
@@ -518,7 +518,7 @@ int adxf_GetPtStat(int a) {
             }
             adxf_curpt = 0;
             adxf_ftbl_idx = 0;
-            lbl_eu_805E062C = 0;
+            adxf_ftbl_nsct = 0;
             return (int)adxf_pt_stat;
         }
         pt->hdr.hw_0C = (u16)nfiles;
@@ -529,26 +529,26 @@ int adxf_GetPtStat(int a) {
             pt->fstm = (void *)((((u32)pt->sectCnt + 1) * 2 + 0x11A) & ~3u);
         }
         if (pt->hdr.b.b0F == 1) {
-            *wtot = ADX_RD32((u8 *)lbl_eu_805E0628 + 8);
+            *wtot = ADX_RD32((u8 *)adxf_ftbl_buf + 8);
         } else {
-            *htot = (u16)(((int)ADX_RD32((u8 *)lbl_eu_805E0628 + 8) + 0x400) >> 11);
+            *htot = (u16)(((int)ADX_RD32((u8 *)adxf_ftbl_buf + 8) + 0x400) >> 11);
         }
         i = 3;
     } else {
         i = 1;
     }
 
-    cnt = ((lbl_eu_805E062C << 11) + 2) >> 2;
+    cnt = ((adxf_ftbl_nsct << 11) + 2) >> 2;
     idx = adxf_ftbl_idx;
     for (; i < cnt; i += 2) {
         if (pt->hdr.b.b0F == 1) {
             /* word table: one 32-bit length per file */
-            wtbl[idx] = ADX_RD32((u8 *)lbl_eu_805E0628 + i * 4);
+            wtbl[idx] = ADX_RD32((u8 *)adxf_ftbl_buf + i * 4);
             idx++;
             adxf_ftbl_idx = idx;
         } else {
             /* halfword table: 16-bit sector counts */
-            val = (int)ADX_RD32((u8 *)lbl_eu_805E0628 + i * 4);
+            val = (int)ADX_RD32((u8 *)adxf_ftbl_buf + i * 4);
             sct = (val + 0x400) >> 11;
             if (val % 2048 > 0) {
                 sct++;
@@ -611,7 +611,7 @@ int adxf_GetPtStat(int a) {
                 }
                 adxf_curpt = 0;
                 adxf_ftbl_idx = 0;
-                lbl_eu_805E062C = 0;
+                adxf_ftbl_nsct = 0;
                 return (int)adxf_pt_stat;
             }
             htbl[idx] = (u16)sct;
@@ -675,13 +675,13 @@ int adxf_GetPtStat(int a) {
             }
             adxf_curpt = 0;
             adxf_ftbl_idx = 0;
-            lbl_eu_805E062C = 0;
+            adxf_ftbl_nsct = 0;
             break;
         }
     }
     {
-        u32 rdsz = (u32)lbl_eu_805E0628;
-        void *rdst = (void *)lbl_eu_805E062C;
+        u32 rdsz = (u32)adxf_ftbl_buf;
+        void *rdst = (void *)adxf_ftbl_nsct;
         void *rsrc = (void *)adxf_curpt;
         if (i >= cnt) {
             /* read the next chunk of the file table */
@@ -748,7 +748,7 @@ int adxf_GetPtStat(int a) {
             }
             adxf_curpt = 0;
             adxf_ftbl_idx = 0;
-            lbl_eu_805E062C = 0;
+            adxf_ftbl_nsct = 0;
         } else {
             if (adxf_curpt == 0) {
                 ADXERR_CallErrFunc1_(adxf_mes.e9040832);
@@ -1638,5 +1638,9 @@ char *ADXF_GetFnameFromPt(int idx) {
  * their own @ha/@l symbol (no section anchor), as retail does. MWCC emits
  * .bss objects in reverse definition order. */
 unsigned char adxf_workarea[0x2080];       /* 0x880 work area */
-u32 lbl_eu_805E062C;                         /* 0x87C */
-u32 lbl_eu_805E0628;                         /* 0x878 */
+// name-guess: 0x87C is the AFS file-table sector count: adxf_GetPtStat
+// shifts it left by 11 to form the copy loop bound and clears it on read failure.
+u32 adxf_ftbl_nsct;                         /* 0x87C */
+// name-guess: 0x878 is the base of the AFS file-table buffer: it is passed to
+// memcmp(buf, adxf_mes.afs, 3) and read as ADX_RD32(base + i * 4).
+u32 adxf_ftbl_buf;                         /* 0x878 */

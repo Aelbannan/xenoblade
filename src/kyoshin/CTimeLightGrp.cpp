@@ -63,15 +63,15 @@ extern "C" CTimeLightGrp_BaseLayout* __ct__CTimeLightGrp(CTimeLightGrp_BaseLayou
     *(void**)((u8*)self + 8) = lbl_eu_80526430;
 
     // Zero extra float fields
-    p->mVal0 = lbl_eu_80666038;
-    p->mVal1 = lbl_eu_80666038;
-    p->mVal2 = lbl_eu_80666038;
-    p->mVal3 = lbl_eu_80666038;
-    p->mScale = lbl_eu_80666038;
+    p->mVal0 = 1.0f;
+    p->mVal1 = 1.0f;
+    p->mVal2 = 1.0f;
+    p->mVal3 = 1.0f;
+    p->mScale = 1.0f;
 
     // Allocate and initialise node array
     base->mList = (_reslist_node<CVirtualLightObjPtr>*)
-        allocate_array__Q23mtl10MemManagerFUlUl(
+        mtl::MemManager::allocate_array(
             0x180, (u32)Scn_CallUnk8C_V10(parent));
 
     for (i = 0; i < 32; i++) {

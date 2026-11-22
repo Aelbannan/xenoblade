@@ -9,7 +9,7 @@
 // CPlayAwardList vtable and base list (.data 0x80537C20..0x80537CB8), its
 // RTTI record (.sdata 0x806629D0), its "CPlayAwardList" type-name string and
 // the string pool that follows it (.rodata 0x8050E7B0..0x8050E958), the
-// sdata2 pool from 0x806689A8 and the lbl_eu_806648A8 scratch word (.sbss).
+// sdata2 pool from 0x806689A8 and the sPlayAwardBdat scratch word (.sbss).
 //
 // Only the declarations come from CMenuPlayAward.hpp; the class members are
 // defined here.
@@ -64,8 +64,8 @@ void PlayAward_BuildEntries(CPlayAwardEntryArray* self) {
         return;
     }
 
-    char* const s = lbl_eu_8050E7C0;
-    void* bdat = lbl_eu_806648A8;
+    const char* const s = "JNL_playaward";
+    void* bdat = sPlayAwardBdat;
     void* fp = getFP(s);
     self->field_1001 = (u8)Bdat_GetMaxRow_B1EC(fp);
 
@@ -95,8 +95,8 @@ void PlayAward_BuildEntries(CPlayAwardEntryArray* self) {
         for (u8 inner = 0; inner < (self->field_1001 - 1) - outer; inner++) {
             u8 a = buf[inner];
             u8 b = buf[inner + 1];
-            if (BdatGetU8Direct((const void*)bdat, &s[0xe], a) >
-                BdatGetU8Direct((const void*)bdat, &s[0xe], b)) {
+            if (BdatGetU8Direct((const void*)bdat, "order", a) >
+                BdatGetU8Direct((const void*)bdat, "order", b)) {
                 buf[inner] = b;
                 buf[inner + 1] = a;
                 swapped = 1;
@@ -107,14 +107,14 @@ void PlayAward_BuildEntries(CPlayAwardEntryArray* self) {
 
     // Build the per-page award entries: bind the text for each award and
     // append it to the page indexed by its type key.
-    char* def = BdatTouchStringCell(&s[0x14], &s[0x1f], 0x10);
+    char* def = BdatTouchStringCell("MNU_update", "info", 0x10);
     for (u8 k = 0; k < count; k++) {
         u8 val = buf[k];
-        u8 page = (u8)(BdatGetU8Direct((const void*)bdat, &s[0x24], val) - 1);
+        u8 page = (u8)(BdatGetU8Direct((const void*)bdat, "genre", val) - 1);
         int has = CtrlRemote_TouchBitByArg(0x312c + val % 200) != 0;
 
-        u8 key2 = BdatGetU8Direct((const void*)bdat, &s[0x2a], val);
-        u16 key3 = BdatGetU16Direct(bdat, &s[0x36], val);
+        u8 key2 = BdatGetU8Direct((const void*)bdat, "com1_terms1", val);
+        u16 key3 = BdatGetU16Direct(bdat, "com1_terms2", val);
         int flag = 0;
         if (key2 <= self->field_1000 && key3 <= CtrlRemote_TouchBitByArg(0x20)) {
             flag = 1;
@@ -123,11 +123,11 @@ void PlayAward_BuildEntries(CPlayAwardEntryArray* self) {
         char* s1;
         char* s2;
         if (has != 0) {
-            s1 = BdatGetPtrDirect(fp, &s[0x42], val);
-            s2 = BdatGetPtrDirect(bdat, &s[0x48], val);
+            s1 = BdatGetPtrDirect(fp, "title", val);
+            s2 = BdatGetPtrDirect(bdat, "comment2", val);
         } else if (flag != 0) {
             s1 = def;
-            s2 = BdatGetPtrDirect(bdat, &s[0x51], val);
+            s2 = BdatGetPtrDirect(bdat, "comment1", val);
         } else {
             s1 = def;
             s2 = def;
@@ -178,9 +178,9 @@ CPlayAwardList::~CPlayAwardList() {}
 // KyoshinHeap_GetField44). Then build the scroll bar layout and clear the flag byte.
 void PlayAward_LoadLayouts(CPlayAwardList* self) {
     self->mFileHandle = CDeviceFile::readFile(
-        mtl::MemManager::getHandleMEM2(), &lbl_eu_8050E7C0[0x5a], self, 0, 0);
+        mtl::MemManager::getHandleMEM2(), "menu/jp/PlayAwardList.arc", self, 0, 0);
     self->mFileHandle2 = CDeviceFile::readCommonArchiveFile(
-        KyoshinHeap_GetField44(), &lbl_eu_8050E7C0[0x74], self, 0, 0);
+        KyoshinHeap_GetField44(), "/common/jp/bdat_menu_award.bin", self, 0, 0);
     self->mScrollBar.loadLayoutArc();
     self->field_0x8A = 0;
 }
@@ -505,9 +505,9 @@ void PlayAward_RefreshEntryPanes(CPlayAwardList* self) {
     for (u8 i = 0; i < 9; i++) {
         CPlayAwardEntry* entry = reinterpret_cast<CPlayAwardEntry*>(
             PlayAward_FindEntry(&self->mEntryArray, (u8)(i + self->field_0x8E)));
-        sprintf(buf, &lbl_eu_8050E7C0[0x93], i + 1);
+        sprintf(buf, "txt_tit%02d", i + 1);
         LayoutSetTextBoxFmtValue(self->mLayout20, buf, reinterpret_cast<char*>(entry->word0), 0);
-        sprintf(buf, &lbl_eu_8050E7C0[0x9f], i + 1);
+        sprintf(buf, "txt_exp%02d", i + 1);
         LayoutSetTextBoxFmtValue(self->mLayout20, buf, reinterpret_cast<char*>(entry->word1),
                       self->field_0x2C);
     }
@@ -519,10 +519,10 @@ void PlayAward_RefreshEntryPanes(CPlayAwardList* self) {
 void PlayAward_RefreshCursor(CPlayAwardList* self) {
     nw4r::math::VEC3 pos;
     char buf[0x20];
-    sprintf(buf, &lbl_eu_8050E7C0[0x93], self->field_0x8C + 1);
+    sprintf(buf, "txt_tit%02d", self->field_0x8C + 1);
     self->mCursor.SetVisible(1);
     nw4r::lyt::Pane* pane1 = self->mLayout20->GetRootPane()->FindPaneByName(buf, true);
-    nw4r::lyt::Pane* pane2 = self->mLayout20->GetRootPane()->FindPaneByName(&lbl_eu_8050E7C0[0xab], true);
+    nw4r::lyt::Pane* pane2 = self->mLayout20->GetRootPane()->FindPaneByName("nul_proportion", true);
     ScalePaneWorldPos(&pos, pane1, pane2, self->mLayout20->GetRootPane());
     self->mCursor.setRootPaneTranslate(&pos);
 }
@@ -531,32 +531,32 @@ void PlayAward_RefreshPageTitles(CPlayAwardList* self) {
     // Load the two page-title strings ("%s"-style templates from the pool).
     char* s1;
     char* s2;
-    void* fp = getFP(&lbl_eu_8050E7C0[0x14]);
-    s1 = BdatGetPtrDirect(fp, &lbl_eu_8050E7C0[0x1f], 0xa);
-    s2 = BdatGetPtrDirect(fp, &lbl_eu_8050E7C0[0x1f], 0xb);
-    LayoutSetTextBoxFmtValue(self->mLayout20, &lbl_eu_8050E7C0[0xba],
+    void* fp = getFP("MNU_update");
+    s1 = BdatGetPtrDirect(fp, "info", 0xa);
+    s2 = BdatGetPtrDirect(fp, "info", 0xb);
+    LayoutSetTextBoxFmtValue(self->mLayout20, "txt_cat00",
                   self->field_0x90 != 0 ? s2 : s1, 0);
 
     // Resolve the award title and the two per-page help strings, then look up
     // the 'timg' texture for the page and size its pane from the row/col.
     char* s5;
-    char* s4 = BdatTouchStringCell(&lbl_eu_8050E7C0[0xc4], &lbl_eu_8050E7C0[0xd2], 0x8a);
-    s5 = BdatTouchStringCell(&lbl_eu_8050E7C0[0xc4], &lbl_eu_8050E7C0[0xd2], 0x89);
+    char* s4 = BdatTouchStringCell("MNU_kyeassign", "help", 0x8a);
+    s5 = BdatTouchStringCell("MNU_kyeassign", "help", 0x89);
     const char* sel = cf::CfGameManager::isClassicController(-1) != 0
-                          ? &lbl_eu_8050E7C0[0xd7]
-                          : &lbl_eu_8050E7C0[0xe0];
-    u16 msgId = BdatGetU16ByTableKey(&lbl_eu_8050E7C0[0xc4], sel, 0x3a);
+                          ? "fileID_2"
+                          : "fileID_1";
+    u16 msgId = BdatGetU16ByTableKey("MNU_kyeassign", sel, 0x3a);
     char* texName = MakeTplNameSysFile((u32)msgId);
     nw4r::lyt::ArcResourceAccessor* mgr = CUICfManager_getArcResourceAccessor();
     CPlayAwardMsgObj* obj = reinterpret_cast<CPlayAwardMsgObj*>(
         mgr->GetResource(0x74696D67, texName, 0));
     if (obj != 0) {
-        PaneSetTexPaletteByName(self->mLayout20, &lbl_eu_8050E7C0[0xe9], (TPLPalette*)obj);
+        PaneSetTexPaletteByName(self->mLayout20, "pic_soatbtn", (TPLPalette*)obj);
         CPlayAwardCoords* coords = obj->chain->pCoords;
         u16 row = coords->row;
         u16 col = coords->col;
         nw4r::lyt::Pane* pane = self->mLayout20->GetRootPane()->FindPaneByName(
-            &lbl_eu_8050E7C0[0xe9], true);
+            "pic_soatbtn", true);
         if (pane != 0) {
             float src[2];
             src[0] = (float)row;
@@ -567,10 +567,10 @@ void PlayAward_RefreshPageTitles(CPlayAwardList* self) {
     }
 
     // Bind the page title/help strings (help string differs by page).
-    LayoutSetTextBoxFmtValue(self->mLayout20, &lbl_eu_8050E7C0[0xf5],
+    LayoutSetTextBoxFmtValue(self->mLayout20, "txt_btn",
                   self->field_0x90 == 0 ? s5 : s4, 0);
-    char* s6 = BdatTouchStringCell(&lbl_eu_8050E7C0[0xfd], &lbl_eu_8050E7C0[0x108], 0x19);
-    LayoutSetTextBoxFmtValue(self->mLayout20, &lbl_eu_8050E7C0[0x10d], s6, 0);
+    char* s6 = BdatTouchStringCell("MNU_battle", "name", 0x19);
+    LayoutSetTextBoxFmtValue(self->mLayout20, "txt_btntit", s6, 0);
 }
 
 // Award-list load handler: when the layout arc accessor is ready and the
@@ -603,7 +603,7 @@ bool CPlayAwardList::OnFileEvent(CEventFile* event) {
         u8 regionBuf[8];
         char buf[0x20];
         mMemRegion.createRegion((int)mtl::MemManager::getHandleMEM2(), 0x10000,
-                                &lbl_eu_8050E7C0[0x118], 0);
+                                "CPlayAwardList", 0);
         __ct__14Class_8045F858FP17UnkClass_8045F564(regionBuf, &mMemRegion);
 
         // Detach the loaded file buffer and hand it to the layout accessor.
@@ -621,12 +621,12 @@ bool CPlayAwardList::OnFileEvent(CEventFile* event) {
         // Build the layout + forward/reverse anim transforms from the arc.
         mArcAccessor1C = (nw4r::lyt::ArcResourceAccessor*)
             CLibLayout::createArcResourceAccessor();
-        mArcAccessor1C->Attach(fileData, &lbl_eu_8050E7C0[0x127]);
-        buildLayout(&mLayout20, mArcAccessor1C, &lbl_eu_8050E7C0[0x12b]);
+        mArcAccessor1C->Attach(fileData, "arc");
+        buildLayout(&mLayout20, mArcAccessor1C, "mf31_award00.brlyt");
         bindLayoutAnimTransform(mLayout20, &mAnimTrans24, mArcAccessor1C,
-                      &lbl_eu_8050E7C0[0x13e]);
+                      "mf31_award00_in.brlan");
         bindLayoutAnimTransform(mLayout20, &mAnimTrans28, mArcAccessor1C,
-                      &lbl_eu_8050E7C0[0x154]);
+                      "mf31_award00_info_in.brlan");
 
         // Bind the shared font into the layout's root pane.
         nw4r::lyt::Pane* rootPane = mLayout20->GetRootPane();
@@ -635,22 +635,22 @@ bool CPlayAwardList::OnFileEvent(CEventFile* event) {
         u32 fontResult = fontObj->getFontHandle();
         ApplyFontToTxtPanes(rootPane, (const nw4r::ut::Font*)fontResult);
 
-        setLayoutTextBoxFont(mLayout20, &lbl_eu_8050E7C0[0x16f], reinterpret_cast<u32>(CUICfManager_getPackedFont9C()));
+        setLayoutTextBoxFont(mLayout20, "txt_val01", reinterpret_cast<u32>(CUICfManager_getPackedFont9C()));
         PlayAward_BindCloseAnims(this);
         mLayout20->Animate(0);
 
         // Bind the three page-title/help strings.
-        void* fp = getFP(&lbl_eu_8050E7C0[0x14]);
-        LayoutSetTextBoxFmtValue(mLayout20, &lbl_eu_8050E7C0[0xba],
-                      BdatGetPtrDirect(fp, &lbl_eu_8050E7C0[0x1f], 0xa), 0);
-        LayoutSetTextBoxFmtValue(mLayout20, &lbl_eu_8050E7C0[0x179],
-                      BdatGetPtrDirect(fp, &lbl_eu_8050E7C0[0x1f], 0xb), 0);
-        LayoutSetTextBoxFmtValue(mLayout20, &lbl_eu_8050E7C0[0x16f],
-                      BdatGetPtrDirect(fp, &lbl_eu_8050E7C0[0x1f], 0xd), 0);
+        void* fp = getFP("MNU_update");
+        LayoutSetTextBoxFmtValue(mLayout20, "txt_cat00",
+                      BdatGetPtrDirect(fp, "info", 0xa), 0);
+        LayoutSetTextBoxFmtValue(mLayout20, "txt_cat01",
+                      BdatGetPtrDirect(fp, "info", 0xb), 0);
+        LayoutSetTextBoxFmtValue(mLayout20, "txt_val01",
+                      BdatGetPtrDirect(fp, "info", 0xd), 0);
 
         // Bind the eight award panes and stash the tag processor on each.
         for (u8 i = 1; i <= 9; i++) {
-            sprintf(buf, &lbl_eu_8050E7C0[0x9f], i);
+            sprintf(buf, "txt_exp%02d", i);
             nw4r::lyt::Pane* pane =
                 mLayout20->GetRootPane()->FindPaneByName(buf, true);
             reinterpret_cast<CPlayAwardPaneUser*>(pane)->field_F8 = field_0x2C;
@@ -671,7 +671,7 @@ bool CPlayAwardList::OnFileEvent(CEventFile* event) {
         void* fileData2 = mFileHandle2->getData();
         CBdat::setBdatEntry(2, fileData2);
         Bdat_GetTable_AA34();
-        lbl_eu_806648A8 = getFP(&lbl_eu_8050E7C0[0x183]);
+        sPlayAwardBdat = getFP("MNU_playaward");
         mFileHandle2 = 0;
         PlayAward_LoadEntries(this);
         return 1;
@@ -679,4 +679,5 @@ bool CPlayAwardList::OnFileEvent(CEventFile* event) {
     return 0;
 }
 
-void* lbl_eu_806648A8 = nullptr;
+// name-guess: loaded award BDAT table pointer set from getFP("MNU_playaward")
+void* sPlayAwardBdat = nullptr;

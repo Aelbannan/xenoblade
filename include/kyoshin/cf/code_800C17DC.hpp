@@ -3,7 +3,7 @@
 #include <types.h>
 #include "kyoshin/code_800AA008.hpp"   // Tok_ParseFile: extern "C" there
 
-// Callback table record at lbl_eu_805739F8 (size 0x28).
+// Callback table record (retail .bss 0x805739F8, size 0x28).
 // Owns an array of callbacks invoked by func_800C1EB8; field20 is the index
 // of the "active" callback slot, field24 is the continue-flag that a callback
 // can set to keep the dispatch loop running.
@@ -12,17 +12,9 @@ struct Unk805739F8 {
     u32 field20;            // 0x20  active slot index
     u8 field24;             // 0x24  continue flag
 };
-extern Unk805739F8 lbl_eu_805739F8;
-
-// Flag/status record targeted by func_800C1CAC.
-// Placed in .bss at lbl_eu_805739E8 (size 0x10).
-struct Unk805739E8 {
-    u32 field_00;
-    u32 field_04;
-    u32 field_08;
-    u32 field_0C;
-};
-extern Unk805739E8 lbl_eu_805739E8;
+// name-guess: no real retail name at 0x805739F8 (JP __vt__9CMdlMouth is a different
+// 0x10-byte .data object); this 0x28-byte record owns the callback array and flags.
+extern Unk805739F8 sCmTextCallbackTable;
 
 // One parsed entry in the text/tips dispatch table: a filename hash plus an
 // index/id word and a sequence number.  8 bytes, stored `stw pt, off; sth, off+4;
@@ -59,15 +51,21 @@ struct CmTextProc {
     CmTextTable* buf;      // 0x00
     const char* base;      // 0x04
     const char* cursor;    // 0x08
+    u32 mStatus;           // 0x0C name-guess: fourth word of the 0x10-byte retail record
 };
+// name-guess: no real retail name at 0x805739E8 (JP lbl_805739E8 is a string label);
+// the static-proc parser state is this 0x10-byte CmTextProc record.
+extern CmTextProc sCmTextParseState;
 
-// Keyword dispatch table (data at lbl_eu_8052A528): maps a scenario keyword
+// Keyword dispatch table (retail .data 0x8052A528): maps a scenario keyword
 // string to an id 0-5 selecting which TextEntry set to write into.
 struct TextKeyword {
     const char* word;      // 0x00
     u32 id;                // 0x04
 };
-extern TextKeyword lbl_eu_8052A528[6];
+// name-guess: no real retail name at 0x8052A528 (JP has no object at this address);
+// this six-entry table maps scenario keyword strings to CmTextTable set ids.
+extern TextKeyword sCmTextKeywords[6];
 
 // cf cue-script decoder routines (this TU).  Retail symbols are unmangled C
 // names, so the declarations use C linkage.

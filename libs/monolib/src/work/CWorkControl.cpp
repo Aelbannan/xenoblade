@@ -19,7 +19,7 @@ public:
 //   lbl_eu_806635B0 (.sdata)  = lbl_eu_806635B0 {name, base-list}
 //   lbl_eu_8056B7C8 (.data)   = CWorkControl vtable
 //   lbl_eu_8056B868 (.data)   = RTTI base list {IWE,0,CWT,0,0,0}
-//   lbl_eu_806655D8 (.sbss)   = spInstance singleton (word 0 in use)
+//   CWorkControl::spInstance (.sbss) is defined below.
 extern "C" const char lbl_eu_80522678[] = "CWorkControl";
 extern "C" const char lbl_eu_80522688[0x80] =
     "CWorkFlowTvMode\0"
@@ -62,19 +62,18 @@ RttiBaseList2 lbl_eu_8056B868 = {
     (u32)&__RTTI__10IWorkEvent, 0, (u32)&__RTTI__11CWorkThread, 0, 0, 0,
 };
 
-// sbss singleton lbl_eu_806655D8 (8 bytes; word 0 in use) - blob monolibdata1d dissolve
-CWorkControl* lbl_eu_806655D8[2];
+CWorkControl* CWorkControl::spInstance;
 CWorkControl::CWorkControl(const char* pName, CWorkThread* pParent) : CWorkThread(pName, pParent, MAX_CHILD){
     *(IWorkEventVtbl**)this = &lbl_eu_8056B7C8;
-    lbl_eu_806655D8[0] = this;
+    spInstance = this;
     mType = THREAD_CWORKCONTROL;
 }
 CWorkControl::~CWorkControl(){
-    lbl_eu_806655D8[0] = nullptr;
+    spInstance = nullptr;
 }
 
 CWorkControl* CWorkControl::getInstance(){
-    return lbl_eu_806655D8[0];
+    return spInstance;
 }
 bool CWorkControl::setFlowSetup(){
     const char* name;

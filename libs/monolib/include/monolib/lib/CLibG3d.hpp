@@ -15,6 +15,8 @@ public:
     static bool isInitialized();
     static CLibG3d* getInstance();
 
+    static CLibG3d* spInstance;
+
     //0x0: vtable
     //0x0-1c4: CWorkThread
     u32 unk1C4;

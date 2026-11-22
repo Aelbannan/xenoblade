@@ -189,24 +189,6 @@ u32 CScnRootNw4r::getGroupHandle() {
     return result;
 }
 
-// Fixed-offset words/blocks reached through an untyped object base
-// (RootNw4r_Ptr44C/45C/SelPtr46C/47C/Ptr49C). Only the
-// starts are significant; spans are explicit pads.
-struct CScnRootNw4rOffView {
-    u8 pad_0x00[0x14];
-    u32 word_0x14;                 // +0x14 (RootNw4r_GetField14)
-    u8 pad_0x18[0x44C - 0x18];
-    u8 block_0x44C[0x10];          // +0x44C
-    u8 block_0x45C[0x10];          // +0x45C
-    u8 block_0x46C[0x10];          // +0x46C
-    u8 block_0x47C[0x20];          // +0x47C
-    u8 block_0x49C[4];             // +0x49C word group start
-    u8 pad_0x4A0[0x4C4 - 0x4A0];
-    u32 word_0x4C4;                // +0x4C4 (RootNw4r_SelPtr46C gate)
-    u8 pad_0x4C8[0x4D0 - 0x4C8];
-    u32 word_0x4D0;                // +0x4D0 (RootNw4r_SelPtr47C gate)
-};
-
 // us-804933ac: destructor. Drains every remaining child of the nw4r scene
 // root (ScnGroup-derived children are Destroy()ed), tears down the bloom
 // object and releases the four alloc handles that are not the shared MEM2
@@ -543,21 +525,21 @@ void CScnRootNw4r::AttachQueued() {
     mIdCount = 0;
 }
 
-extern "C" void* RootNw4r_Ptr44C(u8* self) { return ((CScnRootNw4rOffView*)self)->block_0x44C; }
+extern "C" void* RootNw4r_Ptr44C(CScnRootNw4r* self) { return &self->mAlloc[0]; }
 
-extern "C" void* RootNw4r_Ptr45C(u8* self) { return ((CScnRootNw4rOffView*)self)->block_0x45C; }
+extern "C" void* RootNw4r_Ptr45C(CScnRootNw4r* self) { return &self->mAlloc[1]; }
 
-extern "C" void* RootNw4r_SelPtr46C(u8* self) {
-    if (((CScnRootNw4rOffView*)self)->word_0x4C4 == 0xFFFFFFFF) return ((CScnRootNw4rOffView*)self)->block_0x44C;
-    return ((CScnRootNw4rOffView*)self)->block_0x46C;
+extern "C" void* RootNw4r_SelPtr46C(CScnRootNw4r* self) {
+    if (self->mGroup[2].mHandle == 0xFFFFFFFF) return &self->mAlloc[0];
+    return &self->mAlloc[2];
 }
 
-extern "C" void* RootNw4r_SelPtr47C(u8* self) {
-    if (((CScnRootNw4rOffView*)self)->word_0x4D0 == 0xFFFFFFFF) return ((CScnRootNw4rOffView*)self)->block_0x44C;
-    return ((CScnRootNw4rOffView*)self)->block_0x47C;
+extern "C" void* RootNw4r_SelPtr47C(CScnRootNw4r* self) {
+    if (self->mGroup[3].mHandle == 0xFFFFFFFF) return &self->mAlloc[0];
+    return &self->mAlloc[3];
 }
 
-extern "C" void* RootNw4r_Ptr49C(u8* self) { return ((CScnRootNw4rOffView*)self)->block_0x49C; }
+extern "C" void* RootNw4r_Ptr49C(CScnRootNw4r* self) { return &self->mAlloc[5]; }
 
 // us-80493ea8: allocate `size` bytes from the scene-root allocator.
 // Falls back to the MEM2 region when the current region cannot hold size*2.

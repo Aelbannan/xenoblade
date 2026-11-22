@@ -155,40 +155,10 @@ bool CWorkSystem::wkStandbyLogout(){
     return false;
 }
 
-// Retail Fv create: getInstance -> getWorkMem -> placement-new (the name
-// string "CWorkSystem" is pooled at @stringBase0+109) -> entryWork.
-//
-// OPEN ITEM (best: 0 structural / 6 reg-swap / size 120==120):
-// - retail prologue stmw/lmw r29 comes from the -O4,s unit flag.
-// - retail shows a remat artifact (name base materialized in scratch r4 then
-//   copied to r31 AFTER the getInstance call) while parent=getInstance() is
-//   declared first. Every source permutation trades one defect for another:
-//   * pName-init-first: correct colors (name=r31,parent=r30,obj=r29) but the
-//     lis/addi stays above the bl getInstance call (structural).
-//   * parent-init-first (current): correct schedule + obj already in r29, but
-//     parent/name colors swap (parent=r31,name=r30).
-//   * all-uninit decls / null-init / dead-def re-assign: colors become
-//     parent=r29..30/name=r29..30/obj=r31, never retail's 30/31/29.
-// Hypothesis: retail was built with -use_lmw_stmw on at -O4,p; the speed-mode
-// scheduler rematerializes the constant name at use (after the call) which
-// also yields the 31/30/29 coloring. Not reproducible from source under the
-// size-mode pragma. Needs configure.py per-object flag negotiation.
-// Additional data (2026 session 2): with the single-guard body, colors are
-// stably parent=r30/name=r29/obj=r31 across ALL declaration permutations
-// (init-at-decl vs uninit+assign, decl order, extra handle local). Splitting
-// raw/inst adds a 4th saved reg (stmw r28, size +16); explicit if() adds a
-// duplicate beq and flips to parent=r31/name=r30/obj=r29. The remaining swap
-// is allocation-internal, unreachable from source shape.
-// retail prologue/epilogue saves r29-r31 with a single stmw/lmw pair; MWCC
-// only merges consecutive saves into stmw under optimize-for-size.
+// Parameterless create: forwards to the DECL_WORKTHREAD_CREATE(CWorkSystem)
+// inline with the class name and the CWorkControl root as parent.
 CWorkSystem* CWorkSystem::create() {
-    CWorkThread* parent = CWorkControl::getInstance();
-    const char* pName = "CWorkSystem";
-    CWorkSystem* obj = static_cast<CWorkSystem*>(
-        mtl::MemManager::allocate(0x1D0, CWorkThreadSystem::getWorkMem()));
-    obj = new (obj) CWorkSystem(pName, parent);
-    CWorkUtil::entryWork(obj, parent, false);
-    return obj;
+    return create("CWorkSystem", CWorkControl::getInstance());
 }
 
 void CWorkSystem::setExitFunc(ExitFunc func){

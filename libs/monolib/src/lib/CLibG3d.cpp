@@ -33,22 +33,22 @@ extern "C" void wkStandbyLogout__7CLibG3dFv();
 
 CLibG3d::CLibG3d(const char* pName, CWorkThread* pParent) : CWorkThread(pName, pParent, 4) {
     *reinterpret_cast<u32**>(this) = __vt__7CLibG3d;
-    lbl_eu_806656F0[0] = this;
+    spInstance = this;
     mType = THREAD_CLIBG3D;
 }
 
 CLibG3d::~CLibG3d() {
-    lbl_eu_806656F0[0] = nullptr;
+    spInstance = nullptr;
 }
 
 CLibG3d* CLibG3d::getInstance() {
-    return lbl_eu_806656F0[0];
+    return spInstance;
 }
 
 bool CLibG3d::isInitialized() {
     // G3D counts as "not initialized" while an exception is pending, or while
     // an EVT_EXCEPTION message is still queued waiting to be processed.
-    CLibG3d* inst = lbl_eu_806656F0[0];
+    CLibG3d* inst = spInstance;
     bool busy;
     if (inst->checkFlag(THREAD_FLAG_EXCEPTION)) {
         busy = true;
@@ -138,10 +138,10 @@ extern "C" u32 lbl_eu_806637BC = (u32)&lbl_eu_80523128;
 extern "C" u32 lbl_eu_806637C0[2] = { 0xFFFFFFFF, 0x00000000 };
 
 // [.sbss] 0x806656F0-0x80665700 (0x10 zero-fill; only size/align are compared).
-// lbl_eu_806656F0 is the CLibG3d singleton; lbl_eu_806656F8 stores the
+// CLibG3d::spInstance is the singleton; lbl_eu_806656F8 stores the
 // dissolved monolibdata2 spInstance pointer and lbl_eu_806656FC its
 // HBM-active byte (both referenced from CLibHbm.cpp).
-CLibG3d* lbl_eu_806656F0[2];
+CLibG3d* CLibG3d::spInstance;
 u32 lbl_eu_806656F8;
 // bool + 3B tail pad: the retail .sbss span runs to 0x80665700.
 struct SbssActiveFlag {

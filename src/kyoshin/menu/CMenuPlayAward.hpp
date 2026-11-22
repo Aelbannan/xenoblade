@@ -200,9 +200,8 @@ extern const float lbl_eu_806689A0;
 // (makecrystal precedent); the value matches the retail symbol.
 extern const double lbl_eu_806689B0;
 
-// Loaded-BDAT pointer for the award tables (stored by OnFileEvent branch 2
-// from getFP; read by PlayAward_BuildEntries's sort/list build).
-extern void* lbl_eu_806648A8;
+// name-guess: loaded award BDAT table pointer (owned by code_80272AD8.cpp).
+extern void* sPlayAwardBdat;
 
 // Second string pool (split .rodata): title/help arc paths used by Init.
 extern char lbl_eu_8050E7A0[];
@@ -213,10 +212,6 @@ extern const float lbl_eu_806689AC;
 
 // Render-gate mode bitfield (.sbss; bit 21 = task busy, gates cbRenderBefore).
 extern u32 gmPauseFlags;
-
-// Shared string pool (split .rodata): award-list arc file paths at +0x5A / +0x74.
-extern char lbl_eu_8050E7C0[];
-
 
 
 // .sdata2 float pool: menu init float (ctor stores to +0x115C).

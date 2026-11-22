@@ -33,9 +33,11 @@ struct CScrollBarPane {
 // Pane-name tables: sBarPaneNames[] are the 6 scroll-position/bar panes hidden
 // while idle (sBarPaneNames[mDirection] is re-shown); sThumbPaneNames[mDirection]
 // is the drag thumb.
+// name-guess: sBarPaneNames (retail lbl_eu_80534DA8, unnamed in jp symbols)
 static const char* sBarPaneNames[6] = {
     "nul_scr00", "nul_scr01", "nul_scr02", "nul_scr03", "nul_scr04", "nul_scr05",
 };
+// name-guess: sThumbPaneNames (retail lbl_eu_80534DC0, unnamed in jp symbols)
 static const char* sThumbPaneNames[6] = {
     "pic_scr00_bar", "pic_scr01_bar", "pic_scr02_bar",
     "pic_scr03_bar", "pic_scr04_bar", "pic_scr05_bar",

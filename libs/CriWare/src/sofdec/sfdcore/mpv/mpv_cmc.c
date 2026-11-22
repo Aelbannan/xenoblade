@@ -37,8 +37,8 @@ void MPVCMC_InitMcOiRt(MpvHn* hn) {
     s32 i;
     s32* e = hn->mcRows;
     hn->mcRowCount = (hn->cfgImg[5] == 0) ? -1 : 4;
-    for (i = 0; i < 2; i++) { e[i * 2 + 1] = hn->outStride; }
-    for (i = 2; i < 6; i++) { e[i * 2 + 1] = hn->outChromaStride; }
+    for (i = 0; i < 2; i++) { e[i * 2 + 1] = hn->outFrame.stride; }
+    for (i = 2; i < 6; i++) { e[i * 2 + 1] = hn->outFrame.chromaStride; }
 }
 
 void MPVCMC_SetCcnt(MpvHn* hn) {

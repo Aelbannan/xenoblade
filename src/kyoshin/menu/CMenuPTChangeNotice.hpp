@@ -107,8 +107,6 @@ int PTNotice_BuildLayout_348C(CMenuPTChangeNotice* obj, CEventFile* evt);
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim).
 extern "C" {
 extern u32 lbl_eu_80538888[];        // CMenuPTChangeNotice primary vtable
-extern const f32 lbl_eu_80668B90;    // animation frame target
-extern const f32 lbl_eu_80668B80;    // pad-input disable timer
 extern const char* lbl_eu_80662AF8;  // file path for the notice layout
 // setPresentationFlag: canonical setPresentationFlag__Q22cf13CfGameManagerFv(bool).
 void* readFile__11CDeviceFileFUlPCcP10IWorkEventii(u32 handle, const char* path,
@@ -131,10 +129,3 @@ void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
 // .sbss globals shared with the retail binary (global-scope plain externs keep
 // the unmangled symbol; no extern "C" needed outside a namespace).
 extern u32 lbl_eu_80664A00;  // CMenuPTChangeNotice singleton pointer
-
-// Strings / constants for the notice layout (retail data symbols).
-extern char lbl_eu_8050FC20[];     // notice layout path + pane-name table
-// .sbss pointer globals holding the character/affinity icon message tables.
-extern const f32 lbl_eu_80668B84;  // animation frame target (notice open)
-// 2^52 double used by the u32->float conversion (lfd pool constant).
-extern const f64 lbl_eu_80668B88;

@@ -221,26 +221,14 @@ void WsdPlayer::UpdateChannel() {
         return;
     }
 
-    // Declaration order drives saved-FPR color (first-declared takes the
-    // highest register); the initializations stay in computation order.
-    f32 volume;
-    f32 pitchRatio;
-    f32 pan;
-    f32 surroundPan;
-    f32 lpfFreq;
-    f32 biquadValue;
-    f32 mainSend;
-    int biquadType;
-    int remoteFilter;
-
-    volume = 1.0f;
+    f32 volume = 1.0f;
     volume *= GetVolume();
 
-    pitchRatio = 1.0f;
+    f32 pitchRatio = 1.0f;
     pitchRatio *= GetPitch();
     pitchRatio *= mWaveSoundInfo.pitch;
 
-    pan = 0.0f;
+    f32 pan = 0.0f;
     if (mWaveSoundInfo.pan <= 1) {
         pan += (mWaveSoundInfo.pan - 63) / 63.0f;
     } else {
@@ -250,33 +238,32 @@ void WsdPlayer::UpdateChannel() {
     pan *= GetPanRange();
     pan += GetPan();
 
-    surroundPan = 0.0f;
+    f32 surroundPan = 0.0f;
     if (mWaveSoundInfo.surroundPan <= 1) {
         surroundPan += (mWaveSoundInfo.surroundPan + 1) / 63.0f;
     } else {
         surroundPan += mWaveSoundInfo.surroundPan / 63.0f;
     }
 
-    biquadValue = GetBiquadFilterValue();
-
     surroundPan += mWaveSoundInfo.surroundPan / 64.0f;
     surroundPan += GetSurroundPan();
 
-    mainSend = 0.0f;
-    mainSend += (mWaveSoundInfo.mainSend / 127.0f) - 1.0f;
-    mainSend += GetMainSend();
-
-    lpfFreq = 0.0f;
+    f32 lpfFreq = 0.0f;
     lpfFreq += GetLpfFreq();
 
-    remoteFilter = GetRemoteFilter();
+    u8 biquadType = GetBiquadFilterType();
+    f32 biquadValue = GetBiquadFilterValue();
+
+    u8 remoteFilter = GetRemoteFilter();
+
+    f32 mainSend = 0.0f;
+    mainSend += (mWaveSoundInfo.mainSend / 127.0f) - 1.0f;
+    mainSend += GetMainSend();
 
     u8 infoSend[AUX_BUS_NUM];
     infoSend[AUX_A] = mWaveSoundInfo.fxSendA;
     infoSend[AUX_B] = mWaveSoundInfo.fxSendB;
     infoSend[AUX_C] = mWaveSoundInfo.fxSendC;
-
-    biquadType = GetBiquadFilterType();
 
     f32 fxSend[AUX_BUS_NUM];
     for (int i = 0; i < AUX_BUS_NUM; i++) {

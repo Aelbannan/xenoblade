@@ -3,7 +3,7 @@
 
 #include <harness_catalog.h>
 
-__declspec(section ".data") __attribute__((aligned(8))) unsigned char mwsfdsl_data[0x11C8] = {
+__attribute__((aligned(8))) unsigned char mwsfdsl_data[0x11C8] = {
 0x00, 0x00, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -290,7 +290,6 @@ __declspec(section ".data") __attribute__((aligned(8))) unsigned char mwsfdsl_da
 0x00, 0x00, 0x01, 0x20, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0xBB, 0x80,
 0x00, 0x00, 0xC1, 0xC0, 0x00, 0x00, 0x00, 0x00
 };
-__declspec(section ".rodata") __attribute__((aligned(8))) const unsigned char mwsfdsl_rodata[0x338] = {0x45,0x31,0x31,0x32,0x32,0x36,0x33,0x33,0x20,0x6d,0x77,0x50,0x6c,0x79,0x45,0x6e,0x74,0x72,0x79,0x46,0x6e,0x61,0x6d,0x65,0x3a,0x20,0x68,0x61,0x6e,0x64,0x6c,0x65,0x20,0x69,0x73,0x20,0x69,0x6e,0x76,0x61,0x6c,0x69,0x64,0x2e,0x00,0x45,0x31,0x30,0x39,0x31,0x35,0x42,0x20,0x6d,0x77,0x50,0x6c,0x79,0x45,0x6e,0x74,0x72,0x79,0x46,0x6e,0x61,0x6d,0x65,0x3a,0x20,0x66,0x6e,0x61,0x6d,0x65,0x20,0x69,0x73,0x20,0x4e,0x55,0x4c,0x4c,0x2e,0x00,0x45,0x32,0x30,0x34,0x30,0x32,0x31,0x3a,0x20,0x6d,0x77,0x50,0x6c,0x79,0x45,0x6e,0x74,0x72,0x79,0x46,0x6e,0x61,0x6d,0x65,0x3a,0x20,0x43,0x61,0x6e,0x27,0x74,0x20,0x65,0x6e,0x74,0x72,0x79,0x20,0x66,0x69,0x6c,0x65,0x27,0x25,0x73,0x27,0x00,0x45,0x31,0x31,0x32,0x32,0x36,0x33,0x34,0x20,0x6d,0x77,0x50,0x6c,0x79,0x53,0x74,0x61,0x72,0x74,0x53,0x65,0x61,0x6d,0x6c,0x65,0x73,0x73,0x3a,0x20,0x68,0x61,0x6e,0x64,0x6c,0x65,0x20,0x69,0x73,0x20,0x69,0x6e,0x76,0x61,0x6c,0x69,0x64,0x2e,0x00,0x45,0x31,0x31,0x32,0x32,0x36,0x34,0x32,0x20,0x6d,0x77,0x50,0x6c,0x79,0x4c,0x69,0x6e,0x6b,0x53,0x74,0x6d,0x3a,0x20,0x68,0x61,0x6e,0x64,0x6c,0x65,0x20,0x69,0x73,0x20,0x69,0x6e,0x76,0x61,0x6c,0x69,0x64,0x2e,0x00,0x45,0x31,0x31,0x32,0x32,0x36,0x34,0x31,0x20,0x6d,0x77,0x50,0x6c,0x79,0x53,0x65,0x74,0x4c,0x70,0x46,0x6c,0x67,0x3a,0x20,0x68,0x61,0x6e,0x64,0x6c,0x65,0x20,0x69,0x73,0x20,0x69,0x6e,0x76,0x61,0x6c,0x69,0x64,0x2e,0x00,0x45,0x31,0x31,0x32,0x32,0x36,0x33,0x30,0x20,0x6d,0x77,0x50,0x6c,0x79,0x53,0x74,0x61,0x72,0x74,0x46,0x6e,0x61,0x6d,0x65,0x4c,0x70,0x3a,0x20,0x68,0x61,0x6e,0x64,0x6c,0x65,0x20,0x69,0x73,0x20,0x69,0x6e,0x76,0x61,0x6c,0x69,0x64,0x2e,0x00,0x45,0x31,0x30,0x39,0x31,0x35,0x41,0x20,0x6d,0x77,0x50,0x6c,0x79,0x53,0x74,0x61,0x72,0x74,0x46,0x6e,0x61,0x6d,0x65,0x4c,0x70,0x3a,0x20,0x66,0x6e,0x61,0x6d,0x65,0x20,0x69,0x73,0x20,0x4e,0x55,0x4c,0x4c,0x2e,0x00,0x45,0x31,0x31,0x32,0x32,0x36,0x33,0x31,0x20,0x6d,0x77,0x50,0x6c,0x79,0x52,0x65,0x6c,0x65,0x61,0x73,0x65,0x4c,0x70,0x3a,0x20,0x68,0x61,0x6e,0x64,0x6c,0x65,0x20,0x69,0x73,0x20,0x69,0x6e,0x76,0x61,0x6c,0x69,0x64,0x2e,0x00,0x45,0x31,0x31,0x32,0x32,0x36,0x33,0x35,0x20,0x6d,0x77,0x50,0x6c,0x79,0x52,0x65,0x6c,0x65,0x61,0x73,0x65,0x53,0x65,0x61,0x6d,0x6c,0x65,0x73,0x73,0x3a,0x20,0x68,0x61,0x6e,0x64,0x6c,0x65,0x20,0x69,0x73,0x20,0x69,0x6e,0x76,0x61,0x6c,0x69,0x64,0x2e,0x00,0x45,0x31,0x31,0x32,0x32,0x36,0x33,0x36,0x20,0x6d,0x77,0x50,0x6c,0x79,0x45,0x6e,0x74,0x72,0x79,0x41,0x66,0x73,0x3a,0x20,0x68,0x61,0x6e,0x64,0x6c,0x65,0x20,0x69,0x73,0x20,0x69,0x6e,0x76,0x61,0x6c,0x69,0x64,0x2e,0x00,0x45,0x30,0x30,0x38,0x33,0x31,0x31,0x20,0x6d,0x77,0x50,0x6c,0x79,0x45,0x6e,0x74,0x72,0x79,0x41,0x66,0x73,0x3a,0x20,0x63,0x61,0x6e,0x27,0x74,0x20,0x65,0x6e,0x74,0x72,0x79,0x20,0x70,0x69,0x64,0x3d,0x25,0x64,0x20,0x66,0x69,0x64,0x3d,0x25,0x64,0x00,0x45,0x31,0x31,0x32,0x32,0x36,0x33,0x32,0x20,0x6d,0x77,0x50,0x6c,0x79,0x53,0x74,0x61,0x72,0x74,0x41,0x66,0x73,0x4c,0x70,0x3a,0x20,0x68,0x61,0x6e,0x64,0x6c,0x65,0x20,0x69,0x73,0x20,0x69,0x6e,0x76,0x61,0x6c,0x69,0x64,0x2e,0x00,0x45,0x34,0x30,0x37,0x30,0x32,0x33,0x20,0x6d,0x77,0x50,0x6c,0x79,0x45,0x6e,0x74,0x72,0x79,0x46,0x6e,0x61,0x6d,0x65,0x52,0x61,0x6e,0x67,0x65,0x3a,0x20,0x68,0x61,0x6e,0x64,0x6c,0x65,0x20,0x69,0x73,0x20,0x69,0x6e,0x76,0x61,0x6c,0x69,0x64,0x2e,0x00,0x45,0x34,0x30,0x37,0x30,0x32,0x34,0x20,0x6d,0x77,0x50,0x6c,0x79,0x53,0x74,0x61,0x72,0x74,0x46,0x6e,0x61,0x6d,0x65,0x52,0x61,0x6e,0x67,0x65,0x4c,0x70,0x3a,0x20,0x68,0x61,0x6e,0x64,0x6c,0x65,0x20,0x69,0x73,0x20,0x69,0x6e,0x76,0x61,0x6c,0x69,0x64,0x2e,0x00,0x45,0x31,0x31,0x32,0x32,0x36,0x33,0x37,0x20,0x6d,0x77,0x50,0x6c,0x79,0x47,0x65,0x74,0x53,0x6c,0x46,0x6e,0x61,0x6d,0x65,0x3a,0x20,0x68,0x61,0x6e,0x64,0x6c,0x65,0x20,0x69,0x73,0x20,0x69,0x6e,0x76,0x61,0x6c,0x69,0x64,0x2e,0x00,0x45,0x31,0x30,0x38,0x32,0x31,0x42,0x20,0x3a,0x20,0x49,0x6e,0x76,0x61,0x6c,0x69,0x64,0x20,0x76,0x61,0x6c,0x75,0x65,0x20,0x6f,0x66,0x20,0x73,0x74,0x6d,0x5f,0x6e,0x6f,0x20,0x3a,0x20,0x25,0x64,0x00,0x25,0x30,0x38,0x78,0x2e,0x25,0x30,0x38,0x78,0x00,0x45,0x30,0x35,0x30,0x38,0x30,0x38,0x30,0x31,0x20,0x66,0x72,0x61,0x6d,0x65,0x72,0x61,0x74,0x65,0x20,0x6f,0x66,0x20,0x6d,0x6f,0x76,0x69,0x65,0x20,0x69,0x73,0x20,0x69,0x6e,0x76,0x61,0x6c,0x69,0x64,0x2e,0x00,0x00,0x00,0x00,0x00};
 
 
 /* ---- Shared types for the Sofdec movie player (MWSFDPLY) ---- */
@@ -385,7 +384,6 @@ extern TraceRec sTraceSetSeamlessLp;
 
 /* ---- External symbols / helpers ---- */
 
-extern const char lbl_eu_80519B90[];
 
 s32 MWSFD_IsEnableHndl(MWSFDPLY* self);
 void MWSFSVM_Error(const char* message, ...);
@@ -413,43 +411,42 @@ void LSC_EntryFileRange(LscHandle* handle, const char* fname, s32 a, s32 b, s32 
 
 /* ---- Target implementations ---- */
 
-/* Link another stream to the player. When the existing link flag is already
- * "linked" (1) and the new request clears it (0), set the auto-restore flag
- * before overwriting the link flag. */
-void mwPlyLinkStm(MWSFDPLY* self, s32 linkStm) {
+/* Register a file name with the LSC stream. Skips the actual entry while the
+ * player is in mode 0xa, otherwise hands the name to LSC and bumps the entry
+ * counter on success or records an error on failure. */
+void mwPlyEntryFname(MWSFDPLY* self, const char* fname) {
     if (MWSFD_IsEnableHndl(self) != 1) {
-        MWSFSVM_Error(lbl_eu_80519B90 + 0xb4);
+        MWSFSVM_Error("E1122633 mwPlyEntryFname: handle is invalid.");
         return;
     }
-    if (self->field_0x90 == 1 && linkStm == 0) {
-        self->field_0x91 = 1;
+    if (fname == NULL) {
+        MWSFSVM_Error("E10915B mwPlyEntryFname: fname is NULL.");
+        return;
     }
-    self->field_0x90 = (u8)linkStm;
+    {
+        TraceCb* cb = gpMwPlyTraceCb;
+        if (cb != NULL) {
+            sTraceEntryFname.self = (u32)self;
+            sTraceEntryFname.arg = (u32)fname;
+            cb->vtable->trace(cb, &sTraceEntryFname.field_0x04);
+        }
+    }
+    if (self->field_0x8 != 0xa) {
+        if (LSC_EntryFname(self->field_0x64, fname) < 0) {
+            self->field_0x4 = 4;
+            MWSFSVM_Error("E204021: mwPlyEntryFname: Can't entry file'%s'", fname);
+        } else {
+            self->field_0x94 += 1;
+        }
+    }
+    {
+        TraceCb* cb = gpMwPlyTraceCb;
+        if (cb != NULL) {
+            cb->vtable->trace(cb, &sTraceEntryFname.field_0x6c);
+        }
+    }
 }
 
-/* Set the seamless-loop flag on the LSC stream, surrounded by SVM trace
- * enter/exit callbacks. */
-void mwPlySetSeamlessLp(MWSFDPLY* self, s32 lpFlag) {
-    if (MWSFD_IsEnableHndl(self) != 1) {
-        MWSFSVM_Error(lbl_eu_80519B90 + 0xde);
-        return;
-    }
-    {
-        TraceCb* cb = gpMwPlyTraceCb;
-        if (cb != NULL) {
-            sTraceSetSeamlessLp.self = (u32)self;
-            sTraceSetSeamlessLp.arg = (u32)&lpFlag;
-            cb->vtable->trace(cb, &sTraceSetSeamlessLp.field_0x04);
-        }
-    }
-    LSC_SetLpFlg(self->field_0x64, lpFlag);
-    {
-        TraceCb* cb = gpMwPlyTraceCb;
-        if (cb != NULL) {
-            cb->vtable->trace(cb, &sTraceSetSeamlessLp.field_0x6c);
-        }
-    }
-}
 
 /* Begin seamless playback: trace entry, re-arm the link flag, kick off the
  * Sj/flow/decode pipeline, invoke the optional supply callback, and trace
@@ -457,7 +454,7 @@ void mwPlySetSeamlessLp(MWSFDPLY* self, s32 lpFlag) {
  * through to the rest of the pipeline on failure. */
 void mwPlyStartSeamless(MWSFDPLY* self) {
     if (MWSFD_IsEnableHndl(self) != 1) {
-        MWSFSVM_Error(lbl_eu_80519B90 + 0x84);
+        MWSFSVM_Error("E1122634 mwPlyStartSeamless: handle is invalid.");
         return;
     }
     {
@@ -468,7 +465,7 @@ void mwPlyStartSeamless(MWSFDPLY* self) {
         }
     }
     if (MWSFD_IsEnableHndl(self) != 1) {
-        MWSFSVM_Error(lbl_eu_80519B90 + 0xb4);
+        MWSFSVM_Error("E1122642 mwPlyLinkStm: handle is invalid.");
     } else {
         self->field_0x90 = 1;
     }
@@ -491,87 +488,31 @@ void mwPlyStartSeamless(MWSFDPLY* self) {
     }
 }
 
-/* Register a file name with the LSC stream. Skips the actual entry while the
- * player is in mode 0xa, otherwise hands the name to LSC and bumps the entry
- * counter on success or records an error on failure. */
-void mwPlyEntryFname(MWSFDPLY* self, const char* fname) {
+
+/* Set the seamless-loop flag on the LSC stream, surrounded by SVM trace
+ * enter/exit callbacks. */
+void mwPlySetSeamlessLp(MWSFDPLY* self, s32 lpFlag) {
     if (MWSFD_IsEnableHndl(self) != 1) {
-        MWSFSVM_Error(lbl_eu_80519B90);
-        return;
-    }
-    if (fname == NULL) {
-        MWSFSVM_Error(lbl_eu_80519B90 + 0x2d);
+        MWSFSVM_Error("E1122641 mwPlySetLpFlg: handle is invalid.");
         return;
     }
     {
         TraceCb* cb = gpMwPlyTraceCb;
         if (cb != NULL) {
-            sTraceEntryFname.self = (u32)self;
-            sTraceEntryFname.arg = (u32)fname;
-            cb->vtable->trace(cb, &sTraceEntryFname.field_0x04);
+            sTraceSetSeamlessLp.self = (u32)self;
+            sTraceSetSeamlessLp.arg = (u32)&lpFlag;
+            cb->vtable->trace(cb, &sTraceSetSeamlessLp.field_0x04);
         }
     }
-    if (self->field_0x8 != 0xa) {
-        if (LSC_EntryFname(self->field_0x64, fname) < 0) {
-            self->field_0x4 = 4;
-            MWSFSVM_Error(lbl_eu_80519B90 + 0x55, fname);
-        } else {
-            self->field_0x94 += 1;
-        }
-    }
+    LSC_SetLpFlg(self->field_0x64, lpFlag);
     {
         TraceCb* cb = gpMwPlyTraceCb;
         if (cb != NULL) {
-            cb->vtable->trace(cb, &sTraceEntryFname.field_0x6c);
+            cb->vtable->trace(cb, &sTraceSetSeamlessLp.field_0x6c);
         }
     }
 }
 
-/* Start a seamless looping range playback: record the file name, stop the
- * current stream, (optionally) enter the file range, arm the loop flag, then
- * delegate to mwPlyStartSeamless. Finally publish the range parameters. */
-void mwPlyStartFnameRangeLp(MWSFDPLY* self, const char* fname, s32 arg5, s32 arg6) {
-    if (MWSFD_IsEnableHndl(self) != 1) {
-        MWSFSVM_Error(lbl_eu_80519B90 + 0x27a);
-        return;
-    }
-    MWSFPLY_RecordFname(self, fname);
-    LSC_Stop(self->field_0x64);
-    {
-        const char* recorded = self->field_0x4e8;
-        if (MWSFD_IsEnableHndl(self) != 1) {
-            MWSFSVM_Error(lbl_eu_80519B90 + 0x249);
-        } else {
-            LSC_EntryFileRange(self->field_0x64, recorded, 0, arg5, arg6);
-        }
-    }
-    {
-        s32 lpFlag = 1;
-        if (MWSFD_IsEnableHndl(self) != 1) {
-            MWSFSVM_Error(lbl_eu_80519B90 + 0xde);
-        } else {
-            TraceCb* cb = gpMwPlyTraceCb;
-            if (cb != NULL) {
-                sTraceSetSeamlessLp.self = (u32)self;
-                sTraceSetSeamlessLp.arg = (u32)&lpFlag;
-                cb->vtable->trace(cb, &sTraceSetSeamlessLp.field_0x04);
-            }
-            LSC_SetLpFlg(self->field_0x64, lpFlag);
-            cb = gpMwPlyTraceCb;
-            if (cb != NULL) {
-                cb->vtable->trace(cb, &sTraceSetSeamlessLp.field_0x6c);
-            }
-        }
-    }
-    mwPlyStartSeamless(self);
-    self->field_0x648 = 3;
-    self->field_0x658 = arg5;
-    self->field_0x65c = arg6;
-    self->field_0x640 = 1;
-    if (self->field_0x644 == 0) {
-        self->field_0x64c = 1;
-    }
-}
 
 /* ---- Non-target stubs preserved from the scaffold ---- */
 
@@ -581,11 +522,11 @@ void mwPlyStartFnameRangeLp(MWSFDPLY* self, const char* fname, s32 arg5, s32 arg
  * trace exit. */
 void mwPlyStartFnameLp(MWSFDPLY* self, const char* fname) {
     if (MWSFD_IsEnableHndl(self) != 1) {
-        MWSFSVM_Error(lbl_eu_80519B90 + 0x109);
+        MWSFSVM_Error("E1122630 mwPlyStartFnameLp: handle is invalid.");
         return;
     }
     if (fname == NULL) {
-        MWSFSVM_Error(lbl_eu_80519B90 + 0x138);
+        MWSFSVM_Error("E10915A mwPlyStartFnameLp: fname is NULL.");
         return;
     }
     {
@@ -603,7 +544,7 @@ void mwPlyStartFnameLp(MWSFDPLY* self, const char* fname) {
         {
             s32 lpFlag = 1;
             if (MWSFD_IsEnableHndl(self) != 1) {
-                MWSFSVM_Error(lbl_eu_80519B90 + 0xde);
+                MWSFSVM_Error("E1122641 mwPlySetLpFlg: handle is invalid.");
             } else {
                 TraceCb* cb = gpMwPlyTraceCb;
                 if (cb != NULL) {
@@ -633,7 +574,92 @@ void mwPlyStartFnameLp(MWSFDPLY* self, const char* fname) {
     }
 }
 
+
+// Name recovered from the retail error text E1122631.
+void mwPlyReleaseLp(MWSFDPLY* self) {
+    if (MWSFD_IsEnableHndl(self) != 1) {
+        MWSFSVM_Error("E1122631 mwPlyReleaseLp: handle is invalid.");
+    }
+}
+
+// Name recovered from the retail error text E1122635.
+void mwPlyReleaseSeamless(MWSFDPLY* self) {
+    if (MWSFD_IsEnableHndl(self) != 1) {
+        MWSFSVM_Error("E1122635 mwPlyReleaseSeamless: handle is invalid.");
+    }
+}
+
+// Names recovered from the retail error texts E1122636 / E008311.
+void mwPlyEntryAfs(MWSFDPLY* self, s32 pid, s32 fid) {
+    if (MWSFD_IsEnableHndl(self) != 1) {
+        MWSFSVM_Error("E1122636 mwPlyEntryAfs: handle is invalid.");
+    }
+    MWSFSVM_Error("E008311 mwPlyEntryAfs: can't entry pid=%d fid=%d", pid, fid);
+}
+
+// Name recovered from the retail error text E1122632.
+void mwPlyStartAfsLp(MWSFDPLY* self) {
+    if (MWSFD_IsEnableHndl(self) != 1) {
+        MWSFSVM_Error("E1122632 mwPlyStartAfsLp: handle is invalid.");
+    }
+}
+
+// Name recovered from the retail error text E407023.
+void mwPlyEntryFnameRange(MWSFDPLY* self) {
+    if (MWSFD_IsEnableHndl(self) != 1) {
+        MWSFSVM_Error("E407023 mwPlyEntryFnameRange: handle is invalid.");
+    }
+}
+
+/* Start a seamless looping range playback: record the file name, stop the
+ * current stream, (optionally) enter the file range, arm the loop flag, then
+ * delegate to mwPlyStartSeamless. Finally publish the range parameters. */
+void mwPlyStartFnameRangeLp(MWSFDPLY* self, const char* fname, s32 arg5, s32 arg6) {
+    if (MWSFD_IsEnableHndl(self) != 1) {
+        MWSFSVM_Error("E407024 mwPlyStartFnameRangeLp: handle is invalid.");
+        return;
+    }
+    MWSFPLY_RecordFname(self, fname);
+    LSC_Stop(self->field_0x64);
+    {
+        const char* recorded = self->field_0x4e8;
+        if (MWSFD_IsEnableHndl(self) != 1) {
+            MWSFSVM_Error("E407023 mwPlyEntryFnameRange: handle is invalid.");
+        } else {
+            LSC_EntryFileRange(self->field_0x64, recorded, 0, arg5, arg6);
+        }
+    }
+    {
+        s32 lpFlag = 1;
+        if (MWSFD_IsEnableHndl(self) != 1) {
+            MWSFSVM_Error("E1122641 mwPlySetLpFlg: handle is invalid.");
+        } else {
+            TraceCb* cb = gpMwPlyTraceCb;
+            if (cb != NULL) {
+                sTraceSetSeamlessLp.self = (u32)self;
+                sTraceSetSeamlessLp.arg = (u32)&lpFlag;
+                cb->vtable->trace(cb, &sTraceSetSeamlessLp.field_0x04);
+            }
+            LSC_SetLpFlg(self->field_0x64, lpFlag);
+            cb = gpMwPlyTraceCb;
+            if (cb != NULL) {
+                cb->vtable->trace(cb, &sTraceSetSeamlessLp.field_0x6c);
+            }
+        }
+    }
+    mwPlyStartSeamless(self);
+    self->field_0x648 = 3;
+    self->field_0x658 = arg5;
+    self->field_0x65c = arg6;
+    self->field_0x640 = 1;
+    if (self->field_0x644 == 0) {
+        self->field_0x64c = 1;
+    }
+}
+
+
 int MWSFLSC_IsFsStatErr(void) { extern int LSC_GetStat(void); return (LSC_GetStat() == 3) ? 1 : 0; }
+
 
 void LSC_SetFlowLimit(LscHandle* a);
 void MWSFLSC_SetFlowLimit(MWSFDPLY* self) {
@@ -643,12 +669,45 @@ void MWSFLSC_SetFlowLimit(MWSFDPLY* self) {
     }
 }
 
+
 void LSC_Pause(LscHandle* a);
 void MWSFLSC_Pause(MWSFDPLY* self) {
     LscHandle* obj = self->field_0x64;
     if (obj != NULL) {
         LSC_Pause(obj);
     }
+}
+
+
+/* Link another stream to the player. When the existing link flag is already
+ * "linked" (1) and the new request clears it (0), set the auto-restore flag
+ * before overwriting the link flag. */
+void mwPlyLinkStm(MWSFDPLY* self, s32 linkStm) {
+    if (MWSFD_IsEnableHndl(self) != 1) {
+        MWSFSVM_Error("E1122642 mwPlyLinkStm: handle is invalid.");
+        return;
+    }
+    if (self->field_0x90 == 1 && linkStm == 0) {
+        self->field_0x91 = 1;
+    }
+    self->field_0x90 = (u8)linkStm;
+}
+
+
+// Name recovered from the retail error text E1122637.
+void mwPlyGetSlFname(MWSFDPLY* self) {
+    if (MWSFD_IsEnableHndl(self) != 1) {
+        MWSFSVM_Error("E1122637 mwPlyGetSlFname: handle is invalid.");
+    }
+}
+
+// name-guess: the two orphan retail strings name an stm-number formatter.
+void mwPlyFormatStmNo(s32 stmNo, u32 hi, u32 lo) {
+    if ((u32)stmNo > 0xf) {
+        MWSFSVM_Error("E10821B : Invalid value of stm_no : %d", stmNo);
+        return;
+    }
+    MWSFSVM_Error("%08x.%08x", hi, lo);
 }
 
 /* Infinite-loop handler: when loop mode is armed (0x64c == 1) and playback
@@ -683,7 +742,7 @@ void mwPlyExecInfiniteLoopHandle(MWSFDPLY* self) {
         MWSFD_GetCond(self, 54, &cond);
         SFD_GetFps(self->field_0x58, &fps);
         if (fps <= 0) {
-            MWSFSVM_Error(lbl_eu_80519B90 + 0x30b);
+            MWSFSVM_Error("E05080801 framerate of movie is invalid.");
             self->field_0x660 = cond;
             r = -1;
         } else {
@@ -711,24 +770,24 @@ void mwPlyExecInfiniteLoopHandle(MWSFDPLY* self) {
             fid = self->field_0x654;
             pid = self->field_0x650;
             if (MWSFD_IsEnableHndl(self) != 1) {
-                MWSFSVM_Error(lbl_eu_80519B90 + 0x21c);
+                MWSFSVM_Error("E1122632 mwPlyStartAfsLp: handle is invalid.");
                 break;
             }
             LSC_Stop(self->field_0x64);
             if (MWSFD_IsEnableHndl(self) != 1) {
-                MWSFSVM_Error(lbl_eu_80519B90 + 0x1c0);
+                MWSFSVM_Error("E1122636 mwPlyEntryAfs: handle is invalid.");
             } else {
                 hnd = self->field_0x64;
                 if (ADXF_GetFnameRangeEx(pid, fid, self->field_0x4e8, &rangeA, &rangeB, &rangeC) == 0) {
                     LSC_EntryFileRange(hnd, ADXF_GetFnameFromPt(pid), rangeA, rangeB, rangeC);
             } else {
-                MWSFSVM_Error(lbl_eu_80519B90 + 0x1eb, pid, fid);
+                MWSFSVM_Error("E008311 mwPlyEntryAfs: can't entry pid=%d fid=%d", pid, fid);
             }
             }
             {
                 lpFlag = 1;
                 if (MWSFD_IsEnableHndl(self) != 1) {
-                    MWSFSVM_Error(lbl_eu_80519B90 + 0xde);
+                    MWSFSVM_Error("E1122641 mwPlySetLpFlg: handle is invalid.");
                 } else {
                     TraceCb* cb = gpMwPlyTraceCb;
                     if (cb != NULL) {
@@ -768,7 +827,7 @@ void mwPlyExecInfiniteLoopHandle(MWSFDPLY* self) {
         return;
     }
     if (MWSFD_IsEnableHndl(self) != 1) {
-        MWSFSVM_Error(lbl_eu_80519B90 + 0x162);
+        MWSFSVM_Error("E1122631 mwPlyReleaseLp: handle is invalid.");
     } else {
         {
             TraceCb* cb = gpMwPlyTraceCb;
@@ -780,7 +839,7 @@ void mwPlyExecInfiniteLoopHandle(MWSFDPLY* self) {
         {
             lpFlag2 = 0;
             if (MWSFD_IsEnableHndl(self) != 1) {
-                MWSFSVM_Error(lbl_eu_80519B90 + 0xde);
+                MWSFSVM_Error("E1122641 mwPlySetLpFlg: handle is invalid.");
             } else {
                 TraceCb* cb = gpMwPlyTraceCb;
                 if (cb != NULL) {
@@ -796,7 +855,7 @@ void mwPlyExecInfiniteLoopHandle(MWSFDPLY* self) {
             }
         }
         if (MWSFD_IsEnableHndl(self) != 1) {
-            MWSFSVM_Error(lbl_eu_80519B90 + 0x18e);
+            MWSFSVM_Error("E1122635 mwPlyReleaseSeamless: handle is invalid.");
         } else {
             {
                 TraceCb* cb = gpMwPlyTraceCb;
@@ -806,7 +865,7 @@ void mwPlyExecInfiniteLoopHandle(MWSFDPLY* self) {
                 }
             }
             if (MWSFD_IsEnableHndl(self) != 1) {
-                MWSFSVM_Error(lbl_eu_80519B90 + 0xb4);
+                MWSFSVM_Error("E1122642 mwPlyLinkStm: handle is invalid.");
             } else {
                 if (self->field_0x90 == 1) {
                     self->field_0x91 = 1;

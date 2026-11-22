@@ -205,14 +205,14 @@ void CmText_RegisterEntry(CmTextProc* self, int key, const char* name, const cha
 
 // Routes to CmText_ParseTextBuffer with the global flag record as the leading
 // argument and passes its two arguments through unchanged.
-extern "C" void CmText_ParseWithStaticProc(u32 arg0, u32 arg1) {
-    CmText_ParseTextBuffer((CmTextProc*)&lbl_eu_805739E8, (const char*)arg0, (CmTextTable*)arg1);
+extern "C" void CmText_ParseWithStaticProc(const char* arg0, CmTextTable* arg1) {
+    CmText_ParseTextBuffer(&sCmTextParseState, arg0, arg1);
 }
 
 
 /// Parse a cue-script text buffer into the table owned by `self`.  Each line is
 /// a keyword token followed by up to two parameters (`KEYWORD name value`); the
-/// keyword must appear in the lbl_eu_8052A528 dispatch table.  `buf` receives
+/// keyword must appear in the sCmTextKeywords dispatch table.  `buf` receives
 /// the 0x628-byte table that gets filled.
 void CmText_ParseTextBuffer(CmTextProc* self, const char* text, CmTextTable* buf) {
     if (buf == 0) return;
@@ -234,8 +234,8 @@ void CmText_ParseTextBuffer(CmTextProc* self, const char* text, CmTextTable* buf
         // Look the keyword up in the dispatch table; unknown keywords are skipped.
         int id = -1;
         for (u32 i = 0; i < 6; i++) {
-            if (stricmp(names[0], lbl_eu_8052A528[i].word) == 0) {
-                id = (int)lbl_eu_8052A528[i].id;
+            if (stricmp(names[0], sCmTextKeywords[i].word) == 0) {
+                id = (int)sCmTextKeywords[i].id;
                 break;
             }
         }
@@ -255,18 +255,18 @@ extern "C" void CmText_VariadicNoop(...) {}
 // (Re)initialise the callback table: clear every slot, reset the active index
 // and flag, then install the default no-op callback in slot 0.
 extern "C" void CmText_InitCallbackTable() {
-    lbl_eu_805739F8.field20 = 0;
-    lbl_eu_805739F8.field24 = 0;
-    memset(&lbl_eu_805739F8, 0, 0x20);
-    lbl_eu_805739F8.fns[lbl_eu_805739F8.field20] = CmText_DefaultNoopCallback;
+    sCmTextCallbackTable.field20 = 0;
+    sCmTextCallbackTable.field24 = 0;
+    memset(&sCmTextCallbackTable, 0, sizeof(sCmTextCallbackTable.fns));
+    sCmTextCallbackTable.fns[sCmTextCallbackTable.field20] = CmText_DefaultNoopCallback;
 }
 
 
 // Register a callback into the table slot selected by field20 and set the
 // continue flag that the dispatch loop CmText_DispatchCallbacks checks.
 extern "C" void CmText_RegisterCallback(void (*callback)(void), u8 flag) {
-    lbl_eu_805739F8.fns[lbl_eu_805739F8.field20] = callback;
-    lbl_eu_805739F8.field24 = flag;
+    sCmTextCallbackTable.fns[sCmTextCallbackTable.field20] = callback;
+    sCmTextCallbackTable.field24 = flag;
 }
 
 
@@ -275,29 +275,29 @@ extern "C" void CmText_RegisterCallback(void (*callback)(void), u8 flag) {
 // continue flag, invoke the callback, and keep iterating if the callback
 // re-set the flag.
 extern "C" void CmText_DispatchCallbacks() {
-    if (lbl_eu_805739F8.fns[lbl_eu_805739F8.field20] != 0) {
+    if (sCmTextCallbackTable.fns[sCmTextCallbackTable.field20] != 0) {
         do {
-            lbl_eu_805739F8.field24 = 0;
-            lbl_eu_805739F8.fns[lbl_eu_805739F8.field20]();
-        } while (lbl_eu_805739F8.field24 != 0);
+            sCmTextCallbackTable.field24 = 0;
+            sCmTextCallbackTable.fns[sCmTextCallbackTable.field20]();
+        } while (sCmTextCallbackTable.field24 != 0);
     }
 }
 
 
 
-// Default no-op callback stored in the callback table at lbl_eu_805739F8.
+// Default no-op callback stored in the callback table at sCmTextCallbackTable.
 // Called by CmText_DispatchCallbacks when it iterates the callback array and a slot has no
 // registered handler.  The empty body corresponds to a single blr instruction.
 extern "C" void CmText_DefaultNoopCallback(void) {}
 
 
 
-// Default no-op callback stored in the callback table at lbl_eu_805739F8.
+// Default no-op callback stored in the callback table at sCmTextCallbackTable.
 // Called by CmText_DispatchCallbacks when it iterates the callback array and a slot has no
 // registered handler.  The empty body corresponds to a single blr instruction.
 extern "C" void sinit_800C1F2C() {
-    lbl_eu_805739F8.field20 = 0;
-    lbl_eu_805739F8.field24 = 0;
+    sCmTextCallbackTable.field20 = 0;
+    sCmTextCallbackTable.field24 = 0;
 }
 
 // ---------------------------------------------------------------------------
@@ -305,8 +305,12 @@ extern "C" void sinit_800C1F2C() {
 // ---------------------------------------------------------------------------
 // Retail .bss (0x38): the parser-state record and the 0x28 callback table,
 // both already typed in include/kyoshin/cf/code_800C17DC.hpp.
-Unk805739E8 lbl_eu_805739E8;
-Unk805739F8 lbl_eu_805739F8;
+// name-guess: no real retail name at 0x805739E8 (JP lbl_805739E8 is a string label);
+// this 0x10-byte record is the CmTextProc used by CmText_ParseWithStaticProc.
+CmTextProc sCmTextParseState;
+// name-guess: no real retail name at 0x805739F8 (JP __vt__9CMdlMouth is a different
+// 0x10-byte .data object); this 0x28-byte record owns the callback array/flags.
+Unk805739F8 sCmTextCallbackTable;
 
 // ---------------------------------------------------------------------------
 // Retail .sdata2 (0x28): MWCC pools the six scenario-keyword string literals
@@ -316,7 +320,9 @@ Unk805739F8 lbl_eu_805739F8;
 
 // ---------------------------------------------------------------------------
 // Retail .data owned by this TU (0x30): the scenario-keyword dispatch table.
-TextKeyword lbl_eu_8052A528[6] = {
+// name-guess: no real retail name at 0x8052A528 (JP has no object at this address);
+// this is the six-entry scenario keyword dispatch table used by ParseTextBuffer.
+TextKeyword sCmTextKeywords[6] = {
     { "chr", 0x0 },
     { "anm", 0x1 },
     { "obj", 0x2 },

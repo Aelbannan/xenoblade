@@ -17,17 +17,9 @@ class ArcResourceAccessor;
 } }
 
 
-// Anim-completion sentinel float passed to advanceAnimTransform/AnimRewindFrame
-// (retail .sdata2 constants at 0x80668544 / 0x80668548).
-extern const float lbl_eu_80668544;
-extern const float lbl_eu_80668548;
-
 // Layout text/pane bind helper (retail 0x80137924).
 
 // Pane texture/anim bind helpers used by crystalListUpdateSlot.
-
-// Crystal-list UI strings (retail .rodata at 0x805092C0, size 0x288).
-extern char lbl_eu_805092C0[];
 
 // View into the object returned by CDeviceFont::getFontInfo: vtable+0x24
 // (declared index 7, no args) yields the u32 passed to ApplyFontToTxtPanes.

@@ -1,20 +1,6 @@
 #include "monolib/work.hpp"
 #include "monolib/util.hpp"
 
-// Retail .rodata string owned by this TU (monolibdata1 blob dissolve):
-//   lbl_eu_805224C0 (.rodata 0x2) = " "
-// dispTree's indent pad string. The sdata2_threshold 0 pragma keeps the
-// 2-byte const string in .rodata -- MWCC would otherwise route a <=8B const
-// into .sdata2, and consumers address it via lis/@l (matching retail).
-#ifdef __MWERKS__
-#pragma push
-#pragma sdata2_threshold 0
-#endif
-extern "C" const char lbl_eu_805224C0[8] = {0x20, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};  /* 0x805224C0-C8 */
-#ifdef __MWERKS__
-#pragma pop
-#endif
-
 UnkStruct_80438AF0_3* CWorkUtil::getData(UnkStruct_80438AF0* arg0){
     return arg0->unk4->unk0;
 }
@@ -36,7 +22,7 @@ void CWorkUtil::dispTree(const CWorkThread* pThread, int indent){
     i = 0;
 
     if(indent > 0){
-        pPad = lbl_eu_805224C0;
+        pPad = " ";
 
         for(; i < indent; i++){
             text += pPad;

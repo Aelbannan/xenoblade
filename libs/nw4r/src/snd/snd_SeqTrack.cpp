@@ -476,14 +476,14 @@ Channel* SeqTrack::NoteOn(int key, int velocity, s32 length, bool tie) {
     SeqPlayer* pPlayer = GetSeqPlayer();
     Channel* pChannel = NULL;
 
-    int scaledVelocity = velocity * rParam.velocityScale / 127;
+    velocity = velocity * rParam.velocityScale / 127;
 
     if (tie) {
         pChannel = GetLastChannel();
         if (pChannel != NULL) {
             pChannel->SetKey(static_cast<u8>(key));
 
-            f32 initVolume = scaledVelocity / 127.0f;
+            f32 initVolume = velocity / 127.0f;
             pChannel->SetInitVolume(initVolume * initVolume);
         }
     }
@@ -498,7 +498,7 @@ Channel* SeqTrack::NoteOn(int key, int velocity, s32 length, bool tie) {
             } else {
                 pChannel->SetKey(static_cast<u8>(key));
 
-                f32 initVolume = scaledVelocity / 127.0f;
+                f32 initVolume = velocity / 127.0f;
                 pChannel->SetInitVolume(initVolume * initVolume);
                 pChannel->SetLength(length);
             }
@@ -509,7 +509,7 @@ Channel* SeqTrack::NoteOn(int key, int velocity, s32 length, bool tie) {
         NoteOnInfo info = {
             rParam.prgNo,   // prgNo
             key,            // key
-            scaledVelocity, // velocity
+            velocity,       // velocity
             tie ? -1 : length, // length
             rParam.initPan, // initPan
 

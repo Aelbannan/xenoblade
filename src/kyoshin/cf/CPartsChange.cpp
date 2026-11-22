@@ -11,7 +11,7 @@
 
 #include "kyoshin/cf/CPartsChange.hpp"
 #include "kyoshin/cf/object/CActorParam.hpp"  // real CActorParam virtuals at primary-vtable slots
-#include "kyoshin/cf/object/CfObjectMove.hpp"  // real +0x60C collision-region member
+#include "kyoshin/cf/object/CfObjectActor.hpp"  // real actor hierarchy (CfObjectMove at +0x3E9C)
 #include "monolib/util/reslist.hpp"  // real _reslist_base layout for the manager list
 #include "monolib/util/CPathUtil.hpp"
 #include <string.h>
@@ -22,17 +22,11 @@ using cf::CfPartyInfoSortKey;
 using cf::CfActorAccessors;
 using cf::CfObjectPcExt;
 
-// Real owning classes for the embedded move object at actor+0x3E9C. The
-// hierarchy cannot be spelled with static_cast here: CfObjectActor.hpp pulls
-// CAIAction.hpp, whose CPartsChange imports clash with this TU's definitions.
-static inline cf::CfObjectMove* actorMoveBase(void* p) {
-    return reinterpret_cast<cf::CfObjectMove*>((u8*)p + 0x3E9C);
-}
-static inline cf::CfObject* actorMove(void* p) {
-    return reinterpret_cast<cf::CfObject*>((u8*)p + 0x3E9C);
-}
-static inline cf::CfObjectModel* actorModel(void* p) {
-    return reinterpret_cast<cf::CfObjectModel*>((u8*)p + 0x3E9C);
+// Real owner of the CfObjectMove subobject at actor+0x3E9C. Base members are
+// reached by member access through the derived pointer (no null-guarded
+// upcast), exactly as the retail code addresses them.
+static inline cf::CfObjectActor* asActor(void* p) {
+    return static_cast<cf::CfObjectActor*>(p);
 }
 // Counted view debt for the two tail regions whose real owner header clashes
 // with this TU (VS-OBJ CfObjectPc / CfObjectMove): keep them explicit.
@@ -489,7 +483,7 @@ extern "C" u32 spPartsActorTable;
 extern "C" int spPartsLandmarkTable;
 extern "C" void CPartsChange_FlushChangeList(u8* self);
 
-extern "C" u32 CPartsChange_GetActorTable(void) { return spPartsActorTable; }
+extern "C" void* CPartsChange_GetActorTable(void) { return (void*)spPartsActorTable; }
 
 // 0x98: find the live party-change entry for an id, clear its 0x1E "fired"
 // bit, snap its 0x10 gauge to zero, and if it had not started falling wipe
@@ -579,12 +573,10 @@ extern "C" void CPartsChange_FlushChangeList(u8* self) {
             int i;
             for (i = 0; i < 16; i++, slots++) {
                 void* p = findObjectById(slots->id);
-                void* q = p != 0 ? (u8*)p - 0x3E9C : p;
+                cf::CfObjectActor* q = static_cast<cf::CfObjectActor*>(static_cast<cf::CfObjectMove*>(p));
                 if (q != 0) {
-                    void* r = q != 0 ? (u8*)q + 0x3E9C : q;
-                    if (lookupWorkAtAddr(r) != 0) {
-                        if (q != 0) q = (u8*)q + 0x3E9C;
-                        found[count++] = q;
+                    if (lookupWorkAtAddr(static_cast<cf::CfObjectMove*>(q)) != 0) {
+                        found[count++] = static_cast<cf::CfObjectMove*>(q);
                     }
                 }
             }
@@ -849,7 +841,7 @@ extern "C" int CPartsChange_CheckNameEntry(u32 row, void* unused1, void* unused2
         if (v > 3) ok = 0;
     }
     return ok;
-} static u8* PcActorOf(u32 id); // fwd: defined below GetEnemySlotAt
+} static cf::CfObjectActor* PcActorOf(u32 id); // fwd: defined below GetEnemySlotAt
 
 // 0x78: walk the +0xA80C list for the entry whose id matches the object's
 // 0x45C0 halfword, then resolve its object id through the actor table.
@@ -1004,8 +996,8 @@ extern "C" void* CPartsChange_FindEntryById(u8* self, u32 id) {
 }
 
 extern "C" void* CPartsChange_FindPartsElem(u8* self, u8* obj) {
-    if ((actorMove(obj)->unk64 & 0x4) != 0) {
-        u16 raw = *(u16*)&actorMoveBase(obj)->_6D0;
+    if ((asActor(obj)->unk64 & 0x4) != 0) {
+        u16 raw = *(u16*)&asActor(obj)->_6D0;
         u32 idx = (u32)((s32)raw >> 4);
         if (idx != 0) {
             CfPartsElem4C* p = reinterpret_cast<CfPartsManager*>(self)->mElems.mElems;
@@ -1073,7 +1065,7 @@ extern "C" void CPartsChange_ResetBattleEntry(u8* self, u32 a, u32 b) {
     if (spPartsActorTable == 0) return;
     bool flag = false;
     if (reinterpret_cast<cf::CActorParam*>(self)->CActorParam_isBattleLocked() ||
-        (actorMove(self)->field_0x6C & 0x08000000) != 0) {
+        (asActor(self)->field_0x6C & 0x08000000) != 0) {
         flag = true;
     }
     if (flag) {
@@ -1180,7 +1172,7 @@ extern "C" int CPartsChange_FindFreeSlot(u8* self, u8* obj, u32 arg3, u32 flags)
         slots[idx + 1] = slots[1];
     }
     u32 idx2 = (u32)slot * 2;
-    slots[idx2] = actorModel(obj)->field_0x74;
+    slots[idx2] = asActor(obj)->field_0x74;
     slots[idx2 + 1] = 0;
     reinterpret_cast<CfObjectPcTailView*>(obj)->field_45C0 = (u16)reinterpret_cast<ActorSlotTable*>(self)->f94;
     reinterpret_cast<CfObjectPcTailView*>(obj)->field_45C6 = (u16)slot;
@@ -1195,12 +1187,12 @@ extern "C" int CPartsChange_FindFreeSlot(u8* self, u8* obj, u32 arg3, u32 flags)
 extern "C" int CPartsChange_UnregisterEntry(u8* actor, u8* obj) {
     // One combined guard keeps a single shared `li r3,0` epilogue (retail jumps
     // both early-outs and the loop fall-through to the same block).
-    if (obj != 0 && actorModel(obj)->field_0x74 != 0) {
+    if (obj != 0 && asActor(obj)->field_0x74 != 0) {
         u8* p = actor;
         for (u32 i = 0; i < 16; i++) {
             // Retail re-reads the 0x3F10 id every iteration (the slot
             // stores may alias obj), so the id load must stay in the loop.
-            if (*(u32*)p == actorModel(obj)->field_0x74) {
+            if (*(u32*)p == asActor(obj)->field_0x74) {
                 u32* slots = (u32*)actor;
                 slots[i * 2] = 0;
                 slots[i * 2 + 1] = 0;
@@ -1260,12 +1252,8 @@ extern "C" void* CPartsChange_GetEnemySlotAt(u8* table, u32 idx) {
 // Inline helper: resolve one slot id to its pc-actor object (the same
 // findObjectById + -0x3E9C shape CPartsChange_GetEnemySlotAt uses);
 // PcActorOf appears twice in the first sweep, hence the duplicated call.
-static inline u8* PcActorOf(u32 id) {
-    u8* p = (u8*)findObjectById((int)id);
-    if (p != 0) {
-        p -= 0x3E9C;
-    }
-    return p;
+static inline cf::CfObjectActor* PcActorOf(u32 id) {
+    return static_cast<cf::CfObjectActor*>(static_cast<cf::CfObjectMove*>(findObjectById((int)id)));
 }
 
 
@@ -1280,19 +1268,19 @@ static inline u8* PcActorOf(u32 id) {
 //     (<= 30) commits it while the 0x9A mirror is unset.
 extern "C" void CPartsChange_ResolveSlotReplayIds(u8* self) {
     for (s32 i = 0; i < 16; i++) {
-        u8* act = PcActorOf(*(u32*)(self + i * 8));
+        cf::CfObjectActor* act = PcActorOf(*(u32*)(self + i * 8));
         if (act != 0) {
-            actorMove(act)->unk64 &= ~0x04000000u;
+            act->unk64 &= ~0x04000000u;
         } else if (PcActorOf(*(u32*)(self + i * 8)) != 0) {
             *(u32*)(self + i * 8) = 0;
         }
     }
-    u8* act0 = PcActorOf(*(u32*)self);
+    cf::CfObjectActor* act0 = PcActorOf(*(u32*)self);
     if (act0 != 0) {
-        *(u32*)(act0 + 0x3F00) |= 0x04000000u;
-        *(u16*)(self + 0x98) = *(u16*)(act0 + 0x3F28);
+        act0->unk64 |= 0x04000000u;
+        *(u16*)(self + 0x98) = act0->unk8C_3;
         if ((*(u16*)(self + 0xA0) & 4) == 0 || *(u16*)(self + 0x9A) == 0) {
-            *(u16*)(self + 0x9A) = *(u16*)(act0 + 0x3F28);
+            *(u16*)(self + 0x9A) = act0->unk8C_3;
         }
     } else {
         *(u16*)(self + 0x98) = 0;
@@ -1301,9 +1289,9 @@ extern "C" void CPartsChange_ResolveSlotReplayIds(u8* self) {
     void* bdat = ::cf::CfBdat::spCurBtlEneListFileData;
     const char* col = lbl_eu_80503C48;
     for (s32 i = 0; i < 16; i++) {
-        u8* act = PcActorOf(*(u32*)(self + i * 8));
+        cf::CfObjectActor* act = PcActorOf(*(u32*)(self + i * 8));
         if (act != 0) {
-            replay = *(u16*)(act + 0x3F28);
+            replay = act->unk8C_3;
             u32 val = getBdatStringColumnValue(bdat, col + 0x40, (s32)replay);
             u8 b = *(u8*)&val;
             if (b == 2) {

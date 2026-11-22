@@ -67,9 +67,9 @@ CMCCrystalList::~CMCCrystalList() {}
 void crystalListLoadFiles(CMCCrystalList* self)
 {
     self->mFileHandle1 = CDeviceFile::readFile(
-        mtl::MemManager::getHandleMEM2(), lbl_eu_805092C0, self, 0, 0);
+        mtl::MemManager::getHandleMEM2(), "menu/jp/MCCrystalList.arc", self, 0, 0);
     self->mFileHandle2 = CDeviceFile::readFile(
-        mtl::MemManager::getHandleMEM2(), &lbl_eu_805092C0[0x1a], self, 0, 0);
+        mtl::MemManager::getHandleMEM2(), "menu/jp/tpl/CrystalIcon.arc", self, 0, 0);
     self->mDataFlag = 0;
 }
 
@@ -269,23 +269,23 @@ extern "C" void crystalListClearSlots(CMCCrystalList* self, u32 arg) {
     }
     for (u8 i = 1; i <= 8; i++) {
         char buf[0x28];
-        sprintf(buf, &lbl_eu_805092C0[0x3b], i);
-        LayoutSetTextBoxFmtValue(self->mLayout, buf, &lbl_eu_805092C0[0x12a], 0);
-        sprintf(buf, &lbl_eu_805092C0[0x4c], i);
-        LayoutSetTextBoxFmtValue(self->mLayout, buf, &lbl_eu_805092C0[0x12a], 0);
-        sprintf(buf, &lbl_eu_805092C0[0x5e], i);
-        LayoutSetTextBoxFmtValue(self->mLayout, buf, &lbl_eu_805092C0[0x12a], 0);
+        sprintf(buf, "txt_listname%02d", i);
+        LayoutSetTextBoxFmtValue(self->mLayout, buf, "", 0);
+        sprintf(buf, "txt_listvalue%02d", i);
+        LayoutSetTextBoxFmtValue(self->mLayout, buf, "", 0);
+        sprintf(buf, "txt_listpara%02d", i);
+        LayoutSetTextBoxFmtValue(self->mLayout, buf, "", 0);
 
         void* tex = self->mArcResAccessor->GetResource(
             nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE,
-            &lbl_eu_805092C0[0x12b], NULL);
+            "mf00_com00_dmy.tpl", NULL);
         if (tex != NULL) {
-            sprintf(buf, &lbl_eu_805092C0[0x11b], i);
+            sprintf(buf, "pic_ethcol%02d", i);
             PaneSetTexPaletteByName(self->mLayout, (const char*)buf, (TPLPalette*)tex);
         }
 
         if (arg == 0 && self->mStateIdx >= 3) {
-            sprintf(buf, &lbl_eu_805092C0[0x13e], i);
+            sprintf(buf, "pic_heat%02d", i);
             setPaneVisible(
                 self->mLayout->GetRootPane()->FindPaneByName(buf, true), 0);
             AnimJumpToLast(
@@ -420,7 +420,7 @@ void crystalListResetAnim3(CMCCrystalList* self)
 // then enter state 2 and run crystalListEnableAnim2.
 extern "C" void crystalListWaitAnim1To2(CMCCrystalList* self)
 {
-    if (advanceAnimTransform(self->mAnimTrans1, lbl_eu_80668544)) {
+    if (advanceAnimTransform(self->mAnimTrans1, 1.0f)) {
         self->mStateIdx = 2;
         crystalListEnableAnim2(self);
     }
@@ -429,7 +429,7 @@ extern "C" void crystalListWaitAnim1To2(CMCCrystalList* self)
 // Retail 0x802233F8: wait for anim trans 2 to finish, then activate state 3.
 extern "C" void crystalListWaitAnim2To3(CMCCrystalList* self)
 {
-    if (advanceAnimTransform(self->mAnimTrans2, lbl_eu_80668544) != 0) {
+    if (advanceAnimTransform(self->mAnimTrans2, 1.0f) != 0) {
         self->mStateIdx = 3;
         self->mIsActive = 1;
     }
@@ -453,7 +453,7 @@ extern "C" void crystalListPollSlots(CMCCrystalList* self)
 // The -O4,s unit merges the r30/r31 saves into the retail stmw r30 prologue.
 extern "C" void crystalListStepSlot(CMCCrystalList* self, u32 idx) {
     char buf[0x20];
-    sprintf(buf, &lbl_eu_805092C0[0x13e], idx + 1);
+    sprintf(buf, "pic_heat%02d", idx + 1);
     nw4r::lyt::Pane* pane =
         self->mLayout->GetRootPane()->FindPaneByName(buf, true);
     if (StepAnimLinkFrame(pane, self->mAnimRes5) != 0) {
@@ -465,7 +465,7 @@ extern "C" void crystalListStepSlot(CMCCrystalList* self, u32 idx) {
 // then enter state 5 and run crystalListEnableAnim1.
 extern "C" void crystalListRewindAnim2To5(CMCCrystalList* self)
 {
-    if (AnimRewindFrame(self->mAnimTrans2, lbl_eu_80668544) != 0) {
+    if (AnimRewindFrame(self->mAnimTrans2, 1.0f) != 0) {
         self->mStateIdx = 5;
         crystalListEnableAnim1(self);
     }
@@ -475,7 +475,7 @@ extern "C" void crystalListRewindAnim2To5(CMCCrystalList* self)
 // then reset to state 0 and activate.
 extern "C" void crystalListRewindAnim1To0(CMCCrystalList* self)
 {
-    if (AnimRewindFrame(self->mAnimTrans1, lbl_eu_80668544) != 0) {
+    if (AnimRewindFrame(self->mAnimTrans1, 1.0f) != 0) {
         self->mStateIdx = 0;
         self->mIsActive = 1;
     }
@@ -484,7 +484,7 @@ extern "C" void crystalListRewindAnim1To0(CMCCrystalList* self)
 // Retail 0x80223530: wait for anim trans 3 to finish, then activate state 3.
 extern "C" void crystalListWaitAnim3To3(CMCCrystalList* self)
 {
-    if (advanceAnimTransform(self->mAnimTrans3, lbl_eu_80668544) != 0) {
+    if (advanceAnimTransform(self->mAnimTrans3, 1.0f) != 0) {
         self->mStateIdx = 3;
         self->mIsActive = 1;
     }
@@ -494,7 +494,7 @@ extern "C" void crystalListWaitAnim3To3(CMCCrystalList* self)
 // then activate state 3.
 extern "C" void crystalListRewindAnim3To3(CMCCrystalList* self)
 {
-    if (AnimRewindFrame(self->mAnimTrans3, lbl_eu_80668544) != 0) {
+    if (AnimRewindFrame(self->mAnimTrans3, 1.0f) != 0) {
         self->mStateIdx = 3;
         self->mIsActive = 1;
     }
@@ -504,7 +504,7 @@ extern "C" void crystalListRewindAnim3To3(CMCCrystalList* self)
 // then activate state 3.
 extern "C" void crystalListWaitAnim4To3(CMCCrystalList* self)
 {
-    if (advanceAnimTransform(self->mAnimTrans4, lbl_eu_80668544) != 0) {
+    if (advanceAnimTransform(self->mAnimTrans4, 1.0f) != 0) {
         self->mStateIdx = 3;
         self->mIsActive = 1;
     }
@@ -580,7 +580,7 @@ bool CMCCrystalList::OnFileEvent(CEventFile* pEventFile)
         // === crystal list file 1 loaded ===
         mMemRegion1.createRegion(
             mtl::MemManager::getHandleMEM2(), 0x10000,
-            &lbl_eu_805092C0[0x18f], 0);
+            "CMCCrystalList", 0);
         Class_8045F858 regionGuard1(&mMemRegion1);
 
         fileData = mFileHandle1->mData;
@@ -588,15 +588,15 @@ bool CMCCrystalList::OnFileEvent(CEventFile* pEventFile)
         mtl::MemManager::setMemInitFlag(false);
 
         mArcResAccessor = CLibLayout::createArcResourceAccessor();
-        mArcResAccessor->Attach(fileData, &lbl_eu_805092C0[0x19e]);
+        mArcResAccessor->Attach(fileData, "arc");
 
-        buildLayout(&mLayout, mArcResAccessor, &lbl_eu_805092C0[0x1a2]);
+        buildLayout(&mLayout, mArcResAccessor, "mf10_cry00_inf01.brlyt");
 
-        bindLayoutAnimTransform(mLayout, &mAnimTrans1, mArcResAccessor, &lbl_eu_805092C0[0x1b9]);
-        bindLayoutAnimTransform(mLayout, &mAnimTrans2, mArcResAccessor, &lbl_eu_805092C0[0x1d3]);
-        bindLayoutAnimTransform(mLayout, &mAnimTrans3, mArcResAccessor, &lbl_eu_805092C0[0x1f2]);
-        bindLayoutAnimTransform(mLayout, &mAnimTrans4, mArcResAccessor, &lbl_eu_805092C0[0x20f]);
-        LayoutBindAnimResource(mLayout, (void**)&mAnimRes5, mArcResAccessor, &lbl_eu_805092C0[0x22b]);
+        bindLayoutAnimTransform(mLayout, &mAnimTrans1, mArcResAccessor, "mf10_cry00_inf01_in.brlan");
+        bindLayoutAnimTransform(mLayout, &mAnimTrans2, mArcResAccessor, "mf10_cry00_inf01_info_in.brlan");
+        bindLayoutAnimTransform(mLayout, &mAnimTrans3, mArcResAccessor, "mf10_cry00_inf01_bl_in.brlan");
+        bindLayoutAnimTransform(mLayout, &mAnimTrans4, mArcResAccessor, "mf10_cry00_inf01_drop.brlan");
+        LayoutBindAnimResource(mLayout, (void**)&mAnimRes5, mArcResAccessor, "mf10_cry00_inf01_heat.brlan");
 
         // Bind the loaded font's pane into the layout root.
         nw4r::lyt::Pane* rootPane = mLayout->GetRootPane();
@@ -611,17 +611,17 @@ bool CMCCrystalList::OnFileEvent(CEventFile* pEventFile)
         if (sh != 0) {
             char buf[0x20];
             for (u8 i = 1; i <= 8; i++) {
-                sprintf(buf, &lbl_eu_805092C0[0x4c], i);
+                sprintf(buf, "txt_listvalue%02d", i);
                 setLayoutTextBoxFont(mLayout, buf, sh);
-                sprintf(buf, &lbl_eu_805092C0[0x5e], i);
+                sprintf(buf, "txt_listpara%02d", i);
                 setLayoutTextBoxFont(mLayout, buf, sh);
             }
         }
 
-        LayoutSetTextBoxFmtValue(mLayout, &lbl_eu_805092C0[0x258],
-            BdatTouchStringCell(&lbl_eu_805092C0[0x247], &lbl_eu_805092C0[0x253], 0x2c), 0);
-        LayoutSetTextBoxFmtValue(mLayout, &lbl_eu_805092C0[0x267],
-            BdatTouchStringCell(&lbl_eu_805092C0[0x247], &lbl_eu_805092C0[0x253], 0x2d), 0);
+        char* crystalName = BdatTouchStringCell("MNU_crystal", "info", 0x2c);
+        LayoutSetTextBoxFmtValue(mLayout, "txt_listname00", crystalName, 0);
+        char* crystalValue = BdatTouchStringCell("MNU_crystal", "info", 0x2d);
+        LayoutSetTextBoxFmtValue(mLayout, "txt_listvalue00", crystalValue, 0);
 
         crystalListEnableAnim1(this);
         mLayout->Animate(0);
@@ -638,7 +638,7 @@ bool CMCCrystalList::OnFileEvent(CEventFile* pEventFile)
         // === crystal list file 2 loaded ===
         mMemRegion2.createRegion(
             mtl::MemManager::getHandleMEM2(), 0x100,
-            &lbl_eu_805092C0[0x277], 0);
+            "CItemBoxInfoTex", 0);
         Class_8045F858 regionGuard2(&mMemRegion2);
 
         fileData = mFileHandle2->mData;
@@ -646,7 +646,7 @@ bool CMCCrystalList::OnFileEvent(CEventFile* pEventFile)
         mtl::MemManager::setMemInitFlag(false);
 
         mArcResAccessor2 = CLibLayout::createArcResourceAccessor();
-        mArcResAccessor2->Attach(fileData, &lbl_eu_805092C0[0x19e]);
+        mArcResAccessor2->Attach(fileData, "arc");
 
         // Main layout already built -> mark the list ready.
         if (mArcResAccessor != 0) {

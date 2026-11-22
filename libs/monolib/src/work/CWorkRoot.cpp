@@ -335,31 +335,8 @@ void reslist<T>::pop_front(){
 #include <revolution/OS.h>
 #include <revolution/VI.h>
 
-// Device methods referenced by this TU, declared by retail mangled name
-// instead of including monolib/device.hpp: device.hpp pulls in
-// CDeviceBase.hpp whose inline virtual dtor makes MWCC declare the __RTTI__
-// chain internally, which collides with the extern "C" void* __RTTI__
-// declarations this TU needs for its manual RTTI base list (MWCC "illegal
-// name overloading").
-
-// Out-of-line isEvent3: retail calls mMsgQueue.find rather than inlining it;
-// the header body would fold the find loop into callers.
-// Hand-written stand-in keeps an out-of-line bl; reloc-map equates the
-// ILi8E spelling to retail find__12CMsgParam<8>CFUl (angle brackets are not
-// legal C identifiers -- see MWCC_PATTERNS.md).
-extern "C" int find__12CMsgParamILi8ECFUl(const void* queue, u32 msg);
-extern "C" bool isRunning__11CWorkThreadCFv(CWorkThread* thread);
-extern "C" bool isEvent3__11CWorkThreadCFv(CWorkThread* thread);
-bool CWorkThread::isEvent3() const {
-    if (mFlags & THREAD_FLAG_EVT3)
-        return true;
-    return find__12CMsgParamILi8ECFUl(&mMsgQueue, EVT_3) >= 0;
-}
-
-
-// Out-of-line CMsgParam<8>::find -- the retail keeps a standalone symbol
-// (find__12CMsgParam<8>CFUl) that callers bl to; the header body would
-// inline it under -ipa.
+// Out-of-line CMsgParam<8>::find -- retail keeps a standalone find body that
+// callers bl to; the header body would inline it under -ipa.
 template <int N>
 int CMsgParam<N>::find(u32 msg) const {
     for (int i = 0; i < mRing.mSize; i++) {
@@ -371,68 +348,32 @@ int CMsgParam<N>::find(u32 msg) const {
 }
 template int CMsgParam<8>::find(u32) const;
 
-class CDevice;
-class CDeviceClock;
-class CDeviceVI;
-class CDeviceGX;
-class CDeviceFontLayer;
-extern "C" CDeviceClock* getInstance__12CDeviceClockFv();
-extern "C" void onStartFrame__12CDeviceClockFv();
-extern "C" CDeviceVI* getInstance__9CDeviceVIFv();
-extern "C" void beginFrame__9CDeviceVIFv();
-extern "C" void endFrame__9CDeviceVIFv();
-extern "C" void onPreRetrace__9CDeviceVIFv();
-extern "C" CDeviceGX* getInstance__9CDeviceGXFv();
-extern "C" void onRenderWork__9CDeviceGXFv();
-extern "C" void resetFontCursor__16CDeviceFontLayerFv();
-extern "C" CDevice* getInstance__7CDeviceFv();
-extern "C" bool isColdStartReady__7CDeviceFv();
-extern "C" void createRegions__7CDeviceFv();
-extern "C" void create__7CDeviceFv();
-extern "C" void deleteRegions__7CDeviceFv();
+// Out-of-line isEvent3: retail calls mMsgQueue.find rather than inlining it;
+// the header body would fold the find loop into callers.
+bool CWorkThread::isEvent3() const {
+    if (mFlags & THREAD_FLAG_EVT3)
+        return true;
+    return mMsgQueue.find(EVT_3) >= 0;
+}
 
-extern IWorkEventVtbl lbl_eu_8056B938;
-
-// CWorkThread's own virtuals referenced by the manual vtable (declared here,
-// not in data_vtables.hpp: that header is included by TUs that also include
-// device.hpp/CDeviceBase.hpp, where these would collide with the members).
-extern "C" void wkStandbyLogin__11CWorkThreadFv();
-
-// CWorkRootThread's generated deleting-dtor and virtual override, declared by
-// mangled name so the manual vtable below can reference them.
-extern "C" void __dt__Q217CWorkRootThreadNS15CWorkRootThreadFv();
-extern "C" bool wkStandbyLogout__Q217CWorkRootThreadNS15CWorkRootThreadFv();
+#include "monolib/device/CDevice.hpp"
+#include "monolib/device/CDeviceClock.hpp"
+#include "monolib/device/CDeviceFontLayer.hpp"
+#include "monolib/device/CDeviceGX.hpp"
+#include "monolib/device/CDeviceVI.hpp"
 
 // Emit the standalone reslist<CWorkThread*> constructor for the retail symbol
 // __ct__23reslist<P11CWorkThread>Fv. MWCC else folds the template default-ctor
 // into every call site and never emits a global body; instantiate BEFORE any
 // use so the out-of-line copy is authoritative.
 template reslist<CWorkThread*>::reslist();
-// CWorkRootThread is kept in a named namespace (retail mangles it as
-// @unnamed@CWorkRoot_cpp@) because MWCC cannot spell a destructor address for
-// an anonymous-namespace class in a manual vtable initializer; the coordinator
-// renames the three member symbols below back to their @unnamed@ retail names
-// (same mechanism as the existing CWorkRoot.o exact_renames).
-// -O4,s the class region: the generated ~CWorkRootThread()
-// needs the retail stmw/lmw r30 save/restore prologue style.
-namespace CWorkRootThreadNS {
-    // Empty helper base: runs right after the CWorkThread base ctor but
-    // BEFORE the reslist members are constructed, which reproduces the
-    // retail constructor's vtable-store placement (novtable suppresses the
-    // compiler's own vtable init).
-    struct WorkRootVtableInit {
-        WorkRootVtableInit(void* obj, u32 vtbl){
-            *(u32*)obj = vtbl;
-        }
-    };
-
-    class __declspec(novtable) CWorkRootThread : public CWorkThread, public WorkRootVtableInit {
+namespace {
+    class CWorkRootThread : public CWorkThread {
     public:
         friend class CWorkRoot;
 
         CWorkRootThread(const char* pName, CWorkThread* pThread)
-            : CWorkThread(pName, pThread, 32),
-              WorkRootVtableInit(this, (u32)&lbl_eu_8056B938) {
+            : CWorkThread(pName, pThread, 32) {
             mThreadList1.reserve(mAllocHandle, 16);
             mThreadList2.reserve(mAllocHandle, 16);
         }
@@ -447,7 +388,7 @@ namespace CWorkRootThreadNS {
             return spInstance;
         }
 
-        ~CWorkRootThread();
+        ~CWorkRootThread(){}
 
         virtual bool wkStandbyLogout(){
             if(hasChild(this)) return false;
@@ -463,78 +404,34 @@ namespace CWorkRootThreadNS {
     private:
         static CWorkRootThread* spInstance;
     };
-}  // namespace CWorkRootThreadNS
 
-// Out-of-line definition inside -O4,s: gives the generated
-// dtor the retail stmw/lmw save/restore style.
-CWorkRootThreadNS::CWorkRootThread::~CWorkRootThread(){}
+    CWorkRootThread* CWorkRootThread::spInstance;
+}  // namespace
 
-// spInstance static (retail 0x80665608): the CWorkRoot .sbss split range now
-// includes 0x80665608-0x80665618 (16B) so the singleton storage is emitted;
-// UNIT_RULES["CWorkRoot.o"] renames the NS-mangled symbol to the retail
-// @unnamed@ name (spInstance__Q223@unnamed@CWorkRoot_cpp@15CWorkRootThread),
-// resolving the 13 .text references at link.
-using CWorkRootThreadNS::CWorkRootThread;
-
-CWorkRootThread* CWorkRootThread::spInstance;
-
-// Data owned by this TU (blob monolibdata1d/monolibdata1 dissolve):
+// Data still owned as explicit objects in this TU (blob dissolve residuals):
 //   lbl_eu_80522718 (.rodata) = CWorkRootThread RTTI name string
-//   lbl_eu_80522744 (.rodata) = exit-string pool (retail bytes, 0x4C)
-//   lbl_eu_806635C0 (.sdata)  = __RTTI__CWorkRootThread {name, base-list}
-//   lbl_eu_8056B938 (.data)   = CWorkRootThread vtable
+//   lbl_eu_806635C0 (.sdata)  = CWorkRootThread typeinfo {name, base-list}
 //   lbl_eu_8056B9D8 (.data)   = RTTI base list {IWE,0,CWT,0,0,0}
-//   lbl_eu_8066560C (.sbss)   = CWorkRoot::sExitMode (exit-mode u32)
-//   lbl_eu_80665610 (.sbss)   = CWorkRoot::sException (CException*; 8 bytes, word 0 used)
+//   lbl_eu_80665610 (.sbss)   = CWorkRoot::sException storage (8 bytes, word 0 used)
+// The CWorkRootThread vtable/RTTI name pool and sExitMode are now emitted by
+// the compiler from the real class and static member below.
 // RTTI name string (.rodata 0x80522718, 0x2C bytes: 34 content + 10 pad).
 // align(4) so the object is not padded to a 16-byte slot; the retail object
 // ends at 0x80522744 where the exit-string pool starts.
 extern "C" __declspec(align(4)) const char lbl_eu_80522718[0x2C] =
     {0x40,0x75,0x6E,0x6E,0x61,0x6D,0x65,0x64,0x40,0x43,0x57,0x6F,0x72,0x6B,0x52,0x6F,0x6F,0x74,0x5F,0x63,0x70,0x70,0x40,0x3A,0x3A,0x43,0x57,0x6F,0x72,0x6B,0x52,0x6F,0x6F,0x74,0x54,0x68,0x72,0x65,0x61,0x64,0x00,0x00,0x00,0x00};  /* "@unnamed@CWorkRoot_cpp@::CWorkRootThread\0\0\0\0" */
-extern "C" const char lbl_eu_80522744[0x4C] =
-    "CWorkRoot\0"
-    "exit wii menu\n\0"
-    "exit wii reset\n\0"
-    "exit wii power off\n\0"
-    "exit prog end\n";
-
-extern IWorkEventVtbl lbl_eu_8056B938;
 extern RttiBaseList2 lbl_eu_8056B9D8;
 
 // __RTTI__CWorkRootThread = {name, base-list} (.sdata).
 u32 lbl_eu_806635C0[2] = {(u32)lbl_eu_80522718, (u32)&lbl_eu_8056B9D8};
 
-IWorkEventVtbl lbl_eu_8056B938 = {
-    (u32)&lbl_eu_806635C0, 0, (u32)&__dt__Q217CWorkRootThreadNS15CWorkRootThreadFv,
-    (u32)&WorkEvent1__10IWorkEventFPvPCc, (u32)&OnFileEvent__10IWorkEventFP10CEventFile,
-    (u32)&WorkEvent3__10IWorkEventFPv, (u32)&WorkEvent4__10IWorkEventFv,
-    (u32)&OnPauseTrigger__10IWorkEventFb,
-    (u32)&WorkEvent6__10IWorkEventFv, (u32)&WorkEvent7__10IWorkEventFv,
-    (u32)&WorkEvent8__10IWorkEventFv, (u32)&WorkEvent9__10IWorkEventFv,
-    (u32)&WorkEvent10__10IWorkEventFv, (u32)&WorkEvent11__10IWorkEventFv,
-    (u32)&WorkEvent12__10IWorkEventFv, (u32)&WorkEvent13__10IWorkEventFv,
-    (u32)&WorkEvent14__10IWorkEventFv, (u32)&WorkEvent15__10IWorkEventFv,
-    (u32)&WorkEvent16__10IWorkEventFv, (u32)&WorkEvent17__10IWorkEventFv,
-    (u32)&WorkEvent18__10IWorkEventFv, (u32)&WorkEvent19__10IWorkEventFv,
-    (u32)&WorkEvent20__10IWorkEventFv, (u32)&WorkEvent21__10IWorkEventFv,
-    (u32)&WorkEvent22__10IWorkEventFv, (u32)&WorkEvent23__10IWorkEventFv,
-    (u32)&WorkEvent24__10IWorkEventFv, (u32)&WorkEvent25__10IWorkEventFv,
-    (u32)&WorkEvent26__10IWorkEventFv, (u32)&WorkEvent27__10IWorkEventFv,
-    (u32)&WorkEvent28__10IWorkEventFv, (u32)&WorkEvent29__10IWorkEventFv,
-    (u32)&WorkEvent30__10IWorkEventFv, (u32)&WorkEvent31__10IWorkEventFv,
-    (u32)&wkUpdate__11CWorkThreadFv, (u32)&wkRender__11CWorkThreadFv,
-    (u32)&wkRenderAfter__11CWorkThreadFv, (u32)&wkStandbyLogin__11CWorkThreadFv,
-    (u32)&wkStandbyLogout__Q217CWorkRootThreadNS15CWorkRootThreadFv,
-    (u32)&wkStandbyExceptionRetry__11CWorkThreadFUl,
-};
 RttiBaseList2 lbl_eu_8056B9D8 = {
     (u32)&__RTTI__10IWorkEvent, 0, (u32)&__RTTI__11CWorkThread, 0, 0, 0,
 };
 
-// CWorkRoot exit-mode / exception statics with the retail sda21 labels (blob
-// monolibdata1d dissolve; CWorkRoot.hpp still declares the class statics but
-// the retail addresses carry the lbl_eu_ names).
-int lbl_eu_8066560C;
+// CWorkRoot's exception storage; sExitMode below is the real private static
+// declared in CWorkRoot.hpp.
+CWorkRoot::ExitMode CWorkRoot::sExitMode;
 CException* lbl_eu_80665610[2];
 
 //Exit mode value that determines what to do when exit is called
@@ -553,13 +450,13 @@ CErrorWii CWorkRoot::sErrorWii;
 // investigation, MWCC rematerializes the constant name web so its callee-
 // saved color cannot be forced from source; needs witness-era EQUIVALENT_MATCH.
 void CWorkRoot::initialize(){
-    lbl_eu_8066560C = EXIT_PROG_END;
+    sExitMode = EXIT_PROG_END;
     //Initialize the math library
     ml::math::initialize();
     //Initialize VI
     VIInit();
 
-    const char* pName = &lbl_eu_80522744[0];
+    const char* pName = "CWorkRoot";
     CWorkRootThread* thread =
         new (CWorkThreadSystem::getWorkMem()) CWorkRootThread(pName, nullptr);
     CWorkUtil::entryWork(thread, nullptr, false);
@@ -595,7 +492,7 @@ void CWorkRoot::standbyWork(CWorkThread* pThread, bool arg1){
     //Something is sus here
     // Empty-then layout: makes MWCC emit "bne past the standby block" like
     // retail instead of beq-into-it.
-    if(!(arg1 ^ isEvent3__11CWorkThreadCFv(pThread))){
+    if(!(arg1 ^ pThread->isEvent3())){
         pThread->wkStandby();
 
         //Recursively call standbyWork on this thread's children
@@ -637,10 +534,10 @@ void CWorkRoot::standbyWork(CWorkThread* pThread, bool arg1){
 // -O4,s: reproduces the retail stmw/lmw r29 save/restore style.
 void CWorkRoot::updateWork(CWorkThread* pThread, bool arg1){
     // Early-return form: makes MWCC emit retail's xor./bne exit test.
-    if(arg1 ^ isEvent3__11CWorkThreadCFv(pThread)){
+    if(arg1 ^ pThread->isEvent3()){
         return;
     }
-    if(isRunning__11CWorkThreadCFv(pThread)){
+    if(pThread->isRunning()){
             // Idle threads and no-event-flagged threads tick themselves.
             bool busy = pThread->isPaused() || pThread->isEvent7() || pThread->isAppException();
 
@@ -676,8 +573,8 @@ body:
         thread->mThreadList1.pop_front();
         thread->mThreadList2.pop_front();
 
-        if (isRunning__11CWorkThreadCFv(list1Front)) {
-            if (isRunning__11CWorkThreadCFv(list2Front)) {
+        if (list1Front->isRunning()) {
+            if (list2Front->isRunning()) {
                 list1Front->mParent->wkRemoveChild(list1Front);
                 list2Front->mParent = list1Front;
             }
@@ -701,8 +598,8 @@ check:
 }
 
 void CWorkRoot::renderWork(){
-    if(getInstance__9CDeviceGXFv() != nullptr){
-        onRenderWork__9CDeviceGXFv();
+    if(CDeviceGX::getInstance() != nullptr){
+        CDeviceGX::onRenderWork();
     }
 
     if(!CWorkSystem::isOff()){
@@ -715,7 +612,7 @@ void CWorkRoot::renderWork(){
         }
     }
 
-    resetFontCursor__16CDeviceFontLayerFv();
+    CDeviceFontLayer::resetFontCursor();
 }
 
 bool CWorkRoot::isShutdownAll(){
@@ -724,12 +621,12 @@ bool CWorkRoot::isShutdownAll(){
 
 bool CWorkRoot::runSingle(){
     //Trigger the start frame event in CDeviceClock
-    if(getInstance__12CDeviceClockFv() != nullptr){
-        onStartFrame__12CDeviceClockFv();
+    if(CDeviceClock::getInstance() != nullptr){
+        CDeviceClock::onStartFrame();
     }
 
-    if(getInstance__9CDeviceVIFv() != nullptr){
-        beginFrame__9CDeviceVIFv();
+    if(CDeviceVI::getInstance() != nullptr){
+        CDeviceVI::beginFrame();
     }
 
     standbyWork();
@@ -737,8 +634,8 @@ bool CWorkRoot::runSingle(){
     updateWork(CWorkRootThread::spInstance, false);
     renderWork();
 
-    if(getInstance__9CDeviceVIFv() != nullptr){
-        endFrame__9CDeviceVIFv();
+    if(CDeviceVI::getInstance() != nullptr){
+        CDeviceVI::endFrame();
     }
 
     return isShutdownAll() ? false : true;
@@ -746,33 +643,33 @@ bool CWorkRoot::runSingle(){
 
 void CWorkRoot::exit(){
     //Check the current exit mode to determine how to handle the program stopping
-    if(lbl_eu_8066560C == EXIT_WII_MENU){
+    if(sExitMode == EXIT_WII_MENU){
         //Exit to Wii menu
-        OSReport(&lbl_eu_80522744[0xA]);
+        OSReport("exit wii menu\n");
         OSReturnToMenu();
-    }else if(lbl_eu_8066560C == EXIT_RESTART){
+    }else if(sExitMode == EXIT_RESTART){
         //Restart the game
-        OSReport(&lbl_eu_80522744[0x19]);
+        OSReport("exit wii reset\n");
         OSRestart(0);
-    }else if(lbl_eu_8066560C == EXIT_SHUTDOWN){
+    }else if(sExitMode == EXIT_SHUTDOWN){
         //Shutdown the console
-        OSReport(&lbl_eu_80522744[0x29]);
+        OSReport("exit wii power off\n");
         OSShutdownSystem();
     }else{
         /* If still set to the default mode, just exit without doing anything.
         This probably was what was used during debugging. */
-        OSReport(&lbl_eu_80522744[0x3D]);
+        OSReport("exit prog end\n");
     }
 }
 
 inline void CWorkRoot::initializeComponents(){
     mtl::MemManager::initialize();
     CErrorWii::initialize();
-    createRegions__7CDeviceFv();
+    CDevice::createRegions();
     CWorkThreadSystem::initialize();
     CWorkRoot::initialize();
     CWorkControl::create(CWorkRootThread::spInstance);
-    create__7CDeviceFv();
+    CDevice::create();
     CLib::create();
     CWorkSystem::create();
 }
@@ -780,7 +677,7 @@ inline void CWorkRoot::initializeComponents(){
 inline void CWorkRoot::destroyComponents(){
     CWorkRoot::destroy();
     CWorkThreadSystem::destroy();
-    deleteRegions__7CDeviceFv();
+    CDevice::deleteRegions();
     CErrorWii::destroy();
     mtl::MemManager::finalize();
 }
@@ -793,7 +690,7 @@ void CWorkRoot::run(){
     //Wait for all devices to be initialized?
     do {
         standbyWork();
-    } while(getInstance__7CDeviceFv() == nullptr || isColdStartReady__7CDeviceFv());
+    } while(CDevice::getInstance() == nullptr || CDevice::isColdStartReady());
 
     //Set pre retrace callback
     VISetPreRetraceCallback(preRetraceCallback);
@@ -812,7 +709,7 @@ void CWorkRoot::run(){
 void CWorkRoot::preRetraceCallback(u32 retraceCount){
     /* This function is stubbed, so there's no way of knowing if the parameter got passed in
     or not */
-    onPreRetrace__9CDeviceVIFv();
+    CDeviceVI::onPreRetrace();
 }
 
 void CWorkRoot::setException(CException* pException){
@@ -832,7 +729,7 @@ bool CWorkThread::isRunning() const {
     if (mFlags & THREAD_FLAG_EXCEPTION) {
         exception = true;
     } else {
-        exception = (find__12CMsgParamILi8ECFUl(&mMsgQueue, EVT_EXCEPTION) >= 0);
+        exception = (mMsgQueue.find(EVT_EXCEPTION) >= 0);
     }
 
     bool result = false;

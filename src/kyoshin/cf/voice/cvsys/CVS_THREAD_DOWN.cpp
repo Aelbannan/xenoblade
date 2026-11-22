@@ -124,7 +124,7 @@ void CVS_THREAD_DOWN::onComplete() {
 // Remove a voice from the slots by matching its embedded CCharVoice pointer.
 // Each slot stores a CVoiceHandle; the comparison target is the CCharVoice
 // embedded at +0x3E9C inside that handle (or NULL when the slot is empty).
-void downVoiceRemoveByPtr(CVS_THREAD_DOWN* self, CCharVoice* voicePtr) {
+extern "C" void downVoiceRemoveByPtr(CVS_THREAD_DOWN* self, CCharVoice* voicePtr) {
     DetachThreadVoice(self, voicePtr);
 
     // Slot 0x20: load handle, bias to its embedded voice if non-null, compare
@@ -182,10 +182,6 @@ extern "C" int CCharVoiceMan_NullVoiceDispatch(void* self);
 extern u32 lbl_eu_80539A58[4];
 extern u32 lbl_eu_80539B48[4];
 extern u32 __RTTI__Q22cf10CVS_THREAD[2];
-extern u32 lbl_eu_80539AB8[3];
-extern u32 lbl_eu_80539AC4[3];
-extern u32 lbl_eu_80539AD0[3];
-extern "C" u32 lbl_eu_80539ADC[3];
 extern u32 __RTTI__Q22cf16CVS_THREAD_CHAIN[2];
 extern u32 __RTTI__Q22cf15CVS_THREAD_DOWN[2];
 extern u32 __RTTI__Q22cf14CVS_THREAD_EHP[2];

@@ -123,7 +123,7 @@ struct CUICfSwapStr {
 
 // CUICfManager_checkMenuOpenGate now reaches both actors through real
 // classes. The player's embedded CfObjectMove is at actor +0x3E9C; the
-// canonical static_cast in CfActorMoveLayout.hpp emits that same subi.
+// static_cast<cf::CfObjectActor*> from that CfObjectMove* emits the subi.
 // CfObjectMove::mTargetC4 is the +0x3F60 battle-object pointer, and the
 // pointee is a real cf::CActParamAnimGame (declared in CActParamAnimGame.hpp):
 //   field530 (+0x530) bit 0, field4EC (+0x4EC) bits 1/8/15.
@@ -134,7 +134,7 @@ struct CUICfSwapStr {
 // Keeping these declarations as comments preserves -ipa-file line numbers
 // for the other matched functions in this TU.
 // No data members were lost: the overlays carried no objects of their own.
-// CfActorMoveLayout's pad reproduces the actor's CAIAction trailer.
+// (CfObjectActor = CActorParam + CAIAction + CfObjectMove, size 0x45C0.)
 // The flag meanings are documented on CActParamAnimGame's fields.
 
 // CBattleManager's battle-object circular list (head pointer at +0x8; nodes
@@ -147,12 +147,6 @@ struct CBattleListHead {
     CUICfListLink* head;         // +0x8
 };
 
-// Enum-list view for CUICfManager_checkMenuOpenGate's population check (count at +0x620).
-struct CUICfEnumList620 {
-    u8 pad[0x620];
-    u32 count;                   // +0x620
-};
-
 // View returned by Scn_QueryUnk80State (f32 at +0/+4/+8/+C).
 struct CUICfCamView {
     f32 field_0;
@@ -161,20 +155,6 @@ struct CUICfCamView {
     f32 field_C;
 };
 
-
-struct CUICfUnk144 {
-    u8 unk00[0x39];
-    u8 unk39; // 0x39
-};
-
-// Queue item type for CUICfManager::Move list walks (CProcess-sized prefix).
-struct CUICfMenuItem {
-    u8 unk00[0x39];
-    u8 unk39; // 0x39 - remove / SetRemove
-    u8 unk3A[0x54 - 0x3A];
-    u8 unk54; // 0x54
-    u8 unk55; // 0x55
-};
 
 struct CUICfInitBlock {
     u32 unk00;
@@ -381,7 +361,7 @@ public:
     CUICfListNode* unk138;                               // 0x138 (event node array)
     int unk13C;                                          // 0x13C (event node array count)
     u8 unk140[0x144 - 0x140];                            // 0x140
-    CUICfUnk144* unk144;                                 // 0x144
+    CProcess* unk144;                                    // 0x144
     CUICfInitSlot mInitSlots[8];                         // 0x148
     // Slot0.unk00[0]/[1] are manager-wide clear/mark flags (0x148/0x149).
     u8 unkC88[8];                                        // 0xC88

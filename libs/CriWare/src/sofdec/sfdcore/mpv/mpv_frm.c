@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include <harness_catalog.h>
+#include "libs/CriWare/src/sofdec/sfdcore/mpv/mpv_types.h"
 
 void MPVFRM_Init(void) {}
 
@@ -29,8 +30,11 @@ typedef struct MpvFrmInfo {
     u8 pad_0x42[2];
 } MpvFrmInfo;
 
-/* MPV decode handle - only the fields this TU touches are modelled. */
-typedef struct MpvHn {
+/* MPV decode handle - only the fields this TU touches are modelled.
+ * DEBT(view_struct): full decode-handle layout still lives here instead of
+ * in the canonical mpv_types.h; the request-stop path already uses the real
+ * MpvHn type from that header. */
+typedef struct MpvFrmHn {
     u8 pad_0x00[0xb58];
     MpvDecBuf decBuf;       /* 0xb58: 128B decoded-stream copy source */
     u8 pad_0xbd8[0x10];
@@ -39,9 +43,9 @@ typedef struct MpvHn {
     MpvFrmInfo savedFrm;    /* 0xbf0: 68B copied from the SJ frame info */
     u8 pad_0xc34[0xc8];
     s32 mode;               /* 0xcfc: codec mode (2 = MPEG2 video) */
-} MpvHn;
+} MpvFrmHn;
 
-s32 MPV_DecodeFrmSj(MpvHn* h, void* a2, MpvFrmInfo* a3) {
+s32 MPV_DecodeFrmSj(MpvFrmHn* h, void* a2, MpvFrmInfo* a3) {
     s32 r;
     u32 sv2;
     u32 sv1;
@@ -97,12 +101,12 @@ extern int MPVLIB_CheckHn(void*);
 extern int MPVERR_SetCode(void*, int);
 extern int MPVM2V_RequestStop(void*);
 
-s32 MPV_RequestStop(void* handle) {
+s32 MPV_RequestStop(MpvHn* handle) {
     if (MPVLIB_CheckHn(handle)) {
         return MPVERR_SetCode(NULL, 0xFF030211);
     }
-    *(u32*)((u8*)handle + 0xDA8) = 1;
-    if ((s32)*(u32*)((u8*)handle + 0xCFC) == 2) {
+    handle->stopRequest = 1;
+    if (handle->codecMode == 2) {
         return MPVM2V_RequestStop(handle);
     }
     return 1;

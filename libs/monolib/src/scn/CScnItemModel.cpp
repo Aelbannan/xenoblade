@@ -7,7 +7,6 @@
 #include "monolib/scn/code_804BF59C.hpp"
 #include "monolib/util/MemManager.hpp"
 #include <monolib/scn/CScnItemCameraNw4r.hpp>
-#include "kyoshin/CModelDisp.hpp"
 
 // Cross-unit pool iterator (retail C-ABI, unmangled symbol; defined in
 // CScnItemPool.cpp). Iterates the pool's reslist and clears matching
@@ -2600,6 +2599,10 @@ void simToggleWordBits(u8* self, u32 flags, u32 enable) {
     }
 }
 }
+
+// Defined in kyoshin/CModelDisp.cpp (C++ linkage).
+int simVtableFalse3(void* self);
+int simVtableFalse4(void* self);
 
 // ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
 extern "C" u32 lbl_eu_806624D0;   // foreign .sdata

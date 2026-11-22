@@ -14,14 +14,9 @@
 #include <string.h>
 
 // ----- typified retail data (replaces copy_data_sections) -----
-// .rodata RTTI class-name (0x12) + 2-byte pad gap to lbl_eu_80503E14.
-__declspec(section ".rodata") __attribute__((used, aligned(8)))
-char lbl_eu_80503E00[0x14] = "CSimpleEveTalkWin";
-
-// them); the two this-adjust deltas are immediates. Spelled as a blob
-// because the RTTI/typeinfo refs are unspellable retail labels
-// (CSysWinSelect/CSysWinBuff/CSysWinSave absorb precedent).
-__declspec(section ".data") __attribute__((used, aligned(8)))
+// Composite vtable and RTTI dispatch block; the two this-adjust deltas are
+// immediates (CSysWinSelect/CSysWinBuff/CSysWinSave absorb the same labels).
+__attribute__((used, aligned(8)))
 char lbl_eu_80532EE0[0xC0] = {
     0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00,
     0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0xFF,0xFF,0xFF,0x94, 0x00,0x00,0x00,0x00,
@@ -29,14 +24,14 @@ char lbl_eu_80532EE0[0xC0] = {
     0xFF,0xFF,0xFF,0x90, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00,
 };
 // .data RTTI dispatch block 0x40 (subobject offsets 0x70/0x6C immediates).
-__declspec(section ".data") __attribute__((used, aligned(8)))
+__attribute__((used, aligned(8)))
 char lbl_eu_80532FA0[0x40] = {
     0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x70, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x6C,
     0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00,
 };
 // .sdata typeinfo pair (RTTI name + dispatch block).
-__declspec(section ".sdata") __attribute__((used, aligned(8)))
-const void* __RTTI__17CSimpleEveTalkWin[2] = { lbl_eu_80503E00, lbl_eu_80532FA0 };
+__attribute__((used, aligned(8)))
+const void* __RTTI__17CSimpleEveTalkWin[2] = { "CSimpleEveTalkWin", lbl_eu_80532FA0 };
 // .sbss singletons (MWCC auto-routes zero-init small data here).
 CSimpleEveTalkWin* spEveTalkWinInstance = 0;
 u8 sEveTalkWinTerminated = 0;
@@ -322,7 +317,7 @@ void CSimpleEveTalkWin::Term() {
         reinterpret_cast<UnkClass_8045F564*>(mMemRegion));
 }
 
-void CSimpleEveTalkWin::cbRenderBefore() {
+void CSimpleEveTalkWin::cbRenderBefore(CScn*) {
     CTaskGame::getInstance();
     if (CTaskGame::isFlag01Set() || (gmPauseFlags & 0x200000))
         return;
@@ -363,7 +358,7 @@ CSimpleEveTalkWin* eveTalkWinCreateRegister(CProcess* parent, CScn* scene, u32 t
 // embedded IWorkEvent/IScnRender subobject; back off to the object base and
 // forward to the real member). eveTalkWinSetReuseText / eveTalkWinAdvancePage remain stubs.
 
-extern "C" __declspec(noinline) void eveTalkWinSetReuseText(CSimpleEveTalkWin* owner,
+extern "C" void eveTalkWinSetReuseText(CSimpleEveTalkWin* owner,
                                                     u32 textId, u8* msgBuf) {
     owner->field_67 = 1;
     owner->field_68 = textId;
@@ -591,7 +586,7 @@ extern "C" void eveTalkWinAdvancePage(CSimpleEveTalkWin* self) {
 }
 
 extern "C" void __dt__17CSimpleEveTalkWinFv(void*);
-extern "C" void cbRenderBefore__17CSimpleEveTalkWinFv(void*);
+extern "C" void cbRenderBefore__17CSimpleEveTalkWinFP4CScn(void*);
 
 // Spoof thunks -- retail `subi/b` are compiler thunks for the
 // IWorkEvent@0x6C / IScnRender@0x70 bases. Plain `p->~Class()` lowers to
@@ -604,7 +599,7 @@ void eveTalkWinDtorThunk6C(u8* self) {
 }
 
 void eveTalkWinRenderBeforeThunk(u8* self) {
-    ((void (*)(void*))cbRenderBefore__17CSimpleEveTalkWinFv)((char*)self - 0x70);
+    ((void (*)(void*))cbRenderBefore__17CSimpleEveTalkWinFP4CScn)((char*)self - 0x70);
 }
 
 void eveTalkWinDtorThunk70(u8* self) {

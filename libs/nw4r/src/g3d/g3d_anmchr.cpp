@@ -40,10 +40,10 @@ NW4R_G3D_RTTI_DEF(AnmObjChrRes);
 // AnmObj::IsDerivedFrom body (retail inlines the base chain into every
 // derived class; the 0x650/0x640 checks come from this helper's boundary).
 static bool anmObjBaseIsDerivedFrom(G3dObj::TypeObj other) {
-    if (other == G3dObj::TypeObj(lbl_eu_8051D650)) {
+    if (other == AnmObj::GetTypeObjStatic()) {
         return true;
     }
-    if (other == G3dObj::TypeObj(lbl_eu_8051D640)) {
+    if (other == G3dObj::GetTypeObjStatic()) {
         return true;
     }
     return false;
@@ -416,10 +416,6 @@ void AnmObjChrNode::Release(const ResMdl mdl, u32 target, BindOption option) {
 } // namespace g3d
 } // namespace nw4r
 
-// Complete const array type sized to the retail .sdata table (2 entries,
-// 8 bytes) keeps it small-data eligible (retail: li r4, tbl@sda21).
-extern const nw4r::g3d::PlayPolicyFunc lbl_eu_80663458[2]; // anm play-policy table
-
 namespace nw4r {
 namespace g3d {
 
@@ -501,10 +497,6 @@ AnmObjChrBlend* AnmObjChrBlend::Construct(MEMAllocator* pAllocator,
 
 } // namespace g3d
 } // namespace nw4r
-
-// Shared .sdata2 quiet-NaN constant (0x7FC00000, retail .sdata2 label, owning TU or extern);
-// retail's inlined FLog domain-guard loads NaN from this slot.
-extern const f32 lbl_eu_80669B90;
 
 namespace nw4r {
 namespace g3d {
@@ -727,7 +719,7 @@ inline AnmObjChrRes::AnmObjChrRes(MEMAllocator* pAllocator, ResAnmChr chr,
                                   ChrAnmResult* pCacheBuf)
     : AnmObjChr(pAllocator, pBindingBuf, numBinding),
       FrameCtrl(0.0f, static_cast<f32>(static_cast<int>(chr.ref().info.numFrame)),
-                lbl_eu_80663458[chr.ref().info.policy]),
+                GetAnmPlayPolicy(chr.GetAnmPolicy())),
       mRes(chr), mpResultCache(pCacheBuf) {}
 
 // Layout of the allocation: [object][result cache][binding table]. The cache
@@ -812,18 +804,8 @@ void AnmObjChrRes::UpdateCache() {
 } // namespace g3d
 } // namespace nw4r
 
-// Aliases FrameCtrl::smBaseUpdateRate (sdata2).
-extern const f32 lbl_eu_80663460;
-
 namespace nw4r {
 namespace g3d {
-
-// Stand-in for FrameCtrl::UpdateFrm() kept as a real function so MWCC's
-// early CSE cannot merge the mUpdateRate reloads across the call boundary;
-// smBaseUpdateRate resolves to the shared sdata2 slot lbl_eu_80663460.
-void AnmObjChrResUpdateFrm(FrameCtrl* fc) {
-    fc->SetFrm(fc->GetRate() * lbl_eu_80663460 + fc->GetFrm());
-}
 
 // G3dProc: ATTACH stores the parent, UPDATEFRAME tail-dispatches the
 // vtable slot, DETACH_PARENT clears the parent.

@@ -11,8 +11,6 @@ extern "C" void func_8022EB0C(CMCCrystalSupport* self);
 
 extern "C" {
 extern char lbl_eu_8050AA3C[];
-extern const float lbl_eu_80668630;
-extern const float lbl_eu_80668634;
 
 }
 
@@ -62,7 +60,7 @@ extern "C" void CrySupUnloadLayout(CMCCrystalSupport* self) {
 
 extern "C" void CrySupStartState(CMCCrystalSupport* self) {
     self->mState = 1;
-    *(float*)((u8*)self->mAnimTransform + 0x10) = lbl_eu_80668630;
+    *(float*)((u8*)self->mAnimTransform + 0x10) = 0.0f;
     self->mFinished = 0;
     playUISound(0x8e);
 }
@@ -83,7 +81,7 @@ extern "C" void CrySupSetTexByIndex(CMCCrystalSupport* self, u16 index) {
 // noinline: retail calls this via a real `bl` from CrySupTickAnim (sibling in this
 // TU); without it MWCC inlines the body into the caller and the bl disappears.
 extern "C" __declspec(noinline) void CrySupAdvanceAnim(CMCCrystalSupport* self) {
-    if (advanceAnimTransform(self->mAnimTransform, lbl_eu_80668634) != 0) {
+    if (advanceAnimTransform(self->mAnimTransform, 1.0f) != 0) {
         self->mState = 0;
         self->mFinished = 1;
     }

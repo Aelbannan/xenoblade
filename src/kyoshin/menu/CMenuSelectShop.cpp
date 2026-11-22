@@ -289,7 +289,7 @@ extern "C" void ShopSel_State3Done(CMenuSelectShop* self) {
 // embedded shop window and (when a selection is present) the cursor through a
 // stack DrawInfo.
 // ---------------------------------------------------------------------------
-void CMenuSelectShop::cbRenderBefore() {
+void CMenuSelectShop::cbRenderBefore(CScn*) {
     // Single short-circuit OR gate pair (CMenuShopBuy / CSystemWindow shape).
     if (CTaskGame::getInstance()->isFlag01Set() ||
         (gmPauseFlags & 0x200000))

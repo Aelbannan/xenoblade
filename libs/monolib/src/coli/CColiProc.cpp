@@ -359,7 +359,7 @@ extern "C" int ColiProc_ProcessSegments(CColiWork* work, CColiObjDispatch* obj) 
             ColiLinkSweepRecord(obj, (u32)coliclass(e->field_0x0), (u8*)e);
             if (e->field_0x2 & 2) {
                 if (work->field_0xC & 2) {
-                    g_coliResCall.src = (CColiMtxSrc*)(
+                    g_coliResCall.src = (CColiMtxOut*)(
                         work->field_0x8 + offset +
                         2 * (u32)colisize(e->field_0x0));
                     if (ColiDispatchByIndex(
@@ -374,7 +374,7 @@ extern "C" int ColiProc_ProcessSegments(CColiWork* work, CColiObjDispatch* obj) 
                 }
                 extra = (u32)colisize(e->field_0x0) + 0xc0;
             }
-            g_coliResCall.src = (CColiMtxSrc*)0;
+            g_coliResCall.src = (CColiMtxOut*)0;
             result |= (u32)ColiDispatchByIndex((CColiDispatchTarget*)obj,
                                                work->field_0x8 + offset);
         }
@@ -478,11 +478,6 @@ extern "C" int ColiProc_DispatchSpec(CColiWork* work,
 // then add the linear offset component. Both stages notify the target object.
 // ---------------------------------------------------------------------------
 extern "C" void ColiTranslatePoints(void* self);
-struct CColiMtxSrc {
-    Mtx mtx0;       //0x0
-    char pad[0x60]; //0x30
-    Mtx mtx1;       //0x90
-};
 
 // CColiResCall's virtual slot 0 (retail ColiMoverUpdate): the object itself,
 // reached through the CColiProc members pos (+0x0C) / off (+0x24) and the
@@ -498,9 +493,8 @@ void CColiResCall::Update() {
         if (self->off.y > lbl_eu_8066AEA8) {
             Vec tmp;
             Vec* pos = (Vec*)&self->pos;
-            PSMTXMultVec((const f32 (*)[4])self->src->mtx1, pos, (Vec*)&tmp);
-            PSMTXMultVec((const f32 (*)[4])self->src->mtx0, (Vec*)&tmp,
-                         (Vec*)&tmp);
+            PSMTXMultVec(self->src->old.m1.m, pos, (Vec*)&tmp);
+            PSMTXMultVec(self->src->cur.m0.m, (Vec*)&tmp, (Vec*)&tmp);
             nw4r::math::VEC3Sub((nw4r::math::VEC3*)&tmp,
                                 (nw4r::math::VEC3*)&tmp,
                                 (nw4r::math::VEC3*)&self->pos);

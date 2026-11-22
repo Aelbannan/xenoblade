@@ -34,9 +34,6 @@ public:
     virtual u32 isStateReady() = 0;                                     // 0x38
 };
 
-// Legacy spelling used by the font-device layer and kyoshin callers.
-typedef IDeviceFontInfo CDeviceFontInfo;
-
 namespace nw4r { namespace lyt { class Layout; } }
 
 //size: 0x1f0
@@ -57,7 +54,7 @@ public:
     u32 func_804525F0();
     static void* getFontInfo(u32 fontId, nw4r::lyt::Layout* layout);
     void dispatchLayer4B70();
-    CDeviceFontInfo* findFontByDevice();
+    IDeviceFontInfo* findFontByDevice();
     u32 createFontInfo();
 
     //0x0: vtable

@@ -11,7 +11,6 @@ struct CColiHx;
 struct CColiQx;
 struct CColiWalkStateObj;
 struct CColiQueryNode;
-struct CColiMoveNode;
 struct CColiProcLocal;
 
 // Collision-manager object behind sEneColiProbe.  The fields the shared
@@ -44,6 +43,6 @@ extern "C" void ColiInitSegment(void*, const Vec*, const Vec*, void*);
 extern "C" void ColiMakeAabbMinMax(void*, const Vec*, const Vec*);
 extern "C" int ColiTestAabbContains(const void*, const CColiQueryNode*);
 extern "C" int ColiProcessSegmentSelect(const CColiQueryNode*, const void*, int);
-extern "C" void ColiNodeRefreshAxes(CColiMoveNode* node);
-extern "C" void ColiNodeResortKeyed(CColiMoveNode* node);
+extern "C" void ColiNodeRefreshAxes(CColiQueryNode* node);
+extern "C" void ColiNodeResortKeyed(CColiQueryNode* node);
 extern "C" ColiProbeObj* sEneColiProbe;

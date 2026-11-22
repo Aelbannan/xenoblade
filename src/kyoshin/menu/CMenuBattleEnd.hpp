@@ -55,10 +55,12 @@ public:
     CMenuBattleEnd(CScn* scene, u8 mode, u32 param);
     virtual ~CMenuBattleEnd();
 
+    static CMenuBattleEnd* sInstance;
+
     virtual void Init();
     virtual void Term();
     virtual void Move();
-    virtual void cbRenderBefore();
+    virtual void cbRenderBefore(CScn* scene);
 
     CScn* mScene;                          // 0x74 owning scene
     UnkClass_8045F564 mMemRegion;          // 0x78 embedded MEM2 region
@@ -90,4 +92,3 @@ void Regist__8CProcessFP8CProcessb(void*, void*, bool);
 // .sbss globals shared with the retail binary (global-scope plain externs keep
 // the unmangled symbol; no extern "C" needed outside a namespace).
 extern u32 gmPauseFlags;
-extern CMenuBattleEnd* lbl_eu_80664898;

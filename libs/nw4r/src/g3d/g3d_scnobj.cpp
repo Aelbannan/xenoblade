@@ -723,7 +723,7 @@ ScnGroup::~ScnGroup() {
 // chain) so MWCC inlines it and emits the retail parameter-reload pattern
 // (a fresh lwz at the helper boundary).
 static bool scnObjBaseIsDerivedFrom(G3dObj::TypeObj other) {
-    return other == G3dObj::TypeObj(lbl_eu_8051D640);
+    return other == G3dObj::GetTypeObjStatic();
 }
 
 
@@ -737,7 +737,7 @@ static bool scnGroupBaseIsDerivedFrom(G3dObj::TypeObj other) {
     return other.GetTypeID() == ScnObj::GetTypeObjStatic().GetTypeID()
                ? true
                : (other.GetTypeID() ==
-                  G3dObj::TypeObj(lbl_eu_8051D640).GetTypeID());
+                  G3dObj::GetTypeObjStatic().GetTypeID());
 }
 
 bool ScnGroup::IsDerivedFrom(G3dObj::TypeObj other) const {

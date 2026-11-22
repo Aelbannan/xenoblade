@@ -9,6 +9,7 @@
 // weak copy, and ~CSelShopWin elides the base call (retail shape).
 #define IWORK_EVENT_INLINE_DTOR
 #include "kyoshin/cf/CfGameManager.hpp"
+#include "kyoshin/cf/object/CfObjectMove.hpp"
 #include "kyoshin/CSelShopWin.hpp"
 
 #include "kyoshin/code_80135FDC.hpp"
@@ -21,11 +22,7 @@
 // (memberized: advanceShopWinOpen -> CSelShopWin::advanceShopWinOpen; declaration moved into class CSelShopWin)
 // (memberized: rewindShopWinClose -> CSelShopWin::rewindShopWinClose; declaration moved into class CSelShopWin)
 
-// Opaque overlay structs used by OnFileEvent (retail layout unknown).
-struct ShopPaneInfo {  // extends nw4r::lyt::Pane field we touch
-    u8 gap[0xBB];
-    u8 field_BB;  // 0xBB
-};
+// Opaque resource-object layout used by OnFileEvent.
 struct UnkCoords {
     u16 c0;  // 0x0
     u16 c2;  // 0x2
@@ -36,58 +33,6 @@ struct UnkMsgObjChain {
 struct UnkMsgObj {
     u8 gap[0x8];
     UnkMsgObjChain* chain;  // 0x8
-};
-
-/* Read-only views over opaque retail objects. Declaring the slots as real
-   virtuals makes MWCC emit the canonical virtual-call sequence (lwz r12,0(r3);
-   lwz r12,off(r12); bctrl) instead of an indirect call through a caller-saved
-   register copy. Never constructed, so no vtables are emitted here. */
-struct ShopFontView {
-    virtual void vfn_04();
-    virtual void vfn_08();
-    virtual void vfn_0C();
-    virtual void vfn_10();
-    virtual void vfn_14();
-    virtual void vfn_18();
-    virtual void vfn_1C();
-    virtual u32 getSpacing();  // +0x24
-};
-struct ShopPlayerView {
-    virtual void vfn_04();
-    virtual void vfn_08();
-    virtual void vfn_0C();
-    virtual void vfn_10();
-    virtual void vfn_14();
-    virtual void vfn_18();
-    virtual void vfn_1C();
-    virtual void vfn_20();
-    virtual void vfn_24();
-    virtual void vfn_28();
-    virtual void vfn_2C();
-    virtual void vfn_30();
-    virtual void vfn_34();
-    virtual void vfn_38();
-    virtual void vfn_3C();
-    virtual void vfn_40();
-    virtual void vfn_44();
-    virtual void* getMenuSource();  // +0x4c
-};
-struct ShopActorView {
-    virtual void vfn_04();
-    virtual void vfn_08();
-    virtual void vfn_0C();
-    virtual void vfn_10();
-    virtual void vfn_14();
-    virtual void vfn_18();
-    virtual void vfn_1C();
-    virtual void vfn_20();
-    virtual void vfn_24();
-    virtual void vfn_28();
-    virtual void vfn_2C();
-    virtual void vfn_30();
-    virtual void vfn_34();
-    virtual void vfn_38();
-    virtual const char* getName();  // +0x40
 };
 
 CSelShopWin::CSelShopWin() : mMemRegion() {
@@ -236,27 +181,29 @@ bool CSelShopWin::OnFileEvent(CEventFile* pEventFile) {
         bindLayoutAnimTransform(mLayout, &mAnimTransform, mAccessor, "mf70_cf60_syswin05_in.brlan");
 
         nw4r::lyt::Pane* rootPane = mLayout->GetRootPane();
-        ShopFontView* fontObj =
-            (ShopFontView*)getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, mLayout);
-        u32 fontResult = fontObj->getSpacing();
-        ApplyFontToTxtPanes(rootPane, (const nw4r::ut::Font*)fontResult);
+        IDeviceFontInfo* fontObj = static_cast<IDeviceFontInfo*>(
+            getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, mLayout));
+        nw4r::ut::Font* font = fontObj->getFont();
+        ApplyFontToTxtPanes(rootPane, font);
 
         mLayout->SetAnimationEnable(mAnimTransform, 1);
         mLayout->Animate(0);
 
-        // Clear bit 0 of the info pane's byte at +0xBB.
-        ShopPaneInfo* info = reinterpret_cast<ShopPaneInfo*>(
-            mLayout->GetRootPane()->FindPaneByName("nul_value", true));
-        info->field_BB &= 0xfe;
+        nw4r::lyt::Pane* info =
+            mLayout->GetRootPane()->FindPaneByName("nul_value", true);
+        info->SetVisible(false);
 
         char* text = NULL;
-        ShopPlayerView* player = (ShopPlayerView*)getPlayer__Q22cf13CfGameManagerFi(0);
+        cf::CfObjectMove* player = static_cast<cf::CfObjectMove*>(
+            getPlayer__Q22cf13CfGameManagerFi(0));
         if (player != NULL) {
-            void* sub = player->getMenuSource();
-            if (sub != NULL) {
-                ShopActorView* srcActor = (ShopActorView*)findObjectById(reinterpret_cast<int>(sub));
+            int actorId = player->CObjectParam_getSelfObjectId();
+            if (actorId != 0) {
+                cf::CfObjectMove* srcActor =
+                    static_cast<cf::CfObjectMove*>(findObjectById(actorId));
                 if (srcActor != NULL) {
-                    text = static_cast<char*>(GetBdatNameByNumId(srcActor->getName()));
+                    text = GetBdatNameByNumId(
+                        static_cast<const char*>(srcActor->CObjectParam_getParamPtr()));
                 }
             }
         }

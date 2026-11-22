@@ -14,15 +14,6 @@ public:
     u8 mLearnArtsFlag; // 0xE
 };
 
-// Character-data object returned by CtrlObjectParam_GetCharEntry. Fields beyond +0xE8
-// are the learn-arts flag grid read by ResTbox_IsCellBitSet.
-struct CHelpLearnArtsCharData {
-    u8 pad[0xC];            // 0x0..0xB
-    u16 mWpnType;           // +0xC
-    u8 pad2[0xE8 - 0xE];    // 0xE..0xE7
-    u8 mArts[1];            // +0xE8
-};
-
 } // namespace cf
 
 

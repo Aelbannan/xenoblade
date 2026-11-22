@@ -4,9 +4,6 @@
 
 #include <cmath>
 
-// Retail .sdata2/.rodata pool constants (lbl_eu_8066A0D0 etc.) are declared
-// in snd_Util.h C-linkage imports; see there for the naming rationale.
-
 namespace nw4r {
 namespace snd {
 namespace detail {
@@ -77,18 +74,18 @@ f32 Util::CalcSurroundPanRatio(f32 pan, const PanInfo& rInfo) {
 }
 
 int Util::CalcLpfFreq(f32 scale) {
-    scale = ut::Clamp(scale, lbl_eu_8066A0F0, lbl_eu_8066A0D0);
+    scale = ut::Clamp(scale, 0.0f, 1.0f);
 
-    if (scale < lbl_eu_8066A0F4) {
+    if (scale < 0.13561438f) {
         return 80;
     }
 
-    if (scale >= lbl_eu_8066A0F8) {
+    if (scale >= 0.9f) {
         return 16000;
     }
 
-    return Util::CalcLpfFreqTable[static_cast<int>((scale - lbl_eu_8066A0F4) /
-                                            lbl_eu_8066A0FC)];
+    int index = static_cast<int>((scale - 0.13561438f) / 0.033333335f);
+    return Util::CalcLpfFreqTable[index];
 }
 
 void Util::GetRemoteFilterCoefs(int filter, u16* pB0, u16* pB1, u16* pB2,

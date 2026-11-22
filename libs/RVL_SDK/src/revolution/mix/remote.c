@@ -35,12 +35,6 @@ typedef struct MIXRmtChannel {
     u16 cur7, dst7;  // 0x40-0x43: pair 7 (aux F)
 } MIXRmtChannel;     // total 0x44
 
-// Remote channel info block: index field at 0x18 (caller-provided).
-typedef struct MIXRmtChanInfo {
-    u8  _pad[0x18];
-    s32 index;       // 0x18 - remote channel index
-} MIXRmtChanInfo;
-
 // Flag bit definitions
 #define MIX_RMT_FLAG_COPY_DEST  0x80000000u  // copy dst[] -> cur[] on next update
 #define MIX_RMT_FLAG_UPDATE     0x40000000u  // recalculate dst[] from vol[] params
@@ -54,7 +48,7 @@ typedef struct MIXRmtChanInfo {
 void MIXRmtSetVolumes(void* chanInfo, u32 mask, s32 v0, s32 v1, s32 v2, s32 v3,
                       s32 v4, s32 v5, s32 v6, s32 v7)
 {
-    s32 idx = ((MIXRmtChanInfo*)chanInfo)->index;
+    s32 idx = ((AXVPB*)chanInfo)->index;
     u32 bit = mask & 0xF;
     MIXRmtChannel* ch = __MIXRmtChannel + idx;
     u32 tmp;
@@ -73,7 +67,7 @@ void MIXRmtSetVolumes(void* chanInfo, u32 mask, s32 v0, s32 v1, s32 v2, s32 v3,
 
 void MIXRmtSetFader(void* chanInfo, s32 selector, s32 value)
 {
-    s32 idx = ((MIXRmtChanInfo*)chanInfo)->index;
+    s32 idx = ((AXVPB*)chanInfo)->index;
     MIXRmtChannel* ch = __MIXRmtChannel + idx;
 
     switch (selector) {

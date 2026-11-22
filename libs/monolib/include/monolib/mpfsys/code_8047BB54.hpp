@@ -22,6 +22,7 @@ public:
     void forwardMpfCallB();
     void forwardMpfCallC();
     void flushMpfBuffer();
+    static void destroyMpfInstance(); // name-guess (us-8047ffcc)
 };
 
 // ---------------------------------------------------------------------------

@@ -52,9 +52,6 @@ struct KizunaPadData {
 // signature. int returns keep the caller's `!= 0` as a plain cmpwi (no u8 mask)
 // like retail.
 // ---------------------------------------------------------------------------
-// Shared string pool (.rodata) used by Init.
-extern char lbl_eu_8050E970[];
-
 // Global render-gate mode bitfield (.sbss; bit 21), read by Move/cbRenderBefore.
 extern u32 gmPauseFlags;
 
@@ -114,8 +111,7 @@ void CMenuKizunaTalkList::Init() {
     BgTex_Acquire_3C14(&mBgTex);
 
     // --- Re-initialise the embedded CTitleAHelp ---
-    char* name = BdatTouchStringCell(lbl_eu_8050E970, lbl_eu_8050E970 + 0xb, 0x11);
-    mTitleAHelp = CTitleAHelp(name, 0);
+    mTitleAHelp = CTitleAHelp(BdatTouchStringCell("MNU_update", "info", 0x11), 0);
 
     mTitleAHelp.CTitleAHelp_load();
 
@@ -190,7 +186,7 @@ void CMenuKizunaTalkList::Move() {
 // Render the kizuna talk-list screen through a stack DrawInfo: gate on the
 // task/busy flags and the scene-active check, then draw bg, talk list and
 // title/help bar in that order.
-void CMenuKizunaTalkList::cbRenderBefore() {
+void CMenuKizunaTalkList::cbRenderBefore(CScn*) {
     CTaskGame::getInstance();
     if (CTaskGame::isFlag01Set() || (gmPauseFlags & 0x200000))
         return;

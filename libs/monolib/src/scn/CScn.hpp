@@ -24,12 +24,6 @@ struct ScnTermRelease {
     virtual void release(int flag);
 };
 
-// IScnRender draw callback shape: vt+0xC(cb, scn).
-struct IScnRenderDraw {
-    virtual ~IScnRenderDraw() {}
-    virtual void onRender(CScn* scn) = 0;
-};
-
 class CView;
 
 // CamMan_SyncCameraToView / CamMan_GetViewThread are CScnCameraMan members
@@ -54,14 +48,7 @@ struct ScnCamParams {
     u32 w[16]; // 0x00..0x3C
 };
 
-// View of the camera item returned by CamMan_FindItemA_B158, exposing the +0x194
-// parameter block (projection matrix).
-struct ScnCamItemView {
-    u8 pad00[0x194]; //0x00
-    u32 proj[16]; //0x194 projection matrix (MTX44)
-};
 
-// Blob reached via CScn+0x84; holds per-scene floats at +0x08 / +0x0C.
 struct ScnFloats {
     u8 unk00[0x08];
     float unk08; //0x08

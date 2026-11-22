@@ -135,7 +135,4 @@ char* Tok_FormatRes(void* handle);
 void MoveImplStartDispatch(void* self);
 }
 
-// rodata/data imports referenced by this unit (global scope: not mangled).
-extern char lbl_eu_804FC7EC[];
-extern f32 lbl_eu_804FC7B0[];
-extern const char* lbl_eu_8052AA00[];
+// All data referenced by this unit is now defined in the owning TU.

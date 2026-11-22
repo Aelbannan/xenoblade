@@ -15,10 +15,6 @@
 
 #include <types.h>
 
-// sdata2 scalar used by setChainGauge; defined after the pooling functions so
-// its 8-byte slot lands last, like retail's third .sdata2 entry.
-extern const f64 kChainGaugeTwo;
-
 // C++ linkage: retail's symbols are the C++ mangled initChainGauge__FPv /
 // resetChainGauge__FPv (both take the gauge as void*).
 void initChainGauge(void* p) {
@@ -53,20 +49,9 @@ extern "C" void setChainGauge(float* self, float param) {
     self[1] = b;
     if (a < param) {
         param -= a;
-        // 8-byte 2.0 pooled via the file-scope const double below (lands
-        // last like retail's third slot); reading its low word emits a
-        // plain lfs with no conversion code. The address-taken global keeps
-        // the 8-byte pool alive instead of collapsing to a 4-byte literal,
-        // which is what retail's third sdata2 slot requires.
-        float c = *(const f32*)&kChainGaugeTwo;
+        float c = 2.0;
         float r = (c * param) - a;
         self[1] = r;
         self[0] = r;
     }
 }
-
-// 8-byte 2.0 constant for setChainGauge above. File-scope const double
-// (global linkage so the earlier use compiles; address-taken so it is not
-// folded away) placed after the literal-pooling functions so it emits last,
-// matching retail's third sdata2 slot.
-const f64 kChainGaugeTwo = 2.0;

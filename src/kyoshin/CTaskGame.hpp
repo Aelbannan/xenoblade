@@ -40,11 +40,11 @@ struct UnkClass_8004041C{
     void CTaskGame_setVisionParam(u8 r4, float f1, int r5, u32 r6, u8 r7, u32 r8, u32 r9);
 
     u8 unk0;
-    volatile float unk4; /* 0x04 */
+    float unk4; /* 0x04 */
     int unk8; /* 0x08 */
     u32 unkC; /* 0x0C */
     u8 unk10; /* 0x10 */
-    volatile u32 unk14; /* 0x14 */
+    u32 unk14; /* 0x14 */
     u32 unk18; /* 0x18 */
 };
 
@@ -151,7 +151,7 @@ public:
 
 protected:
     CTaskGame();
-    void cbRenderBefore();
+    void cbRenderBefore(CScn* scene);
     void OnFileEvent();
     void Draw();
 };

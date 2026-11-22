@@ -161,13 +161,13 @@ extern "C" f32 lbl_eu_80667D4C;
 extern "C" void* getInstance__Q22cf13CfGameManagerFv(void);
 
 // Sub-object constructors / vtable data used by the slot constructor
-// (retail __ct__801A33AC). resetMapMarker / initItemWorkState are C-linkage
-// constructors defined in CfMapItemManager.cpp; the lbl_eu_8052xxxx symbols
-// are the CArtsSet / CAttackSet / CVisionSlot vtables stored by the slot ctor.
-// They are declared as byte arrays so MWCC takes their addresses with
-// absolute lis/addi (ADDR16_HA/LO) instead of sda21, matching the retail.
+// (retail __ct__801A33AC). resetMapMarker is a C-linkage constructor defined
+// in CfMapItemManager.cpp; initItemWorkState is declared once with its real
+// ItemWorkState* type in kyoshin/cf/CfMapItemManager.hpp. The lbl_eu_8052xxxx
+// symbols are the CArtsSet / CAttackSet / CVisionSlot vtables stored by the
+// slot ctor. They are declared as byte arrays so MWCC takes their addresses
+// with absolute lis/addi (ADDR16_HA/LO) instead of sda21, matching the retail.
 extern "C" void resetMapMarker(void* self);
-extern "C" void initItemWorkState(void* self);
 // Declared larger than the 8-byte SDA threshold so MWCC takes their addresses
 // with absolute lis/addi (ADDR16_HA/LO) instead of sda21, matching the retail.
 extern "C" u8 lbl_eu_8052813C[0x40];

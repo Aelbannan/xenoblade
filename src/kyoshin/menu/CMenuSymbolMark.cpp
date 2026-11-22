@@ -3,6 +3,7 @@
 // High-level C++ reconstruction
 
 #include "kyoshin/menu/CMenuSymbolMark.hpp"
+#include "kyoshin/cf/CBattleManager.hpp"
 
 #include "monolib/work/CWorkThreadSystem.hpp"
 #include "monolib/core/CViewRoot.hpp"
@@ -433,7 +434,7 @@ void CMenuSymbolMark::Move() {
 // pointer, scene gate (IsMenuState621F0), view flag (bit 0x800), syswin flag
 // (0xAFA4 mask), entry count, then render all visible entries through a
 // DrawInfo.
-void CMenuSymbolMark::cbRenderBefore() {
+void CMenuSymbolMark::cbRenderBefore(CScn*) {
     // Nested guard reproduces retail's beq-body/b-exit branch pair.
     if (CTaskGame::getInstance()->isFlag01Set() == 0) {
         if (!(gmPauseFlags & 0x200000)) {
@@ -728,12 +729,12 @@ void CMenuSymbolMark::SymMark_RebuildIdsA() {
     CfObjList* list = (CfObjList*)getReslistB68();
     for (CfObjListNode* node = list->sentinel->next; node != list->sentinel;
          node = node->next) {
-        CfMarkerFields* obj = (CfMarkerFields*)node->object;
+        cf::CfObjectModel* obj = static_cast<cf::CfObjectModel*>(node->object);
         if (obj == 0) {
             continue;
         }
         u32 n = this->mField_6A0;
-        this->mArray4A0[n] = obj->name74;
+        this->mArray4A0[n] = obj->field_0x74;
         n++;
         this->mField_6A0 = n;
         if (n >= 0x80) {
@@ -766,11 +767,11 @@ void CMenuSymbolMark::SymMark_RebuildIdsB() {
     Vec* pos;
     for (CfObjListNode* node = list->sentinel->next; node != list->sentinel;
          node = node->next) {
-        CfMarkerFields* obj = (CfMarkerFields*)node->object;
+        cf::CfObjectModel* obj = static_cast<cf::CfObjectModel*>(node->object);
         if (obj == 0) {
             continue;
         }
-        u32 flags = obj->flags64;
+        u32 flags = obj->unk64;
         if (!(flags & 0x4000)) {
             if (!(flags & 0x8000)) {
                 continue;
@@ -793,7 +794,7 @@ void CMenuSymbolMark::SymMark_RebuildIdsB() {
             continue;
         }
         u32 n = this->mField_8A8;
-        this->mArray6A8[n] = obj->name74;
+        this->mArray6A8[n] = obj->field_0x74;
         u32 next = n + 1;
         this->mField_8A8 = next;
         if (next >= 0x80) {
@@ -928,8 +929,8 @@ void CMenuSymbolMark::SymMark_AddTouchMark() {
         CfObjList* list = (CfObjList*)getReslistBC8();
         for (CfObjListNode* node = list->sentinel->next;
              node != list->sentinel; node = node->next) {
-            CfMarkerFields* obj = (CfMarkerFields*)node->object;
-            u32 flags = obj->flags64;
+            cf::CfObjectModel* obj = static_cast<cf::CfObjectModel*>(node->object);
+            u32 flags = obj->unk64;
             if (!(flags & 0x4000)) {
                 if (!(flags & 0x8000)) {
                     continue;
@@ -1671,7 +1672,7 @@ extern const f32 lbl_eu_8052CD38[8];
 // zero__Q22ml5CVec3 provided by CfObjectModel.hpp
 extern u32 identity__Q22ml6CMat34[12];
 
-void CArrow3D::cbRenderBefore() {
+void CArrow3D::cbRenderBefore(CScn*) {
     if (CTaskGame::getInstance()->isFlag01Set() != 0) {
         return;
     }
@@ -1698,15 +1699,7 @@ void CArrow3D::cbRenderBefore() {
     }
     // Battle active? Count nodes in the battle list at +8; any entry aborts.
     {
-        void* bm = getInstance__Q22cf14CBattleManagerFv();
-        u32 sentinel = ((u32*)bm)[2];
-        u32 node = *(u32*)sentinel;
-        u32 count = 0;
-        while (node != sentinel) {
-            node = *(u32*)node;
-            count++;
-        }
-        if (count != 0) {
+        if (cf::CBattleManager::getInstance()->mActorList1.size() != 0) {
             return;
         }
     }
@@ -2107,7 +2100,7 @@ void CArrow3D::Init() {
     // (this+0x54) into its own addi; the call itself is unconditional.
     IScnRender* render = reinterpret_cast<IScnRender*>(this);
     if (this != 0) {
-        render = reinterpret_cast<IScnRender*>((char*)this + 0x54);
+        render = static_cast<IScnRender*>(this);
     }
     reinterpret_cast<CScn*>(gmScene)->addRenderCB(render, 9, 0);
     u8* handle = 0;

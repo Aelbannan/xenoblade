@@ -23,12 +23,16 @@
 #include <new>
 #include <revolution/gx/GXPixel.h>
 
+// name-guess: file-scope save-window singleton; no retail name at the
+// corresponding .sbss slot in config/{us,eu,jp}/symbols.txt.
+CSysWinSave* spSysWinSaveInstance = 0;
+
 // ---------------------------------------------------------------------------
 // Producers of the save-window singleton.
 // targets in this batch); must still emit their retail symbols.
 // ---------------------------------------------------------------------------
 extern "C" unsigned long SysWinSaveIsCreated() {
-    return lbl_eu_80664A08 != 0;
+    return spSysWinSaveInstance != 0;
 }
 
 // ---------------------------------------------------------------------------
@@ -220,7 +224,7 @@ void CSysWinSave::Term() {
     mSysWin.termLayout();
     mCur18.cleanup();
     mMemRegion.deleteRegion();
-    lbl_eu_80664A08 = 0;
+    spSysWinSaveInstance = 0;
 
     IScnRender* render = this;
     mScene->removeRenderCB(render);
@@ -243,7 +247,7 @@ CSysWinSave::~CSysWinSave() {}
 // Gate prefix (task busy / global bit / scene-active) then draw the embedded
 // CSysWin and CCur18 cursor through a stack DrawInfo.
 // ---------------------------------------------------------------------------
-void CSysWinSave::cbRenderBefore() {
+void CSysWinSave::cbRenderBefore(CScn*) {
     CTaskGame::getInstance();
     // Gate: when the task game is not ready or the global mode bit (0x200000)
     // is set, skip the render. The if-&&-goto body / goto end / end: return
@@ -268,27 +272,26 @@ body:
 }
 
 // ---------------------------------------------------------------------------
-// Target 5: __ct__802944D8 (us-80296ad4)
+// Target 5: SysWinSave_Create (us-80296ad4)
 // Allocate the CSysWinSave singleton (0xE0 bytes) from work memory, run the
 // CProcess ctor, lay out the IUIWindow + Move region by hand, then construct
 // the embedded UnkClass_8045F564 / CSysWin / CCur18 and register as a CProcess
 // child of `registerParent`. Returns 0 when the singleton already exists.
 // Regist is called even when the allocation/ctor failed, matching retail.
 // ---------------------------------------------------------------------------
-extern "C" CSysWinSave* __ct__802944D8(CProcess* registerParent, CScn* scene) {
-    if (lbl_eu_80664A08 != 0)
+CSysWinSave* SysWinSave_Create(CProcess* registerParent, CScn* scene) {
+    if (spSysWinSaveInstance != 0)
         return 0;
 
     CSysWinSave* obj = new (mtl::MemManager::allocate(0xe0, CWorkThreadSystem::getWorkMem()))
         CSysWinSave(scene);
-    lbl_eu_80664A08 = obj;
+    spSysWinSaveInstance = obj;
     reinterpret_cast<CProcess*>(obj)->Regist(registerParent, 0);
-    return lbl_eu_80664A08;
+    return spSysWinSaveInstance;
 }
 
 // Retail data: __vt__11CSysWinSave (0xC0) + its 0x40 base list, both
 // compiler-emitted (the "CSysWinSave" type-name string and the weak RTTI
 // record come with them). cf::CChainCombo's vtable/RTTI/name string live in
 // CChainCombo.o, before this run.
-CSysWinSave* lbl_eu_80664A08 = 0;
 u32 save_sbss_padA0C = 0; // (retail .sbss is 8B; content ignored by gate)

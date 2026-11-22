@@ -32,6 +32,9 @@
 #include "kyoshin/CTitleAHelpImports.hpp"
 #include "kyoshin/code_80135FDC_State.hpp"
 
+// name-guess: no retail name at .sbss:0x80664788 in config/{us,eu,jp}/symbols.txt;
+// the only xref is the skip-zero wrap counter bumped by MapFxAllocEntry.
+u32 sMapFxAllocCounter;
 
 // Entry within an array of map landmark positions (stride 0x188, 8 entries)
 // One 0x3C status/value slot per landmark; value is a live counter cleared
@@ -353,11 +356,11 @@ s32 MapFxAllocEntry(MenuFxObj* entries, FxParams* params, u8 flagVal) {
         if (obj->fx2[2].field_2c > eps) obj->fx2[2].field_18 = flagVal;
 
         // Shared landmark counter with skip-zero wrap handling.
-        u32 count = lbl_eu_80664788 + 1;
-        lbl_eu_80664788 = count;
+        u32 count = sMapFxAllocCounter + 1;
+        sMapFxAllocCounter = count;
         if (count == 0) {
             count = count + 1;
-            lbl_eu_80664788 = count;
+            sMapFxAllocCounter = count;
         }
         obj->field_04 = count;
         return count;

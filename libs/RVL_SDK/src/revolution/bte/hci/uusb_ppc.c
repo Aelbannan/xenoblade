@@ -5,13 +5,7 @@
 
 #include <string.h>
 
-/* usb.h declares the 4-arg implementation form of IUSB_OpenDeviceIds
- * (resultOut); the retail uusb_ppc TU was compiled against the 3-arg form
- * (result returned in r3, r6 left untouched). Rename the header declaration
- * aside and declare the local form below. */
-#define IUSB_OpenDeviceIds IUSB_OpenDeviceIds_usb_h
 #include <revolution/bte/rvl/uusb_ppc.h>
-#undef IUSB_OpenDeviceIds
 #include <revolution/os/OSContext.h>
 
 /* BTE stack helpers (defined in other BTE TUs, not declared in headers). */
@@ -19,11 +13,6 @@ extern void bta_ci_hci_msg_handler(void* p_data);
 extern BT_HDR* l2cap_link_chk_pkt_start(BT_HDR* p_buf);
 extern BOOLEAN l2cap_link_chk_pkt_end(void);
 
-/* Retail uusb_ppc prototype of IUSB_OpenDeviceIds: no resultOut, the file
- * descriptor comes back in r3. */
-extern IPCResult IUSB_OpenDeviceIds(const char* interface, u16 vid, u16 pid);
-
-/* Global control block and trace flags (retail linker symbols). */
 tUUSB_CB usb;
 
 /* Retail .bss packs the fiber stacks 32-byte aligned: 0x10 gap after usb
@@ -320,12 +309,12 @@ void UUSB_Register(void* cb_arg) {
 
     if (__ntd_ohci_init_flag == 1) {
         if (__ntd_ohci == 0) {
-            fd = IUSB_OpenDeviceIds(lbl_806658D0, (u16)vid, (u16)pid);
+            fd = IUSB_OpenDeviceIds(lbl_806658D0, (u16)vid, (u16)pid, &usb.fd);
         } else if (__ntd_ohci == 1) {
-            fd = IUSB_OpenDeviceIds(lbl_806658D4, (u16)vid, (u16)pid);
+            fd = IUSB_OpenDeviceIds(lbl_806658D4, (u16)vid, (u16)pid, &usb.fd);
         }
     } else {
-        fd = IUSB_OpenDeviceIds(lbl_806658D4, (u16)vid, (u16)pid);
+        fd = IUSB_OpenDeviceIds(lbl_806658D4, (u16)vid, (u16)pid, &usb.fd);
     }
 
     if (fd >= 0) {

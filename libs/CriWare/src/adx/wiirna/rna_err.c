@@ -23,21 +23,25 @@ typedef struct RNAErrHandler {
 } RNAErrHandler;
 
 // Registered error callback (0x805F2AF8).
-void (*lbl_eu_805F2AF8)(u32, char*);
+// name-guess: no retail data name exists in config/{us,eu,jp}/symbols.txt;
+// RNAERR_EntryErrFunc stores the callback at this address.
+void (*RNAERR_ErrFunc)(u32, char*);
 
 // Callback argument word + message buffer (0x805F2AFC, 0x104 bytes).
-u32 lbl_eu_805F2AFC[65];
+// name-guess: no retail data name exists in config/{us,eu,jp}/symbols.txt;
+// this is the work area passed with the error callback.
+u32 RNAERR_ErrWork[65];
 
 // Register the error callback and its argument word.
 void RNAERR_EntryErrFunc(u32 fn, u32 arg) {
-    lbl_eu_805F2AF8 = (void (*)(u32, char*))fn;
-    lbl_eu_805F2AFC[0] = arg;
+    RNAERR_ErrFunc = (void (*)(u32, char*))fn;
+    RNAERR_ErrWork[0] = arg;
 }
 
 // Copy msg into the handler's buffer (capped at 0xFF bytes) and dispatch
 // the registered callback with (arg, msg). No-op when no callback is set.
 void RNAERR_CallErrFunc(const char* msg) {
-    RNAErrHandler* handler = (RNAErrHandler*)&lbl_eu_805F2AF8;
+    RNAErrHandler* handler = (RNAErrHandler*)&RNAERR_ErrFunc;
 
     strncpy(handler->msg, msg, 0xFF);
     if (handler->cb) {

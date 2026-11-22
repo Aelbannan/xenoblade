@@ -3,6 +3,7 @@
 
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/cf/object/CfObjectEffSymbols.hpp"
+#include "kyoshin/cf/object/CfObjectModel.hpp"
 #include "kyoshin/cf/CfSoundMan.hpp"
 #include "kyoshin/CTaskGameEff.hpp"
 #include "kyoshin/cf/chain/CChainEffect.hpp"
@@ -68,7 +69,7 @@ extern "C" void chainBindEffectLink(cf::CChainEffect* self, int a, int b, int c,
         }
         self->unk8 = (u32)d;
         if (e != 0) {
-            cf::CfSoundMan::playActorSound(0, (u32)e, 0, 0, lbl_eu_80668C50);
+            cf::CfSoundMan::playActorSound(0, (u32)e, 0, 0, 0.6f);
         }
         return;
     }
@@ -131,7 +132,7 @@ void chainClearTwoWords(void* self) {
 // whether any object was matched (target 7).
 int chainUnbindMatchingObjects(s32 id, u32 p2) {
     CChainManager* mgr;
-    CChainItem* item;
+    cf::CfObjectModel* item;
     CChainNode* node;
     int found = 0;
     int matched;
@@ -143,12 +144,12 @@ scan:
         mgr = (CChainManager*)getReslistBE8();
         node = mgr->field_04->field_00;
         while (node != mgr->field_04) {
-            item = (CChainItem*)CollObjHasFlag64Bit5(node->field_08);
-            if (item != 0 && id == item->field_8C) {
+            item = static_cast<cf::CfObjectModel*>(CollObjHasFlag64Bit5(node->field_08));
+            if (item != 0 && id == item->unk8C_3) {
                 if (p2 != 0) {
                     // Member pointer is stored rebased by 0x3E9C; the rebase
                     // must stay after the p2==0 test (short-circuit order).
-                    u32 member = item->field_9C;
+                    u32 member = item->field_0x9C;
                     if (member != 0) {
                         member -= 0x3E9C;
                     }

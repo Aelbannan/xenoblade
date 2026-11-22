@@ -9,40 +9,7 @@
 #include "monolib/math/CVec3.hpp"
 class UnkClass_800821F8;
 
-// Real ItemImpl class that owns the slots at 0x08/0x1C/0x20/0x50/0x68.
-// Retail vtables at lbl_eu_8052F770 (cf::ItemPurifyKessyouImpl) etc show
-// the method list IS the original virtuals.  Size 0xA0 = 38 virtuals.
-// We declare the full prefix so each slot lands at its retail offset:
-// 0x1C = 5th virtual, 0x50 = 18th, 0x68 = 24th.  Do NOT combine scene/item
-// into one mega-If; this is the Item hierarchy only.
-class __declspec(novtable) CItemImpl {
-public:
-    virtual u32 vf08(void* item);                 // 0x08
-    virtual void vf0C();                          // 0x0C
-    virtual void vf10();                          // 0x10
-    virtual void vf14();                          // 0x14
-    virtual void vf18();                          // 0x18
-    virtual void vf1C(void* item);                // 0x1C  slot 1C
-    virtual char* vf20(void* item);               // 0x20
-    virtual void vf24();                          // 0x24
-    virtual void vf28();                          // 0x28
-    virtual void vf2C();                          // 0x2C
-    virtual void vf30();                          // 0x30
-    virtual void vf34();                          // 0x34
-    virtual void vf38();                          // 0x38
-    virtual void vf3C();                          // 0x3C
-    virtual void vf40();                          // 0x40
-    virtual void vf44();                          // 0x44
-    virtual void vf48();                          // 0x48
-    virtual void vf4C();                          // 0x4C
-    virtual void vf50(void* item, int slot, int value); // 0x50  slot 50
-    virtual void vf54();                          // 0x54
-    virtual void vf58();                          // 0x58
-    virtual void vf5C();                          // 0x5C
-    virtual void vf60();                          // 0x60
-    virtual void vf64();                          // 0x64
-    virtual void vf68(void* item, int slot, int value); // 0x68  slot 68
-};
+#include "kyoshin/cf/CItemImpl.hpp"  // item-impl virtual interface (owner)
 
 // ---------------------------------------------------------------------------
 // C-linkage imports
@@ -58,15 +25,14 @@ extern "C" u32 Bdat_GetMaxRow_B1EC(void* file);
 extern "C" u32 Bdat_GetRowBase_B41C(void* file);
 extern "C" int CfRes_getD80Flag();
 extern "C" u32 CfRes_getAllocHandle();
-extern "C" void* allocate_array__Q23mtl10MemManagerFUlUl(u32 size, u32 handle);
+#include "monolib/util/MemManager.hpp"
 extern "C" void* __construct_new_array(void* block, void* ctor, void* dtor,
                                        u32 size, u32 n);
-extern "C" int mtRand__Q22ml4mathFi(int n);
-extern "C" int mtRand__Q22ml4mathFii(int lo, int hi);
+#include "monolib/math/Random.hpp"
+#include "monolib/core/CPadManager.hpp"
 extern "C" int lookupWorkAtAddr(void* obj);
 extern "C" void gmFileObject(void* obj);
 extern "C" void* ArtsSelect_GetEntry(int id);
-extern "C" void setLODParam__8CTaskLODFv(u32 a, u32 b, f64 c);
 // CItem_initItemImplInstances: canonical decl from CfGameManager.hpp.
 extern "C" void CItemData_enableFamFlag(void* item);
 extern "C" void CItemData_callVf0C(void* item, u16 v);
@@ -78,7 +44,7 @@ extern "C" void* CItemData_lookupOrAlloc(void* item, int v);
 extern "C" void* getInstance__Fv();
 extern "C" void* spawnMaskedObject(void* a, u32 b, u32 c, u32 d);
 extern "C" void ObjPoint_SetName_13FC(void* obj, void* name, u32 len);
-extern "C" void setChildB59__(void* obj, int mode);
+extern "C" void setChildB59__(void* obj, s8 val);
 
 extern "C" int UIWin_HasPendingUpdate(int v);
 extern "C" int CMainMenu_IsOpen();

@@ -69,10 +69,17 @@ typedef struct HBMSYNVoice {
     s32  accumInput2;          // 0x34
 } HBMSYNVoice;
 
-// Synthesizer layout (mirrors synctrl.c HBMSYNSYNTH; only the fields this
-// TU reads are named).
+// Synthesizer layout (mirrors synctrl.c HBMSYNSYNTH).
 typedef struct HBMSYNSYNTH {
-    u8  _pad0[0x68];           // 0x00-0x67
+    struct HBMSYNSYNTH* next;  // 0x00
+    struct HBMSYNSYNTH* prev;  // 0x04
+    u32 baseValue;             // 0x08
+    void* instruments;         // 0x0C
+    void* regions;             // 0x10
+    void* keygroups;           // 0x14
+    void* samples;             // 0x18
+    u8 _pad1C[0x28 - 0x1C];    // 0x1C-0x27
+    u32 instrPtr[16];          // 0x28-0x67
     s32 masterVolume;          // 0x68 - base fader
     s32 volume[16];            // 0x6C - per-voice volume table
     s32 pan[16];               // 0xAC - per-voice pan table

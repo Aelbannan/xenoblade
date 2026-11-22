@@ -461,6 +461,7 @@ namespace cf {
     void CfObject_forwardNpcAction(int action);             //0x114
     int CfObject_getNpcActionState();                       //0x118
     int CfObject_getNpcTargetAction();                      //0x11C
+    void CfObject_setMoveValue(float value);            //0x134 (base override)
     u32* CfObject_getMoveRateScale();                       //0x138
     void CfObject_setMoveScale(float value);            //0x13C
     float CfObject_getMoveFactor();                      //0x140
@@ -552,12 +553,6 @@ namespace cf {
         u8 _pad90[0x90];     // 0x00-0x8F
         u32 field_90;        // 0x90-0x93
         u32 field_94;        // 0x94-0x97
-    };
-    // View of the CfObject base word at +0x6C (CfObjectMove_setModelListLock toggles bit 16;
-    // CfObject.hpp exposes 0x6C-0x6F as opaque padding).
-    struct CfObjectMoveFlags6C {
-        u8 _pad[0x6C];
-        u32 field_6C;  // 0x6C
     };
     // View of the CfObjectMove +0xA4/+0xA8/+0xAC floats (inside
     // CfObjectModel's opaque 0xA4-0xAF pad): CfObjectMove_updateSpeedA8 reads/writes

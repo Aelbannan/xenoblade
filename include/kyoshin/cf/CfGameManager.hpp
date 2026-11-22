@@ -438,7 +438,7 @@ public:
     void loadPartyResources();
     void func_800853C8();
     void func_8008566C();
-    void resetCameraManager();
+    static void* resetCameraManager();
     bool isSceneReadyForInput();
     static bool isSceneActive();
     void cleanupMapEffects();
@@ -446,10 +446,10 @@ public:
     void func_80085978();  // body lives in the extern "C" Fv-symbol definition below
     void loadFieldPartyState();
     void func_80085FB8();
-    void processFieldLoad();
+    static void processFieldLoad();
     void handleAreaChange();
-    void clearBattleFlagsAndQueue();
-    void processEventQueueB();
+    static void clearBattleFlagsAndQueue();
+    static bool processEventQueueB();
     void handleBattleEnd();
     void finalizeGameState();
     void func_80086778();
@@ -458,7 +458,7 @@ public:
     void getFirstGimmick();
     void spawnGimmickEntity();
     void clearGimmickFlags();
-    void isGimmickActive();
+    static int isGimmickActive(CfObjectMove* obj);
     static u32 getGlobalWord64184Dup();
     static u32 getGlobalPtr6409C();
     static u32 getGlobalPtr640A8();
@@ -616,7 +616,7 @@ extern CProcess* gmPadTask;
 extern "C" void func_8012F87C(u32 value);
 extern "C" void CCharVoiceMan_DestroySingleton();
 extern "C" void destroyHelpManager();
-extern "C" void __dt__80157150();
+extern "C" void CItemBlock_free();
 extern "C" void* __dt__801A9F78(void* self, s32 deleteFlag);
 extern "C" void* __dt__801865C4(void* self, s32 deleteFlag);
 extern "C" void* __dt__8007540C(void* self, s32 deleteFlag);
@@ -689,7 +689,6 @@ extern "C" void func_800AC110(void* self, const void* pA, const void* pB, float 
 extern "C" void func_800AC1BC(void* self, const void* pA, const void* pB, float f);
 extern "C" void func_800AC450(void* self, unsigned long a, unsigned long b);
 // CHelpManager singleton (func_802959AC argument; .sdata).
-extern cf::CHelpManager* lbl_eu_80664A10;
 // Event-done halfword countdown flag (.sbss) cleared by resetBattlePresentation.
 extern u16 gCfNandRestoredEventFlag;
 // Fade/reset float pair written with the shared zero constant.
@@ -750,7 +749,8 @@ extern "C" void* CItemBlock_setKindFlag(u32 kind, u32 slot, u32 mode);
 extern "C" u32 CItem_getKindFromFamily(u32 value);
 class CItemImplInstances;
 struct CItemData;
-class CItemImpl;
+namespace cf { class ItemImpl; }
+typedef cf::ItemImpl CItemImpl;
 // Canonical declaration from the definition in kyoshin/cf/CItem.cpp; this
 // unity header reaches it without pulling in all of CItem.hpp.
 extern "C" CItemImpl* CItem_initItemImplInstances(CItemData* self);

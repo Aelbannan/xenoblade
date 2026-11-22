@@ -3,6 +3,7 @@
 #include "kyoshin/help/CHelp_Talk.hpp"
 #include "kyoshin/cf/CfMapItemManager.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
+#include "kyoshin/cf/object/CfObjectActor.hpp"
 
 // C++ linkage at global scope -> MWCC emits retail symbol findObjectById__Fi.
 void* findObjectById(int id);
@@ -54,12 +55,12 @@ bool CHelp_Talk::isTalkHelpReady() {
 
     // If field_0x10 is set, validate it against the talk target's id (+0x8C).
     if (field_0x10 != 0) {
-        CPlayerTalkRec* targetResult = static_cast<CPlayerTalkRec*>(
+        cf::CfObjectActor* targetResult = static_cast<cf::CfObjectActor*>(
             MapFx_ResolveOwner(CfGameManager::getPlayer(0)));
-        // Sub-object at +0x3E9C: vtable 0x4C yields the actor id.
+        // The embedded CfObjectMove's CObjectParam slot yields the actor id.
         CTalkActor* targetObj = targetResult != nullptr
             ? static_cast<CTalkActor*>(CfObjectMove_getSelfIfActive(findObjectById(
-                reinterpret_cast<int>(targetResult->field_3E9C.vf4C()))))
+                targetResult->CObjectParam_getSelfObjectId())))
             : nullptr;
 
         field_0x16 = (targetObj != nullptr && field_0x10 == targetObj->field_8C) ? 1 : 0;
@@ -72,12 +73,12 @@ bool CHelp_Talk::isTalkHelpReady() {
 
     // If state is still set and field_0x15 is set, check the actor's state id.
     if (field_0x16 != 0 && field_0x15 != 0) {
-        CPlayerTalkRec* actorResult = static_cast<CPlayerTalkRec*>(
+        cf::CfObjectActor* actorResult = static_cast<cf::CfObjectActor*>(
             MapFx_ResolveOwner(CfGameManager::getPlayer(0)));
         // vtable 0x228: current state id; success when it equals 3.
         bool stateOk = actorResult != nullptr
             ? static_cast<CTalkActor*>(CfObjectMove_getSelfIfActive(findObjectById(
-                reinterpret_cast<int>(actorResult->field_3E9C.vf4C()))))->vf228() == 3
+                actorResult->CObjectParam_getSelfObjectId())))->vf228() == 3
             : false;
         field_0x16 = stateOk ? 1 : 0;
     }

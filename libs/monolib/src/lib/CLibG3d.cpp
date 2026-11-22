@@ -2,28 +2,15 @@
 #include "monolib/data_vtables.hpp"
 #include <nw4r/g3d/g3d_init.h>
 #include <nw4r/g3d/g3d_state.h>
+#include "monolib/core/CProcRoot.hpp"
 
-// The device/procroot headers pull in classes with inline virtual dtors that,
-// combined with this TU's sbss globals, trip MWCC 10322 once the manual vtable
-// declares extern __RTTI__. Those statics are all out-of-line, so forward-
-// declare them instead of including the headers.
+// The device headers pull in classes with inline virtual dtors that, combined
+// with this TU's sbss globals, trip MWCC 10322 once the manual vtable declares
+// extern __RTTI__. Those statics are all out-of-line, so forward-declare them
+// instead of including the headers.
 class CDeviceVI;
-class CProcRoot;
 extern "C" int isInitialized__9CDeviceGXFv();
 extern "C" GXRenderModeObj* getRenderModeObj__9CDeviceVIFv();
-extern "C" CProcRoot* getInstance__9CProcRootFv();
-
-// CMsgParam<8> keeps its queue internals private, so mirror the tail layout of
-// CWorkThread's mMsgQueue member (mMsgQueue at 0x80 -> internals at 0x1A4-
-// 0x1B0) to let the inline EVT_EXCEPTION scan below read the ring buffer
-// directly. Field types/offsets mirror CMsgParam.hpp exactly.
-struct CMsgQueueData {
-    u8 pad[0x1A4];               // CWorkThread prefix + vtable + mEntries[8]
-    CMsgParamEntry* mArrayPtr;   // 0x1A4 (mMsgQueue.mArrayPtr)
-    u32 mFront;                  // 0x1A8 (mMsgQueue.mFront)
-    u32 mSize;                   // 0x1AC (mMsgQueue.mSize)
-    u32 mCapacity;               // 0x1B0 (mMsgQueue.mCapacity)
-};
 
 // Forward decls for the data block at the bottom (CLib.cpp pattern).
 extern "C" u32 __vt__7CLibG3d[];   // retail vtable symbol (symbols.txt .data:0x8056D0F0)
@@ -57,11 +44,11 @@ bool CLibG3d::isInitialized() {
         // (mirroring CMsgParam::find()) rather than as a member call so the
         // scan index stays a direct local - an inlined callee's index would
         // otherwise win the r6/r7 split and break the retail register layout.
-        CMsgQueueData* q = reinterpret_cast<CMsgQueueData*>(inst);
+        CMsgParam<8>* q = &inst->mMsgQueue;
         int i;
         int foundIndex;
-        for (i = 0; i < q->mSize; i++) {
-            if (q->mArrayPtr[(q->mFront + i) % q->mCapacity].command == EVT_EXCEPTION) {
+        for (i = 0; i < q->mRing.mSize; i++) {
+            if (q->mRing.mArrayPtr[(q->mRing.mFront + i) % q->mRing.mCapacity].command == EVT_EXCEPTION) {
                 foundIndex = i;
                 goto done;
             }
@@ -85,8 +72,11 @@ bool CLibG3d::wkStandbyLogin() {
 }
 
 bool CLibG3d::wkStandbyLogout() {
-    if (mChildren.empty() && getInstance__9CProcRootFv() == nullptr) {
-        return CWorkThread::wkStandbyLogout();
+    if (mChildren.empty()) {
+        CProcRoot* root = CProcRoot::getInstance();
+        if (root == nullptr) {
+            return CWorkThread::wkStandbyLogout();
+        }
     }
     return false;
 }

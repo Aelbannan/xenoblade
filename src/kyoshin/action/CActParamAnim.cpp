@@ -28,41 +28,20 @@
 #include <revolution/mtx/quat.h>
 #include <revolution/mtx/vec.h>
 
-extern "C" void* lbl_eu_805261C8[];
-extern "C" void __ct__13CActParamDataFv(CActParamData* self);
-
-// Forced-name ctor (same mangling as CActParamAnim::CActParamAnim). Written
-// as extern "C" so the embedded CActParamData is constructed AFTER the retail
-// vptr store -- a C++ ctor would run the member ctor first (novtable).
-extern "C" CActParamAnim* __ct__13CActParamAnimFv(CActParamAnim* self) {
-    u8* raw = reinterpret_cast<u8*>(self);
-    *(void**)self = lbl_eu_805261C8;
-    self->field0C = 0;
-    __ct__13CActParamDataFv(reinterpret_cast<CActParamData*>(raw + 0x10));
-    return self;
-}
-
-extern "C" CActParamAnim* __dt__8004B070(CActParamAnim* self, s32 deleteFlag) {
-    if (self != nullptr && deleteFlag > 0) {
-        operator delete(self);
-    }
-    return self;
-}
+CActParamAnim::CActParamAnim() : field0C(0) {}
 
 extern "C" void noopAnimVec3(void*) {}
 
 extern "C" void noopAnimQuat(void*) {}
 
-CActParamAnim::~CActParamAnim() {
-    reinterpret_cast<CActParamData*>(mChildData10)->CActParamData::~CActParamData();
-}
+CActParamAnim::~CActParamAnim() {}
 
 void CActParamAnim::initAnimState() {
     CActParamAnim* view = this;
     view->field04 = 0;
     view->owner08 = 0;
     view->field0C = 0;
-    initActParamData(reinterpret_cast<CActParamData*>(reinterpret_cast<u8*>(this) + 0x10),
+    initActParamData(&mData,
                   0, 0, 0, 0);
     view->field370 = -1;
     view->field374 = 0;
@@ -165,43 +144,11 @@ void CActParamAnim::initAnimState() {
     view->field4C4 = 0;
 }
 
-void* CActParamAnim::getChild() { return &reinterpret_cast<CActParamAnimFull*>(this)->mChildData; }
+void* CActParamAnim::getChild() { return &mData; }
 
 float CActParamAnim::getBlendWeight() {
     return field43C;
 }
-
-struct CActParamAnimObjectView {
-    u8 _pad_000[0x3A0];
-    void* object;
-    u32 objectState;
-    f32 field_3A8;
-    f32 field_3AC;
-    f32 field_3B0;
-};
-
-struct CActParamAnimFlagView {
-    u8 _pad_000[0x0C];
-    u32 flags;
-};
-
-// Embedded CActParamData base at +0x10 (same object, exact type).
-struct CActParamAnimDataView {
-    u8 pad_00[0x10];
-    CActParamData data10;
-};
-
-// Flag word at +0x260 (bit tests take/clear bits 5/13/16/18).
-struct CActParamAnimFlagWordView {
-    u8 pad_00[0x260];
-    u32 flags260;
-};
-
-// Untyped +0x10 float slot read by getOwnerFloat.
-struct CActParamAnimFloat10View {
-    u8 pad_00[16];
-    f32 field_10;
-};
 
 bool setAnimSubPos(CActParamAnim* self, const CActParamAnimData3* value) {
     CActParamAnim* view = (CActParamAnim*)self;
@@ -329,7 +276,7 @@ extern "C" void attachAnimObj(CActParamAnim* self, void* object, void* state,
     view->object3A0 = reinterpret_cast<u8*>(object);
     view->state3A4 = reinterpret_cast<u32>(state);
     view->field0C |= 8;
-    initActParamData(reinterpret_cast<CActParamData*>(view->mChildData10), self, self, state,
+    initActParamData(&view->mData, self, self, state,
                   reinterpret_cast<void*>(param));
     func_8004B9D4(self, 1, 0, -1, 0);
 }
@@ -339,13 +286,13 @@ void bits_clear(uint32_t* ptr, uint32_t mask) {
 }
 
 void CActParamAnim::updateSubAnim() {
-    if (state3A4 != 0) pushParamNode(mChildData10);
+    if (state3A4 != 0) pushParamNode(&mData);
 }
 
 extern "C" void releaseAnimObj(CActParamAnim* self, void* object) {
-    if (self->state3A4 != 0 && lookupParamByKey(reinterpret_cast<CActParamData*>(self->mChildData10), object)) {
+    if (self->state3A4 != 0 && lookupParamByKey(&self->mData, object)) {
         if (self->state3A4 == reinterpret_cast<u32>(object)) {
-            self->state3A4 = reinterpret_cast<u32>(reinterpret_cast<CActParamData*>(self->mChildData10)->mKeys1D0[0]);
+            self->state3A4 = reinterpret_cast<u32>(self->mData.mKeys1D0[0]);
         }
         self->field374 = 0;
         self->field37C = -1;
@@ -386,13 +333,6 @@ void CActParamAnim::copyVec3To3C0(const float* src) {
     *(int*)((char*)this + 0x3C4) = *(int*)((char*)src + 4);
     *(int*)((char*)this + 0x3C8) = *(int*)((char*)src + 8);
 }
-
-struct CActParamAnimMotionView {
-    u8 _pad_000[0x390];
-    f32 animSpeed;
-    u8 _pad_394[0x30];
-    f32 vec3Y;
-};
 
 extern "C" void addAnimHeight(CActParamAnim* self, f32 amount) {
     f32 animSpeed = self->field390;
@@ -563,31 +503,31 @@ extern "C" void startAnimDual(CActParamAnim* self, u32 param) {
                 if (view->field4BD == 0) {
                     view->field4BD = 0;
                 }
-                u8* data = view->mChildData10;
-                u32 model = view->field2FC;
+                CActParamData* data = &view->mData;
+                u32 model = view->mData.mField2EC;
                 u8 b = view->field4BD;
                 view->field0C &= ~0x200;
                 u32 flag = 0;
-                if (model == 0) model = view->field27C;
+                if (model == 0) model = view->mData.mA26C;
                 if (model == 1) {
-                    model = view->field270;
+                    model = view->mData.mA260;
                     if ((model & 0x10) == 0 && (model & 0x8) == 0) flag = 1;
                 }
                 u32 local;
-                u32 ret = evalParamBySlot((CActParamData*)data, &local, param, b, flag);
-                switchSubAnim(self, local, ret, view->field2A4, 0);
+                u32 ret = evalParamBySlot(data, &local, param, b, flag);
+                switchSubAnim(self, local, ret, view->mData.mA294, 0);
                 view->field0C &= ~0x200;
             }
         } else {
-            u32 sel = view->field278;
+            u32 sel = view->mData.mA268;
             u32 flag = 0;
             if (sel == 1) {
-                u32 m = view->field270;
+                u32 m = view->mData.mA260;
                 if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
             }
             u32 local;
-            u32 ret = evalParamChain(view->mChildData10, &local, param, flag, 0);
-            switchSubAnim(self, local, ret, view->field2A4, (view->field0C >> 9) & 1);
+            u32 ret = evalParamChain(&view->mData, &local, param, flag, 0);
+            switchSubAnim(self, local, ret, view->mData.mA294, (view->field0C >> 9) & 1);
         }
     }
 }
@@ -614,7 +554,7 @@ void switchSubAnim(CActParamAnim* self, u32 param, u32 sel, u32 resId,
     if ((view->field0C & 1) != 0) {
         // Rewind the previous anim's playback offset before switching.
         f32 v49c = view->field49C;
-        if ((view->field270 & 0x1000) != 0)
+        if ((view->mData.mA260 & 0x1000) != 0)
             simSetLeafDist7B0(view->object3A0, -v49c);
         else
             simSetLeafDist7B0(view->object3A0, v49c);
@@ -623,10 +563,10 @@ void switchSubAnim(CActParamAnim* self, u32 param, u32 sel, u32 resId,
 
     view->field37C = -1;
     f32 blendFrames =
-        getParamFloatByName(reinterpret_cast<CActParamData*>(view->mChildData10), sel);
+        getParamFloatByName(&view->mData, sel);
     if (useDefaultScale != 0) blendFrames = 0.0f;
 
-    f32 startAngle = (sel != 0) ? view->field334 : view->field2B4;
+    f32 startAngle = (sel != 0) ? view->mData.mFloat324 : view->mData.mA2A4;
     if (startAngle != 0.0f) {
         // Blend the stored heading toward the target, wrapped into (-pi, pi].
         // Each wrap branch duplicates the owner-gate store + sub-object mirror
@@ -694,31 +634,31 @@ void switchSubAnim(CActParamAnim* self, u32 param, u32 sel, u32 resId,
     if (sel != 0) {
         s32 frameS = static_cast<s32>(blendFrames);
         simBindChrAnimChain(view->object3A0, resId, param, static_cast<u16>(frameS),
-                      view->field36C);
+                      view->mData.mShort35C);
     } else {
-        if (getSubObjPlus14(view->mChildData10) == NULL) view->field4BD = 1;
-        if (view->field4BD != 0 || (view->field270 & 0x800) == 0) {
-            if (hasParamSubObjB((CActParamData*)view->mChildData10) != 0) {
+        if (getSubObjPlus14(&view->mData) == NULL) view->field4BD = 1;
+        if (view->field4BD != 0 || (view->mData.mA260 & 0x800) == 0) {
+            if (hasParamSubObjB(&view->mData) != 0) {
                 // Reset the child data blocks before the fresh anim start.
-                walkParamBlkB((CActParamData*)view->mChildData10);
-                ((CActParamData*)view->mChildData10)->resetParamSubB();
+                walkParamBlkB(&view->mData);
+                view->mData.resetParamSubB();
             }
         }
         s32 frameS = static_cast<s32>(blendFrames);
         simBindChrAnim(view->object3A0, resId, param,
                       static_cast<u16>(frameS),
-                      (view->field270 >> 6) & 1,
-                      ((view->field4BD != 0) || ((view->field270 & 0x800) == 0)) ? 1 : 0,
-                      (sel != 0) ? view->field36C : view->field2EC);
+                      (view->mData.mA260 >> 6) & 1,
+                      ((view->field4BD != 0) || ((view->mData.mA260 & 0x800) == 0)) ? 1 : 0,
+                      (sel != 0) ? view->mData.mShort35C : view->mData.mShort2DC);
     }
 
     view->field370 = param;
     f32 speed27 = 1.0f;
-    if ((view->field270 & 0x4) != 0) {
+    if ((view->mData.mA260 & 0x4) != 0) {
         if ((view->field0C & 0x10000) == 0)
             speed27 = reinterpret_cast<CActParamAnimSubObjView*>(view->object3A0)->field304;
         f32 sp390 = view->field390;
-        f32 scale24 = view->field24;
+        f32 scale24 = view->mData.mFloat14;
         f32 spf = getSecPerFrame__9CDeviceVIFv();
         f32 f3 = sp390 * spf;
         f32 f1 = 3600.0f;
@@ -727,11 +667,11 @@ void switchSubAnim(CActParamAnim* self, u32 param, u32 sel, u32 resId,
         speed27 = (view->field448 / f2) / speed27;
     }
     f32 speedVal = (speed27 * view->field388) * view->field38C;
-    if ((view->field270 & 0x1000) != 0) speedVal = -speedVal;
+    if ((view->mData.mA260 & 0x1000) != 0) speedVal = -speedVal;
     simSetLeafDist7B0(view->object3A0, speedVal);
 
-    if (((view->field274 & 0x10) != 0 || (view->field274 & 0x8) != 0) &&
-        (view->field270 & 0x10) == 0 && (view->field270 & 0x8) == 0 &&
+    if (((view->mData.mA264 & 0x10) != 0 || (view->mData.mA264 & 0x8) != 0) &&
+        (view->mData.mA260 & 0x10) == 0 && (view->mData.mA260 & 0x8) == 0 &&
         blendTime > 0.0f) {
         f32 t = reinterpret_cast<CActParamAnimVt14*>(view)->f03();
         simRefreshFlag8(view->object3A0, prevBlend * t / blendTime);
@@ -742,9 +682,9 @@ void switchSubAnim(CActParamAnim* self, u32 param, u32 sel, u32 resId,
         if ((view->field0C & 0x10000) == 0)
             spdBase = reinterpret_cast<CActParamAnimSubObjView*>(view->object3A0)->field304;
         f32 spd2 = 1.0f;
-        if ((view->field270 & 0x4) != 0) {
+        if ((view->mData.mA260 & 0x4) != 0) {
             f32 sp390 = view->field390;
-            f32 scale24 = view->field24;
+            f32 scale24 = view->mData.mFloat14;
             f32 spf = getSecPerFrame__9CDeviceVIFv();
             f32 f3 = sp390 * spf;
             f32 f1 = 3600.0f;
@@ -752,11 +692,11 @@ void switchSubAnim(CActParamAnim* self, u32 param, u32 sel, u32 resId,
             f2 *= f3;
             spd2 = (view->field448 / f2) / spdBase;
         }
-        if ((view->field270 & 0x1000) != 0) spd2 = -spd2;
+        if ((view->mData.mA260 & 0x1000) != 0) spd2 = -spd2;
         simSetLeafDist7B0(view->object3A0, (spd2 * view->field388) * view->field38C);
     }
 
-    if ((view->field270 & 0x80) != 0) {
+    if ((view->mData.mA260 & 0x80) != 0) {
         // Wrap the anim ratio difference into [-pi, pi] and derive the
         // normalized progress from the object's own scale virtual.
         f32 diff = view->field440 - view->field444;
@@ -770,11 +710,11 @@ void switchSubAnim(CActParamAnim* self, u32 param, u32 sel, u32 resId,
         view->field4A0 = view->field4A4;
     }
 
-    if (((view->field274 & 0x100000) != 0) && ((view->field270 & 0x200000) == 0))
+    if (((view->mData.mA264 & 0x100000) != 0) && ((view->mData.mA260 & 0x200000) == 0))
         reinterpret_cast<CActParamAnimVt18F0*>(view)->dispatch18();
 
     if ((view->field0C & 0x2000000) != 0) {
-        if (view->field26C == NULL) {
+        if (view->mData.mField25C == NULL) {
             if (view->object3A0 != NULL)
                 reinterpret_cast<CActParamAnimObjVt6468*>(view->object3A0)->dispatch64(
                     view->field4E4);
@@ -785,29 +725,29 @@ void switchSubAnim(CActParamAnim* self, u32 param, u32 sel, u32 resId,
                 view->field4E4 =
                     reinterpret_cast<CActParamAnimObjVt6468*>(view->object3A0)->dispatch68();
                 reinterpret_cast<CActParamAnimObjVt6468*>(view->object3A0)->dispatch64(
-                    view->field26C[8]);
+                    view->mData.mField25C[8]);
             }
         }
-    } else if (view->field26C != NULL) {
+    } else if (view->mData.mField25C != NULL) {
         view->field0C |= 0x2000000;
         if (view->object3A0 != NULL) {
             view->field4E4 =
                 reinterpret_cast<CActParamAnimObjVt6468*>(view->object3A0)->dispatch68();
             reinterpret_cast<CActParamAnimObjVt6468*>(view->object3A0)->dispatch64(
-                view->field26C[8]);
+                view->mData.mField25C[8]);
         }
     }
 
-    if (view->field2C >= 0) view->field374 = view->field2C;
+    if (view->mData.mField1C >= 0) view->field374 = view->mData.mField1C;
 
-    if (((view->field274 & 0x20) != 0 || (view->field270 & 0x20) != 0) &&
+    if (((view->mData.mA264 & 0x20) != 0 || (view->mData.mA260 & 0x20) != 0) &&
         (view->field0C & 0x4000000) == 0) {
         view->field45C = view->field44C;
         view->field0C &= ~0x1000u;
         view->field464 = reinterpret_cast<const f32&>(view->field3AC);
     }
 
-    walkParamType9(reinterpret_cast<ActParamWalkHost*>(view->mChildData10));
+    walkParamType9(reinterpret_cast<ActParamWalkHost*>(&view->mData));
     view->field4BD = 0;
     view->field4D6 = 0;
     view->field4BE = 0;
@@ -815,10 +755,10 @@ void switchSubAnim(CActParamAnim* self, u32 param, u32 sel, u32 resId,
     view->field4C0 = 0;
     if (sel == 0) {
         if (scn80496ChildIdsDiffer((CScn80496B0C*)(view->object3A0 + 0xC)) == 0)
-            flushParamPair(view->mChildData10, 0);
+            flushParamPair(&view->mData, 0);
     } else {
         if (scn80496IsComplete(view->object3A0 + 0xC) == 0)
-            flushParamPair(view->mChildData10, 1);
+            flushParamPair(&view->mData, 1);
     }
     view->field4C4 = 0;
 }
@@ -826,9 +766,9 @@ void switchSubAnim(CActParamAnim* self, u32 param, u32 sel, u32 resId,
 void CActParamAnim::clearAnimState() {}
 
 void* CActParamAnim::getModelObj() {
-    void* result = reinterpret_cast<void*>(field2FC);
+    void* result = reinterpret_cast<void*>(mData.mField2EC);
     if (result) return result;
-    return reinterpret_cast<void*>(field27C);
+    return reinterpret_cast<void*>(mData.mA26C);
 }
 
 // Position-delta sources on the model objects returned by Scn_FindCamItem:
@@ -879,7 +819,7 @@ extern "C" void blendAnimHeading(CActParamAnim* self) {
     owner->v1();
     // The 0x274 flag suppresses the whole update unless the 0x270 override
     // bit is also set.
-    if ((view->field274 & 0x100000) != 0 && (view->field270 & 0x200000) == 0) return;
+    if ((view->mData.mA264 & 0x100000) != 0 && (view->mData.mA260 & 0x200000) == 0) return;
 
     // Heading offset saved before the dispatch below.
     f32 saved = owner->field0C;
@@ -975,14 +915,14 @@ extern "C" void blendAnimHeading(CActParamAnim* self) {
     res.z = speed * cosv * (1000.0f * view->field43C / 3600.0f) *
             (view->field390 * spf2);
 
-    if ((view->field270 & 0x100) == 0) return;
+    if ((view->mData.mA260 & 0x100) == 0) return;
     if ((view->field0C & 0x2) != 0) {
         view->field3CC = res.x;
         view->field3D0 = res.y;
         view->field3D4 = res.z;
         return;
     }
-    if ((view->field270 & 0x20) == 0) {
+    if ((view->mData.mA260 & 0x20) == 0) {
         view->field3CC = res.x;
         view->field3D0 = res.y;
         view->field3D4 = res.z;
@@ -1034,11 +974,11 @@ extern "C" f32 cosAnimFIdx(f32 angle) {
     return CosFIdx__Q24nw4r4mathFf(lbl_eu_80665ED8 * angle);
 }
 
-extern "C" int testAnimBit5(CActParamAnim* self) { return ((self->field260 >> 5) & 1); }
+extern "C" int testAnimBit5(CActParamData* data) { return ((data->mA260 >> 5) & 1); }
 
 extern "C" void updateLeafDist(CActParamAnim* self) {
     CActParamAnim* view = (CActParamAnim*)self;
-    if ((view->field270 & 0x8) != 0) {
+    if ((view->mData.mA260 & 0x8) != 0) {
         f32 v = view->field450 + view->field390;
         view->field44C = 0.0f;
         view->field450 = v;
@@ -1067,7 +1007,7 @@ extern "C" void updateLeafDist(CActParamAnim* self) {
     }
     u8* obj = view->object3A0;
     if (obj != 0) {
-        if ((view->field270 & 0x4) != 0) {
+        if ((view->mData.mA260 & 0x4) != 0) {
             if (view->field390 == 0.0f) {
                 simSetLeafDist7B0(obj, 0.0f);
             } else {
@@ -1078,7 +1018,7 @@ extern "C" void updateLeafDist(CActParamAnim* self) {
                     divisor = reinterpret_cast<CActParamAnimSubObjView*>(obj)->field304;
                 }
                 f32 animSpeed = view->field390;
-                f32 field24 = view->field24;
+                f32 field24 = view->mData.mFloat14;
                 f32 field388 = view->field388;
                 f32 field38C = view->field38C;
                 f32 frameSec = CDeviceVI::getSecPerFrame();
@@ -1089,13 +1029,13 @@ extern "C" void updateLeafDist(CActParamAnim* self) {
                 value = field388 * value;
                 value = field38C * value;
                 value = value / divisor;
-                if ((view->field270 & 0x1000) != 0) {
+                if ((view->mData.mA260 & 0x1000) != 0) {
                     value = -value;
                 }
                 simSetLeafDist7B0(obj, value);
             }
         } else {
-            if ((view->field270 & 0x1000) != 0) {
+            if ((view->mData.mA260 & 0x1000) != 0) {
                 simSetLeafDist7B0(obj, -(view->field388 * view->field38C));
             } else {
                 simSetLeafDist7B0(obj, view->field388 * view->field38C);
@@ -1116,7 +1056,7 @@ extern "C" void tickAnimFrame(CActParamAnim* self) {
         // (retail: fctiwz + int-to-float conversion) before the state sync call.
         f32 v1 = (f32)(s32)simGetLeafAnimDist4(view->object3A0);
         f32 v2 = (f32)(s32)simGetLeafAnimDist(view->object3A0);
-        updateParamFloats(reinterpret_cast<CActParamData*>(view->mChildData10), v2, v1);
+        updateParamFloats(&view->mData, v2, v1);
         f32 rate = view->field388;
         f32 t = Scn_GetFrameDelta(reinterpret_cast<void**>(view->object3A0)[1]);
         view->field390 = t * rate;
@@ -1126,12 +1066,12 @@ extern "C" void tickAnimFrame(CActParamAnim* self) {
         }
     }
     blendAnimHeading(self);
-    saveParamShadow((CActParamData*)view->mChildData10);
-    checkParamBlks(view->mChildData10);
-    clearParamShadow(view->mChildData10);
+    saveParamShadow(&view->mData);
+    checkParamBlks(&view->mData);
+    clearParamShadow(&view->mData);
     updateLeafDist(self);
     reinterpret_cast<CActParamAnimVtE4*>(self)->dispatchE4();
-    if ((view->field0C & 0x80000) != 0 && (view->field270 & 0x20) == 0) {
+    if ((view->field0C & 0x80000) != 0 && (view->mData.mA260 & 0x20) == 0) {
         // Retail reloads the flag word for the clear (lwz/stw pair) -- a volatile
         // access keeps MWCC from reusing the value loaded by the test.
         *(volatile u32*)&view->field0C &= ~0x80000;
@@ -1149,9 +1089,9 @@ int CActParamAnim::calcAnimBlendWeight(u32 param) {
         if (simRefreshFadeDist2(view->object3A0, param) == 0) {
             s32 v;
             if (param != 0)
-                v = view->field33C;
+                v = view->mData.mField32C;
             else
-                v = view->field2BC;
+                v = view->mData.mA2AC;
             float progress = simGetLeafAnimDist4(view->object3A0);
             // Int threshold widened via the 0x4330 magic cast (retail
             // xoris/lis/fsubs template); the pool cookie it synthesizes maps
@@ -1164,9 +1104,9 @@ int CActParamAnim::calcAnimBlendWeight(u32 param) {
     if (simRefreshFadeDist(view->object3A0) == 0) {
         s32 v;
         if (param != 0)
-            v = view->field33C;
+            v = view->mData.mField32C;
         else
-            v = view->field2BC;
+            v = view->mData.mA2AC;
         float progress = simGetLeafAnimDist(view->object3A0);
         if (!(progress >= (f32)v)) result = 0;
     }
@@ -1182,9 +1122,9 @@ int CActParamAnim::dispatchAnimSlot(u32 param, u32 arg2) {
     // Dispatch through the vtable slot at +0x80 (retail: lwz r12, 0x80(r12));
     // proceed unless BOTH the virtual call and the child reset return 0.
     if (reinterpret_cast<CActParamAnimVt80*>(this)->dispatch80(arg2) != 0 ||
-        getParamByteSel((CActParamData*)view->mChildData10, 0) != 0) {
-        if (view->field30 >= 0) {
-            view->field374 = view->field30;
+        getParamByteSel(&view->mData, 0) != 0) {
+        if (view->mData.mField20 >= 0) {
+            view->field374 = view->mData.mField20;
         }
         if (param < 0x68) {
             // The 0x40000 guard flag skips the anim start while the requested
@@ -1193,23 +1133,23 @@ int CActParamAnim::dispatchAnimSlot(u32 param, u32 arg2) {
                 if (view->field4BD == 0) {
                     view->field4BD = 1;
                 }
-                u32 model = view->field2FC;
-                u8* data = view->mChildData10;
+                u32 model = view->mData.mField2EC;
+                CActParamData* data = &view->mData;
                 u8 b = view->field4BD;
                 view->field0C &= ~0x200;
                 u32 flag = 0;
-                if (model == 0) model = view->field27C;
+                if (model == 0) model = view->mData.mA26C;
                 if (model == 1) {
-                    u32 m = view->field270;
+                    u32 m = view->mData.mA260;
                     if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                 }
-                u32 ret = evalParamBySlot((CActParamData*)data, &localSmall, param, b, flag);
-                switchSubAnim(this, localSmall, ret, view->field2A4, 0);
+                u32 ret = evalParamBySlot(data, &localSmall, param, b, flag);
+                switchSubAnim(this, localSmall, ret, view->mData.mA294, 0);
                 view->field0C &= ~0x200;
             }
         } else {
-            u32 ret = evalParamChain(view->mChildData10, &localBig, param, 1, 0);
-            switchSubAnim(this, localBig, ret, view->field2A4, (view->field0C >> 9) & 1);
+            u32 ret = evalParamChain(&view->mData, &localBig, param, 1, 0);
+            switchSubAnim(this, localBig, ret, view->mData.mA294, (view->field0C >> 9) & 1);
         }
         return 1;
     }
@@ -1227,7 +1167,7 @@ int CActParamAnim::startUnfinishedAnim(u32 param) {
     u32 localBig;
 
     // Bit 23 of field270 must be set before anything else happens.
-    if ((view->field270 & 0x100) == 0) return 0;
+    if ((view->mData.mA260 & 0x100) == 0) return 0;
 
     int ok;
     if (owner != 0) {
@@ -1252,28 +1192,28 @@ int CActParamAnim::startUnfinishedAnim(u32 param) {
             if (view->field4BD == 0) {
                 view->field4BD = 0;
             }
-            u32 model = view->field2FC;
+            u32 model = view->mData.mField2EC;
             u8 b = view->field4BD;
             view->field0C &= ~0x200;
             u32 flag = 0;
-            if (model == 0) model = view->field27C;
+            if (model == 0) model = view->mData.mA26C;
             if (model == 1) {
-                u32 m = view->field270;
+                u32 m = view->mData.mA260;
                 if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
             }
-            u32 ret = evalParamBySlot((CActParamData*)view->mChildData10, &localSmall, param, b, flag);
-            switchSubAnim(this, localSmall, ret, view->field2A4, 0);
+            u32 ret = evalParamBySlot(&view->mData, &localSmall, param, b, flag);
+            switchSubAnim(this, localSmall, ret, view->mData.mA294, 0);
             view->field0C &= ~0x200;
         }
         return 1;
     }
     u32 flag = 0;
-    if (view->field278 == 1) {
-        u32 m = view->field270;
+    if (view->mData.mA268 == 1) {
+        u32 m = view->mData.mA260;
         if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
     }
-    u32 ret = evalParamChain(view->mChildData10, &localBig, param, flag, 0);
-    switchSubAnim(this, localBig, ret, view->field2A4, (view->field0C >> 9) & 1);
+    u32 ret = evalParamChain(&view->mData, &localBig, param, flag, 0);
+    switchSubAnim(this, localBig, ret, view->mData.mA294, (view->field0C >> 9) & 1);
     return 1;
 }
 
@@ -1326,28 +1266,28 @@ int CActParamAnim::startFinishedAnim(u32 param) {
             if (view->field4BD == 0) {
                 view->field4BD = 0;
             }
-            u32 model = view->field2FC;
+            u32 model = view->mData.mField2EC;
             u8 b = view->field4BD;
             view->field0C &= ~0x200;
             u32 flag = 0;
-            if (model == 0) model = view->field27C;
+            if (model == 0) model = view->mData.mA26C;
             if (model == 1) {
-                u32 m = view->field270;
+                u32 m = view->mData.mA260;
                 if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
             }
-            u32 ret = evalParamBySlot((CActParamData*)view->mChildData10, &localSmall, param, b, flag);
-            switchSubAnim(this, localSmall, ret, view->field2A4, 0);
+            u32 ret = evalParamBySlot(&view->mData, &localSmall, param, b, flag);
+            switchSubAnim(this, localSmall, ret, view->mData.mA294, 0);
             view->field0C &= ~0x200;
         }
         return 1;
     }
     u32 flag = 0;
-    if (view->field278 == 1) {
-        u32 m = view->field270;
+    if (view->mData.mA268 == 1) {
+        u32 m = view->mData.mA260;
         if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
     }
-    u32 ret = evalParamChain(view->mChildData10, &localBig, param, flag, 0);
-    switchSubAnim(this, localBig, ret, view->field2A4, (view->field0C >> 9) & 1);
+    u32 ret = evalParamChain(&view->mData, &localBig, param, flag, 0);
+    switchSubAnim(this, localBig, ret, view->mData.mA294, (view->field0C >> 9) & 1);
     return 1;
 }
 
@@ -1365,10 +1305,10 @@ int CActParamAnim::fireAnimParam(u32 param) {
     }
     if (ok) {
         // Proceed unless the anim is busy: either the 0x80000 anim flag is
-        // clear (bit 5 of field270) with the 0x2 active flag set, or the anim
+        // clear (bit 5 of mData.mA260) with the 0x2 active flag set, or the anim
         // counter is in the "2" state (retail: bne to the field374 test on bit
         // 5, bne to the body on the 0x2 flag, beq to the body on counter == 2).
-        if (((view->field270 & 0x20) == 0 && (view->field0C & 0x2) != 0) ||
+        if (((view->mData.mA260 & 0x20) == 0 && (view->field0C & 0x2) != 0) ||
             view->field374 == 2) {
             if (param != 0) {
                 if (param < 0x68) {
@@ -1379,27 +1319,27 @@ int CActParamAnim::fireAnimParam(u32 param) {
                         if (view->field4BD == 0) {
                             view->field4BD = 0;
                         }
-                        u32 model = view->field2FC;
+                        u32 model = view->mData.mField2EC;
                         u8 b = view->field4BD;
                         view->field0C &= ~0x200;
                         u32 flag = 0;
-                        model = (model != 0) ? model : view->field27C;
+                        model = (model != 0) ? model : view->mData.mA26C;
                         if (model == 1) {
-                            u32 m = view->field270;
+                            u32 m = view->mData.mA260;
                             if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                         }
-                        u32 ret = evalParamBySlot((CActParamData*)view->mChildData10, &localSmall, param, b, flag);
-                        switchSubAnim(this, localSmall, ret, view->field2A4, 0);
+                        u32 ret = evalParamBySlot(&view->mData, &localSmall, param, b, flag);
+                        switchSubAnim(this, localSmall, ret, view->mData.mA294, 0);
                         view->field0C &= ~0x200;
                     }
                 } else {
                     u32 flag = 0;
-                    if (view->field278 == 1) {
-                        u32 m = view->field270;
+                    if (view->mData.mA268 == 1) {
+                        u32 m = view->mData.mA260;
                         if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                     }
-                    u32 ret = evalParamChain(view->mChildData10, &localBig, param, flag, 0);
-                    switchSubAnim(this, localBig, ret, view->field2A4, (view->field0C >> 9) & 1);
+                    u32 ret = evalParamChain(&view->mData, &localBig, param, flag, 0);
+                    switchSubAnim(this, localBig, ret, view->mData.mA294, (view->field0C >> 9) & 1);
                 }
             }
             view->field0C &= ~0x80000;
@@ -1427,28 +1367,28 @@ int CActParamAnim::startOwnerFlag8Anim(u32 param) {
                     if (view->field4BD == 0) {
                         view->field4BD = 0;
                     }
-                    u8* data = view->mChildData10;
+                    CActParamData* data = &view->mData;
                     u8 b = view->field4BD;
                     view->field0C &= ~0x200;
                     u32 flag = 0;
-                    u32 model = view->field2FC;
-                    if (model == 0) model = view->field27C;
+                    u32 model = view->mData.mField2EC;
+                    if (model == 0) model = view->mData.mA26C;
                     if (model == 1) {
-                        u32 m = view->field270;
+                        u32 m = view->mData.mA260;
                         if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                     }
-                    u32 ret = evalParamBySlot((CActParamData*)data, &localSmall, param, b, flag);
-                    switchSubAnim(this, localSmall, ret, view->field2A4, 0);
+                    u32 ret = evalParamBySlot(data, &localSmall, param, b, flag);
+                    switchSubAnim(this, localSmall, ret, view->mData.mA294, 0);
                     view->field0C &= ~0x200;
                 }
             } else {
                 u32 flag = 0;
-                if (view->field278 == 1) {
-                    u32 m = view->field270;
+                if (view->mData.mA268 == 1) {
+                    u32 m = view->mData.mA260;
                     if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                 }
-                u32 ret = evalParamChain(view->mChildData10, &localBig, param, flag, 0);
-                switchSubAnim(this, localBig, ret, view->field2A4, (view->field0C >> 9) & 1);
+                u32 ret = evalParamChain(&view->mData, &localBig, param, flag, 0);
+                switchSubAnim(this, localBig, ret, view->mData.mA294, (view->field0C >> 9) & 1);
             }
         }
         return 1;
@@ -1493,29 +1433,29 @@ int CActParamAnim::startOwnerFlag2Anim(u32 param) {
                 if (view->field4BD == 0) {
                     view->field4BD = 0;
                 }
-                u8* data = view->mChildData10;
-                u32 model = view->field2FC;
+                CActParamData* data = &view->mData;
+                u32 model = view->mData.mField2EC;
                 u32 localSmall;
                 u32 b = view->field4BD;
                 view->field0C &= ~0x200;
                 u32 flag = 0;
-                if (model == 0) model = view->field27C;
+                if (model == 0) model = view->mData.mA26C;
                 if (model == 1) {
-                    u32 m = view->field270;
+                    u32 m = view->mData.mA260;
                     if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                 }
-                u32 ret = evalParamBySlot((CActParamData*)data, &localSmall, param, b, flag);
-                switchSubAnim(this, localSmall, ret, view->field2A4, 0);
+                u32 ret = evalParamBySlot(data, &localSmall, param, b, flag);
+                switchSubAnim(this, localSmall, ret, view->mData.mA294, 0);
                 view->field0C &= ~0x200;
             }
         } else {
             u32 flag = 0;
-            if (view->field278 == 1) {
-                u32 m = view->field270;
+            if (view->mData.mA268 == 1) {
+                u32 m = view->mData.mA260;
                 if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
             }
-            u32 ret = evalParamChain(view->mChildData10, &localBig, param, flag, 0);
-            switchSubAnim(this, localBig, ret, view->field2A4, (view->field0C >> 9) & 1);
+            u32 ret = evalParamChain(&view->mData, &localBig, param, flag, 0);
+            switchSubAnim(this, localBig, ret, view->mData.mA294, (view->field0C >> 9) & 1);
         }
         view->field4C8 = -1;
         return 1;
@@ -1529,22 +1469,21 @@ void* CActParamAnim::getEffObj() {
 }
 
 void CActParamAnim::clearEffObj() {
-    CActParamAnimFull* full = reinterpret_cast<CActParamAnimFull*>(this);
-    full->mEffByte0 = 0;
-    full->mEffByte1 = 0;
+    field4BE = 0;
+    field4BF = 0;
     field4C0 = 0;
 }
 
 
-extern "C" void* getAnimChild(CActParamAnim* self) {
-    return self->mChildData10;
+extern "C" CActParamData* getAnimChild(CActParamAnim* self) {
+    return &self->mData;
 }
 
 extern "C" f32 getAnimWalkKmh(CActParamAnim* self) {
     return self->field43C;
 }
 
-extern "C" void* getAnimOwner(CActParamAnim* self) {
+extern "C" CActParamAnimOwner* getAnimOwner(CActParamAnim* self) {
     return self->owner08;
 }
 
@@ -1638,28 +1577,28 @@ int CActParamAnim::startFlag2000Anim(u32 param) {
                         view->field4BD = 0;
                     }
                     u32 local;
-                    u32 model = view->field2FC;
+                    u32 model = view->mData.mField2EC;
                     u32 flag = 0;
                     view->field0C &= ~0x200;
                     u8 b = view->field4BD;
-                    if (model == 0) model = view->field27C;
+                    if (model == 0) model = view->mData.mA26C;
                     if (model == 1) {
-                        u32 m = view->field270;
+                        u32 m = view->mData.mA260;
                         if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                     }
-                    u32 ret = evalParamBySlot((CActParamData*)view->mChildData10, &local, param, b, flag);
-                    switchSubAnim(this, local, ret, view->field2A4, 0);
+                    u32 ret = evalParamBySlot(&view->mData, &local, param, b, flag);
+                    switchSubAnim(this, local, ret, view->mData.mA294, 0);
                     view->field0C &= ~0x200;
                 }
             } else {
                 u32 flag = 0;
                 u32 local;
-                if (view->field278 == 1) {
-                    u32 m = view->field270;
+                if (view->mData.mA268 == 1) {
+                    u32 m = view->mData.mA260;
                     if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                 }
-                u32 ret = evalParamChain(view->mChildData10, &local, param, flag, 0);
-                switchSubAnim(this, local, ret, view->field2A4, (view->field0C >> 9) & 1);
+                u32 ret = evalParamChain(&view->mData, &local, param, flag, 0);
+                switchSubAnim(this, local, ret, view->mData.mA294, (view->field0C >> 9) & 1);
             }
             return 1;
         }
@@ -1702,28 +1641,28 @@ int CActParamAnim::startFlag0800Anim(u32 param) {
                         view->field4BD = 0;
                     }
                     u32 local;
-                    u32 model = view->field2FC;
+                    u32 model = view->mData.mField2EC;
                     u32 flag = 0;
                     view->field0C &= ~0x200;
                     u8 b = view->field4BD;
-                    if (model == 0) model = view->field27C;
+                    if (model == 0) model = view->mData.mA26C;
                     if (model == 1) {
-                        u32 m = view->field270;
+                        u32 m = view->mData.mA260;
                         if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                     }
-                    u32 ret = evalParamBySlot((CActParamData*)view->mChildData10, &local, param, b, flag);
-                    switchSubAnim(this, local, ret, view->field2A4, 0);
+                    u32 ret = evalParamBySlot(&view->mData, &local, param, b, flag);
+                    switchSubAnim(this, local, ret, view->mData.mA294, 0);
                     view->field0C &= ~0x200;
                 }
             } else {
                 u32 flag = 0;
                 u32 local;
-                if (view->field278 == 1) {
-                    u32 m = view->field270;
+                if (view->mData.mA268 == 1) {
+                    u32 m = view->mData.mA260;
                     if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                 }
-                u32 ret = evalParamChain(view->mChildData10, &local, param, flag, 0);
-                switchSubAnim(this, local, ret, view->field2A4, (view->field0C >> 9) & 1);
+                u32 ret = evalParamChain(&view->mData, &local, param, flag, 0);
+                switchSubAnim(this, local, ret, view->mData.mA294, (view->field0C >> 9) & 1);
             }
             return 1;
         }
@@ -1766,28 +1705,28 @@ int CActParamAnim::startFlag0400Anim(u32 param) {
                         view->field4BD = 0;
                     }
                     u32 local;
-                    u32 model = view->field2FC;
+                    u32 model = view->mData.mField2EC;
                     u32 flag = 0;
                     view->field0C &= ~0x200;
                     u8 b = view->field4BD;
-                    if (model == 0) model = view->field27C;
+                    if (model == 0) model = view->mData.mA26C;
                     if (model == 1) {
-                        u32 m = view->field270;
+                        u32 m = view->mData.mA260;
                         if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                     }
-                    u32 ret = evalParamBySlot((CActParamData*)view->mChildData10, &local, param, b, flag);
-                    switchSubAnim(this, local, ret, view->field2A4, 0);
+                    u32 ret = evalParamBySlot(&view->mData, &local, param, b, flag);
+                    switchSubAnim(this, local, ret, view->mData.mA294, 0);
                     view->field0C &= ~0x200;
                 }
             } else {
                 u32 flag = 0;
                 u32 local;
-                if (view->field278 == 1) {
-                    u32 m = view->field270;
+                if (view->mData.mA268 == 1) {
+                    u32 m = view->mData.mA260;
                     if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                 }
-                u32 ret = evalParamChain(view->mChildData10, &local, param, flag, 0);
-                switchSubAnim(this, local, ret, view->field2A4, (view->field0C >> 9) & 1);
+                u32 ret = evalParamChain(&view->mData, &local, param, flag, 0);
+                switchSubAnim(this, local, ret, view->mData.mA294, (view->field0C >> 9) & 1);
             }
             return 1;
         }
@@ -1830,28 +1769,28 @@ int CActParamAnim::startFlag1000Anim(u32 param) {
                         view->field4BD = 0;
                     }
                     u32 local;
-                    u32 model = view->field2FC;
+                    u32 model = view->mData.mField2EC;
                     u32 flag = 0;
                     view->field0C &= ~0x200;
                     u8 b = view->field4BD;
-                    if (model == 0) model = view->field27C;
+                    if (model == 0) model = view->mData.mA26C;
                     if (model == 1) {
-                        u32 m = view->field270;
+                        u32 m = view->mData.mA260;
                         if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                     }
-                    u32 ret = evalParamBySlot((CActParamData*)view->mChildData10, &local, param, b, flag);
-                    switchSubAnim(this, local, ret, view->field2A4, 0);
+                    u32 ret = evalParamBySlot(&view->mData, &local, param, b, flag);
+                    switchSubAnim(this, local, ret, view->mData.mA294, 0);
                     view->field0C &= ~0x200;
                 }
             } else {
                 u32 flag = 0;
                 u32 local;
-                if (view->field278 == 1) {
-                    u32 m = view->field270;
+                if (view->mData.mA268 == 1) {
+                    u32 m = view->mData.mA260;
                     if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                 }
-                u32 ret = evalParamChain(view->mChildData10, &local, param, flag, 0);
-                switchSubAnim(this, local, ret, view->field2A4, (view->field0C >> 9) & 1);
+                u32 ret = evalParamChain(&view->mData, &local, param, flag, 0);
+                switchSubAnim(this, local, ret, view->mData.mA294, (view->field0C >> 9) & 1);
             }
             return 1;
         }
@@ -1899,29 +1838,29 @@ int CActParamAnim::fireSpeedGate(u32 param) {
                     if (view->field4BD == 0) {
                         view->field4BD = 0;
                     }
-                    u32 model = view->field2FC;
-                    model = (model != 0) ? model : view->field27C;
+                    u32 model = view->mData.mField2EC;
+                    model = (model != 0) ? model : view->mData.mA26C;
                     u8 b = view->field4BD;
                     view->field0C &= ~0x200;
                     u32 flag = 0;
                     if (model == 1) {
-                        u32 m = view->field270;
+                        u32 m = view->mData.mA260;
                         if ((m & 0x10) == 0 && (m & 0x8) == 0) {
                             flag = 1;
                         }
                     }
-                    u32 ret = evalParamBySlot((CActParamData*)view->mChildData10, &localSmall, p, b, flag);
-                    switchSubAnim(this, localSmall, ret, view->field2A4, 0);
+                    u32 ret = evalParamBySlot(&view->mData, &localSmall, p, b, flag);
+                    switchSubAnim(this, localSmall, ret, view->mData.mA294, 0);
                     view->field0C &= ~0x200;
                 }
             } else {
                 u32 flag = 0;
-                if (view->field278 == 1) {
-                    u32 m = view->field270;
+                if (view->mData.mA268 == 1) {
+                    u32 m = view->mData.mA260;
                     if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                 }
-                u32 ret = evalParamChain(view->mChildData10, &localBig, param, flag, 0);
-                switchSubAnim(this, localBig, ret, view->field2A4, (view->field0C >> 9) & 1);
+                u32 ret = evalParamChain(&view->mData, &localBig, param, flag, 0);
+                switchSubAnim(this, localBig, ret, view->mData.mA294, (view->field0C >> 9) & 1);
             }
         }
         return 1;
@@ -1956,27 +1895,27 @@ int CActParamAnim::fireSpeedOkGt(u32 param) {
                     if (view->field4BD == 0) {
                         view->field4BD = 0;
                     }
-                    u32 model = view->field2FC;
+                    u32 model = view->mData.mField2EC;
                     u8 b = view->field4BD;
                     view->field0C &= ~0x200;
                     u32 flag = 0;
-                    model = (model != 0) ? model : view->field27C;
+                    model = (model != 0) ? model : view->mData.mA26C;
                     if (model == 1) {
-                        u32 m = view->field270;
+                        u32 m = view->mData.mA260;
                         if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                     }
-                    u32 ret = evalParamBySlot((CActParamData*)view->mChildData10, &localSmall, param, b, flag);
-                    switchSubAnim(this, localSmall, ret, view->field2A4, 0);
+                    u32 ret = evalParamBySlot(&view->mData, &localSmall, param, b, flag);
+                    switchSubAnim(this, localSmall, ret, view->mData.mA294, 0);
                     view->field0C &= ~0x200;
                 }
             } else {
                 u32 flag = 0;
-                if (view->field278 == 1) {
-                    u32 m = view->field270;
+                if (view->mData.mA268 == 1) {
+                    u32 m = view->mData.mA260;
                     if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                 }
-                u32 ret = evalParamChain(view->mChildData10, &localBig, param, flag, 0);
-                switchSubAnim(this, localBig, ret, view->field2A4, (view->field0C >> 9) & 1);
+                u32 ret = evalParamChain(&view->mData, &localBig, param, flag, 0);
+                switchSubAnim(this, localBig, ret, view->mData.mA294, (view->field0C >> 9) & 1);
             }
         }
         return 1;
@@ -2008,28 +1947,28 @@ int CActParamAnim::fireBlendGate(u32 param) {
             if (view->field4BD == 0) {
                 view->field4BD = 0;
             }
-            u32 model = view->field2FC;
+            u32 model = view->mData.mField2EC;
             u8 b = view->field4BD;
             view->field0C &= ~0x200;
             u32 flag = 0;
-            if (model == 0) model = view->field27C;
+            if (model == 0) model = view->mData.mA26C;
             if (model == 1) {
-                u32 m = view->field270;
+                u32 m = view->mData.mA260;
                 if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
             }
-            u32 ret = evalParamBySlot((CActParamData*)view->mChildData10, &localSmall, param, b, flag);
-            switchSubAnim(this, localSmall, ret, view->field2A4, 0);
+            u32 ret = evalParamBySlot(&view->mData, &localSmall, param, b, flag);
+            switchSubAnim(this, localSmall, ret, view->mData.mA294, 0);
             view->field0C &= ~0x200;
         }
         return 1;
     }
     u32 flag = 0;
-    if (view->field278 == 1) {
-        u32 m = view->field270;
+    if (view->mData.mA268 == 1) {
+        u32 m = view->mData.mA260;
         if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
     }
-    u32 ret = evalParamChain(view->mChildData10, &localBig, param, flag, 0);
-    switchSubAnim(this, localBig, ret, view->field2A4, (view->field0C >> 9) & 1);
+    u32 ret = evalParamChain(&view->mData, &localBig, param, flag, 0);
+    switchSubAnim(this, localBig, ret, view->mData.mA294, (view->field0C >> 9) & 1);
     return 1;
 }
 
@@ -2095,35 +2034,35 @@ int CActParamAnim::stepAnimState(u32 param) {
                     sview->field4BD = 0;
                 }
                 sview->field0C &= ~0x200;
-                u32 model = sview->field2FC;
-                if (model == 0) model = sview->field27C;
+                u32 model = sview->mData.mField2EC;
+                if (model == 0) model = sview->mData.mA26C;
                 u32 flag = 0;
-                if (model == 1 && (sview->field270 & 0x10) == 0) {
+                if (model == 1 && (sview->mData.mA260 & 0x10) == 0) {
                     flag = 1;
                 }
                 u32 flag2 = 0;
-                if (flag != 0 && (sview->field270 & 0x8) == 0) {
+                if (flag != 0 && (sview->mData.mA260 & 0x8) == 0) {
                     flag2 = 1;
                 }
                 u8 b = sview->field4BD;
-                u32 ret = evalParamBySlot((CActParamData*)sview->mChildData10, &localSmall,
+                u32 ret = evalParamBySlot(&sview->mData, &localSmall,
                                         param, b, flag2);
-                switchSubAnim(this, localSmall, ret, sview->field2A4, 0);
+                switchSubAnim(this, localSmall, ret, sview->mData.mA294, 0);
                 sview->field0C &= ~0x200;
             }
         } else {
             u32 flag = 0;
-            if (sview->field278 == 1 && (sview->field270 & 0x10) == 0) {
+            if (sview->mData.mA268 == 1 && (sview->mData.mA260 & 0x10) == 0) {
                 flag = 1;
             }
             u32 flag2 = 0;
-            if (flag != 0 && (sview->field270 & 0x8) == 0) {
+            if (flag != 0 && (sview->mData.mA260 & 0x8) == 0) {
                 flag2 = 1;
             }
-            u32 ret = evalParamChain(sview->mChildData10, &localBig, param,
+            u32 ret = evalParamChain(&sview->mData, &localBig, param,
                                     flag2, 0);
             bool b = (sview->field0C & 0x200) != 0;
-            switchSubAnim(this, localBig, ret, sview->field2A4, b);
+            switchSubAnim(this, localBig, ret, sview->mData.mA294, b);
         }
     }
 
@@ -2204,32 +2143,32 @@ int CActParamAnim::fireCountGate(u32 param, s32 val) {
         if (view->field4BD == 0) {
             view->field4BD = 0;
         }
-        u32 model = view->field2FC;
+        u32 model = view->mData.mField2EC;
         view->field0C &= ~0x200;
         u8 b = view->field4BD;
         u32 flag = 0;
         if (model == 0) {
-            model = view->field27C;
+            model = view->mData.mA26C;
         }
         if (model == 1) {
-            u32 m = view->field270;
+            u32 m = view->mData.mA260;
             if ((m & 0x10) == 0 && (m & 0x8) == 0) {
                 flag = 1;
             }
         }
-        u32 ret = evalParamBySlot((CActParamData*)view->mChildData10, &localSmall, param, b, flag);
-        switchSubAnim(this, localSmall, ret, view->field2A4, 0);
+        u32 ret = evalParamBySlot(&view->mData, &localSmall, param, b, flag);
+        switchSubAnim(this, localSmall, ret, view->mData.mA294, 0);
         view->field0C &= ~0x200;
     } else {
         u32 flag = 0;
-        if (view->field278 == 1) {
-            u32 m = view->field270;
+        if (view->mData.mA268 == 1) {
+            u32 m = view->mData.mA260;
             if ((m & 0x10) == 0 && (m & 0x8) == 0) {
                 flag = 1;
             }
         }
-        u32 ret = evalParamChain(view->mChildData10, &localBig, param, flag, 0);
-        switchSubAnim(this, localBig, ret, view->field2A4, (view->field0C >> 9) & 1);
+        u32 ret = evalParamChain(&view->mData, &localBig, param, flag, 0);
+        switchSubAnim(this, localBig, ret, view->mData.mA294, (view->field0C >> 9) & 1);
     }
     return 1;
 }
@@ -2248,32 +2187,32 @@ int CActParamAnim::fireWord378Gt(u32 param, s32 val) {
                     if (view->field4BD == 0) {
                         view->field4BD = 0;
                     }
-                    u8* data = view->mChildData10;
+                    CActParamData* data = &view->mData;
                     u8 b = view->field4BD;
                     u32 flag = 0;
                     view->field0C &= ~0x200;
                     // Single variable for the whole model chain so MWCC keeps
                     // it in one register like retail.
-                    u32 model = view->field2FC;
-                    if (model == 0) model = view->field27C;
+                    u32 model = view->mData.mField2EC;
+                    if (model == 0) model = view->mData.mA26C;
                     if (model == 1) {
-                        model = view->field270;
+                        model = view->mData.mA260;
                         if ((model & 0x10) == 0 && (model & 0x8) == 0) flag = 1;
                     }
-                    u32 ret = evalParamBySlot((CActParamData*)data, &localSmall, param, b, flag);
-                    switchSubAnim(this, localSmall, ret, view->field2A4, 0);
+                    u32 ret = evalParamBySlot(data, &localSmall, param, b, flag);
+                    switchSubAnim(this, localSmall, ret, view->mData.mA294, 0);
                     view->field0C &= ~0x200;
                 }
             } else {
-                u32 sel = view->field278;
+                u32 sel = view->mData.mA268;
                 u32 flag = 0;
                 if (sel == 1) {
-                    sel = view->field270;
+                    sel = view->mData.mA260;
                     if ((sel & 0x10) == 0 && (sel & 0x8) == 0) flag = 1;
                 }
                 u32 ret =
-                    evalParamChain(view->mChildData10, &localBig, param, flag, 0);
-                switchSubAnim(this, localBig, ret, view->field2A4, (view->field0C >> 9) & 1);
+                    evalParamChain(&view->mData, &localBig, param, flag, 0);
+                switchSubAnim(this, localBig, ret, view->mData.mA294, (view->field0C >> 9) & 1);
             }
         }
         return 1;
@@ -2297,26 +2236,26 @@ int CActParamAnim::fireTwinCount(u32 param, s32 val) {
                     if (view->field4BD == 0) {
                         view->field4BD = 0;
                     }
-                    u32 model = view->field2FC;
+                    u32 model = view->mData.mField2EC;
                     u32 flag = 0;
                     view->field0C &= ~0x200;
-                    model = (model != 0) ? model : view->field27C;
+                    model = (model != 0) ? model : view->mData.mA26C;
                     if (model == 1) {
-                        u32 m = view->field270;
+                        u32 m = view->mData.mA260;
                         if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                     }
-                    u32 ret = evalParamBySlot((CActParamData*)view->mChildData10, &localSmall, param, view->field4BD, flag);
-                    switchSubAnim(this, localSmall, ret, view->field2A4, 0);
+                    u32 ret = evalParamBySlot(&view->mData, &localSmall, param, view->field4BD, flag);
+                    switchSubAnim(this, localSmall, ret, view->mData.mA294, 0);
                     view->field0C &= ~0x200;
                 }
             } else {
                 u32 flag = 0;
-                if (view->field278 == 1) {
-                    u32 m = view->field270;
+                if (view->mData.mA268 == 1) {
+                    u32 m = view->mData.mA260;
                     if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                 }
-                u32 ret = evalParamChain(view->mChildData10, &localBig, param, flag, 0);
-                switchSubAnim(this, localBig, ret, view->field2A4, (view->field0C >> 9) & 1);
+                u32 ret = evalParamChain(&view->mData, &localBig, param, flag, 0);
+                switchSubAnim(this, localBig, ret, view->mData.mA294, (view->field0C >> 9) & 1);
             }
         }
         return 1;
@@ -2344,31 +2283,31 @@ int CActParamAnim::fireOwnerIdGt(u32 animId, u32 id) {
                 if (view->field4BD == 0) {
                     view->field4BD = 0;
                 }
-                u8* data = view->mChildData10;
-                u32 model = view->field2FC;
+                CActParamData* data = &view->mData;
+                u32 model = view->mData.mField2EC;
                 u8 b = view->field4BD;
                 view->field0C &= ~0x200;
                 u32 flag = 0;
-                if (model == 0) model = view->field27C;
+                if (model == 0) model = view->mData.mA26C;
                 if (model == 1) {
-                    model = view->field270;
+                    model = view->mData.mA260;
                     if ((model & 0x10) == 0 && (model & 0x8) == 0) flag = 1;
                 }
                 u32 local;
-                u32 ret = evalParamBySlot((CActParamData*)data, &local, animId, b, flag);
-                switchSubAnim(this, local, ret, view->field2A4, 0);
+                u32 ret = evalParamBySlot(data, &local, animId, b, flag);
+                switchSubAnim(this, local, ret, view->mData.mA294, 0);
                 view->field0C &= ~0x200;
             }
         } else {
-            u32 sel = view->field278;
+            u32 sel = view->mData.mA268;
             u32 flag = 0;
             if (sel == 1) {
-                u32 m = view->field270;
+                u32 m = view->mData.mA260;
                 if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
             }
             u32 local;
-            u32 ret = evalParamChain(view->mChildData10, &local, animId, flag, 0);
-            switchSubAnim(this, local, ret, view->field2A4,
+            u32 ret = evalParamChain(&view->mData, &local, animId, flag, 0);
+            switchSubAnim(this, local, ret, view->mData.mA294,
                           (view->field0C >> 9) & 1);
         }
         return 1;
@@ -2384,31 +2323,31 @@ int CActParamAnim::fireOwnerIdGt(u32 animId, u32 id) {
             if (view->field4BD == 0) {
                 view->field4BD = 0;
             }
-            u8* data = view->mChildData10;
-            u32 model = view->field2FC;
+            CActParamData* data = &view->mData;
+            u32 model = view->mData.mField2EC;
             u8 b = view->field4BD;
             view->field0C &= ~0x200;
             u32 flag = 0;
-            if (model == 0) model = view->field27C;
+            if (model == 0) model = view->mData.mA26C;
             if (model == 1) {
-                model = view->field270;
+                model = view->mData.mA260;
                 if ((model & 0x10) == 0 && (model & 0x8) == 0) flag = 1;
             }
             u32 local;
-            u32 ret = evalParamBySlot((CActParamData*)data, &local, animId, b, flag);
-            switchSubAnim(this, local, ret, view->field2A4, 0);
+            u32 ret = evalParamBySlot(data, &local, animId, b, flag);
+            switchSubAnim(this, local, ret, view->mData.mA294, 0);
             view->field0C &= ~0x200;
         }
     } else {
-        u32 sel = view->field278;
+        u32 sel = view->mData.mA268;
         u32 flag = 0;
         if (sel == 1) {
-            u32 m = view->field270;
+            u32 m = view->mData.mA260;
             if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
         }
         u32 local;
-        u32 ret = evalParamChain(view->mChildData10, &local, animId, flag, 0);
-        switchSubAnim(this, local, ret, view->field2A4,
+        u32 ret = evalParamChain(&view->mData, &local, animId, flag, 0);
+        switchSubAnim(this, local, ret, view->mData.mA294,
                       (view->field0C >> 9) & 1);
     }
         return 1;
@@ -2431,28 +2370,28 @@ void CActParamAnim::fireBlendDflt(u32 param) {
                     view->field4BD = 0;
                 }
                 u32 local;
-                u32 model = view->field2FC;
+                u32 model = view->mData.mField2EC;
                 u32 flag = 0;
                 view->field0C &= ~0x200;
                 u8 b = view->field4BD;
-                if (model == 0) model = view->field27C;
+                if (model == 0) model = view->mData.mA26C;
                 if (model == 1) {
-                    u32 m = view->field270;
+                    u32 m = view->mData.mA260;
                     if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                 }
-                u32 ret = evalParamBySlot((CActParamData*)view->mChildData10, &local, param, b, flag);
-                switchSubAnim(this, local, ret, view->field2A4, 0);
+                u32 ret = evalParamBySlot(&view->mData, &local, param, b, flag);
+                switchSubAnim(this, local, ret, view->mData.mA294, 0);
                 view->field0C &= ~0x200;
             }
         } else {
             u32 flag = 0;
             u32 local;
-            if (view->field278 == 1) {
-                u32 m = view->field270;
+            if (view->mData.mA268 == 1) {
+                u32 m = view->mData.mA260;
                 if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
             }
-            u32 ret = evalParamChain(view->mChildData10, &local, param, flag, 0);
-            switchSubAnim(this, local, ret, view->field2A4, (view->field0C >> 9) & 1);
+            u32 ret = evalParamChain(&view->mData, &local, param, flag, 0);
+            switchSubAnim(this, local, ret, view->mData.mA294, (view->field0C >> 9) & 1);
         }
     }
     // Y-rotation of the anim axis: build the rotation matrix, transform the
@@ -2507,28 +2446,28 @@ int CActParamAnim::fireParamGate(u32 param) {
                         if (view->field4BD == 0) {
                             view->field4BD = 0;
                         }
-                        u32 model = view->field2FC;
+                        u32 model = view->mData.mField2EC;
                         u32 flag = 0;
                         view->field0C &= ~0x200;
-                        model = (model != 0) ? model : view->field27C;
+                        model = (model != 0) ? model : view->mData.mA26C;
                         if (model == 1) {
-                            u32 m = view->field270;
+                            u32 m = view->mData.mA260;
                             if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                         }
                         u32 localSmall;
-                        u32 ret = evalParamBySlot((CActParamData*)view->mChildData10, &localSmall, param, view->field4BD, flag);
-                        switchSubAnim(this, localSmall, ret, view->field2A4, 0);
+                        u32 ret = evalParamBySlot(&view->mData, &localSmall, param, view->field4BD, flag);
+                        switchSubAnim(this, localSmall, ret, view->mData.mA294, 0);
                         view->field0C &= ~0x200;
                     }
                 } else {
                     u32 flag = 0;
-                    if (view->field278 == 1) {
-                        u32 m = view->field270;
+                    if (view->mData.mA268 == 1) {
+                        u32 m = view->mData.mA260;
                         if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                     }
                     u32 localBig;
-                    u32 ret = evalParamChain(view->mChildData10, &localBig, param, flag, 0);
-                    switchSubAnim(this, localBig, ret, view->field2A4, (view->field0C >> 9) & 1);
+                    u32 ret = evalParamChain(&view->mData, &localBig, param, flag, 0);
+                    switchSubAnim(this, localBig, ret, view->mData.mA294, (view->field0C >> 9) & 1);
                 }
             }
             return 1;
@@ -2551,26 +2490,26 @@ int CActParamAnim::fireBlendCust(u32 param) {
                 if (view->field4BD == 0) {
                     view->field4BD = 0;
                 }
-                u32 model = view->field2FC;
+                u32 model = view->mData.mField2EC;
                 u32 flag = 0;
                 view->field0C &= ~0x200;
-                model = (model != 0) ? model : view->field27C;
+                model = (model != 0) ? model : view->mData.mA26C;
                 if (model == 1) {
-                    u32 m = view->field270;
+                    u32 m = view->mData.mA260;
                     if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                 }
-                u32 ret = evalParamBySlot((CActParamData*)view->mChildData10, &localSmall, param, view->field4BD, flag);
-                switchSubAnim(this, localSmall, ret, view->field2A4, 0);
+                u32 ret = evalParamBySlot(&view->mData, &localSmall, param, view->field4BD, flag);
+                switchSubAnim(this, localSmall, ret, view->mData.mA294, 0);
                 view->field0C &= ~0x200;
             }
         } else {
             u32 flag = 0;
-            if (view->field278 == 1) {
-                u32 m = view->field270;
+            if (view->mData.mA268 == 1) {
+                u32 m = view->mData.mA260;
                 if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
             }
-            u32 ret = evalParamChain(view->mChildData10, &localBig, param, flag, 0);
-            switchSubAnim(this, localBig, ret, view->field2A4, (view->field0C >> 9) & 1);
+            u32 ret = evalParamChain(&view->mData, &localBig, param, flag, 0);
+            switchSubAnim(this, localBig, ret, view->mData.mA294, (view->field0C >> 9) & 1);
         }
     }
     if ((view->field0C & 0x4000000) == 0) {
@@ -2726,28 +2665,28 @@ int CActParamAnim::startIfActive(u32 param) {
                     if (view->field4BD == 0) {
                         view->field4BD = 0;
                     }
-                    u8* data = view->mChildData10;
+                    CActParamData* data = &view->mData;
                     u8 b = view->field4BD;
                     u32 flag = 0;
                     view->field0C &= ~0x200;
-                    u32 model = view->field2FC;
-                    if (model == 0) model = view->field27C;
+                    u32 model = view->mData.mField2EC;
+                    if (model == 0) model = view->mData.mA26C;
                     if (model == 1) {
-                        u32 m = view->field270;
+                        u32 m = view->mData.mA260;
                         if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                     }
-                    u32 ret = evalParamBySlot((CActParamData*)data, &localSmall, param, b, flag);
-                    switchSubAnim(this, localSmall, ret, view->field2A4, 0);
+                    u32 ret = evalParamBySlot(data, &localSmall, param, b, flag);
+                    switchSubAnim(this, localSmall, ret, view->mData.mA294, 0);
                     view->field0C &= ~0x200;
                 }
             } else {
                 u32 flag = 0;
-                if (view->field278 == 1) {
-                    u32 m = view->field270;
+                if (view->mData.mA268 == 1) {
+                    u32 m = view->mData.mA260;
                     if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                 }
-                u32 ret = evalParamChain(view->mChildData10, &localBig, param, flag, 0);
-                switchSubAnim(this, localBig, ret, view->field2A4, (view->field0C >> 9) & 1);
+                u32 ret = evalParamChain(&view->mData, &localBig, param, flag, 0);
+                switchSubAnim(this, localBig, ret, view->mData.mA294, (view->field0C >> 9) & 1);
             }
         }
         return 1;
@@ -2771,29 +2710,29 @@ int CActParamAnim::startIfActive(u32 param) {
             view->field4BD = 0;                                                 \
         }                                                                       \
         flag = 0;                                                               \
-        model = view->field2FC;                                                 \
+        model = view->mData.mField2EC;                                                 \
         b = view->field4BD;                                                     \
         view->field0C &= ~0x200u;                                               \
-        model = (model != 0) ? model : view->field27C;                          \
+        model = (model != 0) ? model : view->mData.mA26C;                          \
         if (model == 1) {                                                       \
-            u32 m = view->field270;                                             \
+            u32 m = view->mData.mA260;                                             \
             if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;                    \
         }                                                                       \
         u32 startRet =                                                          \
-            evalParamBySlot((CActParamData*)view->mChildData10, &outLocal, param, b, flag);        \
-        switchSubAnim(this, outLocal, startRet, view->field2A4, 0);              \
+            evalParamBySlot(&view->mData, &outLocal, param, b, flag);        \
+        switchSubAnim(this, outLocal, startRet, view->mData.mA294, 0);              \
         view->field0C &= ~0x200u;                                               \
     } while (0)
 
 #define ACT_PARAM_ANIM_START_BIG(outLocal)                                      \
     do {                                                                        \
         flag = 0;                                                               \
-        if (view->field278 == 1) {                                              \
-            u32 m = view->field270;                                             \
+        if (view->mData.mA268 == 1) {                                              \
+            u32 m = view->mData.mA260;                                             \
             if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;                    \
         }                                                                       \
-        u32 ret = evalParamChain(view->mChildData10, &outLocal, param, flag, 0); \
-        switchSubAnim(this, outLocal, ret, view->field2A4,                      \
+        u32 ret = evalParamChain(&view->mData, &outLocal, param, flag, 0); \
+        switchSubAnim(this, outLocal, ret, view->mData.mA294,                      \
                       (view->field0C >> 9) & 1);                                \
     } while (0)
 
@@ -2887,28 +2826,28 @@ int CActParamAnim::startRandAnim(u32 param, int rngArg) {
                     if (view->field4BD == 0) {
                         view->field4BD = 0;
                     }
-                    u8* data = view->mChildData10;
+                    CActParamData* data = &view->mData;
                     u8 b = view->field4BD;
                     u32 flag = 0;
                     view->field0C &= ~0x200;
-                    u32 model = view->field2FC;
-                    if (model == 0) model = view->field27C;
+                    u32 model = view->mData.mField2EC;
+                    if (model == 0) model = view->mData.mA26C;
                     if (model == 1) {
-                        u32 m = view->field270;
+                        u32 m = view->mData.mA260;
                         if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                     }
-                    u32 ret = evalParamBySlot((CActParamData*)data, &localSmall, param, b, flag);
-                    switchSubAnim(this, localSmall, ret, view->field2A4, 0);
+                    u32 ret = evalParamBySlot(data, &localSmall, param, b, flag);
+                    switchSubAnim(this, localSmall, ret, view->mData.mA294, 0);
                     view->field0C &= ~0x200;
                 }
             } else {
                 u32 flag = 0;
-                if (view->field278 == 1) {
-                    u32 m = view->field270;
+                if (view->mData.mA268 == 1) {
+                    u32 m = view->mData.mA260;
                     if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                 }
-                u32 ret = evalParamChain(view->mChildData10, &localBig, param, flag, 0);
-                switchSubAnim(this, localBig, ret, view->field2A4, (view->field0C >> 9) & 1);
+                u32 ret = evalParamChain(&view->mData, &localBig, param, flag, 0);
+                switchSubAnim(this, localBig, ret, view->mData.mA294, (view->field0C >> 9) & 1);
             }
         }
         return 1;
@@ -2939,28 +2878,28 @@ int CActParamAnim::fireAngleGate(u32 param) {
             if (view->field4BD == 0) {
                 view->field4BD = 0;
             }
-            u32 model = view->field2FC;
+            u32 model = view->mData.mField2EC;
             u8 b = view->field4BD;
             view->field0C &= ~0x200;
             u32 flag = 0;
-            if (model == 0) model = view->field27C;
+            if (model == 0) model = view->mData.mA26C;
             if (model == 1) {
-                u32 m = view->field270;
+                u32 m = view->mData.mA260;
                 if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
             }
-            u32 ret = evalParamBySlot((CActParamData*)view->mChildData10, &localSmall, param, b, flag);
-            switchSubAnim(this, localSmall, ret, view->field2A4, 0);
+            u32 ret = evalParamBySlot(&view->mData, &localSmall, param, b, flag);
+            switchSubAnim(this, localSmall, ret, view->mData.mA294, 0);
             view->field0C &= ~0x200;
         }
         return 1;
     }
     u32 flag = 0;
-    if (view->field278 == 1) {
-        u32 m = view->field270;
+    if (view->mData.mA268 == 1) {
+        u32 m = view->mData.mA260;
         if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
     }
-    u32 ret = evalParamChain(view->mChildData10, &localBig, param, flag, 0);
-    switchSubAnim(this, localBig, ret, view->field2A4, (view->field0C >> 9) & 1);
+    u32 ret = evalParamChain(&view->mData, &localBig, param, flag, 0);
+    switchSubAnim(this, localBig, ret, view->mData.mA294, (view->field0C >> 9) & 1);
     return 1;
 }
 
@@ -2977,7 +2916,7 @@ int CActParamAnim::fireAngleGate(u32 param) {
 //   before cmpi instead of after stw. Same TU-wide scheduler wall as
 //   startAnimDual/startOwnerFlag2Anim/fireSpeedGate.
 // - Found this session: writing the model fallback as a TERNARY placed AFTER
-//   the flags-clear store (`model = (model != 0) ? model : view->field27C;`)
+//   the flags-clear store (`model = (model != 0) ? model : view->mData.mA26C;`)
 //   makes MWCC emit retail's non-inverted beq/b pair around the field27C
 //   load and restores exact size parity (was -4B with if-statement form).
 // - Ruled out: hoisted `f32 twoPi` local (CSEs back to one load, identical
@@ -3021,30 +2960,30 @@ int CActParamAnim::fireAngleLoGt(u32 param) {
                     if (view->field4BD == 0) {
                         view->field4BD = 0;
                     }
-                    u32 model = view->field2FC;
+                    u32 model = view->mData.mField2EC;
                     u8 b = view->field4BD;
                     view->field0C &= ~0x200;
                     u32 flag = 0;
                     // Ternary form (not if-statement) makes MWCC emit the
                     // non-inverted beq/b branch pair around the field27C
                     // fallback load, matching retail and restoring size parity.
-                    model = (model != 0) ? model : view->field27C;
+                    model = (model != 0) ? model : view->mData.mA26C;
                     if (model == 1) {
-                        u32 m = view->field270;
+                        u32 m = view->mData.mA260;
                         if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                     }
-                    u32 ret = evalParamBySlot((CActParamData*)view->mChildData10, &localSmall, param, b, flag);
-                    switchSubAnim(this, localSmall, ret, view->field2A4, 0);
+                    u32 ret = evalParamBySlot(&view->mData, &localSmall, param, b, flag);
+                    switchSubAnim(this, localSmall, ret, view->mData.mA294, 0);
                     view->field0C &= ~0x200;
                 }
             } else {
                 u32 flag = 0;
-                if (view->field278 == 1) {
-                    u32 m = view->field270;
+                if (view->mData.mA268 == 1) {
+                    u32 m = view->mData.mA260;
                     if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                 }
-                u32 ret = evalParamChain(view->mChildData10, &localBig, param, flag, 0);
-                switchSubAnim(this, localBig, ret, view->field2A4, (view->field0C >> 9) & 1);
+                u32 ret = evalParamChain(&view->mData, &localBig, param, flag, 0);
+                switchSubAnim(this, localBig, ret, view->mData.mA294, (view->field0C >> 9) & 1);
             }
         }
         return 1;
@@ -3075,28 +3014,28 @@ int CActParamAnim::fireAngleBand(u32 param) {
             if (view->field4BD == 0) {
                 view->field4BD = 0;
             }
-            u32 model = view->field2FC;
+            u32 model = view->mData.mField2EC;
             u8 b = view->field4BD;
             view->field0C &= ~0x200;
             u32 flag = 0;
-            if (model == 0) model = view->field27C;
+            if (model == 0) model = view->mData.mA26C;
             if (model == 1) {
-                u32 m = view->field270;
+                u32 m = view->mData.mA260;
                 if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
             }
-            u32 ret = evalParamBySlot((CActParamData*)view->mChildData10, &localSmall, param, b, flag);
-            switchSubAnim(this, localSmall, ret, view->field2A4, 0);
+            u32 ret = evalParamBySlot(&view->mData, &localSmall, param, b, flag);
+            switchSubAnim(this, localSmall, ret, view->mData.mA294, 0);
             view->field0C &= ~0x200;
         }
         return 1;
     }
     u32 flag = 0;
-    if (view->field278 == 1) {
-        u32 m = view->field270;
+    if (view->mData.mA268 == 1) {
+        u32 m = view->mData.mA260;
         if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
     }
-    u32 ret = evalParamChain(view->mChildData10, &localBig, param, flag, 0);
-    switchSubAnim(this, localBig, ret, view->field2A4, (view->field0C >> 9) & 1);
+    u32 ret = evalParamChain(&view->mData, &localBig, param, flag, 0);
+    switchSubAnim(this, localBig, ret, view->mData.mA294, (view->field0C >> 9) & 1);
     return 1;
 }
 
@@ -3122,29 +3061,29 @@ int CActParamAnim::fireAngleHiGt(u32 param) {
                     if (view->field4BD == 0) {
                         view->field4BD = 0;
                     }
-                    u8* data;
-                    u32 model = view->field2FC;
+                    CActParamData* data;
+                    u32 model = view->mData.mField2EC;
                     u8 b = view->field4BD;
                     view->field0C &= ~0x200;
-                    data = view->mChildData10;
+                    data = &view->mData;
                     u32 flag = 0;
-                    if (model == 0) model = view->field27C;
+                    if (model == 0) model = view->mData.mA26C;
                     if (model == 1) {
-                        u32 m = view->field270;
+                        u32 m = view->mData.mA260;
                         if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                     }
-                    u32 ret = evalParamBySlot((CActParamData*)data, &localSmall, param, b, flag);
-                    switchSubAnim(this, localSmall, ret, view->field2A4, 0);
+                    u32 ret = evalParamBySlot(data, &localSmall, param, b, flag);
+                    switchSubAnim(this, localSmall, ret, view->mData.mA294, 0);
                     view->field0C &= ~0x200;
                 }
             } else {
                 u32 flag = 0;
-                if (view->field278 == 1) {
-                    u32 m = view->field270;
+                if (view->mData.mA268 == 1) {
+                    u32 m = view->mData.mA260;
                     if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                 }
-                u32 ret = evalParamChain(view->mChildData10, &localBig, param, flag, 0);
-                switchSubAnim(this, localBig, ret, view->field2A4, (view->field0C >> 9) & 1);
+                u32 ret = evalParamChain(&view->mData, &localBig, param, flag, 0);
+                switchSubAnim(this, localBig, ret, view->mData.mA294, (view->field0C >> 9) & 1);
             }
         }
         return 1;
@@ -3195,29 +3134,29 @@ int CActParamAnim::fireOpenGate1(u32 param) {
                 if (view->field4BD == 0) {
                     view->field4BD = 0;
                 }
-                u8* data = view->mChildData10;
-                u32 model = view->field2FC;
+                CActParamData* data = &view->mData;
+                u32 model = view->mData.mField2EC;
                 u8 b = view->field4BD;
                 view->field0C &= ~0x200;
                 u32 flag = 0;
-                if (model == 0) model = view->field27C;
+                if (model == 0) model = view->mData.mA26C;
                 if (model == 1) {
-                    u32 m = view->field270;
+                    u32 m = view->mData.mA260;
                     if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                 }
-                u32 ret = evalParamBySlot((CActParamData*)data, &local, param, b, flag);
-                switchSubAnim(this, local, ret, view->field2A4, 0);
+                u32 ret = evalParamBySlot(data, &local, param, b, flag);
+                switchSubAnim(this, local, ret, view->mData.mA294, 0);
                 view->field0C &= ~0x200;
             }
         } else {
-            u32 sel = view->field278;
+            u32 sel = view->mData.mA268;
             u32 flag = 0;
             if (sel == 1) {
-                u32 m = view->field270;
+                u32 m = view->mData.mA260;
                 if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
             }
-            u32 ret = evalParamChain(view->mChildData10, &local, param, flag, 0);
-            switchSubAnim(this, local, ret, view->field2A4, (view->field0C >> 9) & 1);
+            u32 ret = evalParamChain(&view->mData, &local, param, flag, 0);
+            switchSubAnim(this, local, ret, view->mData.mA294, (view->field0C >> 9) & 1);
         }
     }
     return 1;
@@ -3234,31 +3173,31 @@ int CActParamAnim::fireOpenGate2(u32 param) {
                 if (view->field4BD == 0) {
                     view->field4BD = 0;
                 }
-                u8* data = view->mChildData10;
-                u32 model = view->field2FC;
+                CActParamData* data = &view->mData;
+                u32 model = view->mData.mField2EC;
                 u8 b = view->field4BD;
                 view->field0C &= ~0x200;
                 u32 flag = 0;
-                if (model == 0) model = view->field27C;
+                if (model == 0) model = view->mData.mA26C;
                 if (model == 1) {
-                    u32 m = view->field270;
+                    u32 m = view->mData.mA260;
                     if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                 }
                 u32 local;
-                u32 ret = evalParamBySlot((CActParamData*)data, &local, param, b, flag);
-                switchSubAnim(this, local, ret, view->field2A4, 0);
+                u32 ret = evalParamBySlot(data, &local, param, b, flag);
+                switchSubAnim(this, local, ret, view->mData.mA294, 0);
                 view->field0C &= ~0x200;
             }
         } else {
-            u32 sel = view->field278;
+            u32 sel = view->mData.mA268;
             u32 flag = 0;
             if (sel == 1) {
-                u32 m = view->field270;
+                u32 m = view->mData.mA260;
                 if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
             }
             u32 local;
-            u32 ret = evalParamChain(view->mChildData10, &local, param, flag, 0);
-            switchSubAnim(this, local, ret, view->field2A4, (view->field0C >> 9) & 1);
+            u32 ret = evalParamChain(&view->mData, &local, param, flag, 0);
+            switchSubAnim(this, local, ret, view->mData.mA294, (view->field0C >> 9) & 1);
         }
     }
     return 1;
@@ -3277,29 +3216,29 @@ int CActParamAnim::fireOpenGate3(u32 param) {
                 if (view->field4BD == 0) {
                     view->field4BD = 0;
                 }
-                u8* data = view->mChildData10;
-                u32 model = view->field2FC;
+                CActParamData* data = &view->mData;
+                u32 model = view->mData.mField2EC;
                 u8 b = view->field4BD;
                 view->field0C &= ~0x200;
                 u32 flag = 0;
-                if (model == 0) model = view->field27C;
+                if (model == 0) model = view->mData.mA26C;
                 if (model == 1) {
-                    u32 m = view->field270;
+                    u32 m = view->mData.mA260;
                     if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                 }
-                u32 ret = evalParamBySlot((CActParamData*)data, &localSmall, param, b, flag);
-                switchSubAnim(this, localSmall, ret, view->field2A4, 0);
+                u32 ret = evalParamBySlot(data, &localSmall, param, b, flag);
+                switchSubAnim(this, localSmall, ret, view->mData.mA294, 0);
                 view->field0C &= ~0x200;
             }
         } else {
-            u32 sel = view->field278;
+            u32 sel = view->mData.mA268;
             u32 flag = 0;
             if (sel == 1) {
-                u32 m = view->field270;
+                u32 m = view->mData.mA260;
                 if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
             }
-            u32 ret = evalParamChain(view->mChildData10, &localBig, param, flag, 0);
-            switchSubAnim(this, localBig, ret, view->field2A4, (view->field0C >> 9) & 1);
+            u32 ret = evalParamChain(&view->mData, &localBig, param, flag, 0);
+            switchSubAnim(this, localBig, ret, view->mData.mA294, (view->field0C >> 9) & 1);
         }
     }
     return 1;
@@ -3320,28 +3259,28 @@ int CActParamAnim::fireFlag4D4Gt(u32 param) {
                     if (view->field4BD == 0) {
                         view->field4BD = 0;
                     }
-                    u8* data = view->mChildData10;
+                    CActParamData* data = &view->mData;
                     u8 b = view->field4BD;
                     u32 flag = 0;
                     view->field0C &= ~0x200;
-                    u32 model = view->field2FC;
-                    if (model == 0) model = view->field27C;
+                    u32 model = view->mData.mField2EC;
+                    if (model == 0) model = view->mData.mA26C;
                     if (model == 1) {
-                        u32 m = view->field270;
+                        u32 m = view->mData.mA260;
                         if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                     }
-                    u32 ret = evalParamBySlot((CActParamData*)data, &localSmall, param, b, flag);
-                    switchSubAnim(this, localSmall, ret, view->field2A4, 0);
+                    u32 ret = evalParamBySlot(data, &localSmall, param, b, flag);
+                    switchSubAnim(this, localSmall, ret, view->mData.mA294, 0);
                     view->field0C &= ~0x200;
                 }
             } else {
                 u32 flag = 0;
-                if (view->field278 == 1) {
-                    u32 m = view->field270;
+                if (view->mData.mA268 == 1) {
+                    u32 m = view->mData.mA260;
                     if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                 }
-                u32 ret = evalParamChain(view->mChildData10, &localBig, param, flag, 0);
-                switchSubAnim(this, localBig, ret, view->field2A4, (view->field0C >> 9) & 1);
+                u32 ret = evalParamChain(&view->mData, &localBig, param, flag, 0);
+                switchSubAnim(this, localBig, ret, view->mData.mA294, (view->field0C >> 9) & 1);
             }
         }
         return 1;
@@ -3365,28 +3304,28 @@ int CActParamAnim::fire4D4ZeroGt(u32 param) {
                     if (view->field4BD == 0) {
                         view->field4BD = 0;
                     }
-                    u8* data = view->mChildData10;
+                    CActParamData* data = &view->mData;
                     u8 b = view->field4BD;
                     u32 flag = 0;
                     view->field0C &= ~0x200;
-                    u32 model = view->field2FC;
-                    if (model == 0) model = view->field27C;
+                    u32 model = view->mData.mField2EC;
+                    if (model == 0) model = view->mData.mA26C;
                     if (model == 1) {
-                        u32 m = view->field270;
+                        u32 m = view->mData.mA260;
                         if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                     }
-                    u32 ret = evalParamBySlot((CActParamData*)data, &localSmall, param, b, flag);
-                    switchSubAnim(this, localSmall, ret, view->field2A4, 0);
+                    u32 ret = evalParamBySlot(data, &localSmall, param, b, flag);
+                    switchSubAnim(this, localSmall, ret, view->mData.mA294, 0);
                     view->field0C &= ~0x200;
                 }
             } else {
                 u32 flag = 0;
-                if (view->field278 == 1) {
-                    u32 m = view->field270;
+                if (view->mData.mA268 == 1) {
+                    u32 m = view->mData.mA260;
                     if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                 }
-                u32 ret = evalParamChain(view->mChildData10, &localBig, param, flag, 0);
-                switchSubAnim(this, localBig, ret, view->field2A4, (view->field0C >> 9) & 1);
+                u32 ret = evalParamChain(&view->mData, &localBig, param, flag, 0);
+                switchSubAnim(this, localBig, ret, view->mData.mA294, (view->field0C >> 9) & 1);
             }
         }
         return 1;
@@ -3555,12 +3494,10 @@ extern "C" void steerAnimHead(CActParamAnim* self) {
     CActParamAnim* s = (CActParamAnim*)self;
     CActParamAnim* iv = (CActParamAnim*)self;
 
-    getAnimChild(self);
-    if (testAnimBit5(self) != 0) return;
-    getAnimChild(self);
+    if (testAnimBit5(getAnimChild(self)) != 0) return;
 
     f32 f31 = 0.0f;
-    if (testAnimBit13(self) == 0) {
+    if (testAnimBit13(getAnimChild(self)) == 0) {
         // dt-scaled angular step limit.
         f32 f30 = getAnimPlayRate(self);
         f31 = getSnapScale(self) * f30;
@@ -3618,7 +3555,7 @@ extern "C" void steerAnimHead(CActParamAnim* self) {
     f31 = getTurnTarget(self);
 
     bool turnMode = testFlagMask((u32*)&s->field0C, 0x2000) != 0;
-    if (!turnMode && testAnimBit16(self) != 0) {
+    if (!turnMode && testAnimBit16(&self->mData) != 0) {
         turnMode = true; // child probe true falls through to the turn section
     }
     if (turnMode) {
@@ -3638,7 +3575,7 @@ extern "C" void steerAnimHead(CActParamAnim* self) {
                     n.z = iv->field3E0 * k * t;
                 }
             }
-            if (takeAnimBit18(reinterpret_cast<u8*>(self) + 0x10) != 0) {
+            if (takeAnimBit18(&self->mData) != 0) {
                 copyVec3Words(&iv->field408, &n.x);
             } else {
                 nw4r::math::VEC3 d;
@@ -3723,8 +3660,7 @@ extern "C" void steerAnimHead(CActParamAnim* self) {
             COMMIT_QUAT();
             *counter = *counter - 1;
         } else if (s->object3A0 != 0) {
-            getAnimChild(self);
-            if (testAnimBit13(self) == 0) {
+            if (testAnimBit13(getAnimChild(self)) == 0) {
                 nw4r::math::VEC3 v;
                 writeVec3f(&v.x, 0.0f, f31, 0.0f);
                 storeObjVec3(simGetLeafActData(s->object3A0), &v.x);
@@ -3733,8 +3669,7 @@ extern "C" void steerAnimHead(CActParamAnim* self) {
     }
 
     // Tail: decay the snap timer and swap in the stored snap value.
-    getAnimChild(self);
-    if (testAnimBit13(self) == 0 && s->field4D0 > 0.0f) {
+    if (testAnimBit13(getAnimChild(self)) == 0 && s->field4D0 > 0.0f) {
         f32 dec = simGetLeafDist7B0(s->object3A0);
         f32 rem = s->field4D0 - dec;
         s->field4D0 = rem;
@@ -3747,21 +3682,9 @@ extern "C" void steerAnimHead(CActParamAnim* self) {
     #undef COMMIT_QUAT
 }
 
-u32 CActParamAnim::checkFlag13() { return (field260 >> 13) & 0x1u; }
-
 float CActParamAnim::getParamFloat() { return field4A0; }
 
 float CActParamAnim::getField10() { return *(float *)((char *)this + 0x10); }
-
-u32 CActParamAnim::checkFlag16() {
-    return (field260 >> 0x10) & 1;
-}
-
-u32 CActParamAnim::testAndClearFlag18() {
-    u32 result = (field260 >> 18) & 1u;
-    field260 &= ~(1u << 18);
-    return result;
-}
 
 // Shortest-arc rotation quaternion taking vector a to vector b. The dot is
 // computed with the nw4r paired-single helper; vectors within the antiparallel
@@ -3877,24 +3800,21 @@ extern "C" void startAnimModeA(CActParamAnim* self) {
     self->field0C |= 0x00800000;
 }
 
-extern "C" int testAnimBit13(CActParamAnim* self) {
-    return ((self->field260) >> 13) & 1;
+extern "C" int testAnimBit13(CActParamData* data) {
+    return ((data->mA260) >> 13) & 1;
 }
 
 extern "C" f32 getSnapScale(CActParamAnim* self) {
     return self->field4A0;
 }
 
-extern "C" f32 getOwnerFloat(void* obj) {
-    return *reinterpret_cast<const f32*>(reinterpret_cast<const CActParamAnim*>(obj)->mChildData10);
+extern "C" f32 getOwnerFloat(CActParamAnimOwner* obj) {
+    return obj->field10;
 }
 
-
-struct AnimFlags260View { u8 pad[0x260]; u32 flags; };
-extern "C" int takeAnimBit18(void* data) {
-    u8* base = reinterpret_cast<u8*>(data);
-    int result = ((((volatile CActParamAnim*)base)->field260) >> 18) & 1;
-    ((CActParamAnim*)base)->field260 &= ~0x40000;
+extern "C" int takeAnimBit18(CActParamData* data) {
+    int result = ((((volatile CActParamData*)data)->mA260) >> 18) & 1;
+    data->mA260 &= ~0x40000;
     return result;
 }
 
@@ -3902,8 +3822,8 @@ extern "C" void mulAnimHeight(CActParamAnim* self, f32 param) {
     self->field3C4 *= param;
 }
 
-extern "C" int testAnimBit16(CActParamAnim* self) {
-    return ((self->field260) >> 16) & 1;
+extern "C" int testAnimBit16(CActParamData* data) {
+    return ((data->mA260) >> 16) & 1;
 }
 
 void CActParamAnim::mulVec3Y(float param_2) {
@@ -4105,7 +4025,7 @@ void CActParamAnim::stepAnimFrame(const ml::CVec3* /*v*/) {
             }
             s->field448 = len;
             if ((s->field0C & 0x80) == 0) {
-                if ((s->field270 & 0x20) != 0 &&
+                if ((s->mData.mA260 & 0x20) != 0 &&
                     s->field498 != 0) {
                     // Scale the step down so it never overshoots the last
                     // committed anim value.
@@ -4376,10 +4296,10 @@ extern "C" void setBlendGate(CActParamAnim* self, s32 param) {
 }
 
 extern "C" void* getAnimModelId(void* self) {
-    void* p = reinterpret_cast<void*>(((CActParamAnim*)self)->field2FC);
+    void* p = reinterpret_cast<void*>(((CActParamAnim*)self)->mData.mField2EC);
     if (p != 0)
         return p;
-    return reinterpret_cast<void*>(((CActParamAnim*)self)->field27C);
+    return reinterpret_cast<void*>(((CActParamAnim*)self)->mData.mA26C);
 }
 
 extern "C" f32 atan2AnimFIdx(f32 a, f32 b) {
@@ -4462,11 +4382,11 @@ bool CActParamAnim::isAnimChainActive() { return false; }
 
 bool CActParamAnim::isAnimEffectActive() { return false; }
 
-bool CActParamAnim::isAnimRotateActive() { return false; }
+bool CActParamAnim::isAnimRotateActive(u32 param, u32 sel) { return false; }
 
-bool CActParamAnim::isAnimScaleActive() { return false; }
+bool CActParamAnim::isAnimScaleActive(u32 param, u32 sel) { return false; }
 
-bool CActParamAnim::isAnimUpdateActive() { return false; }
+bool CActParamAnim::isAnimUpdateActive(u32 param, u32 sel) { return false; }
 
 bool CActParamAnim::isAnimTransActive() { return false; }
 
@@ -4483,7 +4403,7 @@ extern "C" void* getAnimEff(CActParamAnim* self) {
 
 extern "C" void pushAnimNode(CActParamAnim* self) {
     if (self->state3A4 != 0) {
-        pushParamNode(self->mChildData10);
+        pushParamNode(&self->mData);
     }
 }
 

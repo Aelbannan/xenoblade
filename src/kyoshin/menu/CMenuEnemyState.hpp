@@ -157,7 +157,7 @@ public:
     virtual void Init();
     virtual void Term();
     virtual void Move();
-    virtual void cbRenderBefore();
+    virtual void cbRenderBefore(CScn* scene);
     void EneSt_PositionPanel(u8* panelData, void* posA, void* posB);
     void EneSt_UpdatePanelHighlight(u8* panelData);
     void EneSt_HighlightPane(u8* panelData, int which);

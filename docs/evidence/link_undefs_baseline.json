@@ -5,7 +5,6 @@
   "sda_reloc": 0
  },
  "missing": [
-  "CCharVoiceMan_DispatchById__Fii",
   "GetTypeName__Q34nw4r3g3d7ScnLeafCFv",
   "GetTypeObj__Q34nw4r3g3d7ScnLeafCFv",
   "IsDerivedFrom__Q34nw4r3g3d7ScnLeafCFQ44nw4r3g3d6G3dObj7TypeObj",
@@ -15,9 +14,7 @@
   "__vt__10IWorkEvent",
   "__vt__11IRandomizer",
   "__vt__12CTaskGamePic",
-  "__vt__6CLibVM",
   "__vt__Q22cf29Flusher<Q22cf13CfObjectActor>",
-  "__vt__Q44nw4r3snd6detail4Task",
   "_bss_init_info",
   "_ctors",
   "_dtors",
@@ -34,16 +31,11 @@
   "lbl_eu_80538338",
   "lbl_eu_80538AD8",
   "lbl_eu_80538BC0",
-  "lbl_eu_8053A3D8",
-  "lbl_eu_8053A3FC",
   "lbl_eu_80569648",
   "lbl_eu_80569688",
   "lbl_eu_8056CA20",
-  "lbl_eu_8056D5E8",
   "lbl_eu_80656C40",
-  "lbl_eu_80656C64",
-  "lbl_eu_80662E00",
-  "lbl_eu_806634B8__Q24nw4r3lyt"
+  "lbl_eu_80656C64"
  ],
  "multiply_defined_names": [],
  "region": "us",

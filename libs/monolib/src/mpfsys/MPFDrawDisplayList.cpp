@@ -97,17 +97,15 @@ struct MPFDrawCol {            // 3-byte RGB color
     u8 b;
 };
 
-struct MPFDrawPos {            // position + interpolated vertex color
-    f32 x;                     // +0x00
-    f32 y;                     // +0x04
-    f32 z;                     // +0x08
-    u8 r;                      // +0x0C
-    u8 g;                      // +0x0D
-    u8 b;                      // +0x0E
-    u8 field_0xf;              // +0x0F
-    f32 field_0x10;            // +0x10 second position slot x
-    f32 field_0x14;            // +0x14 second position slot y
-    f32 field_0x18;            // +0x18 second position slot z
+// 0x10-byte probe record; each slot embeds two of them at +0x2c.
+struct MPFDrawProbe {
+    f32 x;                    // +0x00
+    f32 y;                    // +0x04
+    f32 z;                    // +0x08
+    u8 r;                     // +0x0C
+    u8 g;                     // +0x0D
+    u8 b;                     // +0x0E
+    u8 counter;               // +0x0F proximity counter
 };
 
 struct MPFColor {              // float color used for the interpolation
@@ -122,7 +120,7 @@ struct MPFDrawDisplayListLayout {
     MPFDrawVert* verts;       // +0x08
     MPFDrawTri* tris;         // +0x0C
     MPFDrawCol* cols;         // +0x10
-    MPFDrawPos* pos;          // +0x14
+    MPFDrawProbe* pos;        // +0x14
     u8 gap18[0x18];           // +0x18
     MPFDrawEntry* entries;    // +0x30
     u8 gap34[4];              // +0x34
@@ -170,7 +168,7 @@ struct MPFDrawSlot {
     f32 field_0x24;           // +0x24
     u16 field_0x28;           // +0x28
     u16 field_0x2a;           // +0x2a
-    MPFDrawPos mPos;          // +0x2c embedded walk position/color
+    MPFDrawProbe probes[2];   // +0x2c two embedded 0x10-byte probe records
 };
 
 // 0xC-byte walk cells (self+0x34).  The grid at self+0x20 holds indices into
@@ -230,18 +228,6 @@ struct MPFBillItem {
     u8 gap3c[0x4c - 0x3c];    // +0x3c
 };
 
-// 0x10-byte probe entry inside each slot (slot + 0x2c); the walk in
-// writeDispList advances it by 0x10 per billboard.
-struct MPFDrawProbe {
-    f32 x;                    // +0x00
-    f32 y;                    // +0x04
-    f32 z;                    // +0x08
-    u8 r;                     // +0x0C
-    u8 g;                     // +0x0D
-    u8 b;                     // +0x0E
-    u8 counter;               // +0x0F proximity counter
-};
-
 // Display-list entry written by writeDispList (0xcc0-byte stride).
 // field_0x10/field_0x14 are the position/color cursors; field_0x4 counts
 // the written quads and doubles as the copy format for setupDrawCmds.
@@ -254,8 +240,8 @@ struct MPFDispEntryFull {
     u32 field_0x10;           // +0x10 position cursor
     u32 field_0x14;           // +0x14 color cursor
     u32 field_0x18;           // +0x18 display-list pointer
-    u8 arrayA[0xbc0];         // +0x20 position array (12-byte stride)
-    u8 arrayB[0xe0];          // +0xbe0 color array (3-byte stride)
+    u8 arrayA[0xbe0];         // +0x20 position/alignment area
+    MPFDrawCol colors[0x40];  // +0xc00 colors for 64 quads (3-byte stride)
 };
 
 // 0xb4-byte per-layer draw matrix entry returned by UnkClass_80471EC8::
@@ -366,7 +352,7 @@ struct MPFDrawListLayout {
     MPFDrawVert* field_0x8;   // +0x08 vertex array
     MPFDrawTri* field_0xC;    // +0x0C triangle-height array
     MPFDrawCol* field_0x10;   // +0x10 vertex-color array
-    MPFDrawPos* field_0x14;   // +0x14 current position + color
+    MPFDrawProbe* field_0x14; // +0x14 current probe record
     MPFDrawItem* field_0x18;  // +0x18 per-item cursor
     MPFDrawVert* field_0x1C;  // +0x1C vertex array (cell walk)
     u32* field_0x20;          // +0x20 cell grid
@@ -419,7 +405,6 @@ extern MPFDrawCfg* MpfDrawWalkConfig;                 // display-list walk confi
 extern MPFDrawGlobal* sMpfsysDrawState;              // global draw state (current cell index)
 extern u32* lbl_eu_80665864;                        // global bit-mask table
 extern Mtx sBillboardViewMatrix;                        // shared billboard matrix
-extern const s32 MpfBillboardCount;                  // billboard count
 extern f32 lbl_eu_80665880;                        // billboard probe scale A
 extern f32 lbl_eu_80665884;                        // billboard probe scale B
 
@@ -541,7 +526,7 @@ bool walkDrawCells__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
     const MPFDrawVert* v1;
     MPFDrawNode* node;
     MPFDrawCell* cells;
-    MPFDrawPos* pos;
+    MPFDrawProbe* pos;
     pos = d->field_0x14;
     node = d->field_0x4;
 
@@ -607,7 +592,7 @@ bool shiftDrawSlot__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
     s32 b;
     f32 height;
 
-    d->field_0x14->field_0xf = (u8)d->field_0x3c;
+    d->field_0x14->counter = (u8)d->field_0x3c;
 
     if (d->field_0x18->field_0x18 != 0) {
         // Jitter the interpolated vertex color by +/- n over each channel,
@@ -655,7 +640,7 @@ bool shiftDrawSlot__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
             // area; x/z are read from the old position after the allocation.
             f32 x = d->field_0x14->x;
             f32 z = d->field_0x14->z;
-            d->field_0x14 = &slot->mPos;
+            d->field_0x14 = &slot->probes[0];
             slot->field_0xc = (u8)off;
             d->field_0x50->field_0x24 = height;
             d->field_0x14->x = x;
@@ -665,9 +650,9 @@ bool shiftDrawSlot__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
         }
     } else {
         // Slot not full yet: slide to the embedded second position slot.
-        d->field_0x14->field_0x10 = d->field_0x14->x;
-        d->field_0x14->field_0x18 = d->field_0x14->z;
-        d->field_0x14 = (MPFDrawPos*)((u8*)d->field_0x14 + 0x10);
+        d->field_0x14[1].x = d->field_0x14->x;
+        d->field_0x14[1].z = d->field_0x14->z;
+        d->field_0x14 = &d->field_0x14[1];
     }
     return false;
 }
@@ -1261,7 +1246,7 @@ void writeDispList__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
 
                 // Inner walk over the slot's probe array (0x10-byte stride).
                 f32 f22 = slot->field_0x24 * slot->field_0x24;
-                MPFDrawProbe* probe = (MPFDrawProbe*)((u8*)slot + 0x2c);
+                MPFDrawProbe* probe = &slot->probes[0];
                 f32 f21 = item->field_0x2c;
                 s32 k = 0;
                 u16 probeCount = slot->field_0x28;
@@ -1381,7 +1366,7 @@ void writeDispList__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
                             dst->field_0x4 = 0;
                             dst->field_0x2 = 0;
                             dst->field_0x10 = (u32)dst->arrayA;
-                            dst->field_0x14 = (u32)((u8*)dst + 0xc00);
+                            dst->field_0x14 = (u32)dst->colors;
                             dst->field_0x8 = 3;
                             dst->field_0x0 = (u16)layer;
                             dst++;
@@ -1401,7 +1386,7 @@ void writeDispList__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
                             pendingB = dst;
                             dst->field_0x4 = 0;
                             dst->field_0x10 = (u32)dst->arrayA;
-                            dst->field_0x14 = (u32)((u8*)dst + 0xc00);
+                            dst->field_0x14 = (u32)dst->colors;
                             dst->field_0x8 = 3;
                             dst->field_0x0 = (u16)layer;
                             dst->field_0x2 = 2;
@@ -1619,7 +1604,7 @@ bool trackGridStep__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
                 if (slot == 0) {
                     goto failReset;
                 }
-                d->field_0x14 = &slot->mPos;
+                d->field_0x14 = &slot->probes[0];
                 slot->field_0x24 = scale;
                 f32 f2 = f20 + f26;
                 f32 f1 = f18 + f26;
@@ -2015,7 +2000,7 @@ bool buildDrawItem__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
                         }
                     } else {
                         // Sub-step: just position and store the slot.
-                        d->field_0x14 = &slot->mPos;
+                        d->field_0x14 = &slot->probes[0];
                         slot->field_0x24 = f17;
                         createSlotFromPool__Q26mpfsys18MPFDrawDisplayListFv(self, (MPFDrawListHdr*)slot);
                     }

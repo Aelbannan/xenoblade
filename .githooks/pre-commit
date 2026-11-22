@@ -15,6 +15,10 @@
 
 cd "$(git rev-parse --show-toplevel)" || exit 0
 
+# land gate (tools/coop/land): refuse staged src/include/libs/config/configure.py
+# content that never passed the whole-tree gate. Blocking.
+./.venv/bin/python3 -m tools.coop.land verify-staged || exit 1
+
 PY=./.venv/bin/python3
 if [ ! -x "$PY" ]; then
     echo "pre-commit: $PY not found; skipping README status refresh" >&2

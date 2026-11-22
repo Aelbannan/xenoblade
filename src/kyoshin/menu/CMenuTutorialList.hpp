@@ -28,7 +28,7 @@ public:
     virtual void Init();
     virtual void Term();
     virtual void Move();
-    virtual void cbRenderBefore();
+    virtual void cbRenderBefore(CScn* scene);
 
     static CMenuTutorialList* create(CProcess* parent, CScn* scene, u32 choice);
     static CMenuTutorialList* sInstance;

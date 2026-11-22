@@ -137,7 +137,6 @@ class CVS_THREAD_BATTLE_END { public: static CVS_THREAD_BATTLE_END* create(int);
 class CVS_THREAD_BATTLE_BEGIN { public: static CVS_THREAD_BATTLE_BEGIN* create(struct CVoiceHandle*, struct CVoiceHandle*); };
 extern "C" cf::CfObjectImplPc18* getCfObjectPc__FPQ22cf12CfObjectMove(void* self);
 extern "C" cf::CSoundNode* BtlBeg_PlayLine_0344(void* src);
-extern "C" u32 getQueuedFileEventCount__Q22cf13CfGameManagerFv(void);
 extern "C" void* HpVoice_FindBySubState(int a);
 extern "C" void RunVoiceNodeHandler(void* node);
 extern "C" void releaseThreadVoice(void* node);
@@ -145,9 +144,6 @@ extern "C" u8  visionSharedStateFlags;
 extern "C" u16 gmGlobalFlag42;
 extern "C" cf::CSoundNode* playFaintVoice();
 extern "C" int CCharVoiceMan_EnqueueFaintVoice(void);
-extern "C" void* getInstance__Q22cf13CfGameManagerFv(void);
-
-extern "C" void* getPlayer__Q22cf13CfGameManagerFi(int index);
 #include "kyoshin/cf/CBattleManager.hpp"
 class CVS_THREAD_PARTY_GAGE { public: static CVS_THREAD_PARTY_GAGE* create(int, int); };
 class CVS_THREAD_FAINT { public: static CVS_THREAD_FAINT* create(struct CVoiceHandle*, struct CVoiceHandle*); };

@@ -159,19 +159,12 @@ void CSortMenu::Add(const char* entry) {
 void CSortMenu::SetSelect(u8 select) {
     nw4r::lyt::Pane* pane = mpLayout->GetRootPane()->FindPaneByName("win_sortmenu01", true);
 
-    // Local copy of the pane size region; member-wise so MWCC emits an
-    // lfs/stfs pair (a whole-struct copy collapses to lwz).
-    PaneSizeRegion size;
-    CSortMenuPaneSizeView* paneView = (CSortMenuPaneSizeView*)pane;
-
-    size.width = paneView->width;
-    size.height = paneView->height;
+    nw4r::lyt::Size size = pane->GetSize();
 
     // Visible rows: 5 unless fewer entries exist.
     s32 rows = (mCount < 5) ? (s32)mCount : 5;
     size.height = 21.6f * (f32)rows;
-    paneView->width = size.width;
-    paneView->height = size.height;
+    pane->SetSize(size);
 
     mCursor = select;
     mTop = 0;

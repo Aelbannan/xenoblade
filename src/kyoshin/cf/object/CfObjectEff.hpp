@@ -84,7 +84,8 @@ struct CfObjectEffChild {
     float field_30;      // 0x30
     u32 unk34[3];
     u32 unk40[4];
-    u8 _pad50[0x59 - 0x50];
+    float field_50;      // name-guess: retail setChildF50* writes a float at +0x50
+    u8 _pad54[0x59 - 0x54];
     u8 unk59;
     u8 _pad5A[0x5C - 0x5A];
     int unk5C;

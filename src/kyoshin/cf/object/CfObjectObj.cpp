@@ -8,20 +8,7 @@
 #include "kyoshin/cf/CfResObjImpl.hpp"
 
 #include "kyoshin/cf/object/CfObjectTbox.hpp"
-
-// Local overlay: base CfObjectModel keeps mSubObjB0 as void*; this TU owns a
-// CfResObjImpl at +0xB0 (same scheme as CfObjectPoint typing mSubObj38).
-struct ObjB0View {
-    u8 pad[0xB0];
-    cf::CfResObjImpl* mSubObjB0;
-};
-
-// CfObjectPc.hpp (read-only) currently fails to compile due to an internal
-// virtual-override mismatch (CActorParam_getCurrencyBalance return type); only
-// the incomplete type is needed here (getCfObjectPc pointer arithmetic).
-namespace cf {
-class CfObjectPc;
-}
+#include "kyoshin/cf/object/CfObjectPc.hpp"
 
 // us-800c03d4  - constructor: the CfObjectMove base ctor runs first, then
 // the compiler stores __vt__Q22cf11CfObjectObj. Zero the helper field, then guard the CfResObjImpl
@@ -38,7 +25,7 @@ cf::CfObjectObj::CfObjectObj() {
         if (res != 0) {
             res = __ct__cf_CfResObjImpl(res, this);
         }
-        ((ObjB0View*)this)->mSubObjB0 = res;
+        mSubObjB0 = res;
     }
 }
 
@@ -76,12 +63,11 @@ int cf::CfObjectObj::setup(u32 arg4, u32 arg5) {
     CfObject_setAnimSlotEntry(1, arg4);
     CfObject_setAnimSlotEntry(0, arg5);
     // Mark the sub-object active (+0xB0 is CfResObjImpl*; field_08 is u16).
-    ((ObjB0View*)this)->mSubObjB0->field_08 = 1;
-    cf::CfObjectMoveFlags6C* flags6C = (cf::CfObjectMoveFlags6C*)this;
+    static_cast<cf::CfResObjImpl*>(mSubObjB0)->field_08 = 1;
     if (arg4 != 0)
-        flags6C->field_6C |= 0x20;
+        field_0x6C |= 0x20;
     if (arg5 != 0)
-        flags6C->field_6C |= 0x10;
+        field_0x6C |= 0x10;
     return 1;
 }
 
@@ -110,16 +96,11 @@ void cf::CfObjectObj::setMoveId(u16 id) {
     }
 }
 
-// us-800c06b0  - find the containing CfObjectPc for a CfObjectMove subobject.
-// The CfObjectMove subobject lives at +0x3E9C inside CfObjectPc, so the reverse
-// offset recovers the outer object. Only valid when the flag is set.
+// us-800c06b0  - recover the owning CfObjectPc from its embedded CfObjectMove
+// subobject. Only valid when the subobject's player flag is set.
 cf::CfObjectPc* getCfObjectPc(cf::CfObjectMove* objMove) {
     if (objMove != 0 && (objMove->unk64 & 0x2) != 0) {
-        // Dead null-guard: return objMove as a raw address (never taken here) so
-        // MWCC emits `beqlr cr1` without any class-base adjustment.
-        if (objMove != 0)
-            return (cf::CfObjectPc*)((u8*)objMove - 0x3E9C);
-        return (cf::CfObjectPc*)((u8*)objMove);
+        return static_cast<cf::CfObjectPc*>(objMove);
     }
     return 0;
 }

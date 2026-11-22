@@ -9,10 +9,10 @@
 #include <nw4r/lyt.h>
 
 // Shared string pool (split1 .rodata): fade layout arc filename.
-extern char lbl_eu_8050B5A0[];
+extern const char lbl_eu_8050B5A0[];
 // SDA float - fade animation frame target (defined in CFade.cpp as
-// const f32 1.0f; the .rodata arc-name string is defined there too as
-// lbl_eu_8050B5A0; OnFileEvent fetches the handle first to keep order).
+// const f32 1.0f; the .rodata arc-name string is defined there too;
+// OnFileEvent fetches the handle first to keep order).
 extern const f32 lbl_eu_80668750;
 
 /* Fade overlay layout widget. Loads and animates a nw4r layout for fade-in/out

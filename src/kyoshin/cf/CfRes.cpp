@@ -13,6 +13,7 @@
 #include "monolib/util/CPathUtil.hpp"
 #include "monolib/work/CEventFile.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
+#include "kyoshin/cf/CfGameManager.hpp"  // real cf::CfGameManager::isSceneLoading declaration
 extern "C" char* getEntryPtrGrid(char* self, int a, int b);
 
 // Out-of-line CResLookup vtable thunks (retail shares one dispatcher per slot).
@@ -26,7 +27,6 @@ extern "C" int CfRes_vcall17(void* self, u32 val);
 extern "C" void CfRes_vcall34(void* self);
 extern "C" void CfRes_vcall38(void* self);
 extern "C" mtl::ALLOC_HANDLE Scn_CallUnk8C_V10(void* src);
-extern "C" void* getHandleMEM1__Q23mtl10MemManagerFv();
 
 // Typed views retiring raw (u8 */char *)+offset arithmetic inside the
 // already-accepted helpers below. Offsets are exact by construction (array
@@ -245,12 +245,12 @@ extern "C" u32 CfRes_setD80Flag(u32 val) { gCfResScene = val; return val; }
 // retail: lwz r3,lbl; cmpwi; beq; b CScn::getAllocHandle / b getHandleMEM1 (tail calls)
 extern "C" void* CfRes_getHeapHandle() {
     if (gCfResScene != 0) { return (void*)((CScn*)gCfResScene)->getAllocHandle(); }
-    return (void*)getHandleMEM1__Q23mtl10MemManagerFv();
+    return (void*)mtl::MemManager::getHandleMEM1();
 }
 
 extern "C" mtl::ALLOC_HANDLE CfRes_getAllocHandle() {
     if (gCfResScene != 0) { return Scn_CallUnk8C_V10((void*)gCfResScene); }
-    return (mtl::ALLOC_HANDLE)(uintptr_t)getHandleMEM1__Q23mtl10MemManagerFv();
+    return mtl::MemManager::getHandleMEM1();
 }
 
 // Use explicit default return to match retail pattern
@@ -623,7 +623,7 @@ extern "C" int CfRes_isGridLoadIdle() {
     if (CfRes_getInstance() != 0) {
         for (int row = 0; row < 7; row++) {
             for (int col = 1; col <= 6; col++) {
-                CfResPcEntry28View* entry = CfRes_getPcGridEntry(row, col);
+                CfResCleanupEntry* entry = CfRes_getPcGridEntry(row, col);
                 if (entry != 0 && entry->field_28 != 0) {
                     return 0;
                 }
@@ -708,8 +708,8 @@ extern "C" void CfRes_readCommonArchive(unsigned long a, const char* b, void* c)
 // catalog stub keeps the call relocs resolvable until its own target is
 // worked. The unit's -inline noauto keeps callers (CfRes_isGridLoadIdle) from
 // inlining the body.
-extern "C" CfResPcEntry28View* CfRes_getPcGridEntryAt(char*, int, int);
-extern "C" CfResPcEntry28View* CfRes_getPcGridEntry(int id, int a) {
+extern "C" CfResCleanupEntry* CfRes_getPcGridEntryAt(char*, int, int);
+extern "C" CfResCleanupEntry* CfRes_getPcGridEntry(int id, int a) {
     if (!CfRes_getInstance())
         goto ret0;
     return CfRes_getPcGridEntryAt((char*)CfRes_getInstance(), id, a);
@@ -718,8 +718,8 @@ ret0:
 }
 
 // retail: addi r3,r3,4; b getEntryPtrGrid (3-arg tail call)
-extern "C" CfResPcEntry28View* CfRes_getPcGridEntryAt(char* self, int a, int b) {
-    return (CfResPcEntry28View*)getEntryPtrGrid(self + 4, a, b);
+extern "C" CfResCleanupEntry* CfRes_getPcGridEntryAt(char* self, int a, int b) {
+    return (CfResCleanupEntry*)getEntryPtrGrid(self + 4, a, b);
 }
 
 // CfRes_getArrayElem12Idx: return the manager's array-elem-12 slot if the manager exists
@@ -1640,7 +1640,7 @@ int CfRes_dispatchLoad(void* self, u32 packed, int flag, int kind) {
     if (packed == 0) {
         return 0;
     }
-    if (isSceneLoading__Q22cf13CfGameManagerFv(self)) {
+    if (cf::CfGameManager::isSceneLoading()) {
         return 0;
     }
     CfRes_clearE28Mask(0x40);
@@ -1754,15 +1754,15 @@ int CfRes_dispatchLoad(void* self, u32 packed, int flag, int kind) {
                     // 0 = MEM2, 1 = MEM1, 2 = the current scene heap.
                     u32 handle;
                     if (h == 0) {
-                        handle = (u32)getHandleMEM2__Q23mtl10MemManagerFv();
+                        handle = (u32)mtl::MemManager::getHandleMEM2();
                     } else if (h == 1) {
-                        handle = (u32)getHandleMEM1__Q23mtl10MemManagerFv();
+                        handle = (u32)mtl::MemManager::getHandleMEM1();
                     } else {
                         handle = ((CScn*)CfRes_getE14())->getAllocHandle();
                     }
-                    if (rounded <= getMaxAllocSize__Q23mtl10MemManagerFUl(handle)) {
-                        buf = h == 0 ? allocate_tail__Q23mtl10MemManagerFUlUli(handle, rounded, 0x20)
-                                     : allocate_head__Q23mtl10MemManagerFUlUli(handle, rounded, 0x20);
+                    if (rounded <= mtl::MemManager::getMaxAllocSize(handle)) {
+                        buf = h == 0 ? mtl::MemManager::allocate_tail(handle, rounded, 0x20)
+                                     : mtl::MemManager::allocate_head(handle, rounded, 0x20);
                         if (buf != NULL) {
                             CfRes_orBits_649CC((u8*)entry, 0x1000);
                             break;
@@ -2505,7 +2505,7 @@ static inline void CfRes_zeroSlots(CfResSlot* slot, CfResSlot* end) {
 }
 
 CfResManager* __ct__Q22cf5CfResFv(CProcess* parent, int archiveId) {
-    u32 handle = getWorkMem__17CWorkThreadSystemFv();
+    u32 handle = CWorkThreadSystem::getWorkMem();
     CfResManager* mgr = (CfResManager*)mtl::MemManager::allocate(0x1fa4, handle);
     if (mgr != NULL) {
         __ct__8CProcessFv((CProcess*)mgr);

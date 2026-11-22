@@ -15,7 +15,7 @@ u32 __ntd_get_allocated_mem_size(void);
  * Field names are recovered where semantics are understood; unknown
  * members keep `field_0xNN` offsets. */
 typedef struct tUUSB_CB {
-    s32 fd;                       /* 0x00 device file descriptor */
+    IPCResult fd;                 /* 0x00 device file descriptor */
     u8 field_0x04[0xC];          /* 0x04 unused in matched functions */
     u8 field_0x10;                /* 0x10 endpoint (intr/bulk ctrl) */
     u8 field_0x11;                /* 0x11 endpoint */

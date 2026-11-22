@@ -34,9 +34,16 @@ public:
     virtual u32 v05() = 0;   // vtable +0x18
 };
 
-// Local .sdata "ref" strings (defined at the bottom of this TU).
-extern u32 lbl_sd_04;
-extern u32 lbl_sd_05;
+// .sdata "ref" Panic args (defined at the bottom of this TU, after the RTTI
+// locator, to keep the retail .sdata order). Retail: __FUNCTION__ statics of
+// the inlined asserting nw4r ResCommon<T>::ref() accessors; they become
+// compiler-emitted once the nw4r g3d headers carry their asserts.
+extern char sResMatRefFn[4];
+extern char sResMatRefFn2[4];
+extern char sResUserDataRefFn[4];
+extern char sResUserDataItemRefFn2[4];
+extern char sResUserDataItemRefFn[4];
+extern char sResDicRefFn[4];
 
 // Assertion strings emitted by the inlined nw4r ResUserData/ResDict accessors
 // (declared here at global scope; C++ does not mangle global variable names,
@@ -63,10 +70,6 @@ extern const char lbl_eu_8056E068[];
 extern const char lbl_eu_8056E04C[];
 extern const char lbl_eu_806638E8[7];   // .sdata Panic arg
 extern const char lbl_eu_80663928[];
-extern const char lbl_eu_80663C48[];
-extern const char lbl_eu_80663C4C[];
-extern const char lbl_eu_80663C50[];
-extern const char lbl_eu_80663C54[];
 
 // Node user-data keys owned by this TU (.sdata pointers to short literals).
 const char* sMatCullModeKey = "Hide";
@@ -85,11 +88,6 @@ extern const char lbl_eu_80570180[];
 // Hand-built vtable (defined with the rest of the dissolved .data below).
 extern "C" u32 CMdlMaterialVtable[];
 
-// The .sdata "ref" message strings are defined locally below as lbl_sd_04..09
-// (retail labels 80663C40..80663C54); reference them through the local
-// definitions so MWCC emits SDA-relative addressing.
-#define lbl_eu_80663C40 ((const char*)&lbl_sd_04)
-#define lbl_eu_80663C44 ((const char*)&lbl_sd_05)
 
 // .sdata2 float constant used to scale colours (255.0f).
 
@@ -133,7 +131,7 @@ struct MdlMatApplier {
 static inline u32 ResUserDataNumData(const void* ud, ResUserDataDic* dic) {
     if (ud == NULL) {
         nw4r::db::Panic(lbl_eu_80530D18, 0x57, lbl_eu_80530CFC,
-                        lbl_eu_80530CF0, lbl_eu_80663C48);
+                        lbl_eu_80530CF0, sResUserDataRefFn);
     }
     if (reinterpret_cast<u32>(dic) & 3) {
         nw4r::db::Panic(lbl_eu_80530F08, 0x54, lbl_eu_80530EE0);
@@ -147,7 +145,7 @@ static inline ResUserDataItem* ResUserDataItemAt(const void* ud,
                                                  s32 idx) {
     if (ud == NULL) {
         nw4r::db::Panic(lbl_eu_80530D18, 0x57, lbl_eu_80530CFC,
-                        lbl_eu_80530CF0, lbl_eu_80663C48);
+                        lbl_eu_80530CF0, sResUserDataRefFn);
     }
     if (reinterpret_cast<u32>(dic) & 3) {
         nw4r::db::Panic(lbl_eu_80530F08, 0x54, lbl_eu_80530EE0);
@@ -162,14 +160,14 @@ static inline ResUserDataItem* ResUserDataItemAt(const void* ud,
         if (item == NULL) {
             if (dic == NULL) {
                 nw4r::db::Panic(lbl_eu_8056E43C, 0x54, lbl_eu_8056E420,
-                                lbl_eu_80663928, lbl_eu_80663C54);
+                                lbl_eu_80663928, sResDicRefFn);
             }
             nw4r::db::Panic(lbl_eu_8056E3D0, 0x2A, lbl_eu_8056E398, idx, 0,
                             static_cast<s32>(dic->numData) - 1);
         }
         if (dic == NULL) {
             nw4r::db::Panic(lbl_eu_8056E43C, 0x54, lbl_eu_8056E420,
-                            lbl_eu_80663928, lbl_eu_80663C54);
+                            lbl_eu_80663928, sResDicRefFn);
         }
         s32 refOff = dic->refs[idx].dataOffset;
         if (refOff != 0) {
@@ -253,7 +251,7 @@ extern "C" void setupFromModel(CMdlMaterial* self, void* arg) {
 
         if (!resMat.IsValid()) {
             nw4r::db::Panic(lbl_eu_8056E068, 0x26d, lbl_eu_8056E04C,
-                            lbl_eu_806638E8, lbl_eu_80663C44);
+                            lbl_eu_806638E8, sResMatRefFn2);
         }
 
         nw4r::g3d::ScnMdl::CopiedMatAccess access(
@@ -289,7 +287,7 @@ extern "C" void setupFromModel(CMdlMaterial* self, void* arg) {
                 }
                 if (item == NULL) {
                     nw4r::db::Panic(lbl_eu_80530DC4, 0x26, lbl_eu_80530DA8,
-                                    lbl_eu_80530D68, lbl_eu_80663C50);
+                                    lbl_eu_80530D68, sResUserDataItemRefFn);
                 }
 
                 const char* name = (item->nameOffset != 0)
@@ -300,14 +298,14 @@ extern "C" void setupFromModel(CMdlMaterial* self, void* arg) {
                 if (strcmp(name, sMatCullModeKey) == 0) {
                     if (item == NULL) {
                         nw4r::db::Panic(lbl_eu_80530DC4, 0x26, lbl_eu_80530DA8,
-                                        lbl_eu_80530D68, lbl_eu_80663C50);
+                                        lbl_eu_80530D68, sResUserDataItemRefFn);
                     }
                     if (item->valueType != 0) {
                         nw4r::db::Panic(lbl_eu_80530E1C, 0x36, lbl_eu_80530DD8);
                     }
                     if (item == NULL) {
                         nw4r::db::Panic(lbl_eu_80530D94, 0x26, lbl_eu_80530D78,
-                                        lbl_eu_80530D68, lbl_eu_80663C4C);
+                                        lbl_eu_80530D68, sResUserDataItemRefFn2);
                     }
 
                     u8* data = (item->dataOffset != 0)
@@ -351,7 +349,7 @@ void scanNodeUserData(void* selfPtr, void* nodePtr, void* /*mtx*/) {
         }
         if (item == NULL) {
             nw4r::db::Panic(lbl_eu_80530DC4, 0x26, lbl_eu_80530DA8,
-                            lbl_eu_80530D68, lbl_eu_80663C50);
+                            lbl_eu_80530D68, sResUserDataItemRefFn);
         }
 
         const char* name = (item->nameOffset != 0)
@@ -392,14 +390,14 @@ void scanNodeUserData(void* selfPtr, void* nodePtr, void* /*mtx*/) {
             for (u32 j = 0; j < item->field_0x08; j++) {
                 if (item == NULL) {
                     nw4r::db::Panic(lbl_eu_80530DC4, 0x26, lbl_eu_80530DA8,
-                                    lbl_eu_80530D68, lbl_eu_80663C50);
+                                    lbl_eu_80530D68, sResUserDataItemRefFn);
                 }
                 if (item->valueType != 0) {
                     nw4r::db::Panic(lbl_eu_80530E1C, 0x36, lbl_eu_80530DD8);
                 }
                 if (item == NULL) {
                     nw4r::db::Panic(lbl_eu_80530D94, 0x26, lbl_eu_80530D78,
-                                    lbl_eu_80530D68, lbl_eu_80663C4C);
+                                    lbl_eu_80530D68, sResUserDataItemRefFn2);
                 }
 
                 u8* data = (item->dataOffset != 0)
@@ -441,27 +439,27 @@ extern "C" void applyCullByGroup(CMdlMaterial* selfPtr, u32 val, bool useMatCull
             // Inlined null assert before reading the copied GenMode data.
             if (genMode.ptr() == NULL) {
                 nw4r::db::Panic(lbl_eu_805701A0, 0xdf, lbl_eu_80570180,
-                                lbl_eu_806638E8, lbl_eu_80663C40);
+                                lbl_eu_806638E8, sResMatRefFn);
             }
             cull = genMode.GXGetCullMode();
         }
 
         if (matData == NULL) {
             nw4r::db::Panic(lbl_eu_8056E068, 0x26d, lbl_eu_8056E04C,
-                            lbl_eu_806638E8, lbl_eu_80663C40);
+                            lbl_eu_806638E8, sResMatRefFn);
         }
 
         // Redundant re-check: compiler folds the branch but keeps the
         // assertion-string address setup alive in the prologue.
         if (matData == NULL) {
             nw4r::db::Panic(lbl_eu_80570100, 0x26d, lbl_eu_805700E4,
-                            lbl_eu_806638E8, lbl_eu_80663C40);
+                            lbl_eu_806638E8, sResMatRefFn);
         }
 
         // Inlined NW4R_G3D_ASSERT_ALIGNMENT on the GenMode data.
         if (reinterpret_cast<u32>(genMode.ptr()) & 3) {
             nw4r::db::Panic(lbl_eu_80570170, 0xaf, lbl_eu_80570148,
-                            lbl_eu_806638E8, lbl_eu_80663C40);
+                            lbl_eu_806638E8, sResMatRefFn);
         }
 
         genMode.GXSetCullMode(cull);
@@ -488,7 +486,7 @@ extern "C" bool applyAmbientAll(MdlMatApplier* ap, const f32* rgb) {
 
         if (!mat.IsValid()) {
             nw4r::db::Panic(lbl_eu_8056E068, 0x26d, lbl_eu_8056E04C,
-                            lbl_eu_806638E8, lbl_eu_80663C44);
+                            lbl_eu_806638E8, sResMatRefFn2);
         }
 
         nw4r::g3d::ScnMdl::CopiedMatAccess access(ap->ctx->scnMdl,
@@ -529,12 +527,12 @@ extern "C" bool applyAmbientByLight(MdlMatApplier* ap, const f32* rgb, s32 light
             // Inlined ResMatMisc accessor asserts from g3d_resmat_ac.h.
             if (mat.ptr() == NULL) {
                 nw4r::db::Panic(lbl_eu_80570100, 0x26d, lbl_eu_805700E4,
-                                lbl_eu_806638E8, lbl_eu_80663C40);
+                                lbl_eu_806638E8, sResMatRefFn);
             }
             nw4r::g3d::ResMatMisc misc(&mat.ref().misc);
             if (reinterpret_cast<u32>(misc.ptr()) & 3) {
                 nw4r::db::Panic(lbl_eu_80570138, 0xf3, lbl_eu_80570110,
-                                lbl_eu_806638E8, lbl_eu_80663C40);
+                                lbl_eu_806638E8, sResMatRefFn);
             }
 
             if (misc.GetLightSetIdx() != lightSet) {
@@ -544,7 +542,7 @@ extern "C" bool applyAmbientByLight(MdlMatApplier* ap, const f32* rgb, s32 light
 
         if (!mat.IsValid()) {
             nw4r::db::Panic(lbl_eu_8056E068, 0x26d, lbl_eu_8056E04C,
-                            lbl_eu_806638E8, lbl_eu_80663C44);
+                            lbl_eu_806638E8, sResMatRefFn2);
         }
 
         nw4r::g3d::ScnMdl::CopiedMatAccess access(ap->ctx->scnMdl,
@@ -578,7 +576,7 @@ extern "C" bool applyAmbientArray(MdlMatApplier* ap) {
 
         if (!mat.IsValid()) {
             nw4r::db::Panic(lbl_eu_8056E068, 0x26d, lbl_eu_8056E04C,
-                            lbl_eu_806638E8, lbl_eu_80663C44);
+                            lbl_eu_806638E8, sResMatRefFn2);
         }
 
         nw4r::g3d::ScnMdl::CopiedMatAccess access(ap->ctx->scnMdl,
@@ -639,9 +637,12 @@ u32 CMdlMaterial_mtIris03Name() {
     return strlen("mtIris03");
 }
 
-extern u32 lbl_sd_04 = 0x72656600;
-extern u32 lbl_sd_05 = 0x72656600;
-extern u32 lbl_sd_06 = 0x72656600;
-extern u32 lbl_sd_07 = 0x72656600;
-extern u32 lbl_sd_08 = 0x72656600;
-extern u32 lbl_sd_09 = 0x72656600;
+// name-guess: __FUNCTION__ of the six distinct inlined ResCommon<T>::ref()
+// accessors (ResMat x2, ResUserData, ResUserDataItem x2, ResDic), named after
+// the class-name string each is paired with at its Panic call sites.
+char sResMatRefFn[4] = "ref";
+char sResMatRefFn2[4] = "ref";
+char sResUserDataRefFn[4] = "ref";
+char sResUserDataItemRefFn2[4] = "ref";
+char sResUserDataItemRefFn[4] = "ref";
+char sResDicRefFn[4] = "ref";

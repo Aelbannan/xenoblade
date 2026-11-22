@@ -21,7 +21,7 @@ public:
     virtual void Init();
     virtual void Term();
     virtual void Move();
-    virtual void cbRenderBefore();
+    virtual void cbRenderBefore(CScn* scene);
 
     static CMenuPTState* create(CProcess* parent, CProcess* storedParent);
     static CMenuPTState* sInstance;

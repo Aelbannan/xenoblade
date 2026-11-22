@@ -56,7 +56,7 @@ public:
     virtual void Term();
     virtual void Move();
     virtual void Draw();
-    virtual void cbRenderBefore();
+    virtual void cbRenderBefore(CScn* scene);
 
     CScn* mScene;                       // 0x74 owning scene
     UnkClass_8045F564 mMemRegion;       // 0x78 embedded layout-build region
@@ -131,13 +131,6 @@ struct CTalkWinTalkSrc {
 struct CTalkAnimFrame {
     u8  _00[0x10];   // 0x00 vtable + resource data
     f32 mFrame;      // 0x10
-};
-
-// Minimal pad-data view for driveTalkMessage (only the pressed-flag word at +0x4
-// is read; see CSysPadData in CSysWinSave.hpp).
-struct CTalkPadView {
-    u8  _00[0x4];
-    u32 field_04;   // +0x4 CPad::mPressedButtonFlags
 };
 
 // Position components read from the talk-source CfObject_findNodeMatrix(name)
@@ -268,8 +261,6 @@ void UIWin_CreateBEDE0Win(u16 id);
 void TagProcRenderPage(void* tagProc, nw4r::lyt::Pane* a, nw4r::lyt::Pane* b,
                     nw4r::lyt::Pane* c, int flag);
 void* __ct__CTagProcessor(void* self);
-extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
-    u32 arg, nw4r::lyt::Layout* layout);
 CTalkWinPose* Scn_FindCamItem(CScn* scene, int index);
 void CamMan_ProjectToScreen(nw4r::math::VEC3* out, CTalkWinPose* pose,
                    const nw4r::math::VEC3* in);
@@ -285,8 +276,7 @@ void* findObjectById(int id);
 // Global data imports (MWCC does not mangle global-scope data names).
 extern u32 gmPauseFlags;    // cbRenderBefore flag (.sbss)
 extern u32 __ptmf_null[3];     // null pointer-to-member-function constant
-extern char lbl_eu_8052D238[]; // temp base vtable
 
 // Talk-window global state (.sbss 0x80664040..0x80664048).
-extern u8 lbl_eu_80664040;     // page-mode flag (0 = n-side, 1 = a-side)
-extern u32 lbl_eu_80664044;    // live talk-window counter
+extern u8 gTalkWinPageModeFlag; // page-mode flag (0 = n-side, 1 = a-side)
+extern u32 gTalkWinLiveCount;  // live talk-window counter

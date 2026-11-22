@@ -4,11 +4,6 @@
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "monolib/vm/yvm2.h"
 
-extern "C" {
-extern const char lbl_eu_80503818[];
-extern PluginFuncData lbl_eu_80532348[];
-}
-
 // pluginTime getter: returns the value from CfGameManager::getCurrentSlotIndex() as an int.
 int PlugTime_GetCurrentSlot(VMThread* pThread) {
     VMArg result;
@@ -28,6 +23,13 @@ int PlugTime_GetControllerWord(VMThread* pThread) {
     return 1;
 }
 
+// name-guess: retail .data:0x80532348; named per the JP sPlugin<X>Funcs convention.
+PluginFuncData sPluginTimeFuncs[] = {
+    { "range", PlugTime_GetCurrentSlot },
+    { "hour", PlugTime_GetControllerWord },
+    { 0, 0 },
+};
+
 void pluginTimeRegist() {
-    vmPluginRegist(lbl_eu_80503818, lbl_eu_80532348);
+    vmPluginRegist("time", sPluginTimeFuncs);
 }

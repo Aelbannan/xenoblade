@@ -125,7 +125,7 @@ int CLibCri::dispatchFilePlayback(const char* filename, u32 allocHandle, int fil
     if (hasPackFile(ext) != 0) {
         int out1, out2, out3, out4;
         if (func_804DDD54(ext, filename, &out1, &out2, &out3, &out4) != 0) {
-            bool hasPrefix = (strstr(filename, lbl_eu_80522FD8) != nullptr);
+            bool hasPrefix = (strstr(filename, ".ahx") != nullptr);
             return startStream__20CLibCriStreamingPlayFv((const char*)out1, allocHandle, fileHandle, out2, out3, hasPrefix);
         }
     }
@@ -200,7 +200,7 @@ bool CLibCri::wkStandbyLogin() {
         ADXT_Init();
 
         // Create CLibCriMoviePlay (0x668 bytes)
-        const char* movieName = &lbl_eu_80522FD8[5];
+        const char* movieName = "CLibCriMoviePlay";
         u32 workMem = CWorkThreadSystem::getWorkMem();
         CLibCriMoviePlay* movie = (CLibCriMoviePlay*)mtl::MemManager::allocate(0x668, workMem);
         if (movie != nullptr) {
@@ -209,7 +209,7 @@ bool CLibCri::wkStandbyLogin() {
         CWorkUtil::entryWork(movie, this, false);
 
         // Create CLibCriStreamingPlay (0x4B8 bytes)
-        const char* streamName = &lbl_eu_80522FD8[0x16];
+        const char* streamName = "CLibCriStreamingPlay";
         workMem = CWorkThreadSystem::getWorkMem();
         CLibCriStreamingPlay* stream = (CLibCriStreamingPlay*)mtl::MemManager::allocate(0x4B8, workMem);
         if (stream != nullptr) {
@@ -255,9 +255,3 @@ return_false:
 void CLibCri::errorWiiCB() {
     stopAllStreams__20CLibCriStreamingPlayFv();
 }
-
-// [.rodata] 0x80522FD8-0x80523008 (48B): ".ahx" / "CLibCriMoviePlay" /
-// "CLibCriStreamingPlay" (referenced by dispatchFilePlayback and wkStandbyLogin).
-// Declared `extern const char[]` in CLibCri.hpp, so defined as a char array.
-extern "C" const char lbl_eu_80522FD8[48] =
-    ".ahx\0CLibCriMoviePlay\0CLibCriStreamingPlay\0\0\0\0\0";

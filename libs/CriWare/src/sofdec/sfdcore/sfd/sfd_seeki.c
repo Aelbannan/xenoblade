@@ -11,9 +11,6 @@
 
 extern void *gpSfdCoreTraceCb;
 
-// Absorbed from criware_data (retail bytes) - generated
-__declspec(section ".rodata") __attribute__((aligned(8))) char lbl_eu_8051CEC0[0x20] = {"before seeki\x00""after seeki\x00""\x00""\x00""\x00""\x00""\x00""\x00"}; // off 0x0
-
 /* ------------------------------------------------------------------ */
 /* SFSEEKI_InitHn                                                      */
 /* ------------------------------------------------------------------ */
@@ -97,7 +94,7 @@ int SFSEEKI_IsSkip(SfdHandle* hn, u32* outSkipCount) {
         /* seek target not reached yet: keep dropping frames */
         if (gpSfdCoreTraceCb != NULL) {
             sTraceSfdIsSkip.hn = hn;
-            sTraceSfdIsSkip.str = &lbl_eu_8051CEC0[0];      /* "before seeki" */
+            sTraceSfdIsSkip.str = "before seeki";
             ((SfseekiCtx*)gpSfdCoreTraceCb)->vtbl->trace((SfseekiCtx*)gpSfdCoreTraceCb, &sTraceSfdIsSkip.base);
         }
         return 1;
@@ -107,7 +104,7 @@ int SFSEEKI_IsSkip(SfdHandle* hn, u32* outSkipCount) {
         /* seek target passed: keep dropping frames */
         if (gpSfdCoreTraceCb != NULL) {
             sTraceSfdIsSkip.hn = hn;
-            sTraceSfdIsSkip.str = &lbl_eu_8051CEC0[0x0D];   /* "after seeki" */
+            sTraceSfdIsSkip.str = "after seeki";
             ((SfseekiCtx*)gpSfdCoreTraceCb)->vtbl->trace((SfseekiCtx*)gpSfdCoreTraceCb, &sTraceSfdIsSkip.base);
         }
         return 1;

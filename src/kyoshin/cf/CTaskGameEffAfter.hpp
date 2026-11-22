@@ -6,7 +6,6 @@
 // Runtime imports still used by CTaskREvtSequence.cpp, which includes this
 // header for them (that unit hand-builds its constructor).
 extern "C" long __ptmf_test(void* ptmf);
-extern "C" void __ct__8CProcessFv(CProcess* self);
 
 // Global null pointer-to-member-function constant (3 words).
 extern u32 __ptmf_null[3];

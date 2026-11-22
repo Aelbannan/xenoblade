@@ -70,6 +70,8 @@ struct WsdPlayer_X : WsdPlayer {
 #undef CreatePlayerHeap
 #undef mSoundPlayers
 
+#include <nw4r/snd/snd_SoundSystem.h>
+
 // Retail-named entry points (see definitions further below for why they are
 // free functions with C linkage).
 extern "C" nw4r::snd::SoundStartable::StartResult
@@ -84,10 +86,6 @@ PrepareWaveSoundImpl__Q34nw4r3snd18SoundArchivePlayerFPQ44nw4r3snd6detail9WaveSo
 // scope so the names are not mangled into the nw4r::snd namespace).
 extern const double lbl_eu_8066A050;
 extern const float lbl_eu_8066A048;
-
-// Import from snd_SoundSystem.cpp (retail symbol; SoundSystem.h does not
-// declare the query and is outside this session's writable scope).
-extern "C" bool IsInitializedSoundSystem__Q34nw4r3snd11SoundSystemFv();
 
 // Defined in snd_BasicSound.cpp under its retail mangled name (the locked
 // header does not declare SetAmbientInfo).
@@ -169,7 +167,7 @@ bool SoundArchivePlayer::IsAvailable() const {
 bool SoundArchivePlayer::Setup(const SoundArchive* pArchive, void* pMramBuffer,
                                u32 mramBufferSize, void* pStrmBuffer,
                                u32 strmBufferSize) {
-    if (!IsInitializedSoundSystem__Q34nw4r3snd11SoundSystemFv()) {
+    if (!SoundSystem::IsInitializedSoundSystem()) {
         return false;
     }
 
@@ -1553,10 +1551,8 @@ struct SeqSoundLayout {
     /*0x2AC*/ char mFileStreamBuffer[0x200];
 };
 
-// Imports resolved in other TUs (retail symbol names; the shared headers do
-// not declare these shapes).
-extern "C" bool ReadOffsetByLabel__Q44nw4r3snd6detail13SeqFileReaderCFPCcPUl(
-    const detail::SeqFileReader* pReader, const char* pLabel, u32* pOffset);
+// Import resolved in another TU (retail symbol name; the shared header does
+// not declare this shape).
 extern "C" detail::SeqPlayer::SetupResult
 Setup__Q44nw4r3snd6detail8SeqSoundFPQ44nw4r3snd6detail17SeqTrackAllocatorUlPQ44nw4r3snd6detail14NoteOnCallback(
     detail::SeqSound* pSound, detail::SeqTrackAllocator* pAllocator,
@@ -1597,8 +1593,7 @@ extern "C" SoundStartable::StartResult PrepareSeqImpl__Q34nw4r3snd18SoundArchive
         if (pLabelStr != NULL) {
             // Resolve the start position from a label inside the sequence
             // data.
-            if (!ReadOffsetByLabel__Q44nw4r3snd6detail13SeqFileReaderCFPCcPUl(
-                    &reader, pLabelStr, &seqDataOffset)) {
+            if (!reader.ReadOffsetByLabel(pLabelStr, &seqDataOffset)) {
                 return SoundStartable::
                     START_ERR_INVALID_SEQ_START_LOCATION_LABEL;
             }
@@ -1615,8 +1610,7 @@ extern "C" SoundStartable::StartResult PrepareSeqImpl__Q34nw4r3snd18SoundArchive
         if (pLabelStr != NULL) {
             detail::SeqFileReader reader(pFileAddress);
 
-            if (!ReadOffsetByLabel__Q44nw4r3snd6detail13SeqFileReaderCFPCcPUl(
-                    &reader, pLabelStr, &seqDataOffset)) {
+            if (!reader.ReadOffsetByLabel(pLabelStr, &seqDataOffset)) {
                 return SoundStartable::
                     START_ERR_INVALID_SEQ_START_LOCATION_LABEL;
             }
@@ -2012,14 +2006,6 @@ void SoundArchivePlayer::InvalidateWaveData(const void* pStart,
     }
 }
 
-// Retail names these SoundArchive readers WITHOUT the detail_ prefix
-// (symbols.txt); the locked header spells them detail_Read*. Declare the
-// retail-named entries so the NoteOn call relocs carry retail symbols.
-extern "C" bool ReadSeqSoundInfo__Q34nw4r3snd12SoundArchiveCFUlPQ44nw4r3snd12SoundArchive12SeqSoundInfo(
-    const SoundArchive* rArchive, u32 id, SoundArchive::SeqSoundInfo* pOut);
-extern "C" bool ReadBankInfo__Q34nw4r3snd12SoundArchiveCFUlPQ44nw4r3snd12SoundArchive8BankInfo(
-    const SoundArchive* rArchive, u32 id, SoundArchive::BankInfo* pOut);
-
 detail::Channel*
 SoundArchivePlayer::SeqNoteOnCallback::NoteOn(detail::SeqPlayer* pSeqPlayer,
                                               int bankNo,
@@ -2034,12 +2020,12 @@ SoundArchivePlayer::SeqNoteOnCallback::NoteOn(detail::SeqPlayer* pSeqPlayer,
     u32 soundId = pSeqPlayer->GetId();
 
     SoundArchive::SeqSoundInfo seqInfo;
-    if (!ReadSeqSoundInfo__Q34nw4r3snd12SoundArchiveCFUlPQ44nw4r3snd12SoundArchive12SeqSoundInfo(&rArchive, soundId, &seqInfo)) {
+    if (!rArchive.ReadSeqSoundInfo(soundId, &seqInfo)) {
         return NULL;
     }
 
     SoundArchive::BankInfo bankInfo;
-    if (!ReadBankInfo__Q34nw4r3snd12SoundArchiveCFUlPQ44nw4r3snd12SoundArchive8BankInfo(&rArchive, seqInfo.bankId, &bankInfo)) {
+    if (!rArchive.ReadBankInfo(seqInfo.bankId, &bankInfo)) {
         return NULL;
     }
 

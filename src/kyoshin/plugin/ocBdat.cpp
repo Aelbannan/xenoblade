@@ -6,6 +6,17 @@
 #include "monolib/vm/yvm2.h"
 #include <string.h>
 
+// name-guess: .sbss byte at 0x80663D10, the one-shot init flag tested and set
+// by Bdat_GetTable_AA34.
+s8 sBdatTableInit;
+// name-guess: .sbss pointer at 0x80663D14, whose address is returned by
+// Bdat_GetTable_AA34.
+void* sBdatReturnTable;
+
+// name-guess: .bss table at 0x805705D0 holding the seven registered BDAT
+// name-index tables; the retail object has eight 4-byte slots.
+void* sBdatTables[8];
+
 // Defining TU; canonical declaration lives in plugin/ocBdat.hpp
 // (retail signature u32 (void*, const char*, s32)).
 extern "C" u32 getBdatStringColumnValue(void* bdat, const char* col, s32 index) {
@@ -128,15 +139,14 @@ extern "C" void Bdat_DecodeEntries(void* tblVoid) {
 
 
 extern "C" void* Bdat_GetTable_AA34() {
-    if (!lbl_eu_80663D10) {
-        lbl_eu_80663D10 = 1;
+    if (!sBdatTableInit) {
+        sBdatTableInit = 1;
     }
-    //retail returns &lbl_eu_80663D14 via SDA21 (li r3,0 + R_PPC_EMB_SDA21 reloc)
-    return &lbl_eu_80663D14;
+    return &sBdatReturnTable;
 }
 
 void* CBdat::clearEntries() {
-    void** table = lbl_eu_805705D0;
+    void** table = sBdatTables;
     table[0] = 0;
     table[1] = 0;
     table[2] = 0;
@@ -148,12 +158,12 @@ void* CBdat::clearEntries() {
 }
 
 void CBdat::setBdatEntry(u32 idx, void* p) {
-    lbl_eu_805705D0[idx] = p;
+    sBdatTables[idx] = p;
     Bdat_DecodeEntries(p);
 }
 
 void CBdat::getEntry(u32 idx) {
-    lbl_eu_805705D0[idx] = 0;
+    sBdatTables[idx] = 0;
 }
 
 void* getFP(const char* pName) {
@@ -166,7 +176,7 @@ void* getFP(const char* pName) {
     s32 mid;
     s32 cmp;
 
-    tableSlot = lbl_eu_805705D0;
+    tableSlot = sBdatTables;
     tableIdx = 0;
     while (tableIdx < 7) {
         hdr = static_cast<BdatNameIndexHdr*>(*tableSlot);
@@ -733,6 +743,24 @@ extern "C" int getFlagVal(VMThread* t, void* bdat) {
     return 1;
 }
 
+// name-guess: .data selector array at 0x80524DE0, seven script-visible
+// selectors followed by the retail null terminator.
+OCSelector sBdatSelectors[8] = {
+    { "getVal", (OCSelectorFunc)getVal, 0 },
+    { "getArrayVal", (OCSelectorFunc)getArrayVal, 0 },
+    { "getArrayCount", (OCSelectorFunc)getArrayCount, 0 },
+    { "getVarType", (OCSelectorFunc)getVarType, 0 },
+    { "getIdCount", (OCSelectorFunc)getIdCount, 0 },
+    { "getIdTop", (OCSelectorFunc)getIdTop, 0 },
+    { "getFlagVal", (OCSelectorFunc)getFlagVal, 0 },
+    { 0, 0, 0 },
+};
+
+// name-guess: .data root OCData at 0x80524E40 registered by ocBdatRegist.
+OCData sBdatData[1] = {
+    { "bdat", (OCCtorFunc)bdat, 0, sBdatSelectors },
+};
+
 extern "C" void ocBdatRegist() {
-    vmOCRegist(&lbl_eu_80524E40);
+    vmOCRegist(sBdatData);
 }

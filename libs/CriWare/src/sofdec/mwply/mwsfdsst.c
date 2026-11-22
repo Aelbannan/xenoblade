@@ -17,7 +17,7 @@ typedef struct SstCoreTblEntry {
 } SstCoreTblEntry;
 
 /* MWCC GC/3.0a5.2: use __declspec(align), not GCC __attribute__. */
-__declspec(align(8)) SstCoreTblEntry lbl_eu_80602A00[2];
+__declspec(align(8)) SstCoreTblEntry mwsstmng[2];
 
 /* Object referenced from SstHn::obj (0x08). Its method table lives inline in
  * the object memory, so the SJ control methods are plain members. */
@@ -59,7 +59,7 @@ struct SstCore {
  * stride of 0x28. */
 struct SstHn {
     s32 state;                                     /* 0x00 (1 = active) */
-    s32 type;                                      /* 0x04 (index into lbl_eu_80602A00) */
+    s32 type;                                      /* 0x04 (index into mwsstmng) */
     SstObj* obj;                                   /* 0x08 */
     u8 pad_0x0c[0x8];                              /* 0x0c..0x13 */
     SstHnObj* hn;                                  /* 0x14 */
@@ -86,7 +86,7 @@ void MWSFSVM_GotoIdleBorder(void);
 /* ---- Internal helpers ---- */
 
 static inline s32 MWSST_IsActive(const SstHn* sst) {
-    if (lbl_eu_80602A00[sst->type].core == NULL) {
+    if (mwsstmng[sst->type].core == NULL) {
         return 0;
     }
     if (sst->state != 1) {
@@ -247,7 +247,7 @@ void MWSST_Reset(MWSFDPLY* self, s32 idx) {
  * the state, release the core handle, tear down the handle object, and drop
  * the core registration (terminating the core when the last reference goes). */
 void MWSST_Destroy(SstHn* sst) {
-    SstCoreTblEntry* coreTbl = &lbl_eu_80602A00[sst->type];
+    SstCoreTblEntry* coreTbl = &mwsstmng[sst->type];
     s32 active = 0;
     if (coreTbl->core == NULL) {
         active = 0;

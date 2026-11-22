@@ -124,7 +124,7 @@ void CMenuGCItem::Move() {
 /* Render the GC-item screen through a stack DrawInfo: gate on the task/busy
  * flags and the scene-active check, then draw bg, title/help bar and item
  * grid in that order. */
-void CMenuGCItem::cbRenderBefore() {
+void CMenuGCItem::cbRenderBefore(CScn*) {
     CTaskGame::getInstance();
     if (CTaskGame::isFlag01Set() || (gmPauseFlags & 0x200000))
         return;

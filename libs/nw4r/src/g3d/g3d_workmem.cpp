@@ -5,8 +5,10 @@ namespace g3d {
 namespace detail {
 namespace workmem {
 
-// Absorbed retail work-memory arena (lbl_eu_8061FB00, .bss 0x18000)
-extern "C" union {
+namespace {
+
+// config/jp/symbols.txt recovers the retail name: sTemp, scope:local.
+union {
     u8 mem[WORKMEM_SIZE]; // at 0x0
     struct {
         math::_VEC3 tmpScale[WORKMEM_NUMTMPSCALE]; // at 0x0
@@ -16,27 +18,29 @@ extern "C" union {
     MdlZ mdlZ[WORKMEM_NUMMDLZ];                       // at 0x0
     math::_MTX34 skinningMtx[WORKMEM_NUMSKINNINGMTX]; // at 0x0
     math::_MTX34 bbMtx[WORKMEM_NUMBBMTX];             // at 0x0
-} lbl_eu_8061FB00 __attribute__((aligned(8))) = {};
+} sTemp __attribute__((aligned(8))) = {};
+
+} // namespace
 
 
 math::VEC3* GetScaleTemporary() {
-    return static_cast<math::VEC3*>(lbl_eu_8061FB00.tmpScale);
+    return static_cast<math::VEC3*>(sTemp.tmpScale);
 }
 
 u32* GetMtxIDTemporary() {
-    return lbl_eu_8061FB00.mtxID;
+    return sTemp.mtxID;
 }
 
 MdlZ* GetMdlZTemporary() {
-    return lbl_eu_8061FB00.mdlZ;
+    return sTemp.mdlZ;
 }
 
 math::MTX34* GetSkinningMtxTemporary() {
-    return static_cast<math::MTX34*>(lbl_eu_8061FB00.skinningMtx);
+    return static_cast<math::MTX34*>(sTemp.skinningMtx);
 }
 
 math::MTX34* GetBillboardMtxTemporary() {
-    return static_cast<math::MTX34*>(lbl_eu_8061FB00.bbMtx);
+    return static_cast<math::MTX34*>(sTemp.bbMtx);
 }
 
 } // namespace workmem

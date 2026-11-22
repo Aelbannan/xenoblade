@@ -23,10 +23,8 @@ extern "C" void EffSys_Teardown(void*);
 
 // Default effect time constant used by setEffectEnabled when the caller does not
 // supply an explicit time (retail sdata2 float).
-extern f32 lbl_eu_80665D94;
 
 // Default effect time constant stored into field_0x6C by the ctor (sdata2).
-extern f32 lbl_eu_80665D90;
 
 // 3-word view of a pointer-to-member-function slot (mMoveFunc/mDrawFunc),
 // used by the raw-init ctor to null both callback hooks.
@@ -211,7 +209,7 @@ public:
     virtual ~CTaskGameEff();
     void Init();
     void Term();
-    void cbRenderBefore();
+    void cbRenderBefore(CScn* scene);
     void Draw();
     /* 0x54 */ IScnRender field_0x54;    // render callback (prio 0xe)
     /* 0x58 */ IScnRender field_0x58;    // render callback (prio 8)

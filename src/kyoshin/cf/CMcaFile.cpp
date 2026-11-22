@@ -32,13 +32,13 @@ extern "C" void __dt__8CMcaFileFv();
 const char lbl_eu_804FB088[0x10] = "CMcaFile";
 
 // Retail RTTI descriptor pair (.sdata @0x806619C0): {name, 0}.
-__declspec(section ".sdata") __attribute__((used))
+__attribute__((used))
 const void* __RTTI__8CMcaFile[2] = { lbl_eu_804FB088, 0 };
 
 // Retail vtable data (.data @0x80526348: RTTI + 0 + dtor); the ctor stores
 // it at +0x0 (novtable: the TU declares the class without a compiler
 // vtable and assigns the retail label explicitly).
-__declspec(section ".data") __attribute__((used))
+__attribute__((used))
 void* lbl_eu_80526348[3] = {
     (void*)__RTTI__8CMcaFile,
     0,

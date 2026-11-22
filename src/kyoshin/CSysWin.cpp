@@ -12,6 +12,7 @@
 #include "kyoshin/code_80135FDC.hpp"
 
 #include "monolib/device.hpp"
+#include "monolib/device/CDeviceFont.hpp"
 #include "monolib/util/MemManager.hpp"
 #include "monolib/work/IWorkEvent.hpp"
 
@@ -42,21 +43,6 @@ extern "C" void* __ct__CTagProcessor(void*);
 // plus a trailing byte from .sdata2.
 struct SysWinLabelKeys {
     u8 key[5];
-};
-
-// View into the object returned by CDeviceFont::getFontInfo: its vtable+0x24
-// slot yields the font handle pushed into the layout's text panes. All-pure, so
-// no vtable is emitted.
-class CSysWinFontView {
-public:
-    virtual void v00() = 0;  // +0x08
-    virtual void v01() = 0;  // +0x0C
-    virtual void v02() = 0;  // +0x10
-    virtual void v03() = 0;  // +0x14
-    virtual void v04() = 0;  // +0x18
-    virtual void v05() = 0;  // +0x1C
-    virtual void v06() = 0;  // +0x20
-    virtual u32 v07() = 0;   // +0x24 - font handle
 };
 
 // ---------------------------------------------------------------------------
@@ -509,8 +495,8 @@ bool CSysWin::OnFileEvent(CEventFile* pEventFile) {
     "mf70_cf60_syswin00.brlyt\0"
     "mf70_cf60_syswin00_in.brlan");
         nw4r::lyt::Pane* rootPane = mLayout->GetRootPane();
-        CSysWinFontView* font = (CSysWinFontView*)CDeviceFont::getFontInfo(1, mLayout);
-        ApplyFontToTxtPanes(rootPane, (const nw4r::ut::Font*)font->v07());
+        IDeviceFontInfo* font = static_cast<IDeviceFontInfo*>(CDeviceFont::getFontInfo(1, mLayout));
+        ApplyFontToTxtPanes(rootPane, font->getFont());
         mLayout->SetAnimationEnable(mAnimTrans, true);
         mLayout->Animate(0);
         setupAfterLoad();

@@ -680,28 +680,8 @@ struct UnkClass_800821F8 {
     virtual void setCameraMode(u32 mode) = 0; // +0x40
 };
 
-// Dispatch-only shim for the CItem impl-instance vtable returned by
-// CItem_initItemImplInstances(item). Never instantiated; pure virtuals emit no
-// vtable/code. MWCC RTTI occupies vtable slots 0/4, so declared virtual N lands
-// at offset N*4+8: getItemSlot=0x2C, getItemCount=0x30, resetItemSlot=0x40.
-class CItemImplInstances {
-public:
-    virtual void vf_08() = 0;
-    virtual void vf_0C() = 0;
-    virtual void vf_10() = 0;
-    virtual void vf_14() = 0;
-    virtual void vf_18() = 0;
-    virtual void vf_1C() = 0;
-    virtual void vf_20() = 0;
-    virtual void vf_24() = 0;
-    virtual void vf_28() = 0;
-    virtual UnkF0ACData* getItemSlot(u32 first, u32 second) = 0; // +0x2C
-    virtual u16 getItemCount(u32 value) = 0;                     // +0x30
-    virtual void vf_34() = 0;
-    virtual void vf_38() = 0;
-    virtual void vf_3C() = 0;
-    virtual void resetItemSlot(u32 first, u32 second) = 0;       // +0x40
-};
+// Item-impl virtual interface returned by CItem_initItemImplInstances (owner).
+#include "kyoshin/cf/CItemImpl.hpp"
 
 extern "C" void CObjectState_clearStateFlags8__Q22cf12CObjectStateFi(UnkFlags8Data* data,
                                                                      u32 mask) {
@@ -1195,13 +1175,13 @@ extern "C" cf::CfObjectMove* spawnPartyActor__Q22cf13CfGameManagerFv(
 
 // Canonical CItem_initItemImplInstances(CItemData*) comes from CfGameManager.hpp.
 extern "C" u16 getItemCountForGroup__Q22cf13CfGameManagerFv(u32 value) {
-    return ((CItemImplInstances*)CItem_initItemImplInstances((CItemData*)value))->getItemCount(value);
+    return CItem_initItemImplInstances((CItemData*)value)->vf30((CItemData*)value);
 }
 extern "C" UnkF0ACData* getItemSlotData__Q22cf13CfGameManagerFv(u32 first, u32 second) {
-    return ((CItemImplInstances*)CItem_initItemImplInstances((CItemData*)first))->getItemSlot(first, second);
+    return (UnkF0ACData*)CItem_initItemImplInstances((CItemData*)first)->vf2C((CItemData*)first, second);
 }
 extern "C" void resetItemSlotA__Q22cf13CfGameManagerFv(u32 first, u32 second) {
-    ((CItemImplInstances*)CItem_initItemImplInstances((CItemData*)first))->resetItemSlot(first, second);
+    CItem_initItemImplInstances((CItemData*)first)->vf40((CItemData*)first, second);
 }
 extern "C" void bdatGetItemName(u16 value);
 extern "C" CfGameManagerData1C* loadBdatGroupData__Q22cf13CfGameManagerFv(
@@ -1284,7 +1264,7 @@ extern "C" s32 getTableIndexForPair__Q22cf13CfGameManagerFv(s32 first, s32 secon
     return *(s8*)((char*)table.values + (first - 1) * 8 + (second - 1));
 }
 extern "C" s32 getTableValueByPair__Q22cf13CfGameManagerFv(s32 first, s32 second);
-extern "C" void UIWin_CreateMenuUpdate(u32 first, u32 second, s32 third, s32 fourth);
+extern "C" void* UIWin_CreateMenuUpdate(int first, u32 second, s32 third, s32 fourth);
 extern "C" void addTableValueWithClamp__Q22cf13CfGameManagerFv(
     s32 first, s32 second, s32 increment) {
     s32 value = getTableValueByPair__Q22cf13CfGameManagerFv(first, second);
@@ -1637,7 +1617,7 @@ extern "C" void func_8008360C__Q22cf13CfGameManagerFv() {
 extern "C" ItemListManager* getListB28__Fv();
 namespace cf { class CfObjectPc; }
 void CfObjectPc_applyArtsEntry(cf::CfObjectPc* self, void* destination, s32 itemId);
-extern "C" void __ct__8009ED08(void* destination, u16 itemId);
+extern "C" void CtrlObjectParam_CopyCharRow(u32 rowA, u32 rowB);  // CtrlObjectParam.cpp
 extern "C" void setupBattleCamera__Q22cf13CfGameManagerFv(void* destination,
                                                         u16 itemId) {
     ItemListManager* manager = getListB28__Fv();
@@ -1651,7 +1631,7 @@ extern "C" void setupBattleCamera__Q22cf13CfGameManagerFv(void* destination,
         }
         node = node->next;
     }
-    __ct__8009ED08(destination, itemId);
+    CtrlObjectParam_CopyCharRow((u32)destination, itemId);
 }
 
 extern "C" cf::UnkClass_80082D90* getPlayerContainerForCam__Q22cf13CfGameManagerFv() {

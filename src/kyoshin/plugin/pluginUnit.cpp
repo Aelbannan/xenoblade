@@ -21,9 +21,6 @@ class CfCode800F42AC;
 
 // C-linkage retail symbols referenced by learnArts / clearPcBtlState.
 extern "C" {
-    extern const char lbl_eu_80507FC0[];
-    extern const char lbl_eu_80535460[];
-
     // bdat helpers (C-linkage in retail; ocBdat.hpp declares them as C++).
     void* Bdat_GetTable_AA34();
     // (getBdatStringColumnValue is declared by object/CBattleState.hpp.)
@@ -49,11 +46,8 @@ extern "C" {
     int setEneBtlState(VMThread* pThread);
     int onEneArtsAttack(VMThread* pThread);
     int setPcBtlState(VMThread* pThread);
-}
-
-void pluginUnitRegist() {
-    extern void vmPluginRegist(const char*, const char*);
-    vmPluginRegist(lbl_eu_80507FC0 + 0xb, lbl_eu_80535460);
+    int learnArts(VMThread* pThread);
+    int clearPcBtlState(VMThread* pThread);
 }
 
 using namespace cf;
@@ -479,6 +473,24 @@ extern "C" int synchro(VMThread* pThread) {
     return 0;
 }
 
+// name-guess: retail .data:0x80535460 is an anonymous PluginFuncData array;
+// no name exists for it in any region's symbols.txt.
+static PluginFuncData sPluginUnitCommands[13] = {
+    { "getPcHp", getPcHp },
+    { "getPcHpRate", getPcHpRate },
+    { "getEneHp", getEneHp },
+    { "getEneHpRate", getEneHpRate },
+    { "setPcBtlState", setPcBtlState },
+    { "clearPcBtlState", clearPcBtlState },
+    { "setEneBtlState", setEneBtlState },
+    { "clearEneBtlState", clearEneBtlState },
+    { "onPcArtsAttack", onPcArtsAttack },
+    { "onEneArtsAttack", onEneArtsAttack },
+    { "synchro", synchro },
+    { "learnArts", learnArts },
+    { nullptr, nullptr },
+};
+
 // Script command: teach a learnable art to the player. Looks up an art-id
 // mapping in the bdat table ("ac_p" / "u" columns), resolves the actor slot
 // via CtrlObjectParam_GetCharEntry, then dispatches the learn to the actor-param handler
@@ -486,8 +498,8 @@ extern "C" int synchro(VMThread* pThread) {
 extern "C" int learnArts(VMThread* pThread) {
     int id = vmArgIntGet(2, vmArgPtrGet(pThread, 1));
     (void)Bdat_GetTable_AA34();
-    void* fp = getFP(lbl_eu_80507FC0);
-    u32 val = getBdatStringColumnValue(fp, lbl_eu_80507FC0 + 8, id);
+    void* fp = getFP("pc_arts");
+    u32 val = getBdatStringColumnValue(fp, "pc", id);
     // u8 spill/reload through a 4-byte array forces MWCC to emit the retail
     // `stw r3, 0x8(r1); lbz r3, 0x8(r1)` pattern; a plain `(u8)val` is
     // folded to `rlwinm r3, r3, 0, 24, 31` and the codegen regresses.
@@ -497,6 +509,10 @@ extern "C" int learnArts(VMThread* pThread) {
     cf::CfObjectActor* actor = (cf::CfObjectActor*)CtrlObjectParam_GetCharEntry(byte);
     CtrlObjectParam_ClaimArtsSlotRow(actor, id);
     return 0;
+}
+
+void pluginUnitRegist() {
+    vmPluginRegist("unit", sPluginUnitCommands);
 }
 
 // Script command: clear a battle-state flag on a player actor. Resolves the

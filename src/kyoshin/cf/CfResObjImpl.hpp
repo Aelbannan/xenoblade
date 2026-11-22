@@ -117,6 +117,13 @@ public:
     virtual int ResObj_ZeroStubA_CD54();            // 0x64
     virtual int CfResObj_true68();            // 0x68
 
+    // Non-virtual state handlers dispatched through the function-local
+    // static PTMF table in ResObj_DispatchState_CCE0 (retail .data
+    // lbl_eu_80530F20 + .sbss guard lbl_eu_80664270).
+    // name-guess: no JP/US symbol names exist for these two handlers.
+    void ResObj_ReleaseModels_C98C();
+    void ResObj_Noop_CCDC();
+
     CfResObjImplVtbl*& vtbl() {
         return *reinterpret_cast<CfResObjImplVtbl**>(reinterpret_cast<u8*>(this) + 0x10);
     }
@@ -126,32 +133,13 @@ public:
 
 } // namespace cf
 
-// 3-word (12-byte) member-function-pointer storage view used for the
-// word-wise __ptmf_null copy in ResObj_DispatchState_CCE0 (struct copy so MWCC emits the
-// inline lwzu/stwu sequence).
+// 3-word (12-byte) member-function-pointer storage view (still used by
+// CfResTboxImpl.hpp's lbl_eu_805351E0 table).
 struct CfPmf3 {
     u32 w0;
     u32 w1;
     u32 w2;
 };
-
-// PMTF dispatch table (3 x 12-byte entries) selected by field_08 in
-// ResObj_DispatchState_CCE0. Stored as CfPmf3 words ({0,0,0} + two {0,-1,func} rows:
-// the free-function targets are not expressible as PMFs in C++); the
-// dispatch site casts back to CfResObjImplPMF so the call still lowers to
-// `bl __ptmf_scall`. Declared at global scope so MWCC keeps the retail
-// name unmangled.
-typedef void (cf::CfResObjImpl::*CfResObjImplPMF)();
-// Word/PMF dual view of one dispatch entry: initialized via w (raw words
-// with relocs), dispatched via p (real PMF call -> bl __ptmf_scall).
-union CfPmfEntry {
-    CfPmf3 w;
-    CfResObjImplPMF p;
-};
-extern CfPmfEntry lbl_eu_80530F20[3];
-
-// One-time PMTF-table init flag (.sdata).
-extern char lbl_eu_80664270;
 
 // Global null pointer-to-member-function constant (3 words).
 extern u32 __ptmf_null[3];

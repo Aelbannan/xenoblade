@@ -1,5 +1,5 @@
-// Auto-scaffolded catalog TU for kyoshin/cf/CfTFile
-// Replace stubs with high-level C/C++ during decomp.
+// Retail ~CfTFile elides the empty IWorkEvent base-dtor call.
+#define IWORK_EVENT_INLINE_DTOR
 
 #include "kyoshin/cf/CfTFile.hpp"
 #include "monolib/scn/CScn.hpp"
@@ -12,34 +12,32 @@
 
 // Owner definitions of the file-event / play-clock state (retail .sbss/.sdata).
 // The counter groups keep the retail symbol widths.
+// Seconds-per-frame scale shared with CfResReloadImpl (retail global .sdata2
+// object ahead of the TU's literal pool; local uses fold to the 30.0f literal).
+// name-guess: gCfTFrameRate
+extern const float gCfTFrameRate = 30.0f;
 u32 gCfTEventFrameCounter;
 f32 gCfTPlayClockSeconds;
 f32 gCfTPlayClockPrevSeconds;
 f32 gCfTPlayClockRemainder;
 u32 gCfTClockDisplayFrame;
 u32 gCfTFrameTimerRaw[2];
-f32 gCfTPlayRate = 0.0f;
-u16 gCfTCalendarDay = 0;
-u16 gCfTCalendarYear = 0;
-u16 gCfTFrameCounter[4] = {0, 0, 0, 0};
+f32 gCfTPlayRate = 1.0f;
+u16 gCfTCalendarDay = 1;
+u16 gCfTCalendarYear = 1;
+u16 gCfTFrameCounter[4] = {1, 0, 0, 0};
 u16 gCfTFallbackHourTable[6] = {6, 12, 18, 0, 0, 0};
 u16 gCfTFallbackMinuteTable[6] = {30, 30, 30, 30, 0, 0};
 
 // Auto-scaffolded catalog TU for kyoshin/cf/CfTFile
 
-// The retail ctor symbol __ct__cf_CfTFile is a C-linkage name (no C++ mangling
-// markers), so it is emitted as a global function with a manual vtable store
-// (same convention as __ct__cf_CfGimmick / __ct__cf_CfGimmickSaveOff). The
-// class carries a manual vptr at +0x00 (set to lbl_eu_80526F98).
-CfTFile* __ct__cf_CfTFile(CfTFile* self) {
-    *(void**)self = (void*)lbl_eu_80526F98;
-    self->mFile = 0;
-    self->mField82C = 0;
-    self->mField830 = 0;
+cf::CfTFile::CfTFile() {
+    mFile = 0;
+    mField82C = 0;
+    mField830 = 0;
     // 32-byte aligned sub-buffer pointer inside the object.
-    self->mDataAligned = (u8*)(((u32)self + 0x23) & ~0x1Fu);
-    memset(&self->mData, 0, sizeof(cf::CfTFileData));
-    return self;
+    mDataAligned = (u8*)(((u32)this + 0x23) & ~0x1Fu);
+    memset(&mData, 0, sizeof(cf::CfTFileData));
 }
 
 // Cancel the active file (if any), wipe the payload and reset the file-event
@@ -197,8 +195,8 @@ cf::CfTFileEntry* CfTFile_FindEntryByKey(CfTFile* self, int key) {
 // Dispatch a completed file-event to the shared handler: fires only when the
 // event's handle matches the active file and the payload byte is pending
 // (field_14 non-zero), then clears the handle and reports success.
-int CfTFile::OnFileEvent(CEventFile* pEventFile) {
-    int result = 0;
+bool cf::CfTFile::OnFileEvent(CEventFile* pEventFile) {
+    bool result = false;
     if (this->mFile == pEventFile->mFileHandle) {
         if (pEventFile->unk0 == 1 && pEventFile->field_14 != 0) {
             this->mField82C |= 2;
@@ -206,36 +204,25 @@ int CfTFile::OnFileEvent(CEventFile* pEventFile) {
             CmText_ParseWithStaticProc((u32)this->mDataAligned, (u32)&this->mData);
         }
         this->mFile = 0;
-        result = 1;
+        result = true;
     }
     return result;
 }
 
-// Retail dtor carries the cf::-qualified mangling (__dt__Q22cf7CfTFileFv)
-// even though the class itself is global-scope (cf. OnFileEvent__7CfTFile).
-// Like the __ct__cf_CfTFile ctor above, the __ prefix keeps the name
-// unmangled so it is emitted verbatim.
-CfTFile* __dt__Q22cf7CfTFileFv(CfTFile* obj, int flag) {
-    if (obj != nullptr && flag > 0) {
-        operator delete(obj);
-    }
-    return obj;
-}
+cf::CfTFile::~CfTFile() {}
 
 float CfT_PlayRateGet() { return gCfTPlayRate; }
 
 void func_80069EA8(int param) {
-    extern float lbl_eu_80666214;
-    extern float lbl_eu_80666218;
     if (param != 0) {
         unsigned char val = visionSharedStateFlags;
-        float rate = lbl_eu_80666214;
+        float rate = 1.2f;
         val |= 0x02;
         visionSharedStateFlags = val;
         gCfTPlayRate = rate;
     } else {
         unsigned char val = visionSharedStateFlags;
-        float rate = lbl_eu_80666218;
+        float rate = 1.0f;
         val &= 0x02;
         visionSharedStateFlags = val;
         gCfTPlayRate = rate;
@@ -290,13 +277,13 @@ void CfT_PlayClockUpdate() {
         // Discarded-calibration style wrap: keep only the fmod remainder,
         // reset the residual, store the residual constant first.
         float t = (float)fmod(gCfTPlayClockSeconds, 43200.0);
-        gCfTPlayClockRemainder = lbl_eu_80666238;
+        gCfTPlayClockRemainder = 0.0f;
         gCfTPlayClockSeconds = t;
     }
 }
 
 extern "C" void CfT_PlayClockReset(float v) {
-    float c = lbl_eu_80666238;
+    float c = 0.0f;
     gCfTPlayClockSeconds = v;
     gCfTPlayClockPrevSeconds = v;
     gCfTPlayClockRemainder = c;
@@ -347,15 +334,15 @@ void CfT_PlayClockAdvanceInt(u32 v) {
 // CfT_DispatchFrameCounts fmod trio; the caller-supplied pair is written through the
 // out pointers.
 u16 CfT_PlayClockSnapshot(u16* outA, u16* outB) {
-    *outA = (u16)(int)(float)fmod(gCfTPlayClockSeconds / lbl_eu_8066623C, lbl_eu_80666240);
-    *outB = (u16)(int)(float)fmod(gCfTPlayClockSeconds / lbl_eu_80666248, lbl_eu_80666250);
-    return (u16)(int)(lbl_eu_80666258 * (float)fmod(gCfTPlayClockSeconds, lbl_eu_80666230));
+    *outA = (u16)(int)(float)fmod(gCfTPlayClockSeconds / 1800.0f, 24.0);
+    *outB = (u16)(int)(float)fmod(gCfTPlayClockSeconds / 30.0f, 60.0);
+    return (u16)(int)(2.0f * (float)fmod(gCfTPlayClockSeconds, 43200.0));
 }
 
 // True when the current sub-second frame falls in the [6,17] window of the
 // 60 Hz second (u16 wrap-around range check on the frame counter).
 bool CfT_FrameInWindow() {
-    int frame = (int)(float)fmod(gCfTPlayClockSeconds / lbl_eu_8066623C, lbl_eu_80666240);
+    int frame = (int)(float)fmod(gCfTPlayClockSeconds / 1800.0f, 24.0);
     bool result = false;
     // +0x10000 before -6 keeps MWCC from folding the offset into one addi
     // (0x10000 does not fit addi), matching retail's addis+subi pair.
@@ -368,15 +355,15 @@ bool CfT_FrameInWindow() {
 // Play-time -> frame conversions: fmod the shared second counter against a
 // rate constant, round to int (frames).
 int CfT_FrameCountA() {
-    return (int)(float)fmod(gCfTPlayClockSeconds / lbl_eu_8066623C, lbl_eu_80666240);
+    return (int)(float)fmod(gCfTPlayClockSeconds / 1800.0f, 24.0);
 }
 
 int CfT_FrameCountB() {
-    return (int)(float)fmod(gCfTPlayClockSeconds / lbl_eu_80666248, lbl_eu_80666250);
+    return (int)(float)fmod(gCfTPlayClockSeconds / 30.0f, 60.0);
 }
 
 int CfT_FrameCountC() {
-    return (int)(lbl_eu_80666258 * (float)fmod(gCfTPlayClockSeconds, lbl_eu_80666260));
+    return (int)(2.0f * (float)fmod(gCfTPlayClockSeconds, 30.0));
 }
 
 u16 CfT_FrameCounterStore(u16 val) { gCfTFrameCounter[0] = val; return val; }
@@ -387,6 +374,12 @@ u16 CfT_FrameCounterLoad() { return gCfTFrameCounter[0]; }
 // the given mode are picked from the string table, the cells read back as
 // bytes (minutes*60 + seconds). Falls back to the static u16 tables when the
 // bdat file or the column is unavailable.
+// name-guess: raw bdat cell word with its leading-byte view
+union CfTBdatCell {
+    u32 w;
+    u8 b;
+};
+
 int CfT_GetClockTimeByMode(int mode) {
     Bdat_GetTable_AA34();
     u32 bdat = getGlobalPtr640A8__Q22cf13CfGameManagerFv();
@@ -410,67 +403,55 @@ int CfT_GetClockTimeByMode(int mode) {
             pSec = "night_m";
         }
         if (pMin != 0) {
-            // Both column pointers are fetched before either byte is read
-            // (retail spills both results, then loads the bytes).
-            char* vMin = (char*)getBdatStringColumnValue((void*)bdat, pMin, row);
-            char* vSec = (char*)getBdatStringColumnValue((void*)bdat, pSec, row);
-            return vMin[0] * 60 + vSec[0];
+            // The bdat cell word is left-justified: a u8 column value is the
+            // word's leading byte, read back through the union.
+            CfTBdatCell vMin;
+            CfTBdatCell vSec;
+            vMin.w = getBdatStringColumnValue((void*)bdat, pMin, row);
+            vSec.w = getBdatStringColumnValue((void*)bdat, pSec, row);
+            return vMin.b * 60 + vSec.b;
         }
     }
     return gCfTFallbackHourTable[mode] * 60 + gCfTFallbackMinuteTable[mode];
 }
 
-// True when `target` (minutes-of-day) falls inside the minute window bounded
-// by `hi` and `lo`; a window whose start is past its end (lo < hi) wraps
-// around the 24-hour 0x5A0-minute day. The comparisons are unsigned u16
-// arithmetic, so the 0x5A0 cycle boundary is handled without a full modulo.
-static int inWindow(u32 target, u32 hi, u32 lo) {
-    if (lo < hi) {
-        if (target < (u32)(u16)(lo + 0x5a0)) return 1;
-        if (target < hi) return 0;
-        if (target >= 0x5a0) return 0;
-        return 1;
-    }
-    if (target < hi) return 0;
-    if (target >= lo) return 0;
-    return 1;
-}
-
 // Select the play-time display mode for the given minute-of-day `target`
-// (b + a*60). Fetches the four bdat time values times[1..4], builds a
-// wrap-shifted copy sel[] = times[2..4],times[1], then scans the three
-// consecutive minute windows with wrap-around indexing; returns 1..3 for a
-// window hit and 4 when the target falls in none of them.
-__declspec(noinline) int CfT_SelectDisplayMode(u16 a, u16 b) {
-    u32 target = (u16)(b + a * 60);
-    u16 times[5];
-    u16 sel[4];
-    int i = 1;
-    do {
-        times[i] = (u16)CfT_GetClockTimeByMode(i);
-    } while (++i <= 4);
-    for (i = 0; i < 4; i++) {
-        int idx = i + 2;
-        if (idx >= 5) idx = 1;
-        sel[i] = times[idx];
+// (b + a*60). Fetches the four bdat start times start[1..4] (1-based by
+// mode), pairs each with the next mode's start end[i] (mode 4 wraps to 1),
+// and returns the first mode whose [start, end) minute window holds the
+// target; a window whose end is before its start wraps past the 0x5A0-minute
+// day. Falls back to mode 4.
+int CfT_SelectDisplayMode(u16 a, u16 b) {
+    u16 target = b + a * 60;
+    // Retail frame (0x40) reserves 10-entry tables; only [1..4] are used.
+    u16 start[10];
+    u16 end[10];
+    int i;
+    for (i = 1; i <= 4; i++) {
+        start[i] = (u16)CfT_GetClockTimeByMode(i);
     }
-    int result = 1;
-    for (i = 1; i < 5; i += 2) {
-        if (inWindow(target, times[i], sel[i - 1])) return result;
-        result++;
-        if (inWindow(target, times[i + 1], sel[i])) return result;
-        result++;
+    for (i = 1; i <= 4; i++) {
+        int next = i + 1;
+        if (next >= 5) next = 1;
+        end[i] = start[next];
+    }
+    for (i = 1; i <= 4; i++) {
+        if (end[i] < start[i]) {
+            if (target < (u16)(end[i] + 0x5a0) || (target >= start[i] && target < 0x5a0)) return i;
+        } else {
+            if (target >= start[i] && target < end[i]) return i;
+        }
     }
     return 4;
 }
 
 // Truncated frame counts of the two play-time rates, passed to the
 // file-event entry matcher as u16 pairs. The intermediate fmod against
-// lbl_eu_80666230 is a discarded calibration call kept for side effects.
+// the 43200.0 period is a discarded calibration call kept for side effects.
 u32 CfT_DispatchFrameCounts() {
-    int a = (int)(float)fmod(gCfTPlayClockSeconds / lbl_eu_8066623C, lbl_eu_80666240);
-    int b = (int)(float)fmod(gCfTPlayClockSeconds / lbl_eu_80666248, lbl_eu_80666250);
-    fmod(gCfTPlayClockSeconds, lbl_eu_80666230);
+    int a = (int)(float)fmod(gCfTPlayClockSeconds / 1800.0f, 24.0);
+    int b = (int)(float)fmod(gCfTPlayClockSeconds / 30.0f, 60.0);
+    fmod(gCfTPlayClockSeconds, 43200.0);
     return CfT_SelectDisplayMode((u16)a, (u16)b);
 }
 
@@ -517,9 +498,9 @@ void CfT_ResetEventState() {
     CfFrameTimer timer;
     timer.raw = gCfTFrameTimerRaw[0];
     gCfTEventFrameCounter = 0;
-    gCfTPlayClockSeconds = lbl_eu_80666238;
-    gCfTPlayClockPrevSeconds = lbl_eu_80666238;
-    gCfTPlayClockRemainder = lbl_eu_80666238;
+    gCfTPlayClockSeconds = 0.0f;
+    gCfTPlayClockPrevSeconds = 0.0f;
+    gCfTPlayClockRemainder = 0.0f;
     gCfTCalendarDay = 1;
     gCfTCalendarYear = 1;
     visionSharedStateFlags = 0;

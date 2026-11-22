@@ -46,7 +46,7 @@ public:
         unk1C = false;
         mStartNodePtr = &mStartNode;
         mStartNodePtr->mNext = &mStartNode;
-        mStartNodePtr->mPrev = mStartNode.mNext;
+        mStartNodePtr->mPrev = mStartNodePtr;
     }
 
     virtual ~_reslist_base(){

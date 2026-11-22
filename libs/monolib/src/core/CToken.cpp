@@ -1,26 +1,16 @@
 #include "monolib/core/CToken.hpp"
 #include <cstring>
 
-// ============================================================================
-// Blob monolibdata1.s dissolve - CToken-owned data ranges (retail bytes below
-// are the DOL ground truth; reloc names match the retail blob monolibdata1.o).
+// CToken-owned data ranges in the retail DOL:
 // .data 0x8056B4D0-0x8056B538: tokenizer string table, matchKeyWords switch
-//   jumptable (function+offset relocs) and the CToken vtable.
+//   jumptable (function+offset relocs) and the compiler-emitted CToken vtable.
 // .rodata 0x80522558-0x80522588: token-size table used by findTokenName.
-// .sdata 0x80663560-0x80663568: CToken RTTI base list {&"CToken", 0}.
-// ============================================================================
+// .sdata 0x80663560: compiler-emitted CToken RTTI locator.
 
-// The type-name string and the int->float magic word are compiler pools of
-// the still-unmatched matchKeyWords/RTTI code; keep their retail labels until
-// those functions are reconstructed. The eleven format strings below are
-// TU-owned and emitted by MWCC in first-use order from the table initializer.
-extern "C" const char lbl_eu_8066A2C8[7];  // "CToken"
-// .sdata 0x80663560: CToken RTTI base list (defined below).
-extern "C" u32 lbl_eu_80663560[2];
-
-// CToken dtor / tokenizer entry (retail C-linkage names; coexist with the
-// class member declarations below).
-extern "C" void __dt__6CTokenFv();
+// The int->float magic word at .sdata2 0x8066A2C0 belongs to the unmatched
+// matchKeyWords body and is not emitted until that body is reconstructed.
+// The eleven format strings below are TU-owned and emitted by MWCC in first-use
+// order from the table initializer.
 extern "C" int matchKeyWords__6CTokenFPCcPCc(const char*, const char*);
 
 // .data 0x8056B4D0: tokenizer format-string table (11 pointers + null).
@@ -45,19 +35,11 @@ extern "C" u32 jumptable_eu_8056B500[11] = {
     (u32)((char*)&matchKeyWords__6CTokenFPCcPCc + 2240),
 };
 
-// .data 0x8056B52C: CToken vtable (retail label; ctor stores it at [0]).
-extern "C" u32 lbl_eu_8056B52C[3] = {
-    (u32)&lbl_eu_80663560[0], 0, (u32)&__dt__6CTokenFv,
-};
-
 // .rodata 0x80522558: token-size table for findTokenName's lookup.
 // name-guess: length of each format identifier above; 0 terminates the walk.
 static const u32 sTokenNameLengths[12] = {
     4, 2, 2, 2, 3, 3, 3, 3, 3, 5, 2, 0,
 };
-
-// .sdata 0x80663560: CToken RTTI base list.
-extern "C" u32 lbl_eu_80663560[2] = { (u32)&lbl_eu_8066A2C8[0], 0 };
 
 // NOTE: retail findTokenName reads the CToken format-string table (.data)
 // with the size table sTokenNameLengths (.rodata, 12th entry 0 = terminator)
@@ -66,7 +48,6 @@ extern "C" u32 lbl_eu_80663560[2] = { (u32)&lbl_eu_8066A2C8[0], 0 };
 // its retail .rodata 0x30 range).
 
 CToken::CToken() {
-    *(void**)this = (void*)lbl_eu_8056B52C;
     m_fieldCount = 0;
     for (int i = 0; i < 16; i++) {
         m_data[i] = 0;

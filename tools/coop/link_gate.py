@@ -165,7 +165,7 @@ def check_symbols_dupes(root: Path = ROOT) -> list[str]:
 
 
 # ------------------------------------------------------------- live run
-def run_link(region: str, ninja: str = "ninja") -> tuple[dict, str, int]:
+def run_link(region: str, ninja: str = str(Path(__file__).resolve().parents[2] / "ninja")) -> tuple[dict, str, int]:
     """Caller MUST hold the build lock. Returns (result, log, link rc)."""
     elf = f"build/{region}/main.elf"
     proc = subprocess.run(
@@ -182,7 +182,7 @@ def run_link(region: str, ninja: str = "ninja") -> tuple[dict, str, int]:
     return make_result(undefs, parse_link_log(log)), log, proc.returncode
 
 
-def check_sha1(region: str, ninja: str = "ninja") -> list[str]:
+def check_sha1(region: str, ninja: str = str(Path(__file__).resolve().parents[2] / "ninja")) -> list[str]:
     """Active only at zero missing: main.elf must exist and build.sha1 match."""
     if not (ROOT / "build" / region / "main.elf").is_file():
         return [f"build/{region}/main.elf missing"]

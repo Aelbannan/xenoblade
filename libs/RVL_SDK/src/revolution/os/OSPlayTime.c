@@ -230,7 +230,7 @@ void __OSPlayTimeAlarmExpired(OSAlarm* alarm, OSContext* ctx) {
     prio = 0;
     flags = 0;
     created = OSCreateThread(rebootThread, (OSThreadFunc)__OSPlayTimeRebootThread,
-                             NULL, (char*)rebootThread + 0x1320, 0x1000, prio, flags);
+                             NULL, OS_USABLE_MEM2_END, 0x1000, prio, flags);
     if (!created) {
         __OSHotResetForError();
     }

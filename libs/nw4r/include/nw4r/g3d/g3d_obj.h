@@ -29,13 +29,7 @@ inline u32 align32(u32 x) {
  *
  ******************************************************************************/
 
-// Retail vtable data (nw4r_data.s lbl_eu_805695B0, .data). The class is
-// __declspec(novtable) so the TU emits no local vtable; the inline ctor and
-// the dtor assign the retail label explicitly (MWCC_CASES "Retail-owned
-// vtable data").
-extern "C" void* lbl_eu_805695B0[];
-
-class __declspec(novtable) G3dObj {
+class G3dObj {
 public:
     template <u32 N> struct ResNameDataT {
         u32 len; // at 0x0
@@ -103,10 +97,12 @@ public:
 
     virtual const char* GetTypeName() const; // at 0x18
 
-    G3dObj(MEMAllocator* pAllocator, G3dObj* pParent)
-        : mpHeap(pAllocator), mpParent(pParent) {
-        *(void**)this = (void*)lbl_eu_805695B0;
+    static const TypeObj GetTypeObjStatic() {
+        return TypeObj(TYPE_NAME);
     }
+
+    G3dObj(MEMAllocator* pAllocator, G3dObj* pParent)
+        : mpHeap(pAllocator), mpParent(pParent) {}
 
     G3dObj* GetParent() const {
         return mpParent;

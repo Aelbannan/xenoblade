@@ -26,6 +26,10 @@
 #include "libs/monolib/src/lod/code_80468434.hpp"
 #include "monolib/lod/UnkClass_8046D144.hpp"
 #include "monolib/scn/CScn.hpp"
+
+struct LodDrawObj;
+struct LodTexSel;
+
 namespace LOD {
 struct UnkClass_804645CC {
     void drawLodRecordExt();
@@ -36,8 +40,10 @@ struct UnkClass_804645CC {
     void resetLodFlags();
     void scaleLodFadeAlpha();
     void setLodColorFactor();
+    static void setupLodTexFog(CScn* item, LodDrawObj* obj);
+    static void buildLodTexObj(LodTexSel* sel, GXTexMapID map, f32 lodBias);
     void setLodDepthScale();
-    void setupLodTev();
+    static void setupLodTev(void* rec);
 };
 }
 
@@ -89,7 +95,6 @@ extern u32 lbl_eu_80665780;     // bound ResFile pointer
 extern "C" f32 getLodCacheObject__Q23LOD17UnkClass_8046368CFv(s32 index);
 extern "C" void fetchSampleXY__Q23LOD17CLODCacheManagerSFv(s32* outA,
                                                            s32* outB);
-extern "C" void setupLodTev__Q23LOD17UnkClass_804645CCFv(void* rec);
 
 struct CScnEnvLgtCtrlResList;  // scene env-controller list owner (scnLgtEnterMode20 target)
 extern "C" void* getScnRootSlot10(void* self);
@@ -179,8 +184,7 @@ struct LodTexSel {
 // ---------------------------------------------------------------------------
 // us-8046910c  setupLodTexFog  (frame tex-matrix + fog state setup)
 // ---------------------------------------------------------------------------
-extern "C" void setupLodTexFog__Q23LOD17UnkClass_804645CCFv(CScn* item,
-                                                           LodDrawObj* obj) {
+void LOD::UnkClass_804645CC::setupLodTexFog(CScn* item, LodDrawObj* obj) {
     LodRes11xx* res =
         (LodRes11xx*)((LodSceneResPtr*)item->unk64)->field_0x08;
     u32* mtx = sAmbientScaleLut;
@@ -342,7 +346,7 @@ applyState:
     }
     LodCallFn finalFn = ((LodCallFn*)(tbl + 0xE0))[rec->field_0x0A];
     finalFn();
-    setupLodTev__Q23LOD17UnkClass_804645CCFv(rec);
+    UnkClass_804645CC::setupLodTev(rec);
 
     u16 zFlags = rec->field_0x0C;
     GXSetZMode((GXBool)((zFlags >> 1) & 1), GX_LEQUAL, (GXBool)(zFlags & 1));
@@ -355,9 +359,8 @@ applyState:
 // ---------------------------------------------------------------------------
 // us-804697d0  buildLodTexObj  (texture object build + bind)
 // ---------------------------------------------------------------------------
-extern "C" void buildLodTexObj__Q23LOD17UnkClass_804645CCFv(LodTexSel* sel,
-                                                           GXTexMapID map,
-                                                           f32 lodBias) {
+void LOD::UnkClass_804645CC::buildLodTexObj(LodTexSel* sel, GXTexMapID map,
+                                            f32 lodBias) {
     nw4r::g3d::ResTex tex;
     u16 idxA;
     u16 idxB;
@@ -459,8 +462,6 @@ extern "C" void buildLodTexObj__Q23LOD17UnkClass_804645CCFv(LodTexSel* sel,
     }
     GXLoadTexObj(&texObj, map);
 }
-
-void LOD::UnkClass_804645CC::setupLodTev() {}
 
 // The retail table keeps these entry points under shortened Fv names while
 // passing their real ABI values in the argument registers.  Keep the linker

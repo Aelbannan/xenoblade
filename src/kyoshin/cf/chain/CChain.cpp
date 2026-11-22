@@ -374,7 +374,7 @@ void CChain_StartArtsCombo(cf::CChain* chain, cf::CChainBattleObj* target) {
     }
     u32 actorKey;
     if (actor != 0) {
-        actorKey = actor->unk0;
+        actorKey = (u32)actor->unk0;
     } else {
         actorKey = 0;
     }
@@ -438,7 +438,7 @@ void CChain_RegisterCombo(cf::CChain* self, cf::CChainBattleObj* target) {
     } else {
         actor = 0;
     }
-    u32 key = (actor != 0) ? actor->unk0 : 0;
+    u32 key = (actor != 0) ? (u32)actor->unk0 : 0;
     if ((u32)target != key) return;
 
     if (self->mHead.field_8 != 0) {
@@ -480,7 +480,7 @@ void CChain_RegisterCombo(cf::CChain* self, cf::CChainBattleObj* target) {
 // (re-arm the member list, chain time, actor reslist, menu / err-mes / combo
 // records, then jump to state 0x1a) or dispatches the current state byte
 // through the jump table (chain types 0..0x1a).
-__declspec(noinline) void CChain_TickChain(cf::CChain* self) {
+void CChain_TickChain(cf::CChain* self) {
     // Head / member-list views stay inline (no named cast locals): a named
     // mirror local gets enregistered into a callee-saved register and shifts
     // the whole allocation away from retail.
@@ -599,7 +599,7 @@ __declspec(noinline) void CChain_TickChain(cf::CChain* self) {
         } else {
             actor = 0;
         }
-        func_800F3970(getInstance__Q22cf14CBattleManagerFv(), (void*)actor->unk0,
+        func_800F3970(cf::CBattleManager::getInstance(), (void*)actor->unk0,
                       0, 0, 0);
         ChainChance_Reset((cf::CChainChance*)&self->mChainChance);
         CChain_ResetVoiceMgr();
@@ -1072,7 +1072,7 @@ __declspec(noinline) void CChain_TickChain(cf::CChain* self) {
                 } else {
                     actor = 0;
                 }
-                u32 battleObj = (actor != 0) ? actor->unk0 : 0;
+                u32 battleObj = (actor != 0) ? (u32)actor->unk0 : 0;
                 CfObjectMove_setAnimModeArgs((u8*)&((cf::CChainBattleObj*)battleObj)->mSub, 0x1b, 0, 5, 1);
             }
             self->mHead.field_5 =
@@ -1484,11 +1484,11 @@ int CChain_TryActivateChain(cf::CChain* self, u32 param) {
         result = 0;
     } else {
         cf::CBattleManagerTail* bm =
-            (cf::CBattleManagerTail*)getInstance__Q22cf14CBattleManagerFv();
+            (cf::CBattleManagerTail*)cf::CBattleManager::getInstance();
         if (bm->field_0x20C8 != 0) {
             result = 0;
         } else {
-            bm = (cf::CBattleManagerTail*)getInstance__Q22cf14CBattleManagerFv();
+            bm = (cf::CBattleManagerTail*)cf::CBattleManager::getInstance();
             if (SuddenCommuIsStateActive(&bm->field_0x216C[0]) != 0) {
                 result = 0;
             } else if (self->mHead.field_2 != 0) {
@@ -1546,9 +1546,9 @@ int CChain_CheckActivateReady(cf::CChain* self, u32 param) {
         param = (u32)player;
     }
     if (param == 0) return 0;
-    cf::CBattleManagerTail* bm = (cf::CBattleManagerTail*)getInstance__Q22cf14CBattleManagerFv();
+    cf::CBattleManagerTail* bm = (cf::CBattleManagerTail*)cf::CBattleManager::getInstance();
     if (bm->field_0x20C8 != 0) return 0;
-    bm = (cf::CBattleManagerTail*)getInstance__Q22cf14CBattleManagerFv();
+    bm = (cf::CBattleManagerTail*)cf::CBattleManager::getInstance();
     if (SuddenCommuIsStateActive(&bm->field_0x216C[0]) != 0) return 0;
     if (self->mHead.field_2 != 0) return 0;
     return Chain_CheckActivatable(&self->mChainActorList, param);
@@ -2065,7 +2065,7 @@ int CChainActor_CheckVoice(cf::CChainVoiceHolder* self) {
 }
 
 extern "C" void CChain_setFieldAndClear(void* self, int val) {
-    ((cf::CChainActorData*)self)->unk0 = val;
+    ((cf::CChainActorData*)self)->unk0 = (cf::CChainBattleObj*)val;
     ((cf::CChainActorData*)self)->unk6C = 0;
 }
 

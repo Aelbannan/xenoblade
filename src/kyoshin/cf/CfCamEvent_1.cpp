@@ -1,29 +1,29 @@
 // Auto-scaffolded catalog TU for kyoshin/cf/CfCamEvent_1
 // Replace stubs with high-level C/C++ during decomp.
-
+#include <nw4r/math/math_triangular.h>
 #include "kyoshin/cf/CfBdat.hpp"
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/code_800AA008_Tok.hpp"
 #include "kyoshin/cf/CfCamSymbols.hpp"
 #include "kyoshin/cf/CfMapEffectManager.hpp"
 #include "monolib/scn/CScn.hpp"
-
+#include <nw4r/db/db_assert.h>
 #include "kyoshin/cf/CfGameManagerData.hpp"
 #include <monolib/math/Random.hpp>
 #include "monolib/util/FixStr.hpp"
 #include <math.h>
-
+#include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/cf/CfCamEvent_1.hpp"
 #include "kyoshin/code_800A3B24.hpp"
 #include "kyoshin/cf/object/CfObjectSelectorObj.hpp"
 #include "kyoshin/cf/CtrlPc.hpp"  // CfObj90E4: real selector object type
-
-
-#include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (ml::epsilon)
+using nw4r::math::SinFIdx;
+using nw4r::math::CosFIdx;
+#include "monolib/math/FloatUtils.hpp"
 #include "kyoshin/code_802405F4.hpp"
-
-
-// Typed vtables only. The retail 0x70 assert-string tail at 0x80527358
+using nw4r::math::Atan2FIdx;
+using nw4r::db::Warning;
+// Typed vtables only.
 // belongs to CfCam.cpp's split (cfCam_quatSlerp / cfCam_xzLength) and is
 // no longer emitted here. lbl_eu_80527260 (0x88 = 34 words): CfCamFollow
 // vtable - [typeinfo, 0, dtor + 27 virtuals, typeinfo, 0,0,0].
@@ -334,7 +334,7 @@ CfCamEventObj* CamEvtCreateSlotObj(u32 first, CfCamEventObj* second,
                         (CfCamEventObj*)((cf::CObjectParam*)second)->CObjectParam_getSelfObjectId();
                     if (v != 0) player = (CfCamEventObj*)findObjectById__Fi((int)v);
                     if (player == 0)
-                        player = (CfCamEventObj*)getPlayer__Q22cf13CfGameManagerFi(1);
+                        player = (CfCamEventObj*)cf::CfGameManager::getPlayer(1);
                 }
 
                 u16 c1 = (u16)CamEvtMapActionToCampaign(sixth->h0A, sixth->h0C);
@@ -469,27 +469,27 @@ int CamEvtAdvanceShake(CfCamShakeState* self, int mode) {
     switch (kind) {
     case 1:
         t = 1.0f +
-            SinFIdx__Q24nw4r4mathFf(40.743664f *
+            SinFIdx(40.743664f *
                 (ml::halfpi * t - ml::halfpi));
         break;
     case 2:
         t = 0.5f *
             (1.0f +
-             SinFIdx__Q24nw4r4mathFf(40.743664f *
+             SinFIdx(40.743664f *
                  (ml::pi * t - ml::halfpi)));
         break;
     case 4:
-        t = SinFIdx__Q24nw4r4mathFf(40.743664f *
+        t = SinFIdx(40.743664f *
             (ml::halfpi * t));
         break;
     case 3:
         if (t > 0.5f)
             t = 1.0f - 0.5f *
-                SinFIdx__Q24nw4r4mathFf(40.743664f *
+                SinFIdx(40.743664f *
                     (ml::pi * t));
         else
             t = 0.5f *
-                SinFIdx__Q24nw4r4mathFf(40.743664f *
+                SinFIdx(40.743664f *
                     (ml::pi * t));
         break;
     default:
@@ -850,7 +850,7 @@ void CamEvtSolveAimPair(ml::CVec3* out1, ml::CVec3* out2, CamCamSrc* a, CamCamSr
         diff.x = vb->v.x - va->v.x;
         diff.y = vb->v.y - va->v.y;
         diff.z = vb->v.z - va->v.z;
-        scale = 0.024543693f * Atan2FIdx__Q24nw4r4mathFff(diff.x, diff.z);
+        scale = 0.024543693f * Atan2FIdx(diff.x, diff.z);
 
         if (a != b) scale = a->getScale5B4();
         if (c1 == 1 && c2 == 1) {
@@ -1025,8 +1025,8 @@ static inline void camEventAnglePair(ml::CVec3* o1, ml::CVec3* o2,
         dstW->w[1] = wy;
         dstW->w[2] = srcW->w[2];
         f32 len = (f32)sqrt((f64)(d.x * d.x + d.z * d.z));
-        dst2->x0 = 0.024543693f * Atan2FIdx__Q24nw4r4mathFff(d.y, len);
-        dst2->x4 = 0.024543693f * Atan2FIdx__Q24nw4r4mathFff(d.z, d.x);
+        dst2->x0 = 0.024543693f * Atan2FIdx(d.y, len);
+        dst2->x4 = 0.024543693f * Atan2FIdx(d.z, d.x);
         dst2->x8 = lbl_eu_8066641C;
         VecMath_WrapAnglesPi((ml::CVec3*)dst2);
         // Second stack copy of the difference: PSVECMag takes its address,
@@ -1277,14 +1277,14 @@ void* CamEvtSetupFollowCam(CfCamEventManager* self, int unk34,
         void* v = (void*)(uintptr_t)((cf::CObjectParam*)&src->voice)->CObjectParam_getSelfObjectId();
         followObj = func_800BBC0C(findObjectById__Fi((int)v));
         if (unk34 == 0x2B) {
-            void* p0 = getPlayer__Q22cf13CfGameManagerFi(0);
+            void* p0 = cf::CfGameManager::getPlayer(0);
             if (p0 == 0) {
                 followObj = 0;
             } else {
                 followObj = 0;
                 void* q = ((CamEventVoice*)p0)->unk4C();
                 if (q != 0) followObj = func_800BBC0C(findObjectById__Fi((int)q));
-                if (followObj == 0) followObj = getPlayer__Q22cf13CfGameManagerFi(1);
+                if (followObj == 0) followObj = cf::CfGameManager::getPlayer(1);
             }
             self->field_0x34 = (u32)followObj;
         }
@@ -1984,8 +1984,8 @@ void CamEvtPushCamEntry(CfCamEventManager* self, int add, ml::CVec3* p5, ml::CVe
             d.z = p5->z - aimVec->z;
             f32 len = (f32)sqrt((f64)(d.z * d.z + d.x * d.x));
             CamTripletLocals out;
-            out.x = 0.024543693f * Atan2FIdx__Q24nw4r4mathFff(d.y, len);
-            out.y = 0.024543693f * Atan2FIdx__Q24nw4r4mathFff(d.x, d.z);
+            out.x = 0.024543693f * Atan2FIdx(d.y, len);
+            out.y = 0.024543693f * Atan2FIdx(d.x, d.z);
             out.z = lbl_eu_8066641C;
             VecMath_WrapAnglesPi((ml::CVec3*)&out);
             if ((f32)__fabs((f64)d.x) <= ml::epsilon &&
@@ -2059,8 +2059,8 @@ void CamEvtPushCamEntry(CfCamEventManager* self, int add, ml::CVec3* p5, ml::CVe
         d.z = p5->z - aimVec->z;
         f32 len = (f32)sqrt((f64)(d.z * d.z + d.x * d.x));
         CamTripletLocals out;
-        out.x = 0.024543693f * Atan2FIdx__Q24nw4r4mathFff(d.y, len);
-        out.y = 0.024543693f * Atan2FIdx__Q24nw4r4mathFff(d.x, d.z);
+        out.x = 0.024543693f * Atan2FIdx(d.y, len);
+        out.y = 0.024543693f * Atan2FIdx(d.x, d.z);
         out.z = lbl_eu_8066641C;
         VecMath_WrapAnglesPi((ml::CVec3*)&out);
         if ((f32)__fabs((f64)d.x) <= ml::epsilon &&
@@ -2144,8 +2144,8 @@ void CamEvtPushCamEntry(CfCamEventManager* self, int add, ml::CVec3* p5, ml::CVe
                 t0.y = aimVec->y;
                 t0.z = aimVec->z;
                 f32 len = (f32)sqrt((f64)(d.z * d.z + d.x * d.x));
-                t1.x = 0.024543693f * Atan2FIdx__Q24nw4r4mathFff(d.y, len);
-                t1.y = 0.024543693f * Atan2FIdx__Q24nw4r4mathFff(d.x, d.z);
+                t1.x = 0.024543693f * Atan2FIdx(d.y, len);
+                t1.y = 0.024543693f * Atan2FIdx(d.x, d.z);
                 t1.z = lbl_eu_8066641C;
                 VecMath_WrapAnglesPi((ml::CVec3*)&t1);
                 if ((f32)__fabs((f64)d.x) <= ml::epsilon &&
@@ -2445,14 +2445,14 @@ int CamEvtUpdateFrame(CfCamEventManager* self) {
             f32 ax = u0->u.tab.baseX;
             f32 ay = u0->u.tab.baseY;
             f32 mag = (f32)__fabs((f64)u0->u.tab.baseZ);
-            f32 s1 = SinFIdx__Q24nw4r4mathFf(40.743664f * k1);
-            f32 c1 = CosFIdx__Q24nw4r4mathFf(40.743664f * k1);
+            f32 s1 = SinFIdx(40.743664f * k1);
+            f32 c1 = CosFIdx(40.743664f * k1);
             CamEventMtx m;
             m.m[0] = c1; m.m[1] = -s1; m.m[2] = k1;
             m.m[3] = s1; m.m[4] = c1; m.m[5] = k1;
             m.m[6] = k1; m.m[7] = k1; m.m[8] = half;
-            f32 sn = SinFIdx__Q24nw4r4mathFf(40.743664f * ax);
-            f32 cs = CosFIdx__Q24nw4r4mathFf(40.743664f * ax);
+            f32 sn = SinFIdx(40.743664f * ax);
+            f32 cs = CosFIdx(40.743664f * ax);
             CamEventMtx n1;
             n1.m[8] = k1 * m.m[2] + sn * k1 + cs * m.m[8];
             n1.m[7] = k1 * m.m[1] + sn * c1 + cs * m.m[7];
@@ -2463,8 +2463,8 @@ int CamEvtUpdateFrame(CfCamEventManager* self) {
             n1.m[4] = cs * m.m[4] + k1 * m.m[1] - sn * m.m[7];
             n1.m[3] = k1 * m.m[0] + cs * s1 - sn * m.m[6];
             n1.m[5] = cs * m.m[5] - sn * m.m[8];
-            f32 s3 = SinFIdx__Q24nw4r4mathFf(40.743664f * ay);
-            f32 c3 = CosFIdx__Q24nw4r4mathFf(40.743664f * ay);
+            f32 s3 = SinFIdx(40.743664f * ay);
+            f32 c3 = CosFIdx(40.743664f * ay);
             CamEventMtx n2;
             n2.m[8] = k1 * n1.m[2] + s3 * k1 + c3 * n1.m[8];
             n2.m[7] = k1 * n1.m[1] + s3 * c1 + c3 * n1.m[7];
@@ -2513,14 +2513,14 @@ int CamEvtUpdateFrame(CfCamEventManager* self) {
         f32 ax = u0->u.tab.baseX;
         f32 ay = u0->u.tab.baseY;
         f32 mag = (f32)__fabs((f64)u0->u.tab.baseZ);
-        f32 s1 = SinFIdx__Q24nw4r4mathFf(40.743664f * k1);
-        f32 c1 = CosFIdx__Q24nw4r4mathFf(40.743664f * k1);
+        f32 s1 = SinFIdx(40.743664f * k1);
+        f32 c1 = CosFIdx(40.743664f * k1);
         CamEventMtx m;
         m.m[0] = c1; m.m[1] = -s1; m.m[2] = k1;
         m.m[3] = s1; m.m[4] = c1; m.m[5] = k1;
         m.m[6] = k1; m.m[7] = k1; m.m[8] = half;
-        f32 sn = SinFIdx__Q24nw4r4mathFf(40.743664f * ax);
-        f32 cs = CosFIdx__Q24nw4r4mathFf(40.743664f * ax);
+        f32 sn = SinFIdx(40.743664f * ax);
+        f32 cs = CosFIdx(40.743664f * ax);
         CamEventMtx n1;
         n1.m[8] = k1 * m.m[2] + sn * k1 + cs * m.m[8];
         n1.m[7] = k1 * m.m[1] + sn * c1 + cs * m.m[7];
@@ -2531,8 +2531,8 @@ int CamEvtUpdateFrame(CfCamEventManager* self) {
         n1.m[4] = cs * m.m[4] + k1 * m.m[1] - sn * m.m[7];
         n1.m[3] = k1 * m.m[0] + cs * s1 - sn * m.m[6];
         n1.m[5] = cs * m.m[5] - sn * m.m[8];
-        f32 s3 = SinFIdx__Q24nw4r4mathFf(40.743664f * ay);
-        f32 c3 = CosFIdx__Q24nw4r4mathFf(40.743664f * ay);
+        f32 s3 = SinFIdx(40.743664f * ay);
+        f32 c3 = CosFIdx(40.743664f * ay);
         CamEventMtx n2;
         n2.m[8] = k1 * n1.m[2] + s3 * k1 + c3 * n1.m[8];
         n2.m[7] = k1 * n1.m[1] + s3 * c1 + c3 * n1.m[7];
@@ -2612,10 +2612,10 @@ int CamEvtAdvanceBusy(CfCamEventManager* self) {
         f32 bx = self->shake[0].u.tab.baseX;
         f32 by = self->shake[0].u.tab.baseY;
 
-        f32 s1 = SinFIdx__Q24nw4r4mathFf(40.743664f * lbl_eu_8066641C);
-        f32 c1 = CosFIdx__Q24nw4r4mathFf(40.743664f * lbl_eu_8066641C);
-        f32 s2 = SinFIdx__Q24nw4r4mathFf(40.743664f * bx);
-        f32 c2 = CosFIdx__Q24nw4r4mathFf(40.743664f * bx);
+        f32 s1 = SinFIdx(40.743664f * lbl_eu_8066641C);
+        f32 c1 = CosFIdx(40.743664f * lbl_eu_8066641C);
+        f32 s2 = SinFIdx(40.743664f * bx);
+        f32 c2 = CosFIdx(40.743664f * bx);
         CamEventMtx a;
         a.m[0] = c1; a.m[1] = -s1; a.m[2] = lbl_eu_8066641C;
         a.m[3] = s1; a.m[4] = c1; a.m[5] = lbl_eu_8066641C;
@@ -2636,8 +2636,8 @@ int CamEvtAdvanceBusy(CfCamEventManager* self) {
             a.m[2] = t2; a.m[1] = t1; a.m[0] = t0;
             a.m[5] = t5; a.m[4] = t4; a.m[3] = t3;
         }
-        f32 s3 = SinFIdx__Q24nw4r4mathFf(40.743664f * by);
-        f32 c3 = CosFIdx__Q24nw4r4mathFf(40.743664f * by);
+        f32 s3 = SinFIdx(40.743664f * by);
+        f32 c3 = CosFIdx(40.743664f * by);
         // Reuse the same matrix storage for the second step (the stepped
         // values from step one are no longer needed).
         a.m[0] = c3; a.m[1] = -s3; a.m[2] = lbl_eu_8066641C;
@@ -2991,7 +2991,7 @@ void CamEvtCheckAimAngles(CfCamEventManager* self) {
             int ok = 0;
             if (f31 <= 1.0f && f31 >= -1.0f) ok = 1;
             if (ok == 0) {
-                Warning__Q24nw4r2dbFPCciPCce(lbl_eu_805262F0, 0xef, lbl_eu_805262C8);
+                Warning(lbl_eu_805262F0, 0xef, lbl_eu_805262C8);
             }
 
             // Retail only re-validates the second triplet when the first
@@ -3007,7 +3007,7 @@ void CamEvtCheckAimAngles(CfCamEventManager* self) {
                 int ok2 = 0;
                 if (f30 <= 1.0f && f30 >= -1.0f) ok2 = 1;
                 if (ok2 == 0) {
-                    Warning__Q24nw4r2dbFPCciPCce(lbl_eu_805262F0, 0xef, lbl_eu_805262C8);
+                    Warning(lbl_eu_805262F0, 0xef, lbl_eu_805262C8);
                 }
 
                 f32 a2 = acos(f30);

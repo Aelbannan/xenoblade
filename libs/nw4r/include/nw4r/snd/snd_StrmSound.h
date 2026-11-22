@@ -28,6 +28,8 @@ public:
 
 public:
     explicit StrmSound(SoundInstanceManager<StrmSound>* pManager);
+    StrmSound(SoundInstanceManager<StrmSound>* pManager, int priority,
+              int ambientPriority);
     virtual ~StrmSound();
 
     virtual void Shutdown(); // at 0x28
@@ -69,11 +71,10 @@ private:
 
 private:
     StrmPlayer mStrmPlayer;                    // at 0xD8
-    u8 _padStrmPlayer[0xD6C - sizeof(StrmPlayer) - 0x34];
     StrmSoundHandle* mTempSpecialHandle;       // at 0xE44
     SoundInstanceManager<StrmSound>* mManager; // at 0xE48
-    char UNK_0xE4C[0xE60 - 0xE4C];
-    char mFileStreamBuffer[FILE_STREAM_BUFFER_SIZE]; // at 0xE60
+    MoveValue<f32, int> mMoveValue[8]; // name-guess: per-track move block at 0xE4C
+    char mFileStreamBuffer[FILE_STREAM_BUFFER_SIZE]; // at 0xECC
 };
 
 } // namespace detail

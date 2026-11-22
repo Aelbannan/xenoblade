@@ -338,17 +338,19 @@ asm void LCStoreBlocks(register void* dst, register const void* src,
 u32 LCStoreData(void* dst, const void* src, u32 len) {
     u32 blocks = (len + 31) / 32;
     u32 ret = (blocks + 127) / 128;
+    const u8* src8 = src;
+    u8* dst8 = dst;
 
     while (blocks > 0) {
         if (blocks < 128) {
-            LCStoreBlocks(dst, src, blocks);
+            LCStoreBlocks(dst8, src8, blocks);
             blocks = 0;
         } else {
-            LCStoreBlocks(dst, src, 0);
+            LCStoreBlocks(dst8, src8, 0);
             blocks -= 128;
 
-            dst = (u8*)dst + 0x1000;
-            src = (u8*)src + 0x1000;
+            dst8 += 0x1000;
+            src8 += 0x1000;
         }
     }
 

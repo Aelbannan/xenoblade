@@ -41,7 +41,7 @@ extern "C" int func_8049E51C(const CScnIdMan* self) {
     return static_cast<u32>(__cntlzw(count)) >> 5;
 }
 
-void CScnIdMan::cbRenderBefore() {
+void CScnIdMan::cbRenderBefore(CScn*) {
     if (mFlag) {
         void* a = Scn_FindCamItem(mScn, -1);
         u8 stackbuf[0x38];

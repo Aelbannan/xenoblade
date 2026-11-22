@@ -173,7 +173,7 @@ void ADXSTM_Destroy(ADXSTMHndl* h) {
     ADXCRS_Lock();
     h->stat = 1;
     h->subState = 0;
-    *(u32*)((u8*)h + 0x28) = 0;
+    h->reqId = 0;
     ADXCRS_Unlock();
     ADXCRS_Enter();
     ADXCRS_Lock();
@@ -189,7 +189,7 @@ void ADXSTM_Destroy(ADXSTMHndl* h) {
     ADXCRS_Leave();
 
     for (;;) {
-        if (h->stat == 1 && *(u32*)((u8*)h + 0x28) == 0) break;
+        if (h->stat == 1 && h->reqId == 0) break;
         ADXT_ExecFsSvr();
     }
 
@@ -202,7 +202,7 @@ void ADXSTM_Destroy(ADXSTMHndl* h) {
     ADXCRS_Lock();
     h->stat = 1;
     h->subState = 0;
-    *(u32*)((u8*)h + 0x28) = 0;
+    h->reqId = 0;
     ADXCRS_Unlock();
     ADXCRS_Enter();
     ADXCRS_Lock();
@@ -218,7 +218,7 @@ void ADXSTM_Destroy(ADXSTMHndl* h) {
     ADXCRS_Leave();
 
     for (;;) {
-        if (h->stat == 1 && *(u32*)((u8*)h + 0x28) == 0) break;
+        if (h->stat == 1 && h->reqId == 0) break;
         ADXT_ExecFsSvr();
     }
 
@@ -314,7 +314,7 @@ void ADXSTM_ReleaseFile(ADXSTMHndl* h) {
     ADXCRS_Lock();
     h->stat = 1;
     h->subState = 0;
-    *(u32*)((u8*)h + 0x28) = 0;
+    h->reqId = 0;
     ADXCRS_Unlock();
     ADXCRS_Enter();
     ADXCRS_Lock();
@@ -330,7 +330,7 @@ void ADXSTM_ReleaseFile(ADXSTMHndl* h) {
     ADXCRS_Leave();
 
     for (;;) {
-        if (h->stat == 1 && *(u32*)((u8*)h + 0x28) == 0) break;
+        if (h->stat == 1 && h->reqId == 0) break;
         ADXT_ExecFsSvr();
     }
 
@@ -475,7 +475,7 @@ void ADXSTM_Stop(ADXSTMHndl* h) {
     ADXCRS_Lock();
     h->stat = 1;
     h->subState = 0;
-    *(u32*)((u8*)h + 0x28) = 0;
+    h->reqId = 0;
     ADXCRS_Unlock();
 
     ADXCRS_Enter();
@@ -492,7 +492,7 @@ void ADXSTM_Stop(ADXSTMHndl* h) {
     ADXCRS_Leave();
 
     for (;;) {
-        if (h->stat == 1 && *(u32*)((u8*)h + 0x28) == 0) break;
+        if (h->stat == 1 && h->reqId == 0) break;
         ADXT_ExecFsSvr();
     }
 
@@ -665,7 +665,7 @@ epilogue:
     h->reqId = cvFsReqRd(h->fileHandle, sectorsAvail, tmp[0]);
     h->reqId = (h->reqId > 0) ? h->reqId : 0;
     h->rdAddr = tmp[0];
-    *(u32*)((u8*)h + 0x2C) = tmp[1];
+    h->rdAddr = tmp[1];
 
     if (h->reqId <= 0) {
         /* Request failed - notify SJ */

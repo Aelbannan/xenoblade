@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include <types.h>
+#include "monolib/lod/CTaskLOD.hpp"
 #include "kyoshin/cf/CInfoCf.hpp"
 #include "kyoshin/code_8025FB10.hpp"
 #include "nw4r/g3d/res/g3d_resfile.h"
@@ -98,7 +99,7 @@ public:
 // decl). Declared here: this TU does not include that header.
 extern "C" void Scn_ReleaseUnk80(void* scene, int index, void* vec);
 extern "C" void __dt__Q22cf17CTaskREvtSequenceFv(void*, int);
-extern "C" void cbRenderBefore__Q22cf17CTaskREvtSequenceFv(void*);
+extern "C" void cbRenderBefore__Q22cf17CTaskREvtSequenceFP4CScn(void*);
 
 namespace cf {
     bool CTaskREvtSequence::OnFileEvent(CEventFile* ev) {
@@ -734,7 +735,7 @@ extern "C" void EvtSeqSetupObjLists(cf::CTaskREvtSequence* self) {
                         ->field_0x4 *
                     i);
             CREvtMovie* obj = reinterpret_cast<CREvtMovie*>(
-                __nw__Q22cf8CREvtObjFUl(reinterpret_cast<void*>(0x1C)));
+                cf::CREvtObj::operator new(0x1C));
             if (obj != 0) {
                 __ct__Q22cf10CREvtMovieFP16CREvtMovieScript(
                     obj, reinterpret_cast<CREvtMovieScript*>(entry));
@@ -1623,9 +1624,8 @@ void EvtSeqDispatchObjs(cf::CTaskREvtSequence* self) {
         REvtCam_SetupEvent(reinterpret_cast<CREvtCamera*>(e), (void*)arg,
                       (void*)((u8*)self->field_0x244 + off));
         if ((u32)entry->field_0xC == 0xFFFFFFFF) {
-            entry->field_0xC = reinterpret_cast<EvtSeqObj43C*>(
-                                   *(UnkEvtListEntry**)((u8*)self->field_0xA4 +
-                                                        k))
+            entry->field_0xC = (*(UnkEvtListEntry**)((u8*)self->field_0xA4 +
+                                                      k))
                                    ->field_0x43C;
         }
         off += 8;
@@ -1937,18 +1937,18 @@ void EvtSeqStopSequence(void* selfv) {
     // Cancel the three async file loads (direct read / common archive /
     // sequence chunk); cancelling the archive also drops its buffer.
     if (self->field_0xB8 != 0) {
-        cancel__11CDeviceFileFP11CFileHandle(
+        CDeviceFile::cancel(
             reinterpret_cast<CFileHandle*>(self->field_0xB8));
         self->field_0xB8 = 0;
     }
     if (self->field_0xBC != 0) {
-        cancel__11CDeviceFileFP11CFileHandle(
+        CDeviceFile::cancel(
             reinterpret_cast<CFileHandle*>(self->field_0xBC));
         self->field_0xBC = 0;
         self->field_0xC4 = 0;
     }
     if (self->field_0xFC != 0) {
-        cancel__11CDeviceFileFP11CFileHandle(
+        CDeviceFile::cancel(
             reinterpret_cast<CFileHandle*>(self->field_0xFC));
         self->field_0xFC = 0;
     }
@@ -1998,7 +1998,7 @@ void EvtSeqStopSequence(void* selfv) {
                 self->field_0xF0->field_0x4 * j);
             u8 b = t->field_0x9;
             if (b != 0 && b != 0xFF) {
-                activateLOD__8CTaskLODFv(t->field_0xA);
+                CTaskLOD::activateLOD(t->field_0xA);
             }
         }
         // BGM/fade event rows: only when the fade-out gate bit is clear and
@@ -2730,9 +2730,9 @@ void EvtSeqRefreshEventLod(cf::CTaskREvtSequence* self) {
                            (const char*)reinterpret_cast<cf::CREvtModel*>(entry)->evtModelDataPtr()) == 0) {
                     if (e->field_0x9 == 0xFF) {
                         e->field_0x9 =
-                            (u8)getLODData__8CTaskLODFv(e->field_0xA);
+                            (u8)CTaskLOD::getLODData(e->field_0xA);
                     }
-                    deactivateLOD__8CTaskLODFv(e->field_0xA);
+                    CTaskLOD::deactivateLOD(e->field_0xA);
                 }
                 j++;
             }
@@ -3019,7 +3019,7 @@ u32 EvtSeqResolvePackedResId(u32 resId) {
     return result;
 }
 
-void cf::CTaskREvtSequence::cbRenderBefore() {
+void cf::CTaskREvtSequence::cbRenderBefore(CScn*) {
     if (gmPauseFlags & 0x01000000) {
         return;
     }
@@ -3276,7 +3276,7 @@ int EvtSeqCheckWalkGate(u8* gate) {
 
 void EvtSeqDtorThunk54(void* self) { ((void(*)(void*))__dt__Q22cf17CTaskREvtSequenceFv)((char*)self - 0x54); }
 
-void EvtSeqRenderThunk58(void* self) { ((void(*)(void*))cbRenderBefore__Q22cf17CTaskREvtSequenceFv)((char*)self - 0x58); }
+void EvtSeqRenderThunk58(void* self) { ((void(*)(void*))cbRenderBefore__Q22cf17CTaskREvtSequenceFP4CScn)((char*)self - 0x58); }
 
 extern "C" void EvtSeqDtorThunk58(u8* self) { ((void(*)(void*))__dt__Q22cf17CTaskREvtSequenceFv)((char*)self - 0x58); }
 

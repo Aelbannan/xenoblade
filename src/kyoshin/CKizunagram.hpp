@@ -195,8 +195,7 @@ struct UnkKizunaRes59344 {
     u8 _00[0x2C];
     UnkKizunaVec3 pos;    // 0x2C (placeKizMarker reads/copies it)
     u8 _38[0x44 - 0x38];
-    u32 field44; // 0x44
-    u32 field48; // 0x48
+    UnkKizunaPair pair44; // 0x44
     f32 scale[2]; // 0x4C (pane size pair copied by placeKizMarker)
     u8 _54[0xB8 - 0x54];
     u8 fieldB8; // 0xB8
@@ -331,7 +330,9 @@ struct UnkKizunaSelf59228 {
     u32 field10;                 // 0x10
     u8 field14;                  // 0x14
     u8 field15;                  // 0x15
-    u8 _16[0x40-0x16];
+    u8 _16[0x24-0x16];
+    u8 field24;                  // 0x24 (CKizunagram +0x8C selection flag)
+    u8 _25[0x40-0x25];
     f32 field40;                 // 0x40
 };
 
@@ -754,12 +755,6 @@ struct UnkKizunaSelf59B18 {
     nw4r::lyt::Layout* field0C; // 0x0C
 };
 
-// View of a layout's +0x10 field (root pane) used by buildInfoLayout.
-struct UnkKizunaLayoutView {
-    u8 _00[0x10];
-    nw4r::lyt::Pane* field10; // 0x10
-};
-
 // freeLinePanes's slot-15 result: a pane with a tag-context embedded at +0x10
 // driving the pane-name iteration, and a slot-15 virtual at +0x3C returning
 // child panes. MWCC prepends two implicit vtable slots, so slot15 is declared
@@ -865,20 +860,6 @@ struct UnkKizunaSelfB670 {
     u16 field18;                             // 0x18
 };
 
-// View into the object returned by getFontInfo: vtable slot 9 (+0x24)
-// yields the u32 bound into the layout's font pane by ApplyFontToTxtPanes.
-// All-pure so no vtable is emitted.
-struct UnkKizunaFontView {
-    virtual void vf0() = 0; // +0x08
-    virtual void vf1() = 0; // +0x0C
-    virtual void vf2() = 0; // +0x10
-    virtual void vf3() = 0; // +0x14
-    virtual void vf4() = 0; // +0x18
-    virtual void vf5() = 0; // +0x1C
-    virtual void vf6() = 0; // +0x20
-    virtual u32 vf7() = 0;  // +0x24
-};
-
 // ---------------------------------------------------------------------------
 // C-linkage imports for the current targets (retail names unmangled).
 // ---------------------------------------------------------------------------
@@ -911,10 +892,6 @@ extern "C" const wchar_t* TagCtxGetNodeHeader(const wchar_t** self);
 // sprintf for resetKizPaneTags's pane-name formatting.
 extern "C" int sprintf(char* str, const char* fmt, ...);
 
-// CDeviceFont font-object getter (retail symbol is the mangled C++ name).
-extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
-    u32 arg, nw4r::lyt::Layout* layout);
-
 // ---------------------------------------------------------------------------
 // Targets 17/18/19 (tickKizMain / lineCountDown / kizChartStatus) types.
 // ---------------------------------------------------------------------------
@@ -923,11 +900,12 @@ extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
 struct UnkKizunaSelfC580 {
     u8 _00[0x39];
     u8 field39;                 // 0x39
-    u8 _3A[0x4C - 0x3A];
+    u8 _3A[0x3C - 0x3A];
+    u8 field3C;                 // 0x3C
+    u8 _3D[0x4C - 0x3D];
     UnkKizunaSelfC21C sub4C;    // 0x4C (ends 0x64)
     u8 _64[0x68 - 0x64];
-    UnkKizunaSelf57D90 sub68;   // 0x68
-    u8 _78[0xB0 - 0x78];
+    UnkKizunaSelf59228 sub68;   // 0x68 (ends 0xAC)
     UnkKizunaSelf57EE0 subAC;   // 0xAC (ends 0xC0)
     UnkKizunaSelf57B6C subC0;   // 0xC0
 };
@@ -961,13 +939,6 @@ struct UnkKizunaSelfCBCC {
 // ---------------------------------------------------------------------------
 // Targets buildKizEntryPanes / tickKizMarker support types.
 // ---------------------------------------------------------------------------
-
-// Runtime nw4r::lyt::Pane view exposing the world-space translate vector at
-// +0x2C (used when retail copies positions straight into a pane).
-struct KizunaPaneTranslateView {
-    u8 _00[0x2C];
-    UnkKizunaVec3 translate;
-};
 
 // Opaque shared-layout manager singleton held in ::cf::CfBdat::spFldNpcListFileData.
 struct UnkKizunaMgr {

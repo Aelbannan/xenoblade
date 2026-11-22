@@ -36,8 +36,7 @@ extern "C" int ColiProcessSegmentPair(const CColiQueryNode*, const void*, int);
 // pre-mangled retail symbol like the sibling sinit helpers do.
 extern "C" void __ct__8CProcessFv(CProcess* self);
 
-// Panic file/format strings and va-arg node-name needles used by the nw4r
-// node-lookup helpers below (global-scope C-linkage data names; the unsized
+// node-lookup helpers below
 // arrays get 32-bit lis/addi addressing, the small ones sda21).
 extern char lbl_eu_8056E194[];   // Panic file (node-null assert, line 0x2c)
 extern char lbl_eu_8056E178[];   // Panic fmt
@@ -53,13 +52,25 @@ struct CModelRes {
 };
 
 
-// Dual-index collision node: primary index + flags at 0x0/0x2 and a secondary
-// index at 0x30 (both written by ColiFindNodePair).
-struct CDualIndexNode {
-    s16 index;      //0x0
-    u16 flags;      //0x2
-    char pad[0x2C]; //0x4
-    s16 index2;     //0x30
+// Node header shared by the coli objects: signed bone index at +0x0 and
+// flags word at +0x2 (bit 1 selects the root matrix instead of the index
+// lookup; bit 0 marks the object dirty after a bounds update).
+struct CColiHead {
+    s16 index; //0x0
+    u16 flags; //0x2
+};
+
+// Capsule collision node: primary index + flags at 0x0/0x2 and a secondary
+// index at 0x30 (both written by ColiFindNodePair). This is the real node
+// type used by the capsule dispatch family (ColiSetCapsulePos etc.).
+struct CColiCapsuleNode {
+    CColiHead hd;    //0x0 (index + flags)
+    f32 posA[3];     //0x4
+    f32 posB[3];     //0x10
+    f32 dir[3];      //0x1C
+    f32 radius;      //0x28
+    f32 lenSq;       //0x2C
+    s16 index2;      //0x30
 };
 
 // Second-name reference: a byte offset (+0x4) into the shared node-name table.
@@ -73,7 +84,7 @@ extern char* g_coliSpecTable;
 
 // C-linkage spelling for the dispatch-table participants (retail symbol
 // names; the definitions below adopt this linkage).
-extern "C" void ColiFindNodePair(CDualIndexNode*, const char*, const CModelRes*,
+extern "C" void ColiFindNodePair(CColiCapsuleNode*, const char*, const CModelRes*,
                               const CNameRef*);
 
 // ---------------------------------------------------------------------------
@@ -82,12 +93,12 @@ extern "C" void ColiFindNodePair(CDualIndexNode*, const char*, const CModelRes*,
 // record each match's matrix id into self->index / self->index2. Both found
 // (flags == 3) exits early; unmatched indices fall back to 0 / 1.
 // ---------------------------------------------------------------------------
-void ColiFindNodePair(CDualIndexNode* self, const char* name,
+void ColiFindNodePair(CColiCapsuleNode* self, const char* name,
                    const CModelRes* model, const CNameRef* ref) {
     const char* name2 = g_coliSpecTable + ref->offset;
     int num = (int)nw4r::g3d::ResMdl(model->resMdl).GetResNodeNumEntries();
     u32 flags = 0;
-    self->flags = (u16)flags;
+    self->hd.flags = (u16)flags;
     for (int i = 0; i < num; i++) {
         nw4r::g3d::ResNode node =
             nw4r::g3d::ResMdl(model->resMdl).GetResNode(i);
@@ -100,7 +111,7 @@ void ColiFindNodePair(CDualIndexNode* self, const char* name,
                 if (!node.IsValid()) {
                     nw4r::db::Panic(lbl_eu_80529678, 0x53, lbl_eu_80529658);
                 }
-                self->index = (s16)node.GetMtxID();
+                self->hd.index = (s16)node.GetMtxID();
                 flags |= 1;
                 if (flags == 3) return;
             }
@@ -120,7 +131,7 @@ void ColiFindNodePair(CDualIndexNode* self, const char* name,
             }
         }
     }
-    if (!(flags & 1)) self->index = 0;
+    if (!(flags & 1)) self->hd.index = 0;
     if (!(flags & 2)) self->index2 = 1;
 }
 
@@ -144,14 +155,30 @@ struct CColiQueryNode {
     u16 level;             //0xB2
 };
 
-// Output/Self for the walk funcs: an AABB pair (bbMin at +0x60, bbMax at
-// +0x6C) fed from either the built segment or the shared global result.
-struct CColiQueryResult {
-    char pad0[0x5C];
-    CColiQueryNode* head; //0x5C
-    f32 bbMin[3];         //0x60
-    f32 bbMax[3];         //0x6C
+// CRTP task base -- canonical monolib template (declared-only members so the
+// explicit out-of-line specializations below emit the retail Move/Draw/dtor
+// symbols). The full class definition lives here (single-TU scope) because
+// CTaskColiManager's full layout is only needed in this TU.
+class CTaskColiManager : public CTTask<CTaskColiManager> {
+public:
+    // Overrides from CProcess (pure virtual)
+    void Init() override;
+    void Term() override;
+    void Move() override;
+    void Draw() override;
+
+    virtual ~CTaskColiManager();
+
+    // name-guess: create() stores the scene/model arguments at 0x54/0x58,
+    // zeroes the six-word AABB at 0x60..0x6F, then clears the walk flag.
+    void* mpScene;              //0x54
+    void* mpModel;              //0x58
+    CColiQueryNode* mHead;      //0x5C
+    f32 mAabbMin[3];            //0x60
+    f32 mAabbMax[3];            //0x6C
+    u32 mFlags;                 //0x78
 };
+
 
 // Shared walk state (sColiWalkState): accumulated AABB (bbMin +0x38,
 // bbMax +0x44), the queried source segment (+0x50), a scalar at +0x5C and
@@ -193,7 +220,7 @@ struct CColiQuery {
     char pad1[0x8]; //0x10
 };
 
-extern "C" int Coli_WalkQuery(CColiQueryResult* self, CColiQueryNode* owner, const Vec* a,
+extern "C" int Coli_WalkQuery(CTaskColiManager* self, CColiQueryNode* owner, const Vec* a,
                   u32 mask, int arg, int isFirst, f32 val) {
     // val survives every helper call in an FP saved register.
     const f32 v = val;
@@ -234,12 +261,12 @@ extern "C" int Coli_WalkQuery(CColiQueryResult* self, CColiQueryNode* owner, con
         vs->bbMin[2] = zero;
         vs->bbMax[0] = zero;
         vs->bbMax[1] = zero;
-        self->bbMin[0] = zero;
-        self->bbMin[1] = zero;
-        self->bbMin[2] = zero;
-        self->bbMax[0] = zero;
-        self->bbMax[1] = zero;
-        self->bbMax[2] = zero;
+        self->mAabbMin[0] = zero;
+        self->mAabbMin[1] = zero;
+        self->mAabbMin[2] = zero;
+        self->mAabbMax[0] = zero;
+        self->mAabbMax[1] = zero;
+        self->mAabbMax[2] = zero;
     }
 
     char seg[0x318];
@@ -287,9 +314,9 @@ extern "C" int Coli_WalkQuery(CColiQueryResult* self, CColiQueryNode* owner, con
         if (sColiWalkState.flag != 0) {
             // Word copies of the accumulated AABB via the pipelined
             // two-word struct-copy expansion (y stored before x, trailing z).
-            *(CColiPairCopy*)&self->bbMin[0] =
+            *(CColiPairCopy*)&self->mAabbMin[0] =
                 *(const CColiPairCopy*)&sColiWalkState.bbMin[0];
-            *(CColiPairCopy*)&self->bbMax[0] =
+            *(CColiPairCopy*)&self->mAabbMax[0] =
                 *(const CColiPairCopy*)&sColiWalkState.bbMax[0];
             return 1;
         }
@@ -298,7 +325,7 @@ extern "C" int Coli_WalkQuery(CColiQueryResult* self, CColiQueryNode* owner, con
     return found;
 }
 
-extern "C" int ColiWalkSegment(CColiQueryResult* self, CColiQueryNode* owner, const Vec* a,
+extern "C" int ColiWalkSegment(CTaskColiManager* self, CColiQueryNode* owner, const Vec* a,
                   const Vec* b, u32 mask, int arg, int isFirst) {
     // Distinct web for `b`: retail materializes it into a callee-saved
     // register at entry (it must survive the first helper call).
@@ -337,12 +364,12 @@ extern "C" int ColiWalkSegment(CColiQueryResult* self, CColiQueryNode* owner, co
         vs->bbMin[2] = zero;
         vs->bbMax[0] = zero;
         vs->bbMax[1] = zero;
-        self->bbMin[0] = zero;
-        self->bbMin[1] = zero;
-        self->bbMin[2] = zero;
-        self->bbMax[0] = zero;
-        self->bbMax[1] = zero;
-        self->bbMax[2] = zero;
+        self->mAabbMin[0] = zero;
+        self->mAabbMin[1] = zero;
+        self->mAabbMin[2] = zero;
+        self->mAabbMax[0] = zero;
+        self->mAabbMax[1] = zero;
+        self->mAabbMax[2] = zero;
     }
 
     char seg[0x318];
@@ -394,7 +421,7 @@ extern "C" int ColiWalkSegment(CColiQueryResult* self, CColiQueryNode* owner, co
     {
         const CColiSrcVec* smin =
             (const CColiSrcVec*)&sColiWalkState.bbMin[0];
-        CColiSrcVec* dmin = (CColiSrcVec*)&self->bbMin[0];
+        CColiSrcVec* dmin = (CColiSrcVec*)&self->mAabbMin[0];
         u32 mlo = smin->x;
         u32 mhi = smin->y;
         dmin->y = mhi;
@@ -404,7 +431,7 @@ extern "C" int ColiWalkSegment(CColiQueryResult* self, CColiQueryNode* owner, co
     {
         const CColiSrcVec* smax =
             (const CColiSrcVec*)&sColiWalkState.bbMax[0];
-        CColiSrcVec* dmax = (CColiSrcVec*)&self->bbMax[0];
+        CColiSrcVec* dmax = (CColiSrcVec*)&self->mAabbMax[0];
         u32 xlo = smax->x;
         u32 xhi = smax->y;
         dmax->y = xhi;
@@ -662,15 +689,7 @@ struct CColiQx { f32 qx; f32 qy; f32 qz; }; //0x0/0x4/0x8
 
 // --- Shared collision-node / matrix-source types ---
 
-// Node header shared by the coli objects: signed bone index at +0x0 and
-// flags word at +0x2 (bit 1 selects the root matrix instead of the index
-// lookup; bit 0 marks the object dirty after a bounds update).
-struct CColiHead {
-    s16 index; //0x0
-    u16 flags; //0x2
-};
-
-// Matrix source owned by the collision manager: the root (identity/bind)
+// Matrix source owned by the collision manager:
 // matrix at +0x3C and a bone-matrix table pointer at +0xEC (each entry
 // 0x30 bytes, selected by node index).
 struct CColiMesh {
@@ -699,11 +718,6 @@ struct CColiNode {
 // Node whose world matrix is copied from the bone/root source (upper 3x4),
 // inverse derived, and a scalar radius at +0x64 used to expand the global
 // AABB around the copied matrix's translation column.
-// CObjMtx is a POD forcing lwz/stw word copies in struct assignment.
-struct CObjMtx {
-    f32 m[3][4];
-};
-
 struct CColiMtxNode {
     CColiHead hd;    //0x0
     CObjMtx mtxW;    //0x4
@@ -931,19 +945,6 @@ void Coli_FindNodeRecord(CColiHead* self, const char* name, const CModelRes* mod
     }
 }
 
-// Matrix output object (Coli_ShiftMtxHist / Coli_CopyBoneMtx): a matrix pair at
-// +0x0 (m0 + inverse m1), duplicated up by one pair into the history slots
-// at +0x60. CObjMtx members keep the copies as word loads/stores.
-struct CColiMtxPair {
-    CObjMtx m0; //0x0
-    CObjMtx m1; //0x30
-};
-
-struct CColiMtxOut {
-    CColiMtxPair cur; //0x0
-    CColiMtxPair old; //0x60
-};
-
 // ---------------------------------------------------------------------------
 // Coli_ShiftMtxHist: shift the previous matrix pair up into the history slots,
 // then copy the bone matrix into m0 and derive its inverse into m1.
@@ -955,19 +956,7 @@ extern "C" void Coli_ShiftMtxHist(CColiHead* hd, CColiMtxOut* dst, CColiMgr* mgr
     PSMTXInverse(dst->cur.m0.m, dst->cur.m1.m);
 }
 
-// Capsule collision node (ColiSetCapsulePos): two endpoint positions, the
-// segment direction, a uniform radius and the squared direction length.
-struct CColiCapsuleNode {
-    CColiHead hd;    //0x0 (index + flags)
-    f32 posA[3];     //0x4
-    f32 posB[3];     //0x10
-    f32 dir[3];      //0x1C
-    f32 radius;      //0x28
-    f32 lenSq;       //0x2C
-    s16 index2;      //0x30
-};
 
-// Dispatch-table participants (capsule family).
 extern "C" void ColiUpdateCapsule(CColiCapsuleNode*, const CColiMgr*,
                               const CColiRigid*);
 extern "C" void ColiSetCapsulePos(CColiCapsuleNode*, const CColiMgr*, const Vec*);
@@ -1452,40 +1441,19 @@ extern "C" void Coli_CopyBoneMtx(CColiHead* hd, CColiMtxOut* dst, CColiMgr* mgr)
     dst->old = dst->cur;
 }
 
-// Doubly-linked list used by the coli tasks: head pointer stored on the
-// owner at +0x5C, each node links forward via next (+0x9C) and backward
-// via prev (+0xA0).
-struct CColiListItem {
-    char pad0[0x9C];
-    CColiListItem* next; //0x9C
-    CColiListItem* prev; //0xA0
-    f32 f_a4;            //0xA4
-};
-
-// Nodes walked by CTaskColiManager::Move: forward/back links at +0x9C/+0xA0
-// and a status flags word at +0xA8 checked for bit 13 (0x2000).
-struct CColiMoveNode {
-    char pad0[0x9C];
-    CColiMoveNode* next; //0x9C
-    CColiMoveNode* prev; //0xA0
-    char padA4[0x4];     //0xA4
-    u32 flags;           //0xA8
-};
-
-struct CColiList {
-    char pad0[0x5C];
-    CColiListItem* head; //0x5C
-};
+// The list walkers use the real CTaskColiManager owner and CColiQueryNode:
+// mHead (+0x5C), next (+0x9C), prev (+0xA0), swept-distance (+0xA4) and
+// status flags (+0xA8) are the fields these helpers touch.
 
 // Append `node` to the back of the list owned by `self`, conditioning it with
 // ColiSetMoveEnableFlag first. If the node is already present it is left untouched.
 // Newly-linked nodes have their forward link cleared and their swept-distance
 // accumulator (+0xA4) reset to zero.
-extern "C" void ColiListAppend(CColiList* self, CColiListItem* node) {
+extern "C" void ColiListAppend(CTaskColiManager* self, CColiQueryNode* node) {
     ColiSetMoveEnableFlag(node, 1);
-    CColiListItem* cur = self->head;
+    CColiQueryNode* cur = self->mHead;
     if (cur != 0) {
-        CColiListItem* tail = cur;
+        CColiQueryNode* tail = cur;
         while (cur != 0) {
             if (node == cur) return; // already linked
             tail = cur;
@@ -1496,7 +1464,7 @@ extern "C" void ColiListAppend(CColiList* self, CColiListItem* node) {
         node->next = 0;
         node->f_a4 = lbl_eu_8066AEC0;
     } else {
-        self->head = node;
+        self->mHead = node;
         node->next = 0;
         node->prev = 0;
         node->f_a4 = lbl_eu_8066AEC0;
@@ -1507,17 +1475,17 @@ extern "C" void ColiListAppend(CColiList* self, CColiListItem* node) {
 // fixing the head when the removed node was the head. Goto-shaped to match
 // the retail control flow: pre-check on the head value, entry jump to the
 // tail condition, and the found path falling out to the common epilogue.
-extern "C" void Coli_ListRemoveNode(CColiList* self, CColiListItem* findNode) {
+extern "C" void Coli_ListRemoveNode(CTaskColiManager* self, CColiQueryNode* findNode) {
     ColiSetMoveEnableFlag(findNode, 0);
     // Declared at function top so the allocator colours prev/next before the
     // loop variable: retail keeps cur in r4 with prev/next sharing r3.
-    CColiListItem* prev;
-    CColiListItem* next;
-    CColiListItem* cur;
+    CColiQueryNode* prev;
+    CColiQueryNode* next;
+    CColiQueryNode* cur;
     // `head` stays loop-invariant (r0) for the final branch's comparison;
     // the middle branches re-read self->head because the relink stores may
     // alias it. `cur` is assigned after the pre-check like retail.
-    CColiListItem* head = self->head;
+    CColiQueryNode* head = self->mHead;
     if (head == 0) goto done;
     cur = head;
     goto cond;
@@ -1528,15 +1496,15 @@ body:
         if (prev != 0) {
             prev->next = next;
             if (next != 0) next->prev = prev;
-            if (self->head == findNode) self->head = prev;
+            if (self->mHead == findNode) self->mHead = prev;
             goto done;
         }
         if (next != 0) {
             next->prev = 0;
-            if (self->head == findNode) self->head = next;
+            if (self->mHead == findNode) self->mHead = next;
             goto done;
         }
-        if (head == findNode) self->head = 0;
+        if (head == findNode) self->mHead = 0;
         goto done;
     }
 advance:
@@ -1568,7 +1536,7 @@ extern "C" void sinit_804B598C() {
 
 // Walk the segment query: reject degenerate (equal) vectors, otherwise run
 // the segment build + node query and expand the result AABB.
-extern "C" int ColiQuerySegment(CColiQueryResult* self, const Vec* a, const Vec* b,
+extern "C" int ColiQuerySegment(CTaskColiManager* self, const Vec* a, const Vec* b,
                    u32 filter, int isFirst) {
     // Materialized boolean: retail keeps the && chain result in a temp
     // (li r0,0 / li r0,1 / cmpwi r0,0) instead of short-circuiting straight
@@ -1603,12 +1571,12 @@ extern "C" int ColiQuerySegment(CColiQueryResult* self, const Vec* a, const Vec*
         st->bbMin[2] = zero;
         st->bbMax[0] = zero;
         st->bbMax[1] = zero;
-        self->bbMin[0] = zero;
-        self->bbMin[1] = zero;
-        self->bbMin[2] = zero;
-        self->bbMax[0] = zero;
-        self->bbMax[1] = zero;
-        self->bbMax[2] = zero;
+        self->mAabbMin[0] = zero;
+        self->mAabbMin[1] = zero;
+        self->mAabbMin[2] = zero;
+        self->mAabbMax[0] = zero;
+        self->mAabbMax[1] = zero;
+        self->mAabbMax[2] = zero;
     }
 
     char seg[0x318];
@@ -1617,7 +1585,7 @@ extern "C" int ColiQuerySegment(CColiQueryResult* self, const Vec* a, const Vec*
     int found = 0;
     ColiMakeAabbMinMax(query, a, b);
 
-    CColiQueryNode* n = self->head;
+    CColiQueryNode* n = self->mHead;
     while (n != 0) {
         if (!(filter & n->filter)) {
             if (ColiTestAabbContains(query, n) != 0 &&
@@ -1635,7 +1603,7 @@ extern "C" int ColiQuerySegment(CColiQueryResult* self, const Vec* a, const Vec*
         // pipelined pair (load x/y, store y/x) plus a trailing z word.
         const CColiSrcVec* smin =
             (const CColiSrcVec*)&sColiWalkState.bbMin[0];
-        CColiSrcVec* dmin = (CColiSrcVec*)&self->bbMin[0];
+        CColiSrcVec* dmin = (CColiSrcVec*)&self->mAabbMin[0];
         u32 mlo = smin->x;
         u32 mhi = smin->y;
         dmin->y = mhi;
@@ -1643,7 +1611,7 @@ extern "C" int ColiQuerySegment(CColiQueryResult* self, const Vec* a, const Vec*
         dmin->z = smin->z;
         const CColiSrcVec* smax =
             (const CColiSrcVec*)&sColiWalkState.bbMax[0];
-        CColiSrcVec* dmax = (CColiSrcVec*)&self->bbMax[0];
+        CColiSrcVec* dmax = (CColiSrcVec*)&self->mAabbMax[0];
         u32 xlo = smax->x;
         u32 xhi = smax->y;
         dmax->y = xhi;
@@ -1653,29 +1621,6 @@ extern "C" int ColiQuerySegment(CColiQueryResult* self, const Vec* a, const Vec*
     }
     return found;
 }
-// CRTP task base -- canonical monolib template (declared-only members so the
-// explicit out-of-line specializations below emit the retail Move/Draw/dtor
-// symbols). The full class definition lives here (single-TU scope) because
-// CTaskColiManager's full layout is only needed in this TU.
-// --- CTaskColiManager class definition ---
-// Full class definition lives here (single-TU scope) because CTTask must
-// be defined locally to avoid inline-method codegen from CTTask.hpp.
-class CTaskColiManager : public CTTask<CTaskColiManager> {
-public:
-    // Overrides from CProcess (pure virtual)
-    void Init() override;
-    void Term() override;
-    void Move() override;
-    void Draw() override;
-
-    virtual ~CTaskColiManager();
-
-private:
-    char pad_0x54[0x8];      //0x54
-    CColiMoveNode* mHead;    //0x5C
-    char pad_0x60[0x18];     //0x60
-    u32 mFlags;              //0x78
-};
 
 void CTaskColiManager::Init() {
     // Empty override - no initialization required.
@@ -1689,7 +1634,7 @@ void CTaskColiManager::Term() {
 // fold any node requesting a pass into mFlags bit 1, re-walk for post-pass
 // cleanup (ColiNodeResortKeyed), then re-anchor at the front of the list.
 void CTaskColiManager::Move() {
-    CColiMoveNode* node = mHead;
+    CColiQueryNode* node = mHead;
     mFlags &= ~0x2u;
     if (node != 0) {
         while (node != 0) {
@@ -1704,8 +1649,8 @@ void CTaskColiManager::Move() {
             ColiNodeResortKeyed(node);
             node = node->next;
         }
-        CColiMoveNode* front = mHead;
-        CColiMoveNode* p = mHead->prev;
+        CColiQueryNode* front = mHead;
+        CColiQueryNode* p = mHead->prev;
         while (p != 0) {
             front = p;
             p = p->prev;
@@ -1769,27 +1714,18 @@ extern "C" int Coli_SweepSegNodes(u32 unused, CColiQueryNode* self, const CColiS
     return 0;
 }
 
-// Owner of a segment walk: node-list head at +0x5C and a control flags word
-// at +0x78 (bit 1 gates the walk).
-struct CColiWalkOwner {
-    char pad0[0x5C];
-    CColiQueryNode* head; //0x5C
-    char pad1[0x18];      //0x60
-    u32 flags;            //0x78
-};
 
-// ---------------------------------------------------------------------------
 // Coli_WalkReport: gate on the owner's walk-enable flag, reject degenerate
 // (equal) vectors, then run the shared segment query over the node list and
 // report the accumulated AABB through out1 (min) / out2 (max).
 // ---------------------------------------------------------------------------
-extern "C" int Coli_WalkReport(CColiWalkOwner* self, Vec* out1, Vec* out2,
+extern "C" int Coli_WalkReport(CTaskColiManager* self, Vec* out1, Vec* out2,
                   Vec* a, Vec* b) {
     // Single-exit shape: every zero path breaks to one shared return block
     // (retail merges all li r3,0 sites), success falls out of the block.
     // Nested guards with one shared zero exit (retail's single li r3,0).
-    if (self->flags & 2) {
-        // Materialized boolean: retail keeps the && chain result in a temp
+    if (self->mFlags & 2) {
+        // Materialized boolean:
         // (li r0,0 / li r0,1 / cmpwi r0,0) instead of short-circuiting.
         int eq = a->x == b->x && a->y == b->y && a->z == b->z;
         if (eq) return 0;
@@ -1824,7 +1760,7 @@ extern "C" int Coli_WalkReport(CColiWalkOwner* self, Vec* out1, Vec* out2,
     ColiInitSegment(seg, a, b, st);
     ColiMakeAabbMinMax(query, a, b);
 
-    for (CColiQueryNode* n = self->head; n != 0; n = n->next) {
+    for (CColiQueryNode* n = self->mHead; n != 0; n = n->next) {
         if (n->flags & 0x2000) {
             if (ColiTestAabbContains(query, n) != 0) {
                 ColiProcessSegmentSelect(n, seg, 1);
@@ -1882,7 +1818,7 @@ extern "C" CTaskColiManager* create__16CTaskColiManagerFv(CProcess* parent,
     if (mem != 0) {
         __ct__8CProcessFv((CProcess*)mem);
         CTaskColiManagerInit* init = (CTaskColiManagerInit*)mem;
-        // CTTask ctor body (inlined): CProcess vtable, null member funcs,
+        // CTTask ctor body (inlined):
         // then the CTaskColiManager vtable. Each null-ptmf member is filled
         // by a 3-word copy from __ptmf_null; retail keeps one materialised
         // base pointer across both copies.

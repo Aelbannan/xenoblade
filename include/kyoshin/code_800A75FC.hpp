@@ -13,18 +13,18 @@ struct CtrlObjectParamArtsList;  // defined in src/kyoshin/cf/CtrlObjectParam.hp
 struct GlobalStruct_80572B94;
 
 // ---------------------------------------------------------------------------
-// Retail linker labels referenced from this TU (unmangled global data names;
-// plain extern at global scope -- MWCC does not mangle global variable names)
+// Data objects referenced from this TU (unmangled global names; plain extern
+// at global scope -- MWCC does not mangle global variable names)
 // ---------------------------------------------------------------------------
 extern char sHeapRegionBlocks[];
 extern char sHeapList78[];
 extern char sHeapList38[];
-// Each entry points at a table of up to 14 pointers (indexed by the callers).
+// Each stage table holds 14 byte offsets (indexed by the callers).
 struct LblPtrTable {
-    char* slots[14];
+    u32 slots[14];
 };
-extern LblPtrTable* lbl_eu_805282A0[6];
-extern LblPtrTable* lbl_eu_80528398[6];
+extern LblPtrTable* sKyoshinHeapOffsetTablePtrs0[6];   // name-guess: array read by KyoshinHeap_GetPtrTblA
+extern LblPtrTable* sKyoshinHeapOffsetTablePtrs1[6];   // name-guess: array read by KyoshinHeap_GetPtrTblB
 extern char sHeapSingletonRegistration[];   // .bss: global-object registration node
 extern char sHeapList58[];   // .bss
 extern s8 sKyoshinHeapInitialized;       // .sbss: singleton-initialized flag

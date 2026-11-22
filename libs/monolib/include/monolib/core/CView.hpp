@@ -77,6 +77,7 @@ public:
     CView* updateViewState();
 
     static ml::CCol4 sFrameColor;
+    static CView* sCurrentView;
 
     //Tries to cast the given thread to CView.
     static CView* convertToView(CWorkThread* pThread) {

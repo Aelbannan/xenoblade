@@ -28,7 +28,9 @@
 #include "kyoshin/CBgTex.hpp"
 #include "kyoshin/CTitleAHelp.hpp"
 #include "monolib/util/MemManager.hpp"        // mtl::MemManager::allocate
-#include "monolib/work/CProcess.hpp"          // CProcess::Regist
+#include "monolib/device/CDeviceFile.hpp"      // CDeviceFile::readFile
+#include "monolib/device/CDeviceFont.hpp"      // CDeviceFont::getFontInfo
+#include "monolib/work/CProcess.hpp"
 #include "monolib/device/CDeviceVI.hpp"
 #include "kyoshin/CTaskGame.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
@@ -474,18 +476,27 @@ extern "C" void ArtsSlotCursor_moveUp(SArtsSub8022FA58* self, int a) {
 }
 
 // Arts-slot pane refresh (artsSyncSlots). Stores the character id, reloads
-// the object's 8-word pane-name block from lbl_eu_8050AB08 and a stack copy
-// of the label table lbl_eu_8050AB88, then for each of the 8 slots asks the
-// arts receiver (SArtsManager::v157 result) for the current record and binds
-// or hides its panes; finally maps the character id through the message
-// tables to a help-text id and binds that text onto both panes.
+// the object's 8-word pane-name block and a stack copy of the icon-name
+// table, then for each of the 8 slots asks the arts receiver
+// (SArtsManager::v157 result) for the current record and binds or hides its
+// panes; finally maps the character id through the message tables to a
+// help-text id and binds that text onto both panes.
+// name-guess: these static arrays define the retail .rodata pane-name tables.
+static const SArts308B0Block sArtsPaneNamePtrs = {
+    "pic_arts01", "pic_arts02", "pic_arts03", "pic_arts04",
+    "pic_arts05", "pic_arts06", "pic_arts07", "pic_arts08",
+};
+static const SArts308B0Block sArtsIconNamePtrs = {
+    "pic_icon01", "pic_icon02", "pic_icon03", "pic_icon04",
+    "pic_icon05", "pic_icon06", "pic_icon07", "pic_icon08",
+};
 extern "C" void artsSyncSlots(SArtsSub8022FA58* self, u8 v) {
     self->field_0x26 = v;
     // Reload the two 8-word label tables onto the stack (MWCC counted
     // word-copy loops): the AB88 table feeds PaneSetTexPaletteByName resource binds,
     // the AB08 table feeds the pane-fetch v13 calls.
-    SArts308B0Block panes = lbl_eu_8050AB08;
-    SArts308B0Block names = lbl_eu_8050AB88;
+    SArts308B0Block panes = sArtsPaneNamePtrs;
+    SArts308B0Block names = sArtsIconNamePtrs;
 
     void* recv = ((SArtsManagerRoot*)CtrlObjectParam_GetCharEntry(v))->mObj17C.v157();
     char* base = lbl_eu_8050AC70;
@@ -938,16 +949,20 @@ extern "C" void ArtsSlotCursor_clampFromEmpty(SArtsSub8022FA58* self) {
 // the pane-like object passed to ArtsSlotCursor_refresh). C-linkage retail name.
 extern "C" void CMenuArtsSet_setPaneScale(SArtsPaneScaleObj* self, const SArtsVec2* src);
 
-// Refresh the arts-list cursor: copy the 9-word label block from
-// lbl_eu_8050ABB4, look up the pane for the current 0x20 cursor entry, scale
-// its translate by the 0xA6 label pane's scale, move the 0x08 sub-pane onto
-// it, then write the precomputed 9-entry position table (entry 4 uses the
-// smaller lbl_eu_80668654 value) into the pane's layout offsets via
+// Refresh the arts-list cursor: copy the 9-word label block, look up the
+// pane for the current 0x20 cursor entry, scale its translate by the 0xA6
+// label pane's scale, move the 0x08 sub-pane onto it, then write the
+// precomputed 9-entry position table (entry 4 uses the smaller
+// lbl_eu_80668654 value) into the pane's layout offsets via
 // CMenuArtsSet_setPaneScale.
+static const SArts316F8Block sArtsSlotPaneNamePtrs = {
+    "pic_arts01", "pic_arts02", "pic_arts03", "pic_arts04", "pic_arts00",
+    "pic_arts05", "pic_arts06", "pic_arts07", "pic_arts08",
+};
 extern "C" void ArtsSlotCursor_refresh(SArtsSub8022FA58* self) {
     nw4r::math::VEC3 pos;
     SArts316F8Block tmp;
-    tmp = lbl_eu_8050ABB4;
+    tmp = sArtsSlotPaneNamePtrs;
     // Retail lays 9 fully-initialized entries (entry 4 is the 654 pair);
     // a short list makes MWCC emit a zero-fill loop instead of stores.
     SArtsVec2 vecs[9] = {
@@ -1035,10 +1050,14 @@ extern "C" void CMenuArtsSet_setPaneScale(SArtsPaneScaleObj* self, const SArtsVe
     self->mField48 = src->y;
 }
 
+static const SArts316F8Block sArtsBusyPaneNamePtrs = {
+    "pic_arts01", "pic_arts02", "pic_arts03", "pic_arts04", "pic_arts00",
+    "pic_arts05", "pic_arts06", "pic_arts07", "pic_arts08",
+};
 extern "C" void ArtsBusyPane_refreshCursor(SArts313E0* self) {
     nw4r::math::VEC3 pos;
     SArts316F8Block tmp;
-    tmp = lbl_eu_8050ABD8;
+    tmp = sArtsBusyPaneNamePtrs;
     // Retail lays 9 fully-initialized entries (entry 4 is the 654 pair);
     // a short list makes MWCC emit a zero-fill loop instead of stores.
     SArtsVec2 vecs[9] = {
@@ -1895,8 +1914,8 @@ CArtsList::CArtsList()
 CArtsList::~CArtsList() {}
 
 void CArtsList_startLoad(CArtsList* self) {
-    void* handle = getHandleMEM2__Q23mtl10MemManagerFv();
-    self->field_0x14 = (CFileHandle*)readFile__11CDeviceFileFUlPCcP10IWorkEventii(
+    mtl::ALLOC_HANDLE handle = mtl::MemManager::getHandleMEM2();
+    self->field_0x14 = CDeviceFile::readFile(
         (u32)handle, lbl_eu_8050AC70 + 0x2ba, self, 0, 0);
     self->mScrollBar.loadLayoutArc();
     CArtsInfo_LoadFiles(&self->mSubObj74);
@@ -1990,11 +2009,11 @@ int CArtsList::CMenuArtsSet_getReadyFlag() { return field_0x31; }
 
 // True while the arts menu is busy: either the 0x2A1/0x16F flags are set,
 // the CArtsInfo or CSysWin sub-object is active, or the raw 0x2A6 flag.
-int CMenuArtsSet_isBusy(SArts33888* self) {
-    if (self->field_0x2A1 != 0) return 1;
-    if (self->field_0x16F != 0) return 1;
-    if (CArtsInfo_IsStateGE6(&self->field_0x74) != 0) return 1;
-    if (reinterpret_cast<CSysWin*>(&self->field_0xE8)->isOpened() != 0) return 1;
+int CMenuArtsSet_isBusy(CArtsList* self) {
+    if (self->mSubObj174.field_0x12D != 0) return 1;
+    if (self->mSubObj148.field_0x27 != 0) return 1;
+    if (CArtsInfo_IsStateGE6(&self->mSubObj74) != 0) return 1;
+    if (self->mSysWinE8.isOpened() != 0) return 1;
     return self->field_0x2A6;
 }
 
@@ -2291,7 +2310,7 @@ void artsDriveMenu(CArtsList* self) {
         }
         return;
     }
-    if (((SArts34C84*)self)->field_0x2A1 != 0) {
+    if (self->mSubObj174.field_0x12D != 0) {
         if ((s8)((SArts34D14*)self)->field_0x168 == 4) return;
         ArtsTable_toggleBusyPanes((SArts32888*)(SArts322BC*)&self->mSubObj174);
         self->mSubObj174.field_0x22 = 0;
@@ -2307,7 +2326,7 @@ void artsDriveMenu(CArtsList* self) {
         playUISound(0x15);
         return;
     }
-    if (((SArts34C84*)self)->field_0x16F != 0) {   // abs 0x16F busy flag
+    if (self->mSubObj148.field_0x27 != 0) {   // abs 0x16F busy flag
         if ((s8)((SArts34D14*)self)->field_0x168 == 4) return;
         int matched = 0;
         u32 cur = ArtsTable_getSelectedId((SArts322BC*)&self->mSubObj174);
@@ -2509,8 +2528,8 @@ void CMenuArtsSet_resetSubList(CArtsList* self) {
     SArts34D14* ext = (SArts34D14*)self;
     if (ext->field_0x16A == 0) return;                 // abs 0x16A
     if ((s8)ext->field_0x168 == 4) return;             // abs 0x168 (signed cmp)
-    if (((SArts34C84*)self)->field_0x2A1 != 0) return;
-    if (((SArts34C84*)self)->field_0x16F != 0) return;
+    if (self->mSubObj174.field_0x12D != 0) return;
+    if (self->mSubObj148.field_0x27 != 0) return;
     u8 v = ArtsCharList_getId((SArtsSub8022FA58*)&self->mSubObj124, self->mSubObj124.field_0x14);
     // Byte-table probe: retail fuses tbl[0] into lbz @sda21(r0), r0 being the
     // dead index register left over from the (v == 1) test.
@@ -2612,11 +2631,11 @@ void CMenuArtsSet_confirmSelect(CArtsList* self) {
     playUISound(2);
 }
 
-int CMenuArtsSet_isListBusy(SArts34C84* self) {
-    if (self->field_0x16F != 0) {
+int CMenuArtsSet_isListBusy(CArtsList* self) {
+    if (self->mSubObj148.field_0x27 != 0) {
         return 1;
     }
-    return self->field_0x2A1;
+    return self->mSubObj174.field_0x12D;
 }
 
 int CMenuArtsSet_isLockedArtOpen(SArts34D14* self) {
@@ -2648,7 +2667,7 @@ extern "C" u32 CMenuArtsSet_getHelpMode(CArtsList* self) {
     if (reinterpret_cast<CSysWin*>(&self->mSysWinE8)->isOpened() != 0) return 0;
     if (CArtsInfo_IsStateGE6(&self->mSubObj74) != 0) return 0;
     if (self->mSubObj124.field_0x15 != 0) return 0x42;
-    if (CMenuArtsSet_isListBusy((SArts34C84*)self) != 0) return 0x40;
+    if (CMenuArtsSet_isListBusy(self) != 0) return 0x40;
     int more = code80135FDC_getByte_64077() > 1;
     if (self->mSubObj148.field_0x22 != 0) {          // abs 0x16A
         if (artsReadSelId((SArtsSub8022FA58*)&self->mSubObj148) == 0) {
@@ -2795,15 +2814,15 @@ extern "C" void CMenuArtsSet_refreshArtsInfo(CArtsList* self) {
 // 0x60/0x38/0xC/0x8), then drops the file handle and frees the region guard.
 bool CArtsList::OnFileEvent(CEventFile* pEventFile) {
     if (field_0x14 == pEventFile->mFileHandle) {
-    mMemRegion.createRegion((int)getHandleMEM2__Q23mtl10MemManagerFv(), 0x16000,
+    mMemRegion.createRegion((int)mtl::MemManager::getHandleMEM2(), 0x16000,
                             lbl_eu_8050AC70 + 0x2CF, 0);
     Class_8045F858 regionGuard(&mMemRegion);
     u8* fileData = field_0x14->mData;
     field_0x14->mData = 0;
-    setMemInitFlag__Q23mtl10MemManagerFb(false);
+    mtl::MemManager::setMemInitFlag(false);
     field_0x18 = CLibLayout::createArcResourceAccessor();
-    Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(field_0x18, fileData,
-                                                   lbl_eu_8050AC70 + 0x2D9);
+    field_0x18->Attach(fileData,
+                       lbl_eu_8050AC70 + 0x2D9);
     buildLayout((nw4r::lyt::Layout**)&field_0x1C, field_0x18,
                   lbl_eu_8050AC70 + 0x2DD);
     bindLayoutAnimTransform((nw4r::lyt::Layout*)field_0x1C, &field_0x20, field_0x18,
@@ -2811,7 +2830,7 @@ bool CArtsList::OnFileEvent(CEventFile* pEventFile) {
     bindLayoutAnimTransform((nw4r::lyt::Layout*)field_0x1C, &field_0x24, field_0x18,
                   lbl_eu_8050AC70 + 0x314);
     SArts3CObj* pane = field_0x1C->field_0x10;
-    u32 fontHandle = ((SDevFontV*)getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
+    u32 fontHandle = ((SDevFontV*)CDeviceFont::getFontInfo(
                           1, (nw4r::lyt::Layout*)field_0x1C))
                          ->v7();
     ApplyFontToTxtPanes((nw4r::lyt::Pane*)pane, (const nw4r::ut::Font*)fontHandle);

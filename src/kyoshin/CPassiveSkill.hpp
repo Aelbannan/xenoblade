@@ -456,11 +456,6 @@ public:
     virtual u32 vf7() = 0;  // index 7 -> +0x24
 };
 
-// CDeviceFont font-create helper (retail symbol is the literal mangled
-// identifier; extern "C" so calls bind to it, same convention as
-// CItemBoxGrid.hpp / COption.hpp).
-extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32 arg, nw4r::lyt::Layout* layout);
-
 // Character/party name-text value pushed into layout panes by setLayoutTextBoxFont
 // (retail symbol unmangled; same convention as CPartyState.hpp).
 
@@ -496,12 +491,6 @@ struct CPSkillTexRes {
 // Pane colour setter (retail symbol unmangled): applies the two colours to
 // the pane (CItemBoxLine.hpp convention; PaneMatSetTevColorsByName is the layout form).
 
-// Pane byte at +0xB8 written by CPassiveSkillLine_updateLearnGrid's cell update (opaque state).
-struct CPSkillPaneB8 {
-    u8 _pad0[0xB8];   // +0x00..0xB7
-    u8 field_B8;      // +0xB8
-};
-
 // setPaneVisible (declared in CQuestWindow_Pane.hpp) sets a pane's visible
 // flag; isPaneVisible queries it and is declared once in CTitleAHelp.hpp.
 
@@ -529,13 +518,6 @@ extern void* gpPassiveSkillIconBdat;
 extern void* gpPassiveSkillValueBdat;
 extern void* gpPassiveSkillCharBdat;
 extern void* gpPassiveSkillEffectBdat;
-
-// Character-data view for CPassiveSkillLine_updateSkillTabs: the current-grid-row counter word
-// at +0x3DD0 of the CtrlObjectParam_GetCharEntry result (compared against the loop row).
-struct CPSkillCharData3DD0 {
-    u8 _pad0[0x3DD0];   // +0x00..0x3DCF
-    u32 field_3DD0;     // +0x3DD0
-};
 
 // Frame-bound floats used by CPassiveSkillLine_stepState14's window check (retail .sdata2
 // floats; values resolved at link time).
@@ -574,17 +556,6 @@ extern u8 lbl_eu_80668938;
 // and indexed by the +0xF3 countdown byte (when < 3).
 extern const u32 sPassiveSkillSceneNames[3];
 
-// Character-data view for CPassiveSkillLine_syncEquipState: the five s16 equipment ids at
-// +0x1C..+0x24 (categories 4..8) on the CtrlObjectParam_GetCharEntry result.
-struct CPSkillCharData {
-    u8 _pad0[0x1C];   // +0x00..0x1B
-    s16 equip4;       // +0x1C
-    s16 equip5;       // +0x1E
-    s16 equip6;       // +0x20
-    s16 equip7;       // +0x22
-    s16 equip8;       // +0x24
-};
-
 // Equipment lookup helpers for CPassiveSkillLine_syncEquipState (retail symbols unmangled;
 // same flat declarations as CItemBoxInfo.hpp / CEquipChange.hpp).
 extern "C" void CtrlObjectParam_SetEquipSlot0(void*, int);
@@ -602,12 +573,6 @@ class CfObjEnumList;
 struct CPSkillEnumListSlot {
     u8 _pad0[0x4];             // +0x00..0x03
     cf::CfObjectMove* move;    // +0x04
-};
-
-// CfObjEnumList element-count field at +0x620 (get__16CfEnumListHolderFv result).
-struct CPSkillEnumListCount {
-    u8 _pad0[0x620];           // +0x00..0x61F
-    u32 count;                 // +0x620
 };
 
 // cf enum-list helpers used by CPassiveSkillLine_syncEquipState (retail symbols unmangled;

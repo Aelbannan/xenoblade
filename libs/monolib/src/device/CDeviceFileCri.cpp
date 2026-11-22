@@ -31,14 +31,6 @@ struct CFileHandleLayout {
     u32 unk1A4;            //0x1A4 name selector (0 -> use short name)
 };
 
-// Retail destroy__11CFileHandleFv really takes (handle, size, allocParam,
-// blockSize) - the header declares it with only the handle. Declaring the
-// full signature here (C linkage ignores the namespace for the symbol name)
-// makes the call site emit the same four argument registers as retail.
-namespace {
-extern "C" void destroy__11CFileHandleFv(CFileHandle* handle, u32 size, u32 allocParam, u32 blockSize);
-}
-
 CDeviceFileCri* CDeviceFileCri::getInstance() { return sInstance; }
 
 void CDeviceFileCri::setCriFilePathA(const wchar_t* pData) { sCriFilePathA = pData; }
@@ -107,7 +99,7 @@ CDeviceFileCri::CDeviceFileCri(const char* pName, CWorkThread* pParent, int capa
     if (pSelf != nullptr) {
         pSelf = (CException*)((u8*)this + 0x1C4);
     }
-    AddToGlobalArray__10CExceptionFP10IException(pSelf, pExceptionArg);
+    pSelf->AddToGlobalArray(pExceptionArg);
 }
 
 // Member destructor: the compiler restores both vptrs up front, runs the
@@ -157,7 +149,7 @@ inline bool criIsException(CDeviceFileCri* self) {
 } // namespace
 
 bool CDeviceFileCri::checkDriveStatus() {
-    if (isOff__11CWorkSystemFv()) return true;
+    if (CWorkSystem::isOff()) return true;
     if (!DevFile_GetByteA9()) return true;
     
     int status = DVDGetDriveStatus();
@@ -172,17 +164,17 @@ bool CDeviceFileCri::checkDriveStatus() {
         // busy. The message pointers are static pointer VARIABLES (.sdata) -
         // retail loads their CONTENTS (lwz @sda21), not their addresses.
         if (!criIsException(this)) {
-            createException__10CExceptionFP11CWorkThreadPCwUl(this, sCriFilePathA, 4);
+            CException::createException(this, sCriFilePathA, 4);
         }
         return false;
     } else if (status == 11) {
         if (!criIsException(this)) {
-            createException__10CExceptionFP11CWorkThreadPCwUl(this, sCriFilePathB, 4);
+            CException::createException(this, sCriFilePathB, 4);
         }
         return false;
     } else if (status == 4) {
         if (!criIsException(this)) {
-            createException__10CExceptionFP11CWorkThreadPCwUl(this, sCriFilePathA, 4);
+            CException::createException(this, sCriFilePathA, 4);
         }
         return false;
     }
@@ -389,7 +381,7 @@ bool CDeviceFileCri::beginRead() {
         if (ADXF_GetNumReqSct(mADXFHandle) == 4) {
             // Abort: cancel the handle, then tear down ADXF state + job
             // (retail re-inlines this block per site).
-            call__11CFileHandleF3CBM(handle, 3);
+            handle->call(CBM_3);
             CDeviceFileCri* self = sInstance;
             u32 count = self->mChildren.size();
             if (count != 0) {
@@ -405,7 +397,7 @@ bool CDeviceFileCri::beginRead() {
                     ADXF_Close(sInstance->mADXFHandle);
                     sInstance->mADXFHandle = nullptr;
                 }
-                removeFileJob__11CDeviceFileFP14CDeviceFileJob(job2);
+                CDeviceFile::removeFileJob(job2);
                 sInstance->mState = 0;
             }
         }
@@ -422,7 +414,7 @@ bool CDeviceFileCri::beginRead() {
     ADXF_GetFsizeSct(mADXFHandle);
 
     if (fileSize <= 0) {
-        call__11CFileHandleF3CBM(handle, 3);
+        handle->call(CBM_3);
         CDeviceFileCri* self = sInstance;
         u32 count = self->mChildren.size();
         if (count != 0) {
@@ -457,7 +449,7 @@ bool CDeviceFileCri::beginRead() {
 
     if (layout->field_0x58 & 0x8) {
         // Allocation failed: cancel the handle and clean up the job.
-        call__11CFileHandleF3CBM(handle, 3);
+        handle->call(CBM_3);
         CDeviceFileCri* self = sInstance;
         u32 count = self->mChildren.size();
         if (count != 0) {
@@ -532,7 +524,7 @@ bool CDeviceFileCri::readChunk() {
     }
 
     // Abort: cancel the read job.
-    call__11CFileHandleF3CBM(job->mHandle, 3);
+    job->mHandle->call(CBM_3);
     // Retail caches the singleton here (r6); the ADXF args/state stores still
     // re-read the global between calls.
     CDeviceFileCri* self = sInstance;
@@ -598,7 +590,7 @@ bool CDeviceFileCri::advanceSector() {
     } else {
         // Abort: reset the handle position and cancel the read job.
         job->mHandle->unk10 = 0;
-    call__11CFileHandleF3CBM(job->mHandle, 3);
+    job->mHandle->call(CBM_3);
     // Retail caches the singleton here (r6) for the count walk and child
     // extraction; the ADXF args/state stores still re-read the global.
     // KNOWN RESIDUAL: reslist::size()'s inlined counter/iterator land in
@@ -668,7 +660,7 @@ bool CDeviceFileCri::copyTail() {    // Seed-then-null shape (retail): keeps job
         mActiveWorkID = job->mWorkID;
     } else {
         // Abort: cancel the job, then tear down the singleton's ADXF state.
-        call__11CFileHandleF3CBM(job->mHandle, 3);
+        job->mHandle->call(CBM_3);
         // Retail caches the singleton ONCE here (r6) for the size walk, the
         // front() extraction and the first ADXF-handle null check, but
         // re-reads the global between every call inside the teardown.
@@ -894,9 +886,9 @@ bool CDeviceFileCri::wkStandbyLogin() {
 
 bool CDeviceFileCri::wkStandbyLogout() {
     if (mChildren.empty()) {
-        CWorkSystem* ws = (CWorkSystem*)getInstance__11CWorkSystemFv();
+        CWorkSystem* ws = CWorkSystem::getInstance();
         if (ws == nullptr) {
-            void* clib = getInstance__4CLibFv();
+            CLib* clib = CLib::getInstance();
             if (clib == nullptr) {
                 return CWorkThread::wkStandbyLogout();
             }
@@ -919,7 +911,7 @@ bool CDeviceFileCri::wkStandbyExceptionRetry(u32 wid) {
     
     mExceptionPending = true;
 
-    u32 maxRetries = getTargetFramerate__9CDeviceVIFv() * 6;
+    u32 maxRetries = CDeviceVI::getTargetFramerate() * 6;
 
     mRetryCounter++;
     if (mRetryCounter < maxRetries) {

@@ -75,7 +75,7 @@ public:
 
     virtual void Init();
     virtual void Term();
-    virtual void cbRenderBefore();
+    virtual void cbRenderBefore(CScn* scene);
     virtual bool OnFileEvent(CEventFile* pEventFile);
 
     CScn* mpScn;                           // 0x74 owning scene (removeRenderCB receiver)

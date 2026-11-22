@@ -17,22 +17,11 @@ struct BattleGauge {
 // CActorParam_getArtsScale (slot 0x15C), isActive at +0x2BC is
 // CActorParam_isBattleLocked.)
 
-
-// Overlay of the CBattleManager trailing fields read by this helper (the
-// header's own Unk* member names would trip the unknown-name linter, so the
-// offset is re-declared here with a field_0xNN name).
-struct BattleManagerLayout {
-    u8 pad_00[0x20C8];
-    s16 field_20C8;                                  // +0x20C8 chain/timer state
-};
-
 // C-ABI import from the CVS voice-thread family (retail .text:0x802A6488,
 // unmangled name; the CVS_THREAD_* classes declare the same parameter list).
 extern "C" int RequestVoicePlayback(CCharVoice* voicePtr, int voiceId, int arg);
-// C++-linkage helper defined in CCharVoiceMan.cpp (mangled
-// CCharVoiceMan_DispatchById__Fii; the CVS header that declares it is not
-// included here).
-int CCharVoiceMan_DispatchById(int a, int b);
+// C-ABI voice-event dispatch defined in CCharVoiceMan.cpp.
+extern "C" int CCharVoiceMan_DispatchById(int a, int b);
 
 // Retail symbol is the unmangled BattleGaugeTierVoiceGate (C linkage) - CCharVoiceMan
 // and other TUs reference it via extern "C"; without this the mangled
@@ -53,8 +42,7 @@ extern "C" bool BattleGaugeTierVoiceGate(BattleGauge* obj, f32 curVal, f32 prevV
     }
 
     cf::CBattleManager* bm = cf::CBattleManager::getInstance();
-    BattleManagerLayout* bmv = reinterpret_cast<BattleManagerLayout*>(bm);
-    if (bmv->field_20C8 != 0) {
+    if (static_cast<s16>(bm->unk20C8.unk0) != 0) {
         return false;
     }
 

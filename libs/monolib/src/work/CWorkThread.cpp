@@ -2,28 +2,8 @@
 // ~CWorkThread (retail has no bl __dt__10IWorkEventFv there).
 #define IWORK_EVENT_INLINE_DTOR
 #include "monolib/work.hpp"
-#include "monolib/data_vtables.hpp"
+#include "monolib/device/CDeviceClock.hpp"
 #include <cstring>
-
-// Manual vtable defined at end of file (so MWCC's jump-table emission for
-// wkStandby lands first in .data, matching the retail symbol order); forward
-// declared here for the ctor/dtor vptr stores.
-extern IWorkEventVtbl lbl_eu_8056B110;
-// CWorkThread's own virtuals referenced by the manual vtable (declared here,
-// not in data_vtables.hpp: that header is included by TUs that also include
-// device.hpp/CDeviceBase.hpp, where these would collide with the members).
-extern "C" void wkStandbyLogin__11CWorkThreadFv();
-extern "C" void wkStandbyLogout__11CWorkThreadFv();
-
-// CDeviceClock methods referenced by this TU, declared by retail mangled name
-// instead of including monolib/device.hpp: device.hpp pulls in CDeviceBase.hpp
-// whose inline virtual dtor makes MWCC declare the __RTTI__ chain internally,
-// which collides with the extern "C" void* __RTTI__ declarations this TU needs
-// for its manual vtable (MWCC "illegal name overloading").
-class CDeviceClock;
-extern "C" CDeviceClock* getInstance__12CDeviceClockFv();
-extern "C" bool isInitialized__12CDeviceClockFv();
-
 
 // sbss data owned by this TU (blob monolibdata1d dissolve):
 // sAllocFlags and sWorkThreads are the CWorkThreadSystem statics whose retail
@@ -100,90 +80,79 @@ __declspec(noinline) void CMsgParam<8>::enqueue(u32 msg){  // noinline-ok: dropp
     mRing.field6 = mRing.mSize - 1;
 }
 
-// Flat constructor under the retail mangled symbol (CRsrcData/CUICfManager
-// idiom): a plain member definition makes MWCC emit an implicit IWorkEvent
-// base-subobject vptr store (__vt__10IWorkEvent) that retail does not have;
-// a free function gets no implicit base construction, so the whole init store
-// sequence is spelled by hand in the retail order.
-extern "C" void* __ct__11CWorkThreadFPCcP11CWorkThreadi(
-    CWorkThread* self, const char* pName, CWorkThread* pParent, int capacity){
-    // Vptr first, then FixStr<64> default-init (clear).
-    *(void**)self = (void*)&lbl_eu_8056B110;
-    self->mName.mString[0] = 0;
-    self->mName.mLength = 0;
+CWorkThread::CWorkThread(const char* pName, CWorkThread* pParent, int capacity){
+    // FixStr<64> default-init (clear).
+    mName.mString[0] = 0;
+    mName.mLength = 0;
 
-    self->mState = CWorkThread::THREAD_STATE_NONE;
-    self->mWorkID = INVALID_WORK_ID;
-    self->mType = CWorkThread::THREAD_CWORKTHREAD;
-    self->mParent = pParent;
+    mState = CWorkThread::THREAD_STATE_NONE;
+    mWorkID = INVALID_WORK_ID;
+    mType = CWorkThread::THREAD_CWORKTHREAD;
+    mParent = pParent;
 
     // Inlined _reslist_base<CWorkThread*> ctor: base vtable, fields,
     // sentinel node links; then the reslist ctor overrides the vptr.
-    new (&self->mChildren) reslist<CWorkThread*>();
+    new (&mChildren) reslist<CWorkThread*>();
 
-    self->mFlags = 0;
+    mFlags = 0;
 
     // Inlined CMsgParam<8>() ctor + the thread's own unk1B8/unk1BC clear.
-    CWorkThreadQueueLayout* q = reinterpret_cast<CWorkThreadQueueLayout*>(self);
-    new (&self->mMsgQueue) CMsgParam<8>();
-    self->unk1BC = 0;
+    CWorkThreadQueueLayout* q = reinterpret_cast<CWorkThreadQueueLayout*>(this);
+    new (&mMsgQueue) CMsgParam<8>();
+    unk1BC = 0;
     q->unk1B8 = 0;
 
-    self->mExceptionWorkID = INVALID_WORK_ID;
+    mExceptionWorkID = INVALID_WORK_ID;
 
     // Retail defers the sdata load of sAllocHandle to the end of the init
     // sequence (cheap sda21 addressing).
-    self->mAllocHandle = CWorkThreadSystem::sAllocHandle;
+    mAllocHandle = CWorkThreadSystem::sAllocHandle;
 
     // FixStr::operator=(const char*): length then copy.
-    self->mName = pName;
-    self->mWorkID = CWorkThreadSystem::allocWID(self);
+    mName = pName;
+    mWorkID = CWorkThreadSystem::allocWID(this);
 
     // Hand-expanded mChildren.reserve(mAllocHandle, capacity): retail inlines
     // the array allocation + node-init loop (MWCC unrolls it by 8) here.
     if(capacity > 0){
-        self->mChildren.mList = new (self->mAllocHandle) _reslist_node<CWorkThread*>[capacity];
+        mChildren.mList = new (mAllocHandle) _reslist_node<CWorkThread*>[capacity];
         for(int i = 0; i < capacity; i++){
-            self->mChildren.mList[i].mNext = nullptr;
+            mChildren.mList[i].mNext = nullptr;
         }
-        self->mChildren.mCapacity = capacity;
+        mChildren.mCapacity = capacity;
     }
 
     // Retail inlines isEvent3 here as a direct EVT3 flag-bit test.
     if(pParent != nullptr && (pParent->mFlags & CWorkThread::THREAD_FLAG_EVT3)){
-        self->mFlags |= CWorkThread::THREAD_FLAG_EVT3;
+        mFlags |= CWorkThread::THREAD_FLAG_EVT3;
     }
 
     if(pParent != nullptr && (pParent->mFlags & CWorkThread::THREAD_FLAG_EVT4)){
-        self->mFlags |= CWorkThread::THREAD_FLAG_EVT4;
+        mFlags |= CWorkThread::THREAD_FLAG_EVT4;
     }
 
     if(pParent != nullptr && (pParent->mFlags & CWorkThread::THREAD_FLAG_PAUSE)){
-        self->mFlags |= CWorkThread::THREAD_FLAG_PAUSE;
+        mFlags |= CWorkThread::THREAD_FLAG_PAUSE;
     }
 
     if(pParent != nullptr && (pParent->mFlags & CWorkThread::THREAD_FLAG_EVT7)){
-        self->mFlags |= CWorkThread::THREAD_FLAG_EVT7;
+        mFlags |= CWorkThread::THREAD_FLAG_EVT7;
     }
 
     if(pParent != nullptr && (pParent->mFlags & CWorkThread::THREAD_FLAG_EVT9)){
-        self->mFlags |= CWorkThread::THREAD_FLAG_EVT9;
+        mFlags |= CWorkThread::THREAD_FLAG_EVT9;
     }
 
     if(pParent != nullptr && (pParent->mFlags & CWorkThread::THREAD_FLAG_APPEXCEPTION)){
-        self->mFlags |= CWorkThread::THREAD_FLAG_APPEXCEPTION;
+        mFlags |= CWorkThread::THREAD_FLAG_APPEXCEPTION;
     }
 
     if(pParent != nullptr && (pParent->mFlags & CWorkThread::THREAD_FLAG_NO_EVENT)){
-        self->mFlags |= CWorkThread::THREAD_FLAG_NO_EVENT;
+        mFlags |= CWorkThread::THREAD_FLAG_NO_EVENT;
     }
-
-    return self;
 }
 
 CWorkThread::~CWorkThread(){
-    *(void**)this = &lbl_eu_8056B110;
-
     // Walk the child list without acting on the items (children are destroyed
     // through CWorkControl; retail leaves this loop empty).
     if(!mChildren.empty()){
@@ -461,8 +430,8 @@ void CWorkThread::wkSetEventChild(EVT evt){
 
 bool CWorkThread::wkCheckTimeout(u32 arg0, bool arg1, const char* pMessage){
     // isInitialized is effectively static (never touches this).
-    if(getInstance__12CDeviceClockFv() == nullptr ||
-       (!isInitialized__12CDeviceClockFv() && !arg1)){
+    if(CDeviceClock::getInstance() == nullptr ||
+       (!CDeviceClock::isInitialized() && !arg1)){
         return false;
     }
 
@@ -559,7 +528,7 @@ CWorkThread* CWorkThread::getWorkThread(WORK_ID wid){
 void CWorkThread::setWorkParam(u32){}
 
 void CWorkThread::wkTimeoutInit(){
-    (void)getInstance__12CDeviceClockFv();
+    (void)CDeviceClock::getInstance();
 }
 
 bool CWorkThread::wkStandbyInit(){
@@ -825,33 +794,6 @@ CWorkThread* CWorkThread::getWorkThread(const char* name){
 }
 #pragma optimize_for_size off
 #pragma dont_inline off  // noinline-ok: closes the block above
-
-// Data owned by this TU (blob monolibdata1 dissolve). The CWorkThread vtable
-// (lbl_eu_8056B110) is defined explicitly here because the class is novtable:
-// MWCC would otherwise auto-emit __vt__11CWorkThread + the __RTTI__11CWorkThread
-// base-list, which the retail does not carry in this split range.
-IWorkEventVtbl lbl_eu_8056B110 = {
-    (u32)&__RTTI__11CWorkThread, 0, (u32)&__dt__11CWorkThreadFv,
-    (u32)&WorkEvent1__10IWorkEventFPvPCc, (u32)&OnFileEvent__10IWorkEventFP10CEventFile,
-    (u32)&WorkEvent3__10IWorkEventFPv, (u32)&WorkEvent4__10IWorkEventFv,
-    (u32)&OnPauseTrigger__10IWorkEventFb,
-    (u32)&WorkEvent6__10IWorkEventFv, (u32)&WorkEvent7__10IWorkEventFv,
-    (u32)&WorkEvent8__10IWorkEventFv, (u32)&WorkEvent9__10IWorkEventFv,
-    (u32)&WorkEvent10__10IWorkEventFv, (u32)&WorkEvent11__10IWorkEventFv,
-    (u32)&WorkEvent12__10IWorkEventFv, (u32)&WorkEvent13__10IWorkEventFv,
-    (u32)&WorkEvent14__10IWorkEventFv, (u32)&WorkEvent15__10IWorkEventFv,
-    (u32)&WorkEvent16__10IWorkEventFv, (u32)&WorkEvent17__10IWorkEventFv,
-    (u32)&WorkEvent18__10IWorkEventFv, (u32)&WorkEvent19__10IWorkEventFv,
-    (u32)&WorkEvent20__10IWorkEventFv, (u32)&WorkEvent21__10IWorkEventFv,
-    (u32)&WorkEvent22__10IWorkEventFv, (u32)&WorkEvent23__10IWorkEventFv,
-    (u32)&WorkEvent24__10IWorkEventFv, (u32)&WorkEvent25__10IWorkEventFv,
-    (u32)&WorkEvent26__10IWorkEventFv, (u32)&WorkEvent27__10IWorkEventFv,
-    (u32)&WorkEvent28__10IWorkEventFv, (u32)&WorkEvent29__10IWorkEventFv,
-    (u32)&WorkEvent30__10IWorkEventFv, (u32)&WorkEvent31__10IWorkEventFv,
-    (u32)&wkUpdate__11CWorkThreadFv, (u32)&wkRender__11CWorkThreadFv,
-    (u32)&wkRenderAfter__11CWorkThreadFv, (u32)&wkStandbyLogin__11CWorkThreadFv,
-    (u32)&wkStandbyLogout__11CWorkThreadFv, (u32)&wkStandbyExceptionRetry__11CWorkThreadFUl,
-};
 
 // sAllocHandle (mtl::ALLOC_HANDLE, initialized to INVALID_HANDLE 0xFFFFFFFF)
 // - blob monolibdata1 dissolve. CWorkThreadSystem.cpp is its user; the

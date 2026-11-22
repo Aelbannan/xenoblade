@@ -1,6 +1,7 @@
 #pragma once
 
 #include <types.h>
+#include "nw4r/ut/ut_WideTagProcessor.h"
 #include "kyoshin/code_80135FDC_Bdat.hpp"
 #include "monolib/work/CProcess.hpp"
 #include "monolib/lib/UnkClass_8045F564.hpp"
@@ -34,7 +35,7 @@ public:
     virtual void Init();
     virtual void Term();
     virtual void Move();
-    virtual void cbRenderBefore();
+    virtual void cbRenderBefore(CScn* scene);
     virtual bool OnFileEvent(CEventFile* pEventFile);
 
     CFileHandle* mFileHandle74;  // 0x74 (released by closeFileHandle in Term)
@@ -44,7 +45,7 @@ public:
     CScn* mScene;              // 0x8C owning scene (ctor param)
     /* 0x90 */ u8 mState;    // Move() state machine
     u8 _91[3];                 // 0x91-0x93
-    nw4r::lyt::Layout* mField94;  // 0x94 (Term calls its vtable slot-2 with 1)
+    nw4r::ut::WideTagProcessor* mpTagProcessor;  // 0x94 name-guess: installed on txt_sysmes01 via SetTagProcessor
     nw4r::lyt::ArcResourceAccessor* mpAccessor;  // 0x98
     /* 0x9c */ nw4r::lyt::Layout* mpLayout;
     /* 0xa0 */ nw4r::lyt::AnimTransform* mpAnim;
@@ -824,10 +825,7 @@ struct CScenarioLogArg2 {
 // gets them from this header instead of inline pseudo-import declarations.
 // ---------------------------------------------------------------------------
 
-// Retail callees referenced by the (still-unmatched) CSysWinScenarioLog unit.
-// The CfGameManager "sequence/flag" helpers are mangled Fv in retail even
-// though they take an argument (see CfMapMineManager / code_80135FDC for the
-// same convention), so reference them via their retail mangled names.
+// CfGameManager sequence helpers are still referenced by code_8028130C.cpp.
 extern "C" u32  getEventValue40__Q22cf13CfGameManagerFv(u32 id);   // get sequence value
 extern "C" void setEventManagerValue__Q22cf13CfGameManagerFv(u32 id, u32 value); // set sequence value
 extern "C" void queueEventId__Q22cf13CfGameManagerFv(u32 value);
@@ -836,18 +834,7 @@ extern "C" u32  getQueuedFileEventCount__Q22cf13CfGameManagerFv(); // unsigned c
 extern "C" void* MapFx_ResolveOwner(void* source);
 extern "C" u16  gNandTeardownFlag;          // pause / non-enemy-scene flag
 extern "C" u16  gmGlobalFlag42;          // current area id (SysWinLog_DriveCounters gate)
-extern "C" u32  lbl_eu_80664908;          // CSysWinScenarioLog singleton
-extern "C" u8   lbl_eu_80664910;
-extern "C" u8   lbl_eu_80664911;
-extern "C" u8   lbl_eu_80664912;
-extern "C" u32  lbl_eu_80664914;
-extern "C" u8   lbl_eu_80664918;
-extern u32 lbl_eu_8066490C;              // Term clears this (.sbss)
 
-extern "C" void __dt__17UnkClass_8045F564Fv(void*, int);
-extern "C" void __ct__17UnkClass_8045F564Fv(UnkClass_8045F564* self);
-extern "C" void __dt__8CProcessFv(void*, int);
-extern "C" void __ct__8CProcessFv(CProcess* self);
 extern "C" CSysWinScenarioLog* __ct__CSysWinScenarioLog(CSysWinScenarioLog* _this, void* param); // returns this
 
 // Term / ctor imports (retail C-ABI names; the CfGameManager helper is Fv-mangled
@@ -873,16 +860,11 @@ extern "C" u32 Bdat_GetMaxRow_B1EC(void* fp);               // BDAT row count
 // control the clrlwi with an explicit cast.
 extern "C" void* Bdat_GetTable_AA34();
 extern "C" void* __ct__CTagProcessor(void* self);
-extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
-    u32 arg, nw4r::lyt::Layout* layout);
 
-// u16->f32 conversion magic double (2^52 = 0x4330000000000000, CfTFile.cpp convention).
-extern "C" double lbl_eu_80668AD8;
 
 // CSysWinScenarioLog::Move helpers.
 extern "C" s32  MenuTutorialIsCreated();
 extern "C" u32  gmPauseFlags;
-extern "C" f32  lbl_eu_80668AD0;
 extern "C" void SysWinLog_OpenContent(CSysWinScenarioLog* self);
 
 // Retail-unmangled scenario-counter entry points defined in code_8028130C:

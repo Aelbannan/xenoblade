@@ -3,24 +3,25 @@
 
 #include <harness_catalog.h>
 
-unsigned char lbl_eu_805E64A8[4];
-unsigned char lbl_eu_805E64AC[4];
-unsigned char lbl_eu_805E64B0[8];
-unsigned char lbl_eu_805E64B8[4];
-unsigned char lbl_eu_805E64BC[4];
-void AHXDCD_SetupFtbl(u32 val) { *(u32*)lbl_eu_805E64B8 = val; }
+u32 ahxsbf_synthesis_filter_table2;
+u32 ahxsbf_synthesis_window_table2;
+u32 ahxsbf_init_cnt;
+u32 ahxsbf_filter_flg;
+u32 ahxsbf_ftbl; // name-guess: JP local labels 0x805E9AF8/0x805E9AFC (AHXDCD_SetupFtbl/Wtbl sources)
+u32 ahxsbf_wtbl;
+void AHXDCD_SetupFtbl(u32 val) { ahxsbf_ftbl = val; }
 
-void AHXDCD_SetupWtbl(u32 val) { *(u32*)lbl_eu_805E64BC = val; }
+void AHXDCD_SetupWtbl(u32 val) { ahxsbf_wtbl = val; }
 
 extern const float ahxsbf_scale_table[];
 
 void ahxsbf_init_filter(void);
 
 void AHXSBF_Init(void) {
-    if (*(u32*)lbl_eu_805E64B0 == 0) {
+    if (ahxsbf_init_cnt == 0) {
         ahxsbf_init_filter();
     }
-    (*(u32*)lbl_eu_805E64B0)++;
+    ahxsbf_init_cnt++;
 }
 
 /* SBF filter workspace (bss @ 0x805E64A8).
@@ -40,7 +41,7 @@ typedef struct AhxSbfWork {
 } AhxSbfWork;
 
 void ahxsbf_init_filter(void) {
-    AhxSbfWork* w = (AhxSbfWork*)&lbl_eu_805E64A8;
+    AhxSbfWork* w = (AhxSbfWork*)&ahxsbf_synthesis_filter_table2;
     u8* dst;
     u8* adst;
     u8* src;
@@ -75,15 +76,15 @@ void ahxsbf_init_filter(void) {
 }
 
 void AHXSBF_Finish(void) {
-    (*(u32*)lbl_eu_805E64B0)--;
+    ahxsbf_init_cnt--;
 }
 
 AhxSbfWork* AHXSBF_Create(AhxSbfWork* self, u32 size) {
     memset(self, 0, size);
     self->unk08 = 64;
     self->dstW = (void*)64;
-    self->ftbl = (void*)*(u32*)lbl_eu_805E64AC;
-    self->flag = *(u32*)lbl_eu_805E64A8;
+    self->ftbl = (void*)ahxsbf_synthesis_window_table2;
+    self->flag = ahxsbf_synthesis_filter_table2;
     *(u8*)self = 1;
     return self;
 }

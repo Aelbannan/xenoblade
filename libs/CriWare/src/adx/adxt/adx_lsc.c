@@ -4,10 +4,12 @@ extern void ADXCRS_Enter(void);
 extern void LSC_ExecServer(void);
 extern void ADXCRS_Leave(void);
 
-extern u8 lbl_eu_805E3328[0x10];
+void (*adxt_lsc_svr_start_cb)(s32);
+s32 adxt_lsc_svr_start_cb_obj;
+void (*adxt_lsc_svr_end_cb)(s32);
+s32 adxt_lsc_svr_end_cb_obj;
 
 void ADXT_ExecLscSvr(void) {
-    void *base = (void *)lbl_eu_805E3328;
     void (*cb1)(s32);
     s32 arg1;
     void (*cb2)(s32);
@@ -15,21 +17,19 @@ void ADXT_ExecLscSvr(void) {
 
     ADXCRS_Enter();
 
-    cb1 = *(void (**)(s32))base;
+    cb1 = adxt_lsc_svr_start_cb;
     if (cb1 != NULL) {
-        arg1 = *(s32 *)((u8 *)base + 4);
+        arg1 = adxt_lsc_svr_start_cb_obj;
         cb1(arg1);
     }
 
     LSC_ExecServer();
 
-    cb2 = *(void (**)(s32))((u8 *)base + 8);
+    cb2 = adxt_lsc_svr_end_cb;
     if (cb2 != NULL) {
-        arg2 = *(s32 *)((u8 *)base + 12);
+        arg2 = adxt_lsc_svr_end_cb_obj;
         cb2(arg2);
     }
 
     ADXCRS_Leave();
 }
-
-u8 lbl_eu_805E3328[0x10];

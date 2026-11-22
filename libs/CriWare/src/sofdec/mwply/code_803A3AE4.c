@@ -11,7 +11,7 @@ extern const struct SfdTrIf SFD_tr_vd_mpv;
 extern char lbl_eu_8051C4E0[];
 extern char lbl_eu_8051CCD8[];
 extern char lbl_eu_8051C550[];
-extern char lbl_eu_8051CC98[];
+extern const void* const SFD_tr_uo[16];
 
 __attribute__((aligned(4))) const void * const lbl_eu_8051BF50[9] = {
     &SFD_tr_in_mem,
@@ -21,7 +21,7 @@ __attribute__((aligned(4))) const void * const lbl_eu_8051BF50[9] = {
     0,0,
     lbl_eu_8051CCD8,
     lbl_eu_8051C550,
-    lbl_eu_8051CC98
+    SFD_tr_uo
 };
 
 __attribute__((aligned(4))) const void * const lbl_eu_8051BF74[9] = {
@@ -40,7 +40,7 @@ __attribute__((aligned(4))) const void * const lbl_eu_8051BF98[10] = {
     0,0,0,
     lbl_eu_8051CCD8,
     0,
-    lbl_eu_8051CC98,
+    SFD_tr_uo,
     0
 };
 

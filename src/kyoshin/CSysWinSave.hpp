@@ -15,7 +15,7 @@
 #include "kyoshin/CUICfManager_Res.hpp"
 
 /*
- * System window "save" process (singleton, created by __ct__802944D8).
+ * System window "save" process (singleton, created by SysWinSave_Create).
  *
  * Real MI class: IUIWindow at +0x00 (0x6C - brings the CTTask<IUIWindow>
  * ptmf hooks and the IUIWindow state), IWorkEvent at +0x6C and IScnRender at
@@ -31,24 +31,22 @@
  *   0xDC  flag byte
  *   0xDD  signed flag byte (drives cf load/release helper in Term)
  *
- * CSysWinSave's ctor/dtor are emitted as global functions carrying the retail
- * symbol names (__ct__802944D8 / __dt__11CSysWinSaveFv), so the member dtor
- * declared here is satisfied at link time by that global definition (CMapSel
- * / CSysWinSelect idiom).
+ * The ctor has no out-of-line copy (it is inlined into the SysWinSave_Create
+ * singleton factory); the virtual dtor is defined in CSysWinSave.cpp.
  */
 class CSysWinSave : public IUIWindow, public IWorkEvent, public IScnRender {
 public:
     // Single-use ctor: retail has no out-of-line __ct__11CSysWinSave symbol - the
     // whole body (CProcess ctor, CTTask<IUIWindow> vptr + null ptmf hooks,
     // IUIWindow state, composite + sub-vptrs, the embedded region/CSysWin/CCur18)
-    // is inlined into the __ct__802944D8 factory.
+    // is inlined into the SysWinSave_Create factory.
     CSysWinSave(CScn* scene)
         : mScene(scene), mMemRegion(), mSysWin(0), mCur18(NULL), mFlagDC(0), mFlagDD(0) {}
     virtual ~CSysWinSave();
     virtual void Init();
     virtual void Term();
     virtual void Move();
-    virtual void cbRenderBefore();
+    virtual void cbRenderBefore(CScn* scene);
 
     void HandleInput();
 
@@ -59,6 +57,10 @@ public:
     u8  mFlagDC;                   // 0xDC
     s8  mFlagDD;                   // 0xDD signed flag (cf load/release toggle)
 };
+
+// name-guess: SysWinSave_Create (singleton factory; modelled on the retail
+// sibling SysWinLog_Create(CProcess*, u8*)). Returns 0 if already created.
+CSysWinSave* SysWinSave_Create(CProcess* registerParent, CScn* scene);
 
 #include "monolib/scn/CScn.hpp"
 
@@ -141,35 +143,15 @@ struct CSysWinData {
     u8    f_39;    // 0x39
 };
 
-// C-ABI function imports / definitions: these retail symbols are unmangled so
-// they must be declared `extern "C"` to stop MWCC suffixing the reloc name.
-// (SetWideLocAdjust is the exception: retail emits the mangled nw4r form, so it
-// is declared below as a normal C++ function to let MWCC mangle it.)
+// C-ABI import used by SysWinSaveHandleInput.
 extern "C" {
-void deleteRegion__17UnkClass_8045F564Fv(UnkClass_8045F564* region);
-// setPresentationFlag: canonical setPresentationFlag__Q22cf13CfGameManagerFv(bool).
-void __ct__8CProcessFv(CProcess* self);
-void __ct__7CSysWinFUc(void* syswin, int arg);
-void __ct__17UnkClass_8045F564Fv(UnkClass_8045F564* self);
-void __dt__7CSysWinFv(void* syswin, int flags);
-void __dt__17UnkClass_8045F564Fv(void* self, int flags);
-void __dt__8CProcessFv(CProcess* self, int flags);
-
-// Additional C-ABI imports used by Init/Move/SysWinSaveHandleInput (retail symbols
-// are unmangled / non-namespace, so C linkage is required).
 void* getCfPadData__Q22cf13CfGameManagerFv();
 }
 
 // DrawInfo helper (retail mangled name SetWideLocAdjust__FPQ34nw4r3lyt8DrawInfo).
 
 // Global data imports (MWCC does not mangle global-scope data names).
-extern CSysWinSave* lbl_eu_80664A08;   // singleton instance pointer (.sbss)
 extern u32 gmPauseFlags;            // cbRenderBefore flag (.sbss)
 
 
 
-// Float literals used by setChainGauge (.sdata2). Mutable (const would give
-// internal linkage and clash with the definitions in CSysWinSave.cpp).
-// (BA0+BA4 share one nonzero-anchored pair; single-float zeros exile to .sbss2.)
-extern f32 lbl_eu_80668BA04[2];
-extern f64 lbl_eu_80668BA8;      // multiplier

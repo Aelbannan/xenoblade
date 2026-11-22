@@ -82,7 +82,7 @@ void CfGimmick_LoadBdatAreaRotationIndexed(WarpData*, WarpVec3*, void*, u32*, in
 void CfGimmick_LoadBdatAreaExtentsIndexed(WarpData*, WarpVec3*, void*, u32*, int);
 void CfGimmick_BuildColliderMtx(WarpVec3*, const WarpVec3*, const WarpVec3*);
 void CfGimmick_ClearManagerBinding(WarpData*);
-void CfGimmick_UnregisterSpawnedObject(WarpObject*);
+void CfGimmick_UnregisterSpawnedObject(WarpObject**);
 void CfGimmick_UpdateProximity(WarpObject**, WarpVec3*, u16, f32, int, int);
 int CfGimmick_IsMessageSystemBusy(WarpData*);
 int CfGimmick_CheckPartyIdLoaded(WarpData*, WarpObject*);
@@ -134,14 +134,6 @@ static void clearWarpObjects(WarpData* self) {
 static void updateWarp(WarpData* self) {
     (self->*lbl_eu_80535938[self->state])();
 }
-
-/* Overlay of the CBattleManager fields read by the warp request gating. */
-struct BattleMgrWarpState {
-    u8 pad00[0x1aa];
-    u8 phase;                        /* 0x1aa */
-    u8 pad1ab[0x20c8 - 0x1ab];
-    s16 chainValue;                  /* 0x20c8 */
-};
 
 extern "C" void __ct__cf_CfGimmickWarp(WarpData* self, u16 rowId) {
     __ct__cf_CfGimmick(self);
@@ -210,8 +202,8 @@ extern "C" void* __dt__Q22cf13CfGimmickWarpFv(WarpData* self, int deleteFlag) {
     if (self != 0) {
         *(void**)self = (void*)lbl_eu_805359B0;
         CfGimmick_ClearManagerBinding(self);
-        CfGimmick_UnregisterSpawnedObject((WarpObject*)((u8*)self + 0x7c));
-        CfGimmick_UnregisterSpawnedObject((WarpObject*)((u8*)self + 0x108));
+        CfGimmick_UnregisterSpawnedObject(&self->object7cState);
+        CfGimmick_UnregisterSpawnedObject(&self->object108);
         __dt__Q22cf9CfGimmickFv(self, 0);
         if (deleteFlag > 0) {
             operator delete(self);
@@ -233,8 +225,8 @@ extern "C" void CfGimmickWarp_UpdateState(WarpData* self) {
         }
         self->flags &= ~0x10u;
     } else {
-        CfGimmick_UnregisterSpawnedObject((WarpObject*)(&self->object7cState));
-        CfGimmick_UnregisterSpawnedObject((WarpObject*)(&self->object108));
+        CfGimmick_UnregisterSpawnedObject(&self->object7cState);
+        CfGimmick_UnregisterSpawnedObject(&self->object108);
     }
 }
 
@@ -467,11 +459,12 @@ extern "C" void CfGimmickWarp_CheckTrigger(WarpData* self) {
 
 extern "C" void CfGimmickWarp_ArmWarp(WarpData* self) {
     bool valid;
-    u8 phase = ((BattleMgrWarpState*)getInstance__Q22cf14CBattleManagerFv())->phase;
+    cf::CBattleManager* battleManager = cf::CBattleManager::getInstance();
+    u8 phase = battleManager->mChain.mHead.field_2;
     if (phase >= 1 && phase <= 0x18) {
         valid = true;
     } else {
-        valid = ((BattleMgrWarpState*)getInstance__Q22cf14CBattleManagerFv())->chainValue != 0;
+        valid = battleManager->unk20C8.unk0 != 0;
     }
     if (valid) {
         self->timer = 30.0f;

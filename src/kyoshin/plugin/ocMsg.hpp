@@ -88,7 +88,3 @@ void ocMsgRegist();
 #ifdef __cplusplus
 }
 #endif
-
-/* OCData registration tables (defined in another TU's data section). */
-extern OCData lbl_eu_80524CE8[];
-extern OCData lbl_eu_80524D80[];

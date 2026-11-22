@@ -5,6 +5,8 @@
 
 namespace ml {
     struct CRect16 {
+        static CRect16 zero;
+
         CRect16(){
         }
     

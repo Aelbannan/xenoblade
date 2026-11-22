@@ -301,7 +301,7 @@ done:
  * @param  none
  * @return none
  */
-void CMenuPTGauge::cbRenderBefore() {
+void CMenuPTGauge::cbRenderBefore(CScn*) {
     // getInstance result discarded; feeds static isFlag01Set call schedule
     CTaskGame::getInstance();
     // OR-combined guard: MWCC emits the second disjunct as the unreduced
@@ -361,8 +361,8 @@ extern "C" void CMenuPTGauge_dtorAdj58(void* self){
     __dt__12CMenuPTGaugeFv((char*)self - 0x58);
 }
 extern "C" void CMenuPTGauge_renderBeforeAdj5C(void* self) {
-    extern void cbRenderBefore__12CMenuPTGaugeFv(void*);
-    cbRenderBefore__12CMenuPTGaugeFv((char*)self - 0x5c);
+    extern void cbRenderBefore__12CMenuPTGaugeFP4CScn(void*);
+    cbRenderBefore__12CMenuPTGaugeFP4CScn((char*)self - 0x5c);
 }
 void CMenuPTGauge_dtorAdj5C(void* p) {
     // Adjust from IScnRender subobject (+0x5c) back to CMenuPTGauge

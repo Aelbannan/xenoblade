@@ -20,8 +20,6 @@
 
 // Retail data label: cbRenderBefore gate flag (bit 21 skips the draw).
 extern u32 gmPauseFlags;
-// Zeal menu string table (layout/anim names, texture names, callbacks).
-extern char lbl_eu_80503454[];
 
 // C-ABI imports (retail unmangled names; these identifiers must keep C linkage
 // so MWCC emits the literal reloc names -- see CSysWinSave.hpp).
@@ -55,7 +53,67 @@ CMenuZeal::CMenuZeal(CScn* scene, int a3, float f1)
 // ---------------------------------------------------------------------------
 CMenuZeal::~CMenuZeal() {}
 
-void CMenuZeal::Init() {}
+void CMenuZeal::Init() {
+    mLayoutMem.createRegion(mtl::MemManager::getHandleMEM2(), 0x2000, "CMenuZeal", 0);
+    Class_8045F858 regionGuard(&mLayoutMem);
+
+    buildLayout(&mLayout1, CUICfManager_getArcResourceAccessor(),
+                "mf71_battle90_chance_gage.brlyt");
+    bindLayoutAnimTransform(mLayout1, &mAnim1, CUICfManager_getArcResourceAccessor(),
+                            "mf71_battle90_chance_gage_in.brlan");
+    bindLayoutAnimTransform(mLayout1, &mAnim2, CUICfManager_getArcResourceAccessor(),
+                            "mf71_battle90_chance_gage_go.brlan");
+    bindLayoutAnimTransform(mLayout1, &mAnim3, CUICfManager_getArcResourceAccessor(),
+                            "mf71_battle90_chance_gage_verrygood.brlan");
+    bindLayoutAnimTransform(mLayout1, &mAnim4, CUICfManager_getArcResourceAccessor(),
+                            "mf71_battle90_chance_gage_out.brlan");
+    mLayout1->SetAnimationEnable(mAnim2, false);
+    mLayout1->SetAnimationEnable(mAnim3, false);
+    mLayout1->SetAnimationEnable(mAnim4, false);
+    mLayout1->SetAnimationEnable(mAnim1, true);
+
+    buildLayout(&mLayout2, CUICfManager_getArcResourceAccessor(),
+                "mf71_battle92_chance_pointer.brlyt");
+    bindLayoutAnimTransform(mLayout2, &mAnim5, CUICfManager_getArcResourceAccessor(),
+                            "mf71_battle92_chance_pointer_in.brlan");
+    bindLayoutAnimTransform(mLayout2, &mAnim6, CUICfManager_getArcResourceAccessor(),
+                            "mf71_battle92_chance_pointer_go.brlan");
+    bindLayoutAnimTransform(mLayout2, &mAnim7, CUICfManager_getArcResourceAccessor(),
+                            "mf71_battle92_chance_pointer_verrygood.brlan");
+    bindLayoutAnimTransform(mLayout2, &mAnim8, CUICfManager_getArcResourceAccessor(),
+                            "mf71_battle92_chance_pointer_out.brlan");
+    mLayout2->SetAnimationEnable(mAnim6, false);
+    mLayout2->SetAnimationEnable(mAnim7, false);
+    mLayout2->SetAnimationEnable(mAnim8, false);
+    mLayout2->SetAnimationEnable(mAnim5, true);
+
+    buildLayout(&mLayout3, CUICfManager_getArcResourceAccessor(),
+                "mf71_battle91_chance_hit.brlyt");
+    bindLayoutAnimTransform(mLayout3, &mAnim9, CUICfManager_getArcResourceAccessor(),
+                            "mf71_battle91_chance_hit_glow_in.brlan");
+    mLayout3->SetAnimationEnable(mAnim9, true);
+
+    const char* buttonName = cf::CfGameManager::isClassicController(-1)
+                                 ? "mf71_btl90_chn_btn_c01.tpl"
+                                 : "mf71_btl90_chn_btn_r01.tpl";
+    void* buttonTex = CUICfManager_getArcResourceAccessor()->GetResource(0x74696D67, buttonName, 0);
+    if (buttonTex != 0) {
+        PaneSetTexPaletteByName(mLayout1, "pic_button_r", static_cast<TPLPalette*>(buttonTex));
+    }
+
+    const char* glowName = cf::CfGameManager::isClassicController(-1)
+                               ? "mf71_btl90_chn_btngl_c00.tpl"
+                               : "mf71_btl90_chn_btngl_r00.tpl";
+    void* glowTex = CUICfManager_getArcResourceAccessor()->GetResource(0x74696D67, glowName, 0);
+    if (glowTex != 0) {
+        PaneSetTexPaletteByName(mLayout2, "pic_line_r00", static_cast<TPLPalette*>(glowTex));
+        PaneSetTexPaletteByName(mLayout2, "pic_line_r01", static_cast<TPLPalette*>(glowTex));
+    }
+
+    mScn->addRenderCB(static_cast<IScnRender*>(this), 0xA, 0);
+    playUISound(0xa8);
+    mLayoutMem.validateHeap();
+}
 
 // ---------------------------------------------------------------------------
 // Term: tear down the render callback, the three layouts, and the scratch
@@ -92,7 +150,7 @@ void CMenuZeal::Move() {}
 // draw-enabled flag), then draw the layouts through a stack DrawInfo. The
 // third layout only draws when mField_A0 is set.
 // ---------------------------------------------------------------------------
-void CMenuZeal::cbRenderBefore() {
+void CMenuZeal::cbRenderBefore(CScn*) {
     CTaskGame::getInstance();
     if (CTaskGame::isFlag01Set() != 0) goto exit;
     if (gmPauseFlags & (1u << 21)) goto exit;
@@ -181,16 +239,16 @@ extern "C" int GetZealResult(CMenuZeal* self) {
     quadP[2] = 0xff;
     quadP[1] = 0xff;
     quadP[0] = 0xff;
-    PaneMatSetTevColorsByName(self->mLayout2, &lbl_eu_80503454[0x25e], (const GXColorS10*)quadP, (const GXColorS10*)quadQ);
+    PaneMatSetTevColorsByName(self->mLayout2, "pic_pointer_def", (const GXColorS10*)quadP, (const GXColorS10*)quadQ);
 
     if (self->mField_94 >= 100.0f) {
         // Texture name depends on the detected pad type.
         const char* texName = cf::CfGameManager::isClassicController(-1)
-                                  ? &lbl_eu_80503454[0x1c7]
-                                  : &lbl_eu_80503454[0x1e2];
+                                  ? "mf71_btl90_chn_btn_c01.tpl"
+                                  : "mf71_btl90_chn_btn_r01.tpl";
         void* tex = CUICfManager_getArcResourceAccessor()->GetResource(0x74696D67, texName, 0);
         if (tex != 0) {
-            PaneSetTexPaletteByName(self->mLayout1, &lbl_eu_80503454[0x1fd], (TPLPalette*)tex);
+            PaneSetTexPaletteByName(self->mLayout1, "pic_button_r", static_cast<TPLPalette*>(tex));
         }
 
         self->mField_94 = 0.0f;

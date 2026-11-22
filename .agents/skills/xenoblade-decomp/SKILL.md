@@ -283,6 +283,15 @@ Prior art: `MWCC_CASES` "Shield-clearing batch" (+ `UPDATE`/`UPDATE 2`) and the 
 line-number negative result; `MWCC_PATTERNS` "Cross-header extern \"C\" conflicts" (diagnosis recipe)
 and the `getBdatStringColumnValue` rule (copy the definition's spelling verbatim).
 
+## Landing changes (land gate)
+
+Every edit to a gated file lands through `tools/coop/land` (orchestrator only, `XB_LAND_OWNER=1`):
+whole-tree build + link + snapshot before/after; rejects lost ✓, data-byte drops, extab/link/build
+regressions and any per-unit rise in hard faithful categories or ban counters (including the
+steering shapes `scalar_ptr_alias`, `cast_addr_alias`, `addr_extern`, `single_use_inline`). The
+pre-commit hook refuses gated files the gate never passed. **Agents never run it** — leave the edit
+in the tree and report `DONE`/`BLOCKED <class>`. Details: `docs/land_gate.md`.
+
 ## Policy exceptions
 
 The only allowed escapes from high-level C/C++ are listed in **PLAN.md §17.6**: the `DECOMP_PPC_*`
@@ -324,6 +333,7 @@ bake for DOL-split absolutes like `_stack_addr` is the only ok case).
 | `tools/coop/reloc_map.py` | Reloc name-drift detection/miner |
 | `tools/coop/extc.py` | `extern "C"` decl classifier, header-drift check, member-conversion plan |
 | `docs/CODE_SMELLS.md` | CI-freshness-checked legacy smell backlog (extern "C"/`void*`/`self` counts — trend to 0); regenerate with `tools/coop/smell_report.py` |
+| `tools/coop/land/` | Land gate: `pack` briefs, `check`/`apply` (orchestrator), ledger + pre-commit `verify-staged` (`docs/land_gate.md`) |
 | `tools/coop/batch-cycle.py` | Mass-acceptance after matching |
 | `configure.py` | Per-object matching flags / `mw_version` |
 | `docs/MWCC_PATTERNS.md` | General/reusable MWCC knowledge + KB protocol + templates |

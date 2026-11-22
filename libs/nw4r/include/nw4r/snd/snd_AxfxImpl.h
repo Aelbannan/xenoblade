@@ -30,7 +30,7 @@ struct AxfxImpl {
     }
 
     void HookAlloc(AXFXAllocHook* pAllocHook, AXFXFreeHook* pFreeHook);
-    void RestoreAlloc(AXFXAllocHook allocHook, AXFXFreeHook freeHook);
+    u32 RestoreAlloc(AXFXAllocHook allocHook, AXFXFreeHook freeHook);
 
     static void* Alloc(u32 size);
     static void Free(void* pBlock);
@@ -42,10 +42,5 @@ struct AxfxImpl {
 } // namespace detail
 } // namespace snd
 } // namespace nw4r
-
-// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
-// Retail SDA names (US) - Free/Alloc/Hook must use these for reloc match.
-extern "C" nw4r::snd::detail::AxfxImpl* lbl_eu_806654C8;
-extern "C" u32 lbl_eu_806654CC;
 
 #endif

@@ -770,7 +770,7 @@ extern "C" void  scnImN4Teardown(CScnItemModelNw4r* self) {
         CScnItemModelNw4rRoot2888* root =
             (CScnItemModelNw4rRoot2888*)getScnRootSlot10(owner);
         if (root->field_0x2888 == (u32)self->field_0x1484) {
-            RemoveAnmScn__Q34nw4r3g3d7ScnRootFv(getScnRootSlot10(owner));
+            static_cast<nw4r::g3d::ScnRoot*>(getScnRootSlot10(owner))->RemoveAnmScn();
         }
         ((nw4r::g3d::G3dObj*)self->field_0x1484)->Destroy();
     }
@@ -2834,10 +2834,9 @@ extern "C" CScnItemModelNw4r* __ct__CScnItemModelNw4r(
         nw4r::g3d::ScnRoot* root =
             (nw4r::g3d::ScnRoot*)(uintptr_t)getScnRootSlot10(pSrc);
         if (((CScnItemModelNw4rRoot2888*)root)->field_0x2888 != 0) {
-            RemoveAnmScn__Q34nw4r3g3d7ScnRootFv(root);
+            root->RemoveAnmScn();
         }
-        SetAnmScn__Q34nw4r3g3d7ScnRootFPQ34nw4r3g3d6AnmScn(
-            root, (nw4r::g3d::AnmScn*)self->field_0x1484);
+        root->SetAnmScn((nw4r::g3d::AnmScn*)self->field_0x1484);
         if (anmScnRes->GetNumFog() != 0) {
             nw4r::g3d::FogData fogData;
             nw4r::g3d::Fog fog(&fogData);

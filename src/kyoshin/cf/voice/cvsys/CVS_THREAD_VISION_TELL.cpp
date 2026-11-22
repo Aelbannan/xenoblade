@@ -145,7 +145,7 @@ void CVS_THREAD_VISION_TELL::playSlot2() {
         if (self->field_0x24 != NULL) {
             voicePtr = &self->field_0x24->voice;
         }
-        if (TryRequestVoice(self, voicePtr, lbl_eu_80662D58[ml::math::mtRand(4)]) == 0) {
+        if (TryRequestVoice(self, voicePtr, visionTellActiveVoiceIds[ml::math::mtRand(4)]) == 0) {
             self->PlayThreadVoice();
         }
         return;
@@ -162,7 +162,7 @@ void CVS_THREAD_VISION_TELL::playSlot2() {
         if (self->field_0x24 != NULL) {
             voicePtr = &self->field_0x24->voice;
         }
-        if (TryRequestVoice(self, voicePtr, lbl_eu_80662D60[ml::math::mtRand(3)]) == 0) {
+        if (TryRequestVoice(self, voicePtr, visionTellInactiveVoiceIds[ml::math::mtRand(3)]) == 0) {
             self->PlayThreadVoice();
         }
     }
@@ -206,3 +206,19 @@ void VisionTell_RemoveVoice(CVS_THREAD_VISION_TELL* self, CCharVoice* voicePtr) 
 int CVS_THREAD_VISION_TELL::blank1() {
     return BUFFER_SIZE;
 }
+
+// name-guess: active-phase vision-tell voice IDs from usage in playSlot2.
+s16 visionTellActiveVoiceIds[4] = {
+    0x12E,
+    0x131,
+    0x132,
+    0x133,
+};
+
+// name-guess: inactive-phase vision-tell voice IDs from usage in playSlot2.
+s16 visionTellInactiveVoiceIds[4] = {
+    0x131,
+    0x132,
+    0x133,
+    0,
+};

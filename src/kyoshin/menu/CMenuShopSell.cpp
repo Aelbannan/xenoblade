@@ -2,6 +2,7 @@
 // Shop sell menu screen process (IUICf task + IScnRender MI layout).
 
 #include "kyoshin/cf/CfGameManager.hpp"
+#include "kyoshin/cf/CfPadData.hpp"
 #include <nw4r/lyt/lyt_drawInfo.h>
 #include "kyoshin/menu/CMenuShopSell.hpp"
 
@@ -43,21 +44,10 @@ struct ShopSellData {
     u16 mField804;                // +0x804
 };
 
-/* Local shim for cf::CfPadData - only the flag words HandlePhase2 reads
- * (CfPadData.hpp owns the full type but pulls CPad/monolib umbrella headers
- * into this TU). 0x00/0x04 are CPad held/pressed flags, 0x104 turbo flags. */
-struct ShopSellPadData {
-    u32 mHeldFlags;                   // +0x00 (CPad::mHeldButtonFlags)
-    u32 mPressedFlags;                // +0x04 (CPad::mPressedButtonFlags)
-    u8 _pad08[0x104 - 0x08];          // 0x08..0x103
-    u32 mTurboFlags;                  // +0x104 (CfPadData::mTurboPressButtonFlags)
-};
-
 // HandlePhase2 pad/flag callees (retail unmangled names). IsItemBoxActive is
 // declared int so the caller compares with cmpwi directly; GetPromptState is
 // declared int so the (u8) cast at the tail emits the retail clrlwi.
 extern "C" int MenuTutorialIsCreated();
-extern "C" ShopSellPadData* getCfPadData__Q22cf13CfGameManagerFv();
 
 // Retail-unmangled callee names (US strips the member manglings for these
 // func_ helpers; GetField61 keeps its bare name too). int returns keep the
@@ -155,7 +145,7 @@ void CMenuShopSell::Move() {
 /* Render the shop-sell screen through a stack DrawInfo: gate on the task/busy
  * flags and the scene-active check, then draw bg, item grid and title/help
  * bar in that order. */
-void CMenuShopSell::cbRenderBefore() {
+void CMenuShopSell::cbRenderBefore(CScn*) {
     CTaskGame::getInstance();
     if (CTaskGame::isFlag01Set() || (gmPauseFlags & 0x200000))
         return;
@@ -221,13 +211,13 @@ void CMenuShopSell::HandlePhase1() {
 void CMenuShopSell::HandlePhase2() {
     if (MenuTutorialIsCreated() != 0) return;
 
-    ShopSellPadData* pad = getCfPadData__Q22cf13CfGameManagerFv();
+    cf::CfPadData* pad = cf::CfGameManager::getCfPadData();
     if (cf::CfGameManager::isClassicController(-1) != 0) {
         // Pointer input enabled: materialise the 0/1 flag bools first (retail
         // andi/rlwinm+rlwimi then subic/subfe normalisation, pressed bits via
         // extrwi), then dispatch through cmpwi/beq in this order.
-        u32 turbo = pad->mTurboFlags;
-        u32 pressed = pad->mPressedFlags;
+        u32 turbo = pad->mTurboPressButtonFlags;
+        u32 pressed = pad->mPad.mPressedButtonFlags;
         u32 t8004 = (turbo & 0x8004) != 0;
         u32 t10008 = ((turbo & 0x10000) != 0) || ((turbo & 0x8) != 0);
         u32 t2001 = (turbo & 0x2001) != 0;
@@ -265,8 +255,8 @@ void CMenuShopSell::HandlePhase2() {
         }
     } else {
         // Pointer input disabled: plain pad bits drive the flow.
-        u32 turbo = pad->mTurboFlags;
-        u32 pressed = pad->mPressedFlags;
+        u32 turbo = pad->mTurboPressButtonFlags;
+        u32 pressed = pad->mPad.mPressedButtonFlags;
         u32 t8004 = (turbo & 0x8004) != 0;
         u32 t10008 = ((turbo & 0x10000) != 0) || ((turbo & 0x8) != 0);
         u32 t2001 = (turbo & 0x2001) != 0;

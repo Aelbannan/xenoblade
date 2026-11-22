@@ -176,8 +176,32 @@ def _retail_object(project_root: Path, region: str, unit_hint: str) -> Path | No
     return path if path.is_file() else None
 
 
-def _retail_sections(path: Path | None) -> dict[str, bytes] | None:
-    """Section bytes of the retail split object (evidence for local cascade)."""
+class RetailSections(dict):
+    """Retail data-section bytes plus, per section, its relocation sites.
+
+    ``relocs[name]`` is the set of ``(offset, reloc type)`` pairs the retail
+    split object relocates in that section.  Bytes alone are not evidence: a
+    relocated pointer word is zero in both objects whatever it points at, so
+    two different objects can share their unrelocated bytes.
+    """
+
+    def __init__(self, data=(), relocs=None):
+        super().__init__(data)
+        self.relocs: dict[str, set[tuple[int, int]]] = relocs if relocs is not None else {}
+
+
+def _reloc_sites(elf: "_Elf") -> dict[int, set[tuple[int, int]]]:
+    """Section index -> {(offset, reloc type)} of every relocation in it."""
+    out: dict[int, set[tuple[int, int]]] = {}
+    for ri, tgt in elf.rela_target.items():
+        sites = out.setdefault(tgt, set())
+        for off, info, _addend in elf.relas(ri):
+            sites.add((off, info & 0xFF))
+    return out
+
+
+def _retail_sections(path: Path | None) -> RetailSections | None:
+    """Section bytes + reloc sites of the retail split object (evidence for local cascade)."""
     if path is None or not path.is_file():
         return None
     try:
@@ -186,8 +210,12 @@ def _retail_sections(path: Path | None) -> dict[str, bytes] | None:
         hit = _RETAIL_CACHE.get(key)
         if hit is None:
             elf = _Elf(path.read_bytes())
-            hit = {name: elf.contents[i] for i, name in enumerate(elf.names)
-                   if name in _RETAIL_DATA_SECTIONS}
+            sites = _reloc_sites(elf)
+            hit = RetailSections(
+                {name: elf.contents[i] for i, name in enumerate(elf.names)
+                 if name in _RETAIL_DATA_SECTIONS},
+                {name: sites.get(i, set()) for i, name in enumerate(elf.names)
+                 if name in _RETAIL_DATA_SECTIONS})
             _RETAIL_CACHE.clear()
             _RETAIL_CACHE[key] = hit
         return hit
@@ -209,10 +237,23 @@ def _retail_keeps(retail_sections: dict[str, bytes] | None, elf: _Elf,
     linked = a - cut
     if retail_sections is None:
         return True, linked
-    data = retail_sections.get(elf.names[sec], b"")
+    name = elf.names[sec]
+    data = retail_sections.get(name, b"")
     if linked + (b - a) > len(data):
         return False, linked
-    return data[linked:linked + (b - a)] == elf.contents[sec][a:b], linked
+    if data[linked:linked + (b - a)] != elf.contents[sec][a:b]:
+        return False, linked
+    retail_relocs = getattr(retail_sections, "relocs", None)
+    if retail_relocs is not None:
+        # Same bytes but relocated at different words (or with a different
+        # reloc type) is a different object: e.g. a 12-byte RTTI base list
+        # {type*, 0, 0} against a vtable {RTTI*, 0, dtor*}.
+        ours = {(off - a, t) for off, t in _reloc_sites(elf).get(sec, ()) if a <= off < b}
+        theirs = {(off - linked, t) for off, t in retail_relocs.get(name, ())
+                  if linked <= off < linked + (b - a)}
+        if ours != theirs:
+            return False, linked
+    return True, linked
 
 
 # -- ELF plumbing ----------------------------------------------------------------
@@ -786,7 +827,7 @@ def rewrite(elf: _Elf, excl: dict[int, list[tuple[int, int]]], weak: set[int]) -
 _VIEW_DIR = Path(tempfile.gettempdir()) / "xeno_weak_dedup"
 # Bump when rewrite() changes what it writes for the same exclusions, or when
 # the exclusion rule changes.
-_REWRITE_VERSION = "3:retail-evidence-local-cascade"
+_REWRITE_VERSION = "4:reloc-aware-retail-evidence"
 
 
 def linked_view(decomp_object: Path, project_root: Path, region: str, unit_hint: str,
@@ -824,6 +865,8 @@ def linked_view_for(decomp_object: Path, unit_ranges, symbol_addrs: dict[str, in
     # must not reuse a view written under the old rule.
     evidence = repr(sorted((s, len(b), hashlib.sha1(b).hexdigest()[:8])
                            for s, b in (retail_sections or {}).items()))
+    evidence += repr(sorted((s, sorted(r)) for s, r in
+                            getattr(retail_sections, "relocs", {}).items()))
     key = (_REWRITE_VERSION
            + repr(sorted((s, tuple(rs)) for s, rs in excl.items()))
            + repr(sorted(weak)) + evidence)

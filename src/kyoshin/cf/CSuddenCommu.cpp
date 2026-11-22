@@ -5,12 +5,12 @@
 #include "kyoshin/menu/code_8018C5FC.hpp"
 #include "kyoshin/cf/CBattleManager.hpp"
 
-
 #include "kyoshin/CTaskGameEff.hpp"
 #include "kyoshin/cf/CfMapItemManager.hpp"
 #include "kyoshin/harness_catalog.hpp"
 #include "libs/monolib/src/scn/CScn_8049603C.hpp" // Scn_QueryUnk80State (single owner decl)
 #include "monolib/scn/CScn.hpp"
+#include "monolib/core/CPadManager.hpp"
 #include "kyoshin/code_8028130C.hpp"
 #include "kyoshin/code_801F3BE0.hpp"
 #include "kyoshin/cf/CfSoundMan.hpp" // cf::CfSoundMan::playActorSound
@@ -98,8 +98,6 @@ struct CSuddenCommuVoiceCue {
 
 
 
-struct CSuddenCommuActBody;
-
 #include "kyoshin/cfsys/CfObjectImplMove.hpp"
 #include "kyoshin/CUICfManager.hpp"
 
@@ -124,12 +122,6 @@ struct CSuddenCommuBmView {
 };
 
 
-// Object returned by the actor vtable slot 0x298: int state at +0x48.
-struct CSuddenCommuActBody {
-    u8 pad_00[0x48];
-    int field_48;                   // 0x48
-};
-
 // the fields the retail writes are declared.
 struct CSuddenCommuCmd {
     u8 pad_00[0xC];
@@ -141,13 +133,6 @@ struct CSuddenCommuCmd {
     u8 pad_24[0x34 - 0x24];
 };
 
-// u32-word pair / f64 view used for MWCC's 0x43300000 int->float conversion
-// (subtracts the retail .sdata2 magic double lbl_eu_80667E40 so the pool reloc
-// matches the retail constant instead of an MWCC-synthesised @N entry).
-union CSuddenCommuF64Conv {
-    u32 w[2];
-    f64 d;
-};
 // CBattleManager sub-object at +0x194 (party gauge), handed to PartyGaugeAddClamped.
 struct CSuddenCommuBmGauge {
     u8 pad_00[0x194];
@@ -255,17 +240,6 @@ extern "C" {
 // / CTaskGame.hpp / code_8027513C.hpp; a void* decl here would clash with
 // those in any TU that includes both this header and the scene headers.
 
-// Pad button-flag view (retail CPad first word).
-struct CSuddenCommuPadView {
-    u32 field_00;   // +0 button flags
-};
-
-// Camera/trigger position view (Scn_QueryUnk80State result): f32 at +0xC.
-struct CSuddenCommuCamView {
-    u8 pad_00[0xC];
-    f32 field_C;    // 0xC
-};
-
 // Voice/id tables owned by this TU (retail .sdata 0x806625E8..0x80662608;
 // the retail section is writable, so these are not const arrays).
 extern int lbl_eu_806625E4;
@@ -282,7 +256,7 @@ extern u32 lbl_eu_80575870[];   // .bss: state-handler PMF table (12-byte ptmf s
 // (owner: code_800B06A4.hpp); this TU picks them up through the include chain.
 // Retail aliases the CfGameManager singleton getter under its raw symbol
 // name; CSuddenCommu's driver calls that alias.
-extern "C" bool isSceneLoading__Q22cf13CfGameManagerFv(); // canonical bool form (CfObjectMove.hpp owner)
+typedef void (cf::CSuddenCommu::*CSuddenCommuStateFn)();
 extern "C" void SuddenCommuRearmTimer(cf::CSuddenCommu* self);   // re-arm scan (plain retail symbol)
 extern "C" int SuddenCommuTickActive(cf::CSuddenCommu* self);    // per-frame tick (plain retail symbol)
 
@@ -340,13 +314,8 @@ void SuddenCommuResetPairingState(CSuddenCommu* self) {
 //   moveSpot member at +0x3E9C); the 0x3E9C-byte head view lets the
 //   spot->actor recovery use typed pointer arithmetic ((Head*)spot - 1)
 //   instead of raw (char*)-0x3E9C.
-// - Cue slots carry a u32 word at +0x20 (cleared by SuddenCommuClearCueSlot).
 struct CSuddenCommuActorHead {
     u8 head_00[0x3E9C];              // bytes preceding moveSpot
-};
-struct CSuddenCommuCueSlot {
-    u8 pad_00[0x20];                 // 0x00-0x1F
-    u32 word_20;                     // 0x20 (cleared word)
 };
 
 void CSuddenCommu::SuddenCommuClearCueSlot() { field_20 = 0; }
@@ -357,9 +326,8 @@ void CSuddenCommu::SuddenCommuClearCueSlot() { field_20 = 0; }
 // through the retail PMF table (12-byte ptmf stride). The const-reference
 // binding keeps MWCC from materializing a stack local - it passes the table
 // entry address straight to __ptmf_scall in r12.
-typedef void (CSuddenCommu::*CSuddenCommuStateFn)();
 void SuddenCommuDriveFrame(CSuddenCommu* self) {
-    if (isSceneLoading__Q22cf13CfGameManagerFv() != 0) return;
+    if (cf::CfGameManager::isSceneLoading() != 0) return;
     SuddenCommuRearmTimer(self);
     if (SuddenCommuTickActive(self) != 0) return;
     CSuddenCommuStateFn const& pmf =
@@ -379,8 +347,8 @@ __declspec(noinline) int SuddenCommuCanStart(CSuddenCommu* self) {
     if (self->field_14 != 0) return 0;
     bool voiceRes = (CtrlRemote_TouchBitByArg(0x335F) == 0);
     if (voiceRes) return 0;
-    if (((CSuddenCommuBmView*)getInstance__Q22cf14CBattleManagerFv())->field_1AA != 0) return 0;
-    if (((CSuddenCommuBmView*)getInstance__Q22cf14CBattleManagerFv())->field_20C8 != 0) return 0;
+    if (((CSuddenCommuBmView*)cf::CBattleManager::getInstance())->field_1AA != 0) return 0;
+    if (((CSuddenCommuBmView*)cf::CBattleManager::getInstance())->field_20C8 != 0) return 0;
     if ((self->field_24 & 1) == 0) return 0;
     CGimmickGlobal* global = getUnk80664658();
     if (global->mFlags & 2) return 0;
@@ -439,7 +407,7 @@ __declspec(noinline) void SuddenCommuTallyParty(CSuddenCommu* self) {
                 if (spot2 != 0) other = (CSuddenCommuActor*)((char*)spot2 - 0x3E9C);
                 if (other == 0) continue;
                 if (((cf::CActorParam*)other)->CActorParam_isBattleLocked() == 0) {
-                    CBattleMan_FireActorEvent918(getInstance__Q22cf14CBattleManagerFv(), (BattleObjAccessor*)other, (Func800EA9A8_Arg5*)&cmd, (void*)0x34);
+                    CBattleMan_FireActorEvent918(cf::CBattleManager::getInstance(), (BattleObjAccessor*)other, (Func800EA9A8_Arg5*)&cmd, (void*)0x34);
                 }
             }
         }
@@ -458,7 +426,7 @@ __declspec(noinline) void SuddenCommuTallyParty(CSuddenCommu* self) {
                 if (spot2 != 0) other = (CSuddenCommuActor*)((char*)spot2 - 0x3E9C);
                 if (other == 0) continue;
                 if (((cf::CActorParam*)other)->CActorParam_isBattleLocked() == 0) {
-                    getInstance__Q22cf14CBattleManagerFv();
+                    cf::CBattleManager::getInstance();
                     f32 res = calcBattleDamage(0, other, 0);
                     f32 w = res * (prod * ((cf::CActorParam*)other)->CActorParam_getDamageScale()) + scale;
                     // Truncate -> back-to-float -> truncate -> back-to-float;
@@ -478,11 +446,11 @@ __declspec(noinline) void SuddenCommuTallyParty(CSuddenCommu* self) {
 
     if (total != 0) {
         if (self->field_24 & 0x4) total += 0x19;
-        cf::PartyGaugeAddClamped(reinterpret_cast<cf::UnkClass_8018C5FC*>(&((CSuddenCommuBmGauge*)getInstance__Q22cf14CBattleManagerFv())->field_194), total);
+        cf::PartyGaugeAddClamped(reinterpret_cast<cf::UnkClass_8018C5FC*>(&((CSuddenCommuBmGauge*)cf::CBattleManager::getInstance())->field_194), total);
     }
 
     if (self->field_C == 4) {
-        refreshBattleActors((cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv(), lbl_eu_80667E38, 0x13);
+        refreshBattleActors((cf::CBattleManager*)cf::CBattleManager::getInstance(), lbl_eu_80667E38, 0x13);
         self->field_14 = 0;
         self->field_4 = -1;
         self->field_6 = -1;
@@ -548,7 +516,7 @@ __declspec(noinline) void SuddenCommuResolvePhaseState(CSuddenCommu* self) {
     if (player != 0) {
         s16 state = self->field_C;
         if (state == 4) {
-            refreshBattleActors((cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv(), lbl_eu_80667E38, 0x13);
+            refreshBattleActors((cf::CBattleManager*)cf::CBattleManager::getInstance(), lbl_eu_80667E38, 0x13);
             self->field_14 = 0;
             self->field_4 = -1;
             self->field_6 = -1;
@@ -575,7 +543,7 @@ __declspec(noinline) void SuddenCommuResolvePhaseState(CSuddenCommu* self) {
                 }
             }
         } else {
-            refreshBattleActors((cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv(), lbl_eu_80667E38, 0x13);
+            refreshBattleActors((cf::CBattleManager*)cf::CBattleManager::getInstance(), lbl_eu_80667E38, 0x13);
             self->field_14 = 0;
             self->field_4 = -1;
             self->field_6 = -1;
@@ -590,7 +558,7 @@ __declspec(noinline) void SuddenCommuResolvePhaseState(CSuddenCommu* self) {
             self->field_24 = 0;
         }
     } else {
-        refreshBattleActors((cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv(), lbl_eu_80667E38, 0x13);
+        refreshBattleActors((cf::CBattleManager*)cf::CBattleManager::getInstance(), lbl_eu_80667E38, 0x13);
         self->field_14 = 0;
         self->field_4 = -1;
         self->field_6 = -1;
@@ -632,7 +600,7 @@ void SuddenCommuDispatchAttacker(CSuddenCommu* self, CSuddenCommuActor* attacker
         if (player == 0) continue;
         if (player != attacker) continue;
         if (((cf::CActorParam*)target)->CActorParam_getHp() <= lbl_eu_80667E48) {
-            CSuddenCommuBmList* bm = (CSuddenCommuBmList*)getInstance__Q22cf14CBattleManagerFv();
+            CSuddenCommuBmList* bm = (CSuddenCommuBmList*)cf::CBattleManager::getInstance();
             CSuddenCommuListNode* node;
             int count;
             void* list = bm->mHead;
@@ -755,8 +723,8 @@ extern "C" void SuddenCommuRearmTimer(CSuddenCommu* self) {
             } else if (self->field_14 == 0) {
                 bool voiceRes = (CtrlRemote_TouchBitByArg(0x335F) == 0);
                 if (voiceRes) goto commu_end;
-                if (((CSuddenCommuBmView*)getInstance__Q22cf14CBattleManagerFv())->field_1AA != 0) goto commu_end;
-                if (((CSuddenCommuBmView*)getInstance__Q22cf14CBattleManagerFv())->field_20C8 != 0) goto commu_end;
+                if (((CSuddenCommuBmView*)cf::CBattleManager::getInstance())->field_1AA != 0) goto commu_end;
+                if (((CSuddenCommuBmView*)cf::CBattleManager::getInstance())->field_20C8 != 0) goto commu_end;
                 cf::CfGameManager::getInstance();
                 if (isGlobalCamFlagSet(0x04000000) != 0) goto commu_end;
                 if (getUnk80664658()->mFlags & 2) goto commu_end;
@@ -911,7 +879,7 @@ void SuddenCommuEnterBattle(CSuddenCommu* self) {
     CSuddenCommuVoiceCue* cue;
     void* player;
     SuddenCommuMarkCommuVoices(self);
-    refreshBattleActors((cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv(), 0.2f, 0x13);
+    refreshBattleActors((cf::CBattleManager*)cf::CBattleManager::getInstance(), 0.2f, 0x13);
     CCharVoiceMan_PlayNodeById(self->field_10);
     self->field_10 = CCharVoiceMan_AllocCommuVoiceId();
     player = cf::CfGameManager::getPlayer(0);
@@ -1040,7 +1008,7 @@ void SuddenCommuVoiceEndGateB(CSuddenCommu* self) {
 // Commu-state initializer (same reset shape as SuddenCommuResetPairingState) preceded by a
 // battle-manager voice-volume call that retires cue id 0x13.
 void SuddenCommuInitResetState(CSuddenCommu* self) {
-    cf::CBattleManager* bm = (cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv();
+    cf::CBattleManager* bm = (cf::CBattleManager*)cf::CBattleManager::getInstance();
     refreshBattleActors(bm, lbl_eu_80667E38, 0x13);
     self->field_14 = 0;
     self->field_4 = -1;
@@ -1112,8 +1080,8 @@ int SuddenCommuTickActive(CSuddenCommu* self) {
                 // Busy actor: retire the voice, reset the commu state, and
                 // drop out of the camera path for this frame.
                 SuddenCommuClearCommuVoices(self);
-                refreshBattleActors((cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv(), lbl_eu_80667E38, 0x13);
-                refreshBattleActors((cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv(), lbl_eu_80667E38, 0x13);
+                refreshBattleActors((cf::CBattleManager*)cf::CBattleManager::getInstance(), lbl_eu_80667E38, 0x13);
+                refreshBattleActors((cf::CBattleManager*)cf::CBattleManager::getInstance(), lbl_eu_80667E38, 0x13);
                 self->field_14 = 0;
                 self->field_4 = -1;
                 self->field_6 = -1;
@@ -1133,14 +1101,14 @@ int SuddenCommuTickActive(CSuddenCommu* self) {
         // Camera gate: the mask test short-circuits the distance check.
         bool camPass = (gmGameFlags & 0xAFA40000) != 0;
         if (!camPass) {
-            f32 dist = ((CSuddenCommuCamView*)Scn_QueryUnk80State(gmScene))->field_C;
+            f32 dist = Scn_QueryUnk80State(gmScene)->field_0C;
             camPass = !(lbl_eu_80667E38 - dist >= lbl_eu_80667E38);
         }
         if (camPass) {
             // Camera reached the commu target: full reset and mark ended.
             SuddenCommuClearCommuVoices(self);
-            refreshBattleActors((cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv(), lbl_eu_80667E38, 0x13);
-            refreshBattleActors((cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv(), lbl_eu_80667E38, 0x13);
+            refreshBattleActors((cf::CBattleManager*)cf::CBattleManager::getInstance(), lbl_eu_80667E38, 0x13);
+            refreshBattleActors((cf::CBattleManager*)cf::CBattleManager::getInstance(), lbl_eu_80667E38, 0x13);
             self->field_14 = 0;
             self->field_4 = -1;
             self->field_6 = -1;
@@ -1180,11 +1148,11 @@ int SuddenCommuTickActive(CSuddenCommu* self) {
         int moveSel = 0;
         int winState = (int)GetZealObjPtr();
         if (winState != 0) {
-            CSuddenCommuPadView* pad = (CSuddenCommuPadView*)cf::CfGameManager::getCurrentPad();
+            CPad* pad = cf::CfGameManager::getCurrentPad();
             if (cf::CfGameManager::isClassicController(-1) != 0) {
-                padBit = (pad->field_00 >> 9) & 1;
+                padBit = (pad->mHeldButtonFlags >> 9) & 1;
             } else {
-                padBit = (pad->field_00 >> 26) & 1;
+                padBit = (pad->mHeldButtonFlags >> 26) & 1;
             }
             if (padBit == 0) return 0;
             moveSel = GetZealResult(winState);
@@ -1209,7 +1177,7 @@ int SuddenCommuTickActive(CSuddenCommu* self) {
             self->field_24 |= 0x80;
         }
         SuddenCommuClearCommuVoices(self);
-        refreshBattleActors((cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv(), lbl_eu_80667E38, 0x13);
+        refreshBattleActors((cf::CBattleManager*)cf::CBattleManager::getInstance(), lbl_eu_80667E38, 0x13);
         self->field_24 &= ~0x4;
         return 0;
     }

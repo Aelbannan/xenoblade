@@ -35,7 +35,7 @@ public:
     virtual void Init();
     virtual void Term();
     virtual void Move();
-    virtual void cbRenderBefore();
+    virtual void cbRenderBefore(CScn* scene);
 
     CScn* mScene;            // 0x74 owning scene
     CSysWin mSysWin;         // 0x78
@@ -74,5 +74,4 @@ extern "C" CSystemWindow* SysWinCreateSingleton(CProcess* parent, CScn* scene, u
                              const char* str1, const char* str2);
 
 // Global data imports (MWCC does not mangle global-scope data names).
-extern CSystemWindow* lbl_eu_80663FD8;   // singleton instance pointer (.sbss)
 extern u32 gmPauseFlags;              // cbRenderBefore flag (.sbss)

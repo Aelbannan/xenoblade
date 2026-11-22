@@ -204,11 +204,27 @@ extern "C" BattleActor* getCfObjectPc__FPQ22cf12CfObjectMove(cf::CfObjectMove* o
 extern "C" bool pushYawToLink(void*);
 
 
-extern u8 lbl_eu_804FD0D0[];
+// name-guess: 0x804FD0D0 is the contiguous posX/posY/scale table read by Init,
+// func_80104454 and updateSlotStates; 0x804FD11C/128/138/148 are the adjacent
+// mode, enum-id and texture-id tables read by the same UI code.
+struct ArtsSelectTutorialLayout { s16 posX[10]; s16 posY[10]; f32 scale[9]; };
+extern const ArtsSelectTutorialLayout artsSelectTutorialLayout = {
+    {-214, -164, -114, -64, 0, 64, 114, 164, 214, 0},
+    {-154, -154, -154, -154, -146, -154, -154, -154, -154, 0},
+    {0.8f, 0.8f, 0.8f, 0.8f, 0.9f, 0.8f, 0.8f, 0.8f, 0.8f},
+};
+extern const s16 artsSelectModeTable[6] = {1, 2, 3, 4, 1, 0};
+extern const u32 artsSelectEnumIds[4] = {0x10, 0x100000, 0x200000, 0};
+extern const ArtsModeIds artsSelectNameIds = {
+    {0x8c, 0x8d, 0x8e, 0x8f, 0x8c, 0x8c, 0x8c, 0x8c},
+};
+extern const ArtsModeIds artsSelectGaugeIds = {
+    {0x88, 0x89, 0x8a, 0x8b, 0x7d, 0x7d, 0x7d, 0x7d},
+};
 
 // func_80104454 (retail symbol is UNMANGLED; header member decl is a
-// decompiler guess). Retail table: posX s16[9] @+0x00, posY @+0x14,
-// scale f32[9] @+0x28, selTab s16[5] @+0x4C of lbl_eu_804FD0D0.
+// decompiler guess). Retail table: posX s16[10] @+0x00, posY @+0x14,
+// scale f32[9] @+0x28; the mode/sel tab is its own global table.
 extern "C" int MenuTutorialIsCreated();
 extern "C" int CMenuArtsSelect_ShouldStayOpen(CMenuArtsSelect*);
 extern "C" int checkArtUsable(CMenuArtsSelect*);
@@ -237,7 +253,7 @@ void startEnumObjects(void* list, u32 type, u32 filter);
 void* getEntryAt(void* list, u32 index);
 extern const u32 lbl_eu_80666F54;  // mode-table word
 extern const u8 lbl_eu_80666F58;   // mode-table extra byte
-extern const ArtsSelEnumIds lbl_eu_804FD128;
+extern const u32 artsSelectEnumIds[4]; extern const ArtsModeIds artsSelectNameIds, artsSelectGaugeIds;
 // Unmangled imports used by the batch-14o targets (no header declares these in
 // this TU's include closure; retail symbols are C-linkage names).
 extern "C" int CChain_isValidChain(u8* a1, u8* a2, int a3);
@@ -245,7 +261,7 @@ extern "C" int ChainTmr_GateArts_DF38(u8* self, u8* actor, int flag, int index);
 // (UIBattleFindElemTimg/UIBattleFindPartyTimg: declared on CUIBattleManager.hpp, void*
 // return - the old local u8* copies are gone; call sites cast.)
 
-extern s16 lbl_eu_804FD11C[];  // rodata selTab (s16[5]) - same table as lbl_eu_804FD0D0+0x4c
+extern const s16 artsSelectModeTable[6];
 extern "C" void BtlDmg_CursorSetFlag(void*, u8);
 extern "C" int getPTGaugeWord();
 void PTGaugeTickSP();
@@ -556,9 +572,9 @@ void CMenuArtsSelect::Init() {
 
     // Table pointers stay live from here to the last layout group (retail
     // pins them in r26/r29/r28).
-    s16* posX = reinterpret_cast<s16*>(lbl_eu_804FD0D0);         // +0x00: s16[9]
-    s16* posY = reinterpret_cast<s16*>(lbl_eu_804FD0D0 + 0x14);  // +0x14: s16[9]
-    f32* scale = reinterpret_cast<f32*>(lbl_eu_804FD0D0 + 0x28); // +0x28: f32[9]
+    const s16* posX = artsSelectTutorialLayout.posX;
+    const s16* posY = artsSelectTutorialLayout.posY;
+    const f32* scale = artsSelectTutorialLayout.scale;
 
     buildLayout(&unk8C, reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(unk68), "mf15_arts22_cursor.brlyt");
     bindLayoutAnimTransform(unk8C, &unk90, reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(unk68), "mf15_arts22_cursor_on.brlan");
@@ -1182,7 +1198,7 @@ done:
     ;
 }
 
-void CMenuArtsSelect::cbRenderBefore() {
+void CMenuArtsSelect::cbRenderBefore(CScn*) {
     CTaskGame::getInstance();
     if (CTaskGame::isFlag01Set()) {
         goto done;
@@ -1328,8 +1344,8 @@ void __dt__15CMenuArtsSelectFv(void*);
 extern "C" void CMenuArtsSelect_DtorThunk58(void* self){
     __dt__15CMenuArtsSelectFv((char*)self - 0x58);
 }
-extern "C" void CMenuArtsSelect_workEventDraw(void* self) {
-    ((CMenuArtsSelect*)((char*)self - 0x5c))->cbRenderBefore();
+extern "C" void CMenuArtsSelect_workEventDraw(void* self, CScn* scene) {
+    ((CMenuArtsSelect*)((char*)self - 0x5c))->cbRenderBefore(scene);
 }
 extern "C" void CMenuArtsSelect_workEventDtor(void* p) {
     extern void __dt__15CMenuArtsSelectFv(void*);
@@ -1407,8 +1423,6 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
     typedef void* (*GetPtrFn)(void*);
     typedef f32 (*GetF32Fn)(void*);
     typedef void* (*AtFn)(void*, s32);
-    u8* tbl = lbl_eu_804FD0D0;  // retail hoists this to r30 in the prologue
-
     self->unk308 &= ~0x10u;
 
     if (MenuTutorialIsCreated() != 0) return;
@@ -1631,8 +1645,7 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
                 if (self->unk328 == 4) {
                     refreshHelpText(self);
                 } else {
-                s16* selTab = reinterpret_cast<s16*>(tbl + 0x4C);
-                    s16 v = reinterpret_cast<s16*>(tbl + 0x4C)[self->unk328];
+                    s16 v = artsSelectModeTable[self->unk328];
                     char* nameStr = BdatTouchStringCell("MNU_battle",
                                                   "name", v);
                     char* helpStr = BdatTouchStringCell("MNU_battle",
@@ -1652,9 +1665,9 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
             nw4r::lyt::Pane* pane =
                 self->unk8C->GetRootPane()->FindPaneByName("nul_arts00", true);
             {
-            s16* posX = reinterpret_cast<s16*>(tbl + 0x00);
-            s16* posY = reinterpret_cast<s16*>(tbl + 0x14);
-            f32* scale = reinterpret_cast<f32*>(tbl + 0x28);
+                const s16* posX = artsSelectTutorialLayout.posX;
+                const s16* posY = artsSelectTutorialLayout.posY;
+                const f32* scale = artsSelectTutorialLayout.scale;
                 nw4r::math::VEC3 trans = pane->GetTranslate();
                 trans.x = static_cast<f32>(posX[self->unk324]);
                 trans.y = static_cast<f32>(posY[self->unk324]);
@@ -1665,8 +1678,7 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
             if (self->unk328 == 4) {
                 refreshHelpText(self);
             } else {
-                s16* selTab = reinterpret_cast<s16*>(tbl + 0x4C);
-                s16 v = reinterpret_cast<s16*>(tbl + 0x4C)[self->unk328];
+                s16 v = artsSelectModeTable[self->unk328];
                 char* nameStr = BdatTouchStringCell("MNU_battle",
                                               "name", v);
                 char* helpStr = BdatTouchStringCell("MNU_battle",
@@ -1753,8 +1765,7 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
                 if (self->unk328 == 4) {
                     refreshHelpText(self);
                 } else {
-                s16* selTab = reinterpret_cast<s16*>(tbl + 0x4C);
-                    s16 v = reinterpret_cast<s16*>(tbl + 0x4C)[self->unk328];
+                    s16 v = artsSelectModeTable[self->unk328];
                     char* nameStr = BdatTouchStringCell("MNU_battle",
                                                   "name", v);
                     char* helpStr = BdatTouchStringCell("MNU_battle",
@@ -1794,9 +1805,9 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
         nw4r::lyt::Pane* pane =
             self->unk8C->GetRootPane()->FindPaneByName("nul_arts00", true);
         {
-            s16* posX = reinterpret_cast<s16*>(tbl + 0x00);
-            s16* posY = reinterpret_cast<s16*>(tbl + 0x14);
-            f32* scale = reinterpret_cast<f32*>(tbl + 0x28);
+            const s16* posX = artsSelectTutorialLayout.posX;
+            const s16* posY = artsSelectTutorialLayout.posY;
+            const f32* scale = artsSelectTutorialLayout.scale;
             nw4r::math::VEC3 trans = pane->GetTranslate();
             trans.x = static_cast<f32>(posX[self->unk324]);
             trans.y = static_cast<f32>(posY[self->unk324]);
@@ -1808,8 +1819,7 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
             if (self->unk328 == 4) {
                 refreshHelpText(self);
             } else {
-                s16* selTab = reinterpret_cast<s16*>(tbl + 0x4C);
-                s16 v = reinterpret_cast<s16*>(tbl + 0x4C)[self->unk328];
+                s16 v = artsSelectModeTable[self->unk328];
                 char* nameStr = BdatTouchStringCell("MNU_battle",
                                               "name", v);
                 char* helpStr = BdatTouchStringCell("MNU_battle",
@@ -1869,9 +1879,9 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
         nw4r::lyt::Pane* pane =
             self->unk8C->GetRootPane()->FindPaneByName("nul_arts00", true);
         {
-            s16* posX = reinterpret_cast<s16*>(tbl + 0x00);
-            s16* posY = reinterpret_cast<s16*>(tbl + 0x14);
-            f32* scale = reinterpret_cast<f32*>(tbl + 0x28);
+            const s16* posX = artsSelectTutorialLayout.posX;
+            const s16* posY = artsSelectTutorialLayout.posY;
+            const f32* scale = artsSelectTutorialLayout.scale;
             nw4r::math::VEC3 trans = pane->GetTranslate();
             trans.x = static_cast<f32>(posX[self->unk324]);
             trans.y = static_cast<f32>(posY[self->unk324]);
@@ -1883,8 +1893,7 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
             if (self->unk328 == 4) {
                 refreshHelpText(self);
             } else {
-                s16* selTab = reinterpret_cast<s16*>(tbl + 0x4C);
-                s16 v = reinterpret_cast<s16*>(tbl + 0x4C)[self->unk328];
+                s16 v = artsSelectModeTable[self->unk328];
                 char* nameStr = BdatTouchStringCell("MNU_battle",
                                               "name", v);
                 char* helpStr = BdatTouchStringCell("MNU_battle",
@@ -2066,7 +2075,7 @@ void CMenuArtsSelect::updatePageMode() {
                         unk320 = 1;
                         unk328 = 0;
                         ::refreshPaneTextures(this);
-                        s16 v = lbl_eu_804FD11C[unk328];
+                        s16 v = artsSelectModeTable[unk328];
                         char* name = BdatTouchStringCell("MNU_battle",
                                                     "name", v);
                         char* help = BdatTouchStringCell("MNU_battle",
@@ -2110,7 +2119,7 @@ void CMenuArtsSelect::updatePageMode() {
             unk328 = 0;
             unk320 = 0;
             ::refreshPaneTextures(this);
-            s16 v = lbl_eu_804FD11C[unk328];
+            s16 v = artsSelectModeTable[unk328];
             char* name = BdatTouchStringCell("MNU_battle",
                                         "name", v);
             char* help = BdatTouchStringCell("MNU_battle",
@@ -2243,9 +2252,9 @@ extern "C" void handleConfirm(CMenuArtsSelect* self) {
             s32 matchIdx = 0;
             if (mv != NULL) {
                 CfEnumListHolder holder;
-                ids.id[0] = lbl_eu_804FD128.id[0];
-                ids.id[1] = lbl_eu_804FD128.id[1];
-                ids.id[2] = lbl_eu_804FD128.id[2];
+                ids.id[0] = artsSelectEnumIds[0];
+                ids.id[1] = artsSelectEnumIds[1];
+                ids.id[2] = artsSelectEnumIds[2];
                 // Find which enum type matches the target's +0x8C object id.
                 for (s32 k = 0; k < 3; k++) {
                     ArtsEnumList* list =
@@ -2892,8 +2901,8 @@ void CMenuArtsSelect::refreshPaneTextures() {
         return;
     }
 
-    ArtsModeIds tabA = lbl_eu_804FD138;
-    ArtsModeIds tabB = lbl_eu_804FD148;
+    ArtsModeIds tabA = artsSelectNameIds;
+    ArtsModeIds tabB = artsSelectGaugeIds;
     u16 nameId = tabA.id[unk328];
     u16 gaugeId = tabB.id[unk328];
 
@@ -3235,10 +3244,10 @@ void CMenuArtsSelect::updateSlotStates() {
     u8* arts = static_cast<u8*>(reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_getArtsSetBlock());
 
     f32 zeroF = 0.0f;
-    s16* posX = reinterpret_cast<s16*>(lbl_eu_804FD0D0 + 0x00);
-    s16* posY = reinterpret_cast<s16*>(lbl_eu_804FD0D0 + 0x14);
-    f32* scale = reinterpret_cast<f32*>(lbl_eu_804FD0D0 + 0x28);
-    s16* selTab = reinterpret_cast<s16*>(lbl_eu_804FD0D0 + 0x4c);
+    const s16* posX = artsSelectTutorialLayout.posX;
+    const s16* posY = artsSelectTutorialLayout.posY;
+    const f32* scale = artsSelectTutorialLayout.scale;
+    const s16* selTab = artsSelectModeTable;
 
     for (u8 i = 0; i < 8; i++) {
         ArtsParamInfo* param = reinterpret_cast<ArtsParamInfo*>(

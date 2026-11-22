@@ -27,14 +27,6 @@ public:
 };
 }
 
-// TU-local views over the secondary sub-object anchors written by the
-// ctor and refreshed by setupActionTable (exact layout; names erased at
-// codegen, same addi offsets as the raw byte expressions they replace).
-struct PcAiSubView {
-    u8 _p[0x3380];
-    u8 ai;                  // 0x3380 - CAIAction sub-object anchor
-};
-
 // Allocates the 0x44-byte CfResPcImpl resource object and constructs it in
 // place on the CfObjectMove subobject (the upcast carries the retail null
 // guard), then runs the enable hook.
@@ -66,7 +58,7 @@ void CfObjectPc_setupFrame(cf::CfObjectPc* obj) {
     obj->dispatchPlayerBranch();
     u8* moveSub = (u8*)obj;
     if (obj != NULL) {
-        moveSub = (u8*)obj + 0x3E9C;
+        moveSub = (u8*)&static_cast<cf::CfObjectMove&>(*obj);
     }
     if (moveSub == (u8*)getPlayer__Q22cf13CfGameManagerFi(0)) {
         UIBattleReleaseAll();
@@ -113,7 +105,7 @@ void CfObjectPc_setupFrame(cf::CfObjectPc* obj) {
 // impl (alias: CfObject_initEventState). Keep Class_ form: retail uses bl,
 // not virtual dispatch.
 int cf::CfObjectPc::CfObject_UnkVirtualFunc2() {
-    ((cf::CfObjectModel*)((u8*)this + 0x3E9C))->cf::CfObjectModel::CfObject_UnkVirtualFunc2();
+    this->cf::CfObjectModel::CfObject_UnkVirtualFunc2();
     u8* self = (u8*)this;
     // Retail tests this with a record-form mask keeping only bit 0 (msb):
     // source shape (x & 0x80000000).
@@ -121,7 +113,7 @@ int cf::CfObjectPc::CfObject_UnkVirtualFunc2() {
         ((CfObjectPcSubFields*)self)->field_0x3F08 |= 1;
     }
     this->setPointEnabled(1);
-    CfObjectMove_setModelDisplayFlag((cf::CfObjectMove*)((char*)self + 0x3E9C), 1);
+    CfObjectMove_setModelDisplayFlag(&static_cast<cf::CfObjectMove&>(*this), 1);
     this->CfObjectModel_setModelVisible(1);
     dispatchItemLoad(self, 0x8000000);
     dispatchItemLoad(self, 0x10000000);
@@ -170,9 +162,9 @@ void cf::CfObjectPc::CObjectParam_UnkVirtualFunc4() {
     // three calls below, but MWCC value-numbers the identical receiver
     // conversions into one callee-saved temp regardless of spelling (see
     // MWCC_PATTERNS.md 7j negative result). Known unmatchable residual.
-    ((cf::CfObject*)((u8*)this + 0x3E9C))->CfObject_setMoveValue(lbl_eu_80666B18);
-    ((cf::CfObject*)((u8*)this + 0x3E9C))->CfObject_setMoveScale(lbl_eu_80666B1C);
-    reinterpret_cast<cf::CfObjectMove*>((u8*)this + 0x3E9C)->CfObjectMove_recordMoveValue(lbl_eu_80666B20);
+    this->cf::CfObject::CfObject_setMoveValue(lbl_eu_80666B18);
+    this->cf::CfObject::CfObject_setMoveScale(lbl_eu_80666B1C);
+    this->cf::CfObjectMove::CfObjectMove_recordMoveValue(lbl_eu_80666B20);
 }
 
 
@@ -202,7 +194,7 @@ void cf::CfObjectPc::scanArtsEntries() {
     CfObjectPcArtsData* data = (CfObjectPcArtsData*)CtrlObjectParam_GetCharEntry(
         ((CfObjectPcSubFields*)this)->field_0x3F28);
     for (int i = 0; i <= 5; i++) {
-        if (CtrlObjectParam_GetArtsStatsRow(&data->mEntries, i)->field_0x1A != 0) break;
+        if (((UnkStruct_8009D7E4_Ret*)CtrlObjectParam_GetArtsStatsRow(&data->mEntries, i))->field_0x1A != 0) break;
     }
 }
 
@@ -212,7 +204,7 @@ void cf::CfObjectPc::scanArtsEntries() {
 // object's slot 0x21C, then runs slot 0x28C and stores via CActorParam_copyAll.
 void CfObjectPc_applyArtsEntry(cf::CfObjectPc* self, void* dest, s32 itemId) {
     if ((u32)itemId == (u32)((CfObjectPcSubFields*)self)->field_0x3F28) {
-        __ct__8009ED08(dest, itemId);
+        CtrlObjectParam_CopyCharRow((u32)dest, itemId);
         CfObjectPcArtsData* data =
             (CfObjectPcArtsData*)CtrlObjectParam_GetCharEntry(itemId & 0xFFFF);
         self->CActorParam_copyArtsBlock17E4(
@@ -274,7 +266,7 @@ void cf::CfObjectPc::setupActionTable() {
     // The three uses of this+0x3380 are written in different syntaxes so MWCC
     // does not CSE the address into a callee-saved register (retail recomputes
     // addi r3, r31, 0x3380 at each call site).
-    aiResetTables((u8*)&((PcAiSubView*)this)->ai);
+    aiResetTables((u8*)&static_cast<cf::CAIAction&>(*this));
     if (((CfObjectPcSubFields*)this)->field_0x3F28 == 4) {
         // Arts-count bdat row: enable the art column when the string value's
         // first byte is '1' (the value is returned packed; read its low byte).
@@ -283,11 +275,11 @@ void cf::CfObjectPc::setupActionTable() {
         u32 val = getBdatStringColumnValue(::cf::CfBdat::spItmWpnListFileData,
             (const char*)lbl_eu_804FC5EC + 0x24, artsData->field_0xC);
         if (*(s8*)&val == 1) {
-        aiInstallArts((u8*)&((PcAiSubView*)this)->ai, 0x70, 0xd);
+        aiInstallArts((u8*)&static_cast<cf::CAIAction&>(*this), 0x70, 0xd);
             return;
         }
     }
-    aiInstallArts((u8*)&((PcAiSubView*)this)->ai, 0, 0);
+    aiInstallArts((u8*)&static_cast<cf::CAIAction&>(*this), 0, 0);
 }
 
 
@@ -327,7 +319,7 @@ void cf::CfObjectPc::CfObject_UnkVirtualFunc4() {
     } else {
         // Count entries in the battle-manager list at +0x48.
         cf::CBattleManager* bm =
-            static_cast<cf::CBattleManager*>(getInstance__Q22cf14CBattleManagerFv());
+            static_cast<cf::CBattleManager*>(cf::CBattleManager::getInstance());
         BmListNode* head = (BmListNode*)bm->mActorList3.mStartNodePtr;
         int count = 0;
         for (BmListNode* n = head->mNext; n != head; n = n->mNext) {
@@ -355,7 +347,7 @@ void cf::CfObjectPc::CfObject_UnkVirtualFunc4() {
     }
 
     // Gauge scale: slot 0x8C value times the global scale factor.
-    float gauge = reinterpret_cast<cf::CfObjectMove*>((u8*)this + 0x3E9C)->CfObject_getMoveSpeedRate();
+    float gauge = this->cf::CfObjectMove::CfObject_getMoveSpeedRate();
     float scaled = Scn_GetFrameDelta(gmScene) * gauge;
     CActorParam_updateTick(this, scaled, 1);
 
@@ -379,22 +371,22 @@ void cf::CfObjectPc::CfObject_UnkVirtualFunc4() {
                 if (f->field_0x3F34 != NULL) {
                     f->field_0x3F34->field_0x7A4 |= 0x8000;
                 }
-                ((cf::CfObject*)((u8*)this + 0x3E9C))->CfObject_refreshSubB0();
-                ((cf::CfObject*)((u8*)this + 0x3E9C))->CfObject_updateMoveRate();
+                this->cf::CfObject::CfObject_refreshSubB0();
+                this->cf::CfObject::CfObject_updateMoveRate();
                 return;
             }
         } else {
             if (chkFlag != 0 && UIWin_HasPendingUpdate(1) == 0) {
                 dispatchItemLoad(this, 3);
                 this->CObjectParam_signalActionEnd(0);
-                reinterpret_cast<cf::CfObjectMove*>((u8*)this + 0x3E9C)->CfObjectModel_bindModelTo(0,
+                this->cf::CfObjectModel::CfObjectModel_bindModelTo(0,
                     (const char*)lbl_eu_804FC5EC + 0x2D);
             }
         }
     }
     // Retail: direct bl to CfObjectMove::UnkVirtualFunc4 (alias runMoveUpdate).
     // Class_ keeps the non-virtual bl; alias virtual-dispatch would grow size.
-    ((cf::CfObjectMove*)((u8*)this + 0x3E9C))->cf::CfObjectMove::CfObject_UnkVirtualFunc4();
+    this->cf::CfObjectMove::CfObject_UnkVirtualFunc4();
 }
 
 // Gauge-scale refresh: runs the CActorParam base handler, then reads a text
@@ -431,7 +423,7 @@ void cf::CfObjectPc::CActorParam_UnkVirtualFunc173() {}
 // (Fv) but the dispatcher passes a float in f1; forward it to the base
 // implementation (same naming quirk) after touching the battle singleton.
 void cf::CfObjectPc::CActorParam_decayArtsMatrix(float value) {
-    getInstance__Q22cf14CBattleManagerFv();
+    cf::CBattleManager::getInstance();
     cf::CActorParam::CActorParam_decayArtsMatrix(value);
 }
 
@@ -486,7 +478,7 @@ void cf::CfObjectPc::CActorParam_UnkVirtualFunc88(u32 arg1, u32 arg2, u32 arg3) 
         void* state;
         void* state2;
         cf::CBattleManager* bm =
-            static_cast<cf::CBattleManager*>(getInstance__Q22cf14CBattleManagerFv());
+            static_cast<cf::CBattleManager*>(cf::CBattleManager::getInstance());
         u8 phase = bm->mChain.mHead.field_2;
         if (phase < 1 || phase > 0x18) goto actedDone;
         if (bm->unk20C8.unk0 != 0) goto actedDone;
@@ -559,7 +551,7 @@ extern "C" int CfObjectPc_refreshGauge(cf::CfObjectPc* self, int flag) {
             goto resetGauge;
         }
         cf::CBattleManager* bm =
-            static_cast<cf::CBattleManager*>(getInstance__Q22cf14CBattleManagerFv());
+            static_cast<cf::CBattleManager*>(cf::CBattleManager::getInstance());
         u8 phase = bm->mChain.mHead.field_2;
         if (phase >= 1 && phase <= 0x18) {
             return 0;
@@ -567,7 +559,7 @@ extern "C" int CfObjectPc_refreshGauge(cf::CfObjectPc* self, int flag) {
         if (SuddenCommuIsStateActive(&bm->mSuddenCommu)) {
             return 0;
         }
-        bm = static_cast<cf::CBattleManager*>(getInstance__Q22cf14CBattleManagerFv());
+        bm = static_cast<cf::CBattleManager*>(cf::CBattleManager::getInstance());
         if (bm->unk20C8.unk0 != 0) {
             return 0;
         }

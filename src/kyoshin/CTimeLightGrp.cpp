@@ -81,13 +81,8 @@ extern "C" CTimeLightGrp_BaseLayout* __ct__CTimeLightGrp(CTimeLightGrp_BaseLayou
     return self;
 }
 
-// ================== __dt__8005A03C ==================
-extern "C" void* __dt__8005A03C(void* obj, int mode) {
-    if (obj != 0 && mode > 0) {
-        operator delete(obj);
-    }
-    return obj;
-}
+// ================== CTimeLightObj::~CTimeLightObj (us-8005a6a4) ==================
+CTimeLightObj::~CTimeLightObj() {}
 
 // ================== __dt___reslist_base_CVirtualLightObj ==================
 // Complete object destructor for the _reslist_base<CVirtualLightObj> base of

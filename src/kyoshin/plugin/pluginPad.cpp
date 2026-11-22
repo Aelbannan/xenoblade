@@ -3,19 +3,15 @@
 #include "kyoshin/cf/CfGameManager.hpp"
 
 extern "C" {
-    // Retail data sections (all defined by this TU):
-    // .rodata "pad" (plugin name) + .sdata2 "get"/"enable" (entry names)
-    // + .data PluginFuncData table {name, func} terminated by {NULL, NULL}.
-    __declspec(section ".rodata") __attribute__((used)) char lbl_eu_804FB1D8[0x8] = "pad";
-    __declspec(section ".sdata2") __attribute__((used)) char lbl_eu_806661E0[0x4] = "get";
-    __declspec(section ".sdata2") __attribute__((used)) char lbl_eu_806661E4[0xC] = "enable";
-    __declspec(section ".data") __attribute__((used)) PluginFuncData lbl_eu_80526690[3] = {
-        { lbl_eu_806661E0, pad_get },
-        { lbl_eu_806661E4, pad_enable },
-        { 0, 0 },
-    };
     extern u32 gmPauseFlags;
 }
+
+// name-guess: retail .data:0x80526690 is the pad plugin's VM command table.
+static PluginFuncData sPadFuncData[3] = {
+    { "get", pad_get },
+    { "enable", pad_enable },
+    { 0, 0 },
+};
 
 int pad_get(VMThread* pThread) {
     ButtonFlagsType type;
@@ -67,5 +63,5 @@ int pad_enable(VMThread* pThread) {
 }
 
 void pluginPadRegist() {
-    vmPluginRegist(lbl_eu_804FB1D8, lbl_eu_80526690);
+    vmPluginRegist("pad", sPadFuncData);
 }

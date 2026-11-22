@@ -75,7 +75,7 @@ cf::CfHikariItemManager::CfHikariItemManager() {
     memset(&this->records, 0, 0x100);
     lbl_eu_80664C10 = this;
     memset(&this->unk104, 0, 0x1000);
-    memset(&this->unk1104, 0, 0x10);
+    memset(this->mActiveSlotBits, 0, sizeof(this->mActiveSlotBits));
     this->field_119C = 0;
     this->field_11A0 = 0;
 }
@@ -97,7 +97,7 @@ cf::CfHikariItemManager::~CfHikariItemManager() {
         }
     }
 
-    memset(&this->unk1104, 0, 0x10);
+    memset(this->mActiveSlotBits, 0, sizeof(this->mActiveSlotBits));
     this->field_1198 = 0;
     this->field_119C = 0;
     this->field_11A0 = 0;
@@ -162,9 +162,8 @@ void hikariRemoveRecordTarget(cf::CfHikariItemManager* self, CfHikariItemRecord*
     self->records[self->field_1198] = NULL;
 }
 
-struct HikariFlag1194View { u8 _pad[0x1194]; u32 w1194; };
 void hikariSetFlagBit1(void* self) {
-    ((HikariFlag1194View*)self)->w1194 |= 2;
+    ((cf::CfHikariItemManager*)self)->field_1194 |= 2;
 }
 // (us-802b5488): reset the manager - delete every record, clear the
 // +0x1104 scratch region and zero the counter block.  Same cleanup tail as the
@@ -180,7 +179,7 @@ void hikariResetManagerRecords(cf::CfHikariItemManager* self) {
         }
     }
 
-    memset(&self->unk1104, 0, 0x10);
+    memset(self->mActiveSlotBits, 0, sizeof(self->mActiveSlotBits));
     self->field_1198 = 0;
     self->field_119C = 0;
     self->field_11A0 = 0;
@@ -207,7 +206,7 @@ void CfHikariItemRecord::SetEnableBit0(u32 enable) {
 // sbss counter (C18/C1C with hikariEmitQuad0/3F20, C20 with hikariEmitSparkle,
 // C24 with hikariEmitGradQuad), each building its quad corners from the two
 // normalized axes scaled by the pass-specific constants.
-void cf::CfHikariItemManager::cbRenderBefore() {
+void cf::CfHikariItemManager::cbRenderBefore(CScn*) {
     // Declaration order drives the stack slots (first declared = highest
     // address, matching retail: invMtx 0x98, rotMtx 0x68, corners 0x28,
     // vec1 0x1c, vec2 0x10, matColor 0xc, ambColor 0x8).
@@ -334,7 +333,7 @@ void cf::CfHikariItemManager::cbRenderBefore() {
                 break;
             }
             u32 bit = 1u << (slot & 0x1F);
-            if (((u32*)&this->unk1104[0])[slot >> 5] & bit) {
+            if (this->mActiveSlotBits[slot >> 5] & bit) {
                 hikariUpdateFadeRecord((CfHikariItemRecord*)&this->unk104[slot * 0x20]);
             }
             slot++;
@@ -365,10 +364,10 @@ void cf::CfHikariItemManager::cbRenderBefore() {
                 break;
             }
             u32 bit = 1u << (slot & 0x1F);
-            if (((u32*)&this->unk1104[0])[slot >> 5] & bit) {
+            if (this->mActiveSlotBits[slot >> 5] & bit) {
                 if (hikariUpdateSlotRecord((CfHikariItemRecord*)&this->unk104[slot * 0x20],
                                   fade) != 0) {
-                    ((u32*)&this->unk1104[0])[slot >> 5] &= ~bit;
+                    this->mActiveSlotBits[slot >> 5] &= ~bit;
                     this->field_11A0++;
                     if (this->field_11A0 >= 0x80) {
                         this->field_11A0 = 0;
@@ -457,7 +456,7 @@ void cf::CfHikariItemManager::cbRenderBefore() {
                 break;
             }
             u32 bit = 1u << (slot & 0x1F);
-            if (((u32*)&this->unk1104[0])[slot >> 5] & bit) {
+            if (this->mActiveSlotBits[slot >> 5] & bit) {
                 hikariEmitGradQuad((CfHikariItemRecord*)&this->unk104[slot * 0x20],
                               &corners);
             }
@@ -488,7 +487,7 @@ extern "C" void hikariSpawnSlot(cf::CfHikariItemManager* self, const f32* src,
     // The slot address is recomputed from memory at the call site (retail
     // reloads field_119C instead of keeping count live).
     int count = self->field_119C;
-    u32* wordPtr = (u32*)((char*)self + 0x1104 + ((count >> 5) << 2));
+    u32* wordPtr = &self->mActiveSlotBits[count >> 5];
     u32 bit = 1u << (count & 0x1F);
     u32 word = *wordPtr;
     if (word & bit) {

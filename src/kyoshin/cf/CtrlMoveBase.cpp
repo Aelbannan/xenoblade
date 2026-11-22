@@ -392,21 +392,21 @@ void CCtrlMoveBase::unk08() {}
 
 // Dispatch the pending +0x30 slot through the manager's +0x2F2C sub-object,
 // then clear it.
-extern "C" void* getGameSubManager__Q22cf13CfGameManagerFv(void);
 extern "C" void releaseNode__17UnkClass_8047CD0CFv(void*, void*);
 extern "C" void moveBaseUnlink(void* self) {
-    if (*(u32*)((u8*)self + 0x30) != 0) {
-        void* gm = getGameSubManager__Q22cf13CfGameManagerFv();
+    cf::CCtrlMoveBase* move = (cf::CCtrlMoveBase*)self;
+    if (move->mpSomePtr != 0) {
+        void* gm = cf::CfGameManager::getGameSubManager();
         if (gm && (u8*)gm + 0x2F2C) {
-            releaseNode__17UnkClass_8047CD0CFv((u8*)gm + 0x2F2C, *(void**)((u8*)self + 0x30));
+            releaseNode__17UnkClass_8047CD0CFv((u8*)gm + 0x2F2C, move->mpSomePtr);
         }
-        *(u32*)((u8*)self + 0x30) = 0;
+        move->mpSomePtr = 0;
     }
 }
 
-struct maskMoveBaseFlags_obj { char pad[0x40]; unsigned short flags; };
 void maskMoveBaseFlags(void* self) {
-    ((maskMoveBaseFlags_obj*)self)->flags &= 1;
+    cf::CCtrlMoveBase* move = (cf::CCtrlMoveBase*)self;
+    move->mFlagsU16_1 &= 1;
 }
 
 // Cache facing angle (atan2 of x/z scaled) and the passed-in scalar into the
@@ -414,7 +414,7 @@ void maskMoveBaseFlags(void* self) {
 // loads at +0x34.
 void setMoveFacing(CCtrlMoveBase* self, const ml::CVec3* vec, f32 speed) {
     self->mpDataPtr->field_0x0C =
-        nw4r::math::Atan2FIdx(vec->x, vec->z) * lbl_eu_806665AC;
+        nw4r::math::Atan2FIdx(vec->x, vec->z) * 0.024543693f;
     self->mpDataPtr->field_0x14 = speed;
 }
 

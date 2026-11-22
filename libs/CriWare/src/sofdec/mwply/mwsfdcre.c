@@ -31,6 +31,7 @@ typedef struct TraceRec {
 } TraceRec;
 
 #include "libs/CriWare/src/sofdec/mwply/mwsfd_types.h"
+#include "libs/CriWare/src/sofdec/sfdcore/sfd/sfd_types.h"
 
 /* SFD creation parameter block shared by the frame-buffer allocators. */
 typedef struct MWSFCRE_Para {
@@ -84,26 +85,6 @@ typedef struct AdxtCfg {
     u8 pad_0x0c[0x0c];      /* 0x0c..0x17 */
     u32 field_0x18;         /* 0x18 */
 } AdxtCfg;
-
-/* SFD_Create parameter block (condition table + buffer descriptions). */
-typedef struct SfdCreateCfg {
-    u32 field_0x00;         /* 0x00 */
-    void* stmBuf;           /* 0x04 */
-    u32 field_0x08;         /* 0x08 */
-    u32 field_0x0c;         /* 0x0c */
-    u32 field_0x10;         /* 0x10 */
-    u8 pad_0x14[0x14];      /* 0x14..0x27 */
-    u32 field_0x28;         /* 0x28 */
-    u32 field_0x2c;         /* 0x2c */
-    u32 field_0x30;         /* 0x30 */
-    u32 field_0x34;         /* 0x34 */
-    u32 width;              /* 0x38 */
-    u32 height;             /* 0x3c */
-    u32 modeIdx;            /* 0x40 */
-    u32 field_0x44;         /* 0x44 */
-    u32 field_0x48;         /* 0x48 */
-    u32 field_0x4c;         /* 0x4c */
-} SfdCreateCfg;
 
 /* SFD_SetMpvParaTbl argument block sub-table: 10 default condition/value
  * pairs copied from the mode-specific template in .data. */
@@ -723,8 +704,8 @@ void* mwsfcre_CreateSfd(MWSFDPLY* ply, MWSFCRE_Para* para) {
     cfg.field_0x34 = para->field_0x34;
     cfg.width = width;
     cfg.height = height;
-    cfg.field_0x44 = (u32)buf4000;
-    cfg.field_0x48 = 0x4000;
+    cfg.work = buf4000;
+    cfg.workSize = 0x4000;
     cfg.field_0x4c = 0;
 
     SFD_SetMpvParaTbl((u32*)&sMpvInfo, (u32*)rbfOut, (u32*)tabOut);

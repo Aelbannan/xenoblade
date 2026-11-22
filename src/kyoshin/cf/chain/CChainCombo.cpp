@@ -1,9 +1,10 @@
 #include "kyoshin/cf/chain/CChainCombo.hpp"
 #include "kyoshin/cf/object/CfObjectActor.hpp"
 #include <monolib/math/Random.hpp>
-#include "kyoshin/cf/chain/CChainCombo.hpp"
 #include "kyoshin/cf/chain/CChainEffect.hpp"
 
+// name-guess: three-entry second-gauge payout table named from payoutChainCombo.
+static int sChainComboPayoutValues[3] = {0x708, 0x4b0, 0x258};
 
 namespace cf{
     CChainCombo::CChainCombo(){
@@ -67,11 +68,11 @@ void payoutChainCombo(cf::CChainCombo* self, cf::CfObjectActor* actor) {
             int rand = ml::math::mtRand(100);
             int value;
             if (rand < 5) {
-                value = lbl_eu_80538988[0];
+                value = sChainComboPayoutValues[0];
             } else if (rand < 25) {
-                value = lbl_eu_80538988[1];
+                value = sChainComboPayoutValues[1];
             } else {
-                value = lbl_eu_80538988[2];
+                value = sChainComboPayoutValues[2];
             }
 
             // Slot +0x184 is CActorParam_addSecondGauge (takes the id).
@@ -84,9 +85,3 @@ void payoutChainCombo(cf::CChainCombo* self, cf::CfObjectActor* actor) {
     bool* pending = &self->mPending;
     *pending = false;
 }
-
-// Second-gauge payout selected by the probability roll in payoutChainCombo
-// (5% -> 1800, 25% -> 1200, otherwise 600). Retail keeps this as the third
-// word triple at .data:0x80538988, i.e. the user file-scope object that MWCC
-// emits before the compiler-generated __vt__Q22cf11CChainCombo.
-extern "C" int lbl_eu_80538988[3] = {0x708, 0x4b0, 0x258};

@@ -201,7 +201,7 @@ extern "C" int isPcEffectSlotActive(int idx);
 extern "C" u16 getReloadParam0(void);   // canonical u16 form (chapter/episode getter)
 extern "C" u32 CtrlObjectParam_GetCurrentRowKey(void* obj);
 #include "kyoshin/cf/CtrlRemoteApi.hpp"
-extern "C" int CItem_getNameIdFromFam(u32 v);
+extern "C" u16 CItem_getNameIdFromFam(u16 value);   // CItem.cpp
 extern "C" u32 getBdatStringColumnValue(void* table, const char* col, s32 index = 0); // canonical ocBdat.hpp form; default keeps 2-arg call sites compiling
 extern "C" void* CPartsChange_FindActorById(void* table, u32 id);
 void* getEffOwner(void* obj);   // C++ linkage -> getEffOwner____FPv
@@ -290,8 +290,9 @@ extern "C" void __ct__800FCA24(void*, void*, u32);
 extern "C" void __ct__800FCB80(void*, void*, u32);
 extern "C" void __ct__800FCD10(void*, void*, u32);
 extern "C" void __ct__800FD250(void*);
-extern "C" void* firstReslistB28(void*);
-extern "C" void* nextReslistB28(void*, void*);
+namespace cf { class CfObject; }
+extern "C" void* firstReslistB28();
+extern "C" cf::CfObject* nextReslistB28(cf::CfObject* obj);
 extern "C" void* findObjB28ById(s32);
 
 extern "C" void* findBattleStatusEntry(void*, u32);

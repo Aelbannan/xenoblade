@@ -1,6 +1,7 @@
 #include "kyoshin/cf/CfCamEvent.hpp"
 #include "kyoshin/cf/CfCamSymbols.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"  // canonical isTimerActive declaration
+#include "kyoshin/cf/object/CfObjectEff.hpp"  // gimmick-list payload owner
 #include "monolib/util/MemManager.hpp"  // canonical mtl::MemManager::allocate
 #include "nw4r/db/db_assert.h"  // canonical nw4r::db::Warning
 
@@ -197,7 +198,7 @@ void CfCamEvt_Update(CfCamEvent* self) {
     CfCamBlock48 srcBlock;
     CfCamNodeList* nodeList;
     CfCamNode* node;
-    CfCamNodePayload* payload;
+    cf::CfObjectEff* payload;
     void* o164;
     int follow;
     u8 flagByte;
@@ -313,13 +314,13 @@ void CfCamEvt_Update(CfCamEvent* self) {
         nodeList = getFirstGimmick__Q22cf13CfGameManagerFv();
         node = nodeList->sentinel->next;
         while (node != getFirstGimmick__Q22cf13CfGameManagerFv()->sentinel) {
-            payload = (CfCamNodePayload*)node->field_8;
-            if (payload->field_98 != 0) {
-                if ((payload->field_68 & 0x8000) == 0) {
+            payload = static_cast<cf::CfObjectEff*>(node->field_8);
+            if (payload->mField98 != 0) {
+                if ((payload->mFlags68 & 0x8000) == 0) {
                     scnImN4DynStart();
                 }
-                simSetValue7E8(payload->field_98, 1);
-                scnImN4SetShadFlg(payload->field_98);
+                simSetValue7E8(payload->mField98, 1);
+                scnImN4SetShadFlg(payload->mField98);
             }
             node = node->next;
         }

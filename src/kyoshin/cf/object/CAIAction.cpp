@@ -721,11 +721,11 @@ extern "C" int aiJudgeAction(cf::CAIAction* self, const u8* e, cf::CAIActionSlot
         case 0x40: case 0x41: {
             // Turn-counter window; inner dispatch keyed on 0x40/0x41 only.
             if (k == 0x40) {
-                if (*(s32*)&((cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv())->unk194
+                if (*(s32*)&((cf::CBattleManager*)cf::CBattleManager::getInstance())->unk194
                     < (s32)b[i] * 10)
                     return 0;
             } else if (k == 0x41) {
-                if (*(s32*)&((cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv())->unk194
+                if (*(s32*)&((cf::CBattleManager*)cf::CBattleManager::getInstance())->unk194
                     > (s32)b[i] * 10)
                     return 0;
             }
@@ -814,7 +814,7 @@ extern "C" int aiJudgeAction(cf::CAIAction* self, const u8* e, cf::CAIActionSlot
 
     if (d == 4) {
         // Vision exclusion sweep + arts-slot lottery with power gates.
-        cf::CBattleManager* bm = (cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv();
+        cf::CBattleManager* bm = (cf::CBattleManager*)cf::CBattleManager::getInstance();
         cf::CVisionSub* vision = (cf::CVisionSub*)bm->CBattleMan_FetchVisionObj();
         if (vision != 0 && !(party->move.moveFlags & 2)
             && vision->field_00 != party->unk3F10 && !(vision->field_824 & 0x20000))
@@ -952,7 +952,7 @@ extern "C" int aiJudgeAction(cf::CAIAction* self, const u8* e, cf::CAIActionSlot
             return 0;
 
         // Vision exclusion, relaxed when either flag bit is set.
-        cf::CBattleManager* bm = (cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv();
+        cf::CBattleManager* bm = (cf::CBattleManager*)cf::CBattleManager::getInstance();
         cf::CVisionSub* vision = (cf::CVisionSub*)bm->CBattleMan_FetchVisionObj();
         if (vision != 0 && !(party->move.moveFlags & 2)
             && !(param->unk78 & 0x8000)
@@ -967,11 +967,11 @@ extern "C" int aiJudgeAction(cf::CAIAction* self, const u8* e, cf::CAIActionSlot
     if (d == 0x35) {
         // Pair-flag + unlock + turn-count gate chain.
         void* obj = MapFx_ResolveOwner(findObjectById((int)out->unk00));
-        if (obj != 0 && !(*(u32*)((u8*)obj + 0x3F00) & 2))
+        if (obj != 0 && !(((cf::CfObjectActor*)obj)->unk64 & 2))
             return 0;
         if (!(party->move.moveFlags & 2))
             return 0;
-        if (*(s32*)&((cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv())->unk194 < 0x64)
+        if (*(s32*)&((cf::CBattleManager*)cf::CBattleManager::getInstance())->unk194 < 0x64)
             return 0;
         return CtrlRemote_TouchBitByArg(0x335f) != 0;
     }
@@ -1247,9 +1247,9 @@ extern "C" void* aiDispatchAct(cf::CAIAction* self, const void* cmd) {
                 u8* moveBase = (u8*)self->unkB14 + 0x3E9C;
                 u32 mf = *(u32*)(moveBase + 0x64);
                 if (mf & 0x2) {
-                    if (!(*(u32*)((u8*)v + 0x3F00) & 0x2))
+                    if (!(((cf::CfObjectActor*)v)->unk64 & 0x2))
                         appendObjectById(holder.get(), (u32)(uintptr_t)((cf::CObjectParam*)moveBase)->CObjectParam_getSelfObjectId());
-                } else if (!(*(u32*)((u8*)v + 0x3F00) & 0x4)) {
+                } else if (!(((cf::CfObjectActor*)v)->unk64 & 0x4)) {
                     appendObjectById(holder.get(), (u32)(uintptr_t)((cf::CObjectParam*)moveBase)->CObjectParam_getSelfObjectId());
                 }
             }
@@ -1281,7 +1281,7 @@ extern "C" void* aiDispatchAct(cf::CAIAction* self, const void* cmd) {
                 self->unkB18 = 0;
         } else {
             u32 filter = 0x80000000;
-            if (!(*(u32*)((u8*)self->unkB14 + 0x3F00) & 0x4))
+            if (!(((cf::CfObjectActor*)self->unkB14)->unk64 & 0x4))
                 filter = 0x20;
             startEnumObjects(holder.get(), filter, 0x800);
             if (aiListCount(holder.get()) == 0)
@@ -1291,7 +1291,7 @@ extern "C" void* aiDispatchAct(cf::CAIAction* self, const void* cmd) {
     }
 
     case 2:
-        appendObjectById(holder.get(), *(u32*)((u8*)self->unkB14 + 0x3F10));
+        appendObjectById(holder.get(), ((cf::CfObjectActor*)self->unkB14)->field_0x74);
         break;
 
     case 4:
@@ -1317,7 +1317,7 @@ extern "C" void* aiDispatchAct(cf::CAIAction* self, const void* cmd) {
     case 7:
     case 9: {
         u32 filter = 0x20;
-        if (*(u32*)((u8*)self->unkB14 + 0x3F00) & 0x4)
+        if (((cf::CfObjectActor*)self->unkB14)->unk64 & 0x4)
             filter = 0x80000000;
         startEnumObjects(holder.get(), filter, 0);
         break;
@@ -1326,7 +1326,7 @@ extern "C" void* aiDispatchAct(cf::CAIAction* self, const void* cmd) {
     case 8: {
         u32 i;
         u32 filter = 0x20;
-        if (*(u32*)((u8*)self->unkB14 + 0x3F00) & 0x4)
+        if (((cf::CfObjectActor*)self->unkB14)->unk64 & 0x4)
             filter = 0x80000000;
         startEnumObjects(holder.get(), filter, 0);
         for (i = 0; i < aiListCount(holder.get()); i++) {
@@ -1347,7 +1347,7 @@ extern "C" void* aiDispatchAct(cf::CAIAction* self, const void* cmd) {
             CfEnumListHolder h2;
             {
                 u32 filter = 0x20;
-                if (*(u32*)((u8*)self->unkB14 + 0x3F00) & 0x4)
+                if (((cf::CfObjectActor*)self->unkB14)->unk64 & 0x4)
                     filter = 0x80000000;
                 startEnumObjects(h2.get(), filter, 0);
             }
@@ -1392,21 +1392,23 @@ extern "C" void* aiDispatchAct(cf::CAIAction* self, const void* cmd) {
     case 19:
     case 20:
     case 21: {
-        void* node = firstReslistB28(getInstance());
+        getInstance();
+        void* node = firstReslistB28();
         s32 want = (s32)sel - 13;
         while (node) {
             if (want == (s32)(u16)*(u16*)((u8*)node + 0x8C)) {
                 appendObjectById(holder.get(), *(u32*)((u8*)node + 0x74));
                 break;
             }
-            node = nextReslistB28(getInstance(), node);
+            getInstance();
+            node = nextReslistB28((cf::CfObject*)node);
         }
         break;
     }
 
     case 34: {
         u32 filter = 0x80000000;
-        if (!(*(u32*)((u8*)self->unkB14 + 0x3F00) & 0x4))
+        if (!(((cf::CfObjectActor*)self->unkB14)->unk64 & 0x4))
             filter = 0x20;
         startEnumObjects(holder.get(), filter, 0x800);
         __ct__800FC19C(holder.get(), 0x10000000, 0);
@@ -1439,8 +1441,8 @@ extern "C" void* aiDispatchAct(cf::CAIAction* self, const void* cmd) {
             for (i = 0; i < aiListCount(holder.get()); i++) {
                 CAIEnumSlot* slot = (CAIEnumSlot*)getEntryAt(holder.get(), i);
                 void* obj = slot ? MapFx_ResolveOwner(slot->unk04) : 0;
-                if (!(obj && (*(u32*)((u8*)obj + 0x3F00) & 0x2) &&
-                      (op - 143) == (s32)*(u16*)((u8*)obj + 0x3F28)))
+                if (!(obj && (((cf::CfObjectActor*)obj)->unk64 & 0x2) &&
+                      (op - 143) == (s32)((cf::CfObjectActor*)obj)->unk8C_3))
                     slot->unk18 = slot->unk18 | 0x70;
             }
             __ct__800FD250(holder.get());
@@ -1463,7 +1465,7 @@ extern "C" void* aiDispatchAct(cf::CAIAction* self, const void* cmd) {
         if (aiListCount(holder.get()) != 0) {
             CAIEnumSlot* slot = (CAIEnumSlot*)getEntryAt(holder.get(), 0);
             void* obj = slot ? MapFx_ResolveOwner(slot->unk04) : 0;
-            if (!(obj && (*(u32*)((u8*)obj + 0x3F00) & 0x4) &&
+            if (!(obj && (((cf::CfObjectActor*)obj)->unk64 & 0x4) &&
                   ((cf::CActorParam*)obj)->CActorParam_getActorType() == (s32)(op - 151)))
                 aiListClear(holder.get());
         }
@@ -1485,7 +1487,7 @@ extern "C" void* aiDispatchAct(cf::CAIAction* self, const void* cmd) {
                 if (v != 0)
                     goto done1;
             fallback1:
-                if (*(u32*)((u8*)self->unkB14 + 0x3F00) & 0x2)
+                if (((cf::CfObjectActor*)self->unkB14)->unk64 & 0x2)
                     obj = (void*)(uintptr_t)((cf::CObjectParam*)cf::CfGameManager::getPlayer(0))->CObjectParam_getSelfObjectId();
             }
         done1:
@@ -1509,7 +1511,7 @@ extern "C" void* aiDispatchAct(cf::CAIAction* self, const void* cmd) {
                 if (v != 0)
                     goto done2;
             fallback2:
-                if (*(u32*)((u8*)self->unkB14 + 0x3F00) & 0x2)
+                if (((cf::CfObjectActor*)self->unkB14)->unk64 & 0x2)
                     obj = (void*)(uintptr_t)((cf::CObjectParam*)cf::CfGameManager::getPlayer(0))->CObjectParam_getSelfObjectId();
             }
         done2:
@@ -1909,15 +1911,15 @@ extern "C" void* aiDispatchAct(cf::CAIAction* self, const void* cmd) {
     }
 
     case 139:
-        __ct__800FCD10(holder.get(), *(void**)((u8*)self->unkB14 + 0x3F10), 0);
+        __ct__800FCD10(holder.get(), (void*)((cf::CfObjectActor*)self->unkB14)->field_0x74, 0);
         break;
 
     case 141:
-        __ct__800FCA24(holder.get(), *(void**)((u8*)self->unkB14 + 0x3F10), 0);
+        __ct__800FCA24(holder.get(), (void*)((cf::CfObjectActor*)self->unkB14)->field_0x74, 0);
         break;
 
     case 142:
-        __ct__800FCB80(holder.get(), *(void**)((u8*)self->unkB14 + 0x3F10), 0);
+        __ct__800FCB80(holder.get(), (void*)((cf::CfObjectActor*)self->unkB14)->field_0x74, 0);
         break;
 
     case 164:
@@ -1930,7 +1932,7 @@ extern "C" void* aiDispatchAct(cf::CAIAction* self, const void* cmd) {
     case 171: {
         if (findObjB28ById((s32)op - 163) != 0) {
             void* node = findObjB28ById((s32)(op - 163));
-            __ct__800FCA24(holder.get(), *(void**)((u8*)node + 0x3F10), 0);
+            __ct__800FCA24(holder.get(), (void*)((cf::CfObjectActor*)node)->field_0x74, 0);
         } else {
             aiListClear(holder.get());
         }
@@ -2004,14 +2006,14 @@ extern "C" void* aiQueryHandle(cf::CAIAction* self, CAIActionQuery* q) {
     } else if (b6 >= 14 && b6 <= 21) {
         // +0x6178 : scan singleton node list (reslist at +0xB28) for tag b6-13
         getInstance();                       // singleton acquire (retail discards result)
-        void* node = firstReslistB28(getInstance());          // &singleton->unkB28
+        void* node = firstReslistB28();
         while (node != 0) {
             if (*(u16*)((u8*)node + 0x8C) == (u16)(b6 - 13)) {
                 appendObjectById(it.get(), *(u32*)((u8*)node + 0x74));
                 break;
             }
             getInstance();
-            node = nextReslistB28(getInstance(), node);
+            node = nextReslistB28((cf::CfObject*)node);
         }
     } else if (b6 == 13) {
         // +0x61D0 : battle vision object's field +4
@@ -2485,7 +2487,7 @@ extern "C" void* aiQueryHandle(cf::CAIAction* self, CAIActionQuery* q) {
                     switch (word) {  // jumptable_eu_8052EDEC, words 17..77
                     case 17: case 18: case 19: {
                         // +0x7528
-                        void* target = (u8*)obj + 0x3E9C;
+                        void* target = (cf::CfObjectMove*)((cf::CfObjectActor*)obj);
                         f32 dist = CREvtLight_DistToTarget((u8*)((CfObjBase*)self->unkB14) + 0x3E9C, target);
                         if (dist <= (f32)other) {
                             int st = CREvtLight_AngleState((u8*)((CfObjBase*)self->unkB14) + 0x3E9C, target);
@@ -2500,32 +2502,32 @@ extern "C" void* aiQueryHandle(cf::CAIAction* self, CAIActionQuery* q) {
                     case 20: {
                         // +0x7620
                         f32 dist = CREvtLight_DistToTarget((u8*)((CfObjBase*)self->unkB14) + 0x3E9C,
-                                                 (u8*)obj + 0x3E9C);
+                                                 (cf::CfObjectMove*)((cf::CfObjectActor*)obj));
                         if (dist < (f32)other) e->unk18 = e->unk18 | 0x70;
                         break;
                     }
                     case 21: {
                         // +0x75D8
                         f32 dist = CREvtLight_DistToTarget((u8*)((CfObjBase*)self->unkB14) + 0x3E9C,
-                                                 (u8*)obj + 0x3E9C);
+                                                 (cf::CfObjectMove*)((cf::CfObjectActor*)obj));
                         if (dist >= (f32)other) e->unk18 = e->unk18 | 0x70;
                         break;
                     }
                     case 22: {
                         // +0x7740 (args swapped: state of obj vs self)
-                        int st = CREvtLight_AngleState((u8*)obj + 0x3E9C,
+                        int st = CREvtLight_AngleState((cf::CfObjectMove*)((cf::CfObjectActor*)obj),
                                                (u8*)((CfObjBase*)self->unkB14) + 0x3E9C);
                         if ((st & 0xFF) != 1) e->unk18 = e->unk18 | 0x70;
                         break;
                     }
                     case 23: {
-                        int st = CREvtLight_AngleState((u8*)obj + 0x3E9C,
+                        int st = CREvtLight_AngleState((cf::CfObjectMove*)((cf::CfObjectActor*)obj),
                                                (u8*)((CfObjBase*)self->unkB14) + 0x3E9C);
                         if ((st & 0xFF) != 4) e->unk18 = e->unk18 | 0x70;
                         break;
                     }
                     case 24: {
-                        int st = CREvtLight_AngleState((u8*)obj + 0x3E9C,
+                        int st = CREvtLight_AngleState((cf::CfObjectMove*)((cf::CfObjectActor*)obj),
                                                (u8*)((CfObjBase*)self->unkB14) + 0x3E9C);
                         if ((st & 0xFF) != 2) e->unk18 = e->unk18 | 0x70;
                         break;
@@ -2578,14 +2580,14 @@ extern "C" void* aiQueryHandle(cf::CAIAction* self, CAIActionQuery* q) {
                         // ml::math::abs (NW4R FAbs) per MWCC_CASES
                         // (fabs+frsp pair), NOT libc fabsf.
                         void* selfPos = ((cf::CfObject*)((u8*)((CfObjBase*)self->unkB14) + 0x3E9C))->CfObject_getPosVector();
-                        void* objPos  = ((cf::CfObject*)(u8*)obj + 0x3E9C)->CfObject_getPosVector();
+                        void* objPos  = ((cf::CfObjectActor*)obj)->CfObject_getPosVector();
                         f32 dz = *(f32*)((u8*)selfPos + 4) - *(f32*)((u8*)objPos + 4);
                         if (mlAbs(dz) >= (f32)other) e->unk18 = e->unk18 | 0x70;
                         break;
                     }
                     case 75: {
                         void* selfPos = ((cf::CfObject*)((u8*)((CfObjBase*)self->unkB14) + 0x3E9C))->CfObject_getPosVector();
-                        void* objPos  = ((cf::CfObject*)(u8*)obj + 0x3E9C)->CfObject_getPosVector();
+                        void* objPos  = ((cf::CfObjectActor*)obj)->CfObject_getPosVector();
                         f32 dz = *(f32*)((u8*)selfPos + 4) - *(f32*)((u8*)objPos + 4);
                         if (mlAbs(dz) < (f32)other) e->unk18 = e->unk18 | 0x70;
                         break;

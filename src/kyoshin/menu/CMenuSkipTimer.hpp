@@ -8,8 +8,6 @@
 #include "monolib/scn/IScnRender.hpp"
 #include <types.h>
 
-// String table owned by this TU's .rodata split (MNU_skip* pane names).
-extern const char lbl_eu_80510540[0x10];
 
 // Skip-timer widget shown during cutscene skipping.
 // IUICf task base (0x00-0x57), the IScnRender render-callback subobject at
@@ -22,7 +20,7 @@ public:
     virtual void Init();
     virtual void Term();
     virtual void Move();
-    virtual void cbRenderBefore();
+    virtual void cbRenderBefore(CScn* scene);
 
     static CMenuSkipTimer* create(CProcess* self, CProcess* parent);
     static CMenuSkipTimer* sInstance;

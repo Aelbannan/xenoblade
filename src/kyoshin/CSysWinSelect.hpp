@@ -48,7 +48,7 @@ public:
     virtual void Init() {}
     virtual void Term() {}
     virtual void Move() {}
-    virtual void cbRenderBefore() {}
+    virtual void cbRenderBefore(CScn*) {}
 
     CScn* mScene;      // 0x74 owning scene
     CSysWin mSysWin;   // 0x78 CSysWin storage (0x3C)

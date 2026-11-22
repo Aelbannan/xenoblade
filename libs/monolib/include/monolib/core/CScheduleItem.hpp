@@ -1,6 +1,7 @@
 #pragma once
 
 #include <types.h>
+#include "monolib/effect/EffectNode.hpp"
 
 // Forward declarations
 struct CSchedule;
@@ -47,12 +48,13 @@ struct CItemEntry {
 // Effect object (pool at lbl_eu_80661728, stride 0x22C), looked up via
 // SchedFx_FetchByHandle(handle).
 struct CEffectObj {
-    u8 _pad00[0x1C];
+    u8 _pad00[0x14];
+    f32 mFrameDelta; // 0x14: name-guess: frame fraction passed to the node-chain step
+    u8 _pad18[4];    // 0x18
     u16 mFlags1C;   // 0x1C: bit 0x2000 = parent-linked, bit 0x8000 = update flag
     s16 mPoolSlot;  // 0x1E pool index of the claimed effect slot (negative = free)
     s16 mField20;   // 0x20: parent slot handle
-    u8 _pad22[0xC]; // 0x22
-    s16 mField2E;   // 0x2E
+    EffectNode mNodeHead; // 0x24: embedded node-chain head; field_0x0a is at 0x2E
 };
 
 // Object with a position accessor virtual at vtable offset 0x34.

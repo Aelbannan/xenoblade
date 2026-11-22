@@ -19,7 +19,7 @@ public:
     virtual void Init();
     virtual void Term();
     virtual void Move();
-    virtual void cbRenderBefore();
+    virtual void cbRenderBefore(CScn* scene);
 
     // Only one save menu exists at a time (subsequent calls return NULL).
     static CMenuSave* create(CProcess* parent, CProcess* parentRef, u32 arg208,

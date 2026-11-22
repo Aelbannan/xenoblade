@@ -515,12 +515,10 @@ void scanTboxByXY();
 
 // Stack-buffer slot query (CfGameManager helper): fills CfResPcLoadBuffer.
 extern "C" void func_80080F48__Q22cf13CfGameManagerFv(u32 value, cf::CfResPcLoadBuffer* resource, u32 first, u32 second);
-extern "C" unsigned long getEffectFlagState__Q22cf13CfGameManagerFv();
 
 // C-ABI imports used by CfResPcImpl_open / CfResPcImpl_reload (defined in IResInfo.cpp /
 // CfGameManager.cpp / the model layer). extern "C" keeps the call-site relocs
 // at the plain retail names.
-extern "C" void setMemInitFlag__Q23mtl10MemManagerFb(bool value);
 extern "C" u8* scnImN4BuildByIdx(u8* global, u8* handle, int a, int b, int c, int d);
 extern "C" u32 scnImN4SetShadowNd(void* obj, u32 bdat, u32 arg);
 extern "C" void scnImN4StampShadNd(void* obj, u32 bdat, f32 f1, f32 f2);
@@ -542,7 +540,7 @@ extern "C" void* Scn_InitGlobalA(void* global, void* data, void* buf);
 extern cf::CfResPcAreaEntry lbl_eu_805327F8[8];
 
 // Position table copied by CfResPcImpl_open (.data, 0x50 bytes).
-extern cf::CfResPcPosTable cfResPcPosTableData;
+extern const cf::CfResPcPosTable cfResPcPosTableData;
 
 // Float constant passed to the +0x48 slot by CfResPcImpl_open (.sdata2).
 extern const float lbl_eu_80667A60;

@@ -13,7 +13,9 @@
 #include <revolution/gx/GXTypes.h>
 
 #include "kyoshin/CBaseCur.hpp"
+#include "kyoshin/cf/CItem.hpp"
 #include "kyoshin/CSysWin.hpp"
+#include "kyoshin/CItemBoxInfo.hpp"
 #include "kyoshin/code_80135FDC_Lyt.hpp"
 #include "kyoshin/code_80135FDC_State.hpp"
 
@@ -27,15 +29,6 @@ class DrawInfo;
 
 class CFileHandle;
 class CScn;
-
-struct CMenuGetItemMultiEntry {
-    u32 packed;
-    u16 value;
-    u8 rest[0x2e];
-    // Default ctor zeroes value (+4, halfword) then packed (+0): the retail
-    // CMenuGetItemMulti ctor's array-init loop stores in that order.
-    CMenuGetItemMultiEntry() { value = 0; packed = 0; }
-};
 
 struct CMenuGetItemPaneView {
     u8 _00[0x4c];
@@ -54,11 +47,12 @@ class CMenuGetItemMulti : public IUIWindow,
 public:
     CMenuGetItemMulti(CScn* scn, u32 item0, u32 item1, u32 item2, u32 item3,
                       u32 argF6, u32 arg201, u8 argSpecial);
+    CMenuGetItemMulti(CScn* scn, const CItemFour& items);
     virtual ~CMenuGetItemMulti();
     virtual void Init();
     virtual void Term();
     virtual void Move();
-    virtual void cbRenderBefore();
+    virtual void cbRenderBefore(CScn* scene);
     virtual bool OnFileEvent(CEventFile* pEvent);
 
     // IUIWindow (+0x00..+0x6B), IWorkEvent (+0x6C) and IScnRender (+0x70)
@@ -68,17 +62,13 @@ public:
     nw4r::lyt::AnimTransform* mAnim;         // +0x88
     u32 mInitialItems[4];                    // +0x8C
     u32 mVisibleItemCount;                   // +0x9C
-    CMenuGetItemMultiEntry mFirstEntry;      // +0xA0 (ctor inlined by MWCC)
-    CMenuGetItemMultiEntry mRestEntries[3];  // +0xD4 (array-init bdnz loop)
-    u32 mEntryCount;                         // +0x170
+    CItemFour mItems;                        // +0xA0 (count at +0x170)
     CCur18 mCursor;                          // +0x174
-    u8 mSystemWindow[0x3C];                  // +0x18C CSysWin storage (raw;
-                                             // ctor/dtor driven via C-ABI
-                                             // __ct__7CSysWinFUc/__dt__7CSysWinFv)
+    CSysWin mSystemWindow;                   // +0x18C
     u8 mMaxVisibleItems;                     // +0x1C8
     u8 mHasSpecialItem;                      // +0x1C9
     u8 mPaneVisible[6];                      // +0x1CA
-    CMenuGetItemMultiEntry* mVisibleEntries[6]; // +0x1D0
+    CItemExt* mVisibleEntries[6]; // +0x1D0
     u16 mVisibleItemIds[6];                  // +0x1E8
     u8 field_1F4;
     u8 field_1F5;
@@ -95,61 +85,10 @@ public:
     u8 field_20D;
     u8 field_20E;
     u8 field_20F;
-    // Rank-item slot display arrays (shared by the category-3/9 item
-    // handlers GetItemMulti_FillEntryRankPane / GetItemMulti_ShowItemRank / GetItemMulti_FillRankSlots): per-slot item
-    // ids, positions and the "slot filled" flag byte. Slots 8-11 are the
-    // rank-item display. The +0x2C4/+0x2D0 arrays are only written by
-    // GetItemMulti_FillRankSlots (extra per-slot rank data).
-    u16 mRankSlotIds[12];             // +0x210
-    nw4r::math::VEC3 mRankSlotPos[12]; // +0x228
-    u8 mRankSlotFlag[12];             // +0x2B8
-    u8 mRankSlotFlag2[12];            // +0x2C4
-    u16 mRankSlotIds2[12];            // +0x2D0
-    u8 field_2E8;                     // +0x2E8 slot-window selection (A-press scan)
-    u8 unk2EC[0x80];                  // +0x2EC unknown; retail sizeof is 0x36C (CreateInstance/CreateSimple alloc), no access in this TU
-};
-
-// Vtable-dispatch view of the per-category item impl (the +0x4C/+0x54/+0x64/
-// +0x90 slots this TU calls are typed here; CItem.hpp's CItemImpl keeps those
-// as placeholders). Offsets match the real CItemImpl vtable; never
-// constructed directly (instances come from CItem_initItemImplInstances).
-class CMenuGetItemImpl {
-public:
-    virtual u16 getRankCount(CMenuGetItemMultiEntry*) = 0;    // +0x08
-    virtual void v0C() = 0;
-    virtual void v10() = 0;
-    virtual void v14() = 0;
-    virtual void v18() = 0;
-    virtual void v1C() = 0;
-    virtual char* getName(CMenuGetItemMultiEntry*) = 0;       // +0x20
-    virtual void v24() = 0;
-    virtual void v28() = 0;
-    virtual void* getSlot(CMenuGetItemMultiEntry*, u8) = 0;   // +0x2C
-    virtual u8 hasSlot(CMenuGetItemMultiEntry*) = 0;          // +0x30
-    virtual void v34() = 0;
-    virtual void v38() = 0;
-    virtual void v3C() = 0;
-    virtual s16 getSlotId(CMenuGetItemMultiEntry*, u8) = 0;   // +0x40
-    virtual void v44() = 0;                                   // +0x44
-    virtual void v48() = 0;                                   // +0x48
-    virtual u32 vf4C(CMenuGetItemMultiEntry*, u8) = 0;        // +0x4C slot item id
-    virtual void v50() = 0;                                   // +0x50
-    virtual u32 vf54(CMenuGetItemMultiEntry*) = 0;            // +0x54 item id
-    virtual void v58() = 0;
-    virtual void v5C() = 0;
-    virtual void v60() = 0;
-    virtual u32 vf64(CMenuGetItemMultiEntry*, u8) = 0;        // +0x64 slot id
-    virtual void v68() = 0;
-    virtual void v6C() = 0;
-    virtual void v70() = 0;
-    virtual void v74() = 0;
-    virtual void v78() = 0;
-    virtual void v7C() = 0;
-    virtual void v80() = 0;
-    virtual void v84() = 0;
-    virtual void v88() = 0;
-    virtual void v8C() = 0;
-    virtual int vf90(CMenuGetItemMultiEntry*) = 0;           // +0x90 rank text value
+    // Item page (ids, positions, rank flags, selection, name text) shared with
+    // CItemBoxInfo/CItemBoxLine/CEquipItemBox; its empty inline dtor is the
+    // weak copy retail keeps in this TU (us 0x801B4018).
+    CItemBoxPage mPage;               // +0x210 (ends at retail sizeof 0x36C)
 };
 
 // --- unit imports ---
@@ -232,7 +171,7 @@ extern "C" void __ct__17UnkClass_8045F564Fv(void* self); // layout-memory region
 // GetItemMulti_HandlePad); sysWinSwitchKindPane/BFC8 take CSysWin* (declared in CSysWin.hpp).
 // Item removal helpers (item sweeps in GetItemMulti_PruneEntries): release an entry
 // and notify the item system.
-extern "C" void CItemData_lookupOrAlloc(CMenuGetItemMultiEntry* entry, u32 flags);
+extern "C" void CItemData_lookupOrAlloc(CItemExt* entry, u32 flags);
 extern "C" void CItem_thunkAllocRecord(u32 id, u32 flags);
 extern "C" void UIWin_BuildFlagBuf(u32 a, u32 id, u32 b);
 // Slot-window name source used by GetItemMulti_HandlePad's A-press open (no args).

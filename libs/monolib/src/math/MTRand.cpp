@@ -1,20 +1,16 @@
 #include "monolib/math.hpp"
 
-extern "C" {
-    s8 lbl_eu_80665580;
-}
-
 
 namespace ml{
 
     MTRand* MTRand::getInstance(){
         static MTRand instance;
-        if(!lbl_eu_80665580){
-            instance.srand(0x012BD6AA);
-            instance.pNext = instance.state;
-            lbl_eu_80665580 = 1;
-        }
         return &instance;
+    }
+
+    MTRand::MTRand() {
+        srand(0x012BD6AA);
+        pNext = state;
     }
 
     void MTRand::srand(u32 seed) {

@@ -39,7 +39,7 @@ public:
     virtual void Init();
     virtual void Term();
     virtual void Move();
-    void cbRenderBefore();
+    void cbRenderBefore(CScn* scene);
 
     CProcess* mParentRef;            // 0x5C: owning process (cast to CScn* at call sites)
     CTutorial mTutorial;             // 0x60: tutorial widget

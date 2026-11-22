@@ -50,9 +50,6 @@ public:
 };
 
 
-// Shared string pool (split1 .rodata): arc path, pane names, msg-ids.
-extern char lbl_eu_8050A740[];
-
 // POD mirror of nw4r::lyt::Size (two f32): using the real type would emit
 // the default-constructor zeroing, which retail does not have. Cast to the
 // nw4r type at the SetSize call site (layout-identical).

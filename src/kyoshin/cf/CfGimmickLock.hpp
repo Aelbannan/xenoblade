@@ -2,6 +2,7 @@
 
 #include <types.h>
 #include "kyoshin/cf/CfGimmick.hpp"
+#include "kyoshin/cf/object/CfObjectMove.hpp"  // real type for field_78 battle actors
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 
 namespace cf {
@@ -39,9 +40,9 @@ public:
     virtual void vinit();       // declared slot 6, dispatched at offset 0x20
 
     // vptr at 0x00 (implicit; written directly by the ctor/dtor).
-    /* 0x04 */ CfGimmickVec3 position;
-    /* 0x10 */ CfGimmickVec3 rotation;
-    /* 0x1C */ CfGimmickVec3 scale;
+    /* 0x04 */ ml::CVec3 position;
+    /* 0x10 */ ml::CVec3 rotation;
+    /* 0x1C */ ml::CVec3 scale;
     /* 0x28 */ u8 pad_28[0x24];
     /* 0x4C */ f32 extent0;
     /* 0x50 */ f32 extent1;
@@ -57,7 +58,7 @@ public:
     /* 0x6E */ u16 maxVal;
     /* 0x70 */ u8 lod[4];
     /* 0x74 */ u32 flags;
-    /* 0x78 */ void* field_78;
+    /* 0x78 */ cf::CfObjectMove* field_78;
     /* 0x7C */ u32 field_7C;
     /* 0x80 */ u16 field_80;
     /* 0x82 */ u16 typeId;
@@ -75,89 +76,6 @@ typedef void (*CfGimmickLockSetYFn)(void*, f32);
 typedef void (*CfGimmickLockSetScaleFn)(void*, f32);
 typedef void* (*CfGimmickLockGetTargetFn)(void*);
 
-// Cast-only interface for the linked game-manager object (field_78) and the
-// fight-list node objects.  MWCC vtable slots are shifted +2 (RTTI headers),
-// so a method at declared slot N dispatches at offset (N+2)*4.  Declared
-// slots below are chosen so the real dispatch offsets match the retail calls:
-//   0x9c setPosition (real slot 39 = declared 37)
-//   0xc4 setY        (real slot 49 = declared 47)
-//   0xdc setScale    (real slot 55 = declared 53)
-//   0x110 getTarget  (real slot 68 = declared 66)
-struct CfGimmickLockObj {
-    virtual ~CfGimmickLockObj();      // declared 0
-
-    virtual void d01();               // declared 1
-    virtual void d02();               // declared 2
-    virtual void d03();               // declared 3
-    virtual void d04();               // declared 4
-    virtual void d05();               // declared 5
-    virtual void d06();               // declared 6
-    virtual void d07();               // declared 7
-    virtual void d08();               // declared 8
-    virtual void d09();               // declared 9
-    virtual void d10();               // declared 10
-    virtual void d11();               // declared 11
-    virtual void d12();               // declared 12
-    virtual void d13();               // declared 13
-    virtual void d14();               // declared 14
-    virtual void d15();               // declared 15
-    virtual void d16();               // declared 16
-    virtual void d17();               // declared 17
-    virtual void d18();               // declared 18
-    virtual void d19();               // declared 19
-    virtual void d20();               // declared 20
-    virtual void d21();               // declared 21
-    virtual void d22();               // declared 22
-    virtual void d23();               // declared 23
-    virtual void d24();               // declared 24
-    virtual void d25();               // declared 25
-    virtual void d26();               // declared 26
-    virtual void d27();               // declared 27
-    virtual void d28();               // declared 28
-    virtual void d29();               // declared 29
-    virtual void d30();               // declared 30
-    virtual void d31();               // declared 31
-    virtual void d32();               // declared 32
-    virtual void d33();               // declared 33
-    virtual void d34();               // declared 34
-    virtual void d35();               // declared 35
-    virtual void d36();               // declared 36
-    virtual void setPos(const f32* p);   // declared 37 -> 0x9c
-    virtual void d38();               // declared 38
-    virtual void d39();               // declared 39
-    virtual void d40();               // declared 40
-    virtual void d41();               // declared 41
-    virtual void d42();               // declared 42
-    virtual void d43();               // declared 43
-    virtual void d44();               // declared 44
-    virtual void d45();               // declared 45
-    virtual void d46();               // declared 46
-    virtual void setY(f32 y);         // declared 47 -> 0xc4
-    virtual void d48();               // declared 48
-    virtual void d49();               // declared 49
-    virtual void d50();               // declared 50
-    virtual void d51();               // declared 51
-    virtual void d52();               // declared 52
-    virtual void setScale(f32 s);     // declared 53 -> 0xdc
-    virtual void d54();               // declared 54
-    virtual void d55();               // declared 55
-    virtual void d56();               // declared 56
-    virtual void d57();               // declared 57
-    virtual void d58();               // declared 58
-    virtual void d59();               // declared 59
-    virtual void d60();               // declared 60
-    virtual void d61();               // declared 61
-    virtual void d62();               // declared 62
-    virtual void d63();               // declared 63
-    virtual void d64();               // declared 64
-    virtual void d65();               // declared 65
-    virtual void* getTarget();        // declared 66 -> 0x110
-
-    // Data members below the vtable; the lock links itself here on activation.
-    /* 0x004 */ u8 pad_04[0xAC];
-    /* 0x0B0 */ void* owner;
-};
-
 } // namespace cf
 
 // ---------------------------------------------------------------------------
@@ -172,7 +90,7 @@ extern u8 lbl_eu_80535900[];
 extern "C" void __ct__cf_CfGimmick(void* self);
 extern "C" void __dt__Q22cf9CfGimmickFv(void* self, int flag);
 extern "C" void CfGimmick_ClearManagerBinding(cf::CfGimmickLock* self);
-extern "C" void CfGimmick_BuildColliderMtx(void* matrix, const f32* basis, const CfGimmickVec3* point);
+extern "C" void CfGimmick_BuildColliderMtx(void* matrix, const f32* basis, const ml::CVec3* point);
 extern "C" void CfGimmick_LoadBdatAreaPos(void* self, void* out, void* bdat, void** holder);
 extern "C" void CfGimmick_LoadBdatAreaExtents(void* self, void* out, void* bdat, void** holder);
 extern "C" void CfGimmick_LoadBdatAreaRotation(void* self, void* out, void* bdat, void** holder);
@@ -186,11 +104,10 @@ extern "C" void __dt__804B095C(void* self, int flag);
 extern "C" void ColiSetMoveVecFlagged(void* region, const f32* vec);
 extern "C" void ColiSetMoveVec2(void* region, int flag, f32 a, f32 b);
 extern "C" void ColiSetAxisBlockInverse(void* region, const f32* vec);
-extern "C" void ColiSetAxisBlockRotInverse(void* region, const f32* vec, const CfGimmickVec3* rot);
+extern "C" void ColiSetAxisBlockRotInverse(void* region, const f32* vec, const ml::CVec3* rot);
 
 // CfGameManager object factory / player accessors.
 extern "C" void* createBattleActor__Q22cf13CfGameManagerFv(u32 value, u32 unused);
-extern "C" u32 getQueuedFileEventCount__Q22cf13CfGameManagerFv(void);  // u32 (not unsigned int): must match UnityHelpers/code_801862C0.hpp
 extern "C" void* getPlayer__Q22cf13CfGameManagerFi(int index);
 
 // CfGimmick-TU helpers (CfGimmick.cpp).

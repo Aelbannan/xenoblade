@@ -6473,18 +6473,13 @@ monolib/src/lib/CLibHbmControl.cpp:
 	.sdata2     start:0x8066CD30 end:0x8066CD70
 
 monolib/src/lib/CLibLayout.cpp:
-	extab       start:0x8001D7C0 end:0x8001D86C
-	extabindex  start:0x800353D8 end:0x80035450
-	.text       start:0x8045EF84 end:0x8045F564
+	extab       start:0x8001D7C0 end:0x8001D88C
+	extabindex  start:0x800353D8 end:0x80035480
+	.text       start:0x8045EF84 end:0x8045F858
 	.rodata     start:0x80526AD8 end:0x80526AF8
 	.data       start:0x80570B98 end:0x80570C50
 	.sdata      start:0x806660F8 end:0x80666100
 	.sbss       start:0x80667FE8 end:0x80667FF0
-
-monolib/src/lib/UnkClass_8045F564.cpp:
-	extab       start:0x8001D86C end:0x8001D88C
-	extabindex  start:0x80035450 end:0x80035480
-	.text       start:0x8045F564 end:0x8045F858
 
 monolib/src/lib/Class_8045F858.cpp:
 	extab       start:0x8001D88C end:0x8001D89C

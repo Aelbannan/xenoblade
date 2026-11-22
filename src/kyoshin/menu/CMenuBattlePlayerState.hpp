@@ -140,7 +140,7 @@ public:
     void Init();
     void Term();
     void Move();
-    void cbRenderBefore();
+    void cbRenderBefore(CScn* scene);
 
     // IWorkEvent @0x58; IScnRender @0x5c (extab)
     CScn* mScn; // 0x60
@@ -169,7 +169,7 @@ public:
 };
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
-extern "C" void cbRenderBefore__22CMenuBattlePlayerStateFv();
+extern "C" void cbRenderBefore__22CMenuBattlePlayerStateFP4CScn();
 
 // BDAT message-table pointer: declared by cf/object/CBattleState.hpp as
 // `extern u8* ::cf::CfBdat::spBtlBuffListFileData;`.

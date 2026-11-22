@@ -77,11 +77,6 @@ struct HeadBlock {
 
 } // namespace StrmFile
 
-/******************************************************************************
- *
- * StrmFileReader
- *
- ******************************************************************************/
 struct StrmInfo {
     u8 format;               // at 0x0
     u8 loopFlag;             // at 0x1
@@ -101,8 +96,39 @@ struct StrmInfo {
     u32 adpcmDataSize;       // at 0x34
 };
 
+/******************************************************************************
+ *
+ * StrmFileReader
+ *
+ ******************************************************************************/
 class StrmFileReader {
 public:
+    struct StrmInfo {
+        int format;               // at 0x0
+        u8 loopFlag;              // at 0x4
+        int numChannels;          // at 0x8
+        int sampleRate;           // at 0xC
+        u16 blockHeaderOffset;    // at 0x10
+        u32 loopStart;            // at 0x14
+        u32 loopEnd;              // at 0x18
+        u32 dataOffset;           // at 0x1C
+        u32 numBlocks;            // at 0x20
+        u32 blockSize;            // at 0x24
+        u32 blockSamples;         // at 0x28
+        u32 lastBlockSize;        // at 0x2C
+        u32 lastBlockSamples;     // at 0x30
+        u32 lastBlockPaddedSize;  // at 0x34
+        u32 adpcmDataInterval;    // at 0x38
+        u32 adpcmDataSize;        // at 0x3C
+    };
+
+    struct StrmTrackInfo {
+        u8 volume;         // at 0x0
+        u8 pan;            // at 0x1
+        int channelCount;  // at 0x4
+        u8 channelIndex[]; // at 0x8
+    };
+
     static const u32 SIGNATURE = FOURCC('R', 'S', 'T', 'M');
     static const int VERSION = NW4R_VERSION(1, 0);
 
@@ -117,7 +143,9 @@ public:
     void Setup(const StrmFile::Header* pStrmBin);
 
     bool ReadStrmInfo(StrmInfo* pStrmInfo) const;
-    bool ReadAdpcmInfo(AdpcmInfo* pAdpcmInfo, int channels) const;
+    bool ReadStrmTrackInfo(StrmTrackInfo* pTrackInfo, int trackNo) const;
+
+    friend class StrmFileLoader;
 
     u32 GetAdpcBlockOffset() const {
         if (IsAvailable()) {
@@ -145,21 +173,12 @@ public:
     bool LoadFileHeader(void* pStrmBin, u32 size);
     bool ReadAdpcBlockData(u16* pYN1, u16* pYN2, int block, int channels);
 
-    bool ReadStrmInfo(StrmInfo* pStrmInfo) const {
-        if (!mReader.IsAvailable()) {
-            return false;
-        }
-
-        return mReader.ReadStrmInfo(pStrmInfo);
-    }
-
-    bool ReadAdpcmInfo(AdpcmInfo* pAdpcmInfo, int channel) const {
-        if (!mReader.IsAvailable()) {
-            return false;
-        }
-
-        return mReader.ReadAdpcmInfo(pAdpcmInfo, channel);
-    }
+    bool ReadStrmInfo(StrmFileReader::StrmInfo* pStrmInfo) const;
+    bool ReadStrmTrackInfo(StrmFileReader::StrmTrackInfo* pTrackInfo,
+                           int trackNo) const;
+    int GetChannelCount() const;
+    bool ReadAdpcmInfo(AdpcmParam* pParam, AdpcmLoopParam* pLoopParam,
+                       int channel) const;
 
 private:
     static const int HEADER_ALIGNED_SIZE =

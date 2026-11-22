@@ -3,9 +3,6 @@
 #include <nw4r/g3d/g3d_anmclr.h>
 #include <nw4r/ut.h>
 
-// Shared animation play-policy table (owned by g3d_anmobj's small-data slice).
-extern const nw4r::g3d::PlayPolicyFunc lbl_eu_80663458[2];
-
 namespace nw4r {
 namespace g3d {
 
@@ -23,10 +20,10 @@ NW4R_G3D_RTTI_DEF(AnmObjMatClrRes);
 // AnmObj::IsDerivedFrom body (retail inlines the base chain into every
 // derived class; the 0x650/0x640 checks come from this helper's boundary).
 static bool anmObjBaseIsDerivedFrom(G3dObj::TypeObj other) {
-    if (other == G3dObj::TypeObj(lbl_eu_8051D650)) {
+    if (other == AnmObj::GetTypeObjStatic()) {
         return true;
     }
-    if (other == G3dObj::TypeObj(lbl_eu_8051D640)) {
+    if (other == G3dObj::GetTypeObjStatic()) {
         return true;
     }
     return false;
@@ -109,7 +106,7 @@ inline AnmObjMatClrRes::AnmObjMatClrRes(MEMAllocator* pAllocator,
                                         ClrAnmResult* pCacheBuf)
     : AnmObjMatClr(pAllocator, pBindingBuf, numBinding),
       FrameCtrl(0.0f, AnmClrConvU16ToF(clr.ref().info.numFrame),
-                lbl_eu_80663458[clr.ref().info.policy]),
+                GetAnmPlayPolicy(clr.GetAnmPolicy())),
       mRes(clr), mpResultCache(pCacheBuf) {}
 
 // Layout of the allocation: [object][result cache][binding table]. The cache

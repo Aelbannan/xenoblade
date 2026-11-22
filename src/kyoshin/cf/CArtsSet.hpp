@@ -21,9 +21,9 @@ namespace cf {
         u8 unk2B;
         float unk2C;
         float unk30;
-        u16 unk34;
-        u16 unk36;
-        u8 unk38[4];
+        s16 unk34;
+        s16 unk36;
+        s16 unk38[2]; // cleared by one 4-byte memset; read as two lha (0x38/0x3A)
         u16 unk3C;
         u8 unk3E;
         u8 unk3F;
@@ -33,7 +33,7 @@ namespace cf {
         u8 unk44;
         u16 unk46;
         u16 unk48;
-        u16 unk4A;
+        s16 unk4A;
         u16 unk4C;
         float unk50;
         float unk54;

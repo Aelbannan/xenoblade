@@ -771,30 +771,18 @@ void GetAnmResult_SRT(ChrAnmResult* pResult, const ResAnmChrInfoData& rInfoData,
     pResult->rt._23 = t.z;
 }
 
+typedef void (*GetAnmResultFunc)(ChrAnmResult*, const ResAnmChrInfoData&,
+                                 const ResAnmChrNodeData*, f32);
+
+const GetAnmResultFunc gGetAnmResultTable[8] = {
+    GetAnmResult_,  GetAnmResult_S,  GetAnmResult_R, GetAnmResult_SR,
+    GetAnmResult_T, GetAnmResult_ST, GetAnmResult_RT, GetAnmResult_SRT,
+};
+
 } // namespace
 
 } // namespace g3d
 } // namespace nw4r
-
-// The anonymous-namespace dispatch targets are visible here through a
-// using-directive on the enclosing namespace (unnamed-namespace members
-// are found via unqualified lookup). The table is at global scope so MWCC
-// emits the unmangled name gGetAnmResultTable, which the symbol-recovery
-// tooling maps to the retail pool label lbl_eu_8051D500 (stripping .rodata).
-typedef void (*GetAnmResultFunc)(nw4r::g3d::ChrAnmResult*,
-                                 const nw4r::g3d::ResAnmChrInfoData&,
-                                 const nw4r::g3d::ResAnmChrNodeData*, f32);
-
-using namespace nw4r::g3d;
-
-extern "C" __declspec(section ".rodata") __attribute__((aligned(8))) const GetAnmResultFunc lbl_eu_8051D500[8] = {
-    GetAnmResult_,  GetAnmResult_S,  GetAnmResult_R, GetAnmResult_SR,
-    GetAnmResult_T, GetAnmResult_ST, GetAnmResult_RT, GetAnmResult_SRT,
-};
-#define gGetAnmResultTable lbl_eu_8051D500
-
-// Absorbed ResName string (AnmObjVis)
-extern "C" __declspec(section ".rodata") __attribute__((aligned(8))) const G3dObj::ResNameDataT<10> lbl_eu_8051D520 = {10, "AnmObjVis"};
 
 namespace nw4r {
 namespace g3d {
@@ -910,8 +898,7 @@ void ChrAnmResult::GetRotTrans(math::MTX34* pRotTrans) const {
 namespace nw4r {
 namespace g3d {
 
-
-
+NW4R_G3D_RTTI_DEF(AnmObjVis);
 
 
 } // namespace g3d

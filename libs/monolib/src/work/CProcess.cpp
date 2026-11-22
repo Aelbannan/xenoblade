@@ -9,28 +9,12 @@ struct CProcessVptrSlot {
     u32* vtable;  // +0x10
 };
 
-// ==== blob monolibdata1/1d dissolve: retail data owned by this TU ====
-// rodata 0x80522828 (0x1B): RTTI class-name string for TChildListHeader<CProcess>.
-const char lbl_eu_80522828[] = "TChildListHeader<CProcess>";
-// sdata 0x806635D8 (0x8): RTTI typeinfo { class-name, cast-table=0 }.
-u32 lbl_eu_806635D8[2] = { (u32)&lbl_eu_80522828, 0 };
 // data 0x8056BB60 (0x24): CProcess vtable {rtti, 0, dtor, Reset, 0,0,0,0, Tail}.
 u32 lbl_eu_8056BB60[9] = {
     (u32)&__RTTI__8CProcess, 0, (u32)&__dt__8CProcessFv,
     (u32)&Reset__14CChildListNodeFv, 0, 0, 0, 0, (u32)&Tail__8CProcessFv,
 };
-/* UNRESOLVED: lbl_eu_8056BB84 (0xC, TChildListHeader<CProcess> vtable
- * {&lbl_eu_806635D8, 0, &__dt__27TChildListHeader<8CProcess>Fv}) - the dtor
- * reloc name cannot be written in C++ source (MWCC rejects '<' in extern "C"
- * ids and &T::~T). MWCC emits the equivalent weak __vt__27TChildListHeader
- * <8CProcess> (0xC, .data @+0x24: {&__RTTI__27TChildListHeader<8CProcess>, 0,
- * &__dt__...Fv}) in this TU; coordinator must rename it to lbl_eu_8056BB84,
- * retarget its [0] reloc -> lbl_eu_806635D8 (this TU already defines that
- * typeinfo; the weak __RTTI__27TChildListHeader<8CProcess> + its @2016 name
- * string must be dropped). Not faked. */
-
-// Retail sbss flag lbl_eu_80665628 (8-byte object; byte 0 = sIsInitialized) - blob monolibdata1d dissolve
-u8 lbl_eu_80665628[8];
+bool CProcessMan::sIsInitialized;
 
 TChildListHeader<CProcess> CProcessMan::sFreeProcessList;
 TChildListHeader<CProcess> CProcessMan::sRootProcessList;
@@ -134,15 +118,15 @@ void CProcess::Remove() {
 }
 
 void CProcessMan::Init() {
-    if (!lbl_eu_80665628[0]) {
-        lbl_eu_80665628[0] = true;
+    if (!sIsInitialized) {
+        sIsInitialized = true;
     }
 }
 
 void CProcessMan::Term() {
-    if (lbl_eu_80665628[0] == true) {
+    if (sIsInitialized == true) {
         Reset();
-        lbl_eu_80665628[0] = false;
+        sIsInitialized = false;
     }
 }
 

@@ -46,7 +46,7 @@ public:
     /* 0x4360 */ u8 field_4360;
     /* 0x4361 */ u8 field_4361;
 
-    void cbRenderBefore();
+    void cbRenderBefore(CScn* scene);
     int mkCrystalIsBusyState();
 };
 

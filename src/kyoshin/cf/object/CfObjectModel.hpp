@@ -14,6 +14,7 @@ extern const char lbl_eu_80529658[];   // Panic fmt (CfObject_findNodeMatrix/53)
 namespace nw4r {
 namespace g3d {
 struct ResMdlData;  // forward decl (full type in nw4r/g3d/res/g3d_resmdl.h)
+class ScnMdlSimple; // owner of the world-matrix array at +0xEC
 }
 }
 
@@ -66,16 +67,13 @@ public:
 namespace cf {
     // Sub-object at CfObjectModel+0x98: flag words read by CfModel_GetFlag7A8
     // (bit 0 of field_7A8) and CfObject_isVisibleFlag (bit 1 of field_7A4).
-    // Per-node matrix table reached through CfObjectModelSub98+0x147C: its
-    // +0xEC word is the base of 0x30-byte matrix slots (CfObject_findNodeMatrix/53).
-    struct CfObjectModelActTable {
-        u8 _padEC[0xEC];
-        u8* field_EC;  // 0xEC
-    };
+    // Per-node matrix table reached through CfObjectModelSub98+0x147C:
+    // nw4r::g3d::ScnMdlSimple owns the world-matrix array at +0xEC
+    // (CfObject_findNodeMatrix/53 indexes it by node mtx id, stride 0x30).
     struct CfObjectModelSub98 {
         u8 _pad00[0x304];             // 0x00-0x303
-        u8 field_304;                // 0x304 (setChild34Sc_ source anchor; address taken)
-        u8 unk305[0x31C - 0x305];    // 0x305-0x31B
+        ml::CVec3 mScale304;         // name-guess: sub-object scale (CfObject_setObjScale x/y/z; setChild34Sc_ copies 3 words)
+        ml::CVec3 mPos310;           // name-guess: sub-object position (CfObject_getPosTriple at 0x310)
         u8 field_31C;                // 0x31C anim-target flag byte
         u8 unk31D[0x7A0 - 0x31D];    // 0x31D-0x79F
         u32 field_7A0;               // 0x7A0 anim-target flags
@@ -86,7 +84,7 @@ namespace cf {
         u8 unk7F0[0x146C - 0x7F0];    // 0x7F0-0x146B
         nw4r::g3d::ResMdlData* field_146C;  // 0x146C (model resource data)
         u8 _pad1470[0x147C - 0x1470]; // 0x1470-0x147B
-        CfObjectModelActTable* field_147C;  // 0x147C
+        nw4r::g3d::ScnMdlSimple* field_147C;  // 0x147C
         u8 _pad1480[0x14AC - 0x1480]; // 0x1480-0x14AB
         u32 field_14AC;               // 0x14AC (read by CfObject_getSubPosWord)
     };

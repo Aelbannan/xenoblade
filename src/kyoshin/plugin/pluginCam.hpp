@@ -10,11 +10,8 @@ struct CamOCHandle {
 };
 
 // .sdata2 float-pool constants (retail symbol names).
-extern const f32 lbl_eu_80666168; // 4096.0f fixed-point scale
 // 0x4330000080000000: MWCC int->float conversion magic (2^52 + 0x8000) -
 // defined TU-locally in pluginCam.cpp under its retail pool name.
-extern const f32 lbl_eu_80666178; // 0.0f
-extern const f32 lbl_eu_8066617C; // 1.0f
 
 // u32 -> float conversion: builds the 0x43300000-prefixed bit pattern in
 // memory and subtracts the shared sdata2 magic double so the pool reloc

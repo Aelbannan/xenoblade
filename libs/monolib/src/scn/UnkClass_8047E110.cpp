@@ -94,12 +94,6 @@ static inline f64 s32ToF64_A8A0(s32 v) {
 
 // Real-signature views of the findClosestNeighbor member stub
 // (retail Fv mangling; signatures recovered from caller register setup).
-extern "C" s32 findNodeContaining__17UnkClass_8047E110Fv(UnkClass_8047E110* self, const ml::CVec3* pos);
-extern "C" s32 findClosestNeighbor__17UnkClass_8047E110Fv(UnkClass_8047E110* self, const ml::CVec3* pos, s32 index, f32 clearance);
-extern "C" s32 buildCandidateList__17UnkClass_8047E110Fv(
-    UnkClass_8047E110* self, u16* out, s32 a, s32 b, s32 mode);
-extern "C" s32 floodFillWalkTable__17UnkClass_8047E110Fv(
-    UnkClass_8047E110* self, u16* out, s32 count1, s32 count2);
 extern "C" bool scanNeighbors__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
     const WalkQueryInfo* info, s32 value, s32 slotSel);
 
@@ -565,13 +559,6 @@ extern "C" s32 buildCandidateList__17UnkClass_8047E110Fv(
     return 0;
 }
 
-// Stride-8 threshold slot overlay of the region starting at 0x24, indexed by
-// scanNeighbors.
-struct ScnSlotView {
-    u8 pad[0x24];
-    ScnSlot8 slots8[4];
-};
-
 // scanNeighbors -- neighbour scan with per-slot distance thresholds. When the
 // walk box is inactive only the flag bits decide; otherwise every neighbour of
 // info's edge list (except `value`) must pass a distance test whose threshold
@@ -834,7 +821,7 @@ extern "C" s32 fetchWalkTarget__17UnkClass_8047E110Fv(UnkClass_8047E110* self, S
             // waypoint table layout (f32 triples):
             //   block 0: {A8AC, A8AC, A8B4}  block 1: {A8AC, A8AC, A890}
             //   block 2: {A8B4, A8AC, A8AC}  block 3: {A890, A8AC, A8AC}
-            const f32 vDepth = lbl_eu_8066A8B4;
+            const f32 vDepth = -1.0f;
             const f32 vFlat = lbl_eu_8066A8AC;
             ((f32*)sWalkWaypointTable)[0] = vFlat;
             f32* wp = (f32*)sWalkWaypointTable;
@@ -1589,7 +1576,7 @@ extern "C" void rebuildWalkBox__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
     CVec3 dir = boxMin - boxMax;
     mgr.field_0x7C = paramF;
     mgr.field_0x80 = lbl_eu_8066A8AC;
-    mgr.field_0x84 = lbl_eu_8066A8B4;
+    mgr.field_0x84 = -1.0f;
     mgr.dir = dir;
     if (mgr.dir.x != lbl_eu_8066A8AC || mgr.dir.z != lbl_eu_8066A8AC) {
         f32 lenSq = mgr.dir.z * mgr.dir.z
@@ -1764,12 +1751,12 @@ extern "C" s32 stepWalker__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
     if ((self->*walkFn)(&m.nodes[idx]))
         return 1;
     // loop-invariant constants (retail pins these in f29-f31)
-    const f32 cell = lbl_eu_8066A898;
+    const f32 cell = 0.5f;
     const f32 zeroF = lbl_eu_8066A8AC;
     for (s32 pass = 0; pass < 90; ++pass) {
         const ScnWalkNode& cn = m.nodes[idx];
-        f32 curMinX = lbl_eu_8066A898 * cn.x;
-        f32 curMinZ = lbl_eu_8066A898 * cn.z;
+        f32 curMinX = 0.5f * cn.x;
+        f32 curMinZ = 0.5f * cn.z;
         f32 curMaxX = (f32)(cell * s32ToF64_A8A0(cn.width + 1)) + curMinX;
         f32 curMaxZ = (f32)(cell * s32ToF64_A8A0(cn.depth + 1)) + curMinZ;
 
@@ -1781,8 +1768,8 @@ extern "C" s32 stepWalker__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
             const ScnWalkNode& nn = m.nodes[n];
             if (nn.reserved8 & 2)
                 continue;
-            f32 nMinX = lbl_eu_8066A898 * nn.x;
-            f32 nMinZ = lbl_eu_8066A898 * nn.z;
+            f32 nMinX = 0.5f * nn.x;
+            f32 nMinZ = 0.5f * nn.z;
             f32 nMaxX = (f32)(cell * s32ToF64_A8A0(nn.width + 1)) + nMinX;
             f32 nMaxZ = (f32)(cell * s32ToF64_A8A0(nn.depth + 1)) + nMinZ;
 
@@ -1840,11 +1827,7 @@ extern "C" s32 stepWalker__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
 // The own-member symbols probeWalkerContact/804812D8/804813E8 are the stub member
 // functions defined above (retail Fv mangling); the remaining slots are
 // foreign functions/locators.
-// (probeWalkerContact__17UnkClass_8047E110Fv declared/defined above)
-extern "C" bool isNodeInWalkBox__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
-    const ScnWalkNode* node);
-extern "C" bool isNodeAtPosition__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
-    const ScnWalkNode* node);
+// isNodeInWalkBox/isNodeAtPosition are defined above; the remaining slots are foreign.
 extern "C" void __dt__18CScnItemCameraNw4rFv();
 extern "C" void ScnCam_NoopVFunc();
 extern "C" void ScnCamNw4r_NullHook40();

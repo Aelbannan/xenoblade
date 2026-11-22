@@ -1,5 +1,6 @@
 // Translation unit for kyoshin/plugin/pluginCfs
 #include "kyoshin/cf/object/CfObjectColl.hpp"
+#include "monolib/lod/CTaskLOD.hpp"
 #include "kyoshin/cf/CtrlObjectParamSymbols.hpp"  // CtrlObjectParam U16-row helpers (owner)
 #include "kyoshin/cf/CtrlRemoteApi.hpp"
 // Plugin script functions
@@ -15,6 +16,11 @@
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/code_801F3BE0.hpp"
 #include "kyoshin/plugin/pluginCfs.hpp"
+#include "kyoshin/action/CActParamAnim.hpp"
+#include "kyoshin/CTaskGame.hpp"
+#include "kyoshin/code_80296898.hpp"
+#include "kyoshin/cf/CtrlObjectParam.hpp"
+#include "kyoshin/plugin/pluginCam.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "monolib/scn/code_804BC9EC.hpp"
 #include "kyoshin/cf/object/CfObjectMoveHelpers.hpp"
@@ -60,7 +66,6 @@ extern "C" {
     // CItem_initItemImplInstances now uses its definition's
     // CItemImpl*(CItemData*) signature from CfGameManager.hpp; item pointers
     // are cast at the call sites.
-    void* getInstance__14Class_80296898Fv();
     void walkListByItemId(int, int);
     int scanBattleReady();
 
@@ -108,29 +113,13 @@ extern "C" {
     int  CItem_thunkAllocRecord(int, int);
     void CItem_consumeFamilyCnt(int, int);
     int  CItem_sumFamilyByte6(int);
-    void activateLOD__8CTaskLODFv(int);
-    void deactivateLOD__8CTaskLODFv(int);
     void ScnData_FwdB7D9C(void*, int);
     void ScnData_FwdB7DD4(void*, int);
     void forwardMpfCallB__17UnkClass_8047BB54Fv(void*, int);
     void forwardMpfCallC__17UnkClass_8047BB54Fv(void*, int);
 }
 
-// ----------------------------------------------------------------------------
-// Typed views for raw byte-offset field access (matching-neutral cleanup).
-// These describe the exact retail layout of opaque blobs touched by the
-// script glue below; member access compiles to the same byte-offset
-// addresses as the previous explicit (u8 *)+N arithmetic.
-// ----------------------------------------------------------------------------
-struct CfsOcObjView { u8 pad_0[4]; int id; }; // +4 id word
-struct CfsArtsEntryView { u8 pad_0[0x64]; int flags; }; // +0x64 flags word
-struct CfsMapObjView { u8 pad_0[0xC4]; int field_C4; }; // +0xC4 word
-struct CfsGaugeView { u8 pad_0[0x194]; u8 field_194; }; // +0x194 byte
-struct CfsTaskView { u8 pad_0[0x8C]; u8 field_8C; }; // +0x8C byte
-struct CfsCharEntryView { u8 pad_0[0x0C]; u16 field_C; }; // +0x0C halfword
-struct CfsSysInstView { u8 pad_0[0x1C]; u8 field_1C; }; // +0x1C byte
 
-// ============================================================================
 // Batch 1: Plugin functions (pluginCfs.cpp)
 // ============================================================================
 
@@ -900,7 +889,7 @@ int eventStart(VMThread* pThread) {
         vmArgOmitChk(pThread, idx)
             ? 0
             : vmArgIntGet(idx, vmArgPtrGet(pThread, idx++)));
-    CBattleMan_MarkList48Flag40(getInstance__Q22cf14CBattleManagerFv());
+    CBattleMan_MarkList48Flag40(cf::CBattleManager::getInstance());
     return 0;
 }
 
@@ -968,11 +957,11 @@ int setMapDispID(VMThread* pThread) {
     UnkClass_80083298* gm = cf::CfGameManager::getGameSubManager();
     if (gm) {
         if (v27) {
-            if (v28) activateLOD__8CTaskLODFv(v26);
+            if (v28) CTaskLOD::activateLOD(v26);
             if (v29) { ScnData_FwdB7D9C(getScnHandle(), v26); }
             if (v30) forwardMpfCallB__17UnkClass_8047BB54Fv(&gm->field_0xF0, v26);
         } else {
-            if (v28) deactivateLOD__8CTaskLODFv(v26);
+            if (v28) CTaskLOD::deactivateLOD(v26);
             if (v29) { ScnData_FwdB7DD4(getScnHandle(), v26); }
             if (v30) forwardMpfCallC__17UnkClass_8047BB54Fv(&gm->field_0xF0, v26);
         }
@@ -1205,11 +1194,11 @@ float cf::CfObject::CfObject_getMoveHeadAngle() {
 }
 
 void* cf::CfObjectMove::CfObject_getCurrentTarget() {
-    void* ptr = *(void**)((u8*)this + 0xC4);
+    void* ptr = mTargetC4;
     if (ptr != NULL) {
-        return *(void**)((u8*)ptr + 8);
+        return static_cast< ::CActParamAnim*>(ptr)->owner08;
     }
-    return *(void**)((u8*)this + 0x6C0);
+    return mTarget6C0;
 }
 
 // --- makeGuestParty (us-80049f84) ---
@@ -1359,8 +1348,8 @@ int equipItem(VMThread* vmThread) {
             // Same item type already equipped: nothing to do
             if (itemId >= 0 && itemId != (*slotRec >> 20)) {
                 // Item-type probe via the singleton (result discarded)
-                ((CItemImplInstance*)CItem_initItemImplInstances((CItemData*)slotRec))
-                    ->getItemId(slotRec);
+                CItem_initItemImplInstances((CItemData*)slotRec)
+                    ->vf10((CItemData*)slotRec);
                 changed = 1;
                 act = 1;
             }
@@ -1395,8 +1384,8 @@ int equipItem(VMThread* vmThread) {
                 void* invSlot = CItemBlock_getKindSlot(type, charId, 0);
                 if (itemId == 0) {
                     // Empty equip: refresh the inventory entry's item view
-                    ((CItemImplInstance*)CItem_initItemImplInstances((CItemData*)invSlot))
-                        ->getItemId(invSlot);
+                    CItem_initItemImplInstances((CItemData*)invSlot)
+                        ->vf10((CItemData*)invSlot);
                 } else {
                     CItemData_initFromFamily(invSlot, itemId & 0xFFFF, 1);
                 }
@@ -1448,7 +1437,7 @@ int equipWeapon(VMThread* pThread) {
             return 0;
         }
         // Item-type probe via the item implementation singleton (result unused)
-        ((CItemImplInstance*)CItem_initItemImplInstances((CItemData*)weaponSlot))->getItemId(weaponSlot);
+        CItem_initItemImplInstances((CItemData*)weaponSlot)->vf10((CItemData*)weaponSlot);
         short slotVal;
         int unkVal;
         CItem_findOrCreateRec(weaponId & 0xFFFF, &slotVal, 1, &unkVal);
@@ -1463,7 +1452,7 @@ int equipWeapon(VMThread* pThread) {
             void* invSlot = CItemBlock_getKindSlot(2, charId, 0);
             if (weaponId == 0) {
                 // Empty equip: refresh the inventory entry's item view (discarded)
-                ((CItemImplInstance*)CItem_initItemImplInstances((CItemData*)invSlot))->getItemId(invSlot);
+                CItem_initItemImplInstances((CItemData*)invSlot)->vf10((CItemData*)invSlot);
             } else {
                 CItemData_initFromFamily(invSlot, weaponId & 0xFFFF, 1);
                 CItem_reCount(invSlot);
@@ -1497,8 +1486,8 @@ int getWeaponSlot(VMThread* vmThread) {
     slotData = CtrlObjectParam_ResolveEquipItem(&charData[7], 5);
 
     if (slotData != NULL) {
-        CItemImplInstance* inst = (CItemImplInstance*)CItem_initItemImplInstances((CItemData*)slotData);
-        itemId = inst->getWeaponSlot(slotData) & 0xFFFF;
+        CItemImpl* inst = CItem_initItemImplInstances((CItemData*)slotData);
+        itemId = inst->vf30((CItemData*)slotData) & 0xFFFF;
     } else {
         // Swapped first guard blocks MWCC's unsigned-range fusion so the
         // two signed cmpi/branch pairs stay byte-identical to retail.
@@ -1509,8 +1498,8 @@ int getWeaponSlot(VMThread* vmThread) {
             // Item-type nibble sits at bits 16-19; reading it unsigned lets
             // MWCC fold shift+mask into a single rotate and emit cmpli.
             if ((*invSlot >> 16 & 0xF) == 2) {
-                CItemImplInstance* inst = (CItemImplInstance*)CItem_initItemImplInstances((CItemData*)invSlot);
-                itemId = inst->getWeaponSlot((void*)invSlot) & 0xFFFF;
+                CItemImpl* inst = CItem_initItemImplInstances((CItemData*)invSlot);
+                itemId = inst->vf30((CItemData*)invSlot) & 0xFFFF;
             }
         } while (0);
     }
@@ -1539,16 +1528,16 @@ int setWeaponSlot(VMThread* vmThread) {
     slotData = CtrlObjectParam_ResolveEquipItem(&charData[7], 5);
 
     if (slotData != NULL) {
-        CItemImplInstance* inst = (CItemImplInstance*)CItem_initItemImplInstances((CItemData*)slotData);
-        inst->setWeaponSlot(slotData, itemId);
+        CItemImpl* inst = CItem_initItemImplInstances((CItemData*)slotData);
+        inst->vf34((CItemData*)slotData, itemId);
     } else {
         // Swapped-operand guards block MWCC's range-check fusion (see getWeaponSlot).
         do {
             if (1 > charId) break;
             if (11 < charId) break;
             int* invSlot = (int*)CItemBlock_getKindSlot(2, charId, 0);
-            CItemImplInstance* inst = (CItemImplInstance*)CItem_initItemImplInstances((CItemData*)invSlot);
-            inst->setWeaponSlot(invSlot, itemId);
+            CItemImpl* inst = CItem_initItemImplInstances((CItemData*)invSlot);
+            inst->vf34((CItemData*)invSlot, itemId);
         } while (0);
     }
 
@@ -1639,7 +1628,7 @@ int setDispOffArea(VMThread* vmThread) {
     arg = vmArgPtrGet(vmThread, 2);
     int areaId = vmArgFixedGet(3, arg);
 
-    void* obj = ArtsSelect_Lookup(ArtsSelect_GetContainer(), ((CfsOcObjView*)ocObj)->id);
+    void* obj = ArtsSelect_Lookup(ArtsSelect_GetContainer(), static_cast<CamOCHandle*>(ocObj)->field_0x04);
 
     if (obj != NULL) {
         // The singleton from getInstance__Fv is passed as the callee's self.
@@ -1668,10 +1657,10 @@ int setScheduleType(VMThread* vmThread) {
         enable = vmArgBoolGet(3, arg);
     }
 
-    void* obj = ArtsSelect_Lookup(ArtsSelect_GetContainer(), ((CfsOcObjView*)ocObj)->id);
+    void* obj = ArtsSelect_Lookup(ArtsSelect_GetContainer(), static_cast<CamOCHandle*>(ocObj)->field_0x04);
 
     if (obj != NULL) {
-        int flags = ((CfsArtsEntryView*)obj)->flags;
+        int flags = (int)static_cast<cf::CfObject*>(obj)->unk64;
         if (flags & 0x08) {
             typedef void (*ForwardNpcSignalRetail)(int, bool);  // DEBT(callcast): retail sets live r4 into 1-arg CfObjectMove_forwardNpcSignal (mangled arity 1; LOSTFIX proof)
             ((ForwardNpcSignalRetail)CfObjectMove_forwardNpcSignal)((int)obj, enable != 0);
@@ -1776,8 +1765,7 @@ int setActMapObj(VMThread* vmThread) {
 
     void* mapObj = ArtsSelect_GetEntry(mapObjId & 0xFFFF);
     if (mapObj != NULL) {
-        CfsMapObjView* objView = (CfsMapObjView*)mapObj;
-        if (objView->field_C4 != 0) {
+        if (static_cast<cf::CfObjectMove*>(mapObj)->mTargetC4 != 0) {
             CfObjectMove_setAnimModeArgs((u8*)mapObj, state, 0, -1, 1);
         }
     }
@@ -1830,10 +1818,10 @@ int partyMember(VMThread* vmThread) {
 
 // --- clearPartyGauge (us-8004b0a8) ---
 int clearPartyGauge(VMThread* vmThread) {
-    void* battleMgr = getInstance__Q22cf14CBattleManagerFv();
+    void* battleMgr = cf::CBattleManager::getInstance();
     if (battleMgr != NULL) {
-        void* gauge = getInstance__Q22cf14CBattleManagerFv();
-        cf::PartyGaugeSetClamped(reinterpret_cast<cf::UnkClass_8018C5FC*>(&((CfsGaugeView*)gauge)->field_194), 0);
+        void* gauge = cf::CBattleManager::getInstance();
+        cf::PartyGaugeSetClamped(&static_cast<cf::CBattleManager*>(gauge)->unk194, 0);
     }
     return 0;
 }
@@ -1861,7 +1849,7 @@ int partyWarp(VMThread* vmThread) {
         if (player != NULL) {
             void* task = player->getTask();
             if (task != NULL) {
-                movePcCondFullReset(&((CfsTaskView*)task)->field_8C, 1);
+                movePcCondFullReset(&static_cast<CTaskGame*>(task)->unk8C, 1);
             }
         }
     }
@@ -1941,11 +1929,12 @@ int getWeaponID(VMThread* vmThread) {
         charId = vmArgIntGet(2, arg);
     }
 
-    int* charData = (int*)CtrlObjectParam_GetCharEntry(charId & 0xFFFF);
+    cf::CtrlObjectParamArtsSlotOwner* charData =
+        static_cast<cf::CtrlObjectParamArtsSlotOwner*>(CtrlObjectParam_GetCharEntry(charId & 0xFFFF));
 
     VMArg ret;
     ret.type = 3;
-    ret.value.intVal = ((CfsCharEntryView*)charData)->field_C;
+    ret.value.intVal = charData->field_0C;
     vmRetValSet(vmThread, &ret);
     return 1;
 }
@@ -2007,8 +1996,7 @@ int setIgnorePal(VMThread* vmThread) {
 
 // --- isVoiceJP (us-8004b5f4) ---
 int isVoiceJP(VMThread* vmThread) {
-    void* instance = getInstance__14Class_80296898Fv();
-    int lang = ((CfsSysInstView*)instance)->field_1C;
+    int lang = Class_80296898::getInstance()->mConfigData[0x0C];
     int orVal = (1 - lang) | (lang - 1);
 
     VMArg ret;

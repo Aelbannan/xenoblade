@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include <harness_catalog.h>
+#include "libs/CriWare/src/adx/adxt/adx_bsc.h"
 
 static inline u32 AiffLE32(const u8* p) {
     return (u32)p[0] | ((u32)p[1] << 8) | ((u32)p[2] << 16) | ((u32)p[3] << 24);
@@ -57,10 +58,8 @@ out:
     ;
 }
 
-__declspec(section ".rodata") __attribute__((aligned(8))) const unsigned char lbl_eu_80516B20[0x10] = {0x46,0x4F,0x52,0x4D,0x00,0x41,0x49,0x46,0x46,0x00,0x00,0x00,0x00,0x00,0x00,0x00};
-
 int ADXB_CheckAiff(void* self) {
-    if (memcmp(self, lbl_eu_80516B20, 4) == 0 && memcmp((u8*)self + 8, lbl_eu_80516B20 + 5, 4) == 0)
+    if (memcmp(self, "FORM", 4) == 0 && memcmp((u8*)self + 8, "AIFF", 4) == 0)
         return 1;
     return 0;
 }
@@ -138,7 +137,8 @@ void ADXB_ExecOneAiff16() {}
 void ADXB_ExecOneAiff8() {}
 
 void ADXB_ExecOneAiff(void* self) {
-    if ((int)*(s16*)((u8*)self + 0x9c) == 1) {
+    ADXB* adxb = self;
+    if ((int)adxb->fmtSub == 1) {
         ((void(*)(void*))ADXB_ExecOneAiff8)(self);
     } else {
         ((void(*)(void*))ADXB_ExecOneAiff16)(self);

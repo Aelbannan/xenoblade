@@ -104,16 +104,10 @@ u32 lbl_eu_8056B7B0[6] = {
     (u32)&__RTTI__10IWorkEvent, 0, (u32)&__RTTI__11CWorkThread, 0, 0, 0,
 };
 
-// sbss data owned by this TU (blob monolibdata1d dissolve):
-//   CViewRoot::spInstance (4 bytes) = current root view pointer
-//   CViewRoot::sRenderViewDisabled (1 byte)
-//   lbl_eu_806655D5/806655D6/806655D7 (3 bytes) = retail zero-fill pad to the
-//   0x806655D8 boundary (the 8-byte retail .sbss slot ends there).
+// sbss data owned by this TU: the root pointer and the render-disable flag.
+// The remaining three bytes of the retail 8-byte slot are linker tail padding.
 CViewRoot* CViewRoot::spInstance;
 u8 CViewRoot::sRenderViewDisabled;
-u8 lbl_eu_806655D5;
-u8 lbl_eu_806655D6;
-u8 lbl_eu_806655D7;
 
 // NOTE: no CViewRoot ctor is defined here -- the retail split has no
 // __ct__9CViewRoot symbol (create() constructs the object manually and the
@@ -162,22 +156,6 @@ extern "C" void* __dt__9CViewRootFv(void* selfPtr, int flag) {
         }
     }
     return self;
-}
-
-// Retail emits the CViewRootPool destructor at the head of this TU's split
-// (0x80444A1C). It resets the pool ring (mUsed/mList) and frees the object
-// when the delete flag is set; the CViewRoot destructor inlines the same
-// logic, which is why this symbol only appears once as an out-of-line copy.
-extern "C" void* __dt__80442084(CViewRootPool* pThis, int flag) {
-    if (pThis != nullptr) {
-        pThis->mUsed = 0;
-        pThis->mList = 0;
-
-        if (flag > 0) {
-            ::operator delete(pThis);
-        }
-    }
-    return pThis;
 }
 
 CViewRoot* CViewRoot::getInstance() {

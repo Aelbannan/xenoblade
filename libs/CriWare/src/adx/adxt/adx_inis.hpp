@@ -20,13 +20,9 @@ struct AdxInisContext {
     s32 field_0x0C;         // 0x0C
     s32 handle_0x10;        // 0x10
     s32 field_0x14;         // 0x14
-    u8* field_0x18;         // 0x18
+    const char* field_0x18; // 0x18 - build stamp
     s32 field_0x1C;         // 0x1C
     struct AdxInisHandle handles[16];  // 0x20
 };
 
-// Global context for ADXT_Init/ADXT_Finish, stored at lbl_eu_805E26C8.
-// (plain object: taking its address here is the retail form)
-extern struct AdxInisContext lbl_eu_805E26C8;
-extern const char lbl_eu_80515FB8[];
-extern const char lbl_eu_80516010[];
+// Global context for ADXT_Init/ADXT_Finish (defined in adx_inis.c).

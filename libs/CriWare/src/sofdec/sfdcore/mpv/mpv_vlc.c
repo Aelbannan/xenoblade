@@ -63,7 +63,7 @@ u32 sVlcTablePtrExtra;
 unsigned char __bss_fill_8[0x50]; // trailing filler for .bss
 // name-guess: mpvvlc_SetDflPtr / mpvvlc_SetVlcRunLevel use these packed u32
 // pairs as the default VLC table descriptor entries
-__declspec(section ".rodata") __attribute__((aligned(8))) u32 sVlcDefaultPtrs[0x2C] = {0x12011101, 0x10010F01, 0x03060210, 0x020F020E, 0x020D020C, 0x020B011F, 0x011E011D, 0x011C011B, 0x28002700, 0x26002500, 0x24002300, 0x22002100, 0x20000E01, 0x0D010C01, 0x0B010A01, 0x09010801, 0x1F001E00, 0x1D001C00, 0x1B001A00, 0x19001800, 0x17001600, 0x15001400, 0x13001200, 0x11001000, 0x020A0209, 0x03050403, 0x05020701, 0x06010F00, 0x0E000D00, 0x0C00011A, 0x01190118, 0x01170116, 0x0B000208, 0x03040A00, 0x04020207, 0x01150114, 0x09000113, 0x01120501, 0x03030800, 0x02060111, 0x01100205, 0x07000302, 0x0401010F, 0x010E0204}; // off 0x0
+__attribute__((aligned(8))) const u32 sVlcDefaultPtrs[0x2C] = {0x12011101, 0x10010F01, 0x03060210, 0x020F020E, 0x020D020C, 0x020B011F, 0x011E011D, 0x011C011B, 0x28002700, 0x26002500, 0x24002300, 0x22002100, 0x20000E01, 0x0D010C01, 0x0B010A01, 0x09010801, 0x1F001E00, 0x1D001C00, 0x1B001A00, 0x19001800, 0x17001600, 0x15001400, 0x13001200, 0x11001000, 0x020A0209, 0x03050403, 0x05020701, 0x06010F00, 0x0E000D00, 0x0C00011A, 0x01190118, 0x01170116, 0x0B000208, 0x03040A00, 0x04020207, 0x01150114, 0x09000113, 0x01120501, 0x03030800, 0x02060111, 0x01100205, 0x07000302, 0x0401010F, 0x010E0204}; // off 0x0
 
 
 extern int UTY_MemcpyDword(u32 *dst, const u32 *src, u32 n);
@@ -920,10 +920,10 @@ void mpvvlc_InitMotion(void) {
    Each destination pointer is materialized into its own local first
    (retail's register-heavy schedule), then stored slot by slot. */
 void mpvvlc_SetDflPtr(void) {
-    u32 *d = sVlcDefaultPtrs;
+    const u32 *d = sVlcDefaultPtrs;
     u32 *g = (u32 *)sVlcTableWorkArea;
     u32 *p_730 = g + 0x1cc;
-    u32 *p_d20 = d + 0x08;
+    const u32 *p_d20 = d + 0x08;
     u32 *p_930 = g + 0x24c;
     u32 *p_9b0 = g + 0x26c;
     u32 *p_ab0 = g + 0x2ac;
@@ -938,10 +938,10 @@ void mpvvlc_SetDflPtr(void) {
     u32 *p_490 = g + 0x124;
     u32 *p_c30 = g + 0x30c;
     u32 *p_1030 = g + 0x40c;
-    u32 *p_d40 = d + 0x10;
-    u32 *p_d60 = d + 0x18;
-    u32 *p_d80 = d + 0x20;
-    u32 *p_da0 = d + 0x28;
+    const u32 *p_d40 = d + 0x10;
+    const u32 *p_d60 = d + 0x18;
+    const u32 *p_d80 = d + 0x20;
+    const u32 *p_da0 = d + 0x28;
     u32 *p_1430 = g + 0x50c;
 
     g[0x58c] = (u32)p_730;
@@ -1007,7 +1007,7 @@ void MPVVLC_Init(u32 *work) {
 /* Install run/level VLC tables (copied from the default table image). */
 u32 *mpvvlc_SetVlcRunLevel(u32 *tbl) {
     u32 *g = (u32 *)sVlcTableWorkArea;
-    u32 *d = sVlcDefaultPtrs;
+    const u32 *d = sVlcDefaultPtrs;
 
     g[0x59b] = (u32)(tbl - 0x80);
     UTY_MemcpyDword(tbl - 0x80, &g[0x50c], 0x80);

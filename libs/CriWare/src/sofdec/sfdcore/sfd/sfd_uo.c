@@ -146,8 +146,8 @@ s32 SFUO_AddRead(SfdHandle* h) {
 
 int SFUO_Seek(void) { return 0x0; }
 
-/* Absorbed .rodata 0x8051CC98 (0x40) : dispatch table for UO unit */
-__declspec(section ".rodata") __attribute__((aligned(8))) const void* lbl_eu_8051CC98[16] = {
+/* SFD transport interface table for the UO channel. */
+__attribute__((aligned(8))) const void* const SFD_tr_uo[16] = {
     (void*)SFUO_Init,
     (void*)SFUO_Finish,
     (void*)SFUO_ExecServer,

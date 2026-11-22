@@ -1,6 +1,3 @@
-#include <typeinfo>
-#include <monolib/scn/CScnItemCamera.hpp>
-#include <monolib/scn/CScnItemCameraNw4r.hpp>
 #include "monolib/mpfsys/MPFDrawBillboard.hpp"
 #include "monolib/mpfsys/MPFDrawCross.hpp"
 #include "monolib/mpfsys/MPFDrawBillLayTex.hpp"
@@ -51,10 +48,6 @@ struct MPFDrawBillPairList {
 };
 
 extern "C" {
-    s8 sBillLayTexInitialised;
-    mpfsys::MPFDrawBillLayTex* sBillLayTexInstance;
-    extern "C" u32 __vt__Q26mpfsys17MPFDrawBillLayTex[4];
-
     extern MPFDrawBillData* sLastBillDrawData;
     extern void* sMpfsysDrawState;
     extern Mtx sBillboardViewMatrix;
@@ -64,7 +57,6 @@ extern "C" {
     extern const u32 sBillBlendOrderAsc[4];
     extern const u32 sBillBlendOrderDesc[4];
 
-    extern const s32 MpfBillboardCount;
     extern u32 lbl_eu_8066A72C;
     extern f32 lbl_eu_8066A730;
 
@@ -87,11 +79,8 @@ extern "C" {
 namespace mpfsys {
 
 MPFDrawBillLayTex* MPFDrawBillLayTex::getInstance() {
-    if (!sBillLayTexInitialised) {
-        sBillLayTexInstance = (mpfsys::MPFDrawBillLayTex*)&__vt__Q26mpfsys17MPFDrawBillLayTex;
-        sBillLayTexInitialised = 1;
-    }
-    return (MPFDrawBillLayTex*)&sBillLayTexInstance;
+    static MPFDrawBillLayTex instance;
+    return &instance;
 }
 
 } // namespace mpfsys
@@ -706,14 +695,8 @@ void mpfsys::MPFDrawBillLayTex::drawPaired(MPFDrawBillData* billboard, MPFDrawBi
     loadTevKColor__Q26mpfsys17UnkClass_80471EC8Fv();
 }
 
-// [.rodata] 0x80523E00-0x80523E10: blend-order tables.  The RTTI name strings
+// [.rodata] 0x80523E00-0x80523E20: blend-order tables.  The RTTI name strings
 // that follow in retail are emitted by MWCC from the real dispatcher classes.
 extern "C" __declspec(align(4)) const u32 sBillBlendOrderAsc[4] = { 0x00000000, 0x00000001, 0x00000002, 0x00000003 };
 extern "C" __declspec(align(4)) const u32 sBillBlendOrderDesc[4] = { 0x00000003, 0x00000002, 0x00000001, 0x00000000 };
 
-// name-guess: the dead-stripped RTTI locators __RTTI__18CScnItemCameraNw4r /
-// __RTTI__14CScnItemCamera and their orphan name strings prove this TU had a
-// real RTTI-based camera type query; no retail symbol survives for it.
-extern "C" bool scnCamIsNw4r(const CScnItemCamera* cam) {
-    return cam != 0 && &typeid(*cam) == &typeid(CScnItemCameraNw4r);
-}

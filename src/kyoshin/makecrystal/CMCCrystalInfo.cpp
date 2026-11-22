@@ -29,14 +29,14 @@ extern "C" void MCCrystal_RewindAnim3(CMCCrystalInfo*);
 // Small-data symbol (plain C++ extern; lives in another TU).
 
 
-s16 sPane1Color0[4] = {0};
-s16 sPane1Color1[4] = {0};
-s16 sPane1Alpha0[4] = {0};
-s16 sPane1Alpha1[4] = {0};
-s16 sPane2Color0[4] = {0};
-s16 sPane2Color1[4] = {0};
-s16 sPane2Alpha0[4] = {0};
-s16 sPane2Alpha1[4] = {0};
+GXColorS10 sPane1Color0;
+GXColorS10 sPane1Color1;
+GXColorS10 sPane1Alpha0;
+GXColorS10 sPane1Alpha1;
+GXColorS10 sPane2Color0;
+GXColorS10 sPane2Color1;
+GXColorS10 sPane2Alpha0;
+GXColorS10 sPane2Alpha1;
 
 void MCCrystal_BuildItemBuf(CrystalItemBuf* out, CMCCrystalInfo*, u32, CMCCItemHandle*);
 
@@ -205,23 +205,23 @@ void MCCrystal_FillSlot(CMCCrystalInfo* self, u32 idxBase, u32 arg5, u8 arg6, u3
     sprintf(buf, "txt_listname%02d", idx);
     LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)self->mLayout, buf, msgName, 0);
     PaneMatSetTevColorsByName((nw4r::lyt::Layout*)self->mLayout, buf,
-        (GXColorS10*)(arg7 ? &sPane1Alpha0 : &sPane1Color0),
-        (GXColorS10*)(arg7 ? &sPane1Alpha1 : &sPane1Color1));
+        (arg7 ? &sPane1Alpha0 : &sPane1Color0),
+        (arg7 ? &sPane1Alpha1 : &sPane1Color1));
 
     // Slot number text + element image index, coloured with the second pair.
     sprintf(buf, "txt_listvalue%02d", idx);
     setLayoutTextBoxNumber((nw4r::lyt::Layout*)self->mLayout, buf, arg6);
     PaneMatSetTevColorsByName((nw4r::lyt::Layout*)self->mLayout, buf,
-        (GXColorS10*)(arg7 ? &sPane2Alpha0 : &sPane2Color0),
-        (GXColorS10*)(arg7 ? &sPane2Alpha1 : &sPane2Color1));
+        (arg7 ? &sPane2Alpha0 : &sPane2Color0),
+        (arg7 ? &sPane2Alpha1 : &sPane2Color1));
 
     // Description string + colour.
     sprintf(buf, "txt_listpara%02d", idx);
     LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)self->mLayout, buf,
         BdatTouchStringCell("MNU_item", "name", 0x21), 0);
     PaneMatSetTevColorsByName((nw4r::lyt::Layout*)self->mLayout, buf,
-        (GXColorS10*)(arg7 ? &sPane2Alpha0 : &sPane2Color0),
-        (GXColorS10*)(arg7 ? &sPane2Alpha1 : &sPane2Color1));
+        (arg7 ? &sPane2Alpha0 : &sPane2Color0),
+        (arg7 ? &sPane2Alpha1 : &sPane2Color1));
 
     // Pick the crystal picture to show for this slot based on the item code.
     void* res = 0;
@@ -353,7 +353,7 @@ void MCCrystal_StepAnim3(CMCCrystalInfo* self)
 
 void MCCrystal_RewindAnim3(CMCCrystalInfo* self)
 {
-    if (AnimRewindFrame((nw4r::lyt::AnimTransform*)self->mAnimTransform3, lbl_eu_80668498)) {
+    if (AnimRewindFrame((nw4r::lyt::AnimTransform*)self->mAnimTransform3, 1.0f)) {
         self->mField51 = 1;
         self->mState = 3;
     }
@@ -371,20 +371,20 @@ void MCCrystal_BuildItemBuf(CrystalItemBuf* out, CMCCrystalInfo* self, u32 data,
     }
     BdatGetItemType(data);
     BdatGetItemId(data);
-    CItemImplInstancesFacade* inst = (CItemImplInstancesFacade*)CItem_initItemImplInstances((CItemData*)item2);
-    u8 count = inst->GetCount(item2);
+    CItemImpl* inst = CItem_initItemImplInstances((CItemData*)item2);
+    u8 count = (u8)inst->vf08((CItemData*)item2);
     buf.count = count;
     buf.str = (char*)BdatTouchStringCell("MNU_item", "name",
                                    0x1e - (count - 1));
     buf.field21 = 0;
     for (u32 i = 0; i < 4; i++) {
-        CItemImplInstancesFacade* inst2 = (CItemImplInstancesFacade*)CItem_initItemImplInstances((CItemData*)item2);
-        u16 n = inst2->GetName(item2, (u8)i);
+        CItemImpl* inst2 = CItem_initItemImplInstances((CItemData*)item2);
+        u16 n = (u16)inst2->vf4C((CItemData*)item2, (u8)i);
         if (n > 0) {
             buf.names[buf.field21] = BdatGetPtrDirect((char*)::cf::CfBdat::spBtlSkillListFileData,
                                                    "name", n);
-            CItemImplInstancesFacade* inst3 = (CItemImplInstancesFacade*)CItem_initItemImplInstances((CItemData*)item2);
-            buf.flags[buf.field21] = inst3->GetFlag(item2, (u8)i);
+            CItemImpl* inst3 = CItem_initItemImplInstances((CItemData*)item2);
+            buf.flags[buf.field21] = (u8)inst3->vf64((CItemData*)item2, (u8)i);
             buf.field21++;
         }
     }
@@ -567,20 +567,20 @@ bool CMCCrystalInfo::OnFileEvent(CEventFile* pEventFile)
         nw4r::lyt::Pane* pane1 = ((nw4r::lyt::Layout*)mLayout)->GetRootPane()
             ->FindPaneByName("txt_listname01", true);
         GXColorS10 fs1a = PaneMatGetS16Quad(pane1, 0);
-        CopyVec4s((GXColorS10*)sPane1Color0, (const GXColorS10*)((short*)&fs1a));
+        CopyVec4s(&sPane1Color0, &fs1a);
         GXColorS10 fs1b = PaneMatGetS16Quad(pane1, 1);
-        CopyVec4s((GXColorS10*)sPane1Color1, (const GXColorS10*)((short*)&fs1b));
-        sPane1Alpha0[3] = sPane1Color0[3];
-        sPane1Alpha1[3] = sPane1Color1[3];
+        CopyVec4s(&sPane1Color1, &fs1b);
+        sPane1Alpha0.a = sPane1Color0.a;
+        sPane1Alpha1.a = sPane1Color1.a;
 
         nw4r::lyt::Pane* pane2 = ((nw4r::lyt::Layout*)mLayout)->GetRootPane()
             ->FindPaneByName("txt_listvalue01", true);
         GXColorS10 fs2a = PaneMatGetS16Quad(pane2, 0);
-        CopyVec4s((GXColorS10*)sPane2Color0, (const GXColorS10*)((short*)&fs2a));
+        CopyVec4s(&sPane2Color0, &fs2a);
         GXColorS10 fs2b = PaneMatGetS16Quad(pane2, 1);
-        CopyVec4s((GXColorS10*)sPane2Color1, (const GXColorS10*)((short*)&fs2b));
-        sPane2Alpha0[3] = sPane2Color0[3];
-        sPane2Alpha1[3] = sPane2Color1[3];
+        CopyVec4s(&sPane2Color1, &fs2b);
+        sPane2Alpha0.a = sPane2Color0.a;
+        sPane2Alpha1.a = sPane2Color1.a;
 
         func_8021B500(this);
         mFileHandle1 = 0;
@@ -613,12 +613,12 @@ bool CMCCrystalInfo::OnFileEvent(CEventFile* pEventFile)
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 void sinit_8021BBC4()
 {
-    SplitU32ToS16s(sPane1Color0, 0);
-    SplitU32ToS16s(sPane1Color1, 0);
-    setGXColorS10((GXColorS10*)sPane1Alpha0, 0xd2, 0x28, 0x14, 0);
-    setGXColorS10((GXColorS10*)sPane1Alpha1, 0xd2, 0x28, 0x14, 0);
-    SplitU32ToS16s(sPane2Color0, 0);
-    SplitU32ToS16s(sPane2Color1, 0);
-    setGXColorS10((GXColorS10*)sPane2Alpha0, 0xff, 0xff, 0xfa, 0);
-    setGXColorS10((GXColorS10*)sPane2Alpha1, 0xd2, 0x28, 0x14, 0);
+    SplitU32ToS16s(&sPane1Color0, 0);
+    SplitU32ToS16s(&sPane1Color1, 0);
+    setGXColorS10(&sPane1Alpha0, 0xd2, 0x28, 0x14, 0);
+    setGXColorS10(&sPane1Alpha1, 0xd2, 0x28, 0x14, 0);
+    SplitU32ToS16s(&sPane2Color0, 0);
+    SplitU32ToS16s(&sPane2Color1, 0);
+    setGXColorS10(&sPane2Alpha0, 0xff, 0xff, 0xfa, 0);
+    setGXColorS10(&sPane2Alpha1, 0xd2, 0x28, 0x14, 0);
 }

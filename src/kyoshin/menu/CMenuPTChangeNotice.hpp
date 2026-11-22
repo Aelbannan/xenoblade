@@ -87,7 +87,7 @@ public:
     void Init();
     void Term();
     void Move();
-    void cbRenderBefore();
+    void cbRenderBefore(CScn* scene);
     void OnFileEvent(CEventFile* pEvent);
 };
 

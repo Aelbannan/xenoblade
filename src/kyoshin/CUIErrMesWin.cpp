@@ -10,6 +10,7 @@
 #include "kyoshin/cf/object/CActorParam.hpp"
 #include "kyoshin/cf/CfGimmick.hpp"
 #include "monolib/device/CDeviceVI.hpp"
+#include "monolib/core/CPadManager.hpp"
 #include "monolib/util/MemManager.hpp"
 #include "monolib/work/CWorkThreadSystem.hpp"
 #include <revolution/gx/GXPixel.h>
@@ -74,21 +75,20 @@ void CUIErrMesWin::Term() {
 // CUIErrMesWin::cbRenderBefore (us-802b7804) - disable Z testing and draw
 // the embedded system window with a layout DrawInfo.
 
-void CUIErrMesWin::cbRenderBefore() {
+void CUIErrMesWin::cbRenderBefore(CScn*) {
     GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
     nw4r::lyt::DrawInfo drawInfo;
     SetWideLocAdjust(&drawInfo);
     mSysWin.drawLayout(reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfo));
 }
 
-// CUIErrMesWin factory ctor (us-802b7864, retail stripped name
-// __ct__802B4DF4) - singleton creator. Returns 0 when the window already
+// ErrWin_Create (us-802b7864) - CUIErrMesWin singleton creator. Returns 0 when the window already
 // exists; otherwise allocates the 0xA4-byte window on the work heap,
 // constructs CProcess out-of-line and fills the CTTask/CUIErrMesWin region by
 // hand (interim vtable, null ptmf slots, composite vtable + sub-vtables,
 // CSysWin storage, state bytes), registers it under `parent` and returns the
 // singleton global.
-CUIErrMesWin* __ct__802B4DF4(CProcess* parent, u32 a, u16 b, u8 c) {
+CUIErrMesWin* ErrWin_Create(CProcess* parent, u32 a, u16 b, u8 c) {
     if (lbl_eu_80664C28 != 0) {
         return 0;
     }
@@ -167,9 +167,9 @@ void ErrWin_MarkActive4_4FA8(CUIErrMesWin* self) {
 // classic controller mask when isClassicController reports classic), close the
 // embedded CSysWin and advance the state byte to 5.
 void ErrWin_OnConfirm_4FE8(CUIErrMesWin* self) {
-    CErrMesPad* pad = reinterpret_cast<CErrMesPad*>(cf::CfGameManager::getCurrentPad());
+    CPad* pad = cf::CfGameManager::getCurrentPad();
     // Classic-controller button bit is 0x200000 (retail lis r3, 0x20).
-    if (pad->field_0x4 & (cf::CfGameManager::isClassicController(-1) ? 0x200000 : 0x10)) {
+    if (pad->mPressedButtonFlags & (cf::CfGameManager::isClassicController(-1) ? 0x200000 : 0x10)) {
         self->mSysWin.advancePhase3();
         self->field_0x9C = 5;
     }
@@ -181,13 +181,11 @@ void ErrWin_MarkActive6_5054(CUIErrMesWin* self) {
     }
 }
 
-// Byte view of the CTTask<CUIErrMesWin> base byte at +0x39 written by
-// ErrWin_SetFlag39_5094 (no named member exists in the base chain).
-struct ErrWinFlag39View { u8 _pad00[57]; u8 field_0x39; };
-extern "C" void ErrWin_SetFlag39_5094(ErrWinFlag39View* self) { self->field_0x39 = 1; }
+// CProcess::mIsRemove is the +0x39 byte this retail helper sets.
+extern "C" void ErrWin_SetFlag39_5094(CProcess* self) { self->SetRemove(); }
 
 
-void ErrWin_RenderCbThunk_5138(void* self) { ((void(*)(void*))cbRenderBefore__12CUIErrMesWinFv)((char*)self - 0x58); }
+void ErrWin_RenderCbThunk_5138(void* self) { ((void(*)(void*))cbRenderBefore__12CUIErrMesWinFP4CScn)((char*)self - 0x58); }
 
 void ErrWin_DtorThunkB_5140(void* self) { ((void(*)(void*))__dt__12CUIErrMesWinFv)((char*)self - 0x58); }
 
@@ -209,10 +207,10 @@ void CErrMesSub::Win_UpdateSub(int flag) {
         void* d80 = Scn_FindCamItem((void*)CfRes_getD80Flag(), -1);
         CErrMesObjView* p1 =
             reinterpret_cast<CErrMesObjView*>(
-                MapFx_ResolveOwner(getPlayer__Q22cf13CfGameManagerFi(0)));
+                MapFx_ResolveOwner(cf::CfGameManager::getPlayer(0)));
         CErrMesObjView* p2 =
             reinterpret_cast<CErrMesObjView*>(
-                MapFx_ResolveOwner(getPlayer__Q22cf13CfGameManagerFi(0)));
+                MapFx_ResolveOwner(cf::CfGameManager::getPlayer(0)));
         void* candidate;
         if (p2 == 0) {
             candidate = 0;

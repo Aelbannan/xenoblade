@@ -12,8 +12,11 @@ The tool is deliberately conservative:
   classified but left alone (they need a cast or a deliberate pool-order
   decision, not a literal);
 * ``--apply`` snapshots ``hexdiff <unit> --all --json`` before/after and
-  reverts any edit that costs a check mark or lowers the percentage of a
-  function that was checked before.
+  reverts, one whole label at a time, any label whose compiler literal does
+  not land in the retail ``.sdata2`` slot, or that adds a byte mismatch or a
+  relocation-proof error to ANY function (matched or not).  The comparator
+  resolves TU-local ``@N`` pool entries as ``section base + offset``, so a
+  literal is only correct when MWCC emits it at the retail pool offset.
 
 Usage::
 
@@ -130,6 +133,30 @@ def double_spelling(bits: int) -> str:
     if not any(c in text for c in ".eEnNaAiI"):
         text += ".0"
     return text
+
+
+def promote_shared(values: dict[str, LabelValue], shared_elsewhere: set[str]) -> dict[str, str]:
+    """Phase 2: let 0.0/1.0 labels convert under the --apply slot gate.
+
+    Only TU-private labels qualify: a 0.0/1.0 label still referenced by another
+    unit cannot be converted whole from this unit (its other references would
+    keep the label alive beside a new @N copy), so it is refused.  Returns
+    {label: refusal reason} for the refused ones.
+    """
+    refused: dict[str, str] = {}
+    for name, v in list(values.items()):
+        if v.kind != KIND_SHARED:
+            continue
+        if name in shared_elsewhere:
+            refused[name] = "shared 0.0/1.0 label referenced by another unit: refuse (not whole-label)"
+            continue
+        if v.size == 4:
+            values[name] = LabelValue(KIND_FLOAT, v.bits, 4, float_spelling(v.bits),
+                                      struct.unpack(">f", struct.pack(">I", v.bits))[0], v.section)
+        else:
+            values[name] = LabelValue(KIND_DOUBLE, v.bits, 8, double_spelling(v.bits),
+                                      struct.unpack(">d", struct.pack(">Q", v.bits))[0], v.section)
+    return refused
 
 
 def classify(bits: int, size: int, data_kind: str, section: str = "") -> LabelValue:
@@ -278,6 +305,11 @@ class ScanResult:
     declaration_lines: dict[Path, list[tuple[str, int, int]]] = field(default_factory=dict)
 
 
+_NOT_FUNCTION_NAMES = frozenset({
+    "__declspec", "__attribute__", "sizeof", "if", "while", "for", "switch", "return",
+})
+
+
 def _function_spans(code: str, symbols: Iterable[str]) -> list[tuple[int, int, tuple[str, ...]]]:
     """Best-effort top-level function spans for edit attribution."""
     syms = tuple(symbols)
@@ -295,7 +327,8 @@ def _function_spans(code: str, symbols: Iterable[str]) -> list[tuple[int, int, t
                 sig = masked[start:i]
                 # The function being defined is the last `name(...)` in the
                 # declaration; earlier names are return types/calls/attributes.
-                candidates = re.findall(r"([A-Za-z_]\w*)\s*\(", sig)
+                candidates = [c for c in re.findall(r"([A-Za-z_]\w*)\s*\(", sig)
+                              if c not in _NOT_FUNCTION_NAMES]
                 names: list[str] = []
                 for cand in candidates:
                     for sym in syms:
@@ -618,17 +651,43 @@ def snapshot_rows(data: dict) -> dict[str, tuple[bool, float]]:
     return rows
 
 
+def proof_rows(data: dict) -> dict[str, tuple[int, int, int]]:
+    """Per-function (mismatch words, relocation-proof errors, size delta)."""
+    rows: dict[str, tuple[int, int, int]] = {}
+    for f in data.get("functions", []):
+        if not f.get("present"):
+            continue
+        rows[f["symbol"]] = (
+            int(f.get("mismatch", 0)),
+            len(f.get("relocation_errors") or ()),
+            abs(int(f.get("retail_size", 0)) - int(f.get("decomp_size", 0))),
+        )
+    return rows
+
+
 def regressions(before: dict, after: dict) -> list[str]:
+    """Functions that got worse, matched or not.
+
+    Unmatched functions count too: before conversion a label reference is
+    proven by name, afterwards by @N slot address, so a misplaced literal
+    turns a proven relocation into a wrong-address one without touching the
+    check-mark count.  Any increase in mismatch words, relocation-proof
+    errors or size delta is a regression.
+    """
     bad: list[str] = []
     rows_before = snapshot_rows(before)
     rows_after = snapshot_rows(after)
+    proof_before = proof_rows(before)
+    proof_after = proof_rows(after)
     for name, (matched, pct) in rows_before.items():
         now = rows_after.get(name)
         if now is None:
             bad.append(name)
         elif matched and not now[0]:
             bad.append(name)
-        elif matched and now[1] < pct - 1e-9:
+        elif now[1] < pct - 1e-9:
+            bad.append(name)
+        elif any(a > b for a, b in zip(proof_after.get(name, (0, 0, 0)), proof_before[name])):
             bad.append(name)
     return bad
 
@@ -644,30 +703,76 @@ def _name_matches(fn: str, symbol: str) -> bool:
     return False
 
 
-def pick_reverts(regressed: list[str], edits: list[Edit]) -> set[int]:
-    """Indices of edits to drop for the regressed function set."""
-    drop: set[int] = set()
-    global_drop = {i for i, e in enumerate(edits) if e.kind in ("decl", "defn")}
-    for i, e in enumerate(edits):
-        if e.kind in ("decl", "defn"):
-            continue
-        if any(_name_matches(fn, sym) for fn in e.functions for sym in regressed):
-            drop.add(i)
-    if not drop:
-        # Unattributed regression: line-number/header effects are global.
-        # Drop everything still applied and let the next round start over.
-        drop = set(range(len(edits)))
-    # Declaration deletions shift __LINE__ for the whole TU; if any regressed
-    # function has no directly attributed literal edit, drop those too.
-    named = {fn for i, e in enumerate(edits) if i in drop for fn in e.functions}
-    if any(not any(_name_matches(fn, s) for fn in named) for s in regressed):
-        drop |= global_drop
-    return drop
+def _label_group(edits: list[Edit], labels: set[str]) -> set[int]:
+    """Every edit (literals, extern decls, pool defns) owned by *labels*.
+
+    Conversion is whole-label: a label is either fully literal with its
+    declaration gone, or untouched.  A pool definition is dropped with any
+    of its member labels so no pool is left half-deleted.
+    """
+    out = {i for i, e in enumerate(edits) if e.label in labels}
+    pools = {e.label for i, e in enumerate(edits) if i in out and e.kind == "defn"}
+    out |= {i for i, e in enumerate(edits) if e.kind == "defn" and e.label in pools}
+    return out
+
+
+def pick_reverts(regressed: list[str], edits: list[Edit],
+                 offsets: dict[str, tuple[int, int]] | None = None) -> set[int]:
+    """Indices of edits to drop for the regressed function set (whole labels)."""
+    labels = {
+        e.label for e in edits
+        if e.kind == "literal" and any(_name_matches(fn, sym) for fn in e.functions for sym in regressed)
+    }
+    if not labels:
+        # Unattributed (e.g. a pool shift hitting a function that has no
+        # literal of its own): drop the label with the highest retail offset.
+        # Monotone and deterministic; the next round re-measures.
+        active = sorted({e.label for e in edits if e.kind == "literal"},
+                        key=lambda n: ((offsets or {}).get(n, (1 << 30, 0))[0], n))
+        labels = set(active[-1:])
+    return _label_group(edits, labels)
+
+
+def decomp_slots(obj: Path) -> tuple[dict[int, tuple[int, str]], bytes]:
+    """{offset: (size, name)} and raw bytes of a built object's .sdata2."""
+    r = subprocess.run([str(OBJDUMP), "-t", str(obj)], capture_output=True, text=True)
+    if r.returncode != 0:
+        raise RuntimeError(f"objdump -t failed for {obj}: {r.stderr.strip()}")
+    slots: dict[int, tuple[int, str]] = {}
+    for line in r.stdout.splitlines():
+        m = OBJDUMP_SYMBOL_RE.match(line)
+        if m and m.group(6) != ".sdata2":
+            slots[int(m.group(1), 16)] = (int(m.group(5), 16), m.group(6))
+    return slots, section_bytes(obj, ".sdata2") or b""
+
+
+def misplaced_labels(active_labels: set[str], offsets: dict[str, tuple[int, int]],
+                     retail_data: bytes, decomp_obj: Path) -> set[str]:
+    """Converted labels whose compiler literal is NOT at the retail slot.
+
+    The comparator proves a TU-local @N reference as section base + st_value,
+    so the literal must be a compiler pool symbol at exactly the retail
+    offset, with the retail size and bytes.  This also rejects shared-slot
+    cases (two retail labels with one value collapse into one @N) and
+    first-use order differences.
+    """
+    slots, data = decomp_slots(decomp_obj)
+    bad: set[str] = set()
+    for name in active_labels:
+        off, size = offsets[name]
+        got = slots.get(off)
+        if (got is None or got[0] != size or not got[1].startswith("@")
+                or data[off:off + size] != retail_data[off:off + size]):
+            bad.add(name)
+    return bad
 
 
 def apply_verified(unit: str, scan: ScanResult, allowed_paths: Iterable[Path],
-                   max_rounds: int = 8) -> tuple[list[Edit], dict, list[str]]:
-    """Apply edits, reverting any that hurt a matched function."""
+                   max_rounds: int = 64, *, retail_obj: Path | None = None,
+                   decomp_obj: Path | None = None) -> tuple[list[Edit], dict, list[str]]:
+    """Apply edits; revert whole labels that misplace a literal or hurt any function."""
+    offsets = sdata2_offsets(retail_obj) if retail_obj else {}
+    retail_data = (section_bytes(retail_obj, ".sdata2") or b"") if retail_obj else b""
     allowed = set(allowed_paths)
     assert_writable([e.path for e in scan.edits], allowed)
     before = hexdiff_snapshot(unit)
@@ -687,10 +792,27 @@ def apply_verified(unit: str, scan: ScanResult, allowed_paths: Iterable[Path],
             for path, text in original.items():
                 atomic_write_text(path, text)
             raise exc
+        # Slot gate first: a literal off its retail offset is wrong even when
+        # no measured function moves (the 2026-11 sweep kept such edits).
+        if decomp_obj is not None and offsets:
+            labels = {e.label for e in active if e.kind == "literal"}
+            misplaced = misplaced_labels(labels, offsets, retail_data, decomp_obj)
+            if misplaced:
+                # Only the lowest misplaced offset is certainly at fault;
+                # later slots may be shifted by it.  Drop the first one and
+                # re-measure (deterministic, one label per round).
+                first = min(misplaced, key=lambda n: (offsets[n][0], n))
+                drop = _label_group(active, {first})
+                notes.append(f"round {round_no}: {first} literal not at retail .sdata2 "
+                             f"offset 0x{offsets[first][0]:x}; reverted {len(drop)} edit(s)")
+                for idx in sorted(drop, reverse=True):
+                    dropped.append(active[idx])
+                    del active[idx]
+                continue
         bad = regressions(before, after)
         if not bad:
             return active, after, notes + [f"round {round_no}: accepted {len(active)} edit(s)"]
-        drop = pick_reverts(bad, active)
+        drop = pick_reverts(bad, active, offsets)
         if not drop:
             for path, text in original.items():
                 atomic_write_text(path, text)
@@ -744,6 +866,8 @@ def main(argv: list[str] | None = None) -> int:
     mode = p.add_mutually_exclusive_group()
     mode.add_argument("--dry-run", action="store_true", help="analyze only (default)")
     mode.add_argument("--apply", action="store_true", help="apply and hexdiff-verify each change")
+    p.add_argument("--include-shared", action="store_true",
+                   help="phase 2: also convert TU-private 0.0/1.0 labels (requires --apply: slot gate)")
     args = p.parse_args(argv)
 
     config = load_config(None, ROOT)
@@ -779,10 +903,20 @@ def main(argv: list[str] | None = None) -> int:
         symbols = [f["symbol"] for f in base.get("functions", [])]
 
     shared = find_other_users(set(values), set(paths))
+    if args.include_shared:
+        if not args.apply:
+            print("ERROR: --include-shared needs --apply (the .sdata2 slot gate)", file=sys.stderr)
+            return 2
+        if unit.base_path is None:
+            print("ERROR: --include-shared needs the unit's decomp object for the slot gate", file=sys.stderr)
+            return 2
+        for name, why in sorted(promote_shared(values, shared).items()):
+            print(f"refused {name}: {why}")
     scan = scan_source(paths, values, symbols, shared)
     kept: set[int] = set()
     if args.apply:
-        kept_edits, after, notes = apply_verified(unit.name, scan, paths)
+        kept_edits, after, notes = apply_verified(
+            unit.name, scan, paths, retail_obj=unit.target_path, decomp_obj=unit.base_path)
         kept = {id(e) for e in kept_edits}
         for note in notes:
             print(note)

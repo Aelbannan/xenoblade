@@ -89,7 +89,7 @@ struct CMenuLandTelop {
     void Init();
     void Term();
     void Move();
-    void cbRenderBefore();
+    void cbRenderBefore(CScn* scene);
 };
 
 // Object behind the global landTelopInstance pointer (real type not yet
@@ -136,7 +136,7 @@ void __dt__17UnkClass_8045F564Fv(void* _this, int flags);
 void __ct__8CProcessFv(CProcess* _this);
 void __dt__8CProcessFv(CProcess* _this, int flags);
 CMenuLandTelop* __dt__14CMenuLandTelopFv(CMenuLandTelop* _this, int flags);
-void cbRenderBefore__14CMenuLandTelopFv(void* _this);
+void cbRenderBefore__14CMenuLandTelopFP4CScn(void* _this);
 int QstCnt_HasInstance_6B94();
 // getBdatStringColumnValue / getInstance__Q22cf14CBattleManagerFv come from
 // their canonical headers via the include chain (u32 / void* from

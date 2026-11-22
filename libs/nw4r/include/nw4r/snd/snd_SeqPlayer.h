@@ -53,29 +53,21 @@ public:
     virtual void Stop();           // at 0x10
     virtual void Pause(bool flag); // at 0x14
 
-    virtual bool IsActive() const {
-        return mActiveFlag;
-    } // at 0x18
+    virtual bool IsActive() const; // at 0x18
 
-    virtual bool IsStarted() const {
-        return mStartedFlag;
-    } // at 0x1C
+    virtual bool IsStarted() const; // at 0x1C
 
-    virtual bool IsPause() const {
-        return mPauseFlag;
-    } // at 0x20
+    virtual bool IsPause() const; // at 0x20
 
     virtual void InvalidateData(const void* pStart,
                                 const void* pEnd); // at 0x50
 
-    virtual void InvalidateWaveData(const void* /* pStart */,
-                                    const void* /* pEnd */) {} // at 0x54
+    virtual void InvalidateWaveData(const void* pStart,
+                                    const void* pEnd); // at 0x54
 
     virtual void ChannelCallback(Channel* pChannel); // at 0x58
 
-    virtual void OnUpdateFrameSoundThread() {
-        Update();
-    } // at 0x5C
+    virtual void OnUpdateFrameSoundThread(); // at 0x5C
 
     virtual void OnShutdownSoundThread(); // at 0x60
 

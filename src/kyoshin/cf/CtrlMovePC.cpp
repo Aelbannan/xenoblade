@@ -8,6 +8,7 @@
 // objdiff can pair them exactly with the retail object.
 
 #include "kyoshin/cf/CBattleManager.hpp"
+#include "kyoshin/cf/CPartsChange.hpp"
 #include "kyoshin/cf/CtrlMoveBase.hpp"
 #include "monolib/coli/code_804B2FF0.hpp"
 #include "kyoshin/cf/CBattleManager.hpp"
@@ -151,7 +152,7 @@ extern "C" int movePcTickCounterWrap(CCtrlMovePC* self) {
         d[1] |= 1u;                    // *(data+4) |= 1
         self->mStateFunc = lbl_eu_80532D28;
     }
-    ((cf::CfMoveData*)self->mpDataPtr)->mField14 = 0.0f;
+    self->mpDataPtr->field_0x14 = 0.0f;
     return 0;
 }
 
@@ -176,7 +177,7 @@ extern "C" int movePcFlagTransitionReset(CCtrlMovePC* self) {
     g &= 0xE1FFFFFFu;                  // rlwinm 0,7,2
     self->mArr124[3] = 0;              // 0x12a
     self->mFlags4C = g;
-    ((cf::CfMoveData*)self->mpDataPtr)->mField14 = lbl_eu_80667B60;
+    self->mpDataPtr->field_0x14 = lbl_eu_80667B60;
     return 0;
 }
 
@@ -194,7 +195,7 @@ extern "C" int movePcFacingSinCosUpdate(CCtrlMovePC* self) {
         setMoveFacing((cf::CCtrlMoveBase*)self, (const ml::CVec3*)&self->mVec90, lbl_eu_80667B68);
     } else {
         self->mStateFunc = lbl_eu_80532C98;
-        ((cf::CfMoveData*)self->mpDataPtr)->mField14 = lbl_eu_80667B60;
+        self->mpDataPtr->field_0x14 = lbl_eu_80667B60;
     }
     return 0;
 }
@@ -243,7 +244,7 @@ extern "C" void movePcTopTickDispatch(CCtrlMovePC* self) {
 
     // Ternary materialization: MWCC emits li 0 / cmplwi / blt / cmplwi /
     // bgt / li 1 for the nested ternary form (avoids the range-fold).
-    int battleState = ((cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv())->mChain.unk0[2];
+    int battleState = ((cf::CBattleManager*)cf::CBattleManager::getInstance())->mChain.unk0[2];
     bool inBattle = (u32)battleState >= 1 && (u32)battleState <= 0x18;
     if (inBattle) {
         return;
@@ -476,9 +477,9 @@ extern "C" void func_8019A9C4(cf::CCtrlMovePC* self) {
     cf::CfGameManager::getInstance();
     bool inBattle = isGlobalCamFlagSet(0x40000000) != 0;
     if (!inBattle) {
-        u8 phase = *(u8*)((char*)getInstance__Q22cf14CBattleManagerFv() + 0x1aa);
+        u8 phase = *(u8*)((char*)cf::CBattleManager::getInstance() + 0x1aa);
         if (!((u32)phase >= 1 && (u32)phase <= 0x18)) {
-            s16 bf = ((cf::CfBattleState*)getInstance__Q22cf14CBattleManagerFv())->mField20C8;
+            u16 bf = ((cf::CBattleManager*)cf::CBattleManager::getInstance())->unk20C8.unk0;
             inBattle = (bf != 0);
         }
     }
@@ -544,7 +545,7 @@ extern "C" void func_8019A9C4(cf::CCtrlMovePC* self) {
     self->mArr124[8] = 0;
     ml::CVec3 tmp = self->mPos;                  // stack +0xa8 source spot
     u32 rnd = (u32)ml::math::mtRand() & 0xffffu;
-    CfPartyInfoIn info;                          // stack +0xe8 planner block
+    cf::CfPartyInfo info;                        // stack +0xe8 planner block
     InitRecord(&info, &tmp, 1, self->mFloat100,
                   2.0f, 4.0f, rnd);
     ml::CVec3 out;                               // stack +0xc0 candidate spot
@@ -561,9 +562,10 @@ extern "C" void func_8019A9C4(cf::CCtrlMovePC* self) {
                 (char*)self->mPlayer + 0x44a8) == 0) {
             return;
         }
-        ml::CVec3* gp = (ml::CVec3*)((char*)sEneColiProbe + 0x60);
-        self->mVecB4 = *gp;
-        self->mVecC0.y = 0.20000000298023224f + gp->y;
+        self->mVecB4.x = sEneColiProbe->field_0x60;
+        self->mVecB4.y = sEneColiProbe->field_0x64;
+        self->mVecB4.z = sEneColiProbe->field_0x68;
+        self->mVecC0.y = 0.20000000298023224f + sEneColiProbe->field_0x64;
     }
 
     // --- move-task allocation and commit toward the candidate spot ---
@@ -787,15 +789,13 @@ extern "C" int movePcUpdateWalk(cf::CCtrlMovePC* self) {
 
     // ---- common tail: move-task contact / wall-slide handling ----
     if (self->mpSomePtr != 0) {
-        ml::CVec3* tp = ((cf::CfObject*)((cf::CfMoveData*)self->mpDataPtr)->field_28)
-                            ->CfObject_getPosVector();
+        ml::CVec3* tp = self->mpDataPtr->mPosObj->CfObject_getPosVector();
         if (updateWalker__17UnkClass_8047D2ACFv(self->mpSomePtr, (Vec*)tp, (Vec*)goalPtr,
                 0.0f, 0.0f, 1) != 0) {
             // Contact: slide along the surface normal toward the goal.
             self->mFlags4C &= ~0x01000000u;
             ml::CVec3 delta = *goalPtr
-                - *((cf::CfObject*)((cf::CfMoveData*)self->mpDataPtr)->field_28)
-                      ->CfObject_getPosVector();
+                - *self->mpDataPtr->mPosObj->CfObject_getPosVector();
             ml::CVec3 dirTmp = delta;
             ml::CVec3 n = dirTmp;
             if (n.x != 0.0f || n.y != 0.0f || n.z != 0.0f) {
@@ -821,14 +821,11 @@ extern "C" int movePcUpdateWalk(cf::CCtrlMovePC* self) {
                     self->mFlags50 |= 0x400u;
                     ml::CVec3 probe;
                     probe.x = 0.5f * out.x
-                            + ((cf::CfObject*)((cf::CfMoveData*)self->mpDataPtr)->field_28)
-                                  ->CfObject_getPosVector()->x;
+                            + self->mpDataPtr->mPosObj->CfObject_getPosVector()->x;
                     probe.y = 2.0f
-                            + ((cf::CfObject*)((cf::CfMoveData*)self->mpDataPtr)->field_28)
-                                  ->CfObject_getPosVector()->y;
+                            + self->mpDataPtr->mPosObj->CfObject_getPosVector()->y;
                     probe.z = 0.5f * out.z
-                            + ((cf::CfObject*)((cf::CfMoveData*)self->mpDataPtr)->field_28)
-                                  ->CfObject_getPosVector()->z;
+                            + self->mpDataPtr->mPosObj->CfObject_getPosVector()->z;
                     if (ScnRes_VertRayForward_E398(&probe, 0x4a05, 0, 0, -4.0f,
                                       0.0f) == 0) {
                         self->mFlags50 |= 0x800u;
@@ -901,7 +898,7 @@ extern "C" int movePcEnterApproach(cf::CCtrlMovePC* self) {
         self->mVec54 = self->mVecCC;
     } else {
         ml::CVec3 pos = self->mPos;
-        CfPartyInfoIn info;
+        cf::CfPartyInfo info;
         InitRecord(&info, &pos, 6, self->mFloat100, 2.0f,
                       0.0f, self->mShort120);
         if (CPartsChange_ProcessPartyInfo(&info, &self->mVec54) == 0) {
@@ -1113,13 +1110,13 @@ extern "C" int movePcUpdateApproach(cf::CCtrlMovePC* self) {
             if (!(f50 & 0x400u)) {
                 // Obstacle probe ahead: steer around or mark blocked.
                 self->mFlags50 |= 0x400u;
-                ml::CVec3* p1 = ((cf::CfObject*)((cf::CfMoveData*)self->mpDataPtr)->field_28)->CfObject_getPosVector();
+                ml::CVec3* p1 = self->mpDataPtr->mPosObj->CfObject_getPosVector();
                 f32 pz = p1->z;
-                ml::CVec3* p2 = ((cf::CfObject*)((cf::CfMoveData*)self->mpDataPtr)->field_28)->CfObject_getPosVector();
+                ml::CVec3* p2 = self->mpDataPtr->mPosObj->CfObject_getPosVector();
                 f32 tz = 0.5f * self->mVec90.z + pz;
-                ml::CVec3* p3 = ((cf::CfObject*)((cf::CfMoveData*)self->mpDataPtr)->field_28)->CfObject_getPosVector();
+                ml::CVec3* p3 = self->mpDataPtr->mPosObj->CfObject_getPosVector();
                 f32 ty = 2.0f + p3->y;
-                ml::CVec3* p4 = ((cf::CfObject*)((cf::CfMoveData*)self->mpDataPtr)->field_28)->CfObject_getPosVector();
+                ml::CVec3* p4 = self->mpDataPtr->mPosObj->CfObject_getPosVector();
                 ml::CVec3 probe(0.5f * self->mVec90.x + p4->x, ty, tz);
                 if (ScnRes_VertRayForward_E398(&probe, 0x4a05, 0, 0, -4.0f, 0.0f) == 0) {
                     self->mFlags50 |= 0x800u;
@@ -1157,7 +1154,7 @@ extern "C" int movePcUpdateApproach(cf::CCtrlMovePC* self) {
             if ((f50e & 0x1000u) && !(f50e & 0x8000u)
                 && !(((cf::CfObjWrap*)self->mObject)->mSub->mField4EC & 0x100u)
                 && (((cf::CfObjWrap*)self->mPlayer)->mSub->mField4EC & 0x100u)) {
-                ((cf::CfMoveData*)self->mpDataPtr)->mField14 = 0.0f;
+                self->mpDataPtr->field_0x14 = 0.0f;
                 return 0;
             }
 
@@ -1220,7 +1217,7 @@ extern "C" int movePcUpdateApproach(cf::CCtrlMovePC* self) {
     self->mFlags4C = (g | 0x01000000u) & 0xE1FFFFFFu;
     self->mArr124[1] = 0;
     self->mArr124[3] = 0;
-    ((cf::CfMoveData*)self->mpDataPtr)->mField14 = 0.0f;
+    self->mpDataPtr->field_0x14 = 0.0f;
     return 0;
 }
 // ============================================================================
@@ -1308,19 +1305,19 @@ extern "C" int movePcUpdateTop(cf::CCtrlMovePC* self) {
         self->mPlayer = (char*)p0 - 0x3e9c;
     }
     if (self->mPlayer == 0) {
-        ((cf::CfMoveData*)self->mpDataPtr)->mField14 = 0.0f;
+        self->mpDataPtr->field_0x14 = 0.0f;
         return 0;
     }
     if (mine == 0) {
-        ((cf::CfMoveData*)self->mpDataPtr)->mField14 = 0.0f;
+        self->mpDataPtr->field_0x14 = 0.0f;
         return 0;
     }
     if (((cf::CfObjWrap*)self->mObject)->mSub == 0) {
-        ((cf::CfMoveData*)self->mpDataPtr)->mField14 = 0.0f;
+        self->mpDataPtr->field_0x14 = 0.0f;
         return 0;
     }
     if (((cf::CfObjWrap*)self->mPlayer)->mSub == 0) {
-        ((cf::CfMoveData*)self->mpDataPtr)->mField14 = 0.0f;
+        self->mpDataPtr->field_0x14 = 0.0f;
         return 0;
     }
 
@@ -1672,12 +1669,12 @@ extern "C" int movePcUpdateTop(cf::CCtrlMovePC* self) {
     }
 
     if ((gmPauseFlags & 0x4000000u) == 0) {
-        if (((cf::CfBattleState*)getInstance__Q22cf14CBattleManagerFv())->mField20C8 != 0) {
-            ((cf::CfMoveData*)self->mpDataPtr)->mField14 = 0.0f;
+        if (((cf::CBattleManager*)cf::CBattleManager::getInstance())->unk20C8.unk0 != 0) {
+            self->mpDataPtr->field_0x14 = 0.0f;
             return 0;
         }
         if (isGlobalCamFlagSet(0x40000000) != 0) {
-            ((cf::CfMoveData*)self->mpDataPtr)->mField14 = 0.0f;
+            self->mpDataPtr->field_0x14 = 0.0f;
             return 0;
         }
         cf::CfObjWrap* obj2 = (cf::CfObjWrap*)self->mObject;
@@ -1686,7 +1683,7 @@ extern "C" int movePcUpdateTop(cf::CCtrlMovePC* self) {
         void* stateData = ((cf::CObjectState*)sub3)->getStateData();
         y = *(u32*)stateData;
         if (testActorStatus(obj2, (int*)&y, 8) != 0) {
-            ((cf::CfMoveData*)self->mpDataPtr)->mField14 = 0.0f;
+            self->mpDataPtr->field_0x14 = 0.0f;
             return 0;
         }
         f32 g = ((cf::CActorParam*)self->mObject)->CActorParam_getHp();
@@ -1695,7 +1692,7 @@ extern "C" int movePcUpdateTop(cf::CCtrlMovePC* self) {
         }
     }
 
-    ((cf::CfMoveData*)self->mpDataPtr)->mField14 = 0.0f;
+    self->mpDataPtr->field_0x14 = 0.0f;
     return 0;
 }
 
@@ -1972,7 +1969,7 @@ extern "C" int movePcSteerToGoal(cf::CCtrlMovePC* self) {
     self->mArr124[2] = 0;
     self->mArr124[1] = 0;
     self->mArr124[3] = 0;
-    ((cf::CfMoveData*)self->mpDataPtr)->mField14 = 0.0f;
+    self->mpDataPtr->field_0x14 = 0.0f;
     return 0;
 }
 // ============================================================================
@@ -2050,7 +2047,7 @@ extern "C" int movePcUpdateFollow(cf::CCtrlMovePC* self) {
         self->mFlags4C = (self->mFlags4C | 0x100u) & ~0x0F000000u;
         self->mArr124[1] = 0;
         self->mArr124[3] = 0;
-        ((cf::CfMoveData*)self->mpDataPtr)->mField14 = 0.0f;
+        self->mpDataPtr->field_0x14 = 0.0f;
         return 0;
     }
 
@@ -2065,7 +2062,7 @@ extern "C" int movePcUpdateFollow(cf::CCtrlMovePC* self) {
 // ============================================================================
 extern "C" int movePcUpdateReposition(cf::CCtrlMovePC* self) {
     self->mFlags4C |= 0x8;
-    ((cf::CfMoveData*)self->mpDataPtr)->mField14 = 0.0f;
+    self->mpDataPtr->field_0x14 = 0.0f;
 
     // Bail out while the move-state reports an active condition/anim lock.
     cf::CfMoveSub* sub = ((cf::CfObjWrap*)self->mObject)->mSub;
@@ -2171,22 +2168,22 @@ extern "C" int movePcUpdateReposition(cf::CCtrlMovePC* self) {
         if (!(f4C & 0x4000)) {
             self->mFlags4C |= 0x20000;
             ml::CVec3 v0 = self->mPos;
-            CfPartyInfoIn p1;
+            cf::CfPartyInfo p1;
             InitRecord(&p1, &v0, 6, self->mFloat100, 2.0f,
                           0.0f, self->mShort120);
             self->mArr124[9] = 0;
-            p1.mField2E = 1;
+            p1.field_2E = 1;
             if (CPartsChange_ProcessPartyInfo(&p1, &goal) == 0) {
                 return 0;
             }
-            if (p1.mField2C != 0) {
-                height = p1.mField24;
+            if (p1.field_2C != 0) {
+                height = p1.field_24;
                 flag = 1;
             }
         } else {
             ml::CVec3 v0 = self->mPos;
             u32 rnd = ml::math::mtRand();
-            CfPartyInfoIn p2;
+            cf::CfPartyInfo p2;
             InitRecord(&p2, &v0, 1, self->mFloat100, 2.0f,
                           4.0f, rnd & 0xffff);
             s16 cnt = self->mArr124[9];
@@ -2194,7 +2191,7 @@ extern "C" int movePcUpdateReposition(cf::CCtrlMovePC* self) {
             if (cnt > 3) {
                 self->mArr124[9] = 5;
             } else {
-                p2.mField2E = 1;
+                p2.field_2E = 1;
             }
             if (CPartsChange_ProcessPartyInfo(&p2, &goal) == 0) {
                 // No candidate: probe straight down/up for walkable floor.
@@ -2208,8 +2205,8 @@ extern "C" int movePcUpdateReposition(cf::CCtrlMovePC* self) {
                 }
                 ml::CVec3 tmp = *(ml::CVec3*)sEneColiProbe;
                 goal.y = tmp.y + 0.20000000298023224f;
-            } else if (p2.mField2C != 0) {
-                height = p2.mField24;
+            } else if (p2.field_2C != 0) {
+                height = p2.field_24;
                 flag = 1;
             }
         }
@@ -2434,7 +2431,7 @@ extern "C" void movePcTickState(cf::CCtrlMovePC* self) {
         g &= 0xE1FFFFFFu;
         self->mArr124[3] = 0;
         self->mFlags4C = g;
-        ((cf::CfMoveData*)self->mpDataPtr)->mField14 = 0.0f;
+        self->mpDataPtr->field_0x14 = 0.0f;
     }
 }
 // ============================================================================

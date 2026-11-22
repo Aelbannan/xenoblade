@@ -45,7 +45,3 @@ private:
 
     static CDeviceRemotePad* spInstance;
 };
-
-// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
-// singleton pointer (retail sbss label; 8-byte object, word 0 in use)
-extern "C" CDeviceRemotePad* lbl_eu_80665638[2];

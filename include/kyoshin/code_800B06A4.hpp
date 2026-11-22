@@ -820,31 +820,31 @@ public:
     u32 getSize();
     void* getRingElem(u32 index);
     u8 unk0[0x4C];
-    // name-guess: member names follow the retail accessors get_u32_74,
-    // getPtr_1A8 and set_float_730. Offsets in the comments are absolute in
-    // UnkClass_805764CC; this object sits at owner+0x20.
-    u32 field_0x6C;             // owner 0x6C
-    u32 field_0x70;             // owner 0x70
-    u32 field_0x74;             // owner 0x74
-    u8 unk58[0x78 - 0x58];      // owner 0x78 .. 0x97
-    u32 field_0x98;             // owner 0x98 (this object's 0x78)
-    u8 unk9C[0x188 - 0x7C];     // owner 0x9C .. 0x1A7
-    u8 field_0x1A8;             // owner 0x1A8 (address taken by getPtr_1A8)
-    u8 unk1A9[0x360 - 0x189];   // owner 0x1A9 .. 0x37F
-    u32 field_0x380;            // owner 0x380
-    u8 unk384[0x600 - 0x364];   // owner 0x384 .. 0x61F
-    u32 field_0x620;            // owner 0x620
-    u8 unk624[0x6E0 - 0x604];   // owner 0x624 .. 0x6FF
-    u32 field_0x700;            // owner 0x700 (append/clear counter)
-    u8 unk704[0x720 - 0x704];   // owner 0x704 .. 0x71F
-    u32 field_0x720;            // owner 0x720
-    u8 unk724[0x710 - 0x704];   // owner 0x724 .. 0x72F
-    float field_0x730;          // owner 0x730
-    u32 field_0x734;            // owner 0x734
-    u16 field_0x738;            // owner 0x738
-    u8 field_0x73A;             // owner 0x73A
-    u8 field_0x73B;             // owner 0x73B
-    u8 unk73C[0xAF8 - 0x71C];   // owner 0x73C .. 0xB17
+    // name-guess: offset-named members (local to this object, which is
+    // embedded at UnkClass_805764CC+0x20); the retail-named owner accessors
+    // (get_u32_74, getPtr_1A8, set_float_730, ...) add 0x20.
+    u32 field_0x4C;
+    u32 field_0x50;
+    u32 field_0x54;
+    u8 unk58[0x78 - 0x58];
+    u32 field_0x78;
+    u8 unk7C[0x188 - 0x7C];
+    u8 field_0x188;             // address taken by getPtr_1A8
+    u8 unk189[0x360 - 0x189];
+    u32 field_0x360;
+    u8 unk364[0x600 - 0x364];
+    u32 field_0x600;
+    u8 unk604[0x6E0 - 0x604];
+    u32 field_0x6E0;            // append/clear counter
+    u8 unk6E4[0x700 - 0x6E4];
+    u32 field_0x700;
+    u8 unk704[0x710 - 0x704];
+    float field_0x710;
+    u32 field_0x714;
+    u16 field_0x718;
+    u8 field_0x71A;
+    u8 field_0x71B;
+    u8 unk71C[0xAF8 - 0x71C];
     UnkClass_800B0AD8* unkAF8;
     u32 unkAFC;
     u32 unkB00;
@@ -1198,7 +1198,6 @@ struct B20B4Payload {
 // Imports used by func_800B20B4 (retail symbol names).
 extern "C" void* func_80061FE8();
 extern "C" void __ct__Q22cf13CfObjectModelFv(void* self);
-extern "C" void __ct__Q22cf11CfObjectNpcFi(void* self, int flag);
 extern "C" void __ct__Q22cf10CfObjectPcFv(void* self);
 extern "C" void CfObjectMove_setSubB0FieldC(void* obj, u16 id);
 extern "C" void CfObjectMove_setSubB0FieldA(void* obj, s32 a);
@@ -1219,7 +1218,6 @@ extern u8 __vt__Q22cf8CfObject[];
 extern void* lbl_eu_80529128[];
 extern void* lbl_eu_80528600[];
 // Flat constructors/dtor called from the spawner (retail symbol names).
-extern "C" void* __ct__Q22cf12CfObjectTboxFv(void* self);
 extern "C" void __ct__Q22cf11CfObjectEffFv(void* self);
 extern "C" void* spawnMaskedObject(UnkClass_805764CC* self, u32 mask,
                                 const B20B4Payload* payload, u32 arg);
@@ -1656,7 +1654,7 @@ extern "C" void unlinkMatchingNode(void* list, void* obj);
 
 // --- imports for func_800B83AC (us-800b8cc8) ---
 
-extern "C" void* CtrlObjectParam_GetCharEntry(u16 index);
+extern "C" void* CtrlObjectParam_GetCharEntry(u32 index);
 extern "C" void* func_8009EC9C(u32 index);
 // func_80174C98 is owned by kyoshin/cf/CfMapItemManager.hpp.
 extern "C" int func_80148778(void* obj, int arg);

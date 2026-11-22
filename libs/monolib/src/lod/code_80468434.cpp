@@ -163,7 +163,7 @@ u16* LOD::UnkClass_80468434::drawLodBillDual() {
 // ===========================================================================
 void dispatchLodRecord__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self,
                                                 u8* arg2) {
-    LodHeader34* o = (LodHeader34*)self;
+    LodRenderRecord& o = self->records[0];
     u32 idx = lbl_eu_80665794;
     LodCurrentObject = (u8*)self;
     u16 count = *(u16*)((u8*)self + idx * 2 + 6);
@@ -203,11 +203,11 @@ void dispatchLodRecord__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self,
     // Reassemble the per-record matrices when the object's bit 4 flag is set
     // and the matrix cache is stale (bit 0 of the dirty word) or the cached
     // distance value differs.
-    if ((o->field_0x0 & 0x10) != 0) {
+    if ((o.field_0x0 & 0x10) != 0) {
         if ((LodStateFlags & 1) != 0 ||
             LodCachedDistance != sLodThresholdDist) {
-            LodRec1* records = (LodRec1*)(LodCurrentObject + o->field_0x28);
-            for (u32 i = 0; i < o->field_0x4; i++) {
+            LodRec1* records = (LodRec1*)(LodCurrentObject + o.field_0x28);
+            for (u32 i = 0; i < o.field_0x4; i++) {
                 LodRec1* rec = &records[i];
                 f32* mtx = &LodMatrixWorkArea[i][0][0];
                 ColiLodBuildRecordMatrix(mtx, rec);
@@ -221,8 +221,8 @@ void dispatchLodRecord__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self,
     }
 
     // Record loop: per-record matrix concat + GX matrix upload.
-    LodRec1* records = (LodRec1*)(LodCurrentObject + o->field_0x28);
-    for (u32 i = 0; i < o->field_0x4; i++) {
+    LodRec1* records = (LodRec1*)(LodCurrentObject + o.field_0x28);
+    for (u32 i = 0; i < o.field_0x4; i++) {
         LodRec1* rec = &records[i];
         if ((rec->field_0x0 & 1) != 0) {
             Mtx mtxC;
@@ -236,17 +236,17 @@ void dispatchLodRecord__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self,
     }
 
     // Register the vertex arrays.
-    if (o->field_0x10 != 0) {
-        GXSetArray(GX_VA_NRM, LodCurrentObject + o->field_0x10,
+    if (o.field_0x10 != 0) {
+        GXSetArray(GX_VA_NRM, LodCurrentObject + o.field_0x10,
                    (u8)LodNormalStride);
     }
-    if (o->field_0x18 != 0) {
-        GXSetArray(GX_VA_CLR0, LodCurrentObject + o->field_0x18, 4);
+    if (o.field_0x18 != 0) {
+        GXSetArray(GX_VA_CLR0, LodCurrentObject + o.field_0x18, 4);
     }
-    if (o->field_0x14 != 0) {
-        for (u32 i = 0; i < o->field_0x2; i++) {
+    if (o.field_0x14 != 0) {
+        for (u32 i = 0; i < o.field_0x2; i++) {
             GXSetArray((GXAttr)(GX_VA_TEX0 + i),
-                       LodCurrentObject + o->field_0x14, 8);
+                       LodCurrentObject + o.field_0x14, 8);
         }
     }
 
@@ -276,7 +276,7 @@ void submitLodBillMtx__Q23LOD17UnkClass_80468434Fv(u32 idx, const f32* srcMtx,
     u8* obj = p68 + *(u32*)(p78 + off);
     LodCurrentObject = obj;
 
-    LodObj1* o = (LodObj1*)obj;
+    LodRenderRecord* o = (LodRenderRecord*)obj;
     LodRec1* records = (LodRec1*)(obj + o->field_0x28);
     f32* mtx;
     LodRec1* rec;

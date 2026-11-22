@@ -1,33 +1,25 @@
 #pragma once
 
 #include <types.h>
+#include "kyoshin/cf/CActParamAnimGame.hpp"
 
-// Sub-object struct within CModelDisp, stride 0xFF0
-// Kept void*: the only includer (CModelDisp.cpp) has a pre-existing compile
-// failure (undefined mSubObj) and mixed void*-assignment usage; unverifiable.
+// Sub-object within CModelDisp, stride 0xFF0. Its implicit ctor/dtor are
+// compiler-emitted (weak __ct__/__dt__13CModelDispSubFv, emitted right after
+// the CModelDisp ctor that first needs them).
+// name-guess: CModelDispSub
 struct CModelDispSub {
-    void* field_00;                  // 0x00
-    void* field_04;                  // 0x04
-    void* mpController;              // 0x08 - pointer to controller (vcalled)
-    void* mObj0C;                    // 0x0C - object with vtable (vcall at 0xE0)
-    void* field_10;                  // 0x10
-    u8 _14[0x53C];                   // 0x14 to 0x54F
-    // controller-like slot; retail treats it as a signed countdown value
-    // (skips re-init while > 0, resets to 150 after func_8004B9D4)
-    s32 field_550;                   // 0x550
-    void* field_554;                 // 0x554 - controller-like pointer
-    u8 mBuffer[0x4B4];               // 0x558 - buffer region (base for func_8004B9D4)
-    void* mResultA;                  // 0xA0C - getNextChainObj result
-    u8 _A10[0x80];                   // 0xA10 to 0xA8F
-    void* field_A90;                 // 0xA90 - second controller-like pointer
-    u8 _A94[0x4B4];                  // 0xA94 to 0xF47
-    void* mResultB;                  // 0xF48 - getNextChainObj result
-    u8 _F4C[0x7C];                   // 0xF4C to 0xFC7
-    void* mSlotPtrA;                 // 0xFC8
-    void* mSlotPtrB;                 // 0xFCC
-    u32 mFlagFD0;                    // 0xFD0 - flag
-    u32 mFlagFD4;                    // 0xFD4 - flag
-    u8 _FD8[0x18];                   // 0xFD8 - padding to 0xFF0
+    void* mpController;                  // 0x00 - pointer to controller (vcalled)
+    void* field_04;                      // 0x04
+    void* field_08;                      // 0x08
+    cf::CActParamAnimGame mObj0C;        // 0x0C - embedded act-param object (ends 0x548)
+    s32 mTimer548;                       // 0x548 - signed countdown; reset to 150
+    s32 field_54C;                       // 0x54C
+    cf::CActParamAnimGame mActParams[2]; // 0x550 - two act-param objects (ends 0xFC8)
+    void* mSlotPtrA;                     // 0xFC8
+    void* mSlotPtrB;                     // 0xFCC
+    u32 mFlagFD0;                        // 0xFD0
+    u32 mFlagFD4;                        // 0xFD4
+    u8 _FD8[0x18];                       // 0xFD8 - padding to 0xFF0
 };
 
 // CModelDisp is not polymorphic in retail: the vtable pointer at +0x00 is a
@@ -47,9 +39,6 @@ public:
     f32 field_2FE0;              // 0x2FE0 - accumulator timer
     u8 field_2FE4;               // 0x2FE4
 };
-
-// Opaque forward decls used by the alpha vtable views above.
-struct CModelDispSub;
 
 // --- retail data symbols (imports; global scope keeps names unmangled) ---
 extern u32 lbl_eu_80535390[];     // CModelDisp vtable (.data)
@@ -81,14 +70,6 @@ struct CDispHolderWordView {
 // (was CDispVt40 here: fake +0x40 dispatch pad on the equipment param
 // objects. Retail slot +0x40 is CResLookup::isInUse (idx14); call sites
 // now use the owning class directly.)
-
-// --- C-linkage runtime helper and sub-object ctor/dtor (retail names) ---
-// The sub-object ctor/dtor are retail-named symbols (ModelDispConstructSub /
-// __dt__801FBF0C), not C++ member symbols; C linkage keeps the __construct_array
-// data relocs byte-identical to retail (same pattern as code_801C2C14.cpp).
-// (__construct_array itself is declared in CModelDispEquip.hpp.)
-extern "C" void* ModelDispConstructSub(CModelDispSub* sub);
-extern "C" u8* __dt__801FBF0C(CModelDispSub* obj, int flag);
 
 // C++-linkage helpers owned by kyoshin/CModelDisp.
 int ModelDispGetDoneFlag(void* self);

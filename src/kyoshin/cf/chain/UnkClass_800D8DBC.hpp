@@ -16,7 +16,7 @@ namespace cf {
         ~UnkClass_800D8DBC();
         void ChainTmr_Reset_D1A4();
 
-        u16 unk0;
+        s16 unk0; // retail reads are all lha (signed)
         u8 unk2[2];
         u32 unk4;
         u32 unk8;

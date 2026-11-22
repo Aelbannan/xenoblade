@@ -128,20 +128,9 @@ void MiniMapSetActiveFlag();
 // C++-linkage helper - retail emits the mangled form
 // SetWideLocAdjust__FPQ34nw4r3lyt8DrawInfo.
 
-// Flat pad-data view exposing only the flag words KizunagramHandleCharInput reads:
-// CPad::mPressedButtonFlags at +0x4 and CfPadData::mTurboPressButtonFlags at
-// +0x104 (see kyoshin/cf/CfPadData.hpp for the full layout).
-struct KizunaPadData {
-    u32 mPadHeldFlags;          // 0x00 - CPad::mHeldButtonFlags
-    u32 mPadPressedFlags;       // 0x04 - CPad::mPressedButtonFlags
-    u8 _pad[0xFC];              // 0x08-0x103 - rest of the pad data
-    u32 mTurboPressButtonFlags; // 0x104
-};
-extern "C" KizunaPadData* getCfPadData__Q22cf13CfGameManagerFv();
 
-// Data imports (MWCC does not mangle global-scope data names).
-extern u32 lbl_eu_806647E0;    // CMenuKizunagram singleton pointer (sbss)
-extern char lbl_eu_8050CAB8[]; // kizuna-gram string pool base
+// name-guess: 0x806647E0 is the sole CMenuKizunagram singleton slot.
+CMenuKizunagram* sKizunaInstance;
 extern u32 gmPauseFlags;    // global mode bitfield (bit 0x200000 = kizuna gate)
 
 
@@ -193,7 +182,7 @@ void CMenuKizunagram::Term() {
     CLoadTeardownLayout(loadOf(this));
     (fadeOf(this))->Unload();
 
-    lbl_eu_806647E0 = 0;
+    sKizunaInstance = 0;
     DecMenuCounter64080();
     if (code80135FDC_getByte_64080() == 0) {
         setPresentationFlag__Q22cf13CfGameManagerFv(0);
@@ -256,7 +245,7 @@ body:
     CFade_Update(fadeOf(this));
 }
 
-void CMenuKizunagram::cbRenderBefore() {
+void CMenuKizunagram::cbRenderBefore(CScn*) {
     CTaskGame::getInstance();
     if (CTaskGame::isFlag01Set() != 0) {
         return;
@@ -295,7 +284,7 @@ end:
 // of `parent`.
 // ---------------------------------------------------------------------------
 extern "C" CMenuKizunagram* KizunagramCreateSingleton(CProcess* parent, int a, int b) {
-    if (lbl_eu_806647E0 != 0) {
+    if (sKizunaInstance != 0) {
         return 0;
     }
 
@@ -306,9 +295,9 @@ extern "C" CMenuKizunagram* KizunagramCreateSingleton(CProcess* parent, int a, i
     // reuse r3 after the call instead of preserving `obj` in a callee-saved
     // register (retail keeps only 3 saved regs here).
     obj = new (obj) CMenuKizunagram(reinterpret_cast<CProcess*>(a), b);
-    lbl_eu_806647E0 = (u32)obj;
+    sKizunaInstance = obj;
     obj->Regist(parent, false);
-    return (CMenuKizunagram*)lbl_eu_806647E0;
+    return sKizunaInstance;
 }
 
 
@@ -484,7 +473,7 @@ void KizunagramAdvanceToPcWin(CMenuKizunagram* self) {
     if (self->mTitleAHelp.func_801C4124() != 0 &&
         kizChartOpen(&self->mSub98) != 0 &&
         KizunagramIsHidden(&self->mPcKizunagram) != 0) {
-        char* name = BdatTouchStringCell(lbl_eu_8050CAB8, lbl_eu_8050CAB8 + 0xb, 2);
+        char* name = BdatTouchStringCell("MNU_relate", "name", 2);
         self->mTitleAHelp.setNameText(name);
         self->mTitleAHelp.func_801C41E8(0x59);
         self->mTitleAHelp.reopenFromClose();
@@ -516,13 +505,13 @@ void KizunagramHandleCharInput(CMenuKizunagram* self) {
     if (KizunagramIsOpen((CPcKizunagram*)&self->mPcKizunagram) == 0) {
         return;
     }
-    KizunaPadData* pad = getCfPadData__Q22cf13CfGameManagerFv();
+    cf::CfPadData* pad = cf::CfGameManager::getCfPadData();
     // Declaration order drives MWCC's register colors (a before b);
     // assignment order below drives the load schedule.
     u32 a, b, f1, f2, f3, f4;
     if (cf::CfGameManager::isClassicController(-1) != 0) {
         u32 turbo = pad->mTurboPressButtonFlags;
-        u32 pressed = pad->mPadPressedFlags;
+        u32 pressed = pad->mPad.mPressedButtonFlags;
         f1 = !!(turbo & 0x8004);
         // 0x10008 = bit 16 | bit 3: MWCC splits the over-16-bit mask into
         // rlwinm + rlwimi, matching retail (cf. KizunagramDriveChart).
@@ -533,7 +522,7 @@ void KizunagramHandleCharInput(CMenuKizunagram* self) {
         a = (pressed >> 22) & 1;
     } else {
         u32 turbo = pad->mTurboPressButtonFlags;
-        u32 pressed = pad->mPadPressedFlags;
+        u32 pressed = pad->mPad.mPressedButtonFlags;
         f1 = !!(turbo & 0x8004);
         f2 = !!(turbo & 0x10008);
         f3 = !!(turbo & 0x2001);
@@ -567,7 +556,7 @@ void KizunagramHandleCharInput(CMenuKizunagram* self) {
 void KizunagramAdvanceToState7(CMenuKizunagram* self) {
     if (self->mTitleAHelp.func_801C4124() != 0 &&
         KizunagramIsOpen((CPcKizunagram*)&self->mPcKizunagram) != 0) {
-        char* name = BdatTouchStringCell(lbl_eu_8050CAB8, lbl_eu_8050CAB8 + 0xb, 1);
+        char* name = BdatTouchStringCell("MNU_relate", "name", 1);
         self->mTitleAHelp.setNameText(name);
         self->mTitleAHelp.func_801C41E8(kizChartStatus((UnkKizunaSelfCBCC*)&self->mSub98));
         self->mTitleAHelp.reopenFromClose();
@@ -588,4 +577,4 @@ void KizunagramReopenCharWindow(CMenuKizunagram* self) {
     }
 }
 
-extern "C" unsigned long KizunagramIsCreated(void) { return lbl_eu_806647E0 != 0; }
+extern "C" unsigned long KizunagramIsCreated(void) { return sKizunaInstance != 0; }

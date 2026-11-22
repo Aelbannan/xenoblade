@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include <harness_catalog.h>
+#include "libs/CriWare/src/sofdec/sfdcore/mpv/mpv_types.h"
 
 typedef struct MpvSjChunk {
     const u8* p;
@@ -33,9 +34,10 @@ typedef struct MpvSlice {
     void (*c60)(void*, void*);  /* 0xC60 */
     u8  padC64[0xC8C - 0xC64];
     s32 c8c;                    /* 0xC8C */
-    u8  padC90[0xCB4 - 0xC90];
-    s32 cb4[4];                 /* 0xCB4 */
-    u8  padCC4[0xCD8 - 0xCC4];
+    MpvMvPair fwdMv;            /* 0xC90 */
+    u8  padCB0[0xCB4 - 0xCB0];
+    MpvMvPair backMv;           /* 0xCB4 */
+    u8  padCD4[0xCD8 - 0xCD4];
     s32 cd8;                    /* 0xCD8 */
     s32 cdc;                    /* 0xCDC */
     s32 ce0;                    /* 0xCE0 */
@@ -170,8 +172,8 @@ void MPVSL_DecSliceOne(MpvSlice* self, void* sj, MpvSliceOut* out) {
         bitoff += 5;
     }
 
-    MPVDEC_ResetMv((u8*)self + 0xC90);
-    MPVDEC_ResetMv((u8*)self + 0xCB4);
+    MPVDEC_ResetMv(&self->fwdMv);
+    MPVDEC_ResetMv(&self->backMv);
     MPVDEC_ResetDc(self);
 
     /* Scan the slice payload: while the MSB is 1 consume 9 bits; a 0 bit

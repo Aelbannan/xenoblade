@@ -3,8 +3,6 @@
 #include <types.h>
 #include "kyoshin/cf/chain/CChainActor.hpp"
 
-extern "C" cf::CChainActorVtbl lbl_eu_80538458;
-
 struct EneChainObj;
 struct BattleActor;
 

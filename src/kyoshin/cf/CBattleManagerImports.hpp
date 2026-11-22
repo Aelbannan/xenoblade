@@ -148,9 +148,9 @@ struct BMSentinelView {
 
 // MapFx_ResolveOwner result view for CBattleMan_FindActorByKind: flags at +0x3F00 (bit 2 =
 
-// Absolute-offset view of an actor's embedded move sub-object (the C++ base
-// layout in CfObjectActor.hpp is 8 bytes off retail, so raw views pin the
-// offset; cf. CfActorField3F00 in CfObjectActor.hpp).
+// Absolute-offset view of an actor's embedded move sub-object (DEBT: the
+// CfObjectActor.hpp layout is correct - CfObjectMove sits at +0x3E9C - so
+// users should static_cast to cf::CfObjectMove instead of this view).
 struct ActorMoveSubView3E9C {
     u8 pad_00[0x3E9C];
     u8 sub3E9C;                 // +0x3E9C (move sub-object vptr)

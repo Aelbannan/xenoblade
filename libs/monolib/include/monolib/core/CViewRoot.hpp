@@ -10,8 +10,13 @@ class CView;
 class CDesktop;
 class CViewFrame;
 
+// name-guess: CViewRootPool (no RTTI; retail dtor us 0x80444A1C resets mUsed/mList).
 struct CViewRootPool {
     CViewRootPool(u32 capacity);
+    ~CViewRootPool() {
+        mUsed = 0;
+        mList = nullptr;
+    }
 
     bool empty() const { return mUsed == 0; }
     void pop() { if (!empty()) --mUsed; }

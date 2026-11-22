@@ -20,7 +20,6 @@ extern "C" u32 Tok_ParseFile(const char* path);
 extern u8* gLockBdatTable;      // lock-gimmick BDAT table (.sbss)
 extern u32 gCachedFldMapRow;     // cached fld-map row (mirror of 80664184)
 extern float lbl_eu_8066418C;   // fld-map cache float
-// .data block whose address is stored into lbl_eu_80664194 by the sinit.
 
 namespace cf{
 
@@ -118,22 +117,3 @@ namespace cf{
     };
 
 } //namespace cf
-
-// ---- static-initializer support (retail __sinit_\CfBdat_cpp) ----
-// The retail sinit initializes an anonymous 4-byte prototype object at
-// lbl_eu_80664194 (first word = address of the lbl_eu_8052E718 data block)
-// and stores the object's address into lbl_eu_80664190.  The inline ctor
-// lets MWCC emit the auto-sinit with the ctor body inlined (see CfBdat.cpp).
-extern "C" u32 lbl_eu_8052E718[34];
-extern void* lbl_eu_80664190;
-
-struct CfBdatSinitProto {
-    void* mData;   // +0x00: address of lbl_eu_8052E718
-
-    CfBdatSinitProto(){
-        mData = (void*)lbl_eu_8052E718;
-        lbl_eu_80664190 = this;
-    }
-};
-
-extern CfBdatSinitProto lbl_eu_80664194;

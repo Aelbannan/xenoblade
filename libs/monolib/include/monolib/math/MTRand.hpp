@@ -80,6 +80,7 @@ protected:
     u32 unk9D0;
 
 public:
+    MTRand();
     static MTRand* getInstance();
     void srand(u32);
     void nextMt();

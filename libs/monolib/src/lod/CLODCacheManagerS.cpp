@@ -386,12 +386,13 @@ s32 CLODCacheManagerS::findCutBinIdx()
     return 0;
 }
 
+#include "libs/monolib/src/lod/code_80468434.hpp"
+
 // ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
 // [.data] 0x8056D700-0x8056D71C (28B): LOD dispatch table. 8046374C/8046375C
 // are this TU's; the rest live in the sibling LOD TUs.
 extern "C" void setLodRotation__Q23LOD17UnkClass_8046368CFv();
 extern "C" void drawLodRecordExt__Q23LOD17UnkClass_804645CCFv();
-extern "C" void dispatchLodRecord__Q23LOD17UnkClass_80468434Fv();
 extern "C" void drawLodRecord__Q23LOD17UnkClass_804645CCFv();
 typedef void (*LODDispFn)(LOD::UnkClass_8046368C*);
 void (*sLodRecordDispatchTable[])(LOD::UnkClass_8046368C*) = {

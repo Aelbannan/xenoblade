@@ -6,7 +6,6 @@
 
 
 extern "C" {
-extern const char lbl_eu_80522500[]; // "(View)" - retail .rodata pool string
 void getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(ml::CRect16* rect,
                                                                    const CViewFrame* frame);
 // Vtable/RTTI targets referenced by the CProc data definitions below.
@@ -74,10 +73,10 @@ const void* lbl_eu_80663540[2] = { lbl_eu_805224E0, 0 };
 const char lbl_eu_805224C8[24] = {0x72,0x65,0x73,0x6C,0x69,0x73,0x74,0x3C,0x75,0x6E,0x73,0x69,0x67,0x6E,0x65,0x64,0x20,0x6C,0x6F,0x6E,0x67,0x3E,0x00,0x00};
 const char lbl_eu_805224E0[32] = {0x5F,0x72,0x65,0x73,0x6C,0x69,0x73,0x74,0x5F,0x62,0x61,0x73,0x65,0x3C,0x75,0x6E,0x73,0x69,0x67,0x6E,0x65,0x64,0x20,0x6C,0x6F,0x6E,0x67,0x3E,0x00,0x00,0x00,0x00};
 
-// lbl_eu_80522500 ("(View)", .rodata 0x7) is a pooled string-literal entry
-// emitted from pssCreateView's FixStr init below (retail is a pool entry too);
-// a named const definition would land in .sdata2 (7 bytes <= small-data limit)
-// instead of .rodata, so the pool entry is left as the definition.
+// pssCreateView's FixStr name is a plain string literal; MWCC pools it as
+// the TU's 7-byte rodata string entry. Retail has the same pooled entry,
+// and a named const definition would land in .sdata2 instead of .rodata,
+// so the natural literal is the faithful source shape.
 
 // Typed primary-vptr slot (CWorkThread at +0x0).
 struct CProcVptrView {
@@ -262,7 +261,7 @@ static inline ml::CRect16& pssMakeClientRectInline(
 }
 
 CView* CProc::pssCreateView(const char* pName, CWorkThread* pThread, int param3){
-    ml::FixStr<64> viewName = "(View)\0";
+    ml::FixStr<64> viewName = "(View)";
     PssCreateWalkFrame wf;
     viewName += pName;
     CView* view = CView::create(viewName.c_str(), pThread);

@@ -5,33 +5,33 @@
 #include "libs/CriWare/src/adx/adxt/adx_xpnd.h"
 
 void* memset(void* s, int c, size_t n);
-unsigned char lbl_eu_805E4F80[0x3C0];
-unsigned char lbl_eu_805E5340[8];
+ADXPD adxpd_obj[16];
+u32 adxpd_internal_error;
 void ADXPD_Init(void) {
-    memset(lbl_eu_805E4F80, 0, 0x3c0);
+    memset(adxpd_obj, 0, sizeof(adxpd_obj));
 }
 
 void* ADXPD_Create(void) {
-    u32* p = (u32*)lbl_eu_805E4F80;
+    ADXPD* p = adxpd_obj;
     s32 count = 0;
 
     while (count < 16) {
-        if (*p == 0)
+        if (p->inUse == 0)
             break;
-        p += 15;
+        p++;
         count++;
     }
     if (count == 16)
         return NULL;
     {
-        u8* slot = (u8*)lbl_eu_805E4F80 + count * 60;
-        memset(slot, 0, 60);
-        *(u32*)slot = 1;
-        *(u32*)(slot + 4) = (u32)count;
-        *(u32*)(slot + 8) = 0;
-        *(u32*)(slot + 12) = 0;
-        ADX_GetCoefficient((void*)500, (void*)44100, (void*)(slot + 48), (void*)(slot + 50));
-        memset(slot + 40, 0, 8);
+        ADXPD* slot = &adxpd_obj[count];
+        memset(slot, 0, sizeof(*slot));
+        slot->inUse = 1;
+        slot->index = (u32)count;
+        slot->field_0x08 = 0;
+        slot->stat = 0;
+        ADX_GetCoefficient((void*)500, (void*)44100, &slot->coef[0], &slot->coef[1]);
+        memset(&slot->dly, 0, 8);
         return slot;
     }
 }
@@ -163,7 +163,7 @@ void ADXPD_ExecHndl(ADXPD* self) {
             t = (r & 1) ^ sign;
             self->numBlk = r;
             if (t - sign == 1) {
-                *(u32*)lbl_eu_805E5340 = 1;
+                adxpd_internal_error = 1;
             }
         }
         self->stat = 3;

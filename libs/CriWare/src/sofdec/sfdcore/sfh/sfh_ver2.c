@@ -4,6 +4,8 @@
 #include <harness_catalog.h>
 #include <decomp.h>
 
+#include "libs/CriWare/src/sofdec/sfdcore/sfh/sfh_types.h"
+
 extern int SFHLOCAL_GetSizeofMember(int, int);
 extern int SFHLOCAL_GetNbyteB(const void *, int);
 extern u64 SFHLOCAL_GetNbyteB64(const void *, int);
@@ -11,14 +13,14 @@ extern int memcmp(const void *, const void *, unsigned long);
 extern void *memset(void *, int, unsigned long);
 extern void *memcpy(void *, const void *, unsigned long);
 extern char *strstr(const char *, const char *);
-__declspec(section ".rodata") __attribute__((aligned(8))) const char lbl_eu_8051CF00[32] = {
+__attribute__((aligned(8))) const char lbl_eu_8051CF00[32] = {
     0x53,0x6F,0x66,0x64,0x65,0x63,0x53,0x74,0x72,0x65,0x61,0x6D,0x32,0x20,0x20,0x20,
     0x20,0x20,0x20,0x20,0x20,0x20,0x20,0x20,0x00,0x56,0x65,0x72,0x2E,0x00,0x00,0x00
 };
 extern int SFH_AnlyNumElemAud(void *, int *);
 extern int SFH_AnlyNumElemVid(void *, int *);
 
-u8 *searchStmId(void *work, u32 stm_id) {
+u8 *searchStmId(SFHContext *work, u32 stm_id) {
     u8 *base;
     u8 *cur;
     u8 *found;
@@ -30,8 +32,8 @@ u8 *searchStmId(void *work, u32 stm_id) {
     u32 is_v2;
     int i;
 
-    base = ((u8 **)work)[1];
-    if (*(s32 *)((u8 *)work + 0x10) < 0xCA) {
+    base = work->header;
+    if ((s32)work->sfhVer < 0xCA) {
         is_v2 = 0;
         if (!SFH_AnlyNumElemAud(work, &n_aud)) {
             n_aud = 0x20;
@@ -113,7 +115,7 @@ done:
     return found;
 }
 
-int VER2_IsSfdHeader(void *work, int *out) {
+int VER2_IsSfdHeader(SFHContext *work, int *out) {
     char buf[0x40];
     char *sig;
     char *p;
@@ -128,15 +130,15 @@ int VER2_IsSfdHeader(void *work, int *out) {
 
     *out = 0;
     sig = (char*)lbl_eu_8051CF00;
-    if (memcmp(*(u8 **)((u8 *)work + 4) + 0x20, sig, 0x18) != 0) {
-        *(s32 *)work = -1;
+    if (memcmp(work->header + 0x20, sig, 0x18) != 0) {
+        work->state = -1;
         return 0;
     }
-    major = SFHLOCAL_GetNbyteB(*(u8 **)((u8 *)work + 4) + 0x38, SFHLOCAL_GetSizeofMember(0x38, 0x39));
-    minor = SFHLOCAL_GetNbyteB(*(u8 **)((u8 *)work + 4) + 0x39, SFHLOCAL_GetSizeofMember(0x39, 0x3A));
-    *(u32 *)((u8 *)work + 0x10) = (major << 8) | minor;
+    major = SFHLOCAL_GetNbyteB(work->header + 0x38, SFHLOCAL_GetSizeofMember(0x38, 0x39));
+    minor = SFHLOCAL_GetNbyteB(work->header + 0x39, SFHLOCAL_GetSizeofMember(0x39, 0x3A));
+    work->sfhVer = (major << 8) | minor;
     memset(buf, 0, 0x40);
-    memcpy(buf, *(u8 **)((u8 *)work + 4) + 0x40, 0x40);
+    memcpy(buf, work->header + 0x40, 0x40);
     t1 = 0;
     t2 = 0;
     p = strstr(buf, sig + 0x19);
@@ -183,12 +185,12 @@ int VER2_IsSfdHeader(void *work, int *out) {
     if (ok != 0) {
         v1 = t1;
         v2 = t2;
-        *(u32 *)((u8 *)work + 0xC) = (v1 << 8) | v2;
+        work->toolVer = (v1 << 8) | v2;
     }
-    major = SFHLOCAL_GetNbyteB(*(u8 **)((u8 *)work + 4) + 0x3A, SFHLOCAL_GetSizeofMember(0x3A, 0x3B));
-    minor = SFHLOCAL_GetNbyteB(*(u8 **)((u8 *)work + 4) + 0x3B, SFHLOCAL_GetSizeofMember(0x3B, 0x3C));
-    *(u32 *)((u8 *)work + 0x14) = (major << 8) | minor;
-    *(s32 *)work = 2;
+    major = SFHLOCAL_GetNbyteB(work->header + 0x3A, SFHLOCAL_GetSizeofMember(0x3A, 0x3B));
+    minor = SFHLOCAL_GetNbyteB(work->header + 0x3B, SFHLOCAL_GetSizeofMember(0x3B, 0x3C));
+    work->moduleVer = (major << 8) | minor;
+    work->state = 2;
     *out = 1;
     return 1;
 }
@@ -229,7 +231,7 @@ int VER2_IsEffFtrInf(void *work, int stm_id, u32 *out) {
     return r;
 }
 
-int VER2_AnlyHdrToolVer(void *work, u32 *out1, u32 *out2) {
+int VER2_AnlyHdrToolVer(SFHContext *work, u32 *out1, u32 *out2) {
     char buf[0x40];
     u32 t1;
     u32 t2;
@@ -240,7 +242,7 @@ int VER2_AnlyHdrToolVer(void *work, u32 *out1, u32 *out2) {
     *out1 = 0;
     *out2 = 0;
     memset(buf, 0, 0x40);
-    memcpy(buf, ((u8 **)work)[1] + 0x40, 0x40);
+    memcpy(buf, work->header + 0x40, 0x40);
     t1 = 0;
     t2 = 0;
     p = strstr(buf, lbl_eu_8051CF00 + 0x19);
@@ -290,25 +292,25 @@ int VER2_AnlyHdrToolVer(void *work, u32 *out1, u32 *out2) {
     *out2 = t2;
     return 1;
 }
-int VER2_AnlyHdrSfhVer(void* work, unsigned int* out1, unsigned int* out2) {
+int VER2_AnlyHdrSfhVer(SFHContext* work, unsigned int* out1, unsigned int* out2) {
     int sz;
     *out1 = 0;
     *out2 = 0;
     sz = SFHLOCAL_GetSizeofMember(0x38, 0x39);
-    *out1 = SFHLOCAL_GetNbyteB(*(char**)((char*)work + 4) + 0x38, sz);
+    *out1 = SFHLOCAL_GetNbyteB(work->header + 0x38, sz);
     sz = SFHLOCAL_GetSizeofMember(0x39, 0x3a);
-    *out2 = SFHLOCAL_GetNbyteB(*(char**)((char*)work + 4) + 0x39, sz);
+    *out2 = SFHLOCAL_GetNbyteB(work->header + 0x39, sz);
     return 1;
 }
 
-int VER2_AnlyHdrModuleVer(void* work, unsigned int* out1, unsigned int* out2) {
+int VER2_AnlyHdrModuleVer(SFHContext* work, unsigned int* out1, unsigned int* out2) {
     int sz;
     *out1 = 0;
     *out2 = 0;
     sz = SFHLOCAL_GetSizeofMember(0x3a, 0x3b);
-    *out1 = SFHLOCAL_GetNbyteB(*(char**)((char*)work + 4) + 0x3a, sz);
+    *out1 = SFHLOCAL_GetNbyteB(work->header + 0x3a, sz);
     sz = SFHLOCAL_GetSizeofMember(0x3b, 0x3c);
-    *out2 = SFHLOCAL_GetNbyteB(*(char**)((char*)work + 4) + 0x3b, sz);
+    *out2 = SFHLOCAL_GetNbyteB(work->header + 0x3b, sz);
     return 1;
 }
 
@@ -394,16 +396,16 @@ int VER2_AnlyMaxPicSiz(void *work, int *out) {
     return 1;
 }
 
-int VER2_AnlyDiffTime(void *work, u64 *out) {
+int VER2_AnlyDiffTime(SFHContext *work, u64 *out) {
     *out = 0;
-    if (*(s32 *)((u8 *)work + 0x10) < 0xCB) {
+    if ((s32)work->sfhVer < 0xCB) {
         return 0;
     }
-    *out = SFHLOCAL_GetNbyteB64(((u8 **)work)[1] + 0xE0, SFHLOCAL_GetSizeofMember(0xE0, 0xE8));
+    *out = SFHLOCAL_GetNbyteB64(work->header + 0xE0, SFHLOCAL_GetSizeofMember(0xE0, 0xE8));
     return 1;
 }
 
-int VER2_AnlyElemCodecAud(void *work, u32 stm_id, u32 *out) {
+int VER2_AnlyElemCodecAud(SFHContext *work, u32 stm_id, u32 *out) {
     u8 *f;
     int codec;
     u32 result;
@@ -415,7 +417,7 @@ int VER2_AnlyElemCodecAud(void *work, u32 stm_id, u32 *out) {
     }
     // For v2.0 headers (200) the codec lives in the high nibble, offset by 0x20.
     codec = SFHLOCAL_GetNbyteB(f + 0x1, SFHLOCAL_GetSizeofMember(0x1, 0x2));
-    if (*(s32 *)((u8 *)work + 0x10) == 0xC8) {
+    if ((s32)work->sfhVer == 0xC8) {
         codec = ((codec >> 4) & 0xF) + 0x20;
     }
     switch (codec) {
@@ -447,7 +449,7 @@ int VER2_AnlyElemCodecAud(void *work, u32 stm_id, u32 *out) {
     *out = result;
     return 1;
 }
-int VER2_AnlyElemLayer(void *work, u32 stm_id, u32 *out) {
+int VER2_AnlyElemLayer(SFHContext *work, u32 stm_id, u32 *out) {
     u8 *f;
     u32 layer;
     u32 result;
@@ -459,7 +461,7 @@ int VER2_AnlyElemLayer(void *work, u32 stm_id, u32 *out) {
     }
     // Layer byte doubles as codec for v2.0 headers (200): low nibble is the layer.
     layer = SFHLOCAL_GetNbyteB(f + 0x1, SFHLOCAL_GetSizeofMember(0x1, 0x2));
-    if (*(s32 *)((u8 *)work + 0x10) == 0xC8) {
+    if ((s32)work->sfhVer == 0xC8) {
         result = layer & 0xF;
     } else {
         switch (layer) {
@@ -508,7 +510,7 @@ int VER2_AnlyElemSmpHz(void *work, u32 stm_id, u32 *out) {
     return 1;
 }
 
-int VER2_AnlyElemCodecVid(void *work, u32 stm_id, u32 *out) {
+int VER2_AnlyElemCodecVid(SFHContext *work, u32 stm_id, u32 *out) {
     u8 *f;
     u32 codec;
 
@@ -519,7 +521,7 @@ int VER2_AnlyElemCodecVid(void *work, u32 stm_id, u32 *out) {
         return 0;
     }
     codec = SFHLOCAL_GetNbyteB(f + 1, SFHLOCAL_GetSizeofMember(1, 2));
-    if (*(s32 *)((u8 *)work + 0x10) == 0xC8) {
+    if ((s32)work->sfhVer == 0xC8) {
         codec = ((codec >> 4) & 0xF) + 0x40;
     }
     switch (codec) {

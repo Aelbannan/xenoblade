@@ -6,7 +6,7 @@
 #include "kyoshin/code_80135FDC_Lyt.hpp"
 #include "kyoshin/CUICfManager_Res.hpp"
 
-extern int lbl_eu_80663FA0;
+CMenuFade* spFadeMenu; // name-guess: only this TU owns the fade-menu pointer at 0x80663FA0
 
 extern "C" {
 extern char lbl_eu_804FDEA8[];  // String table: +0xa layout, +0x18 anim, +0x26 pane name
@@ -128,11 +128,11 @@ void CMenuFade::Term() {
         mLayout = 0;
     }
     mLayoutMem.deleteRegion();
-    lbl_eu_80663FA0 = 0;
+    spFadeMenu = 0;
 }
 
-extern "C" int getFadeMenu() {
-    return lbl_eu_80663FA0;
+extern "C" CMenuFade* getFadeMenu() {
+    return spFadeMenu;
 }
 extern "C" u8 isFadeActive(u8* pthis) {
     return ((CMenuFade*)pthis)->field_0x94;
@@ -144,8 +144,8 @@ extern "C" CMenuFade* __dt__9CMenuFadeFv(CMenuFade* self, int deleteFlag);
 extern "C" void fwdFadeDtor58(CMenuFade* p) {
     ((void(*)(CMenuFade*))__dt__9CMenuFadeFv)((CMenuFade*)((char*)p - 0x58));
 }
-extern "C" void cbRenderBefore__9CMenuFadeFv(void* self);
-extern "C" void fwdFadeCbRender5C(void* self) { ((void(*)(void*))cbRenderBefore__9CMenuFadeFv)((char*)self - 0x5c); }
+extern "C" void cbRenderBefore__9CMenuFadeFP4CScn(void* self);
+extern "C" void fwdFadeCbRender5C(void* self) { ((void(*)(void*))cbRenderBefore__9CMenuFadeFP4CScn)((char*)self - 0x5c); }
 extern "C" void fwdFadeDtor5C(void* arg0) {
     ((void(*)(CMenuFade*))__dt__9CMenuFadeFv)((struct CMenuFade*)((char*)arg0 - 0x5C));
 }

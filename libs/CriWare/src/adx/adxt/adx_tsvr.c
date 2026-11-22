@@ -3,7 +3,7 @@
 
 #include <harness_catalog.h>
 
-__declspec(section ".rodata") __attribute__((aligned(8))) char lbl_eu_80516A88[0x98] = "E8101201 adxt_trap_entry: not enough data\x00" "E9081001 adxt_stat_decinfo: can't play this number of channels\x00" "E02080842 adxt_ExecHndl: parameter error\x00";
+__attribute__((aligned(8))) const char lbl_eu_80516A88[0x98] = "E8101201 adxt_trap_entry: not enough data\x00" "E9081001 adxt_stat_decinfo: can't play this number of channels\x00" "E02080842 adxt_ExecHndl: parameter error\x00";
 
 // Forward declarations for external functions
 void ADXCRS_Enter(void);
@@ -88,6 +88,19 @@ typedef struct ADXT_Tsvr {
     u32 threshold;          // field_0xC0: threshold for decoded data length
 } ADXT_Tsvr;
 
+/**
+ * Sets the default format for a sound job descriptor.
+ *
+ * The SJD pointer is the second field of the server handle; the format is
+ * passed through to the SJD owner's two-argument API.
+ */
+void criware_eu_803878BC(ADXT_Tsvr* self, void* fmt) {
+    ADXCRS_Enter();
+    // DEBT(callcast): the SJD owner takes the format in r4 for this API.
+    ((void(*)(void*, void*))ADXSJD_SetDefFmt)(self->sjd, fmt);
+    ADXCRS_Leave();
+}
+
 // Opaque LSC state
 struct LSC_State;
 typedef struct LSC_State LSC_State;
@@ -124,23 +137,6 @@ void ADXT_ExecHndl(void* hndl) {
     ADXCRS_Leave();
 }
 
-/**
- * Sets the default format for a sound job descriptor.
- * 
- * The function extracts a base pointer from the struct at offset 4 and
- * passes it to ADXSJD_SetDefFmt along with a format parameter.
- * 
- * @param self Pointer to some ADXT struct containing a sound job descriptor pointer at offset 4
- * @param fmt Format parameter (passed to ADXSJD_SetDefFmt to match ABI)
- */
-void criware_eu_803878BC(void* self, void* fmt) {
-    ADXCRS_Enter();
-    // The retail ASM sets r4 before calling ADXSJD_SetDefFmt.
-    // Cast to force two-argument calling convention to match retail codegen.
-    ((void(*)(void*, void*))ADXSJD_SetDefFmt)(*(void**)((u8*)self + 4), fmt);
-    ADXCRS_Leave();
-}
-
 extern s32 ADXSJD_GetLpStartPos(void* sj);
 extern s32 ADXSJD_GetLpStartOfst(void* sj);
 extern s32 ADXSJD_GetLpEndPos(void* sj);
@@ -169,7 +165,7 @@ void adxt_trap_entry_lps(void* self) {
     ADXSJD_TakeSnapshot(sj);
     ADXSJD_SetTrapCnt(sj, 0);
     d = end - start;
-    *(u32*)((u8*)tsvr + 0x90) = (u32)d;
+    tsvr->field_0x90 = d;
     ADXSJD_SetTrapNumSmpl(sj, d);
     ADXSJD_SetTrapDtLen(sj, ofst);
     ADXSJD_SetDecPos(sj, start);
@@ -309,9 +305,8 @@ extern void ADXT_SetTranspose(ADXT_Tsvr* self, s32 type, s32 val);
 extern void ADXT_SetOutPan(ADXT_Tsvr* self, s32 chan, s16 pan);
 extern void ADXAMP_SetSfreq(ADXAMP_State* amp, s32 sfreq);
 extern void ADXERR_ItoA2(s32 val1, s32 val2, char* buf, s32 bufSize);
-extern void ADXERR_CallErrFunc2_(char* msg, char* buf);
-// Optional observer invoked once decode parameters are configured
-void (*lbl_eu_805E4F70)(ADXT_Tsvr* tsvr, s32 sfreq, s32 nchan, s32 total);
+extern void ADXERR_CallErrFunc2_(const char* msg, const char* buf);
+void (*adxt_enddecinfo_cbfn)(ADXT_Tsvr* tsvr, s32 sfreq, s32 nchan, s32 total);
 extern int ADXT_GetNumChan(ADXT_Tsvr* self);
 
 /**
@@ -437,8 +432,8 @@ void adxt_stat_decinfo(ADXT_Tsvr* tsvr) {
                 ADXRNA_SetStmHdInfo(tsvr->rna, ADXSJD_GetSpsdInfo(sjd));
             }
             ADXRNA_SetTransSw(tsvr->rna, 1);
-            if (lbl_eu_805E4F70 != NULL) {
-                lbl_eu_805E4F70(tsvr, sfreq, nchan, total);
+            if (adxt_enddecinfo_cbfn != NULL) {
+                adxt_enddecinfo_cbfn(tsvr, sfreq, nchan, total);
             }
         }
         tsvr->state = 2;
@@ -501,10 +496,9 @@ void adxt_stat_prep(ADXT_Tsvr* self) {
     self->flag_0x73 = 0;
 }
 
-// Global variables referenced in ASM (likely debug/communication)
-// These need to be declared for proper linking
-u32 lbl_eu_805E4F74;
-u32 lbl_eu_805E4F78;
+// Debug mirrors of the playing-state channel scan.
+u32 adxt_dbg_nch;
+u32 adxt_dbg_ndt;
 
 /**
  * Handles streaming playback state machine for ADXT.
@@ -613,7 +607,7 @@ void adxt_stat_playing(ADXT_Tsvr* self) {
     if (stat == 3) {
         // Get number of channels
         int numChan = ADXSJD_GetNumChan(self->sjd);
-        lbl_eu_805E4F74 = numChan;  // Store to global (debug/communication)
+        adxt_dbg_nch = numChan;  // Store to global (debug/communication)
         
         // Iterate through channel array
         int i;
@@ -622,7 +616,7 @@ void adxt_stat_playing(ADXT_Tsvr* self) {
             
             // Call virtual function at vtable offset 0x24 (func_0x24)
             int result = chanObj->vtable->func_0x24(chanObj, 1);
-            lbl_eu_805E4F78 = result;  // Store to global (debug/communication)
+            adxt_dbg_ndt = result;  // Store to global (debug/communication)
             
             // If result >= 0x40, break early (channel needs attention)
             if (result >= 0x40) {
@@ -642,10 +636,9 @@ void adxt_stat_playing(ADXT_Tsvr* self) {
     criware_80385320(self);
 }
 
-// Error message data referenced by the null-handle error path
-
-u32 lbl_eu_805E4F7C;
-extern int ADXERR_CallErrFunc1_(char* msg);
+// Last ring-buffer data count recorded by the state-4 handler.
+u32 adxt_dbg_rna_ndata;
+extern void ADXERR_CallErrFunc1_(const char* msg);
 extern int ADXT_GetStat(ADXT_Tsvr* self);
 extern int ADXSTM_GetStat(ADXSTM_State* stm);
 extern int LSC_GetStat(LSC_State* lsc);
@@ -675,7 +668,7 @@ void adxt_ExecHndl(ADXT_Tsvr* hndl) {
     } else if (hndl->state == 4) {
         // All stream data consumed: record final size, and once the ring
         // buffer drains, stop playback and move to the end state.
-        lbl_eu_805E4F7C = ADXRNA_GetNumData(hndl->rna);
+        adxt_dbg_rna_ndata = ADXRNA_GetNumData(hndl->rna);
         if ((int)ADXRNA_GetNumData(hndl->rna) <= 0) {
             ADXRNA_SetPlaySw(hndl->rna, 0);
             hndl->state = 5;

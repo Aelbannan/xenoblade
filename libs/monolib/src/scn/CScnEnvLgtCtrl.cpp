@@ -2565,21 +2565,11 @@ extern "C" void scnLgtStartFlash(CScnEnvLgtCtrl* self, int slot, int dir, float 
 }
 
 
-extern "C" void scnLgtGetFogCount(void* self, unsigned int* out) {
-    struct SelfStruct {
-        char pad[0x40];
-        void* ptr;
-    };
-    SelfStruct* s = static_cast<SelfStruct*>(self);
-    void* subPtr = s->ptr;
-    if (subPtr == nullptr) return;
-    struct SubStruct {
-        unsigned short flags;
-        unsigned short value;
-    };
-    SubStruct* sub = static_cast<SubStruct*>(subPtr);
-    if (!(sub->flags & 1)) return;
-    *out = sub->value;
+extern "C" void scnLgtGetFogCount(CScnEnvLgtCtrl* self, unsigned int* out) {
+    CScnEnvLgtCtrlFogGate* gate = self->alt2.field_0x40;
+    if (gate == nullptr) return;
+    if (!(gate->mFlags & 1)) return;
+    *out = gate->mFogCount;
 }
 
 // scnLgtSetSlotBits (us-804c9efc): set/clear one of two light-control flag bits

@@ -5,8 +5,7 @@
 extern const f64 lbl_eu_8066A148;  // 0x4330000080000000 (signed int->f32 magic)
 extern const f64 lbl_eu_8066A158;  // 0x4330000000000000 (2^52, unsigned u32->f32 magic)
 unsigned char lbl_eu_80653EA8[0x10] __attribute__((aligned(8)));
-nw4r::ut::CharWriter::LoadingTexture lbl_eu_80653EB8 __attribute__((aligned(8)));
-#define mLoadingTexture lbl_eu_80653EB8
+nw4r::ut::CharWriter::LoadingTexture nw4r::ut::CharWriter::mLoadingTexture;
 
 // int -> f32 conversion matching retail: plain builtin cast. Retail rounds
 // single (fsubs against the shared signed magic); the manual union form makes

@@ -17,6 +17,7 @@
 // pattern as CMenuArtsSet.cpp's artsFAD0View.
 #include "kyoshin/cf/CfBdat.hpp"
 #include "kyoshin/cf/CItem.hpp"
+#include "kyoshin/cf/CfObjectEnumList.hpp"
 #include "kyoshin/harness_catalog.hpp"
 #include "monolib/lib/CLibLayout.hpp"
 #include "kyoshin/CPassiveSkill.hpp"
@@ -26,6 +27,7 @@
 #include "kyoshin/cf/CtrlObjectParam.hpp"
 #include "monolib/util/MemManager.hpp"
 #include "monolib/device/CDeviceFont.hpp"
+#include "monolib/device/CDeviceFile.hpp"
 #include "monolib/lib.hpp"
 extern "C" void writePanePos(nw4r::lyt::Pane*, float*);
 extern "C" void TagCopyVec2f(float* dst, float* src);
@@ -283,7 +285,7 @@ extern "C" void CPassiveSkillInfo_init(UI_CPassiveSkillInfo* self) {
                   &lbl_eu_8050DC20[0x111]);
     // Bind the font handle into the layout's root pane.
     nw4r::lyt::Pane* rootPane = self->field_8->GetRootPane();
-    CDeviceFontInfo* font = static_cast<CDeviceFontInfo*>(CDeviceFont::getFontInfo(1, self->field_8));
+    IDeviceFontInfo* font = static_cast<IDeviceFontInfo*>(CDeviceFont::getFontInfo(1, self->field_8));
     ApplyFontToTxtPanes(rootPane, font->getFont());
     u32 textVal = (u32)CUICfManager_getPackedFont9C();
     if (textVal != 0) {
@@ -2793,7 +2795,7 @@ void CPassiveSkillLine_updateLearnGrid(UI::CPassiveSkillLine* self) {
                     GXColorS10* col1 = setGXColorS10(&c1, 0, 0, 0, fs3.a);
                     GXColorS10* col2 = setGXColorS10(&c2, 0, 0, 0, fs1.a);
                     PaneMatSetTevColors(pane2, col2, col1);
-                    reinterpret_cast<CPSkillPaneB8*>(pane2)->field_B8 = 0xa0;
+                    pane2->SetAlpha(0xa0);
                 }
             }
             sprintf(bufB, "pic_curs_sl%02d_%02d", rowP1, i);
@@ -3228,14 +3230,14 @@ u8 CPassiveSkillLine_isOccupied(UI::CPassiveSkillLine* self) {
 // scene-name table and clear the first matching CfObjectMove.
 void CPassiveSkillLine_syncEquipState(UI::CPassiveSkillLine* self) {
     u8 charId = GetCollectedFlagByte(self->field_F3);
-    CPSkillCharData* data =
-        reinterpret_cast<CPSkillCharData*>(CtrlObjectParam_GetCharEntry(charId));
+    cf::CtrlObjectParamEntry* data =
+        reinterpret_cast<cf::CtrlObjectParamEntry*>(CtrlObjectParam_GetCharEntry(charId));
     s16 ids[5];
-    ids[0] = data->equip4;
-    ids[1] = data->equip5;
-    ids[2] = data->equip6;
-    ids[3] = data->equip7;
-    ids[4] = data->equip8;
+    ids[0] = data->shortArr[0];
+    ids[1] = data->shortArr[1];
+    ids[2] = data->shortArr[2];
+    ids[3] = data->shortArr[3];
+    ids[4] = data->shortArr[4];
     CPSkillCatFilter cats;
     cats.w.word = lbl_eu_80668934;
     cats.w.byte4 = lbl_eu_80668938;
@@ -3288,7 +3290,7 @@ void CPassiveSkillLine_syncEquipState(UI::CPassiveSkillLine* self) {
         names[2] = *src++;
         CfEnumListHolder holder;
         startEnumObjects(holder.get(), names[(s8)self->field_F3], 0);
-        if (((CPSkillEnumListCount*)holder.get())->count >= 1) {
+        if (holder.get()->mPtrCount >= 1) {
             CPSkillEnumListSlot* slot = getEntryAt(holder.get(), 0);
             cf::CfObjectMove* move = slot->move;
             if (move != 0) {
@@ -3450,9 +3452,7 @@ UI::CPassiveSkill::~CPassiveSkill() {}
 
 // Callee declarations (retail plain/mangled names; also declared in
 // CArtsInfo.hpp / CCollepedia.hpp for their TUs).
-extern "C" void* readFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, const char*, void*, int, int);
 extern "C" u32 KyoshinHeap_GetField44();
-extern "C" void* readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, const char*, void*, int, int);
 extern "C" void __dt__7CSysWinFv(void*, int);
 
 // Skill-data load + learned-flag sweep (retail CPassiveSkill_loadSkillData): load the two
@@ -3461,11 +3461,12 @@ extern "C" void __dt__7CSysWinFv(void*, int);
 // split each grid entry via FetchRelatePair and set the learned bit of the
 // entry's 32 per-slot records in the char-data learn table at +0x3534.
 extern "C" void CPassiveSkill_loadSkillData(UI::CPassiveSkill* self) {
-    self->field_18 = (u32)readFile__11CDeviceFileFUlPCcP10IWorkEventii(
-        (u32)mtl::MemManager::getHandleMEM2(), "menu/jp/PassiveSkill.arc",
-        (void*)self, 0, 0);
-    self->field_1C = (u32)readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii(
-        KyoshinHeap_GetField44(), "common/jp/bdat_menu_psv.bin", (void*)self, 0, 0);
+    self->field_18 = (u32)CDeviceFile::readFile(
+        (mtl::ALLOC_HANDLE)mtl::MemManager::getHandleMEM2(), "menu/jp/PassiveSkill.arc",
+        (IWorkEvent*)self, 0, 0);
+    self->field_1C = (u32)CDeviceFile::readCommonArchiveFile(
+        (mtl::ALLOC_HANDLE)KyoshinHeap_GetField44(), "common/jp/bdat_menu_psv.bin",
+        (IWorkEvent*)self, 0, 0);
 
     u8 tempW[0x3C];
     __ct__7CSysWinFUc(reinterpret_cast<CSysWin*>(tempW), 2);
@@ -3923,7 +3924,6 @@ extern "C" void func_8026DB64() {}
 
 // Callee declarations (retail plain/mangled names; also declared in
 // CEquipItemBox.hpp / CCollepedia.hpp for their TUs).
-extern "C" bool Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(nw4r::lyt::ArcResourceAccessor*, void*, const char*);
 class CEventFile;
 
 // UI::CPassiveSkill file-event handler (retail
@@ -3947,9 +3947,8 @@ extern "C" int OnFileEvent__13CPassiveSkillFP10CEventFile(UI::CPassiveSkill* sel
         *(void**)((u8*)fh + 4) = 0;
         mtl::MemManager::setMemInitFlag(false);
         self->field_20 = (u32)CLibLayout::createArcResourceAccessor();
-        Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(
-            (nw4r::lyt::ArcResourceAccessor*)self->field_20, buf,
-            &lbl_eu_8050DC20[0xa20]);
+        ((nw4r::lyt::ArcResourceAccessor*)self->field_20)->Attach(
+            buf, &lbl_eu_8050DC20[0xa20]);
 
         // Direct-init the temp via the retail accessor ctor (a default-constructed
         // temp would emit an extra CPassiveSkillInfo ctor call).

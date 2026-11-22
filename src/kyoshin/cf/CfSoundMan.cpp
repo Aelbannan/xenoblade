@@ -68,12 +68,12 @@ CfSoundManGlobal* __ct__801BF76C(CfSoundManGlobal* self) {
 }
 
 // Deleting destructor for the sound-slot record (CfSoundRecord): destroys the
-// embedded SoundArchivePlayer and MemorySoundArchive (non-deleting, flag -1),
-// then frees the record when the delete flag is set.
+// embedded SoundArchivePlayer and MemorySoundArchive (qualified calls: direct,
+// non-virtual, flag -1), then frees the record when the delete flag is set.
 void* __dt__801BF80C(CfSoundRecord* _this, int flags) {
     if (_this != NULL) {
-        __dt__Q34nw4r3snd18SoundArchivePlayerFv(&_this->mArchivePlayer, -1);
-        __dt__Q34nw4r3snd18MemorySoundArchiveFv(&_this->mArchive, -1);
+        _this->mArchivePlayer.nw4r::snd::SoundArchivePlayer::~SoundArchivePlayer();
+        _this->mArchive.nw4r::snd::MemorySoundArchive::~MemorySoundArchive();
         if (flags > 0) {
             operator delete(_this);
         }
@@ -269,8 +269,8 @@ u32 cf::CfSoundMan::playActorSound(u32 idx, u32 a, u32 b, u32 c, float volume) {
                 if (scn == 0) {
                     goto skipScale;
                 }
-                CfSndCamView* view = (CfSndCamView*)Scn_QueryUnk80State((CScn*)scn);
-                volume = volume * (1.0f - view->field_0x0C);
+                ScnFadeColor* view = Scn_QueryUnk80State((CScn*)scn);
+                volume = volume * (1.0f - view->field_0C);
             }
         skipScale:;
         }
@@ -512,7 +512,7 @@ extern "C" void CfSoundMan_InitSlotState(CfSoundSlot* slot) {
     slot->mSound = 0;
     slot->mId = 0xFFFF;
     slot->mSoundId = 0;
-    slot->field_0x18 = lbl_eu_80667E98;
+    slot->field_0x18 = 30.0f;
     slot->field_0x1C = lbl_eu_80667E9C;
     slot->field_0x2A = 0;
     slot->field_0x2C = 0;
@@ -700,8 +700,7 @@ extern "C" void CfSoundMan_UpdateSlot(CfSoundSlot* slot) {
                     if (scn != 0) {
                         vol = vol *
                               (1.0f -
-                               ((CfSndCamView*)Scn_QueryUnk80State((CScn*)scn))
-                                   ->field_0x0C);
+                               Scn_QueryUnk80State((CScn*)scn)->field_0C);
                     }
                     if (slot->mSound != 0) {
                         slot->mSound->SetVolume(vol * slot->field_0x1C, 0);

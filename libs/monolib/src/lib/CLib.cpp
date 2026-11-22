@@ -39,25 +39,13 @@ CLib* CLib::getInstance(){
     return spInstance;
 }
 
-// Mirrors CMsgParam<8>::find's ring walk (the template definition in the
-// shared header carries __declspec(noinline) for CWorkRoot.cpp's out-of-line
-// shape, which suppresses the retail-inlined scan here). -inline auto folds
-// this single-call static into the TU-local isRunning() so isInitialized
-// reproduces the retail walk shape (inst=r6 / index=r7, no bl).
-// Layout from the queue base: vptr@0x0, mEntries[8]@0x4 (8 x 36B),
-// mArrayPtr@0x124, mFront@0x128, mSize@0x12C, mCapacity@0x130.
-struct ClibMsgQueueView {
-    IWorkEventVtbl* vptr;       // 0x00
-    u8 entries[0x120];          // 0x04..0x123
-    CMsgParamEntry* mArrayPtr;  // 0x124
-    u32 mFront;                 // 0x128
-    u32 mSize;                  // 0x12C
-    u32 mCapacity;              // 0x130
-};
-
-static int ClibFindException(const ClibMsgQueueView* q, u32 msg) {
-    for (int i = 0; i < q->mSize; i++) {
-        if (q->mArrayPtr[(q->mFront + i) % q->mCapacity].command == msg) {
+// Retail inlines CMsgParam<8>::find here (CWorkRoot.cpp keeps the strong
+// out-of-line definition). The explicit specialization walks the real ring
+// members and lets -ipa fold the scan into isInitialized.
+template <>
+inline int CMsgParam<8>::find(u32 msg) const {
+    for (int i = 0; i < mRing.mSize; i++) {
+        if (mRing.mArrayPtr[(mRing.mFront + i) % mRing.mCapacity].command == msg) {
             return i;
         }
     }
@@ -74,7 +62,7 @@ inline bool CWorkThread::isRunning() const {
     if (mFlags & THREAD_FLAG_EXCEPTION) {
         exception = true;
     } else {
-        exception = ClibFindException((const ClibMsgQueueView*)&mMsgQueue, EVT_EXCEPTION) >= 0;
+        exception = mMsgQueue.find(EVT_EXCEPTION) >= 0;
     }
 
     bool result = false;

@@ -160,9 +160,10 @@ extern "C" void Chain_ClearAll(cf::CChainActorList* self){
 extern "C" void Chain_SweepDeadActors(cf::CChainActorList* self){
     _reslist_node<cf::CChainActor*>* node = self->mChainActorList.mStartNodePtr->mNext;
     while (node != self->mChainActorList.mStartNodePtr) {
-        u32 base = node->mItem->unk0;
-        if (base != 0) base += 0x3e9c;
-        if (lookupWorkAtAddr((void*)base) == 0) {
+        cf::CChainBattleObj* obj0 = node->mItem->unk0;
+        void* base = obj0;
+        if (base != 0) base = &obj0->mSub;
+        if (lookupWorkAtAddr(base) == 0) {
             cf::CChainActor* actor = node->mItem;
             actor->CChainActor_ClearTargetRef();
             // Pass the node's own item slot so the inlined remove compares
@@ -299,7 +300,7 @@ extern "C" int Chain_RemoveActor(cf::CChainActorList* self, u32 key) {
     _reslist_node<cf::CChainActor*>* node = head->mNext;
     while (node != head) {
         cf::CChainActor* actor = node->mItem;
-        if (key == actor->unk0) {
+        if (key == (u32)actor->unk0) {
             actor->CChainActor_ClearTargetRef();
             // Pass the node's own item slot: the inlined remove re-reads
             // node->mItem each iteration (retail keeps the node in r31).
@@ -365,7 +366,7 @@ extern "C" void Chain_MergeList(cf::CChainActorList* self, cf::CChainList* list)
     cf::CChainList* l = list;
     for (int i = 0; i < (int)l->mCount; i++) {
         cf::CChainActor* actor = (i < (int)list->mCount) ? list->mActors[i] : 0;
-        if (findActorForBB4C(actor->unk0, self) == 0)
+        if (findActorForBB4C((u32)actor->unk0, self) == 0)
             Chain_InsertOrdered(self, actor);
     }
     ChainList_Clear(list);
@@ -386,7 +387,7 @@ static cf::CChainActor* findActorByTarget(u32 key, cf::CChainActorList* self) {
                    end = self->mChainActorList.end();
          it != end; ++it) {
         cf::CChainActor* x = *it;
-        if (key == x->unk0) return x;
+        if (key == (u32)x->unk0) return x;
     }
     return 0;
 }
@@ -463,7 +464,7 @@ static cf::CChainActor* searchActorByHead(_reslist_node<cf::CChainActor*>* head,
                                           u32 key) {
     _reslist_node<cf::CChainActor*>* node = head->mNext;
     while (node != head) {
-        if (key == node->mItem->unk0) return node->mItem;
+        if (key == (u32)node->mItem->unk0) return node->mItem;
         node = node->mNext;
     }
     return 0;
@@ -479,7 +480,7 @@ static cf::CChainActor* findActorForBB4C(u32 key, cf::CChainActorList* self) {
                    end = self->mChainActorList.end();
          it != end; ++it) {
         cf::CChainActor* x = *it;
-        if (key == x->unk0) return x;
+        if (key == (u32)x->unk0) return x;
     }
     return 0;
 }
@@ -513,7 +514,7 @@ static cf::CChainActor* findActorForKey(cf::CChainActorList* self, u32 key) {
                    end = self->mChainActorList.end();
          it != end; ++it) {
         cf::CChainActor* x = *it;
-        if (key == x->unk0) return x;
+        if (key == (u32)x->unk0) return x;
     }
     return 0;
 }
@@ -721,9 +722,10 @@ extern "C" void ChainList_SweepDead(cf::CChainList* self){
     int i = 0;
     while (i < (int)self->mCount) {
         p = &self->mActors[i];
-        u32 base = (*p)->unk0;
-        if (base != 0) base += 0x3e9c;
-        if (lookupWorkAtAddr((void*)base) == 0) {
+        cf::CChainBattleObj* obj0 = (*p)->unk0;
+        void* base = obj0;
+        if (base != 0) base = &obj0->mSub;
+        if (lookupWorkAtAddr(base) == 0) {
             cf::CChainActor* actor = *p;
             actor->CChainActor_ClearTargetRef();
             if ((int)self->mCount - i - 1 > 0) {
@@ -759,7 +761,7 @@ extern "C" __declspec(noinline) void ChainList_PushBack(cf::CChainList* self, cf
 // Removes the actor whose unk0 matches @p key (if any); returns whether found.
 extern "C" int ChainList_RemoveKey(cf::CChainList* self, u32 key){
     for (int i = 0; i < (int)self->mCount; i++) {
-        if (self->mActors[i]->unk0 == key) {
+        if ((u32)self->mActors[i]->unk0 == key) {
             cf::CChainActor** p = &self->mActors[i];
             cf::CChainActor* actor = self->mActors[i];
             actor->CChainActor_ClearTargetRef();
@@ -868,7 +870,7 @@ extern "C" int ChainList_HasCount(cf::CChainList* self, int key) {
 // Returns the list entry whose first u32 field matches @p key.
 extern "C" cf::CChainActor* ChainList_FindKey(cf::CChainList* self, u32 key) {
     for (int i = 0; i < (int)self->mCount; i++) {
-        if (self->mActors[i]->unk0 == key)
+        if ((u32)self->mActors[i]->unk0 == key)
             return self->mActors[i];
     }
     return 0;

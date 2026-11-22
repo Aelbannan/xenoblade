@@ -2,14 +2,14 @@
 
 #include <harness_catalog.h>
 
-const unsigned int lbl_eu_8051C2A8[4] = {0, 0, 0, 0}; // .rodata 0x10 at 0x8051C2A8
+const unsigned int mpvmc_oneref1p_func_table[4] = {0, 0, 0, 0}; // .rodata 0x10 at 0x8051C2A8
 
 void MPVMC08_Init(void *dst_param) {
     unsigned int *dst = (unsigned int *)dst_param;
-    dst[0] = lbl_eu_8051C2A8[0];
-    dst[1] = lbl_eu_8051C2A8[1];
-    dst[2] = lbl_eu_8051C2A8[2];
-    dst[3] = lbl_eu_8051C2A8[3];
+    dst[0] = mpvmc_oneref1p_func_table[0];
+    dst[1] = mpvmc_oneref1p_func_table[1];
+    dst[2] = mpvmc_oneref1p_func_table[2];
+    dst[3] = mpvmc_oneref1p_func_table[3];
 }
 
 /* Motion compensation params: 0x18 = dst, 0x20 = stride, 0x24/0x28 = srcs */

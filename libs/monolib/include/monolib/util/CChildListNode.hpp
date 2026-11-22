@@ -9,7 +9,7 @@ class CChildListNode;
 List containing nodes designated as children
 */
 template <typename T>
-class __declspec(novtable) TChildListHeader : private CDoubleListHeader {
+class TChildListHeader : private CDoubleListHeader {
 private:
     //Many methods delegate to the implementation
     typedef CDoubleListHeader Base;
@@ -71,15 +71,13 @@ public:
 Children-list node
 */
 // Retail vtables (monolibdata1d.s @0x8056BBA0 = CChildListNode,
-// @0x8056BBB0 = TChildListHeader<CChildListNode>); the classes are
-// __declspec(novtable) so this TU emits no local vtables; the ctor assigns
-// the retail labels explicitly (CDoubleListNode.cpp pattern). The retail
-// TChildListHeader ctor is trivial (bss zero-init covers Reset), so the
-// ctor is omitted and Reset is issued from the owning ctor's body.
-extern "C" void* lbl_eu_8056BBA0[];
-extern "C" void* lbl_eu_8056BBB0[];
+// @0x8056BBB0 = TChildListHeader<CChildListNode>); the real classes now
+// emit their own vtables and vptr stores in this TU, so no retail label
+// needs to be spelled in source (CDoubleListNode.cpp pattern). The
+// TChildListHeader ctor sets its vptr before Reset from its base, matching
+// the retail CChildListNode constructor.
 
-class __declspec(novtable) CChildListNode : public CDoubleListNode {
+class CChildListNode : public CDoubleListNode {
 private:
     typedef TChildListHeader<CChildListNode> ChildrenType;
 

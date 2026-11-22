@@ -215,7 +215,7 @@ void tboxState0Tick(UnkCode8027513C* self) {
                     if (ptr != nullptr) {
                         ptr += 0x10;
                     }
-                    ((CfObjectEffB0*)eff)->field_0xB0 = ptr;
+                    eff->mFieldB0 = ptr;
 
                     self->field_0x74 = eff;
                     bindPartnerO_((cf::CfObjectEff*)eff, (u8*)self->field_0x14, (u8*)0);
@@ -273,7 +273,7 @@ void tboxState1Tick(UnkCode8027513C* self) {
     if (ptr != nullptr) {
         ptr += 0x10;
     }
-    ((CfObjectEffB0*)eff)->field_0xB0 = ptr;
+    eff->mFieldB0 = ptr;
     
     self->field_0x74 = eff;
     bindPartnerO_((cf::CfObjectEff*)eff, (u8*)self->field_0x14, (u8*)0);
@@ -307,8 +307,8 @@ void CfObjectImplTbox_Reset(UnkCode8027513C* ptr) {
 
 extern "C" void func_80275824(UnkCode8027513C* self) {
     if (self->field_0x74 == 0) return;
-    *(u32*)((u8*)self->field_0x74 + 0xB0) = 0;
-    *(u32*)((u8*)self->field_0x74 + 0x68) |= 0x40;
+    self->field_0x74->mFieldB0 = 0;
+    self->field_0x74->mFlags68 |= 0x40;
     self->field_0x74 = 0;
 }
 
@@ -370,7 +370,7 @@ void tboxUpdateAll(UnkCode8027513C* self) {
 extern "C" void CfObjectImplMoveClearLinkIfMatch();
 extern "C" void CfObjectImplTbox_ReleaseLink(void* self, void* other) {
     if (other == ((UnkCode8027513C*)self)->field_0x74) {
-        ((CfObjectEffB0*)other)->field_0xB0 = 0;
+        ((cf::CfObjectEff*)other)->mFieldB0 = 0;
         ((UnkCode8027513C*)self)->field_0x74 = 0;
     }
     CfObjectImplMoveClearLinkIfMatch();

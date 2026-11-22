@@ -23,7 +23,7 @@
 // by the definitions in this TU). extern "C" keeps the `__dt__`-prefixed
 // names unmangled so the thunk tail-call relocs match retail.
 extern "C" void __dt__16CMenuBattleCommuFv(void*, int);
-extern "C" void cbRenderBefore__16CMenuBattleCommuFv(void*);
+extern "C" void cbRenderBefore__16CMenuBattleCommuFP4CScn(void*);
 
 CMenuBattleCommu* spMenuBattleCommuInstance = 0;
 
@@ -240,7 +240,7 @@ void CMenuBattleCommu::Move() {}
 // Draw callback: guard against task/event/busy states, verify the player is
 // in battle, then draw the layout with Z-testing disabled.
 // ---------------------------------------------------------------------------
-void CMenuBattleCommu::cbRenderBefore() {
+void CMenuBattleCommu::cbRenderBefore(CScn*) {
     CTaskGame::getInstance();
     // OR-combined guard: MWCC emits the second disjunct as the unreduced
     // `beq cont; b exit` pair (retail shape, MWCC_CASES RFCOMM OR-guard).
@@ -613,6 +613,6 @@ void battleCommuAdvanceAnim80(CMenuBattleCommu* self) {
 
 void battleCommuDtorThunk58(void* self) { ((void(*)(void*))__dt__16CMenuBattleCommuFv)((char*)self - 0x58); }
 
-void battleCommuRenderBeforeThunk(void* self) { ((void(*)(void*))cbRenderBefore__16CMenuBattleCommuFv)((char*)self - 0x5c); }
+void battleCommuRenderBeforeThunk(void* self) { ((void(*)(void*))cbRenderBefore__16CMenuBattleCommuFP4CScn)((char*)self - 0x5c); }
 
 void battleCommuDtorThunk5C(void* self) { ((void(*)(void*))__dt__16CMenuBattleCommuFv)((char*)self - 0x5c); }

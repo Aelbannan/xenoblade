@@ -131,7 +131,7 @@ const char* CDeviceFontInfoExt::getCharGlyph(const char* pStr, void** ppTexture,
     work.srcLen = strlen(work.src);
     ENCConvertStringUtf8ToUtf16(work.dest, &work.destLen, (const u8*)work.src, &work.srcLen);
 
-    nw4r::ut::Font* font = reinterpret_cast<nw4r::ut::Font*>(reinterpret_cast<u8*>(this) + 0x1C);
+    nw4r::ut::Font* font = CDeviceFontInfoExt::getFont();
     font->GetGlyph(&work.glyph, work.dest[0]);
 
     *pCellX = work.glyph.cellX;
@@ -145,7 +145,10 @@ const char* CDeviceFontInfoExt::getCharGlyph(const char* pStr, void** ppTexture,
     work.widths[2] = cw;
     return pStr;
 }
-extern "C" void create__18CDeviceFontInfoExtFv() {}
+CDeviceFontInfoExt* CDeviceFontInfoExt::create() {
+    CDeviceFont* font = CDeviceFont::getInstance();
+    return new (font->mAllocHandle) CDeviceFontInfoExt();
+}
 
 extern "C" void __ct__Q34nw4r2ut10PackedFontFv(void* self);
 extern "C" void Destroy__Q34nw4r2ut10PackedFontFv(void* self);
@@ -153,9 +156,9 @@ extern "C" void __dt__Q34nw4r2ut10PackedFontFv(void* self, int flag);
 
 CDeviceFontInfoExt::CDeviceFontInfoExt() {
     field_04 = 0;
-    *(u32*)((u8*)this + 0x08) = 0;
-    *(u32*)((u8*)this + 0x0C) = 0;
-    *(void**)((u8*)this + 0x18) = 0;
+    mFontData = 0;
+    mFontInfo = 0;
+    mFontBuffer = 0;
     __ct__Q34nw4r2ut10PackedFontFv((u8*)this + 0x1C);
     field_60 = 0;
 }
@@ -167,9 +170,9 @@ CDeviceFontInfoExt::CDeviceFontInfoExt() {
 // drawGX()->~CDrawGX()), and the implicit deleting-flag operator delete.
 CDeviceFontInfoExt::~CDeviceFontInfoExt() {
     Destroy__Q34nw4r2ut10PackedFontFv((u8*)this + 0x1C);
-    if (*(void**)((u8*)this + 0x18) != NULL) {
-        mtl::MemManager::deallocate(*(void**)((u8*)this + 0x18));
-        *(void**)((u8*)this + 0x18) = NULL;
+    if (mFontBuffer != NULL) {
+        mtl::MemManager::deallocate(mFontBuffer);
+        mFontBuffer = NULL;
     }
     __dt__Q34nw4r2ut10PackedFontFv((u8*)((u32)this + 0x1C), -1);
 }

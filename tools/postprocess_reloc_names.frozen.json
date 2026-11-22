@@ -1,5 +1,5 @@
 {
- "baseline_count": 265,
+ "baseline_count": 234,
  "entries": {
   "AXFXChorusExp.o": {
    "class": "content",
@@ -3366,12 +3366,6 @@
   "CTitleAHelp.o": {
    "class": "layout",
    "fields": {
-    "exact_renames": [
-     [
-      "@stringBase0",
-      "lbl_eu_805054BC"
-     ]
-    ],
     "extern_data_sections": [
      ".data",
      ".rodata",

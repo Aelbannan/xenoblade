@@ -111,7 +111,7 @@ extern "C" bool isOff__11CWorkSystemFv();
 extern "C" void* getInstance__11CWorkSystemFv();
 extern "C" void* getInstance__4CLibFv();
 extern "C" void advanceReadProgress__11CFileHandleFi(CFileHandle* handle, int val);
-extern "C" void destroy__11CFileHandleFv(CFileHandle* handle);
+extern "C" void destroy__11CFileHandleFv(CFileHandle* handle, u32 size, u32 allocParam, u32 blockSize);
 extern "C" void call__11CFileHandleF3CBM(CFileHandle* handle, int cbm);
 extern "C" void callCBM3__21CDeviceFileJobReadDvdFv(CDeviceFileJobReadDvd* job);
 extern "C" u32 getTargetFramerate__9CDeviceVIFv();

@@ -23,7 +23,7 @@ class CScnIdMan : IScnRender {
 public:
     CScnIdMan(CScn* pScn);
     virtual ~CScnIdMan();
-    virtual void cbRenderBefore();
+    virtual void cbRenderBefore(CScn* scene);
 
     // +0x00: vtable pointer (IScnRender)
     CScn* mScn;             // +0x04

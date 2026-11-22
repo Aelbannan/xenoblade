@@ -1,6 +1,7 @@
 #pragma once
 
 #include <types.h>
+#include "kyoshin/cf/CfMapItemManager.hpp"
 #include "kyoshin/cf/object/IObjectInfo.hpp"
 #include "monolib/core/CSchedule.hpp"
 
@@ -496,7 +497,7 @@ namespace cf{
         CVisionInitBlock items[10]; // 0x3FC8 (10 x 0xBC, ends 0x4720)
         CVisionInitBlock block4720; // 0x4720
         u8 unk47DC[0x10];   // 0x47DC
-        u8 unk47EC[0x14];   // 0x47EC initItemWorkState sub-object (ends 0x4800)
+        ItemWorkState unk47EC; // 0x47EC initItemWorkState sub-object (ends 0x4800)
         u32 w_4800;     // 0x4800
         u32 w_4804;     // 0x4804
         float f_4808;   // 0x4808

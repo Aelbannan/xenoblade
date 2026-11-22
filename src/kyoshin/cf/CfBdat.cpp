@@ -3,8 +3,7 @@
 #include "kyoshin/cf/CfBdat.hpp"
 #include "types.h"
 
-// Typed .data (retail 0xC0): quest pointer table + IWorkEvent vtable block + RTTI tail.
-// Uses u32 + (u32)& casts so function relocs emit as ADDR32 with zero file bytes (retail shape).
+// .data (retail 0xC0): quest name table, then the compiler-emitted CfBdat vtable + RTTI base list.
 // Typed .rodata (retail 0x420): type name + bdat table-name pool + face names.
 // Sizes are retail gaps so the section packs exactly.
 

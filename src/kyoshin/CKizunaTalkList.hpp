@@ -146,7 +146,7 @@ public:
 
 // File-scope data owned by kyoshin/CKizunaTalkList.cpp (retail .sbss).
 extern "C" void* sKizunaTalkBdatData;
-extern "C" void* sKizunaTalkRowColorNeutralA;
-extern "C" void* sKizunaTalkRowColorNeutralB;
-extern "C" void* sKizunaTalkRowColorSelectedA;
-extern "C" void* sKizunaTalkRowColorSelectedB;
+extern GXColorS10 sKizunaTalkRowColorNeutralA;
+extern GXColorS10 sKizunaTalkRowColorNeutralB;
+extern GXColorS10 sKizunaTalkRowColorSelectedA;
+extern GXColorS10 sKizunaTalkRowColorSelectedB;

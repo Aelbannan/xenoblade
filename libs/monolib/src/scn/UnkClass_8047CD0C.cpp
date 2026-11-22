@@ -26,6 +26,9 @@
 // ------------------------------------------------------------------
 
 struct UnkClass_8047E064 {
+    void initScnDefaults();
+    void resetScnState();
+
     u32 mField0;   // 0x00
     f32 mField4;   // 0x04
     u16 mField8;   // 0x08
@@ -58,6 +61,8 @@ struct UnkCfgHead {
 // ------------------------------------------------------------------
 
 struct UnkClass_8047CD0C {
+    void configurePoolLayout(UnkClass_8047CD0C* src);
+    u8* allocateNodeStorage(mtl::ALLOC_HANDLE handle, u32 size, u32 nodeCount);
     UnkClass_8047E064* allocFreeNode();
     void clearPoolData();
     void resetPoolState();
@@ -86,15 +91,10 @@ struct UnkClass_8047CD0C {
 
 extern u8 lbl_eu_80658560[]; // scene manager (bss)
 
-extern "C" void initScnDefaults__17UnkClass_8047E064Fv(UnkClass_8047E064* self);
-extern "C" void resetScnState__17UnkClass_8047E064Fv(UnkClass_8047E064* self);
 extern "C" void attachScnNode__17UnkClass_8047E064Fv(UnkClass_8047E064* self, u32 val);
 
-extern "C" void configurePoolLayout__17UnkClass_8047CD0CFv(UnkClass_8047CD0C* self,
-                                                      UnkClass_8047CD0C* src);
-extern "C" u8* allocateNodeStorage__17UnkClass_8047CD0CFv(UnkClass_8047CD0C* self,
-                                                      mtl::ALLOC_HANDLE handle,
-                                                      u32 size, u32 nodeCount);
+// UnkClass_8047CD0C::configurePoolLayout / allocateNodeStorage are declared
+// on the real class above; the compiler emits their C++ names.
 
 // ------------------------------------------------------------------
 // Externals: global node-pool object + owned-allocation slot (retail
@@ -122,8 +122,7 @@ extern "C" void initFromConfig__17UnkClass_8047CD0CFv(UnkClass_8047CD0C* self,
     config += 0xC;
     self->mData = config;
     init__17UnkClass_8047E110Fv((UnkClass_8047E110*)lbl_eu_80658560, config);
-    configurePoolLayout__17UnkClass_8047CD0CFv(&sWalkTableLocator,
-                                         (UnkClass_8047CD0C*)self->mData);
+    sWalkTableLocator.configurePoolLayout((UnkClass_8047CD0C*)self->mData);
     if (self->mField08 != 0) {
         i = 0;
         off = 0;
@@ -143,14 +142,12 @@ extern "C" void initFromConfig__17UnkClass_8047CD0CFv(UnkClass_8047CD0C* self,
 extern "C" void initNodePool__17UnkClass_8047CD0CFv(UnkClass_8047CD0C* self,
                                                       mtl::ALLOC_HANDLE handle,
                                                       u32 size, u32 nodeCount) {
-    self->mField04 = (u32)allocateNodeStorage__17UnkClass_8047CD0CFv(
-        &sWalkTableLocator, handle, size, nodeCount);
+    self->mField04 = (u32)sWalkTableLocator.allocateNodeStorage(handle, size, nodeCount);
     self->mField08 = nodeCount;
     s32 i = 0;
     s32 off = 0;
     while (i < (s32)self->mField08) {
-        resetScnState__17UnkClass_8047E064Fv(
-            (UnkClass_8047E064*)(self->mField04 + off));
+        ((UnkClass_8047E064*)(self->mField04 + off))->resetScnState();
         off += 0x28;
         i++;
     }
@@ -179,8 +176,7 @@ UnkClass_8047E064* UnkClass_8047CD0C::allocFreeNode() {
             // freshly i*0x28-computed pointer to the call so MWCC materialses
             // a mulli like retail (keeps i*0x28 in a callee-saved reg).
             if (!((((UnkClass_8047E064*)(mField04 + i * 0x28))->mFlags) & 1)) {
-                initScnDefaults__17UnkClass_8047E064Fv(
-                    (UnkClass_8047E064*)(mField04 + i * 0x28));
+                ((UnkClass_8047E064*)(mField04 + i * 0x28))->initScnDefaults();
                 ((UnkClass_8047E064*)(mField04 + i * 0x28))->mFlags &= 0xff83;
                 return (UnkClass_8047E064*)(mField04 + i * 0x28);
             }
@@ -257,28 +253,27 @@ void UnkClass_8047CD0C::clearPoolFlags() {
 // real `bl` to it (retail keeps it a separate function).
 // ------------------------------------------------------------------
 
-extern "C" u8* allocateNodeStorage__17UnkClass_8047CD0CFv(UnkClass_8047CD0C* self,
-                                                      mtl::ALLOC_HANDLE handle,
-                                                      u32 size, u32 nodeCount) {
+u8* UnkClass_8047CD0C::allocateNodeStorage(mtl::ALLOC_HANDLE handle,
+                                           u32 size, u32 nodeCount) {
     if (!sWalkNodeStorage) {
         // Nested identical null-tests -> one cmp + two beq (dead second
         // branch), matching retail's double-beq shape.
-        if (self->mData) {
-            if (self->mData) {
-                mtl::MemManager::deallocate(self->mData);
-                self->mData = 0;
+        if (mData) {
+            if (mData) {
+                mtl::MemManager::deallocate(mData);
+                mData = 0;
             }
         }
-        self->mData =
+        mData =
             (u8*)mtl::MemManager::allocate_head(handle, size, 0x20);
     } else {
-        self->mData = sWalkNodeStorage;
+        mData = sWalkNodeStorage;
     }
-    self->mNodeCount = nodeCount;
-    self->mField04 = size - nodeCount * 0x28;
-    self->mField08 = (u32)self->mData + nodeCount * 0x28;
-    self->mFlags |= 1;
-    return self->mData;
+    mNodeCount = nodeCount;
+    mField04 = size - nodeCount * 0x28;
+    mField08 = (u32)mData + nodeCount * 0x28;
+    mFlags |= 1;
+    return mData;
 }
 
 // ------------------------------------------------------------------
@@ -288,9 +283,8 @@ extern "C" u8* allocateNodeStorage__17UnkClass_8047CD0CFv(UnkClass_8047CD0C* sel
 // noinline so the CD0C constructor emits a real `bl` to it.
 // ------------------------------------------------------------------
 
-extern "C" void configurePoolLayout__17UnkClass_8047CD0CFv(UnkClass_8047CD0C* self,
-                                                      UnkClass_8047CD0C* src) {
-    if (!(self->mFlags & 1)) return;
+void UnkClass_8047CD0C::configurePoolLayout(UnkClass_8047CD0C* src) {
+    if (!(mFlags & 1)) return;
 
     u32 cap = (u32)src->mData;
     // count*4 + 0x28 must stay unfolded as slwi+add+addi (retail shape): any
@@ -309,12 +303,12 @@ extern "C" void configurePoolLayout__17UnkClass_8047CD0CFv(UnkClass_8047CD0C* se
     }
     base += 0x1f - (base & 0x1f);
 
-    self->mNodes = (u16*)(self->mField08 + base);
-    self->mStride = ((self->mField04 - base) / self->mNodeCount) >> 1;
+    mNodes = (u16*)(mField08 + base);
+    mStride = ((mField04 - base) / mNodeCount) >> 1;
     // Written LAST (with the plain `= |` form) so the mFlags web is born last and
     // colored first (r0) like retail; the scheduler keeps the mFlags store first
     // because the field offsets don't alias.
-    self->mFlags = self->mFlags | 2;
+    mFlags = mFlags | 2;
 }
 
 // ------------------------------------------------------------------

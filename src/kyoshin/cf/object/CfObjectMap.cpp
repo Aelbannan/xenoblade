@@ -58,7 +58,7 @@ void cf::CfObjectMap::cleanupMap() {
         this->field_0x6C &= ~0x8000;
     }
     if (this->field_0x2F40 != 0) {
-        resetActiveLOD__8CTaskLODFv(0);
+        CTaskLOD::resetActiveLOD(0);
         this->field_0x2F40 = 0;
     }
     CScnEnvLgtCtrlListItem* resource = this->field_0x2F3C;
@@ -267,8 +267,8 @@ extern "C" void CfObjectMap_updateEvents(cf::CfObjectMap* self) {
             }
         }
         if (self->field_0xE4 != 0) {
-            acquireLODResource__8CTaskLODFv(self->field_0xE4, 0);
-            bindTaskToLOD__8CTaskLODFv(*reinterpret_cast<void**>(&self->field_0x90[8]));
+            CTaskLOD::acquireLODResource(self->field_0xE4, 0);
+            CTaskLOD::bindTaskToLOD(*reinterpret_cast<void**>(&self->field_0x90[8]));
             CTaskLOD::notifyLODTick(0.0f);
         }
         if (self->field_0xE8 != 0) {
@@ -343,7 +343,7 @@ extern "C" void CfObjectMap_updateFrame(cf::CfObjectMap* self) {
         value = 0.0f;
     }
     // v passed uncast so MWCC emits a separate clrlwi per u16 parameter site
-    updateLODRange__8CTaskLODFv(v, value);
+    CTaskLOD::updateLODRange(v, value);
     scnLgtPushLgtValue(gmScene->mLgtCtrl, v, value);
     if (gmPauseFlags & 0x01000000) {
         v = 2;
@@ -379,7 +379,7 @@ extern "C" void CfObjectMap_updateFrame(cf::CfObjectMap* self) {
 typedef void (cf::CfObjectMap::*CfObjectMapDispatchPMF)();
 extern "C" { extern CfObjectMapDispatchPMF lbl_eu_80529100[3]; }
 void cf::CfObjectMap::dispatchMapState() {
-    u16 idx = *(u16*)((u8*)this + 0x8E);
+    u16 idx = this->field_0x8E;
     if (idx < 3) {
         (this->*lbl_eu_80529100[idx])();
     }
@@ -387,8 +387,8 @@ void cf::CfObjectMap::dispatchMapState() {
 
 extern "C" void setMapScale__Q22cf11CfObjectMapFv(cf::CfObjectMap* self, float f) {
     extern void simSetLeafDist7B0(void*);
-    void* unk = *(void**)((char*)self + 0x98);
-    *(float*)((char*)self + 0x2F48) = f;
+    void* unk = self->mSubObj98;
+    self->field_0x2F48 = f;
     if (unk != 0) {
         simSetLeafDist7B0(unk);
     }
@@ -408,18 +408,17 @@ extern "C" void setMapEffectFlag__Q22cf11CfObjectMapFv(cf::CfObjectMap* self, vo
             sub->flags_0x10 &= ~8;
         }
     }
-    setLODFilterFlag__8CTaskLODFv(task);
+    CTaskLOD::setLODFilterFlag(task);
     if (getMapEffectManager__Q22cf13CfGameManagerFv() != 0) {
         getMapEffectManager__Q22cf13CfGameManagerFv()->setSlotFlag((int)task);
     }
 }
 
 extern "C" void CfObjectModel_UnkVirtualFunc19__Q22cf13CfObjectModelFv(cf::CfObjectModel* self, int arg) {
-    unsigned int* field = (unsigned int*)((char*)self + 0x68);
     if (arg != 0)
-        *field |= 0x200000;
+        self->mFlags68 |= 0x200000;
     else
-        *field &= ~0x200000;
+        self->mFlags68 &= ~0x200000;
 }
 
 extern "C" int CfObjectModel_UnkVirtualFunc5__Q22cf13CfObjectModelFv(cf::CfObjectModel* self) { return 0; }
@@ -428,7 +427,7 @@ extern "C" int CfObjectModel_UnkVirtualFunc4__Q22cf13CfObjectModelFv(cf::CfObjec
 
 
 
-extern "C" void nopMap__Q22cf11CfObjectMapFv() {}
+void cf::CfObjectMap::nopMap() {}
 
 // Retail D1 dtor for CfObjectMap: vtable reset (lbl_eu_80529128) then the
 // CfObject_UnkVirtualFunc6 virtual at vtable+0x68 called via the constant
@@ -441,7 +440,7 @@ extern "C" void* __dt__Q22cf11CfObjectMapFv(void* self, int flag) {
         u32 vt = (u32)lbl_eu_80529128;
         *(u32*)this_ = vt;
         this_->CfObject_releaseMoveTargets();
-        void* sub = (char*)this_ + 0xF0;
+        void* sub = &this_->field_0xF0;
         if (sub != 0) {
             __dt__8047BDA8(sub);
         }

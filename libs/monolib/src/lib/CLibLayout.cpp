@@ -6,7 +6,9 @@
 #include "monolib/core/CProcRoot.hpp"
 #include "monolib/device/CDeviceGX.hpp"
 #include "monolib/lib/UnkClass_8045F564.hpp"
+#include "monolib/util/MemManager.hpp"
 #include <revolution/mem/mem_allocator.h>
+#include <revolution/mem.h>
 #include <nw4r/lyt/lyt_init.h>
 
 // The retail singleton is CLibLayout's static spInstance (the symbol map
@@ -15,9 +17,6 @@
 CLibLayout* CLibLayout::spInstance;
 u32 lbl_eu_80665710_pad; // second word of 8-byte retail slot
 
-// [.rodata] layout-region name string: the first of the two compiler-pooled
-// literals in this TU (retail lbl_eu_805231B0/lbl_eu_805231BC order).
-extern const char lbl_eu_805231BC[0x14];
 #include <decomp.h>
 
 CLibLayout::CLibLayout(const char* pName, CWorkThread* pParent) : CWorkThread(pName, pParent, 0) {
@@ -165,7 +164,7 @@ bool CLibLayout::wkStandbyLogin() {
         // Set up the layout allocation region + its custom nw4r allocator.
         nw4r::lyt::LytInit();
         mtl::ALLOC_HANDLE h = mtl::MemManager::create(
-            mtl::MemManager::getHandleMEM2(), 0x3FFE0, lbl_eu_805231BC);
+            mtl::MemManager::getHandleMEM2(), 0x3FFE0, "Layout Mem");
         mAllocHandle = h;
         // Alloc/free callbacks are the extern "C" layoutAllocCallback/layoutFreeCallback,
         // invoked with the allocator pointer and the requested size/block.
@@ -272,10 +271,83 @@ u32 lbl_eu_8066571C;
 // without a stub (verified: .sbss stays 0x10 and data diff MATCHes), and the
 // stub's .text cost would break the exactly-full 0x5E0 split budget.
 
+UnkClass_8045F564::UnkClass_8045F564()
+    : unk0(-1), unk4(0), unk8(0), unkC(0) {}
 
-// name-guess: orphan retail pool strings; unreferenced in the linked game.
-const char* CLibLayout_getLayoutRegionName() {
-    const char* region = "Layout Mem";
-    const char* thread = "LAYOUT";
-    return region[0] == 0 ? thread : region;
+UnkClass_8045F564::~UnkClass_8045F564() {
+    if (unk0 != 0xFFFFFFFF) {
+        if (unk4 != 0) {
+            MEMDestroyFrmHeap(reinterpret_cast<MEMiHeapHead*>(unk4));
+            unk4 = 0;
+        }
+        mtl::MemManager::setMemInitFlag(false);
+        mtl::MemManager::erase(unk0);
+        mtl::MemManager::setMemInitFlag(true);
+        unk0 = 0xFFFFFFFF;
+    }
+
+    // Remove this instance from CLibLayout's tracking array by shifting
+    // every later entry down one slot.
+    for (u32 i = 0; i < CLibLayout::spInstance->instanceCount; i++) {
+        if (CLibLayout::spInstance->instanceArray[i] != this) continue;
+
+        for (; i < CLibLayout::spInstance->instanceCount - 1; i++) {
+            CLibLayout::spInstance->instanceArray[i] = CLibLayout::spInstance->instanceArray[i + 1];
+        }
+        CLibLayout::spInstance->instanceCount--;
+        break;
+    }
+}
+
+void UnkClass_8045F564::createRegion(int size1, int size2, const char* name, int flag) {
+    mtl::MemManager::setMemInitFlag(false);
+
+    if (unk0 != 0xFFFFFFFF) {
+        mtl::MemManager::erase(unk0);
+    }
+
+    if (name != nullptr) {
+        if (flag != 0) {
+            unk0 = mtl::MemManager::create_tail(size1, size2, name);
+        } else {
+            unk0 = mtl::MemManager::create(size1, size2, name);
+        }
+    } else {
+        if (flag != 0) {
+            unk0 = mtl::MemManager::create_tail(size1, size2, "LAYOUT");
+        } else {
+            unk0 = mtl::MemManager::create(size1, size2, "LAYOUT");
+        }
+    }
+
+    mtl::MemManager::setMemInitFlag(true);
+
+    void* allocData = mtl::MemManager::getMaxAllocData(unk0);
+    unk4 = reinterpret_cast<u32>(MEMCreateFrmHeapEx(allocData, size2, 0));
+}
+
+void UnkClass_8045F564::deleteRegion() {
+    if (unk0 == 0xFFFFFFFF) return;
+
+    if (unk4 != 0) {
+        MEMDestroyFrmHeap(reinterpret_cast<MEMiHeapHead*>(unk4));
+        unk4 = 0;
+    }
+    mtl::MemManager::setMemInitFlag(false);
+    mtl::MemManager::erase(unk0);
+    mtl::MemManager::setMemInitFlag(true);
+    unk0 = 0xFFFFFFFF;
+}
+
+void UnkClass_8045F564::clearFrmHeap() {
+    if (unk0 == 0xFFFFFFFF) return;
+    if (unk4 == 0) return;
+    MEMFreeToFrmHeap(reinterpret_cast<MEMiHeapHead*>(unk4), 3);
+}
+
+void UnkClass_8045F564::validateHeap() {
+    mtl::MemManager::setRegionUnk6C(unk0, 1);
+    if (unk4 != 0) {
+        MEMGetAllocatableSizeForFrmHeapEx(reinterpret_cast<MEMiHeapHead*>(unk4), 4);
+    }
 }

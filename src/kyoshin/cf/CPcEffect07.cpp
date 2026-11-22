@@ -10,75 +10,28 @@
 #include <monolib/scn/CScn.hpp>       // Scn_GetFrameDelta frame-delta query
 #include "kyoshin/realtimeevt/CREvtEffect.hpp"
 
-extern "C" void* __dt__Q22cf11CPcEffect07Fv(void*, int);
-
-extern "C" { extern char lbl_eu_80533744[]; }  // vtable data (retail .data)
-
 namespace cf {}
 using namespace cf;
-// Retail ctor: installs the twin vtable pointers (vtbl and vtbl+0x10, second
-// base subobject at +4), stores the actor view pointer, value-initializes the
-// three effect entries (first element inline, remainder via bdnz loop),
-// zeroes the bank byte, stores two copies of an sdata2 float, then publishes
-// the singleton.
+// Retail ctor: the compiler installs both vtable pointers (primary +0,
+// cf::IPcEffect at +4) and value-initializes the three effect entries
+// (PcEffectEntry ctor), then the bank byte and both timers are zeroed and the
+// singleton is published.
 namespace cf {
-CPcEffect07::CPcEffect07(PcEffectActorView* actor) {
-    *(u32*)this = (u32)lbl_eu_80533744;
-    *((u32*)this + 1) = (u32)lbl_eu_80533744 + 0x10;
-    mField08 = 0;
-    mField0C = actor;
-
-    // Element 0 written inline; remaining elements via pointer-walk (< walk
-    // keeps MWCC's count-computing template instead of full unrolling).
-    PcEffectEntry* e = mEntries;
-    e->mObj = NULL;
-    e->mActive = 0;
-    e->mField06 = 0;
-    e->mMat = NULL;
-    e->mId = 0;
-    e->_10 = 0;
-    e->_14 = 0;
-
-    PcEffectEntry* end = &mEntries[3];
-    PcEffectEntry* p = &mEntries[1];
-    while (p < end) {
-        p->mObj = NULL;
-        p->mActive = 0;
-        p->mField06 = 0;
-        p->mMat = NULL;
-        p->mId = 0;
-        p->_10 = 0;
-        p->_14 = 0;
-        ++p;
-    }
-
+CPcEffect07::CPcEffect07(PcEffectActorView* actor) : mField08(0), mField0C(actor) {
     maxEffects = 0;
     mField5C = 0.0f;
     mField60 = 0.0f;
     gpPcEffectData = (PcEffectData*)this;
 }
-} // namespace cf
 
-// Retail D1 dtor: write the two vtable slots (+0 / +4, retail stw pair from
-// lbl_eu_80533744), run the cleanup, clear the singleton global when it
-// points at this, then delete-on-flag; returns this. Written as a
-// freestanding extern "C" function (the C++ dtor stays declared so the
-// virtual dtor symbol and thunk calls resolve here at link).
-extern "C" void* __dt__Q22cf11CPcEffect07Fv(void* self, int flag) {
-    cf::CPcEffect07* this_ = reinterpret_cast<cf::CPcEffect07*>(self);
-    if (this_ != 0) {
-        *(u32*)((char*)this_ + 0) = (u32)lbl_eu_80533744;
-        *(u32*)((char*)this_ + 4) = (u32)lbl_eu_80533744 + 0x10;
-        freePcEffects(reinterpret_cast<PcEffectData*>(this_));
-        if ((void*)gpPcEffectData == (void*)this_) {
-            gpPcEffectData = 0;
-        }
-        if (flag > 0) {
-            ::operator delete(this_);
-        }
+// Release every slot, then clear the singleton when it points at this.
+CPcEffect07::~CPcEffect07() {
+    freePcEffects(reinterpret_cast<PcEffectData*>(this));
+    if ((void*)gpPcEffectData == (void*)this) {
+        gpPcEffectData = 0;
     }
-    return self;
 }
+} // namespace cf
 
 // Spawn/attach an effect object into a slot.
 // - selector picks the effect id via the 0x700+n table (switch below).
@@ -184,9 +137,9 @@ extern "C" s32 spawnPcEffect(u8 type, s32 slotSel) {
 extern "C" int spawnBankByte(void) {
     if (gpPcEffectData == 0)
         return -1;
-    if (spawnPcEffect(*(u8*)((u8*)gpPcEffectData + 0x58), -1) < 0)
+    if (spawnPcEffect(gpPcEffectData->maxEffects, -1) < 0)
         return -1;
-    return *(u8*)((u8*)gpPcEffectData + 0x58);
+    return gpPcEffectData->maxEffects;
 }
 
 int getEffectMax() {
@@ -353,14 +306,14 @@ int countActiveSlots() {
 // or the id looked up in the wstring table for negative selectors. When a
 // positive amount is given and a schedule is attached, drive its fixed
 // timestep via schedSetStepIntervals.
-PcEffectSchedHolder* getSchedHolder(CPcEffect07* self, s32 id, s32 sel, s32 amount) {
+PcEffectSchedHolder* CPcEffect07::getSchedHolder(s32 id, s32 sel, s32 amount) {
     PcEffectSchedHolder* result;
     if (sel >= 0) {
-        result = self->mField0C->mSub.GetSlot(0);
+        result = mField0C->mSub.GetSlot(0);
     } else {
         // Negative selectors index the wstring table of slot ids (id - 0x700).
         s32 tblIdx = id - 0x700;
-        result = self->mField0C->mSub.GetSlot(lbl_eu_805049F8[tblIdx]);
+        result = mField0C->mSub.GetSlot(lbl_eu_805049F8[tblIdx]);
     }
     if (amount > 0 && result != NULL && result->mSched != NULL) {
         schedSetStepIntervals(result->mSched, (f32)amount, 1.0f);
@@ -370,18 +323,18 @@ PcEffectSchedHolder* getSchedHolder(CPcEffect07* self, s32 id, s32 sel, s32 amou
 
 // Clear the caller's +0xB0 slot, then scan the 3-entry table at the global
 // bank's +0x10 (24-byte stride) for the entry pointing at r4 and wipe it.
-extern "C" void clearPcEffect(void* a1, void* pEffect) {
+void CPcEffect07::release(CPcEffect07Obj* pEffect) {
     if (gpPcEffectData == 0)
         return;
-    *(u32*)((u8*)pEffect + 0xB0) = 0;
+    pEffect->mFieldB0 = 0;
     PcEffectData* g = gpPcEffectData;
     for (int i = 0; i < 3; i++) {
         PcEffectEntry* e = &g->entries[i];
-        if (*(void**)e == pEffect) {
-            *(u32*)e = 0;
-            *(u16*)((u8*)e + 4) = 0;
-            *(u16*)((u8*)e + 6) = 0;
-            *(u8*)((u8*)e + 0xC) = 0;
+        if (e->mObj == pEffect) {
+            e->mObj = NULL;
+            e->mActive = 0;
+            e->mField06 = 0;
+            e->mId = 0;
             return;
         }
     }
@@ -392,14 +345,14 @@ extern "C" void clearPcEffect(void* a1, void* pEffect) {
 // when the duration hits zero the object gets a setChildB59__ poke with a
 // sign-folded constant. Afterwards the two timers at +0x5C/+0x60 are stepped
 // down by an sdata2 epsilon and clamped to it.
-void tickPcEffects(CPcEffect07* self) {
+void CPcEffect07::tick() {
     if (gpPcEffectData == NULL)
         return;
     if (cf::CfGameManager::isSceneLoading())
         return;
 
     for (int i = 0; i < 3; i++) {
-        PcEffectEntry* e = &self->mEntries[i];
+        PcEffectEntry* e = &mEntries[i];
         if (e->mActive == 2) {
             // Aux timer lives in the same-strided record of the global bank
             // (aliases this entry's mField06).
@@ -418,29 +371,29 @@ void tickPcEffects(CPcEffect07* self) {
 
     // Step each timer down by the scene's frame delta and clamp to epsilon.
     f32 nv;
-    if (self->mField5C > 0.0f) {
-        nv = self->mField5C - Scn_GetFrameDelta(gmScene);
-        self->mField5C = nv;
+    if (mField5C > 0.0f) {
+        nv = mField5C - Scn_GetFrameDelta(gmScene);
+        mField5C = nv;
         if (nv < 0.0f)
-            self->mField5C = 0.0f;
+            mField5C = 0.0f;
     }
-    if (self->mField60 > 0.0f) {
-        nv = self->mField60 - Scn_GetFrameDelta(gmScene);
-        self->mField60 = nv;
+    if (mField60 > 0.0f) {
+        nv = mField60 - Scn_GetFrameDelta(gmScene);
+        mField60 = nv;
         if (nv < 0.0f)
-            self->mField60 = 0.0f;
+            mField60 = 0.0f;
     }
 }
 
 // Per-frame update: for each active slot, push the transform's translation and
 // rotation into the effect object through its SetPos/SetRot virtuals.
-void updatePcEffect(CPcEffect07* self) {
+void CPcEffect07::update() {
     // Two induction pointers mirror retail: e walks the entry array
-    // (self+0x10+i*0x18), base walks the interleaved mat slots (self+i*0x18
+    // (this+0x10+i*0x18), base walks the interleaved mat slots (this+i*0x18
     // with the CMat34* at +0x18). Mat pointers are re-read (not cached) so
     // retail's reload after the SetPos call is reproduced.
-    PcEffectEntry* e = self->mEntries;
-    u8* base = (u8*)self;
+    PcEffectEntry* e = mEntries;
+    u8* base = (u8*)this;
     for (int i = 0; i < 3; i++) {
         if (e->mActive == 1) {
             ml::CVec3 rot;
@@ -517,14 +470,6 @@ void dropPendingFx(PcEffectData* data) {
     data->entries[2].mField06 = 0;
 }
 
-// This-adjusting forwarders (retail func_801B2544 / func_801B254C): re-base
-// `this` onto the embedded CPcEffect07 (-0x4) and tail-jump to the per-frame
-// tick (tickPcEffects) / update (updatePcEffect). C linkage like the fwdPcEffect*
-// siblings so the emitted symbols keep their retail unmangled names.
-extern "C" void thunk_adj4_reset(void* self) { ((void(*)(void*))tickPcEffects)((char*)self - 0x4); }
-
-extern "C" void thunk_adj4_update(void* self) { ((void(*)(void*))updatePcEffect)((char*)self - 0x4); }
-
 // Effect-bank byte, zero default (retail func_801B1CB0): 0 when the global
 // bank is absent, else the bank byte at +0x58. Simpler sibling of
 // spawnBankByte (which returns -1 on lookup failure); CArtsParam treats 0
@@ -544,10 +489,6 @@ extern "C" int isPcEffectSlotActive(int index) {
         return 0;
     return data->entries[index].mActive == 1;
 }
-
-extern "C" void fwdPcEffect20C8(u8* self) { ((void(*)(void*))getSchedHolder)((char*)self - 0x4); }
-
-extern "C" void fwdPcEffectDtor(u8* self) { ((void(*)(void*))__dt__Q22cf11CPcEffect07Fv)((char*)self - 0x4); }
 
 // name-guess: CPcEffect07 bank pointer; sole retail .sbss object at 0x80664398,
 // assigned by the constructor and cleared by the destructor.

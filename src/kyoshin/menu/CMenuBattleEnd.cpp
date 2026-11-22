@@ -114,7 +114,7 @@ void CMenuBattleEnd::Term() {
         delete mLayout;
         mLayout = 0;
     }
-    lbl_eu_80664898 = 0;
+    CMenuBattleEnd::sInstance = 0;
     deleteRegion__17UnkClass_8045F564Fv(&mMemRegion);
 }
 
@@ -131,7 +131,7 @@ void CMenuBattleEnd::Move() {
     mLayout->Animate(0);
 }
 
-void CMenuBattleEnd::cbRenderBefore() {
+void CMenuBattleEnd::cbRenderBefore(CScn*) {
     // Same single-OR guard shape as Move / CSystemWindow::cbRenderBefore.
     if (CTaskGame::getInstance()->isFlag01Set() ||
         (gmPauseFlags & 0x200000))
@@ -150,16 +150,16 @@ void CMenuBattleEnd::cbRenderBefore() {
 // ---------------------------------------------------------------------------
 extern "C" CMenuBattleEnd* createBattleEndMenu(CProcess* parent, CScn* scene, u8 mode,
                                          u32 param) {
-    if (lbl_eu_80664898 != 0) {
-        queueBattleEndEntry(lbl_eu_80664898, mode, param);
+    if (CMenuBattleEnd::sInstance != 0) {
+        queueBattleEndEntry(CMenuBattleEnd::sInstance, mode, param);
         return 0;
     }
     CMenuBattleEnd* obj =
         new (mtl::MemManager::allocate(0xbc, CWorkThreadSystem::getWorkMem()))
             CMenuBattleEnd(scene, mode, param);
-    lbl_eu_80664898 = obj;
+    CMenuBattleEnd::sInstance = obj;
     Regist__8CProcessFP8CProcessb(obj, parent, 0);
-    return lbl_eu_80664898;
+    return CMenuBattleEnd::sInstance;
 }
 
 // ---------------------------------------------------------------------------
@@ -257,5 +257,7 @@ extern "C" void queueBattleEndEntry(CMenuBattleEnd* obj, u8 flag, u32 param) {
 // Retail data: __vt__14CMenuBattleEnd (0xC0) + its 0x40 base list, both
 // compiler-emitted from the real class above (the "CMenuBattleEnd" type-name
 // string and the weak __RTTI__14CMenuBattleEnd record come with them).
-CMenuBattleEnd* lbl_eu_80664898 = 0;
+// name-guess: 0x80664898 is the 8-byte .sbss singleton slot between
+// sInstance__17CMenuPassiveSkill and sInstance__14CMenuPlayAward.
+CMenuBattleEnd* CMenuBattleEnd::sInstance;
 u32 battleEnd_sbss_pad9C = 0; // (retail .sbss is 8B; content ignored by gate)

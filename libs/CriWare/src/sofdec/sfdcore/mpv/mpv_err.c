@@ -1,14 +1,12 @@
 // CriWare Sofdec MPEG video error-handler registration (mpv_err.c).
 #include <harness_catalog.h>
 
-extern u32 lbl_eu_80602A78[];
-
 typedef void (*MPVErrCallback)(u32);
 
 int MPVLIB_CheckHn(void* handle);
 
 // Error-handler registration block embedded in the MPV decoder state
-// (and mirrored globally at lbl_eu_80602A78 when no handle is given).
+// (and mirrored globally when no handle is given).
 typedef struct MPVErrInf {
     MPVErrCallback func;  // 0xBDC: user error callback
     u32 user;             // 0xBE0: opaque argument passed to the callback
@@ -16,6 +14,11 @@ typedef struct MPVErrInf {
     u32 field_0xC;
     u32 field_0x10;
 } MPVErrInf;
+
+// Global error-registration block used when no MPV handle is supplied
+// (JP symbol mpverrinf, .bss size 0x14). Its retail .bss slot lies inside the
+// mpv_vlc .bss range, so its defining TU is still unresolved; reference it only.
+extern MPVErrInf mpverrinf;
 
 typedef struct SFD_MPV {
     u8 field_0x0[0xbdc];
@@ -41,22 +44,22 @@ void MPVERR_InitErrInf(MPVErrInf* inf) {
 // the inline global dispatch below.
 s32 MPV_SetErrFunc(SFD_MPV* mpv, MPVErrCallback cb, u8* arg) {
     SFD_MPV* m = (SFD_MPV*)(void*)mpv;
-    u32* dst;
+    MPVErrInf* dst;
     if (m == NULL) {
-        dst = lbl_eu_80602A78;
+        dst = &mpverrinf;
     } else if (MPVLIB_CheckHn(m)) {
         /* invalid handle: record the fatal code and dispatch it through the
          * previously registered global callback */
-        lbl_eu_80602A78[2] = 0xFF030203;
-        if ((MPVErrCallback)lbl_eu_80602A78[0] != NULL) {
-            ((MPVErrCallback)lbl_eu_80602A78[0])(lbl_eu_80602A78[1]);
+        mpverrinf.code = 0xFF030203;
+        if (mpverrinf.func != NULL) {
+            mpverrinf.func(mpverrinf.user);
         }
         return 0xFF030203;
     } else {
-        dst = (u32*)&m->errInf;
+        dst = &m->errInf;
     }
-    dst[0] = (u32)cb;
-    dst[1] = (u32)arg;
+    dst->func = cb;
+    dst->user = (u32)arg;
     return 0;
 }
 
@@ -65,11 +68,11 @@ s32 MPV_SetErrFunc(SFD_MPV* mpv, MPVErrCallback cb, u8* arg) {
 s32 MPVERR_SetCode(s32 val, u32 err_code) {
     SFD_MPV* mpv = (SFD_MPV*)val;
     if (mpv == NULL) {
-        lbl_eu_80602A78[2] = err_code;
+        mpverrinf.code = err_code;
         if (err_code != 0) {
-            MPVErrCallback cb = (MPVErrCallback)lbl_eu_80602A78[0];
+            MPVErrCallback cb = mpverrinf.func;
             if (cb != NULL) {
-                cb(lbl_eu_80602A78[1]);
+                cb(mpverrinf.user);
             }
         }
     } else {

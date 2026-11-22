@@ -44,10 +44,10 @@ void adxt_StartAfs(ADXT_OBJ_ *handle, const char *filename, int flags) {
         return;
     }
 
-    *(u32 *)((u8 *)handle + 0xB0) = *(u32 *)((u8 *)handle + 0xAC);
-    *(u32 *)((u8 *)handle + 0xB4) = range_start;
-    *(u32 *)((u8 *)handle + 0xB8) = range_end;
-    *(u32 *)((u8 *)handle + 0xBC) = range_size;
+    handle->fname = handle->sjTail;
+    handle->sctOfst = range_start;
+    handle->sctLen = range_end;
+    handle->startNumChan = range_size;
     handle->stat = 1;
     handle->fA8 = 1;
     handle->mode = 1;
@@ -61,11 +61,11 @@ int ADXT_StartFnameRange(ADXT_OBJ_ *handle, const char *fname) {
         ADXERR_CallErrFunc1_(lbl_eu_805161A0 + 0x4D);
     } else {
         ADXT_Stop(handle);
-        CRICRW_Strcpy(*(char **)((u8 *)handle + 0xAC), 0x100, fname);
-        *(u32 *)((u8 *)handle + 0xB0) = *(u32 *)((u8 *)handle + 0xAC);
-        *(u32 *)((u8 *)handle + 0xB4) = 0;
-        *(u32 *)((u8 *)handle + 0xB8) = 0;
-        *(u32 *)((u8 *)handle + 0xBC) = 0x000FFFFF;
+        CRICRW_Strcpy(handle->sjTail, 0x100, fname);
+        handle->fname = handle->sjTail;
+        handle->sctOfst = 0;
+        handle->sctLen = 0;
+        handle->startNumChan = 0x000FFFFF;
         handle->stat = 1;
         handle->fA8 = 1;
         handle->mode = 0;

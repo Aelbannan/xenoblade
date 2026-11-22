@@ -3,6 +3,7 @@
 #include "kyoshin/harness_catalog.hpp"
 
 #include "kyoshin/cf/CHelpManager.hpp"
+#include <new>
 #include "kyoshin/CTitle.hpp"
 // cf::CBattleManager comes from CHelpManager.hpp's owning-header include.
 #include "monolib/util/MemManager.hpp"
@@ -34,14 +35,16 @@ extern "C" void* __ct__Q22cf12CHelpManagerFv(void* ignored) {
         self->mField17 = 0;
         self->mField18 = 0;
     }
-    lbl_eu_80664A10 = (cf::CHelpManager*)self;
+    cf::CHelpManager::sInstance = (cf::CHelpManager*)self;
 }
+
+cf::CHelpManager* cf::CHelpManager::sInstance;
 
 void destroyHelpManager() {
     // Reset the help-manager singleton: destroy it and clear the global.
-    if (lbl_eu_80664A10 != NULL) {
-        delete lbl_eu_80664A10;
-        lbl_eu_80664A10 = NULL;
+    if (cf::CHelpManager::sInstance != NULL) {
+        delete cf::CHelpManager::sInstance;
+        cf::CHelpManager::sInstance = NULL;
     }
 }
 
@@ -225,265 +228,265 @@ void sinit_80295DB0() {
     cf::CHelpTableFull* t = &sHelpDispatchObjects;
 
     // obj0 @ 0x00: base ctor, vtable override, extra word at +0xC.
-    __ct__Q22cf5CHelpFUlUl(&t->mObj00, (void*)0x3341, 0x2);
+    new (&t->mObj00) cf::CHelp(0x3341, 0x2);
     t->mObj00.vtbl() = (cf::CHelpVtbl*)lbl_eu_8053B7C0;
     t->mObj00.mFieldC = 1;
 
     // obj1 @ 0x10: ctor then dispatch through vtable slot 2.
-    __ct__Q22cf5CHelpFUlUl(&t->mObj10, (void*)0x3342, 0x3);
+    new (&t->mObj10) cf::CHelp(0x3342, 0x3);
     t->mObj10.vtbl() = (cf::CHelpVtbl*)lbl_eu_8053B378;
     t->mObj10.CHelp_UnkVirtualFunc1();
 
     // obj2 @ 0x20: extra float at +0xC.
-    __ct__Q22cf5CHelpFUlUl(&t->mObj20, (void*)0x3343, 0x4);
+    new (&t->mObj20) cf::CHelp(0x3343, 0x4);
     t->mObj20.vtbl() = (cf::CHelpVtbl*)lbl_eu_8053B770;
 t->mObj20.mFieldC = 1.0f;
 
     // obj3 @ 0x30: dispatch type (same vtable as obj1).
-    __ct__Q22cf5CHelpFUlUl(&t->mObj30, (void*)0x3344, 0x5);
+    new (&t->mObj30) cf::CHelp(0x3344, 0x5);
     t->mObj30.vtbl() = (cf::CHelpVtbl*)lbl_eu_8053B378;
     t->mObj30.CHelp_UnkVirtualFunc1();
 
-    __ct__Q22cf5CHelpFUlUl(&t->mObj40, (void*)0x3345, 0x6);
+    new (&t->mObj40) cf::CHelp(0x3345, 0x6);
     t->mObj40.vtbl() = (cf::CHelpVtbl*)lbl_eu_805390E8;
 
-    __ct__Q22cf5CHelpFUlUl(&t->mObj50, (void*)0x3346, 0x7);
+    new (&t->mObj50) cf::CHelp(0x3346, 0x7);
     t->mObj50.vtbl() = (cf::CHelpVtbl*)lbl_eu_8053B3C0;
 
-    __ct__Q22cf5CHelpFUlUl(&t->mObj60, (void*)0x3347, 0x8);
+    new (&t->mObj60) cf::CHelp(0x3347, 0x8);
     t->mObj60.vtbl() = (cf::CHelpVtbl*)lbl_eu_8053B770;
 t->mObj60.mFieldC = 1.0f;
 
-    __ct__Q22cf5CHelpFUlUl(&t->mObj70, (void*)0x3348, 0x9);
+    new (&t->mObj70) cf::CHelp(0x3348, 0x9);
     t->mObj70.vtbl() = (cf::CHelpVtbl*)lbl_eu_8053B4F0;
     t->mObj70.mFieldC = 0;
 
-    __ct__Q22cf5CHelpFUlUl(&t->mObj84, (void*)0x3349, 0xA);
+    new (&t->mObj84) cf::CHelp(0x3349, 0xA);
     t->mObj84.vtbl() = (cf::CHelpVtbl*)lbl_eu_8053B518;
 
-    __ct__Q22cf5CHelpFUlUl(&t->mObj90, (void*)0x334A, 0xB);
+    new (&t->mObj90) cf::CHelp(0x334A, 0xB);
     t->mObj90.vtbl() = (cf::CHelpVtbl*)lbl_eu_8053B378;
     t->mObj90.CHelp_UnkVirtualFunc1();
 
-    __ct__Q22cf5CHelpFUlUl(&t->mObjA0, (void*)0x334B, 0xC);
+    new (&t->mObjA0) cf::CHelp(0x334B, 0xC);
     t->mObjA0.vtbl() = (cf::CHelpVtbl*)lbl_eu_8053B4C8;
     t->mObjA0.mField10 = 0;
 
-    __ct__Q22cf5CHelpFUlUl(&t->mObjB4, (void*)0x3351, 0x12);
+    new (&t->mObjB4) cf::CHelp(0x3351, 0x12);
     t->mObjB4.vtbl() = (cf::CHelpVtbl*)lbl_eu_805390E8;
 
-    __ct__Q22cf5CHelpFUlUl(&t->mObjC0, (void*)0x334C, 0xD);
+    new (&t->mObjC0) cf::CHelp(0x334C, 0xD);
     t->mObjC0.vtbl() = (cf::CHelpVtbl*)lbl_eu_805390E8;
 
-    __ct__Q22cf5CHelpFUlUl(&t->mObjCC, (void*)0x334D, 0xE);
+    new (&t->mObjCC) cf::CHelp(0x334D, 0xE);
     t->mObjCC.vtbl() = (cf::CHelpVtbl*)lbl_eu_805390E8;
 
-    __ct__Q22cf5CHelpFUlUl(&t->mObjD8, (void*)0x3365, 0x26);
+    new (&t->mObjD8) cf::CHelp(0x3365, 0x26);
     t->mObjD8.vtbl() = (cf::CHelpVtbl*)lbl_eu_805390B8;
 
-    __ct__Q22cf5CHelpFUlUl(&t->mObjE4, (void*)0x3396, 0x57);
+    new (&t->mObjE4) cf::CHelp(0x3396, 0x57);
     t->mObjE4.vtbl() = (cf::CHelpVtbl*)lbl_eu_805390B8;
 
-    __ct__Q22cf5CHelpFUlUl(&t->mObjF0, (void*)0x3361, 0x22);
+    new (&t->mObjF0) cf::CHelp(0x3361, 0x22);
     t->mObjF0.vtbl() = (cf::CHelpVtbl*)lbl_eu_805390B8;
 
-    __ct__Q22cf5CHelpFUlUl(&t->mObjFC, (void*)0x3362, 0x23);
+    new (&t->mObjFC) cf::CHelp(0x3362, 0x23);
     t->mObjFC.vtbl() = (cf::CHelpVtbl*)lbl_eu_805390B8;
 
-    __ct__Q22cf5CHelpFUlUl(&t->mObj108, (void*)0x334E, 0xF);
+    new (&t->mObj108) cf::CHelp(0x334E, 0xF);
     t->mObj108.vtbl() = (cf::CHelpVtbl*)lbl_eu_8053B660;
 
-    __ct__Q22cf5CHelpFUlUl(&t->mObj118, (void*)0x334F, 0x10);
+    new (&t->mObj118) cf::CHelp(0x334F, 0x10);
     t->mObj118.vtbl() = (cf::CHelpVtbl*)lbl_eu_805390E8;
 
-    __ct__Q22cf5CHelpFUlUl(&t->mObj124, (void*)0x3363, 0x24);
+    new (&t->mObj124) cf::CHelp(0x3363, 0x24);
     t->mObj124.vtbl() = (cf::CHelpVtbl*)lbl_eu_805390B8;
 
-    __ct__Q22cf5CHelpFUlUl(&t->mObj130, (void*)0x3352, 0x13);
+    new (&t->mObj130) cf::CHelp(0x3352, 0x13);
     t->mObj130.vtbl() = (cf::CHelpVtbl*)lbl_eu_8053B6E8;
 
-    __ct__Q22cf5CHelpFUlUl(&t->mObj140, (void*)0x3353, 0x14);
+    new (&t->mObj140) cf::CHelp(0x3353, 0x14);
     t->mObj140.vtbl() = (cf::CHelpVtbl*)lbl_eu_8053B4C8;
     t->mObj140.mField10 = 0;
 
-    __ct__Q22cf5CHelpFUlUl(&t->mObj154, (void*)0x3366, 0x27);
+    new (&t->mObj154) cf::CHelp(0x3366, 0x27);
     t->mObj154.vtbl() = (cf::CHelpVtbl*)lbl_eu_805390B8;
 
-    __ct__Q22cf5CHelpFUlUl(&t->mObj160, (void*)0x335F, 0x20);
+    new (&t->mObj160) cf::CHelp(0x335F, 0x20);
     t->mObj160.vtbl() = (cf::CHelpVtbl*)lbl_eu_8053B6E8;
 
-    __ct__Q22cf5CHelpFUlUl(&t->mObj170, (void*)0x3354, 0x15);
+    new (&t->mObj170) cf::CHelp(0x3354, 0x15);
     t->mObj170.vtbl() = (cf::CHelpVtbl*)lbl_eu_805390E8;
 
-    __ct__Q22cf5CHelpFUlUl(&t->mObj17C, (void*)0x3358, 0x19);
+    new (&t->mObj17C) cf::CHelp(0x3358, 0x19);
     t->mObj17C.vtbl() = (cf::CHelpVtbl*)lbl_eu_805390E8;
 
-    __ct__Q22cf5CHelpFUlUl(&t->mObj188, (void*)0x336D, 0x2E);
+    new (&t->mObj188) cf::CHelp(0x336D, 0x2E);
     t->mObj188.vtbl() = (cf::CHelpVtbl*)lbl_eu_805390B8;
 
-    __ct__Q22cf5CHelpFUlUl(&t->mObj194, (void*)0x3368, 0x29);
+    new (&t->mObj194) cf::CHelp(0x3368, 0x29);
     t->mObj194.vtbl() = (cf::CHelpVtbl*)lbl_eu_805390B8;
 
-    __ct__Q22cf5CHelpFUlUl(&t->mObj1A0, (void*)0x3355, 0x16);
+    new (&t->mObj1A0) cf::CHelp(0x3355, 0x16);
     t->mObj1A0.vtbl() = (cf::CHelpVtbl*)lbl_eu_8053B660;
 
-    __ct__Q22cf5CHelpFUlUl(&t->mObj1B0, (void*)0x3356, 0x17);
+    new (&t->mObj1B0) cf::CHelp(0x3356, 0x17);
     t->mObj1B0.vtbl() = (cf::CHelpVtbl*)lbl_eu_805390E8;
 
-    __ct__Q22cf5CHelpFUlUl(&t->mObj1BC, (void*)0x3369, 0x2A);
+    new (&t->mObj1BC) cf::CHelp(0x3369, 0x2A);
     t->mObj1BC.vtbl() = (cf::CHelpVtbl*)lbl_eu_805390B8;
 
-    __ct__Q22cf5CHelpFUlUl(&t->mObj1C8, (void*)0x336A, 0x2B);
+    new (&t->mObj1C8) cf::CHelp(0x336A, 0x2B);
     t->mObj1C8.vtbl() = (cf::CHelpVtbl*)lbl_eu_805390B8;
 
-    __ct__Q22cf5CHelpFUlUl(&t->mObj1D8, (void*)0x3357, 0x18);
+    new (&t->mObj1D8) cf::CHelp(0x3357, 0x18);
     t->mObj1D8.vtbl() = (cf::CHelpVtbl*)lbl_eu_8053B660;
 
-    __ct__Q22cf5CHelpFUlUl(&t->mObj1E8, (void*)0x3383, 0x44);
+    new (&t->mObj1E8) cf::CHelp(0x3383, 0x44);
     t->mObj1E8.vtbl() = (cf::CHelpVtbl*)lbl_eu_805390E8;
 
-    __ct__Q22cf5CHelpFUlUl(&t->mObj1F4, (void*)0x3359, 0x1A);
+    new (&t->mObj1F4) cf::CHelp(0x3359, 0x1A);
     t->mObj1F4.vtbl() = (cf::CHelpVtbl*)lbl_eu_8053B4C8;
     t->mObj1F4.mField10 = (u32)"vs01240050";
 
-    __ct__Q22cf5CHelpFUlUl(&t->mObj208, (void*)0x335A, 0x1B);
+    new (&t->mObj208) cf::CHelp(0x335A, 0x1B);
     t->mObj208.vtbl() = (cf::CHelpVtbl*)lbl_eu_805390B8;
 
-    __ct__Q22cf5CHelpFUlUl(&t->mObj214, (void*)0x3399, 0x5A);
+    new (&t->mObj214) cf::CHelp(0x3399, 0x5A);
     t->mObj214.vtbl() = (cf::CHelpVtbl*)lbl_eu_805390B8;
 
-    __ct__Q22cf5CHelpFUlUl(&t->mObj220, (void*)0x3367, 0x28);
+    new (&t->mObj220) cf::CHelp(0x3367, 0x28);
     t->mObj220.vtbl() = (cf::CHelpVtbl*)lbl_eu_8053B4C8;
     t->mObj220.mField10 = 0;
 
-    __ct__Q22cf5CHelpFUlUl(&t->mObj234, (void*)0x3350, 0x11);
+    new (&t->mObj234) cf::CHelp(0x3350, 0x11);
     t->mObj234.vtbl() = (cf::CHelpVtbl*)lbl_eu_8053B4C8;
     t->mObj234.mField10 = 0;
 
-    __ct__Q22cf5CHelpFUlUl(&t->mObj248, (void*)0x335C, 0x1D);
+    new (&t->mObj248) cf::CHelp(0x335C, 0x1D);
     t->mObj248.vtbl() = (cf::CHelpVtbl*)lbl_eu_8053B660;
 
-    __ct__Q22cf5CHelpFUlUl(&t->mObj258, (void*)0x335D, 0x1E);
+    new (&t->mObj258) cf::CHelp(0x335D, 0x1E);
     t->mObj258.vtbl() = (cf::CHelpVtbl*)lbl_eu_8053B660;
 
-    __ct__Q22cf5CHelpFUlUl(&t->mObj268, (void*)0x336C, 0x2D);
+    new (&t->mObj268) cf::CHelp(0x336C, 0x2D);
     t->mObj268.vtbl() = (cf::CHelpVtbl*)lbl_eu_8053B4C8;
     t->mObj268.mField10 = 0;
 
-    __ct__Q22cf5CHelpFUlUl(&t->mObj27C, (void*)0x3398, 0x59);
+    new (&t->mObj27C) cf::CHelp(0x3398, 0x59);
     t->mObj27C.vtbl() = (cf::CHelpVtbl*)lbl_eu_805390B8;
 
-    __ct__Q22cf5CHelpFUlUl(&t->mObj288, (void*)0x3393, 0x54);
+    new (&t->mObj288) cf::CHelp(0x3393, 0x54);
     t->mObj288.vtbl() = (cf::CHelpVtbl*)lbl_eu_8053B4C8;
     t->mObj288.mField10 = 0;
 
-    __ct__Q22cf5CHelpFUlUl(&t->mObj2A0, (void*)0x3360, 0x21);
+    new (&t->mObj2A0) cf::CHelp(0x3360, 0x21);
     t->mObj2A0.vtbl() = (cf::CHelpVtbl*)lbl_eu_8053B660;
 
-    __ct__Q22cf5CHelpFUlUl(&t->mObj2B0, (void*)0x3370, 0x31);
+    new (&t->mObj2B0) cf::CHelp(0x3370, 0x31);
     t->mObj2B0.vtbl() = (cf::CHelpVtbl*)lbl_eu_8053B660;
 
-    __ct__Q22cf5CHelpFUlUl(&t->mObj2C0, (void*)0x3371, 0x32);
+    new (&t->mObj2C0) cf::CHelp(0x3371, 0x32);
     t->mObj2C0.vtbl() = (cf::CHelpVtbl*)lbl_eu_8053B4C8;
     t->mObj2C0.mField10 = 0;
 
-    __ct__Q22cf5CHelpFUlUl(&t->mObj2D8, (void*)0x335E, 0x1F);
+    new (&t->mObj2D8) cf::CHelp(0x335E, 0x1F);
     t->mObj2D8.vtbl() = (cf::CHelpVtbl*)lbl_eu_8053B490;
 
-    __ct__Q22cf5CHelpFUlUl(&t->mObj2E8, (void*)0x336F, 0x30);
+    new (&t->mObj2E8) cf::CHelp(0x336F, 0x30);
     t->mObj2E8.vtbl() = (cf::CHelpVtbl*)lbl_eu_805390B8;
 
-    __ct__Q22cf5CHelpFUlUl(&t->mObj2F8, (void*)0x339C, 0x5D);
+    new (&t->mObj2F8) cf::CHelp(0x339C, 0x5D);
     t->mObj2F8.vtbl() = (cf::CHelpVtbl*)lbl_eu_8053B458;
 
-    __ct__Q22cf5CHelpFUlUl(&t->mObj308, (void*)0x3372, 0x33);
+    new (&t->mObj308) cf::CHelp(0x3372, 0x33);
     t->mObj308.vtbl() = (cf::CHelpVtbl*)lbl_eu_805390E8;
 
-    __ct__Q22cf5CHelpFUlUl(&t->mObj314, (void*)0x3387, 0x48);
+    new (&t->mObj314) cf::CHelp(0x3387, 0x48);
     t->mObj314.vtbl() = (cf::CHelpVtbl*)lbl_eu_805390B8;
 
-    __ct__Q22cf5CHelpFUlUl(&t->mObj320, (void*)0x3373, 0x34);
+    new (&t->mObj320) cf::CHelp(0x3373, 0x34);
     t->mObj320.vtbl() = (cf::CHelpVtbl*)lbl_eu_8053B4C8;
     t->mObj320.mField10 = 0;
 
-    __ct__Q22cf5CHelpFUlUl(&t->mObj334, (void*)0x335B, 0x1C);
+    new (&t->mObj334) cf::CHelp(0x335B, 0x1C);
     t->mObj334.vtbl() = (cf::CHelpVtbl*)lbl_eu_8053B4C8;
     t->mObj334.mField10 = 0;
 
-    __ct__Q22cf5CHelpFUlUl(&t->mObj348, (void*)0x3374, 0x35);
+    new (&t->mObj348) cf::CHelp(0x3374, 0x35);
     t->mObj348.vtbl() = (cf::CHelpVtbl*)lbl_eu_805390B8;
 
-    __ct__Q22cf5CHelpFUlUl(&t->mObj354, (void*)0x339A, 0x5B);
+    new (&t->mObj354) cf::CHelp(0x339A, 0x5B);
     t->mObj354.vtbl() = (cf::CHelpVtbl*)lbl_eu_805390B8;
 
-    __ct__Q22cf5CHelpFUlUl(&t->mObj360, (void*)0x3375, 0x36);
+    new (&t->mObj360) cf::CHelp(0x3375, 0x36);
     t->mObj360.vtbl() = (cf::CHelpVtbl*)lbl_eu_8053B4C8;
     t->mObj360.mField10 = 0;
 
-    __ct__Q22cf5CHelpFUlUl(&t->mObj374, (void*)0x3364, 0x25);
+    new (&t->mObj374) cf::CHelp(0x3364, 0x25);
     t->mObj374.vtbl() = (cf::CHelpVtbl*)lbl_eu_8053B698;
 
-    __ct__Q22cf5CHelpFUlUl(&t->mObj380, (void*)0x3376, 0x37);
+    new (&t->mObj380) cf::CHelp(0x3376, 0x37);
     t->mObj380.vtbl() = (cf::CHelpVtbl*)lbl_eu_80539064;
     t->mObj380.mField10 = 0;
 
-    __ct__Q22cf5CHelpFUlUl(&t->mObj398, (void*)0x3388, 0x49);
+    new (&t->mObj398) cf::CHelp(0x3388, 0x49);
     t->mObj398.vtbl() = (cf::CHelpVtbl*)lbl_eu_8053B660;
 
-    __ct__Q22cf5CHelpFUlUl(&t->mObj3A8, (void*)0x339D, 0x5E);
+    new (&t->mObj3A8) cf::CHelp(0x339D, 0x5E);
     t->mObj3A8.vtbl() = (cf::CHelpVtbl*)lbl_eu_8053B490;
 
-    __ct__Q22cf5CHelpFUlUl(&t->mObj3B8, (void*)0x339B, 0x5C);
+    new (&t->mObj3B8) cf::CHelp(0x339B, 0x5C);
     t->mObj3B8.vtbl() = (cf::CHelpVtbl*)lbl_eu_8053B4C8;
     t->mObj3B8.mField10 = 0;
 
-    __ct__Q22cf5CHelpFUlUl(&t->mObj3CC, (void*)0x3377, 0x38);
+    new (&t->mObj3CC) cf::CHelp(0x3377, 0x38);
     t->mObj3CC.vtbl() = (cf::CHelpVtbl*)lbl_eu_805390B8;
 
-    __ct__Q22cf5CHelpFUlUl(&t->mObj3D8, (void*)0x3378, 0x39);
+    new (&t->mObj3D8) cf::CHelp(0x3378, 0x39);
     t->mObj3D8.vtbl() = (cf::CHelpVtbl*)lbl_eu_80539064;
     t->mObj3D8.mField10 = 0;
 
-    __ct__Q22cf5CHelpFUlUl(&t->mObj3EC, (void*)0x3389, 0x4A);
+    new (&t->mObj3EC) cf::CHelp(0x3389, 0x4A);
     t->mObj3EC.vtbl() = (cf::CHelpVtbl*)lbl_eu_8053B4C8;
     t->mObj3EC.mField10 = 0;
 
-    __ct__Q22cf5CHelpFUlUl(&t->mObj400, (void*)0x338C, 0x4D);
+    new (&t->mObj400) cf::CHelp(0x338C, 0x4D);
     t->mObj400.vtbl() = (cf::CHelpVtbl*)lbl_eu_8053B660;
 
-    __ct__Q22cf5CHelpFUlUl(&t->mObj410, (void*)0x3379, 0x3A);
+    new (&t->mObj410) cf::CHelp(0x3379, 0x3A);
     t->mObj410.vtbl() = (cf::CHelpVtbl*)lbl_eu_80539064;
     t->mObj410.mField10 = 0;
 
-    __ct__Q22cf5CHelpFUlUl(&t->mObj424, (void*)0x337A, 0x3B);
+    new (&t->mObj424) cf::CHelp(0x337A, 0x3B);
     t->mObj424.vtbl() = (cf::CHelpVtbl*)lbl_eu_8053B5D8;
 
-    __ct__Q22cf5CHelpFUlUl(&t->mObj430, (void*)0x337B, 0x3C);
+    new (&t->mObj430) cf::CHelp(0x337B, 0x3C);
     t->mObj430.vtbl() = (cf::CHelpVtbl*)lbl_eu_80539028;
 
-    __ct__Q22cf5CHelpFUlUl(&t->mObj43C, (void*)0x337C, 0x3D);
+    new (&t->mObj43C) cf::CHelp(0x337C, 0x3D);
     t->mObj43C.vtbl() = (cf::CHelpVtbl*)lbl_eu_8053B5B0;
 
-    __ct__Q22cf5CHelpFUlUl(&t->mObj448, (void*)0x337E, 0x3F);
+    new (&t->mObj448) cf::CHelp(0x337E, 0x3F);
     t->mObj448.vtbl() = (cf::CHelpVtbl*)lbl_eu_8053B720;
 
-    __ct__Q22cf5CHelpFUlUl(&t->mObj454, (void*)0x3394, 0x55);
+    new (&t->mObj454) cf::CHelp(0x3394, 0x55);
     t->mObj454.vtbl() = (cf::CHelpVtbl*)lbl_eu_8053B748;
 
-    __ct__Q22cf5CHelpFUlUl(&t->mObj460, (void*)0x336E, 0x2F);
+    new (&t->mObj460) cf::CHelp(0x336E, 0x2F);
     t->mObj460.vtbl() = (cf::CHelpVtbl*)lbl_eu_80538FD4;
     t->mObj460.mField10 = 0;
     t->mObj460.mField14 = 0;
     t->mObj460.mField15 = 1;
     t->mObj460.mField16 = 0;
 
-    __ct__Q22cf5CHelpFUlUl(&t->mObj478, (void*)0x337F, 0x40);
+    new (&t->mObj478) cf::CHelp(0x337F, 0x40);
     t->mObj478.vtbl() = (cf::CHelpVtbl*)lbl_eu_8053B6E8;
 
-    __ct__Q22cf5CHelpFUlUl(&t->mObj488, (void*)0x3380, 0x41);
+    new (&t->mObj488) cf::CHelp(0x3380, 0x41);
     t->mObj488.vtbl() = (cf::CHelpVtbl*)lbl_eu_8053B420;
 
-    __ct__Q22cf5CHelpFUlUl(&t->mObj498, (void*)0x3381, 0x42);
+    new (&t->mObj498) cf::CHelp(0x3381, 0x42);
     t->mObj498.vtbl() = (cf::CHelpVtbl*)lbl_eu_8053B7C0;
     t->mObj498.mFieldC = 2;
 
@@ -494,65 +497,65 @@ t->mObj60.mFieldC = 1.0f;
                             (void*)__dt__Q22cf14CHelp_LandMarkFv,
                             &t->mObj498.mField10);
 
-    __ct__Q22cf5CHelpFUlUl(&t->mObj4D0, (void*)0x3384, 0x45);
+    new (&t->mObj4D0) cf::CHelp(0x3384, 0x45);
     t->mObj4D0.vtbl() = (cf::CHelpVtbl*)lbl_eu_8053B560;
 
-    __ct__Q22cf5CHelpFUlUl(&t->mObj4E0, (void*)0x3385, 0x46);
+    new (&t->mObj4E0) cf::CHelp(0x3385, 0x46);
     t->mObj4E0.vtbl() = (cf::CHelpVtbl*)lbl_eu_8053B638;
     t->mObj4E0.mFieldC = 9;
 
-    __ct__Q22cf5CHelpFUlUl(&t->mObj4F0, (void*)0x338A, 0x4B);
+    new (&t->mObj4F0) cf::CHelp(0x338A, 0x4B);
     t->mObj4F0.vtbl() = (cf::CHelpVtbl*)lbl_eu_8053B798;
     t->mObj4F0.mField10 = 0x9C;
     t->mObj4F0.mField14 = 0;
     t->mObj4F0.mField15 = 0;
     t->mObj4F0.mField16 = 0;
 
-    __ct__Q22cf5CHelpFUlUl(&t->mObj508, (void*)0x3397, 0x58);
+    new (&t->mObj508) cf::CHelp(0x3397, 0x58);
     t->mObj508.vtbl() = (cf::CHelpVtbl*)lbl_eu_8053B588;
     t->mObj508.mFieldC = 0;
 
-    __ct__Q22cf5CHelpFUlUl(&t->mObj51C, (void*)0x338B, 0x4C);
+    new (&t->mObj51C) cf::CHelp(0x338B, 0x4C);
     t->mObj51C.vtbl() = (cf::CHelpVtbl*)lbl_eu_8053B588;
     t->mObj51C.mFieldC = 0x11;
     t->mObj51C.mField10 = 1;
 
-    __ct__Q22cf5CHelpFUlUl(&t->mObj530, (void*)0x338D, 0x4E);
+    new (&t->mObj530) cf::CHelp(0x338D, 0x4E);
     t->mObj530.vtbl() = (cf::CHelpVtbl*)lbl_eu_8053B7C0;
     t->mObj530.mFieldC = 3;
 
-    __ct__Q22cf5CHelpFUlUl(&t->mObj540, (void*)0x338E, 0x4F);
+    new (&t->mObj540) cf::CHelp(0x338E, 0x4F);
     t->mObj540.vtbl() = (cf::CHelpVtbl*)lbl_eu_8053B3F8;
     t->mObj540.mFieldC = 0x2C;
 
-    __ct__Q22cf5CHelpFUlUl(&t->mObj550, (void*)0x338F, 0x50);
+    new (&t->mObj550) cf::CHelp(0x338F, 0x50);
     t->mObj550.vtbl() = (cf::CHelpVtbl*)lbl_eu_8053B798;
     t->mObj550.mField10 = 0x19;
     t->mObj550.mField14 = 1;
     t->mObj550.mField15 = 0;
     t->mObj550.mField16 = 0;
 
-    __ct__Q22cf5CHelpFUlUl(&t->mObj568, (void*)0x3390, 0x51);
+    new (&t->mObj568) cf::CHelp(0x3390, 0x51);
     t->mObj568.vtbl() = (cf::CHelpVtbl*)lbl_eu_80538FD4;
     t->mObj568.mField10 = 0x19;
     t->mObj568.mField14 = 1;
     t->mObj568.mField15 = 0;
     t->mObj568.mField16 = 0;
 
-    __ct__Q22cf5CHelpFUlUl(&t->mObj580, (void*)0x3391, 0x52);
+    new (&t->mObj580) cf::CHelp(0x3391, 0x52);
     t->mObj580.vtbl() = (cf::CHelpVtbl*)lbl_eu_80538FD4;
     t->mObj580.mField10 = 0x19;
     t->mObj580.mField14 = 1;
     t->mObj580.mField15 = 0;
     t->mObj580.mField16 = 0;
 
-    __ct__Q22cf5CHelpFUlUl(&t->mObj598, (void*)0x3386, 0x47);
+    new (&t->mObj598) cf::CHelp(0x3386, 0x47);
     t->mObj598.vtbl() = (cf::CHelpVtbl*)lbl_eu_8053B540;
 
-    __ct__Q22cf5CHelpFUlUl(&t->mObj5A4, (void*)0x3392, 0x53);
+    new (&t->mObj5A4) cf::CHelp(0x3392, 0x53);
     t->mObj5A4.vtbl() = (cf::CHelpVtbl*)lbl_eu_80538F98;
 
-    __ct__Q22cf5CHelpFUlUl(&t->mObj5B0, (void*)0x336B, 0x2C);
+    new (&t->mObj5B0) cf::CHelp(0x336B, 0x2C);
     t->mObj5B0.vtbl() = (cf::CHelpVtbl*)lbl_eu_8053B6C0;
 t->mObj5B0.mFieldC = 300.0f;
 }

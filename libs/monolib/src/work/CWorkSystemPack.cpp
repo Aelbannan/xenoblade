@@ -8,6 +8,7 @@
 #include "monolib/util/CPathUtil.hpp"
 #include "monolib/util/MemManager.hpp"
 #include "monolib/work/CWorkSystemPack.hpp"
+#include "monolib/device/CDeviceFileCri.hpp" // canonical DevFile_SubstLangPath C++ decl
 
 // ---------------------------------------------------------------------------
 // CPackItem (monolib/core/CPackItem.hpp): load-state field at 0x78, base name
@@ -121,9 +122,6 @@ reslist<CArcItem*>::~reslist() {
 }
 
 extern "C" {
-
-// Defined in monolib/src/device/CDeviceFile.cpp with C++ linkage.
-void DevFile_SubstLangPath(char* pPath);
 
 // Register one static arc filename: normalize the path through DevFile_SubstLangPath,
 // construct a CArcItem from the work region, and push it onto the singleton's

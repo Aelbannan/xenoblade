@@ -171,7 +171,6 @@ void* findObjectById(int id);
 
 // C-linkage data imports (retail names; global-scope plain externs keep the
 // unmangled symbol -- MWCC does not mangle global variables).
-extern char lbl_eu_8050EC70[];   // layout/animation name string table
 extern u32 gmPauseFlags;
 
 
@@ -185,7 +184,7 @@ CMenuLvUp::~CMenuLvUp() {}
 // ---------------------------------------------------------------------------
 void CMenuLvUp::Init() {
     mtl::ALLOC_HANDLE handle = mtl::MemManager::getHandleMEM2();
-    mMemRegion.createRegion((int)handle, 0x3e00, lbl_eu_8050EC70, 0);
+    mMemRegion.createRegion((int)handle, 0x3e00, "CMenuLvUp", 0);
     Class_8045F858 regionGuard(&mMemRegion);
 
     f32 resetFrame = 0.0f;
@@ -193,19 +192,19 @@ void CMenuLvUp::Init() {
         CMenuLvUpEntry* entry = &mEntries[i];
 
         nw4r::lyt::ArcResourceAccessor* accessor = CUICfManager_getArcResourceAccessor();
-        buildLayout(&entry->field_0x00, accessor, &lbl_eu_8050EC70[0xa]);
+        buildLayout(&entry->field_0x00, accessor, "mf71_battle18_lv.brlyt");
         accessor = CUICfManager_getArcResourceAccessor();
         bindLayoutAnimTransform(entry->field_0x00, &entry->field_0x04, accessor,
-                      &lbl_eu_8050EC70[0x21]);
+                      "mf71_battle18_lv_in.brlan");
         entry->field_0x00->SetAnimationEnable(entry->field_0x04, true);
         entry->field_0x04->SetFrame(resetFrame);
         entry->field_0x00->Animate(0);
 
         accessor = CUICfManager_getArcResourceAccessor();
-        buildLayout(&entry->field_0x08, accessor, &lbl_eu_8050EC70[0x3b]);
+        buildLayout(&entry->field_0x08, accessor, "mf71_battle19_mstr.brlyt");
         accessor = CUICfManager_getArcResourceAccessor();
         bindLayoutAnimTransform(entry->field_0x08, &entry->field_0x0C, accessor,
-                      &lbl_eu_8050EC70[0x54]);
+                      "mf71_battle19_mstr_in.brlan");
         entry->field_0x08->SetAnimationEnable(entry->field_0x0C, true);
         entry->field_0x0C->SetFrame(resetFrame);
         entry->field_0x08->Animate(0);
@@ -294,7 +293,7 @@ void CMenuLvUp::Move() {
 // ---------------------------------------------------------------------------
 // cbRenderBefore - draws the three entries' layouts through a stack DrawInfo.
 // ---------------------------------------------------------------------------
-void CMenuLvUp::cbRenderBefore() {
+void CMenuLvUp::cbRenderBefore(CScn*) {
     if (CTaskGame::getInstance()->isFlag01Set() ||
         (gmPauseFlags & 0x200000))
         return;

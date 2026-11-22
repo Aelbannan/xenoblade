@@ -136,9 +136,9 @@ public:
     void clearElementFlag(int task);
     void setElementFlag(int task);
     void toggleElementFlag(int task, int flag);
-    void* isElementFlagClear(int task);
+    bool isElementFlagClear(int task);
     void setElementLodLevel(int task, f32 value);
-    void configureShrinkTargets(f32 val, s16 task, int flag);
+    void configureShrinkTargets(f32 val, int task, int flag);
     void setElementVisibility(int task, int flag);
     void setElementScale(int task, f32 value);
     void refreshElementScale(int task);
@@ -146,13 +146,13 @@ public:
     void updateElementVisibility(int task, int flag);
     void setElementFlag80(int task, int flag);
     void linkTaskElements(int task, int value);
-    void* getElementState(int task);
+    u8 getElementState(int task);
     void setElementCachedValue(int task, f32 value);
     f32 getElementCachedValue(int task);
-    void* updateSingleElement(int id);
+    void updateSingleElement(int id);
     void setBaseScale(float a);
     float getBaseScale();
-    void configureFadeMode(int mode, u16 value, f32 f1);
+    void configureFadeMode(int mode, int value, f32 f1);
     void updateSubObject();
     void updateViewLayers(LODViewDesc* view);
     void updateBoxElement(LODBoxElem* box);

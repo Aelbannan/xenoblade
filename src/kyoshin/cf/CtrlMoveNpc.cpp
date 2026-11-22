@@ -8,6 +8,7 @@
 // Class layout lives in kyoshin/cf/CtrlMoveNpc.hpp.
 
 #include "kyoshin/cf/CfBdat.hpp"
+#include "monolib/lod/CTaskLOD.hpp"
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/cf/CtrlMoveBase.hpp"
 #include <monolib/math/CVec3.hpp>
@@ -55,8 +56,6 @@ extern u32 sNpcMoveInitialStateFunc[3];
 // retail unmangled symbol name is emitted.
 u32 Bdat_GetRowBase_B41C(void* bdat);
 u32 Bdat_GetMaxRow_B1EC(void* bdat);
-void activateLOD__8CTaskLODFv(s8 v);
-void deactivateLOD__8CTaskLODFv(u8 v);
 void ScnData_FwdB7D9C(void*, s8 v);
 void ScnData_FwdB7DD4(void*, u8 v);
 int isNpcRowUsable(u32 idx, const char* p1, const char* p2, const char* p3,
@@ -328,7 +327,7 @@ extern "C" void refreshNpcRowFlags() {
             u32 bit = 1u << (idx & 31);
             if (w & bit) {
                 bitmap[word] = w & ~bit;
-                activateLOD__8CTaskLODFv(v);
+                CTaskLOD::activateLOD(v);
                 ScnData_FwdB7D9C(getScnHandle(), v);
             }
         } else {
@@ -337,7 +336,7 @@ extern "C" void refreshNpcRowFlags() {
             u32 bit = 1u << (idx & 31);
             if (!(w & bit)) {
                 bitmap[word] = w | bit;
-                deactivateLOD__8CTaskLODFv(v);
+                CTaskLOD::deactivateLOD(v);
                 ScnData_FwdB7DD4(getScnHandle(), v);
             }
         }

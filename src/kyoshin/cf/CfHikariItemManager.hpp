@@ -17,12 +17,12 @@ class CfHikariItemManager {
 public:
     CfHikariItemManager();
     ~CfHikariItemManager();
-    void cbRenderBefore();
+    void cbRenderBefore(CScn* scene);
 
     /* 0x00 */ u32 field_00;                        // manual vptr (lbl_eu_8053AE90)
     /* 0x04 */ ::CfHikariItemRecord* records[0x40]; // 0x40 record pointers
     /* 0x104 */ u8 unk104[0x1104 - 0x104];
-    /* 0x1104 */ u8 unk1104[0x10];                  // zeroed by memset in reset/dtor
+    /* 0x1104 */ u32 mActiveSlotBits[4];             // name-guess: 0x80-slot liveness bitfield (slot>>5 index)
     /* 0x1114 */ u8 unk1114[0x1194 - 0x1114];
     /* 0x1194 */ u32 field_1194;                    // flag word (bit0 toggle, bit1 hikariSetFlagBit1)
     /* 0x1198 */ u32 field_1198;                    // active record count

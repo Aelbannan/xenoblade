@@ -3,6 +3,7 @@
 #include "kyoshin/cf/CBattleManager.hpp"
 #include "kyoshin/cf/CfMapItemManager.hpp"
 #include "kyoshin/cf/voice/CCharVoiceMan.hpp"
+#include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/cf/voice/cvsys/CVS_THREAD_BATTLE_MAIN.hpp"
 #include "kyoshin/cf/voice/cvsys/HpVoiceApi.hpp"
 #include <decomp.h>
@@ -258,7 +259,7 @@ extern "C" void CCharVoiceMan_Tick(){
         // action source (mPendingActionId) as a node.
         if (!(gmGameFlags & 0x00400000)) {
             cf::CfObjectImplPc18* br =
-                getCfObjectPc__FPQ22cf12CfObjectMove(getPlayer__Q22cf13CfGameManagerFi(0));
+                getCfObjectPc__FPQ22cf12CfObjectMove(cf::CfGameManager::getPlayer(0));
             if (br != 0) {
                 cf::CfObjectImplPcED4* edge = br->field_3ED4;
                 if (edge != 0 && edge->vf40(0x800) == 0) {
@@ -353,7 +354,7 @@ interactStore:
         // cmpi branches; swapping the operand order (const OP v) blocks
         // MWCC's unsigned range-fusion (MWCC_PATTERNS "swapped-operand
         // range guards").
-        int phase = getQueuedFileEventCount__Q22cf13CfGameManagerFv();
+        int phase = cf::CfGameManager::getQueuedFileEventCount();
         u32 gaugeBit = 1 << (gmGlobalFlag42 - 1);
         if (0x108 >= phase)
             goto noFieldFlag;
@@ -367,7 +368,7 @@ noFieldFlag:;
         // Battle voice auto-talk: resolve the current player and fire.
         if (m->mAutoTalkPending != 0) {
             cf::CVoiceSrcNode* srcNode = (cf::CVoiceSrcNode*)HpVoice_FindBySubState(1);
-            cf::CfObjectMove* player = (cf::CfObjectMove*)getPlayer__Q22cf13CfGameManagerFi(0);
+            cf::CfObjectMove* player = (cf::CfObjectMove*)cf::CfGameManager::getPlayer(0);
             if (player != 0)
                 player = (cf::CfObjectMove*)((u8*)player - 0x3E9C);
             if (srcNode != 0 && player != 0) {
@@ -497,7 +498,7 @@ extern "C" void CCharVoiceMan_HookBattleSlotVoice(cf::CfObjectImplPc18* a, cf::C
     cf::CCharVoiceMan* m = spCharVoiceMan;
     cf::CVoiceBtlSlot* bs = (cf::CVoiceBtlSlot*)cf::CBattleManager::getInstance()->CBattleMan_FetchVisionObj();
     if (bs != 0) {
-        getInstance__Q22cf13CfGameManagerFv();
+        cf::CfGameManager::getInstance();
         if (isGlobalCamFlagSet(0x04000000) == 0) {
             if (a != 0 && b != 0) {
                 u32 af = a->field_3F10;
@@ -694,7 +695,7 @@ extern "C" void CCharVoiceMan_TriggerBattleOrPlainVoice(cf::CVoiceActorState* se
         if (gmGameFlags & 0x00400000)
             return;
         int useBattle = 0;
-        if (((cf::CBattleCountAccessor*)getInstance__Q22cf14CBattleManagerFv())->field_194 < 0x64 &&
+        if (((cf::CBattleCountAccessor*)cf::CBattleManager::getInstance())->field_194 < 0x64 &&
             (self->field_3F08 & 0x10000))
             useBattle = 1;
         cf::CSoundNode* node = chainVoiceActorTrigger(self, useBattle);
@@ -782,7 +783,7 @@ extern "C" void CCharVoiceMan_TickPlayerVoiceCount(cf::CVoiceActorBase* actor) {
     const u8* movePc = (const u8*)actor;
     if (actor != 0)
         movePc = (const u8*)&actor->moveBase;
-    if (movePc == (const u8*)getPlayer__Q22cf13CfGameManagerFi(0)) {
+    if (movePc == (const u8*)cf::CfGameManager::getPlayer(0)) {
         cf::CCharVoiceMan* m = spCharVoiceMan;
         m->mPcVoiceCount++;
         if ((int)m->mPcVoiceCount >= 3) {
@@ -797,7 +798,7 @@ extern "C" void CCharVoiceMan_ClearPlayerVoiceCount(cf::CVoiceActorBase* actor) 
         const u8* movePc = (const u8*)actor;
         if (actor != 0)
             movePc = (const u8*)&actor->moveBase;
-        if (movePc == (const u8*)getPlayer__Q22cf13CfGameManagerFi(0)) {
+        if (movePc == (const u8*)cf::CfGameManager::getPlayer(0)) {
             spCharVoiceMan->mPcVoiceCount = 0;
         }
     }
@@ -816,7 +817,7 @@ extern "C" void CCharVoiceMan_PlayPairVoice(cf::CVoiceActorState* self, cf::CVoi
         return;
     if (ml::math::mtRand(0x64) >= 0x32)
         return;
-    cf::CfObjectMove* player = (cf::CfObjectMove*)getPlayer__Q22cf13CfGameManagerFi(0);
+    cf::CfObjectMove* player = (cf::CfObjectMove*)cf::CfGameManager::getPlayer(0);
     if (player != 0)
         player = (cf::CfObjectMove*)((u8*)player - 0x3E9C);
     if (player != 0)
@@ -1449,7 +1450,7 @@ extern "C" int CCharVoiceMan_CheckBattleGauge(cf::CCharVoiceMan* self) {
     if (count <= 0)
         return 0;
 
-    cf::CVoiceActorState* p = (cf::CVoiceActorState*)getPlayer__Q22cf13CfGameManagerFi(0);
+    cf::CVoiceActorState* p = (cf::CVoiceActorState*)cf::CfGameManager::getPlayer(0);
     if (p != 0)
         p = (cf::CVoiceActorState*)((u8*)p - 0x3E9C);
     // Plain copy keeps the actor local materialized before the branch.

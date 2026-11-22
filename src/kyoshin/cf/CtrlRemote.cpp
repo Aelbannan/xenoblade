@@ -138,12 +138,12 @@ void func_80098EF8(CtrlPcVf38* self)
     u32 p1aHold;
 
     u32 vf14res = self->mField5C->mSub3ED4->vf14(0x800);
-    u8 bs = ((CBattleManagerViewPc*)getInstance__Q22cf14CBattleManagerFv())->mField1AA;
+    u8 bs = ((CBattleManagerViewPc*)cf::CBattleManager::getInstance())->mField1AA;
     // Commuted second compare keeps MWCC from fusing the range test into
     // subi+cmpli; retail emits two separate cmplwi branches.
     int inBattle = (bs >= 1u && 0x18u >= bs) ? 1 : 0;
     int timerNZ =
-        ((CBattleManagerViewPc*)getInstance__Q22cf14CBattleManagerFv())->mField20C8 != 0 ? 1 : 0;
+        ((CBattleManagerViewPc*)cf::CBattleManager::getInstance())->mField20C8 != 0 ? 1 : 0;
     int probe1a = probePlayerCtrl((cf::CtrlPc*)self, &v1a, 0x1a);
 
     {
@@ -489,7 +489,7 @@ a89c:
         self->mField5C->mSub3E9C.v02(4);
     }
 
-    if (CChain_HasMemberEntry((cf::CChain*)&((CBattleManagerViewPc*)getInstance__Q22cf14CBattleManagerFv())->mField1A8,
+    if (CChain_HasMemberEntry((cf::CChain*)&((CBattleManagerViewPc*)cf::CBattleManager::getInstance())->mField1A8,
                       (CChainBattleObjTail*)self->mField5C) != 0 &&
         probePlayerCtrl((cf::CtrlPc*)self, &v801b, 0x801) != 0) {
         CtrlPlayerSub298Vf4* sub298 =
@@ -1137,7 +1137,7 @@ void CtrlRemote_MenuComboSweep(CtrlPcVf38* self)
     if (testActorStatus(player, &v, 0x803) == 0) {
         return;
     }
-    u32 bs = ((CBattleManagerViewPc*)getInstance__Q22cf14CBattleManagerFv())
+    u32 bs = ((CBattleManagerViewPc*)cf::CBattleManager::getInstance())
         ->mField1AA;
     // Second comparison commuted: two same-operand unsigned compares with
     // the same branch target get fused by MWCC into a subi/cmpli range
@@ -1146,7 +1146,7 @@ void CtrlRemote_MenuComboSweep(CtrlPcVf38* self)
     if (inBattle != 0) {
         return;
     }
-    if (((CBattleManagerViewPc*)getInstance__Q22cf14CBattleManagerFv())
+    if (((CBattleManagerViewPc*)cf::CBattleManager::getInstance())
             ->mField20C8 != 0) {
         return;
     }
@@ -1164,7 +1164,7 @@ void CtrlRemote_MenuComboSweep(CtrlPcVf38* self)
         // Head addressed via bm in both init and condition so the manager
         // stays in r3 across the head load (retail regalloc).
         CBattleManagerViewPc* bm =
-            (CBattleManagerViewPc*)getInstance__Q22cf14CBattleManagerFv();
+            (CBattleManagerViewPc*)cf::CBattleManager::getInstance();
         count = 0;
         CtrlSweepNode* node =
             ((CtrlSweepNode*)((cf::CBattleManager*)bm)->mActorList2.mStartNode.mNext)->mNext;
@@ -1320,7 +1320,7 @@ void CtrlRemote_ArtsWindowDispatch(CtrlPcVf38State* self)
     mode = CfCmd_PickChain(&sub->mResult368, sub->mActor18, 0, 0);
     bmFlag = sub->mField370;
 
-    if (SuddenCommuIsStateActive((u8*)getInstance__Q22cf14CBattleManagerFv() + 0x216c) !=
+    if (SuddenCommuIsStateActive((u8*)cf::CBattleManager::getInstance() + 0x216c) !=
         0) {
         return;
     }
@@ -1452,10 +1452,10 @@ void CtrlRemote_ArtsWindowDispatch(CtrlPcVf38State* self)
         }
         {
             u8* gaugeBase =
-                (u8*)getInstance__Q22cf14CBattleManagerFv() + 0x219c;
+                (u8*)cf::CBattleManager::getInstance() + 0x219c;
             u32 chainId = *(u32*)cf::CBattleManager::getInstance()->CBattleMan_FetchVisionObj();
             cf::CChainState* chain =
-                (cf::CChainState*)((u8*)getInstance__Q22cf14CBattleManagerFv() +
+                (cf::CChainState*)((u8*)cf::CBattleManager::getInstance() +
                                    0x20c8);
             if (ChainTmr_Start_DE44(chain,
                               (cf::CChainBattleObj*)self->mField5C,
@@ -1464,7 +1464,7 @@ void CtrlRemote_ArtsWindowDispatch(CtrlPcVf38State* self)
                 CCharVoiceMan_PushChainVoiceNode(self->mField5C, obj374);
                 gaugeBase[0x261a4] = 1;
                 cf::PartyGaugeAddClamped(reinterpret_cast<cf::UnkClass_8018C5FC*>(
-                    (u8*)getInstance__Q22cf14CBattleManagerFv() + 0x194),
+                    (u8*)cf::CBattleManager::getInstance() + 0x194),
                     -100);
             }
         }

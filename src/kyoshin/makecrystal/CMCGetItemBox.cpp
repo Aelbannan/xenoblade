@@ -73,12 +73,6 @@ extern "C" void prevMCGetItemBoxPage(CMCGetItemBox*);
 
 // Initialise a CMCItemBoxSub: clear the offset table to 0xFFFF, zero the
 // counters and index fields, then reset the whole table again.
-void* __dt__80296BB0(CMCGetItemBox* _this, int flags) {
-    if (_this != NULL && flags > 0) {
-        operator delete(_this);
-    }
-    return _this;
-}
 
 // -O4,s keeps both passes rolled (pointer-walk + mtctr/bdnz sthx) as in retail.
 // C linkage: retail symbol is the plain name (reloc-site gate).
@@ -171,9 +165,6 @@ u32 getMCItemSubItemId(CMCItemBoxSub* x, u32 index) {
     return 0;
 }
 
-// auto_inline off: retail keeps the single-call-site bl from refreshMCGetItemBoxSlots
-// (MWCC otherwise folds this small helper in).
-#pragma auto_inline off
 s8 getMCItemSubKind(CMCItemBoxSub* x, u32 index) {
     CMCItemBoxEntry* base = x->listBase;
     if (base == 0) return 0;
@@ -181,14 +172,13 @@ s8 getMCItemSubKind(CMCItemBoxSub* x, u32 index) {
     if (idx < x->count) {
         CMCItemBoxEntry* p = base + x->table[idx];
         if (p != 0) {
-            CMCItemImplShim* inst = (CMCItemImplShim*)CItem_initItemImplInstances((CItemData*)p);
-            u32 r = inst->getKind(p);
+            CItemImpl* inst = CItem_initItemImplInstances((CItemData*)p);
+            u32 r = inst->vf08((CItemData*)p);
             return (s8)(u16)r;
         }
     }
     return 0;
 }
-#pragma auto_inline on
 
 // Format the selected entry's item-name into the FixStr<64> at sub+0x108
 // (object offset 0x41C). Returns that FixStr, or null when out of range.
@@ -205,14 +195,14 @@ char* getMCItemSubName(CMCItemBoxSub* sub, u16 index) {
     // The s16 table offset sign-extends before the *52 scale (retail lhax/mulli).
     CMCItemBoxEntry* p = base + x->table[idx];
     if (p == 0) return 0;
-    CMCItemImplShim* inst = (CMCItemImplShim*)CItem_initItemImplInstances((CItemData*)p);
+    CItemImpl* inst = CItem_initItemImplInstances((CItemData*)p);
     // Keep only x/p/strTbl live across calls: recompute &x->shortName
     // at every use so MWCC holds just three callee-saved regs (retail r29-r31).
-    ((ml::FixStr<64>*)&x->shortName)->format(strTbl, inst->getName(p));
+    ((ml::FixStr<64>*)&x->shortName)->format(strTbl, inst->vf20((CItemData*)p));
     if (x->pad_102 == 3) {
         // Gem slot: rebuild the name as "<kind suffix><saved name>".
-        CMCItemImplShim* inst2 = (CMCItemImplShim*)CItem_initItemImplInstances((CItemData*)p);
-        u32 kind = (u8)inst2->getKind(p);
+        CItemImpl* inst2 = CItem_initItemImplInstances((CItemData*)p);
+        u32 kind = (u8)inst2->vf08((CItemData*)p);
         char* itemName = BdatTouchStringCell(&strTbl[3], &strTbl[0xc],
                                        0x1e - (kind - 1));
         // Refresh the cached length, then splice: format("%s%s", saved, suffix).
@@ -933,8 +923,8 @@ extern "C" void setMCSlotIconTex(CMCGetItemBox* self, u32 idx, CMCItemBoxEntry* 
         u32 type = (e->field_00 >> 16) & 0xF;
         if (type == 3) {
             h = 0;
-            CMCItemImplShim* inst = (CMCItemImplShim*)CItem_initItemImplInstances((CItemData*)e);
-            u32 k = inst->getIcon(e);
+            CItemImpl* inst = CItem_initItemImplInstances((CItemData*)e);
+            u32 k = inst->vf54((CItemData*)e);
             u8 r = (u8)BdatGetU8Direct((const void*)::cf::CfBdat::spBtlSkillListFileData, &lbl_eu_8050FF8C[0x128], (u16)k);
             switch (r) {
                 case 4: h = MakeTplNameSysFile(0x144); break;
@@ -949,8 +939,8 @@ extern "C" void setMCSlotIconTex(CMCGetItemBox* self, u32 idx, CMCItemBoxEntry* 
             else
                 h = self->arcAcc1->GetResource(0x74696d67u, &lbl_eu_8050FF8C[0x131], 0);
         } else if (type == 9) {
-            CMCItemImplShim* inst = (CMCItemImplShim*)CItem_initItemImplInstances((CItemData*)e);
-            u32 cnt = inst->getCount(e);
+            CItemImpl* inst = CItem_initItemImplInstances((CItemData*)e);
+            u32 cnt = inst->vf80((CItemData*)e);
             if ((u16)cnt == 0) {
                 // Empty slot: a bdat-managed entry uses the 0x155 chain,
                 // otherwise the gem-icon chain keyed on byte 7 >> 2.
@@ -1014,8 +1004,8 @@ void setMCSlotNameTex(CMCGetItemBox* self, u32 idx, CMCItemBoxEntry* entry, u8 n
         u32 type = (e->field_00 >> 16) & 0xF;
         if (type == 3) {
             h = 0;
-            CMCItemImplShim* inst = (CMCItemImplShim*)CItem_initItemImplInstances((CItemData*)e);
-            switch ((u16)inst->getKind(e)) {
+            CItemImpl* inst = CItem_initItemImplInstances((CItemData*)e);
+            switch ((u16)inst->vf08((CItemData*)e)) {
                 case 1: h = MakeTplNameSysFile(0x197); break;
                 case 2: h = MakeTplNameSysFile(0x196); break;
                 case 3: h = MakeTplNameSysFile(0x195); break;
@@ -1028,8 +1018,8 @@ void setMCSlotNameTex(CMCGetItemBox* self, u32 idx, CMCItemBoxEntry* entry, u8 n
             else
                 h = self->arcAcc1->GetResource(0x74696d67u, &lbl_eu_8050FF8C[0x131], 0);
         } else if (type == 9) {
-            CMCItemImplShim* inst = (CMCItemImplShim*)CItem_initItemImplInstances((CItemData*)e);
-            if ((u16)inst->getCount(e) == 0) {
+            CItemImpl* inst = CItem_initItemImplInstances((CItemData*)e);
+            if ((u16)inst->vf80((CItemData*)e) == 0) {
                 // Empty slot: only resolve a name when the entry is a valid
                 // type-9 item (bdat-managed or flagged in byte 7).
                 do {
@@ -1040,8 +1030,8 @@ void setMCSlotNameTex(CMCGetItemBox* self, u32 idx, CMCItemBoxEntry* entry, u8 n
                         if (f == 0 && ex != 9) break;
                     }
                     h = 0;
-                    CMCItemImplShim* inst2 = (CMCItemImplShim*)CItem_initItemImplInstances((CItemData*)e);
-                    switch ((u16)inst2->getKind(e)) {
+                    CItemImpl* inst2 = CItem_initItemImplInstances((CItemData*)e);
+                    switch ((u16)inst2->vf08((CItemData*)e)) {
                         case 1: h = MakeTplNameSysFile(0x191); break;
                         case 2: h = MakeTplNameSysFile(0x190); break;
                         case 3: h = MakeTplNameSysFile(0x18f); break;
@@ -1056,8 +1046,8 @@ void setMCSlotNameTex(CMCGetItemBox* self, u32 idx, CMCItemBoxEntry* entry, u8 n
             } else {
                 // Item present: kind-keyed name chain 0x19c..
                 h = 0;
-                CMCItemImplShim* inst2 = (CMCItemImplShim*)CItem_initItemImplInstances((CItemData*)e);
-                switch ((u16)inst2->getKind(e)) {
+                CItemImpl* inst2 = CItem_initItemImplInstances((CItemData*)e);
+                switch ((u16)inst2->vf08((CItemData*)e)) {
                     case 1: h = MakeTplNameSysFile(0x19c); break;
                     case 2: h = MakeTplNameSysFile(0x19b); break;
                     case 3: h = MakeTplNameSysFile(0x19a); break;

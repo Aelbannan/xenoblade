@@ -20,8 +20,10 @@ struct VTarget {
 #define IWORK_EVENT_INLINE_DTOR
 #include "monolib/work.hpp"
 #include "monolib/scn/CScnItemPool.hpp"
+#include "monolib/scn/IScnRender.hpp"
 #include "libs/monolib/src/scn/CScn.hpp"
 #include "libs/monolib/src/scn/CScnCameraMan.hpp"
+#include "libs/monolib/src/scn/CScnItemModel.hpp"
 #include "monolib/scn/CScnItemCamera.hpp"
 #include "monolib/core/CView.hpp"
 #include "monolib/device/CDeviceVI.hpp"
@@ -180,7 +182,7 @@ void CScn::Draw() {
                 s32 i = 0;
                 for (; i < (s32)mRenderCBCount;) {
                     if (unk_3E5 != 0 || mRenderCBs[i].flag != 0) {
-                        reinterpret_cast<IScnRenderDraw*>(mRenderCBs[i].cb)->onRender(this);
+                        mRenderCBs[i].cb->cbRenderBefore(this);
                     }
                     i += 1;
                 }
@@ -195,35 +197,20 @@ void CScn::Draw() {
 }
 
 
-// Owner/pool lens for Scn_IsAnimActiveOrNull / Scn_HasWorkItem: the item
-// carries its owner at +0x04 (CScnItemModel::field_04) and the owner carries
-// the pool at +0x60 (CScnItemModelOwner::pool). TU-local so this TU stays
-// free of the CScnItemModel header (whose Scn_SetupAnimDefault decl clashes
-// with this TU's definition under -W error).
-struct ScnOwnerPoolView {
-    u8 _00[0x60]; // 0x00..0x60
-    void* pool;   // 0x60
-};
-struct ScnItemOwnerView {
-    u8 _00[4];                 // 0x00..0x04
-    ScnOwnerPoolView* owner04; // 0x04
-};
-extern "C" bool Scn_IsAnimActiveOrNull(void* self) {
+extern "C" bool Scn_IsAnimActiveOrNull(CScnItemModel* self) {
     extern bool CScnItemPool_unlinkAndReleaseItem(void*, void*);
     if (self == 0) {
         return 1;
     }
-    return CScnItemPool_unlinkAndReleaseItem(((ScnItemOwnerView*)self)->owner04->pool, self);
+    return CScnItemPool_unlinkAndReleaseItem(self->field_04->pool, self);
 }
-extern "C" bool Scn_HasWorkItem(u8* self) {
-
-    return ((bool (*)(void*))CScnItemPool_releaseItemByKey)(((ScnOwnerPoolView*)self)->pool);
+extern "C" bool Scn_HasWorkItem(CScnItemModelOwner* self) {
+    return ((bool (*)(void*))CScnItemPool_releaseItemByKey)(self->pool); // DEBT(callcast)
 }
 extern "C" void* Scn_SetupAnim(void* a, void* b, void* c, void* d) {
     return simFwdAnimSetup102(a, b, c, d, 0);
 }
-class CScnItemModel; // pointer-only owner of this cross-TU scene helper
-extern "C" CScnItemModel* Scn_SetupAnimDefault(u32 param_1, u32 param_2) {
+extern "C" CScnItemModel* Scn_SetupAnimDefault(u32 param_1, void* param_2) {
     return (CScnItemModel*)simFwdAnimSetup102(
         (void*)param_1, (void*)param_2, (void*)-1, (void*)0, 0);
 }

@@ -22,22 +22,18 @@ typedef _reslist_node<IDeviceFontInfo*> CDeviceFontInfoListNode;
 
 // Font-info provider impls (typing only; the real layouts live in their own
 // units). Both share the IDeviceFontInfo vtable layout.
-class CDeviceFontInfoExt : public CDeviceFontInfo {
+class CDeviceFontInfoExt : public IDeviceFontInfo {
 public:
     static CDeviceFontInfoExt* create();  // static factory (retail name)
 };
 
-class CDeviceFontInfoRom : public CDeviceFontInfo {
+class CDeviceFontInfoRom : public IDeviceFontInfo {
 public:
     static CDeviceFontInfoRom* create();  // static factory (retail name)
 };
 
-// Minimal singletons used by wkStandbyLogout (work/CLib systems).
-class CWorkSystem {
-public:
-    static CWorkSystem* getInstance();
-};
-
+// Minimal singleton used by wkStandbyLogout (CLib system).
+// CWorkSystem is declared by monolib/work/CWorkSystem.hpp via CDesktop.hpp.
 class CLib {
 public:
     static CLib* getInstance();
@@ -49,12 +45,8 @@ public:
     static bool isColdStartReady();
 };
 
-// CWorkRoot::setException/getException (called from wkStandbyLogin/wkUpdate).
-class CWorkRoot {
-public:
-    static void setException(CException* pException);
-    static CException* getException();
-};
+// CWorkRoot is declared by monolib/work/CWorkRoot.hpp, included by
+// CDesktop.hpp in this TU.
 
 // Minimal CDeviceFile view: wkUpdate only needs the singleton and its init
 // state. (The full header cannot be included here - it would clash with this
@@ -91,7 +83,7 @@ public:
     // reference them under the literal retail names.
     void queueText();
     void setBackgroundColor(const ml::CCol4* col);
-    void setFontScale();
+    void setFontScale(f32 scaleX, f32 scaleY);
     void setFontId(u32 id);
 
     static void allocFontHeap();  // font-layer unit helper (standby login)

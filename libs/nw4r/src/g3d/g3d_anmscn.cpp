@@ -2,15 +2,74 @@
 
 #include <algorithm>
 
-// Shared anm play-policy table (retail .sdata object; accessed via
-// small-data addressing, so reference it directly instead of the header's
-// inline static-local table).
-extern const nw4r::g3d::PlayPolicyFunc lbl_eu_80663458[2];
-
 namespace nw4r {
 namespace g3d {
 
-AnmScn::~AnmScn() {}
+NW4R_G3D_RTTI_DEF(AnmScn);
+NW4R_G3D_RTTI_DEF(AnmScnRes);
+
+namespace {
+
+void MakeDiffuseLightObj(LightObj* pLightObj, const LightAnmResult* pResult) {
+    u32 lightType = pResult->flags & LightAnmResult::FLAG_LIGHT_TYPE_MASK;
+
+    pLightObj->Clear();
+
+    switch (lightType) {
+    case 0: {
+        pLightObj->InitLightColor(pResult->color);
+        pLightObj->InitLightPos(pResult->pos.x,
+                               pResult->pos.y, pResult->pos.z);
+        pLightObj->InitLightSpot(0.0f, GX_SP_OFF);
+        pLightObj->InitLightDistAttn(pResult->refDistance,
+                                     pResult->refBrightness,
+                                     pResult->distFunc);
+        pLightObj->InitLightDir(0.0f, 0.0f, 0.0f);
+        break;
+    }
+    case 1: {
+        math::VEC3 dir = pResult->aim - pResult->pos;
+        math::VEC3 pos = dir * -10000000000.0f;
+
+        pLightObj->InitLightColor(pResult->color);
+        pLightObj->InitLightPos(pos.x, pos.y, pos.z);
+        pLightObj->InitLightAttnA(1.0f, 0.0f, 0.0f);
+        pLightObj->InitLightAttnK(1.0f, 0.0f, 0.0f);
+        pLightObj->InitLightDir(0.0f, 0.0f, 0.0f);
+        break;
+    }
+    case 2: {
+        math::VEC3 dir = pResult->aim - pResult->pos;
+
+        PSVECNormalize(reinterpret_cast<const Vec*>(&dir),
+                      reinterpret_cast<Vec*>(&dir));
+
+        pLightObj->InitLightColor(pResult->color);
+        pLightObj->InitLightPos(pResult->pos.x,
+                               pResult->pos.y, pResult->pos.z);
+        pLightObj->InitLightSpot(pResult->cutoff, pResult->spotFunc);
+        pLightObj->InitLightDistAttn(pResult->refDistance,
+                                     pResult->refBrightness,
+                                     pResult->distFunc);
+        pLightObj->InitLightDir(dir.x, dir.y, dir.z);
+        break;
+    }
+    default:
+        break;
+    }
+
+    if (!(pResult->flags & LightAnmResult::FLAG_COLOR_ENABLE)) {
+        pLightObj->DisableColor();
+    }
+
+    if (!(pResult->flags & LightAnmResult::FLAG_ALPHA_ENABLE)) {
+        pLightObj->DisableAlpha();
+    }
+
+    pLightObj->Enable();
+}
+
+} // namespace
 
 void AnmScn::GetLightSetting(LightSetting* pSetting) {
     const u32 numLightSet = GetLightSetMaxRefNumber();
@@ -72,171 +131,11 @@ void AnmScn::GetLightSetting(LightSetting* pSetting) {
     }
 }
 
-NW4R_G3D_RTTI_DEF(AnmScn);
+AnmScnRes* AnmScn::Attach(int idx, AnmScnRes* pRes) { return NULL; }
 
-// G3dObj base-chain check as an inlined by-value helper: the parameter copy
-// is the CSE barrier that makes MWCC reload `other` at the base link, the
-// same shape used by ScnRoot/ScnProc/AnmObj in their own TUs.
-static bool anmScnBaseIsDerivedFrom(G3dObj::TypeObj other) {
-    return other == G3dObj::TypeObj(lbl_eu_8051D640);
-}
+AnmScnRes* AnmScn::Detach(int idx) { return NULL; }
 
-bool AnmScn::IsDerivedFrom(G3dObj::TypeObj other) const {
-    if (other == TypeObj(TYPE_NAME)) {
-        return true;
-    }
-    return anmScnBaseIsDerivedFrom(other);
-}
-
-const G3dObj::TypeObj AnmScn::GetTypeObj() const {
-    return TypeObj(TYPE_NAME);
-}
-
-const char* AnmScn::GetTypeName() const {
-    return GetTypeObj().GetTypeName();
-}
-
-
-NW4R_G3D_RTTI_DEF(AnmScnRes);
-
-extern "C" const nw4r::g3d::G3dObj::ResNameDataT<11> lbl_eu_8051D640 = {7, "G3dObj"};
-extern "C" const nw4r::g3d::G3dObj::ResNameDataT<11> lbl_eu_8051D650 = {7, "AnmObj"};
-
-// AnmScn/G3dObj base-chain check, same inlined-helper convention as
-// anmScnBaseIsDerivedFrom above.
-static bool anmScnResBaseIsDerivedFrom(G3dObj::TypeObj other) {
-    return other == AnmScn::GetTypeObjStatic() ? true
-         : (other == G3dObj::TypeObj(lbl_eu_8051D640));
-}
-
-bool AnmScnRes::IsDerivedFrom(G3dObj::TypeObj other) const {
-    if (other == TypeObj(TYPE_NAME)) {
-        return true;
-    }
-    return anmScnResBaseIsDerivedFrom(other);
-}
-
-const G3dObj::TypeObj AnmScnRes::GetTypeObj() const {
-    return TypeObj(TYPE_NAME);
-}
-
-const char* AnmScnRes::GetTypeName() const {
-    return GetTypeObj().GetTypeName();
-}
-
-
-} // namespace g3d
-} // namespace nw4r
-
-void GetLightSet__Q34nw4r3g3d12LightSettingFi(nw4r::g3d::LightSet* result, nw4r::g3d::LightSetting* self, int index) {
-    nw4r::g3d::LightSetting* setting = self;
-    nw4r::g3d::LightSet* lightSet = result;
-    *lightSet = setting->GetLightSet(index);
-}
-nw4r::g3d::AnmScnRes* nw4r::g3d::AnmScn::Attach(int idx, AnmScnRes* pRes) {
-    return NULL;
-}
-nw4r::g3d::AnmScnRes* nw4r::g3d::AnmScn::Detach(int idx) { return NULL; }
-unsigned int GetResLightSetNumEntries__Q34nw4r3g3d9ResAnmScnCFv(const void*);
-
-unsigned int GetNumLightSet__Q34nw4r3g3d9AnmScnResCFv(const nw4r::g3d::AnmScnRes* this_ptr) {
-    return GetResLightSetNumEntries__Q34nw4r3g3d9ResAnmScnCFv(
-        reinterpret_cast<const char*>(this_ptr) + 0x20);
-}
-int GetResAnmAmbLightNumEntries__Q34nw4r3g3d9ResAnmScnCFv(const void*);
-
-int GetNumAmbLight__Q34nw4r3g3d9AnmScnResCFv(const nw4r::g3d::AnmScnRes* ths) {
-    return GetResAnmAmbLightNumEntries__Q34nw4r3g3d9ResAnmScnCFv(
-        reinterpret_cast<const char*>(ths) + 0x20);
-}
-u32 GetResAnmLightNumEntries__Q34nw4r3g3d9ResAnmScnCFv(const void *);
-
-u32 GetNumDiffuseLight__Q34nw4r3g3d9AnmScnResCFv(const nw4r::g3d::AnmScnRes* self) {
-    return GetResAnmLightNumEntries__Q34nw4r3g3d9ResAnmScnCFv(
-        reinterpret_cast<const void*>(reinterpret_cast<const char*>(self) + 0x20));
-}
-unsigned short GetNumSpecularLight__Q34nw4r3g3d9AnmScnResCFv(const nw4r::g3d::AnmScnRes* __this) {
-    return *reinterpret_cast<const unsigned short*>(
-        *reinterpret_cast<const unsigned char* const*>(
-            reinterpret_cast<const unsigned char*>(__this) + 0x20) + 0x36);
-}
-int GetNumFog__Q34nw4r3g3d9AnmScnResCFv(const nw4r::g3d::AnmScnRes* this_) {
-    extern int GetResAnmFogNumEntries__Q34nw4r3g3d9ResAnmScnCFv(const void*);
-    return GetResAnmFogNumEntries__Q34nw4r3g3d9ResAnmScnCFv(reinterpret_cast<const char*>(this_) + 0x20);
-}
-void GetResAnmCameraNumEntries__Q34nw4r3g3d9ResAnmScnCFv(void*);
-void GetNumCamera__Q34nw4r3g3d9AnmScnResCFv(nw4r::g3d::AnmScnRes* self) {
-    reinterpret_cast<void(*)(void*)>(GetResAnmCameraNumEntries__Q34nw4r3g3d9ResAnmScnCFv)(
-        reinterpret_cast<char*>(self) + 0x20);
-}
-u16 GetLightSetMaxRefNumber__Q34nw4r3g3d9AnmScnResCFv(const nw4r::g3d::AnmScnRes* _this) {
-    return *reinterpret_cast<const u16*>(*reinterpret_cast<const u8* const*>(reinterpret_cast<const u8*>(_this) + 0x20) + 0x3c);
-}
-unsigned short GetAmbLightMaxRefNumber__Q34nw4r3g3d9AnmScnResCFv(const nw4r::g3d::AnmScnRes* self) {
-    const unsigned char* res = *reinterpret_cast<const unsigned char* const*>(
-        reinterpret_cast<const unsigned char*>(self) + 0x20);
-    return *reinterpret_cast<const unsigned short*>(res + 0x3e);
-}
-int GetDiffuseLightMaxRefNumber__Q34nw4r3g3d9AnmScnResCFv(const nw4r::g3d::AnmScnRes* p) {
-    return *reinterpret_cast<const unsigned short*>(
-        *reinterpret_cast<const char* const*>(
-            reinterpret_cast<const char*>(p) + 0x20) + 0x40);
-}
-unsigned short GetFogMaxRefNumber__Q34nw4r3g3d9AnmScnResCFv(const nw4r::g3d::AnmScnRes* this_) {
-    return *reinterpret_cast<const unsigned short*>(
-        *reinterpret_cast<const char* const*>(
-            reinterpret_cast<const char*>(this_) + 0x20) + 0x42);
-}
-u16 GetCameraMaxRefNumber__Q34nw4r3g3d9AnmScnResCFv(const nw4r::g3d::AnmScnRes* pThis) {
-    return *reinterpret_cast<const u16*>(
-        reinterpret_cast<const u8*>(
-            *reinterpret_cast<const u32*>(reinterpret_cast<const u8*>(pThis) + 0x20)) + 0x44);
-}
-namespace nw4r {
-namespace g3d {
-
-void AnmScnRes::G3dProc(u32 task, u32 arg, void* pArg) {
-    switch (task) {
-    case G3DPROC_UPDATEFRAME:
-        UpdateFrame();
-        break;
-    case G3DPROC_DETACH_PARENT:
-        SetParent(NULL);
-        break;
-    case G3DPROC_ATTACH_PARENT:
-        SetParent(static_cast<G3dObj*>(pArg));
-        break;
-    default:
-        break;
-    }
-}
-
-AnmScnRes::AnmScnRes(MEMAllocator* pAllocator, ResAnmScn res,
-                     AmbLightAnmResult* pAmbCache,
-                     LightAnmResult* pLightCache, FogAnmResult* pFogCache,
-                     CameraAnmResult* pCameraCache)
-    : AnmScn(pAllocator),
-      // Signed intermediate forces MWCC's signed int->f32 conversion path
-      // (xoris 0x8000 + 0x43300000 magic), matching retail.
-      FrameCtrl(0.0f,
-                static_cast<f32>(static_cast<s32>(res.ref().info.numFrame)),
-                lbl_eu_80663458[res.ref().info.policy]),
-      mRes(res) {
-    mUpdateCacheFlag = 0;
-    mpAmbLightCache = pAmbCache;
-    mpLightCache = pLightCache;
-    mpFogCache = pFogCache;
-    mpCameraCache = pCameraCache;
-
-    if (pAmbCache != NULL || pLightCache != NULL || pFogCache != NULL ||
-        pCameraCache != NULL) {
-        mUpdateCacheFlag |= 1;
-    }
-
-    if (mUpdateCacheFlag & 1) {
-        UpdateCache();
-    }
-}
+AnmScn::~AnmScn() {}
 
 u32 AnmScnRes::GetNumLightSet() const {
     return mRes.GetResLightSetNumEntries();
@@ -376,12 +275,32 @@ AnmScnRes* AnmScnRes::Construct(MEMAllocator* pAllocator, u32* pSize,
                                 pFogCache, pCameraCache);
 }
 
-} // namespace g3d
-} // namespace nw4r
+AnmScnRes::AnmScnRes(MEMAllocator* pAllocator, ResAnmScn res,
+                     AmbLightAnmResult* pAmbCache,
+                     LightAnmResult* pLightCache, FogAnmResult* pFogCache,
+                     CameraAnmResult* pCameraCache)
+    : AnmScn(pAllocator),
+      // Signed intermediate forces MWCC's signed int->f32 conversion path
+      // (xoris 0x8000 + 0x43300000 magic), matching retail.
+      FrameCtrl(0.0f,
+                static_cast<f32>(static_cast<s32>(res.ref().info.numFrame)),
+                GetAnmPlayPolicy(res.ref().info.policy)),
+      mRes(res) {
+    mUpdateCacheFlag = 0;
+    mpAmbLightCache = pAmbCache;
+    mpLightCache = pLightCache;
+    mpFogCache = pFogCache;
+    mpCameraCache = pCameraCache;
 
+    if (pAmbCache != NULL || pLightCache != NULL || pFogCache != NULL ||
+        pCameraCache != NULL) {
+        mUpdateCacheFlag |= 1;
+    }
 
-namespace nw4r {
-namespace g3d {
+    if (mUpdateCacheFlag & 1) {
+        UpdateCache();
+    }
+}
 
 void AnmScnRes::SetFrame(f32 frame) {
     SetFrm(frame);
@@ -391,42 +310,20 @@ void AnmScnRes::SetFrame(f32 frame) {
     }
 }
 
-} // namespace g3d
-} // namespace nw4r
-
-
-float nw4r::g3d::AnmScnRes::GetFrame() const {
-    return GetFrm();
-}
-namespace nw4r {
-namespace g3d {
-
-// Retail .sdata2 float-pool slots: 1.0f constant and FrameCtrl's static
-// smBaseUpdateRate, shipped in retail as named .sdata2 objects (MWCC_CASES
-// §7: name the retail pool labels so the sda21 relocs match).
-extern "C" const f32 lbl_eu_80669BA0;
+f32 AnmScnRes::GetFrame() const { return GetFrm(); }
 
 void AnmScnRes::SetUpdateRate(f32 rate) {
     SetRate(rate);
 
-    if (lbl_eu_80669BA0 == rate && (mUpdateCacheFlag & 1)) {
+    if (rate == 0.0f && (mUpdateCacheFlag & 1)) {
         UpdateCache();
     }
 }
 
-} // namespace g3d
-} // namespace nw4r
-
-
-float nw4r::g3d::AnmScnRes::GetUpdateRate() const { return GetRate(); }
-// Retail .sdata2 float 2.0f used by AnmScnRes::GetCamera's ortho height calc.
-extern const f32 lbl_eu_80669BB8;
-
-namespace nw4r {
-namespace g3d {
+f32 AnmScnRes::GetUpdateRate() const { return GetRate(); }
 
 void AnmScnRes::UpdateFrame() {
-    if (GetRate() != lbl_eu_80669BA0) {
+    if (GetRate() != 0.0f) {
         UpdateFrm();
 
         if (mUpdateCacheFlag & 1) {
@@ -435,13 +332,21 @@ void AnmScnRes::UpdateFrame() {
     }
 }
 
-} // namespace g3d
-} // namespace nw4r
-
-
-void G3dProc__Q34nw4r3g3d9AnmScnResFUlUlPv(){}
-namespace nw4r {
-namespace g3d {
+void AnmScnRes::G3dProc(u32 task, u32 arg, void* pArg) {
+    switch (task) {
+    case G3DPROC_UPDATEFRAME:
+        UpdateFrame();
+        break;
+    case G3DPROC_DETACH_PARENT:
+        SetParent(NULL);
+        break;
+    case G3DPROC_ATTACH_PARENT:
+        SetParent(static_cast<G3dObj*>(pArg));
+        break;
+    default:
+        break;
+    }
+}
 
 bool AnmScnRes::GetLightSet(LightSet set, u32 refNumber) {
     ResLightSet lightSet = mRes.GetResLightSetByRefNumber(refNumber);
@@ -488,13 +393,6 @@ bool AnmScnRes::GetLightSet(LightSet set, u32 refNumber) {
     return true;
 }
 
-} // namespace g3d
-} // namespace nw4r
-
-
-namespace nw4r {
-namespace g3d {
-
 ut::Color AnmScnRes::GetAmbLightColor(u32 refNumber) {
     AmbLightAnmResult result;
 
@@ -512,80 +410,6 @@ ut::Color AnmScnRes::GetAmbLightColor(u32 refNumber) {
 
     return ut::Color(color);
 }
-
-} // namespace g3d
-} // namespace nw4r
-
-
-namespace nw4r {
-namespace g3d {
-namespace {
-
-void MakeDiffuseLightObj(LightObj* pLightObj, const LightAnmResult* pResult) {
-    u32 lightType = pResult->flags & LightAnmResult::FLAG_LIGHT_TYPE_MASK;
-
-    pLightObj->Clear();
-
-    switch (lightType) {
-    case 0: {
-        pLightObj->InitLightColor(pResult->color);
-        pLightObj->InitLightPos(pResult->pos.x,
-                               pResult->pos.y, pResult->pos.z);
-        pLightObj->InitLightSpot(0.0f, GX_SP_OFF);
-        pLightObj->InitLightDistAttn(pResult->refDistance,
-                                     pResult->refBrightness,
-                                     pResult->distFunc);
-        pLightObj->InitLightDir(0.0f, 0.0f, 0.0f);
-        break;
-    }
-    case 1: {
-        math::VEC3 dir = pResult->aim - pResult->pos;
-        math::VEC3 pos = dir * -10000000000.0f;
-
-        pLightObj->InitLightColor(pResult->color);
-        pLightObj->InitLightPos(pos.x, pos.y, pos.z);
-        pLightObj->InitLightAttnA(1.0f, 0.0f, 0.0f);
-        pLightObj->InitLightAttnK(1.0f, 0.0f, 0.0f);
-        pLightObj->InitLightDir(0.0f, 0.0f, 0.0f);
-        break;
-    }
-    case 2: {
-        math::VEC3 dir = pResult->aim - pResult->pos;
-
-        PSVECNormalize(reinterpret_cast<const Vec*>(&dir),
-                      reinterpret_cast<Vec*>(&dir));
-
-        pLightObj->InitLightColor(pResult->color);
-        pLightObj->InitLightPos(pResult->pos.x,
-                               pResult->pos.y, pResult->pos.z);
-        pLightObj->InitLightSpot(pResult->cutoff, pResult->spotFunc);
-        pLightObj->InitLightDistAttn(pResult->refDistance,
-                                     pResult->refBrightness,
-                                     pResult->distFunc);
-        pLightObj->InitLightDir(dir.x, dir.y, dir.z);
-        break;
-    }
-    default:
-        break;
-    }
-
-    if (!(pResult->flags & LightAnmResult::FLAG_COLOR_ENABLE)) {
-        pLightObj->DisableColor();
-    }
-
-    if (!(pResult->flags & LightAnmResult::FLAG_ALPHA_ENABLE)) {
-        pLightObj->DisableAlpha();
-    }
-
-    pLightObj->Enable();
-}
-
-} // namespace
-} // namespace g3d
-} // namespace nw4r
-
-namespace nw4r {
-namespace g3d {
 
 void AnmScnRes::GetLight(LightObj* pDiff, LightObj* pSpec, u32 refNumber) {
     LightAnmResult result;
@@ -638,13 +462,6 @@ void AnmScnRes::GetLight(LightObj* pDiff, LightObj* pSpec, u32 refNumber) {
     }
 }
 
-} // namespace g3d
-} // namespace nw4r
-
-
-namespace nw4r {
-namespace g3d {
-
 void AnmScnRes::GetFog(Fog fog, u32 refNumber) {
     FogAnmResult result;
 
@@ -668,13 +485,6 @@ void AnmScnRes::GetFog(Fog fog, u32 refNumber) {
     }
 }
 
-} // namespace g3d
-} // namespace nw4r
-
-
-namespace nw4r {
-namespace g3d {
-
 bool AnmScnRes::GetCamera(Camera camera, u32 refNumber) {
     CameraAnmResult result;
 
@@ -691,8 +501,7 @@ bool AnmScnRes::GetCamera(Camera camera, u32 refNumber) {
         break;
     }
     case GX_ORTHOGRAPHIC: {
-        // Named sdata2 constant so MWCC emits the retail sda21 reloc.
-        f32 height = pResult->orthoHeight * lbl_eu_80669BB8;
+        f32 height = pResult->orthoHeight / 2.0f;
         f32 width = height * pResult->aspect;
 
         camera.SetOrtho(height, -height, -width, width, pResult->near,
@@ -732,13 +541,6 @@ bool AnmScnRes::GetCamera(Camera camera, u32 refNumber) {
 
     return true;
 }
-
-} // namespace g3d
-} // namespace nw4r
-
-
-namespace nw4r {
-namespace g3d {
 
 AmbLightAnmResult* AnmScnRes::GetAmbLightResult(AmbLightAnmResult* pResult,
                                                 u32 idx) {
@@ -807,13 +609,6 @@ CameraAnmResult* AnmScnRes::GetCameraResult(CameraAnmResult* pResult,
     return pResult;
 }
 
-} // namespace g3d
-} // namespace nw4r
-
-
-namespace nw4r {
-namespace g3d {
-
 u32 AnmScnRes::GetSpecularLightID(u32 idx) const {
     ResAnmLight light = mRes.GetResAnmLightByRefNumber(idx);
 
@@ -835,14 +630,6 @@ bool AnmScnRes::HasSpecularLight(u32 idx) const {
 
     return result;
 }
-
-} // namespace g3d
-} // namespace nw4r
-
-
-
-namespace nw4r {
-namespace g3d {
 
 void AnmScnRes::UpdateCache() {
     u32 numAmb = mRes.GetResAnmAmbLightNumEntries();
@@ -866,6 +653,52 @@ void AnmScnRes::UpdateCache() {
     for (u32 i = 0; i < numCamera; i++) {
         mRes.GetResAnmCamera(i).GetAnmResult(&mpCameraCache[i], frame);
     }
+}
+
+
+// AnmScn/G3dObj base-chain check, same inlined-helper convention as
+// anmScnBaseIsDerivedFrom above.
+static bool anmScnResBaseIsDerivedFrom(G3dObj::TypeObj other) {
+    return other == AnmScn::GetTypeObjStatic() ? true
+         : (other == G3dObj::GetTypeObjStatic());
+}
+
+bool AnmScnRes::IsDerivedFrom(G3dObj::TypeObj other) const {
+    if (other == TypeObj(TYPE_NAME)) {
+        return true;
+    }
+    return anmScnResBaseIsDerivedFrom(other);
+}
+
+// G3dObj base-chain check as an inlined by-value helper: the parameter copy
+// is the CSE barrier that makes MWCC reload `other` at the base link, the
+// same shape used by ScnRoot/ScnProc/AnmObj in their own TUs.
+static bool anmScnBaseIsDerivedFrom(G3dObj::TypeObj other) {
+    return other == G3dObj::GetTypeObjStatic();
+}
+
+bool AnmScn::IsDerivedFrom(G3dObj::TypeObj other) const {
+    if (other == TypeObj(TYPE_NAME)) {
+        return true;
+    }
+    return anmScnBaseIsDerivedFrom(other);
+}
+
+const char* AnmScnRes::GetTypeName() const {
+    return GetTypeObj().GetTypeName();
+}
+
+const G3dObj::TypeObj AnmScnRes::GetTypeObj() const {
+    return TypeObj(TYPE_NAME);
+}
+
+
+const char* AnmScn::GetTypeName() const {
+    return GetTypeObj().GetTypeName();
+}
+
+const G3dObj::TypeObj AnmScn::GetTypeObj() const {
+    return TypeObj(TYPE_NAME);
 }
 
 } // namespace g3d

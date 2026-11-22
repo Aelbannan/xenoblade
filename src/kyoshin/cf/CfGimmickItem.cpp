@@ -8,6 +8,7 @@
  */
 
 #include "kyoshin/cf/CfBdat.hpp"
+#include "monolib/lod/CTaskLOD.hpp"
 #include "kyoshin/cf/CfGimmickItem.hpp"
 
 // BDAT column result: the raw call result lives in a word frame slot and is
@@ -120,8 +121,8 @@ cf::CfGimmickItem::CfGimmickItem(int rowId) {
     this->field_9E = 0;
     this->field_A0 = 0;
     if (this->field_70 != 0) {
-        attachLODObject__8CTaskLODFv(this->field_70, 0);
-        removeLODEntry__8CTaskLODFv(this->field_70, lbl_eu_80668448);
+        CTaskLOD::attachLODObject(this->field_70, 0);
+        CTaskLOD::removeLODEntry(this->field_70, lbl_eu_80668448);
     }
 
     if (CfGimmick_CheckStateFlag2CC8((u8*)(u32)this->field_64) != 0 && this->field_9C == 3) {
@@ -245,24 +246,24 @@ void GimItem_LodFxUpdate(cf::CfGimmickItem* self) {
             // the CfGimmickEne per-LOD filter block).
             if ((fc & 4) != 0) {
                 if ((fc & 2) != 0) {
-                    removeLODEntry__8CTaskLODFv(lod, lbl_eu_80668448);
+                    CTaskLOD::removeLODEntry(lod, lbl_eu_80668448);
                 } else {
-                    clearLODEntry__8CTaskLODFv(lod);
+                    CTaskLOD::clearLODEntry(lod);
                 }
-                attachLODObject__8CTaskLODFv(lod, 0);
+                CTaskLOD::attachLODObject(lod, 0);
             } else if ((fc & 1) != 0) {
-                detachLODObject__8CTaskLODFv(lod, 0);
-                attachLODObject__8CTaskLODFv(lod, 1);
+                CTaskLOD::detachLODObject(lod, 0);
+                CTaskLOD::attachLODObject(lod, 1);
             } else if ((fc & 2) != 0) {
-                detachLODObject__8CTaskLODFv(lod, 1);
-                attachLODObject__8CTaskLODFv(lod, 1);
+                CTaskLOD::detachLODObject(lod, 1);
+                CTaskLOD::attachLODObject(lod, 1);
             }
             if ((fc & 8) != 0) {
-                addLODEntry__8CTaskLODFv(lod, 0);
+                CTaskLOD::addLODEntry(lod, 0);
             } else {
-                addLODEntry__8CTaskLODFv(lod, 1);
+                CTaskLOD::addLODEntry(lod, 1);
             }
-            setLODObject__8CTaskLODFv(lod, self->field_99);
+            CTaskLOD::setLODObject(lod, self->field_99);
         }
 
         self->field_74 |= 8;

@@ -3,6 +3,7 @@
 
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/cf/object/CfObjectSelectorObj.hpp"
+#include "kyoshin/cf/object/CfObject.hpp"
 #include "monolib/util/reslist.hpp"
 #include <nw4r/math.h>
 #include "monolib/util/MemManager.hpp"  // canonical mtl::MemManager::allocate
@@ -18,7 +19,6 @@ class CfObject;
 // Retail emits bare (unmangled-C) symbol names for these imports; keep
 // C linkage so the relocs reference the exact retail names.
 extern "C" void __ct__cf_CfObjEnumList(u8* self);
-extern "C" u8* getHandleMEM2__Q23mtl10MemManagerFv();
 // KEEP (extern-C cleanup 2026-10-23): calling these through operator delete/delete[]
 // changes the extab cleanup actions (retail keeps the may-throw call shape).
 extern "C" void __dl__FPv(void* p);
@@ -68,11 +68,6 @@ struct SelEnumSlotView {
     u8 field_18;      // 0x18 (filter mark byte)
 };
 
-// Object state word queried by the enumeration filter.
-struct SelObjFlagsView {
-    u8 _pad_00[0x64];
-    u32 flags64;
-};
 // Player aux block whose radius widens the distance threshold.
 struct SelActorAuxView {
     u8 _pad_00[0x63C];
@@ -561,15 +556,14 @@ extern "C" void Selector_RunRequest(cf::CfSelectorUnit* self) {
             SelEnumSlotView* info =
                 reinterpret_cast<SelEnumSlotView*>(
                     getEntryAt(&self->mList, i));
-            if (reinterpret_cast<SelObjFlagsView*>(info->object)->flags64 & 4) {
+            if (static_cast<cf::CfObject*>(info->object)->unk64 & 4) {
                 continue;
             }
             // Stale-distance entries are re-marked before the cone test.
             if (info->field_14 > self->f305C) {
                 info->field_18 |= 0x70;
             }
-            if (reinterpret_cast<SelObjFlagsView*>(info->object)->flags64 &
-                0x100) {
+            if (static_cast<cf::CfObject*>(info->object)->unk64 & 0x100) {
                 continue;
             }
             f32 range = self->f305C; // distance threshold (+ aux radius)
@@ -698,7 +692,7 @@ void Selector_ReinitState(cf::CfObjectSelectorData* obj, u32 a4, u32 a5) {
 // ---------------------------------------------------------------------
 void __ct__800FDB4C() {
     if (lbl_eu_80663F14 == NULL) {
-        cf::CfObjectSelectorData* obj = (cf::CfObjectSelectorData*)mtl::MemManager::allocate(0xC188, (u32)getHandleMEM2__Q23mtl10MemManagerFv());
+        cf::CfObjectSelectorData* obj = (cf::CfObjectSelectorData*)mtl::MemManager::allocate(0xC188, mtl::MemManager::getHandleMEM2());
         if (obj != NULL) {
             __ct__cf_CfObjEnumList((u8*)&obj->mList1);
             __ct__cf_CfObjEnumList((u8*)&obj->mList2);
@@ -917,11 +911,11 @@ void Selector_FrameUpdate(cf::CfObjectSelectorData* self) {
 
     {
         cf::CfObjectSelectorData* sel = lbl_eu_80663F14;
-        SelObjFlagsView* obj = reinterpret_cast<SelObjFlagsView*>(
+        cf::CfObject* obj = static_cast<cf::CfObject*>(
             findObjectById((int)sel->mInner1.w3044));
         u32 f180 = self->fieldC180;
         if ((f180 & 0x400) || (f180 & 0x100) ||
-            (obj != NULL && (obj->flags64 & 0x4))) {
+            (obj != NULL && (obj->unk64 & 0x4))) {
             goto l_ff0dc;
         }
 
@@ -954,8 +948,8 @@ void Selector_FrameUpdate(cf::CfObjectSelectorData* self) {
 l_fee90:
     // Current selection lost or invalid.
     {
-        u32 fl = reinterpret_cast<SelObjFlagsView*>(
-            findObjectById((int)(u32)getObjectIdAt(self, 0)))->flags64;
+        u32 fl = static_cast<cf::CfObject*>(
+            findObjectById((int)(u32)getObjectIdAt(self, 0)))->unk64;
         if ((fl & (0x8 | 0x100 | 0x4000)) || (fl & 0x8000)) {
             // Tear down pending request state on the singleton.
             cf::CfObjectSelectorData* s = lbl_eu_80663F14;
@@ -1002,10 +996,10 @@ l_ffeff4:
         void* target = findObjectById((int)lbl_eu_80663F14->mInner1.w3044);
         u32 found = 0;
         for (u32 i = 0; i < self->field620; i++) {
-            SelObjFlagsView* o = reinterpret_cast<SelObjFlagsView*>(
+            cf::CfObject* o = static_cast<cf::CfObject*>(
                 findObjectById((int)(u32)getObjectIdAt(self, i)));
             if ((void*)o == target) {
-                u32 fl = o->flags64;
+                u32 fl = o->unk64;
                 if ((fl & (0x8 | 0x100 | 0x4000)) || (fl & 0x8000)) {
                     found = 1;
                     break;

@@ -105,7 +105,7 @@ typedef struct SFXDstBufInf {
 
 typedef struct SFXZmvSlot {
     u32 active;
-    u32 _04;
+    s32 _04;
     u32 _08;
     u32 _0C;
     u32 _10;
@@ -114,13 +114,13 @@ typedef struct SFXZmvSlot {
     u32 _1C;
     u32 _20;
     u8 _24[0x04];
-    u32 _28;
-    u32 _2C;
-    u32 _30;
+    s32 _28;
+    s32 _2C;
+    s32 _30;
     u8 _34[0x08];
     float _3C;
     float _40;
-    u32 _44;
+    void (*_44)(void* org, void* dst, f32 zmin, f32 zmax);
     u32 _48;
 } SFXZmvSlot;
 
@@ -136,6 +136,7 @@ typedef struct SFXZmvGlobal {
     u32 _04;
     u32 maxCount;
     SFXZmvSlot slots[8];
+    u32 _26C;
 } SFXZmvGlobal;
 
 typedef struct SFXHandleState {

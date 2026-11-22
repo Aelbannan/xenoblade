@@ -136,11 +136,11 @@ extern "C" int getUnitObject(VMThread* pThread, int handle, u16 unk) {
         ++argIdx;
         extra = vmArgIntGet(argIdx, ptr3);
     }
-    // Save the talk-lock bit (volatile read keeps this load separate from
-    // the reloads in the ternaries below, matching retail), then lift bit
-    // 0x2000 into 0x40000 depending on the omitted-arg value.
-    u32 talkBit = (*(volatile u32*)&gmGameFlags >> 13) & 1;
-    u32 flags = *(volatile u32*)&gmGameFlags;
+    // Save the talk-lock bit and the incoming flag word before the update;
+    // the omitted-argument choice either lifts 0x2000 into 0x40000 or
+    // clears 0x2000 while preserving the other flag bits.
+    u32 talkBit = (gmGameFlags >> 13) & 1;
+    u32 flags = gmGameFlags;
     gmGameFlags = (extra != 0) ? (flags | 0x40000u) : (flags & ~0x2000u);
     cf::CfObject* found = NULL;
     if (strcmp(str, lbl_eu_804FA74C) == 0 || strcmp(str, lbl_eu_804FA74C + 0xC) == 0) {
@@ -165,7 +165,7 @@ extern "C" int getUnitObject(VMThread* pThread, int handle, u16 unk) {
     }
 
     // Same bit lift as above, keyed on the saved talk bit this time.
-    u32 flags2 = *(volatile u32*)&gmGameFlags;
+    u32 flags2 = gmGameFlags;
     gmGameFlags = (talkBit != 0) ? (flags2 | 0x40000u) : (flags2 & ~0x2000u);
     if (found == NULL) {
         vmOCExceptionThrow(pThread);
@@ -1275,9 +1275,9 @@ extern "C" int invin(VMThread* pThread, int handle) {
     void* actor = (void*)__dynamic_cast(obj, 0, (void*)&__RTTI__Q22cf13CfObjectActor, (void*)&__RTTI__Q22cf8CfObject, 0);
     if (actor) {
         if (enable) {
-            CBattleMan_ClearEventNotify(getInstance__Q22cf14CBattleManagerFv(), (u32)actor, (u16)1);
+            CBattleMan_ClearEventNotify(cf::CBattleManager::getInstance(), (u32)actor, (u16)1);
         } else {
-            CBattleMan_ClearActorStatus(getInstance__Q22cf14CBattleManagerFv(), actor, (void*)1);
+            CBattleMan_ClearActorStatus(cf::CBattleManager::getInstance(), actor, (void*)1);
         }
     }
     return 0;
@@ -1348,7 +1348,7 @@ extern "C" int sendBattleEvent(VMThread* pThread, int handle) {
         data.field_14 = (u16)arg4;
         data.field_20 = arg2;
         data.field_24 = arg5;
-        CBattleMan_RunBattleEvent((u32)getInstance__Q22cf14CBattleManagerFv(), (u32)actor, &data, (u32)0);
+        CBattleMan_RunBattleEvent((u32)cf::CBattleManager::getInstance(), (u32)actor, &data, (u32)0);
     }
     return 0;
 }
@@ -1364,7 +1364,7 @@ extern "C" int delBuff(VMThread* pThread, int handle) {
     void* actor = (void*)__dynamic_cast(obj, 0, (void*)&__RTTI__Q22cf13CfObjectActor,
                                         (void*)&__RTTI__Q22cf8CfObject, 0);
     if (actor) {
-        void* battleMgr = getInstance__Q22cf14CBattleManagerFv();
+        void* battleMgr = cf::CBattleManager::getInstance();
         CBattleMan_ClearActorStatus(battleMgr, actor, (void*)index);
     }
     return 0;
@@ -1488,10 +1488,10 @@ extern "C" int spawnParty(VMThread* pThread, int handle, int retType) {
         ++idx;
         arg3 = vmArgIntGet(idx, ptr3);
     }
-    // Save the spawn-flag bit (volatile read keeps this load separate from
-    // the reloads in the ternaries below, matching retail), toggle the bit
-    // around the spawn, then restore the saved state.
-    u32 flags = *(volatile u32*)&gmGameFlags;
+    // Save the spawn-flag bit, toggle the bit around the spawn, then
+    // restore the saved state from the incoming flag word; the ternary
+    // arms read the current global independently.
+    u32 flags = gmGameFlags;
     u32 savedFlag = (flags >> 14) & 1;
     gmGameFlags = (arg3 != 0) ? (gmGameFlags | 0x40000u)
                                   : (gmGameFlags & ~0x40000u);
@@ -2145,30 +2145,16 @@ extern "C" OcUnitPluginArea ocUnitPluginArea = {
 // us-80040664: ocUnitRegist
 // Registers all OC unit plugin functions
 // Register the OC unit: init contexts then vmOCRegist each of the five
-// OCData sub-objects in the shared plugin area (lbl_eu_80524E50).
+// OCData records in the plugin area.
 extern char lbl_eu_80524E50[];
 extern "C" void ocUnitRegist() {
-    // TU-local view of the shared plugin area (lbl_eu_80524E50): five
-    // OCData records at fixed offsets, registered in order.
-    struct PluginArea {
-        u8 _pad0[0x2D0];
-        OCData e0;
-        u8 _pad1[0x398 - 0x2D0 - sizeof(OCData)];
-        OCData e1;
-        u8 _pad2[0x488 - 0x398 - sizeof(OCData)];
-        OCData e2;
-        u8 _pad3[0x560 - 0x488 - sizeof(OCData)];
-        OCData e3;
-        u8 _pad4[0x638 - 0x560 - sizeof(OCData)];
-        OCData e4;
-    };
-    PluginArea* area = (PluginArea*)&lbl_eu_80524E50;
+    OcUnitPluginArea* area = (OcUnitPluginArea*)lbl_eu_80524E50;
     ArtsSelect_Clear(ArtsSelect_GetContainer());
-    vmOCRegist(&area->e0);
-    vmOCRegist(&area->e1);
-    vmOCRegist(&area->e2);
-    vmOCRegist(&area->e3);
-    vmOCRegist(&area->e4);
+    vmOCRegist(&area->d0);
+    vmOCRegist(&area->d1);
+    vmOCRegist(&area->d2);
+    vmOCRegist(&area->d3);
+    vmOCRegist(&area->d4);
 }
 
 void cf::CObjectState::setStateBitMask(u32 bits) {

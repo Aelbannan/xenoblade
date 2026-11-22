@@ -256,29 +256,10 @@ void SeqSound::SeqLoadTask::OnCancel() {
 } // namespace snd
 } // namespace nw4r
 
-// Flattened entry point: the SeqSound member layout lives in snd_SeqSound.h,
-// but the fields this function needs are private, so they are reached through
-// retail-offset overlay structs (same pattern as StrmSound's MoveBlocksRetail
-// overlay in snd_StrmSound.cpp). The priority list itself stays on the real
-// Flattened entry point: the SeqSound member layout lives in snd_SeqSound.h
-// (not writable from this TU), so the one private field this function needs
-// (mManager at 0x294) is reached through a retail-offset overlay struct.
 // The manager's public UpdatePriority() inlines to exactly the retail body:
 // AutoLock(OSLockMutex/OSUnlockMutex around one Erase + one sorted Insert by
 // CalcCurrentPlayerPriority).
 void nw4r::snd::detail::SeqSound::OnUpdatePlayerPriority() {
-
-    struct SeqSoundOfs {
-        u8 _pad[0x294];
-        nw4r::snd::detail::SoundInstanceManager<nw4r::snd::detail::SeqSound>*
-            mManager; // at 0x294
-    };
-
-    SeqSound* pSound = this; // retail's `mr r28, r3` copy
-
-    reinterpret_cast<
-        nw4r::snd::detail::SoundInstanceManager<nw4r::snd::detail::SeqSound>*>(
-        reinterpret_cast<SeqSoundOfs*>(this)->mManager)
-        ->UpdatePriority(pSound, CalcCurrentPlayerPriority());
+    mManager->UpdatePriority(this, CalcCurrentPlayerPriority());
 }
 

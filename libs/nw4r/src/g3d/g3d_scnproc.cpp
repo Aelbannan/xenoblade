@@ -92,7 +92,7 @@ static bool scnLeafIsDerivedFrom(G3dObj::TypeObj other) {
     if (other == ScnObj::GetTypeObjStatic()) {
         return true;
     }
-    return other == G3dObj::TypeObj(lbl_eu_8051D640);
+    return other == G3dObj::GetTypeObjStatic();
 }
 
 // ScnProc is derived from ScnLeaf -> ScnObj -> G3dObj; the RTTI chain is

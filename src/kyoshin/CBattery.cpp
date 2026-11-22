@@ -43,7 +43,7 @@ void CBattery::drawBattery(void* param) {
     drawLayout(mLayout, static_cast<nw4r::lyt::DrawInfo*>(param), 0, 1);
 }
 
-__declspec(noinline) void CBattery::releaseLayout() {
+void CBattery::releaseLayout() {
     CDeviceVI::waitForDrawDone();
     closeFileHandle(&mFileHandle);
     nw4r::lyt::Layout* layout = mLayout;
@@ -64,7 +64,7 @@ void CBattery::setBatteryLevel(u8 level) {
 
 /* Updates the current battery images by going through the individual images
 for each bar, and only showing the ones for the current battery level. */
-void __declspec(noinline) CBattery::updateBatteryImage() {
+void CBattery::updateBatteryImage() {
     if (mLayout != nullptr) {
         // Cap the battery level at 4
         if (mBatteryLevel > 4)
@@ -83,7 +83,7 @@ void __declspec(noinline) CBattery::updateBatteryImage() {
     }
 }
 
-__declspec(noinline) void CBattery::onLayoutReady() {
+void CBattery::onLayoutReady() {
     if (mLayout != nullptr) {
         mDrawn = true;
         mLayoutReady = true;

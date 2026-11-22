@@ -1,5 +1,6 @@
 
 #include "kyoshin/cf/chain/CChainActorPc.hpp"
+#include "kyoshin/cf/chain/CChainTimer.hpp"
 #include "kyoshin/menu/code_8018C5FC.hpp"
 #include "kyoshin/code_8025FB10.hpp"
 
@@ -21,10 +22,6 @@ extern "C" void bindChainEffect(void* self, void* a, void* b, int c, int d) {
 extern "C" int forwardChainVoiceB3(int arg) {
     return (int)chainResolveMemberFromSrc(0xb3, (u32*)(u32)arg);
 }
-struct ChainActorInnerData {
-    u8 _pad00[0x3f28];
-    unsigned short field_3f28;
-};
 // View of the party-gauge word inside cf::CBattleManager (+0x194, the
 // UnkClass_8018C5FC sub-object head): getInstance returns void*, so the
 // meter is reached through this TU-local view instead of raw u8 arithmetic.
@@ -35,8 +32,7 @@ struct BattleMeterView {
 
 extern "C" int translateChainActorState(void* self) {
     cf::CChainActor* actor = static_cast<cf::CChainActor*>(self);
-    ChainActorInnerData* inner = reinterpret_cast<ChainActorInnerData*>(static_cast<uintptr_t>(actor->unk0));
-    int value = inner->field_3f28;
+    int value = actor->unk0->field_3F28;
     if (value == 8) return 3;
     if (value == 9) return 8;
     if (value == 10) return 9;
@@ -45,14 +41,8 @@ extern "C" int translateChainActorState(void* self) {
     if (value == 13) return 12;
     return value;
 }
-// Address anchor for the effect-link subobject at +0x74, forwarded to the
-// unlink matcher (void* callee, so the member is only an offset anchor).
-struct ChainEff74Anchor {
-    u8 _pad00[0x74];
-    u8 link74;
-};
 extern "C" bool chainUnlinkOnOwnerMatch(void*);
-extern "C" bool isChainEffectReady(void* self) { return chainUnlinkOnOwnerMatch(&((ChainEff74Anchor*)self)->link74); }
+extern "C" bool isChainEffectReady(void* self) { return chainUnlinkOnOwnerMatch(static_cast<cf::CChainActorPc*>(self)->mChainEffectRaw); }
 extern "C" bool isChainActorEnabled() { return true; }
 // Real class tree: CChainActorPc is novtable, vptr at +0x70 (0x70 pad), ctor writes lbl_eu_805384E0 (JP __vt__Q22cf13CChainActorPc).
 // Slot +0x48 (index 18 overall, vt offset 0x48) is CChain_getZero_A9FC: int(void* p) - owned by cf::CChainActorPc (leaf override of base A9FC).
@@ -75,7 +65,7 @@ void CChainActorPc::CChain_noop_78E00(int, int) {}
 int CChainActorPc::CChain_getZero_78E04() { return 0; }
 int CChainActorPc::CChain_getZero_AA04() { return 0; }
 int CChainActorPc::CChain_getZero_A9F4(void* arg) { return this->CChain_getZero_A9FC(*(void**)arg); }
-int CChainActorPc::CChain_getZero_A9FC(void* p) { return ((*(int*)((char*)p + 0x3f00) >> 1) & 1); }
+int CChainActorPc::CChain_getZero_A9FC(void* p) { return ((static_cast<cf::CChainBattleObj*>(p)->field_3F00 >> 1) & 1); }
 int CChainActorPc::CChain_getZero_A9EC() { return 0; }
 void CChainActorPc::CChain_noop_A9E8() {}
 int CChainActorPc::CChain_getZero_A9E0() { return 0; }
@@ -91,14 +81,8 @@ int CChainActorPc::CChain_getZero_A9D0() { return 0; }
 extern "C" void forwardChainZeroA9FC(cf::CChainActorPc* self, void* arg) {
     self->CChain_getZero_A9FC(*(void**)arg);
 }
-// Word view of the actor bitfield at +0x3F00 (same test as
-// CChainActorPc::CChain_getZero_A9FC).
-struct ChainBitWord {
-    u8 _pad00[0x3f00];
-    int bits3F00;
-};
 extern "C" int testChainActorBit(void*, void* p) {
-    return ((((ChainBitWord*)p)->bits3F00 >> 1) & 1);
+    return ((static_cast<cf::CChainBattleObj*>(p)->field_3F00 >> 1) & 1);
 }
 extern "C" void queryChainVoice() {
     CChain_QueryVoiceNode();
@@ -114,16 +98,6 @@ extern "C" void resetChainActor(cf::CChainActorPc* self, int val) {
     CChain_setFieldAndClear(self, val);
     chainClearTwoWords(&self->mChainEffectRaw);
 }
-// Local struct for accessing known fields within the large object at self->unk0
-struct CChainBigObj {
-    u8 _pad00[4];
-    u32 field_04;       // 0x04 - sub-object pointer
-    u8 _pad08[0x44a0];  // 0x08 .. 0x44a8
-    u8 field_44a8[4];   // 0x44a8
-    u8 _pad44ac[0xae];  // 0x44ac .. 0x455a
-    u16 field_455a;     // 0x455a
-};
-
 // Shared external declarations
 extern "C" void ColiSetMoveEnableFlag(void*, int);
 extern u8* findChainBattleActor(cf::CChainActorPc*);
@@ -131,7 +105,7 @@ extern u8* findChainBattleActor(cf::CChainActorPc*);
 // Main per-frame update for chain actor PC.
 // Uses multi-exit guard pattern to match retail control flow.
 void updateChainActor(cf::CChainActorPc* self) {
-    CChainBigObj* big = (CChainBigObj*)self->unk0;
+    cf::CChainBattleObj* big = self->unk0;
     ::CChainActor_CleanupVoiceEnd((cf::CChainActor*)self);
     if (!(self->unk6C & 1)) goto tail_check;
     if (((int(*)(u8*))((u8**)self->mVTable())[16])((u8*)self) == 0) goto state5_check;
@@ -182,18 +156,19 @@ store_455a:
         u8* sub = *(u8**)(obj + 4);
         int v = *(int*)((int(*)(u8*))(*(u8***)sub)[12])(sub);
         if (testActorStatus(obj, &v, 6)) {
-            big->field_455a = 0xec;
+            big->mField455A = 0xec;
         } else {
-            big->field_455a = 0x64;
+            big->mField455A = 0x64;
         }
     }
 tail_check:
     if ((self->unk6C & 1) || (self->unk6C & 2)) {
-        float f1 = ((float(*)(u8*))(*(u8***)((u8*)big + 0x3e9c))[35])((u8*)big + 0x3e9c);
+        cf::CChainVoiceSub* move = &big->mSub;
+        float f1 = move->v35();
         if (f1 > 0.0f) {
-            ColiSetMoveEnableFlag(big->field_44a8, 1);
+            ColiSetMoveEnableFlag(big->mCollision44A8, 1);
         } else {
-            ColiSetMoveEnableFlag(big->field_44a8, 0);
+            ColiSetMoveEnableFlag(big->mCollision44A8, 0);
         }
     }
 }
@@ -214,7 +189,7 @@ extern float calcBattleDamage(int, u8*, int);
 //   arg == 0    -> healing/damage loop over all battle actors
 //   arg != 0    -> check battle-manager flag 0xeb; may trigger chain-end vfunc
 void applyChainDamage(cf::CChainActorPc* self, int arg) {
-    CChainBigObj* big = (CChainBigObj*)self->unk0;
+    cf::CChainBattleObj* big = self->unk0;
     u32 bit = self->unk6C & 1;
     if ((u32)arg == bit) goto done;
     if (arg == 0) goto arg0;
@@ -241,8 +216,8 @@ check_cond:
     goto done;
 arg0:
     // arg == 0: healing/damage loop over all battle actors
-    big->field_455a = 100;
-    ColiSetMoveEnableFlag(big->field_44a8, 1);
+    big->mField455A = 100;
+    ColiSetMoveEnableFlag(big->mCollision44A8, 1);
     u8* unk0obj = (u8*)big;
     float f30;
     if (((int(*)(u8*))(*(u8***)unk0obj)[164])(unk0obj) != 0) {
@@ -282,67 +257,28 @@ extern "C" void updateChainMoveFlag(cf::CChainActorPc* self, int arg) {
     // Use u32 compare to force cmpl (unsigned) to match retail
     u32 bit = (self->unk6C >> 1) & 1;
     if ((u32)arg != bit && arg == 0) {
-        ColiSetMoveEnableFlag((void*)(self->unk0 + 0x44a8), 1);
+        ColiSetMoveEnableFlag(self->unk0->mCollision44A8, 1);
     }
     ::CChainActor_ToggleMoveFlag((cf::CChainActor*)self, (u32)arg);
 }
-// Data pad so the C++ vptr lands at +0x70 (retail lwz r12, 0x70(r3)).
-struct CChainActorPcV70Data {
-    u8 pad[0x70];
-};
-
-// Pure-virtual view of slot 0x74. MWCC prefix + v27 = retail +0x74.
-// Never constructed (CHelpManager / CQuestWindow scheme).
-struct CChainActorPcV29View : CChainActorPcV70Data {
-    virtual int v00() = 0;
-    virtual int v01() = 0;
-    virtual int v02() = 0;
-    virtual int v03() = 0;
-    virtual int v04() = 0;
-    virtual int v05() = 0;
-    virtual int v06() = 0;
-    virtual int v07() = 0;
-    virtual int v08() = 0;
-    virtual int v09() = 0;
-    virtual int v10() = 0;
-    virtual int v11() = 0;
-    virtual int v12() = 0;
-    virtual int v13() = 0;
-    virtual int v14() = 0;
-    virtual int v15() = 0;
-    virtual int v16() = 0;
-    virtual int v17() = 0;
-    virtual int v18() = 0;
-    virtual int v19() = 0;
-    virtual int v20() = 0;
-    virtual int v21() = 0;
-    virtual int v22() = 0;
-    virtual int v23() = 0;
-    virtual int v24() = 0;
-    virtual int v25() = 0;
-    virtual int v26() = 0;
-    virtual int v27() = 0;  // MWCC prefix+27*4 = retail +0x74
-};
-
 // Checks preconditions before calling CChainActor_CheckReady to execute chain logic.
 // Returns 0 if the actor is inactive (vtable check) or if a battle-manager
 // flag 0xf8 is set on the unk0 object; otherwise delegates to CChainActor_CheckReady.
 extern "C" int checkChainActorReady(cf::CChainActorPc* self, void* arg) {
-    if (static_cast<CChainActorPcV29View*>(static_cast<void*>(self))->v27() != 0) {
+    if (self->CChain_getZero_A9D0() != 0) {
         return 0;
     }
     // Check battle-manager flag 0xf8 on this->unk0 + 8
-    if (isBattleStatusActive((void*)(self->unk0 + 8), 0xf8) != 0) return 0;
+    if (isBattleStatusActive(&self->unk0->mSub8, 0xf8) != 0) return 0;
     return CChainActor_CheckReady(self, arg);
 }
 // Checks if this actor is the player's current actor.
 // Compares getPlayer(0) against unk0 + 0x3e9c (or 0 if unk0 is null).
 extern "C" int isChainActorPlayer(cf::CChainActor* self) {
-    u32 addr = self->unk0;
-    if (addr != 0) {
-        addr += 0x3e9c;
-    }
-    return (void*)addr == cf::CfGameManager::getPlayer(0);
+    cf::CChainBattleObj* obj = self->unk0;
+    void* addr = obj;
+    if (addr != 0) addr = &obj->mSub;
+    return addr == cf::CfGameManager::getPlayer(0);
 }
 // Returns true if CBattleManager+0x194 >= 300.
 extern "C" int isChainMeterFull() {
@@ -357,7 +293,7 @@ extern "C" void resetChainMeter() {
 // otherwise.
 extern "C" int matchChainActorSlot(cf::CChainActorPc* self) {
     int* config = CtrlObjectParam_GetSlotTableBase();
-    u16 value = reinterpret_cast<ChainActorInnerData*>(static_cast<uintptr_t>(self->unk0))->field_3f28;
+    u16 value = self->unk0->field_3F28;
     if (value == config[1]) return 0;
     if (value == config[2]) return 1;
     if (value == config[3]) return 2;

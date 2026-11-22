@@ -152,11 +152,10 @@ void BtlBeg_RemoveVoice_01B0(CVS_THREAD_BATTLE_BEGIN* self, CCharVoice* voicePtr
 // Select a battle-start voice ID from the current handle playback state.
 // Dispatches on HpVoice_MapSubState(handle); the first arg (self) is unused.
 int BtlBeg_SelectVoiceId_0248(CVS_THREAD_BATTLE_BEGIN* self, CVoiceHandle* handle) {
-    CVSHandleFieldView* hf = (CVSHandleFieldView*)handle;
     int r;
     switch (HpVoice_MapSubState(handle)) {
     case 1: {
-        int x = (int)hf->field_0x3374;
+        int x = (int)handle->field_0x3374;
         if ((x & 0x4000) != 0) {
             r = 1;
         } else {
@@ -168,12 +167,12 @@ int BtlBeg_SelectVoiceId_0248(CVS_THREAD_BATTLE_BEGIN* self, CVoiceHandle* handl
         r = 3;
         break;
     case 3: {
-        int y = hf->field_0x3F28;
+        int y = handle->field_0x3F28;
         r = (((y - 8) == 0) ? 1 : 0) + 4;
         break;
     }
     case 4: {
-        int x = (int)hf->field_0x3374;
+        int x = (int)handle->field_0x3374;
         if ((x & 0x4000) != 0) {
             r = 7;
         } else {

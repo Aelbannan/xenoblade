@@ -3,6 +3,7 @@
 
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/cf/object/CfObjectEffSymbols.hpp"
+#include "kyoshin/cf/object/CfObjectMove.hpp"
 #include "kyoshin/CTaskGameEff.hpp"
 #include "kyoshin/cf/CTaskGameEffAfter.hpp"
 #include "monolib/work/CProcess.hpp"
@@ -41,7 +42,7 @@ __declspec(noinline) CTaskGameEff* __ct__CTaskGameEff(CTaskGameEff* pThis, CScn*
     // Interim CTTask<CTaskGameEff> vtable (overwritten by the final vptr).
     p[4] = reinterpret_cast<u32>(lbl_eu_80525CAC);
 
-    f32 time = lbl_eu_80665D90;        // default effect time
+    f32 time = 1.0f;        // default effect time
 
     // NULL PTMF -> mMoveFunc (0x3C) / mDrawFunc (0x48): whole 12-byte
     // pointer-to-member assignments; MWCC picks the load/store schedule.
@@ -144,10 +145,11 @@ extern "C" void __dt__8CProcessFv(void* self, int flags);
 #pragma optimize_for_size on
 extern "C" __declspec(noinline) void* __dt__12CTaskGameEffFv(void* self, int flags) {
     if (self != 0) {
-        if ((u8*)self + 0x74 != 0) {
-            __dt___reslist_base_CScn((ResListCScn*)((u8*)self + 0x74), 0);
+        CTaskGameEff* eff = static_cast<CTaskGameEff*>(self);
+        if (&eff->mSceneList != nullptr) {
+            __dt___reslist_base_CScn(&eff->mSceneList, 0);
         }
-        __dt__Q212CTaskGameEff18CEffRenderHighPrioFv((u8*)self + 0x70, -1);
+        __dt__Q212CTaskGameEff18CEffRenderHighPrioFv(&eff->field_0x70, -1);
         if (self != 0) {
             __dt__8CProcessFv(self, 0);
         }
@@ -241,7 +243,7 @@ void CTaskGameEff::Term() {
 void setEffectEnabled(u32 enable) {
     CTaskGameEff* gTask = spGameEffTask;
     if (gTask == nullptr) return;
-    f32 time = (enable != 0) ? lbl_eu_80665D94 : gTask->field_0x6C;
+    f32 time = (enable != 0) ? 0.0f : gTask->field_0x6C;
     EffSys_DriveRandom(lbl_eu_8065FC18, time);
     gTask = spGameEffTask;
     if (enable != 0) {
@@ -314,10 +316,6 @@ extern "C" void* attachEffectById(EffHostObj* target, EffHostObj* host, u32 id, 
 // manager's 0x304 data block. Returns the resolved effect (or 0).
 // optimize_for_size on: retail prologue saves r30+r31 via stmw, not stw.
 #pragma optimize_for_size on
-// TU-local typed views over the manager+0x98 sub-object and its +0x304
-// anchor (exact layout, explicit pads); cf::CfObjectMove is incomplete here.
-struct Mgr98View { u8 _pad[0x98]; u8* sub98; };
-struct Mgr304View { u8 _pad[0x304]; u8 anchor; };
 void* bindIndexedEffect(int index, void* manager) {
     if (cf::CfGameManager::getInstance() == nullptr) {
         return nullptr;
@@ -329,9 +327,10 @@ void* bindIndexedEffect(int index, void* manager) {
     void* obj = __dynamic_cast(eff, 0, &__RTTI__Q22cf11CfObjectEff, &__RTTI__Q22cf8CfObject, 0);
     if (obj != nullptr && manager != nullptr) {
         bindPartnerO_((cf::CfObjectEff*)obj, (u8*)manager, (u8*)0);
-        void* data = static_cast<Mgr98View*>(manager)->sub98;
+        cf::CfObjectMove* move = static_cast<cf::CfObjectMove*>(manager);
+        cf::CfObjectModelSub98* data = move->mSubObj98;
         if (data != nullptr) {
-            setChild34Sc_(obj, &static_cast<Mgr304View*>(data)->anchor);
+            setChild34Sc_(obj, &data->mScale304);
         }
     }
     return obj;

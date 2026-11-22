@@ -27,7 +27,7 @@
 extern "C" void SplitU32ToS16s(short*, unsigned long);
 
 extern "C" void __dt__15CMenuKizunaTalkFv(void*, int);
-extern "C" void cbRenderBefore__15CMenuKizunaTalkFv(void*);
+extern "C" void cbRenderBefore__15CMenuKizunaTalkFP4CScn(void*);
 
 // Defined later in this TU (retail symbol is unmangled).
 extern "C" void checkKizunaGate(CMenuKizunaTalk* self);
@@ -132,7 +132,7 @@ void CMenuKizunaTalk::Term() {
 
 void CMenuKizunaTalk::Move() {}
 
-void CMenuKizunaTalk::cbRenderBefore() {}
+void CMenuKizunaTalk::cbRenderBefore(CScn*) {}
 
 // ---------------------------------------------------------------------------
 // Factory: lazily allocate + construct the single kizuna talk instance from
@@ -565,6 +565,6 @@ void CMenuKizunaTalk::OnFileEvent(CEventFile* pEvent) { ((void(*)(void*))handleK
 
 extern "C" void fwdKizunaDtor6C(void* self) { ((void(*)(void*))__dt__15CMenuKizunaTalkFv)((char*)self - 0x6c); }
 
-extern "C" void fwdKizunaCbRender70(void* self) { ((void(*)(void*))cbRenderBefore__15CMenuKizunaTalkFv)((char*)self - 0x70); }
+extern "C" void fwdKizunaCbRender70(void* self) { ((void(*)(void*))cbRenderBefore__15CMenuKizunaTalkFP4CScn)((char*)self - 0x70); }
 
 extern "C" void fwdKizunaDtor70(void* self) { ((void(*)(void*))__dt__15CMenuKizunaTalkFv)((char*)self - 0x70); }

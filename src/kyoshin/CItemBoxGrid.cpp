@@ -2,17 +2,14 @@
 // Auto-scaffolded catalog TU for kyoshin/CItemBoxGrid
 // Replace stubs with high-level C/C++ during decomp.
 
-// Real item-impl owner (kyoshin/cf/CItem.hpp): the harness chain declares a
-// stale extern "C" void* CItem_initItemImplInstances that conflicts with the
-// real CItemImpl*(CItemData*) form, so it is renamed away for this TU (same
-// workaround as CEquipChange.cpp).
-#define CItem_initItemImplInstances CItem_initItemImplInstances_staleVoid
 #include "kyoshin/cf/CfBdat.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/code_8025FB10.hpp"
 #include "monolib/lib/CLibLayout.hpp"
 #include "kyoshin/CItemBoxGrid.hpp"
+#include "kyoshin/cf/CfObjectEnumList.hpp"
+#include "kyoshin/cf/object/CfObjectObj.hpp"
 #include "kyoshin/makecrystal/CMenuMakeCrystal.hpp"
 #include "kyoshin/CPresentWinApi.hpp"
 #include "kyoshin/cf/CtrlObjectParam.hpp"
@@ -25,7 +22,6 @@
 #include "kyoshin/CBaseCur.hpp"
 #include "kyoshin/code_80135FDC_State.hpp"
 #include "kyoshin/CUICfManager_Res.hpp"
-#undef CItem_initItemImplInstances
 // CItemBoxGrid.hpp declares these two accessors with a stale void*/u32 view
 // that CItem.hpp (the owner) declares as CItemExt*/s32; the owning header is
 // not canonicalised yet, so CItem.hpp's copies are renamed for this include.
@@ -62,8 +58,7 @@ extern "C" {
 void CopyTabSlotVec(u32*, void*, u32);
 }
 void CopyTabSlotVec(u32*, void*, u32);
-void deleteRegion__17UnkClass_8045F564Fv(void*);
-// .sdata2 conversion magics referenced by ((CItemBoxGridFull*)(retail pool
+// .sdata2 conversion magics
 // constants; F48 = signed-int magic 0x4330000080000000))->GetItemValueFloat(F40 = plain 2^52).
 extern const float lbl_eu_80667F34;
 extern const float lbl_eu_80667F88;
@@ -72,22 +67,23 @@ extern const float lbl_eu_80667F98;
 extern const double lbl_eu_80667F60;
 extern const double lbl_eu_80667F68;
 
-extern u32 itemBoxGrid_slotLabelNeutralTop;
-extern u32 itemBoxGrid_slotLabelNeutralBottom;
-extern u32 itemBoxGrid_slotLabelUpTop;
-extern u32 itemBoxGrid_slotLabelUpBottom;
-extern u32 itemBoxGrid_slotLabelDownTop;
-extern u32 itemBoxGrid_slotLabelDownBottom;
-extern u32 itemBoxGrid_slotValueNeutralTop;
-extern u32 itemBoxGrid_slotValueNeutralBottom;
-extern u32 itemBoxGrid_slotValueUpTop;
-extern u32 itemBoxGrid_slotValueUpBottom;
-extern u32 itemBoxGrid_shopLabelNeutralTop;
-extern u32 itemBoxGrid_shopLabelNeutralBottom;
-extern u32 itemBoxGrid_shopLabelSelectedTop;
-extern u32 itemBoxGrid_shopLabelSelectedBottom;
-extern u32 itemBoxGrid_shopValueSelectedTop;
-extern u32 itemBoxGrid_shopValueSelectedBottom;
+// .sbss 0x80664488: the sixteen cursor/label colour quads owned by this TU.
+GXColorS10 itemBoxGrid_slotLabelNeutralTop;
+GXColorS10 itemBoxGrid_slotLabelNeutralBottom;
+GXColorS10 itemBoxGrid_slotLabelUpTop;
+GXColorS10 itemBoxGrid_slotLabelUpBottom;
+GXColorS10 itemBoxGrid_slotLabelDownTop;
+GXColorS10 itemBoxGrid_slotLabelDownBottom;
+GXColorS10 itemBoxGrid_slotValueNeutralTop;
+GXColorS10 itemBoxGrid_slotValueNeutralBottom;
+GXColorS10 itemBoxGrid_slotValueUpTop;
+GXColorS10 itemBoxGrid_slotValueUpBottom;
+GXColorS10 itemBoxGrid_shopLabelNeutralTop;
+GXColorS10 itemBoxGrid_shopLabelNeutralBottom;
+GXColorS10 itemBoxGrid_shopLabelSelectedTop;
+GXColorS10 itemBoxGrid_shopLabelSelectedBottom;
+GXColorS10 itemBoxGrid_shopValueSelectedTop;
+GXColorS10 itemBoxGrid_shopValueSelectedBottom;
 extern u32 itemBoxGrid_shopItemTypeTable;
 extern u32 itemBoxGrid_shopSkillTable;
 extern u32 itemBoxGrid_shopItemIdTable;
@@ -2064,9 +2060,9 @@ void CItemBoxGridFull::SortByItemVf30() {
             CItemBoxGridEntry* e2 = &this->entries[j + 1];
             void* obj1 = CItem_kindPtr(this->field_2802, e1->id);
             void* obj2 = CItem_kindPtr(this->field_2802, e2->id);
-            u32 v2 = CItem_initItemImplInstances((CItemData*)obj2)->vf30((CItemData*)obj2);
-            u32 v1 = CItem_initItemImplInstances((CItemData*)obj1)->vf30((CItemData*)obj1);
-            if ((u16)v1 >= (u16)v2) continue;
+            u16 v2 = CItem_initItemImplInstances((CItemData*)obj2)->vf30((CItemData*)obj2);
+            u16 v1 = CItem_initItemImplInstances((CItemData*)obj1)->vf30((CItemData*)obj1);
+            if (v1 >= v2) continue;
             CopyEntry9Bytes(tmp, (const char*)e1);
             CopyGridEntry9(e1, CopyEntry9Bytes(tmp + 12, (const char*)e2));
             CopyGridEntry9(e2, CopyEntry9Bytes(tmp + 24, (const char*)tmp));
@@ -2569,28 +2565,28 @@ CItemBoxGrid::~CItemBoxGrid() {
 // -O4,s: retail uses stmw r29/lmw r29 block saves.
 void CItemBoxGrid::LoadItemBoxFiles() {
     const char* strs;
-    void* allocHandle = getHandleMEM2__Q23mtl10MemManagerFv();
+    mtl::ALLOC_HANDLE allocHandle = mtl::MemManager::getHandleMEM2();
 
     if (MakeCrystalIsCreated()) {
-        if (getMaxAllocSize__Q23mtl10MemManagerFUl((u32)getHandleMEM1__Q23mtl10MemManagerFv()) >= 0x38000) {
-            allocHandle = (void*)getHandleMEM1__Q23mtl10MemManagerFv();
+        if (mtl::MemManager::getMaxAllocSize(mtl::MemManager::getHandleMEM1()) >= 0x38000) {
+            allocHandle = mtl::MemManager::getHandleMEM1();
         }
     }
 
     // Retail caches the string-table base here (r31), after the MEM1 choice.
     strs = lbl_eu_8050566C;
 
-    field_28 = (CFileHandle*)readFile__11CDeviceFileFUlPCcP10IWorkEventii((u32)allocHandle, strs + 0x266, this, 0, 0);
+    field_28 = CDeviceFile::readFile(allocHandle, strs + 0x266, this, 0, 0);
 
-    allocHandle = getHandleMEM2__Q23mtl10MemManagerFv();
-    field_2C = (CFileHandle*)readFile__11CDeviceFileFUlPCcP10IWorkEventii((u32)allocHandle, strs + 0x27e, this, 0, 0);
+    allocHandle = mtl::MemManager::getHandleMEM2();
+    field_2C = CDeviceFile::readFile(allocHandle, strs + 0x27e, this, 0, 0);
 
     if (field_543) {
-        allocHandle = (void*)KyoshinHeap_GetField44();
-        field_30 = (CFileHandle*)readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii((u32)allocHandle, strs + 0x297, this, 0, 0);
+        allocHandle = (u32)KyoshinHeap_GetField44();
+        field_30 = CDeviceFile::readCommonArchiveFile(allocHandle, strs + 0x297, this, 0, 0);
 
-        allocHandle = getHandleMEM2__Q23mtl10MemManagerFv();
-        field_34 = (CFileHandle*)readFile__11CDeviceFileFUlPCcP10IWorkEventii((u32)allocHandle, strs + 0x2b4, this, 0, 0);
+        allocHandle = mtl::MemManager::getHandleMEM2();
+        field_34 = CDeviceFile::readFile(allocHandle, strs + 0x2b4, this, 0, 0);
     } else {
         itemBoxGrid_shopItemTypeTable = (u32)getFP(strs + 0x2d0);
         itemBoxGrid_shopSkillTable = (u32)getFP(strs + 0x2df);
@@ -2759,7 +2755,7 @@ void CItemBoxGrid::UnloadItemBox() {
     void* ptr38 = this->field_38;
     this->field_54 = 0;
     if (ptr38) {
-        deallocate__Q23mtl10MemManagerFPv(ptr38);
+        mtl::MemManager::deallocate(ptr38);
         this->field_38 = 0;
     }
 
@@ -2783,8 +2779,8 @@ void CItemBoxGrid::UnloadItemBox() {
         this->field_5C = 0;
     }
 
-    deleteRegion__17UnkClass_8045F564Fv(p + 0x8);
-    deleteRegion__17UnkClass_8045F564Fv(p + 0x18);
+    mRegion08.deleteRegion();
+    mRegion18.deleteRegion();
 
     ((CBaseCur*)(p + 0x70))->cleanup();
     ((CBaseCur*)(p + 0x88))->cleanup();
@@ -4680,18 +4676,18 @@ void CItemBoxGrid::SetCellCaption(s8 kind, void* item, u16 idx) {
         char* msg = BdatTouchStringCell((const char*)&lbl_eu_8050566C[0x14f], (const char*)&lbl_eu_8050566C[0x158],
                                   (u32)(0x1e - ((cnt & 0xFF) - 1)));
         sprintf(msgBuf, (const char*)&lbl_eu_8050566C[0x14c], msg);
-        PaneMatSetTevColorsByName(this->field_44, nameBuf, (const GXColorS10*)&itemBoxGrid_shopLabelNeutralTop, (const GXColorS10*)&itemBoxGrid_shopLabelNeutralBottom);
+        PaneMatSetTevColorsByName(this->field_44, nameBuf, &itemBoxGrid_shopLabelNeutralTop, &itemBoxGrid_shopLabelNeutralBottom);
     } else if (kind > 0) {
         sprintf(msgBuf, (const char*)&lbl_eu_8050566C[0x162], kind);
-        PaneMatSetTevColorsByName(this->field_44, nameBuf, (const GXColorS10*)&itemBoxGrid_shopLabelNeutralTop, (const GXColorS10*)&itemBoxGrid_shopLabelNeutralBottom);
+        PaneMatSetTevColorsByName(this->field_44, nameBuf, &itemBoxGrid_shopLabelNeutralTop, &itemBoxGrid_shopLabelNeutralBottom);
     } else if (kind == 0) {
         sprintf(msgBuf, (const char*)&lbl_eu_8050566C[0x3af]);
     } else if (kind == -2) {
         sprintf(msgBuf, getErrMesText16());
-        PaneMatSetTevColorsByName(this->field_44, nameBuf, (const GXColorS10*)&itemBoxGrid_shopLabelSelectedTop, (const GXColorS10*)&itemBoxGrid_shopLabelSelectedBottom);
+        PaneMatSetTevColorsByName(this->field_44, nameBuf, &itemBoxGrid_shopLabelSelectedTop, &itemBoxGrid_shopLabelSelectedBottom);
     } else if (kind == -3) {
         sprintf(msgBuf, getErrMesText15());
-        PaneMatSetTevColorsByName(this->field_44, nameBuf, (const GXColorS10*)&itemBoxGrid_shopValueSelectedTop, (const GXColorS10*)&itemBoxGrid_shopValueSelectedBottom);
+        PaneMatSetTevColorsByName(this->field_44, nameBuf, &itemBoxGrid_shopValueSelectedTop, &itemBoxGrid_shopValueSelectedBottom);
     } else {
         sprintf(msgBuf, (const char*)&lbl_eu_8050566C[0x3af]);
     }
@@ -4814,11 +4810,11 @@ void CItemBoxGrid::RefreshCategoryTabs() {
                 isOtherTab = true;
             }
             if ((u32)(cat - 4) <= 4 || (s32)cat == 2 || (s32)cat == 0xb) {
-                PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(void**)(p + 0x44)), buf1, (const GXColorS10*)&itemBoxGrid_slotLabelDownTop, (const GXColorS10*)&itemBoxGrid_slotLabelDownBottom);
-                PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(void**)(p + 0x44)), buf2, (const GXColorS10*)&itemBoxGrid_slotLabelDownTop, (const GXColorS10*)&itemBoxGrid_slotLabelDownBottom);
+                PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(void**)(p + 0x44)), buf1, &itemBoxGrid_slotLabelDownTop, &itemBoxGrid_slotLabelDownBottom);
+                PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(void**)(p + 0x44)), buf2, &itemBoxGrid_slotLabelDownTop, &itemBoxGrid_slotLabelDownBottom);
             } else {
-                PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(void**)(p + 0x44)), buf1, (const GXColorS10*)&itemBoxGrid_slotLabelUpTop, (const GXColorS10*)&itemBoxGrid_slotLabelUpBottom);
-                PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(void**)(p + 0x44)), buf2, (const GXColorS10*)&itemBoxGrid_slotLabelUpTop, (const GXColorS10*)&itemBoxGrid_slotLabelUpBottom);
+                PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(void**)(p + 0x44)), buf1, &itemBoxGrid_slotLabelUpTop, &itemBoxGrid_slotLabelUpBottom);
+                PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(void**)(p + 0x44)), buf2, &itemBoxGrid_slotLabelUpTop, &itemBoxGrid_slotLabelUpBottom);
             }
         }
         void* pane = *(void**)(*(u32*)(p + 0x44) + 0x10);
@@ -5045,31 +5041,31 @@ void CItemBoxGrid::MoveTabPage(int val) {
         if ((u32)(cat - 4) <= 4 || (s32)cat == 2 || (s32)cat == 0xB) {
             // Layout pointer re-derived per call: PaneMatSetTevColorsByName clobbers
             // memory, so MWCC reloads *(p+0x44) before every call.
-            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), XB_K + 0x5aa, (const GXColorS10*)&itemBoxGrid_slotLabelDownTop, (const GXColorS10*)&itemBoxGrid_slotLabelDownBottom);
-            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), XB_K + 0x5b6, (const GXColorS10*)&itemBoxGrid_slotLabelDownTop, (const GXColorS10*)&itemBoxGrid_slotLabelDownBottom);
-            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), XB_K + 0x5c2, (const GXColorS10*)&itemBoxGrid_slotLabelDownTop, (const GXColorS10*)&itemBoxGrid_slotLabelDownBottom);
-            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), XB_K + 0x5ce, (const GXColorS10*)&itemBoxGrid_slotLabelDownTop, (const GXColorS10*)&itemBoxGrid_slotLabelDownBottom);
-            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), XB_K + 0x5da, (const GXColorS10*)&itemBoxGrid_slotLabelDownTop, (const GXColorS10*)&itemBoxGrid_slotLabelDownBottom);
-            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), XB_K + 0x5e6, (const GXColorS10*)&itemBoxGrid_slotLabelDownTop, (const GXColorS10*)&itemBoxGrid_slotLabelDownBottom);
-            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), XB_K + 0x5f2, (const GXColorS10*)&itemBoxGrid_slotLabelDownTop, (const GXColorS10*)&itemBoxGrid_slotLabelDownBottom);
-            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), XB_K + 0x5fe, (const GXColorS10*)&itemBoxGrid_slotLabelDownTop, (const GXColorS10*)&itemBoxGrid_slotLabelDownBottom);
-            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), XB_K + 0x60a, (const GXColorS10*)&itemBoxGrid_slotLabelDownTop, (const GXColorS10*)&itemBoxGrid_slotLabelDownBottom);
-            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), XB_K + 0x616, (const GXColorS10*)&itemBoxGrid_slotLabelDownTop, (const GXColorS10*)&itemBoxGrid_slotLabelDownBottom);
-            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), XB_K + 0x621, (const GXColorS10*)&itemBoxGrid_slotLabelDownTop, (const GXColorS10*)&itemBoxGrid_slotLabelDownBottom);
-            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), XB_K + 0x62c, (const GXColorS10*)&itemBoxGrid_slotLabelDownTop, (const GXColorS10*)&itemBoxGrid_slotLabelDownBottom);
+            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), XB_K + 0x5aa, &itemBoxGrid_slotLabelDownTop, &itemBoxGrid_slotLabelDownBottom);
+            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), XB_K + 0x5b6, &itemBoxGrid_slotLabelDownTop, &itemBoxGrid_slotLabelDownBottom);
+            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), XB_K + 0x5c2, &itemBoxGrid_slotLabelDownTop, &itemBoxGrid_slotLabelDownBottom);
+            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), XB_K + 0x5ce, &itemBoxGrid_slotLabelDownTop, &itemBoxGrid_slotLabelDownBottom);
+            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), XB_K + 0x5da, &itemBoxGrid_slotLabelDownTop, &itemBoxGrid_slotLabelDownBottom);
+            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), XB_K + 0x5e6, &itemBoxGrid_slotLabelDownTop, &itemBoxGrid_slotLabelDownBottom);
+            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), XB_K + 0x5f2, &itemBoxGrid_slotLabelDownTop, &itemBoxGrid_slotLabelDownBottom);
+            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), XB_K + 0x5fe, &itemBoxGrid_slotLabelDownTop, &itemBoxGrid_slotLabelDownBottom);
+            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), XB_K + 0x60a, &itemBoxGrid_slotLabelDownTop, &itemBoxGrid_slotLabelDownBottom);
+            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), XB_K + 0x616, &itemBoxGrid_slotLabelDownTop, &itemBoxGrid_slotLabelDownBottom);
+            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), XB_K + 0x621, &itemBoxGrid_slotLabelDownTop, &itemBoxGrid_slotLabelDownBottom);
+            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), XB_K + 0x62c, &itemBoxGrid_slotLabelDownTop, &itemBoxGrid_slotLabelDownBottom);
         } else {
-            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), XB_K + 0x5aa, (const GXColorS10*)&itemBoxGrid_slotLabelUpTop, (const GXColorS10*)&itemBoxGrid_slotLabelUpBottom);
-            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), XB_K + 0x5b6, (const GXColorS10*)&itemBoxGrid_slotLabelUpTop, (const GXColorS10*)&itemBoxGrid_slotLabelUpBottom);
-            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), XB_K + 0x5c2, (const GXColorS10*)&itemBoxGrid_slotLabelUpTop, (const GXColorS10*)&itemBoxGrid_slotLabelUpBottom);
-            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), XB_K + 0x5ce, (const GXColorS10*)&itemBoxGrid_slotLabelUpTop, (const GXColorS10*)&itemBoxGrid_slotLabelUpBottom);
-            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), XB_K + 0x5da, (const GXColorS10*)&itemBoxGrid_slotLabelUpTop, (const GXColorS10*)&itemBoxGrid_slotLabelUpBottom);
-            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), XB_K + 0x5e6, (const GXColorS10*)&itemBoxGrid_slotLabelUpTop, (const GXColorS10*)&itemBoxGrid_slotLabelUpBottom);
-            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), XB_K + 0x5f2, (const GXColorS10*)&itemBoxGrid_slotLabelUpTop, (const GXColorS10*)&itemBoxGrid_slotLabelUpBottom);
-            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), XB_K + 0x5fe, (const GXColorS10*)&itemBoxGrid_slotLabelUpTop, (const GXColorS10*)&itemBoxGrid_slotLabelUpBottom);
-            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), XB_K + 0x60a, (const GXColorS10*)&itemBoxGrid_slotLabelUpTop, (const GXColorS10*)&itemBoxGrid_slotLabelUpBottom);
-            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), XB_K + 0x616, (const GXColorS10*)&itemBoxGrid_slotLabelUpTop, (const GXColorS10*)&itemBoxGrid_slotLabelUpBottom);
-            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), XB_K + 0x621, (const GXColorS10*)&itemBoxGrid_slotLabelUpTop, (const GXColorS10*)&itemBoxGrid_slotLabelUpBottom);
-            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), XB_K + 0x62c, (const GXColorS10*)&itemBoxGrid_slotLabelUpTop, (const GXColorS10*)&itemBoxGrid_slotLabelUpBottom);
+            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), XB_K + 0x5aa, &itemBoxGrid_slotLabelUpTop, &itemBoxGrid_slotLabelUpBottom);
+            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), XB_K + 0x5b6, &itemBoxGrid_slotLabelUpTop, &itemBoxGrid_slotLabelUpBottom);
+            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), XB_K + 0x5c2, &itemBoxGrid_slotLabelUpTop, &itemBoxGrid_slotLabelUpBottom);
+            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), XB_K + 0x5ce, &itemBoxGrid_slotLabelUpTop, &itemBoxGrid_slotLabelUpBottom);
+            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), XB_K + 0x5da, &itemBoxGrid_slotLabelUpTop, &itemBoxGrid_slotLabelUpBottom);
+            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), XB_K + 0x5e6, &itemBoxGrid_slotLabelUpTop, &itemBoxGrid_slotLabelUpBottom);
+            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), XB_K + 0x5f2, &itemBoxGrid_slotLabelUpTop, &itemBoxGrid_slotLabelUpBottom);
+            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), XB_K + 0x5fe, &itemBoxGrid_slotLabelUpTop, &itemBoxGrid_slotLabelUpBottom);
+            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), XB_K + 0x60a, &itemBoxGrid_slotLabelUpTop, &itemBoxGrid_slotLabelUpBottom);
+            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), XB_K + 0x616, &itemBoxGrid_slotLabelUpTop, &itemBoxGrid_slotLabelUpBottom);
+            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), XB_K + 0x621, &itemBoxGrid_slotLabelUpTop, &itemBoxGrid_slotLabelUpBottom);
+            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), XB_K + 0x62c, &itemBoxGrid_slotLabelUpTop, &itemBoxGrid_slotLabelUpBottom);
         }
     }
 }
@@ -5234,16 +5230,16 @@ void CItemBoxGrid::UnequipPartyItem(int kind, int id) {
         u8 i;
         for (i = 0; i < 3; i++) {
             startEnumObjects(holder.get(), names[i], 0);
-            CItemBoxGridEnumList* list = (CItemBoxGridEnumList*)holder.get();
-            if (list->field_620 >= 1) {
-                list = (CItemBoxGridEnumList*)holder.get();
+            cf::CfObjEnumList* list = holder.get();
+            if (list->mPtrCount >= 1) {
+                list = holder.get();
                 CItemBoxGridEnumSlot* slot =
                     (CItemBoxGridEnumSlot*)getEntryAt(list, 0);
                 if (slot->field_04) {
-                    CItemBoxGridMoveObj* mv = (CItemBoxGridMoveObj*)
-                        getCfObjectPc__FPQ22cf12CfObjectMove(slot->field_04);
-                    if ((u8)pass == mv->field_3f28) {
-                        CfObjectPc_setupFrame(reinterpret_cast<cf::CfObjectPc*>(mv));
+                    cf::CfObjectMove* move = slot->field_04;
+                    cf::CfObjectPc* mv = getCfObjectPc(move);
+                    if ((u8)pass == move->unk8C_3) {
+                        CfObjectPc_setupFrame(mv);
                         break;
                     }
                 }
@@ -5351,21 +5347,20 @@ bool CItemBoxGrid::OnFileEvent(CEventFile* pEventFile) {
     u8* p = (u8*)this;
     // Keep the handle comparison operandless so MWCC holds it in r4 like retail.
     if (*(u32*)(p + 0x28) == *(u32*)((u8*)event + 4)) {
-    void* memHandle = getHandleMEM2__Q23mtl10MemManagerFv();
-    createRegion__17UnkClass_8045F564FiiPCci(p + 8, memHandle, 0x28000, "CItemBoxGrid", 0);
-    u8 regionBuf[0x14];
-    __ct__14Class_8045F858FP17UnkClass_8045F564(regionBuf, p + 8);
+    mtl::ALLOC_HANDLE memHandle = mtl::MemManager::getHandleMEM2();
+    mRegion08.createRegion((int)memHandle, 0x28000, "CItemBoxGrid", 0);
+    Class_8045F858 guard(&mRegion08);
     u32* fileData = *(u32**)(p + 0x28);
     void* fileBuf = (void*)fileData[1];
     fileData[1] = 0;
-    setMemInitFlag__Q23mtl10MemManagerFb(0);
+    mtl::MemManager::setMemInitFlag(false);
     mtl::ALLOC_HANDLE allocHandle = CLibLayout::getAllocHandle();
     void* tpMem = mtl::MemManager::allocate(0x858, allocHandle);
     if (tpMem != NULL) __ct__CTagProcessor(tpMem);
     *(void**)(p + 0x5c) = tpMem;
     nw4r::lyt::ArcResourceAccessor* arcRes = CLibLayout::createArcResourceAccessor();
     *(nw4r::lyt::ArcResourceAccessor**)(p + 0x3c) = arcRes;
-    Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(arcRes, fileBuf, "arc");
+    arcRes->Attach(fileBuf, "arc");
     buildLayout((nw4r::lyt::Layout**)(p + 0x44), arcRes, "mf02_box01_box.brlyt");
     nw4r::lyt::Layout* layout = *(nw4r::lyt::Layout**)(p + 0x44);
     bindLayoutAnimTransform(layout, (nw4r::lyt::AnimTransform**)(p + 0x48), arcRes, (char*)"mf02_box01_box_in.brlan");
@@ -5373,7 +5368,7 @@ bool CItemBoxGrid::OnFileEvent(CEventFile* pEventFile) {
     bindLayoutAnimTransform(layout, (nw4r::lyt::AnimTransform**)(p + 0x50), arcRes, (char*)"mf02_box01_box_slct.brlan");
     // Pane lookups go through the layout's root pane.
     nw4r::lyt::Pane* paneHost = layout->GetRootPane();
-    void* font = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, layout);
+    void* font = CDeviceFont::getFontInfo(1, layout);
     void* fontData = ((IDeviceFontInfo*)font)->getFont();
     ApplyFontToTxtPanes(paneHost, (const nw4r::ut::Font*)((u32)fontData));
     u32 screenW = (u32)getPackedFont();
@@ -5434,20 +5429,20 @@ bool CItemBoxGrid::OnFileEvent(CEventFile* pEventFile) {
     copyVEC3(p + 0x534, (u8*)&((nw4r::lyt::Pane*)posPane)->GetTranslate());
     // Snapshot both cursor colour states into the global colour tables.
     GXColorS10 colA = PaneMatGetS16QuadByName(layout, "pic_tbbcof01", 0);
-    CopyVec4s((GXColorS10*)&itemBoxGrid_slotLabelNeutralTop, &colA);
+    CopyVec4s(&itemBoxGrid_slotLabelNeutralTop, &colA);
     GXColorS10 colB = PaneMatGetS16QuadByName(layout, "pic_tbbcof01", 1);
-    CopyVec4s((GXColorS10*)&itemBoxGrid_slotLabelNeutralBottom, &colB);
+    CopyVec4s(&itemBoxGrid_slotLabelNeutralBottom, &colB);
     // Fan the two base colours' kind indices out over the eight table rows.
-    s16 colAW = *(s16*)((u8*)&itemBoxGrid_slotLabelNeutralTop + 6);
-    s16 colBW = *(s16*)((u8*)&itemBoxGrid_slotLabelNeutralBottom + 6);
-    *(s16*)((u8*)&itemBoxGrid_slotLabelUpTop + 6) = colAW;
-    *(s16*)((u8*)&itemBoxGrid_slotLabelUpBottom + 6) = colBW;
-    *(s16*)((u8*)&itemBoxGrid_slotLabelDownTop + 6) = colAW;
-    *(s16*)((u8*)&itemBoxGrid_slotLabelDownBottom + 6) = colBW;
-    *(s16*)((u8*)&itemBoxGrid_slotValueNeutralTop + 6) = colAW;
-    *(s16*)((u8*)&itemBoxGrid_slotValueNeutralBottom + 6) = colBW;
-    *(s16*)((u8*)&itemBoxGrid_slotValueUpTop + 6) = colAW;
-    *(s16*)((u8*)&itemBoxGrid_slotValueUpBottom + 6) = colBW;
+    s16 colAW = itemBoxGrid_slotLabelNeutralTop.a;
+    s16 colBW = itemBoxGrid_slotLabelNeutralBottom.a;
+    itemBoxGrid_slotLabelUpTop.a = colAW;
+    itemBoxGrid_slotLabelUpBottom.a = colBW;
+    itemBoxGrid_slotLabelDownTop.a = colAW;
+    itemBoxGrid_slotLabelDownBottom.a = colBW;
+    itemBoxGrid_slotValueNeutralTop.a = colAW;
+    itemBoxGrid_slotValueNeutralBottom.a = colBW;
+    itemBoxGrid_slotValueUpTop.a = colAW;
+    itemBoxGrid_slotValueUpBottom.a = colBW;
     // Build each cursor from a stack temporary handed to the attach helper.
     *reinterpret_cast<CCur07*>(p + 0x70) = CCur07((nw4r::lyt::ArcResourceAccessor*)*(void**)(p + 0x3c));
     ((CBaseCur*)(p + 0x70))->initLayout();
@@ -5472,15 +5467,15 @@ bool CItemBoxGrid::OnFileEvent(CEventFile* pEventFile) {
     void* grpPane = paneHost->FindPaneByName((char*)"txt_num01", 1);
     if (grpPane != NULL) {
         GXColorS10 gcolA = PaneMatGetS16Quad((nw4r::lyt::Pane*)grpPane, 0);
-        CopyVec4s((GXColorS10*)&itemBoxGrid_shopLabelNeutralTop, &gcolA);
+        CopyVec4s(&itemBoxGrid_shopLabelNeutralTop, &gcolA);
         GXColorS10 gcolB = PaneMatGetS16Quad((nw4r::lyt::Pane*)grpPane, 1);
-        CopyVec4s((GXColorS10*)&itemBoxGrid_shopLabelNeutralBottom, &gcolB);
-        s16 gAW = *(s16*)((u8*)&itemBoxGrid_shopLabelNeutralTop + 6);
-        s16 gBW = *(s16*)((u8*)&itemBoxGrid_shopLabelNeutralBottom + 6);
-        *(s16*)((u8*)&itemBoxGrid_shopLabelSelectedTop + 6) = gAW;
-        *(s16*)((u8*)&itemBoxGrid_shopLabelSelectedBottom + 6) = gBW;
-        *(s16*)((u8*)&itemBoxGrid_shopValueSelectedTop + 6) = gAW;
-        *(s16*)((u8*)&itemBoxGrid_shopValueSelectedBottom + 6) = gBW;
+        CopyVec4s(&itemBoxGrid_shopLabelNeutralBottom, &gcolB);
+        s16 gAW = itemBoxGrid_shopLabelNeutralTop.a;
+        s16 gBW = itemBoxGrid_shopLabelNeutralBottom.a;
+        itemBoxGrid_shopLabelSelectedTop.a = gAW;
+        itemBoxGrid_shopLabelSelectedBottom.a = gBW;
+        itemBoxGrid_shopValueSelectedTop.a = gAW;
+        itemBoxGrid_shopValueSelectedBottom.a = gBW;
     }
     char* msgD = BdatTouchStringCell("MNU_item", "name", 7);
     LayoutSetTextBoxFmtValue(layout, (char*)"txt_button00", msgD, 0);
@@ -5520,26 +5515,23 @@ bool CItemBoxGrid::OnFileEvent(CEventFile* pEventFile) {
         }
     }
     *(u32*)(p + 0x28) = 0;
-    validateHeap__17UnkClass_8045F564Fv(p + 8);
-    __dt__14Class_8045F858Fv(regionBuf, -1);
+    mRegion08.validateHeap();
     return 1;
     }
     // Secondary arc resource load (+0x2c slot).
     if (*(u32*)(p + 0x2c) == *(u32*)((u8*)event + 4)) {
-        void* memHandle = getHandleMEM2__Q23mtl10MemManagerFv();
-        createRegion__17UnkClass_8045F564FiiPCci(p + 0x18, memHandle, 0x100, "CItemBoxGridTex", 0);
-        u8 regionBuf[0x14];
-        __ct__14Class_8045F858FP17UnkClass_8045F564(regionBuf, p + 0x18);
+        mtl::ALLOC_HANDLE memHandle = mtl::MemManager::getHandleMEM2();
+        mRegion18.createRegion((int)memHandle, 0x100, "CItemBoxGridTex", 0);
+        Class_8045F858 guard(&mRegion18);
         u32* fileData = *(u32**)(p + 0x2c);
         void* fileBuf = (void*)fileData[1];
         fileData[1] = 0;
-        setMemInitFlag__Q23mtl10MemManagerFb(0);
+        mtl::MemManager::setMemInitFlag(false);
         nw4r::lyt::ArcResourceAccessor* arcRes = CLibLayout::createArcResourceAccessor();
         *(nw4r::lyt::ArcResourceAccessor**)(p + 0x40) = arcRes;
-        Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(arcRes, fileBuf, "arc");
+        arcRes->Attach(fileBuf, "arc");
         *(u32*)(p + 0x2c) = 0;
-        validateHeap__17UnkClass_8045F564Fv(p + 0x18);
-        __dt__14Class_8045F858Fv(regionBuf, -1);
+        mRegion18.validateHeap();
         return 1;
     }
     // BDAT table loads: register the fetched tables in their globals so the
@@ -5574,20 +5566,20 @@ bool CItemBoxGrid::OnFileEvent(CEventFile* pEventFile) {
 void sinit_801D1E30(void) {
     SplitU32ToS16s((short*)&itemBoxGrid_slotLabelNeutralTop, 0);
     SplitU32ToS16s((short*)&itemBoxGrid_slotLabelNeutralBottom, 0);
-    setGXColorS10((GXColorS10*)&itemBoxGrid_slotLabelUpTop, 0x79, 0x49, 0x07, 0x00);
-    setGXColorS10((GXColorS10*)&itemBoxGrid_slotLabelUpBottom, 0xED, 0xCD, 0x83, 0x00);
-    setGXColorS10((GXColorS10*)&itemBoxGrid_slotLabelDownTop, 0x1A, 0x43, 0x53, 0x00);
-    setGXColorS10((GXColorS10*)&itemBoxGrid_slotLabelDownBottom, 0xC4, 0xE8, 0xEB, 0x00);
-    setGXColorS10((GXColorS10*)&itemBoxGrid_slotValueNeutralTop, 0x74, 0x54, 0x1D, 0x00);
-    setGXColorS10((GXColorS10*)&itemBoxGrid_slotValueNeutralBottom, 0xD5, 0xB9, 0x78, 0x00);
-    setGXColorS10((GXColorS10*)&itemBoxGrid_slotValueUpTop, 0x3D, 0x68, 0x78, 0x00);
-    setGXColorS10((GXColorS10*)&itemBoxGrid_slotValueUpBottom, 0xC4, 0xE8, 0xEB, 0x00);
+    setGXColorS10(&itemBoxGrid_slotLabelUpTop, 0x79, 0x49, 0x07, 0x00);
+    setGXColorS10(&itemBoxGrid_slotLabelUpBottom, 0xED, 0xCD, 0x83, 0x00);
+    setGXColorS10(&itemBoxGrid_slotLabelDownTop, 0x1A, 0x43, 0x53, 0x00);
+    setGXColorS10(&itemBoxGrid_slotLabelDownBottom, 0xC4, 0xE8, 0xEB, 0x00);
+    setGXColorS10(&itemBoxGrid_slotValueNeutralTop, 0x74, 0x54, 0x1D, 0x00);
+    setGXColorS10(&itemBoxGrid_slotValueNeutralBottom, 0xD5, 0xB9, 0x78, 0x00);
+    setGXColorS10(&itemBoxGrid_slotValueUpTop, 0x3D, 0x68, 0x78, 0x00);
+    setGXColorS10(&itemBoxGrid_slotValueUpBottom, 0xC4, 0xE8, 0xEB, 0x00);
     SplitU32ToS16s((short*)&itemBoxGrid_shopLabelNeutralTop, 0);
     SplitU32ToS16s((short*)&itemBoxGrid_shopLabelNeutralBottom, 0);
-    setGXColorS10((GXColorS10*)&itemBoxGrid_shopLabelSelectedTop, 0x12, 0xA3, 0xE7, 0x00);
-    setGXColorS10((GXColorS10*)&itemBoxGrid_shopLabelSelectedBottom, 0xFF, 0xFF, 0xFF, 0x00);
-    setGXColorS10((GXColorS10*)&itemBoxGrid_shopValueSelectedTop, 0xB3, 0x09, 0xC0, 0x00);
-    setGXColorS10((GXColorS10*)&itemBoxGrid_shopValueSelectedBottom, 0xFF, 0xFF, 0xFF, 0x00);
+    setGXColorS10(&itemBoxGrid_shopLabelSelectedTop, 0x12, 0xA3, 0xE7, 0x00);
+    setGXColorS10(&itemBoxGrid_shopLabelSelectedBottom, 0xFF, 0xFF, 0xFF, 0x00);
+    setGXColorS10(&itemBoxGrid_shopValueSelectedTop, 0xB3, 0x09, 0xC0, 0x00);
+    setGXColorS10(&itemBoxGrid_shopValueSelectedBottom, 0xFF, 0xFF, 0xFF, 0x00);
 }
 
 

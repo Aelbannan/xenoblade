@@ -1258,7 +1258,7 @@ void* __dt__reslist_unsigned_short(ResListUS* self, int mode) {
 // set to lbl_eu_80526938). Frees the container itself when mode > 0.
 // Shared teardown body (mirrors __dt__80067670); expanded inline in the
 // deleting destructor below.
-static void ResStorage_ClearFirstList(ResInfoStorage* obj) {
+static inline void ResStorage_ClearFirstList(ResInfoStorage* obj) {
     ResInfoListNode* tmp;
     ResInfoListNode* head = obj->mStartNodePtr;
     ResInfoListNode* node = head->next;
@@ -1485,15 +1485,15 @@ extern "C" void CfRes_initWork(ResInfoWork* self) {
 // Named wrappers for -2 targets
 // ============================================================
 
-extern "C" __declspec(noinline) bool testResInfoFlag(u32 flags) {
+extern "C" bool testResInfoFlag(u32 flags) {
     return (gmPauseFlags & flags) != 0;
 }
 
-extern "C" __declspec(noinline) bool testWordFlag(const u32* p, u32 mask) {
+extern "C" bool testWordFlag(const u32* p, u32 mask) {
     return (*p & mask) != 0;
 }
 
-extern "C" __declspec(noinline) void clearWordFlag(u32* self, u32 mask) {
+extern "C" void clearWordFlag(u32* self, u32 mask) {
     *self &= ~mask;
 }
 

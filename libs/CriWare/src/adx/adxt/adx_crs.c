@@ -3,16 +3,15 @@
 
 #include <harness_catalog.h>
 
-/* Ref-count + lock state live in the retail .bss slice owned by criware_data.s
- * (lbl_eu_805E6378/lbl_eu_805E637C at 0x805E6378); this TU owns no data in
- * retail, so declare extern (defining them here would add a bogus .bss). */
-s32 lbl_eu_805E6378;
+/* Ref-count + lock state live in the retail .bss slice at 0x805E6378;
+ * JP symbols.txt names the first word adxcrs_lvl. */
+s32 adxcrs_lvl;
 volatile s32 lbl_eu_805E637C;
 
 void ADXCRS_Init(void) {
     ++lbl_eu_805E637C;
     if (lbl_eu_805E637C == 1) {
-        s32 *p = &lbl_eu_805E6378;
+        s32 *p = &adxcrs_lvl;
         *p = 0;
     }
 }
@@ -20,7 +19,7 @@ void ADXCRS_Init(void) {
 void ADXCRS_Finish(void) {
     --lbl_eu_805E637C;
     if (lbl_eu_805E637C == 0) {
-        s32 *p = &lbl_eu_805E6378;
+        s32 *p = &adxcrs_lvl;
         *p = 0;
     }
 }

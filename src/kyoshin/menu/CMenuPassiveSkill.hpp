@@ -6,6 +6,7 @@
 #include "monolib/scn/IScnRender.hpp"
 #include "kyoshin/CBgTex.hpp"
 #include "kyoshin/CTitleAHelp.hpp"
+#include "kyoshin/cf/CfPadData.hpp"
 #include <nw4r/lyt.h>
 
 class CScn;
@@ -24,7 +25,7 @@ public:
     virtual void Init();
     virtual void Term();
     virtual void Move();
-    virtual void cbRenderBefore();
+    virtual void cbRenderBefore(CScn* scene);
 
     static CMenuPassiveSkill* create(CProcess* parent, CScn* scene);
     static CMenuPassiveSkill* sInstance;
@@ -45,8 +46,6 @@ public:
 #include "kyoshin/code_80135FDC_State.hpp"
 #include "kyoshin/code_80135FDC_Lyt.hpp"
 
-extern "C" void Init__17CMenuPassiveSkillFv();
-extern "C" void Move__17CMenuPassiveSkillFv();
 extern "C" unsigned long hasPassiveSkillMenu();
 extern "C" void pollPassiveSkillReady(CMenuPassiveSkill* self);
 extern "C" void updatePassiveSkillMenu(CMenuPassiveSkill* self);
@@ -205,16 +204,6 @@ struct CMenuPassivePSView {
 // Game-progress flag getter (shared split1 helper, retail-unmangled name).
 #include "kyoshin/cf/CtrlRemoteApi.hpp"
 
-// cf::CfPadData view: only the flag words dispatchPassiveSkillInput reads (held buttons
-// at +0x00/+0x04, turbo/short-press flags at +0x104).
-struct CMenuPassivePadView {
-    u32 field_0;                // +0x00
-    u32 field_4;                // +0x04 held-button flags
-    u8 _pad8[0x104 - 0x8];
-    u32 mTurboPressButtonFlags; // +0x104 short-press flags
-};
-
-
 // unmangled; each takes the +0xB8 sub-object).
 extern "C" void UI_CPassiveSkill_thunk28_67BA0(u8* self);
 extern "C" void UI_CPassiveSkill_thunk28_67CE0(u8* self);
@@ -223,9 +212,6 @@ extern "C" void UI_CPassiveSkill_thunk28_68C38(u8* self);
 
 // +0x180 state-byte setter / pending-transition poller on the +0xB8 object.
 extern "C" void UI_CPassiveSkill_setByte180(u8* self, u8 value);
-
-// Shared event-file byte + classic-controller query (retail unmangled).
-extern "C" CMenuPassivePadView* getCfPadData__Q22cf13CfGameManagerFv();
 
 // Timer tick uses 1.0f / 10.0f literals around field_2B0.
 

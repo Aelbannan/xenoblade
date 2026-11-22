@@ -306,7 +306,7 @@ void CMenuLandTelop::Move() {
     field_54->Animate();
 }
 
-void CMenuLandTelop::cbRenderBefore() {
+void CMenuLandTelop::cbRenderBefore(CScn*) {
     CTaskGame::getInstance();
     // Single short-circuit OR so MWCC emits: func test -> bne exit;
     // bit test -> beq continue / b exit (CSystemWindow::Move shape).
@@ -331,7 +331,7 @@ CMenuLandTelop* createLandTelop(CProcess* parent, CScn* scene, u16 opt,
         CBattleListNode* p;
         s32 count;
         CBattleListNode* head =
-            ((CBattleListHead*)getInstance__Q22cf14CBattleManagerFv())->list;
+            ((CBattleListHead*)cf::CBattleManager::getInstance())->list;
         count = 0;
         for (p = head->next; p != head; p = p->next) {
             count++;
@@ -430,8 +430,6 @@ int consumeTelopEntry(CMenuLandTelop* self) {
 // Build/rebuild the land-telop layout: allocate the MEM2 scratch region,
 // load the layout + animation for the configured screen variant (field_8E),
 // wire up the message panes and font, then reset the anim frame.
-#pragma push
-#pragma auto_inline off
 void buildTelopLayout(CMenuLandTelop* self) {
     self->mMemRegion.createRegion(mtl::MemManager::getHandleMEM2(), 0x3000,
                                   "CMenuLandTelop", 0);
@@ -601,11 +599,10 @@ void buildTelopLayout(CMenuLandTelop* self) {
     // Flush the scratch region (regionGuard's destructor frees it).
     self->mMemRegion.validateHeap();
 }
-#pragma pop
 
 void CMenuLandTelop_dtorAdj6C(void* self) { ((void(*)(void*))__dt__14CMenuLandTelopFv)((char*)self - 0x6c); }
 
-void CMenuLandTelop_renderBeforeAdj70(void* self) { ((void(*)(void*))cbRenderBefore__14CMenuLandTelopFv)((char*)self - 0x70); }
+void CMenuLandTelop_renderBeforeAdj70(void* self) { ((void(*)(void*))cbRenderBefore__14CMenuLandTelopFP4CScn)((char*)self - 0x70); }
 
 void CMenuLandTelop_dtorAdj70(void* self) { ((void(*)(void*))__dt__14CMenuLandTelopFv)((char*)self - 0x70); }
 

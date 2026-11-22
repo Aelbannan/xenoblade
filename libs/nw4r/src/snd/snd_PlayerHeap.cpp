@@ -7,14 +7,8 @@ namespace nw4r {
 namespace snd {
 namespace detail {
 
-// Retail vtable data (nw4r_data.s lbl_eu_8056AAE8); novtable suppresses the
-// local vtable, the ctor/dtor assign the retail label explicitly in the
-// retail store order.
-extern "C" void* lbl_eu_8056AAE8[];
-
 PlayerHeap::PlayerHeap() {
     mSound = NULL;
-    *(void**)this = (void*)lbl_eu_8056AAE8;
     mPlayer = NULL;
     mStart = NULL;
     mUnk0x10 = NULL;
@@ -23,7 +17,6 @@ PlayerHeap::PlayerHeap() {
 }
 
 PlayerHeap::~PlayerHeap() {
-    *(void**)this = (void*)lbl_eu_8056AAE8;
     {
         SoundThread::AutoLock lock;
 

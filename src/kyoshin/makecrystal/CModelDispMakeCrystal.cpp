@@ -2717,8 +2717,7 @@ extern "C" void MakeCrystal_SpawnCrystalItem(void* selfp, int sel, u8 chIn)
         off = (u16)(0xe16 - (s == 1));
         break;
     }
-    CTaskGame_openVision((u8)ch, off, (u32)getHandleMEM2__Q23mtl10MemManagerFv(), 2, 1,
-                  1.0f);
+    CTaskGame_openVision((u8)ch, off, 1.0f, (u32)getHandleMEM2__Q23mtl10MemManagerFv(), 2, 1);
 }
 
 // Virtual dispatch at vtable offset +0xA8 (index 0x2a), returns a pointer.

@@ -601,16 +601,16 @@ extern "C" u32 KyoshinHeap_GetBaseTblRaw(int index) {
     return sKyoshinHeapState.field_0x5C[index];
 }
 
-extern "C" void* KyoshinHeap_GetPtrTblA(unsigned int param1, unsigned int param2) {
-    LblPtrTable* table = lbl_eu_805282A0[param2];
+extern "C" u32 KyoshinHeap_GetPtrTblA(unsigned int param1, unsigned int param2) {
+    LblPtrTable* table = sKyoshinHeapOffsetTablePtrs0[param2];
     if (param1 >= 0xe) {
         return table->slots[0];
     }
     return table->slots[param1];
 }
 
-extern "C" void* KyoshinHeap_GetPtrTblB(unsigned int param1, unsigned int param2) {
-    LblPtrTable* table = lbl_eu_80528398[param2];
+extern "C" u32 KyoshinHeap_GetPtrTblB(unsigned int param1, unsigned int param2) {
+    LblPtrTable* table = sKyoshinHeapOffsetTablePtrs1[param2];
     if (param1 >= 0xe) {
         return table->slots[0];
     }
@@ -1469,29 +1469,27 @@ s8 sKyoshinHeapInitialized;
 //
 // The three heap names passed to mtl::MemManager::create are plain literals at
 // their use sites; MWCC emits their .rodata pool in retail first-use order.
-// .data holds the per-stage 14-word offset tables and the
-// two 6-slot LblPtrTable arrays the runtime fills in.  Values are the retail
-// split's bytes (build/us/obj/kyoshin/code_800A75FC.o); the tables are read
-// only by the heap entry points that are still open (KyoshinHeap_CreateRegions /
-// KyoshinHeap_AllocNode / KyoshinHeap_GetField54), so nothing in this TU references them yet.
-// The all-zero arrays need #pragma section data_type: MWCC migrates an
-// all-zero aggregate to .bss even with __declspec(section ...), and the
-// nocommon/aligned attribute forms do not survive it either.  Keeping every
-// section at its retail size matters: ldscript.lcf concatenates sections
-// positionally, so a short .data/.bss/.sbss would move every later unit's data.
-#pragma section data_type ".data" ".data"
-u32 lbl_eu_80528188[14] = { 0x96000, 0x20800, 0x2F800, 0x32000, 0x2F800, 0x2A800, 0x39800, 0x32000, 0x2F800, 0x94000, 0x94000, 0x94000, 0x2F800, 0x2F800 };   // retail .data+0x000
-u32 lbl_eu_805281C0[14] = { 0x0, 0x28000, 0x1E000, 0x2D000, 0x23000, 0x2A800, 0x32000, 0x2A800, 0x1E000, 0x800, 0x800, 0x800, 0x23000, 0x23000 };   // retail .data+0x038
-u32 lbl_eu_805281F8[14] = { 0x0, 0x1B800, 0x16800, 0xF000, 0x16800, 0x14000, 0x11800, 0x11800, 0x19000, 0x800, 0x800, 0x800, 0x16800, 0x16800 };   // retail .data+0x070
-u32 lbl_eu_80528230[14] = { 0x0, 0x19000, 0x1E000, 0x16800, 0x19000, 0x19000, 0x14000, 0x16800, 0x1E000, 0x800, 0x800, 0x800, 0x19000, 0x19000 };   // retail .data+0x0A8
-u32 lbl_eu_80528268[14] = { 0x0, 0x19000, 0x14000, 0x11800, 0x14000, 0x14000, 0x5000, 0x11800, 0x11800, 0x800, 0x800, 0x800, 0x14000, 0x14000 };   // retail .data+0x0E0
-__declspec(section ".data") LblPtrTable* lbl_eu_805282A0[6] = { 0 };   // retail .data+0x118
-u32 lbl_eu_805282B8[14] = { 0x0, 0x20800, 0x2F800, 0x32000, 0x2F800, 0x2A800, 0x39800, 0x32000, 0x2F800, 0x94000, 0x94000, 0x94000, 0x2F800, 0x2F800 };   // retail .data+0x130
-u32 lbl_eu_805282F0[14] = { 0x0, 0x48800, 0x4D800, 0x5F000, 0x52800, 0x55000, 0x6B800, 0x5C800, 0x4D800, 0x94800, 0x94800, 0x94800, 0x52800, 0x52800 };   // retail .data+0x168
-u32 lbl_eu_80528328[14] = { 0x0, 0x64000, 0x64000, 0x6E000, 0x69000, 0x69000, 0x7D000, 0x6E000, 0x66800, 0x95000, 0x95000, 0x95000, 0x69000, 0x69000 };   // retail .data+0x1A0
-u32 lbl_eu_80528360[14] = { 0x0, 0x7D000, 0x82000, 0x84800, 0x82000, 0x82000, 0x91000, 0x84800, 0x84800, 0x95800, 0x95800, 0x95800, 0x82000, 0x82000 };   // retail .data+0x1D8
-__declspec(section ".data") LblPtrTable* lbl_eu_80528398[6] = { 0 };   // retail .data+0x210
-#pragma section data_type ".data" ".bss"
+// .data holds the per-stage 14-word offset tables and the two 6-slot arrays
+// of pointers to those tables.  Initialising the pointer arrays with their
+// real table addresses keeps them in .data and emits the retail relocations.
+// Values are the retail split's bytes (build/us/obj/kyoshin/code_800A75FC.o).
+LblPtrTable sKyoshinHeapOffsets0 = {{ 0x96000, 0x20800, 0x2F800, 0x32000, 0x2F800, 0x2A800, 0x39800, 0x32000, 0x2F800, 0x94000, 0x94000, 0x94000, 0x2F800, 0x2F800 }};   // name-guess: 14-word offset table at retail .data+0x000; no retail name in symbols.txt
+LblPtrTable sKyoshinHeapOffsets1 = {{ 0x0, 0x28000, 0x1E000, 0x2D000, 0x23000, 0x2A800, 0x32000, 0x2A800, 0x1E000, 0x800, 0x800, 0x800, 0x23000, 0x23000 }};   // name-guess: 14-word offset table at retail .data+0x038; no retail name in symbols.txt
+LblPtrTable sKyoshinHeapOffsets2 = {{ 0x0, 0x1B800, 0x16800, 0xF000, 0x16800, 0x14000, 0x11800, 0x11800, 0x19000, 0x800, 0x800, 0x800, 0x16800, 0x16800 }};   // name-guess: 14-word offset table at retail .data+0x070; no retail name in symbols.txt
+LblPtrTable sKyoshinHeapOffsets3 = {{ 0x0, 0x19000, 0x1E000, 0x16800, 0x19000, 0x19000, 0x14000, 0x16800, 0x1E000, 0x800, 0x800, 0x800, 0x19000, 0x19000 }};   // name-guess: 14-word offset table at retail .data+0x0A8; no retail name in symbols.txt
+LblPtrTable sKyoshinHeapOffsets4 = {{ 0x0, 0x19000, 0x14000, 0x11800, 0x14000, 0x14000, 0x5000, 0x11800, 0x11800, 0x800, 0x800, 0x800, 0x14000, 0x14000 }};   // name-guess: 14-word offset table at retail .data+0x0E0; no retail name in symbols.txt
+LblPtrTable* sKyoshinHeapOffsetTablePtrs0[6] = {
+    &sKyoshinHeapOffsets0, &sKyoshinHeapOffsets1, &sKyoshinHeapOffsets2,
+    &sKyoshinHeapOffsets3, &sKyoshinHeapOffsets4, 0,
+};   // name-guess: pointer array read by KyoshinHeap_GetPtrTblA at retail .data+0x118
+LblPtrTable sKyoshinHeapOffsets5 = {{ 0x0, 0x20800, 0x2F800, 0x32000, 0x2F800, 0x2A800, 0x39800, 0x32000, 0x2F800, 0x94000, 0x94000, 0x94000, 0x2F800, 0x2F800 }};   // name-guess: 14-word offset table at retail .data+0x130; no retail name in symbols.txt
+LblPtrTable sKyoshinHeapOffsets6 = {{ 0x0, 0x48800, 0x4D800, 0x5F000, 0x52800, 0x55000, 0x6B800, 0x5C800, 0x4D800, 0x94800, 0x94800, 0x94800, 0x52800, 0x52800 }};   // name-guess: 14-word offset table at retail .data+0x168; no retail name in symbols.txt
+LblPtrTable sKyoshinHeapOffsets7 = {{ 0x0, 0x64000, 0x64000, 0x6E000, 0x69000, 0x69000, 0x7D000, 0x6E000, 0x66800, 0x95000, 0x95000, 0x95000, 0x69000, 0x69000 }};   // name-guess: 14-word offset table at retail .data+0x1A0; no retail name in symbols.txt
+LblPtrTable sKyoshinHeapOffsets8 = {{ 0x0, 0x7D000, 0x82000, 0x84800, 0x82000, 0x82000, 0x91000, 0x84800, 0x84800, 0x95800, 0x95800, 0x95800, 0x82000, 0x82000 }};   // name-guess: 14-word offset table at retail .data+0x1D8; no retail name in symbols.txt
+LblPtrTable* sKyoshinHeapOffsetTablePtrs1[6] = {
+    0, &sKyoshinHeapOffsets5, &sKyoshinHeapOffsets6,
+    &sKyoshinHeapOffsets7, &sKyoshinHeapOffsets8, 0,
+};   // name-guess: pointer array read by KyoshinHeap_GetPtrTblB at retail .data+0x210
 
 // .bss remainder (retail 0x180..0x1B8): zero-initialised storage with no
 // source reference (its users are the open heap entry points).

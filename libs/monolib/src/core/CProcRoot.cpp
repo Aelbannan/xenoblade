@@ -4,18 +4,17 @@
 #include "monolib/util/MemManager.hpp"
 #include "monolib/data_vtables.hpp"
 
-extern "C" {
-CProcRoot* lbl_eu_806655A0;   // defined here (blob monolibdata1d dissolve; 4-byte sbss slot)
-// Shared string pool: "CDesktop\0CProcRoot" - create uses +9 ("CProcRoot").
-extern const char lbl_eu_80522514[];
+// name-guess: retail sbss slot at 0x806655A0 holds the current root-process pointer.
+CProcRoot* sProcRootInstance;
 
+extern "C" {
 // Base ctor called on raw storage: create() hand-inlines CProcRoot's ctor (see below).
 extern "C" void __ct__11CWorkThreadFPCcP11CWorkThreadi(CWorkThread* ths, const char* name,
                                                         CWorkThread* parent, int cap);
 }
 
 // --- Blob monolibdata1.s / monolibdata1d.s dissolve: this TU owns .data
-// 0x8056B2A8-0x8056B360, .rodata 0x80522508-0x80522528, .sdata 0x80663548-
+// 0x8056B2A8-0x8056B360, .rodata 0x80522508-0x80522510, .sdata 0x80663548-
 // 0x80663550, .sbss 0x806655A0-0x806655A8. ---
 
 // RTTI name string (.rodata).
@@ -24,7 +23,6 @@ extern const char lbl_eu_80522508[];
 extern u32 __RTTI__9CProcRoot[2];
 
 const char lbl_eu_80522508[] = "CProcRoot";
-const char lbl_eu_80522514[] = "CDesktop\0CProcRoot\0";
 
 // CProcRoot vtable (.data, 0xA0): [rtti, 0, dtor, IWorkEvent 1-31, wkUpdate/
 // wkRender/wkRenderAfter (CWorkThread slots), wkStandbyLogin/Logout (CProcRoot),
@@ -59,20 +57,18 @@ u32 lbl_eu_8056B348[6] = {
 
 u32 __RTTI__9CProcRoot[2] = { (u32)lbl_eu_80522508, (u32)lbl_eu_8056B348 };
 
-// spInstance (sbss lbl_eu_806655A4) - defined here so this TU owns its data
-// (blob monolibdata1d dissolve). Retail code accesses the singleton via the
-// flat lbl_eu_806655A0 label (4-byte sbss slot).
+// The second half of the retail 8-byte sbss slot is the class's static member.
 CProcRoot* CProcRoot::spInstance;
 
 // No out-of-line __ct__9CProcRoot - retail create inlines CWorkThread ctor +
 // vtable/singleton/mType stores (same pattern as CViewRoot::create).
 
 CProcRoot::~CProcRoot() {
-    lbl_eu_806655A0 = nullptr;
+    sProcRootInstance = nullptr;
 }
 
 CProcRoot* CProcRoot::getInstance() {
-    return lbl_eu_806655A0;
+    return sProcRootInstance;
 }
 
 bool CProcRoot::wkStandbyLogin() {
@@ -83,9 +79,9 @@ bool CProcRoot::wkStandbyLogin() {
     }
 
     if (CLib::isInitialized() && CViewRoot::isInitialized()) {
-        // CREATE_WORKTHREAD(CDesktop, this) with retail string-pool label.
+        // CREATE_WORKTHREAD(CDesktop, this).
         // Materialize name before create so MWCC homes it in r31 / this in r30.
-        name = lbl_eu_80522514;
+        name = "CDesktop";
         CDesktop::create(name, this);
         return CWorkThread::wkStandbyLogin();
     }
@@ -99,7 +95,7 @@ bool CProcRoot::wkStandbyLogout() {
 }
 
 CProcRoot* CProcRoot::create(CWorkThread* pParent) {
-    const char* name = lbl_eu_80522514 + 9; // "CProcRoot"
+    const char* name = "CProcRoot";
     CWorkThread* parent = pParent;
     mtl::ALLOC_HANDLE handle = CWorkThreadSystem::getWorkMem();
     CProcRoot* procRoot = static_cast<CProcRoot*>(mtl::MemManager::allocate(sizeof(CProcRoot), handle));
@@ -110,7 +106,7 @@ CProcRoot* CProcRoot::create(CWorkThread* pParent) {
         // vptr store has to be explicit.
         __ct__11CWorkThreadFPCcP11CWorkThreadi(procRoot, name, parent, MAX_CHILD);
         *reinterpret_cast<u32**>(procRoot) = lbl_eu_8056B2A8;
-        lbl_eu_806655A0 = procRoot;
+        sProcRootInstance = procRoot;
         procRoot->mType = THREAD_CPROCROOT;
     }
 

@@ -18,9 +18,9 @@ struct Vec3 {
     // float-wise copy so struct copies compile to lfs/stfs triples
     Vec3() {}
     Vec3(const Vec3& o) : x(o.x), y(o.y), z(o.z) {}
+    Vec3(const ColiQueryVec& o) : x(o.x), y(o.y), z(o.z) {}
 };
 
-extern Vec3 lbl_eu_8065F3F0;
 extern f32 sColiQueryLimit;
 // sdata2 sweep tables: entries consumed with a 12-byte stride; the additive
 // base table sits 16 bytes into the same region and is indexed identically.
@@ -599,7 +599,7 @@ extern "C" void ColiQueryOrientBox(ColiObj* self, const Vec3* pts, const Vec3* b
     nw4r::math::VEC3Add(&c[5], &s10, &az1);
     nw4r::math::VEC3Add(&c[6], &s01, &az1);
     nw4r::math::VEC3Add(&c[7], &s11, &az1);
-    Vec3* mn = &lbl_eu_8065F3F0;
+    ColiQueryVec* mn = &lbl_eu_8065F3F0;
     ColiQueryVec* mx = &sColiQueryBounds.max;
     mn->x = mn->y = mn->z = (-100000.0f);
     mx->x = mx->y = mx->z = 100000.0f;

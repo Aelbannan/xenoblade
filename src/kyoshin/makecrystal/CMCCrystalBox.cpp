@@ -16,6 +16,8 @@
 #include "monolib/util/MemManager.hpp"
 #include "monolib/work/CEventFile.hpp"
 #include "monolib/device/CFileHandle.hpp"
+#include "monolib/device/CDeviceFile.hpp"
+#include "monolib/device/CDeviceFont.hpp"
 
 #include <string.h>
 #include <nw4r/lyt.h>
@@ -390,12 +392,12 @@ void CMCCrystalBox::initCrystalBoxResources() {
     // Resource archives: sort menu (+0x24), crystal info (+0x28), common
     // (+0x2C). The first two use the heap handle, the third the common-archive
     // file after KyoshinHeap_GetField44's handle setup.
-    this->mFileHandle0 = (CFileHandle*)readFile__11CDeviceFileFUlPCcP10IWorkEventii(
-        (unsigned long)getHandleMEM1__Q23mtl10MemManagerFv(), sMakeCrystalStrings + 0xc, this, 0, 0);
-    this->mFileHandle1 = (CFileHandle*)readFile__11CDeviceFileFUlPCcP10IWorkEventii(
-        (unsigned long)getHandleMEM2__Q23mtl10MemManagerFv(), sMakeCrystalStrings + 0x25, this, 0, 0);
-    this->mFileHandle2 = (CFileHandle*)readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii(
-        (unsigned long)KyoshinHeap_GetField44(), sMakeCrystalStrings + 0x3e, this, 0, 0);
+    this->mFileHandle0 = CDeviceFile::readFile(
+        mtl::MemManager::getHandleMEM1(), sMakeCrystalStrings + 0xc, this, 0, 0);
+    this->mFileHandle1 = CDeviceFile::readFile(
+        mtl::MemManager::getHandleMEM2(), sMakeCrystalStrings + 0x25, this, 0, 0);
+    this->mFileHandle2 = CDeviceFile::readCommonArchiveFile(
+        KyoshinHeap_GetField44(), sMakeCrystalStrings + 0x3e, this, 0, 0);
 
     // Re-init the sort menu from a default temp: copy every member except the
     // +0x6C s32 array (retail copies the mem region, pointer fields, flags,
@@ -497,8 +499,8 @@ void CMCCrystalBox::teardownCrystalBox() {
         }
         releaseArcResourceAccessor(this->mArcAcc0);
         releaseArcResourceAccessor(this->mArcAcc1);
-        deleteRegion__17UnkClass_8045F564Fv(&this->mMemRegion1);
-        deleteRegion__17UnkClass_8045F564Fv(&this->mMemRegion2);
+        this->mMemRegion1.deleteRegion();
+        this->mMemRegion2.deleteRegion();
         this->sortMenu.Term();
         MCCrystal_Teardown(&this->crystalInfo);
         // Deactivate each placed cursor sub-object via its slot-0x0C virtual.
@@ -2357,7 +2359,6 @@ void CMCCrystalBox::refreshCrystalBoxCursors() {
     char buf14[0xC];    // countdown quad
     char buf8[0xC];     // normal quad
     bool flag;          // window-kind <2 guard (retail keeps it in r30; bool: no int->bool convert)
-    struct PaneW44 { u8 pad[0x44]; f32 w44; };  // +0x44 scale float (per-statement view)
     if (this->unk1500 != 0) {
         MCCrystal_AlignPane(reinterpret_cast<CMCCrystalInfo*>(buf2C), &this->crystalInfo, static_cast<u32>(this->unk1501));
         this->mCur18B.setRootPaneTranslate(reinterpret_cast<const nw4r::math::VEC3*>(buf2C));
@@ -2412,7 +2413,7 @@ void CMCCrystalBox::refreshCrystalBoxCursors() {
                 AccumPaneWorldPos((nw4r::math::VEC3*)((char*)buf44), paneA);
                 nw4r::lyt::Pane* paneB = (((CrystalBoxSubObj5*)this->mLayout)->layout)
                                              ->vf_3C(sMakeCrystalStrings + 0x63, 1);
-                buf44[0] *= ((PaneW44*)paneB)->w44;
+                buf44[0] *= paneB->GetScale().x;
                 this->mCur11.setRootPaneTranslate(reinterpret_cast<const nw4r::math::VEC3*>(buf44));
                 this->mCur11.SetVisible(1);
                 this->mCur16.SetVisible(0);
@@ -2429,7 +2430,7 @@ void CMCCrystalBox::refreshCrystalBoxCursors() {
                 AccumPaneWorldPos((nw4r::math::VEC3*)((char*)buf38), paneA);
                 nw4r::lyt::Pane* paneB = (((CrystalBoxSubObj5*)this->mLayout)->layout)
                                              ->vf_3C(sMakeCrystalStrings + 0x63, 1);
-                buf38[0] *= ((PaneW44*)paneB)->w44;
+                buf38[0] *= paneB->GetScale().x;
                 this->mCur16.setRootPaneTranslate(reinterpret_cast<const nw4r::math::VEC3*>(buf38));
                 this->mCur16.SetVisible(1);
                 this->mCur11.SetVisible(0);
@@ -2873,10 +2874,10 @@ bool CMCCrystalBox::OnFileEvent(CEventFile* event) {
         bindLayoutAnimTransform((nw4r::lyt::Layout*)mLayout, &mAnim8, (nw4r::lyt::ArcResourceAccessor*)mArcAcc0, sMakeCrystalStrings + 0x48b);
 
         // Bind the shared font into the layout's root pane.
-        nw4r::lyt::Pane* rootPane = *(nw4r::lyt::Pane**)((u8*)mLayout + 0x10);
-        void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
+        nw4r::lyt::Pane* rootPane = mLayout->GetRootPane();
+        void* fontObj = CDeviceFont::getFontInfo(
             1, (nw4r::lyt::Layout*)mLayout);
-        u32 fontHandle = ((CDeviceFontVtblView*)fontObj)->vf7();
+        u32 fontHandle = (u32)((IDeviceFontInfo*)fontObj)->getFont();
         ApplyFontToTxtPanes(rootPane, (const nw4r::ut::Font*)fontHandle);
         // Row/column count labels from the two shared counters.
         u32 cnt = (u32)getPackedFont();
@@ -2942,7 +2943,7 @@ bool CMCCrystalBox::OnFileEvent(CEventFile* event) {
             u16 w2 = *(u16*)((u8*)d + 2);
             u16 w0 = *(u16*)d;
             nw4r::lyt::Pane* pane =
-                ((CLytVf3C3*)(*(void**)((u8*)mLayout + 0x10)))
+                ((CLytVf3C3*)mLayout->GetRootPane())
                     ->vf_3C(sMakeCrystalStrings + 0x4fd, 1, d);
             if (pane != 0) {
                 f32 fx;
@@ -2950,9 +2951,10 @@ bool CMCCrystalBox::OnFileEvent(CEventFile* event) {
                 // Dead local pair (store-only, so MWCC keeps the two stfs to
                 // +0x10/+0x14 like retail instead of eliminating them).
                 u64 pos;
-                ((PanePosMirror*)pane)->m4C = fx = (f32)w2;
+                nw4r::lyt::Size& paneSize = const_cast<nw4r::lyt::Size&>(pane->GetSize());
+                paneSize.width = fx = (f32)w2;
                 ((f32*)&pos)[0] = fx;
-                ((PanePosMirror*)pane)->m50 = fy = (f32)w0;
+                paneSize.height = fy = (f32)w0;
                 ((f32*)&pos)[1] = fy;
             }
         }
@@ -2996,9 +2998,9 @@ bool CMCCrystalBox::OnFileEvent(CEventFile* event) {
 
         // Mirror the window-size pane's translate onto field_14F4.
         nw4r::lyt::Pane* sizePane =
-            ((CLytVf3C*)(*(void**)((u8*)mLayout + 0x10)))
+            ((CLytVf3C*)mLayout->GetRootPane())
                 ->vf_3C(sMakeCrystalStrings + 0x523, 1);
-        copyVEC3(&field_14F4, (u8*)sizePane + 0x2c);
+        copyVEC3(&field_14F4, &sizePane->GetTranslate());
 
         // Re-init all six cursor sub-objects from temps (accessor or the
         // shared resource manager), then poke each member's slot-0x08 virtual.

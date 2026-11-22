@@ -30,7 +30,7 @@ public:
     void Term();
     void Move();
     void Draw();
-    void cbRenderBefore();
+    void cbRenderBefore(CScn* scene);
 
     // IScnRender at 0x5c (public non-primary base)
     CScn* mScn;                                 // 0x60

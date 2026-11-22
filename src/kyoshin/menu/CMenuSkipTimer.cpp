@@ -32,7 +32,7 @@ void CMenuSkipTimer::Init() {
     mBgTex = CBgTex(0);
     BgTex_Acquire_3C14(&mBgTex);
 
-    mTitleAHelp = CTitleAHelp(BdatTouchStringCell(lbl_eu_80510540, lbl_eu_80510540 + 9, 0x35), 0x75);
+    mTitleAHelp = CTitleAHelp(BdatTouchStringCell("MNU_main", "name", 0x35), 0x75);
     mTitleAHelp.CTitleAHelp_load();
 
     mTimerData = CSkipTimer();
@@ -100,7 +100,7 @@ void CMenuSkipTimer::Move() {
     CSkipTimerTick(&mTimerData);
 }
 
-void CMenuSkipTimer::cbRenderBefore() {
+void CMenuSkipTimer::cbRenderBefore(CScn*) {
     CTaskGame::getInstance();
     if (CTaskGame::isFlag01Set() || (gmPauseFlags & 0x200000))
         return;

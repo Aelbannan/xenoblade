@@ -144,7 +144,7 @@ CQstLogInfo::CQstLogInfo() : mMemRegion() {
 // us-8022b5a8 - QstLogInfo_AdvanceState1To2
 // If the animation at 0x24 finishes, transition to state 2.
 extern "C" void QstLogInfo_AdvanceState1To2(CQstLogInfo* self) {
-    f32 frame = lbl_eu_80668590;
+    f32 frame = 1.0f;
     nw4r::lyt::AnimTransform* anim = self->field_0x24;
     if (advanceAnimTransform(anim, frame) != 0) {
         self->field_0x34 = 2;
@@ -155,7 +155,7 @@ extern "C" void QstLogInfo_AdvanceState1To2(CQstLogInfo* self) {
 // us-8022b5f4 - QstLogInfo_AdvanceState2To3
 // If the animation at 0x28 finishes, transition to state 3 and set field 0x39.
 extern "C" void QstLogInfo_AdvanceState2To3(CQstLogInfo* self) {
-    f32 frame = lbl_eu_80668590;
+    f32 frame = 1.0f;
     nw4r::lyt::AnimTransform* anim = self->field_0x28;
     if (advanceAnimTransform(anim, frame) != 0) {
         self->field_0x34 = 3;
@@ -166,7 +166,7 @@ extern "C" void QstLogInfo_AdvanceState2To3(CQstLogInfo* self) {
 // us-8022b640 - QstLogInfo_RewindState4To5
 // If the animation at 0x28 is done (via AnimRewindFrame), transition to state 5.
 extern "C" void QstLogInfo_RewindState4To5(CQstLogInfo* self) {
-    if (AnimRewindFrame(self->field_0x28, lbl_eu_80668590) != 0) {
+    if (AnimRewindFrame(self->field_0x28, 1.0f) != 0) {
         self->field_0x34 = 5;
         QstLogInfo_SwapAnimEnablePair(self);
     }
@@ -175,7 +175,7 @@ extern "C" void QstLogInfo_RewindState4To5(CQstLogInfo* self) {
 // us-8022b68c - QstLogInfo_RewindState5To0
 // If the animation at 0x24 is done (via AnimRewindFrame), reset to state 0.
 extern "C" void QstLogInfo_RewindState5To0(CQstLogInfo* self) {
-    if (AnimRewindFrame(self->field_0x24, lbl_eu_80668590) != 0) {
+    if (AnimRewindFrame(self->field_0x24, 1.0f) != 0) {
         self->field_0x34 = 0;
         self->mField39 = 1;
     }
@@ -839,7 +839,7 @@ bool CQstLogInfo::OnFileEvent(CEventFile* event) {
 
         nw4r::lyt::Pane* rootPane = mUnk20->GetRootPane();
         void* font = CDeviceFont::getFontInfo(1, mUnk20);
-        ApplyFontToTxtPanes(rootPane, ((CDeviceFontInfo*)font)->getFont());
+        ApplyFontToTxtPanes(rootPane, ((IDeviceFontInfo*)font)->getFont());
 
         char* questName = (char*)CUICfManager_getPackedFont9C();
         if (questName != 0) {

@@ -1,16 +1,12 @@
 #include "monolib/core.hpp"
 #include "monolib/device.hpp"
+#include <nw4r/math/math_triangular.h>
 
 // ===== Dissolved monolibdata2 (.sdata2 pool) constants owned by this TU =====
 // Retail CDrawGX.o ships no .sdata2: the float literals below resolve to the
 // monolibdata2 pool (1.0f..A478); referencing them as externs
 // keeps this TU's .sdata2 empty (retail shape).
 
-
-// nw4r trig entry points used by renderCircle (retail calls these directly,
-// passing rad * 128/pi from the shared pool constant).
-extern "C" float SinFIdx__Q24nw4r4mathFf(float);
-extern "C" float CosFIdx__Q24nw4r4mathFf(float);
 
 CDrawGX::CDrawGX() :
 mFlags(0),
@@ -439,7 +435,7 @@ void CDrawGX::renderCircle(const ml::CVec3& pos, int sides, float r){
         add(pos);
 
         for(int i = sides; i >= 0; i--){
-            add(ml::CVec3(pos.x + r * SinFIdx__Q24nw4r4mathFf((float)i * (ml::tau / (float)sides) * 40.743664f), pos.y, pos.z + r * CosFIdx__Q24nw4r4mathFf((float)i * (ml::tau / (float)sides) * 40.743664f)));
+            add(ml::CVec3(pos.x + r * nw4r::math::SinFIdx((float)i * (ml::tau / (float)sides) * 40.743664f), pos.y, pos.z + r * nw4r::math::CosFIdx((float)i * (ml::tau / (float)sides) * 40.743664f)));
         }
 
         end();
@@ -451,7 +447,7 @@ void CDrawGX::renderCircle(const ml::CVec3& pos, int sides, float r){
         add(pos);
 
         for(int i = sides; i >= 0; i--){
-            add(ml::CVec3(pos.x + r * SinFIdx__Q24nw4r4mathFf((float)i * (ml::tau / (float)sides) * 40.743664f), pos.y + r * CosFIdx__Q24nw4r4mathFf((float)i * (ml::tau / (float)sides) * 40.743664f), 0.0f));
+            add(ml::CVec3(pos.x + r * nw4r::math::SinFIdx((float)i * (ml::tau / (float)sides) * 40.743664f), pos.y + r * nw4r::math::CosFIdx((float)i * (ml::tau / (float)sides) * 40.743664f), 0.0f));
         }
 
         end();

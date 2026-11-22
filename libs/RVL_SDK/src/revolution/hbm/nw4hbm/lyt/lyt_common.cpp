@@ -207,19 +207,21 @@ void DrawQuad(const math::VEC2& rBase, const Size& rSize, u8 num,
     GXEnd();
 }
 
+inline void MultipleAlpha(ut::Color* pDst, const ut::Color* pSrc, u8 alpha) {
+    for (int i = 0; i < VERTEXCOLOR_MAX; i++) {
+        pDst[i] = MultipleAlpha(pSrc[i], alpha);
+    }
+}
+
 void DrawQuad(const math::VEC2& rBase, const Size& rSize, u8 num,
               const TexCoord* pCoords, const ut::Color* pColors, u8 alpha) {
 
-    // Work buffer, defaulting to opaque white. The inline Color(u32) ctor lets
-    // MWCC materialize this as plain word stores (retail emits no ctor calls).
     ut::Color colorWork[VERTEXCOLOR_MAX] = {
         0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF
     };
 
     if (pColors != NULL) {
-        for (int i = 0; i < VERTEXCOLOR_MAX; i++) {
-            colorWork[i] = MultipleAlpha(pColors[i], alpha);
-        }
+        MultipleAlpha(colorWork, pColors, alpha);
     }
 
     DrawQuad(rBase, rSize, num, pCoords, pColors ? colorWork : NULL);

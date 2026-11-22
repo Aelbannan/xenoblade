@@ -36,6 +36,7 @@ extern CMenuVision* sVisionMenuInstance;
 
 #include "kyoshin/cf/CBattleManager.hpp"
 #include "kyoshin/cf/CVision.hpp"
+#include "kyoshin/cf/object/CfObjectActor.hpp"
 #include "kyoshin/cf/code_800F42AC.hpp"  // ScMain_* typed exports
 
 
@@ -116,6 +117,15 @@ static inline void* menuVisionResource(const char* name) {
 
 static inline u32 menuVisionActorKind(void* actor) {
     return ((u32 (*)(void*))(*(void***)actor)[0xE0 / 4])(actor);
+}
+
+// findObjectById returns the +0x3E9C CfObjectMove sub-object; the enclosing
+// actor derives from it, so the upcast emits the retail offset-to-top adjustment.
+static inline void* menuVisionActorBase(void* actor) {
+    cf::CfObjectActor& obj = static_cast<cf::CfObjectActor&>(
+        *static_cast<cf::CfObjectMove*>(actor));
+    cf::CActorParam* param = &obj;
+    return param;
 }
 
 static inline MenuVisionActorInfo* menuVisionActorInfo(void* actor) {
@@ -335,7 +345,7 @@ void CMenuVision::Term() {
 // us-801ae288: render-before callback. Same gate chain as Move(); only draws
 // while some slot is animating, then renders all six layouts through a stack
 // DrawInfo with Z-testing disabled.
-void CMenuVision::cbRenderBefore() {
+void CMenuVision::cbRenderBefore(CScn*) {
     // Combined first guard via || reproduces retail's short-circuit branch
     // shape (direct bne for clause 1, trampolined b for clause 2); the
     // remaining guards fold to direct branches.
@@ -548,7 +558,7 @@ extern "C" void driveVisionUpdate(int flags) {
         if (static_cast<CUIBattleAction*>(actor)->field_64 & 4) {
             void* actorBase = actor;
             if (actor != 0) {
-                actorBase = (u8*)actor - 0x3E9C;
+                actorBase = menuVisionActorBase(actor);
             }
             if (battle->flags824 & 0x20000) {
                 image = menuVisionResource(lbl_eu_80504268 + 0x21D);
@@ -627,7 +637,7 @@ extern "C" void driveVisionUpdate(int flags) {
         u32 color3 = visionPaneColorNeutralSecond;
         void* actor = findObjectById(battle->actor);
         if (actor != 0) {
-            actor = (u8*)actor - 0x3E9C;
+            actor = menuVisionActorBase(actor);
         }
         if (actor == 0) {
             return;
@@ -710,7 +720,7 @@ extern "C" void driveVisionUpdate(int flags) {
             if (actorFlags & 4) {
                 void* actorBase = actor;
                 if (actor != 0) {
-                    actorBase = (u8*)actor - 0x3E9C;
+                    actorBase = menuVisionActorBase(actor);
                 }
                 switch (menuVisionActorKind(actorBase)) {
                 case 3: case 4: case 5: case 6: case 8: case 12:
@@ -766,7 +776,7 @@ extern "C" void driveVisionUpdate(int flags) {
                 }
             } else if (actorFlags & 2) {
                 if (actor != 0) {
-                    actor = (u8*)actor - 0x3E9C;
+                    actor = menuVisionActorBase(actor);
                 }
                 switch (static_cast<cf::CVisionObjV*>(actor)->field_3F28) {
                 case 1: image = menuVisionResource(lbl_eu_80504268 + 0x44E); break;
@@ -830,7 +840,7 @@ extern "C" void driveVisionUpdate(int flags) {
             u32 color2 = visionPaneColorNeutralSecond;
             void* actor = findObjectById(battle->actor);
             if (actor != 0) {
-                actor = (u8*)actor - 0x3E9C;
+                actor = menuVisionActorBase(actor);
             }
             if (actor == 0) {
                 return;
@@ -967,7 +977,7 @@ extern "C" void driveVisionUpdate(int flags) {
             if (battle->targetActor != 0) {
                 void* target = findObjectById(battle->targetActor);
                 if (target != 0) {
-                    target = (u8*)target - 0x3E9C;
+                    target = menuVisionActorBase(target);
                 }
                 if (target != 0 && (battle->flags824 & 0x400)) {
                     menuVisionSetVisible(entry.mLayout->GetRootPane()->FindPaneByName(lbl_eu_80504268 + 0x55D, true), true);
@@ -1040,11 +1050,11 @@ void resetVisionSlots(int sel) {
 
 // Mangled linker names used by adjustor thunks below
 extern "C" void* __dt__11CMenuVisionFv(void* self, int flags);
-extern "C" void cbRenderBefore__11CMenuVisionFv(void* self);
+extern "C" void cbRenderBefore__11CMenuVisionFP4CScn(void* self);
 
 extern "C" void fwdVisionDtor58(void* self) { ((void(*)(void*))__dt__11CMenuVisionFv)((char*)self - 0x58); }
 
-extern "C" void fwdVisionCbRender5C(void* self) { ((void(*)(void*))cbRenderBefore__11CMenuVisionFv)((char*)self - 0x5c); }
+extern "C" void fwdVisionCbRender5C(void* self) { ((void(*)(void*))cbRenderBefore__11CMenuVisionFP4CScn)((char*)self - 0x5c); }
 
 extern "C" void fwdVisionDtor5C(void* self) { ((void(*)(void*))__dt__11CMenuVisionFv)((char*)self - 0x5c); }
 

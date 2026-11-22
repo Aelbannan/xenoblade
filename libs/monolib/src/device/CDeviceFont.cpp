@@ -23,10 +23,11 @@
 #include "monolib/work/CWorkUtil.hpp"
 #include "monolib/device/CDeviceFontLoader.hpp"
 #include "monolib/core/CFontLayer.hpp"
+#include "monolib/core/CDesktop.hpp"
 
 // ---- Retail data labels (monolibdata2 dissolve) ----
 // Foreign RTTI / base-list objects referenced by the CDeviceFont vtable and
-// the reslist<CDeviceFontInfo> sub-vtables.
+// the reslist<IDeviceFontInfo> sub-vtables.
 // Foreign rodata RTTI name strings referenced by the .sdata locators.
 extern "C" u32 lbl_eu_80522D68;
 extern "C" u32 lbl_eu_80522D7C;
@@ -79,7 +80,6 @@ extern "C" {
 // names even though the calls pass trailing arguments through in r4+.
 void queueText__16CDeviceFontLayerFv(CDeviceFontLayer* layer, u32 a1,
                                          u32 a2, u32 a3);
-void setFontScale__16CDeviceFontLayerFv(CDeviceFontLayer* layer, u32 a1);
 
 // Find the font layer for `fontId` (0 selects the device's current font id)
 // and tail-call the layer's queueText with the passed-through args.
@@ -167,9 +167,9 @@ found:
 }
 
 // Same lookup as dispatchLayerBB4, dispatching to the layer's setFontScale
-// (no trailing arguments: retail colors child/candidate r4, node r5,
-// sentinel r6).
-void dispatchLayer41F8__11CDeviceFontFv(u32 fontId) {
+// with the two scale factors passed through in f1/f2 (retail colors
+// child/candidate r4, node r5, sentinel r6).
+void dispatchLayer41F8__11CDeviceFontFv(u32 fontId, f32 scaleX, f32 scaleY) {
     CDeviceFontLayer* layer;
     CDeviceFontLayer* child;
     CDeviceFontLayer* candidate;
@@ -203,7 +203,7 @@ void dispatchLayer41F8__11CDeviceFontFv(u32 fontId) {
     layer = 0;
 found:
     if (layer == 0) return;
-    layer->setFontScale();
+    layer->setFontScale(scaleX, scaleY);
 }
 
 // Same lookup as dispatchLayerBB4, dispatching to the layer's setFontId
@@ -502,14 +502,14 @@ void* CDeviceFont::getFontInfo(u32 fontId,
     while (node != spDeviceFont->mInfoList.mStartNodePtr) {
         if (node->mItem->isStateNonZero() == 0 &&
             node->mItem->getFlags() == (s32)fontId) {
-            return (CDeviceFontInfo*)node->mItem;
+            return (IDeviceFontInfo*)node->mItem;
         }
         node = node->mNext;
     }
     node = spDeviceFont->mInfoList.mStartNodePtr->mNext;
     while (node != spDeviceFont->mInfoList.mStartNodePtr) {
         if (node->mItem->isStateNonZero() == 0) {
-            return (CDeviceFontInfo*)node->mItem;
+            return (IDeviceFontInfo*)node->mItem;
         }
         node = node->mNext;
     }
@@ -521,7 +521,7 @@ void* CDeviceFont::getFontInfo(u32 fontId,
 // returned 0). Returns the matching provider or null. The item pointer is
 // re-read from the node at every use (retail reloads node->mItem per vtable
 // call).
-CDeviceFontInfo* CDeviceFont::findFontByDevice() {
+IDeviceFontInfo* CDeviceFont::findFontByDevice() {
     CDeviceFont* font = spDeviceFont;
     if (font == 0) return 0;
 
@@ -529,7 +529,7 @@ CDeviceFontInfo* CDeviceFont::findFontByDevice() {
     while (node != spDeviceFont->mInfoList.mStartNodePtr) {
         if (node->mItem->isStateNonZero() == 0 &&
             node->mItem->getFlags() == (s32)this) {
-            return (CDeviceFontInfo*)node->mItem;
+            return (IDeviceFontInfo*)node->mItem;
         }
         node = node->mNext;
     }
@@ -600,7 +600,7 @@ void CDeviceFont::wkUpdate() {
     node = *(CDeviceFontInfoListNode* volatile*)&mInfoList.mStartNodePtr->mNext;
     while (node != *(CDeviceFontInfoListNode* volatile*)&mInfoList.mStartNodePtr) {
         if (node->mItem->isStateReady() != 0) {
-            CDeviceFontInfo* item = (CDeviceFontInfo*)node->mItem;
+            IDeviceFontInfo* item = (IDeviceFontInfo*)node->mItem;
             if (item != 0) {
                 delete item;
             }
@@ -707,7 +707,6 @@ void CDeviceFont::wkUpdate() {
     }
 
 typedef nw4r::ut::TextWriterBase<wchar_t> WideTextWriter;
-extern "C" void* getInstance__8CDesktopFv();
 
 // ---- wkRender (0x80455D2C): draws the exception-layer text ---------------
 // While this device owns the work-root exception, fade in a centered UTF-16
@@ -718,7 +717,7 @@ void CDeviceFont::wkRender() {
     // Exception handoff:
     // exception, count frames; release the exception once the counter wraps
     // negative (retail: addic./ble after the increment).
-    if (getInstance__8CDesktopFv() != 0) {
+    if (CDesktop::getInstance() != 0) {
         if (CWorkRoot::getException() == (CException*)this) {
             if ((s32)++sDeviceFontInitCount < 1) {
                 CWorkRoot::setException(0);
@@ -785,11 +784,11 @@ void CDeviceFont::wkRender() {
 
     // Fetch the bound font twice like retail (null check + use).
     nw4r::lyt::Layout* layout;  // unused second argument, uninitialized in retail
-    if (((CDeviceFontInfo*)getFontInfo(0, layout))->getFont() == NULL) {
+    if (((IDeviceFontInfo*)getFontInfo(0, layout))->getFont() == NULL) {
         return;
     }
     const nw4r::ut::Font* font = static_cast<const nw4r::ut::Font*>(
-        ((CDeviceFontInfo*)getFontInfo(0, layout))->getFont());
+        ((IDeviceFontInfo*)getFontInfo(0, layout))->getFont());
 
     VALIDATE_NW4R_POINTER(&writer, lbl_eu_8053785C, 65, lbl_eu_80537828);
     VALIDATE_NW4R_POINTER(font, lbl_eu_80537818, 66, lbl_eu_805377E0);
@@ -891,7 +890,7 @@ bool CDeviceFont::wkStandbyLogin() {
         // Register a fresh ROM font-info provider in the first free list
         // slot (reslist::push_back with the retail setItem try/catch frame).
         if (spDeviceFont != 0) {
-            CDeviceFontInfo* info = CDeviceFontInfoRom::create();
+            IDeviceFontInfo* info = CDeviceFontInfoRom::create();
             CDeviceFont* font = spDeviceFont;
 
             int i = 0;
@@ -951,7 +950,7 @@ bool CDeviceFont::wkStandbyLogout() {
     // Delete every font-info provider still in the list, then clear the ring.
     CDeviceFontInfoListNode* node = mInfoList.mStartNodePtr->mNext;
     while (node != mInfoList.mStartNodePtr) {
-        CDeviceFontInfo* item = (CDeviceFontInfo*)node->mItem;
+        IDeviceFontInfo* item = (IDeviceFontInfo*)node->mItem;
         if (item != 0) {
             delete item;
             node->mItem = 0;

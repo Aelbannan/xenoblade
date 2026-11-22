@@ -137,10 +137,6 @@ struct InfStream {
 #define INF_MODE_TYPE 0xB
 #define INF_MODE_BAD  0x1B
 
-#define INF_MSG_DIST_TOOFAR ((char*)(lbl_eu_805231F8 + 0x00))
-#define INF_MSG_DIST_CODE   ((char*)(lbl_eu_805231F8 + 0x1E))
-#define INF_MSG_LEN_CODE    ((char*)(lbl_eu_805231F8 + 0x34))
-
 #define INF_OFF 1
 #define INF_PUP(a) (*++(a))
 
@@ -254,7 +250,7 @@ extern "C" void ZlibInflateFastCore(InfStream* strm, u32 start)
                     /* see if copy from window */
                     op = dist - op; /* distance back in window */
                     if (op > whave) {
-                        strm->msg = INF_MSG_DIST_TOOFAR;
+                        strm->msg = "invalid distance too far back";
                         state->mode = INF_MODE_BAD;
                         break;
                     }
@@ -340,7 +336,7 @@ extern "C" void ZlibInflateFastCore(InfStream* strm, u32 start)
                 goto dodist;
             }
             else {
-                strm->msg = INF_MSG_DIST_CODE;
+                strm->msg = "invalid distance code";
                 state->mode = INF_MODE_BAD;
                 break;
             }
@@ -356,7 +352,7 @@ extern "C" void ZlibInflateFastCore(InfStream* strm, u32 start)
             break;
         }
         else {
-            strm->msg = INF_MSG_LEN_CODE;
+            strm->msg = "invalid literal/length code";
             state->mode = INF_MODE_BAD;
             break;
         }
@@ -376,7 +372,4 @@ extern "C" void ZlibInflateFastCore(InfStream* strm, u32 start)
     state->hold = hold;
     state->bits = bits;
 }
-
-// [.rodata] 0x805231F8-0x80523248 (80 bytes) -- error message strings
-extern "C" __declspec(align(4)) const char lbl_eu_805231F8[0x50] = { 0x69, 0x6E, 0x76, 0x61, 0x6C, 0x69, 0x64, 0x20, 0x64, 0x69, 0x73, 0x74, 0x61, 0x6E, 0x63, 0x65, 0x20, 0x74, 0x6F, 0x6F, 0x20, 0x66, 0x61, 0x72, 0x20, 0x62, 0x61, 0x63, 0x6B, 0x00, 0x69, 0x6E, 0x76, 0x61, 0x6C, 0x69, 0x64, 0x20, 0x64, 0x69, 0x73, 0x74, 0x61, 0x6E, 0x63, 0x65, 0x20, 0x63, 0x6F, 0x64, 0x65, 0x00, 0x69, 0x6E, 0x76, 0x61, 0x6C, 0x69, 0x64, 0x20, 0x6C, 0x69, 0x74, 0x65, 0x72, 0x61, 0x6C, 0x2F, 0x6C, 0x65, 0x6E, 0x67, 0x74, 0x68, 0x20, 0x63, 0x6F, 0x64, 0x65, 0x00 };
 

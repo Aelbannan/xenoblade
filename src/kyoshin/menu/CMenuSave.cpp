@@ -7,6 +7,7 @@
 #include "kyoshin/CMainMenu.hpp" // CMainMenu_GetInstancePtr
 #include "kyoshin/CTaskGame.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
+#include "kyoshin/cf/CfPadData.hpp"
 #include "monolib/device/CDeviceVI.hpp"
 #include "monolib/scn/CScn.hpp"
 #include "monolib/work/CWorkThreadSystem.hpp"
@@ -19,19 +20,6 @@
 #include "kyoshin/code_80135FDC_State.hpp"
 #include "kyoshin/code_80135FDC_Lyt.hpp"
 
-
-// Flat view of cf::CfPadData exposing only the flag words handleSaveMenuInput reads:
-// CPad::mPressedButtonFlags at +0x4 and CfPadData::mTurboPressButtonFlags at
-// +0x104 (see kyoshin/cf/CfPadData.hpp for the full layout).
-struct MenuSavePadData {
-    u32 mPadHeldFlags;          // 0x00 - CPad::mHeldButtonFlags
-    u32 mPadPressedFlags;       // 0x04 - CPad::mPressedButtonFlags
-    u8 _pad[0xFC];              // 0x08-0x103 - rest of the pad data
-    u32 mTurboPressButtonFlags; // 0x104
-};
-
-// Message table base used by Init's CTitleAHelp name lookup (+0xb string).
-extern char lbl_eu_8050F7B0[];
 // Render-gate mode bitfield (.sbss; bit 21 = realtime event busy).
 extern u32 gmPauseFlags;
 
@@ -100,7 +88,7 @@ void CMenuSave::Init() {
     mBgTex = CBgTex(0);
     BgTex_Acquire_3C14(&mBgTex);
 
-    char* name = BdatTouchStringCell(lbl_eu_8050F7B0, lbl_eu_8050F7B0 + 0xb,
+    char* name = BdatTouchStringCell("MNU_sysmes", "name",
                                 mField208 != 0 ? 0x49 : 0x48);
     mTitleAHelp = CTitleAHelp(name, mField208 != 0 ? 0x6b : 0x69);
     mTitleAHelp.CTitleAHelp_load();
@@ -162,7 +150,7 @@ void CMenuSave::Move() {
 // Render the save screen through a stack DrawInfo: gate on the task/busy
 // flags and the scene-active check, then draw background, save-load panel and
 // title/help bar in that order.
-void CMenuSave::cbRenderBefore() {
+void CMenuSave::cbRenderBefore(CScn*) {
     CTaskGame::getInstance();
     if (CTaskGame::isFlag01Set() || (gmPauseFlags & 0x200000))
         return;
@@ -245,11 +233,11 @@ extern "C" void handleSaveMenuInput(CMenuSave* self) {
         self->mField54 = 1;
     }
 
-    MenuSavePadData* pad = (MenuSavePadData*)cf::CfGameManager::getCfPadData();
+    cf::CfPadData* pad = cf::CfGameManager::getCfPadData();
     if (cf::CfGameManager::isClassicController(-1) != 0) {
         // Co-op layout: Classic-controller style bits.
         u32 turbo = pad->mTurboPressButtonFlags;
-        u32 pressed = pad->mPadPressedFlags;
+        u32 pressed = pad->mPad.mPressedButtonFlags;
         if ((pressed >> 21) & 1) {
             self->mSaveLoad.confirm();
         } else if ((pressed >> 22) & 1) {
@@ -284,7 +272,7 @@ extern "C" void handleSaveMenuInput(CMenuSave* self) {
     } else {
         // Single-player layout: Wiimote-style bits.
         u32 turbo = pad->mTurboPressButtonFlags;
-        u32 pressed = pad->mPadPressedFlags;
+        u32 pressed = pad->mPad.mPressedButtonFlags;
         if ((pressed >> 4) & 1) {
             self->mSaveLoad.confirm();
         } else if ((pressed >> 5) & 1) {

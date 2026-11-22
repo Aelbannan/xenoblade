@@ -59,7 +59,8 @@ struct TextBox : Pane {
  ******************************************************************************/
 class TextBox : public Pane {
 public:
-    NW4R_UT_RTTI_DECL(TextBox);
+    virtual const ut::detail::RuntimeTypeInfo* GetRuntimeTypeInfo() const;
+    static ut::detail::RuntimeTypeInfo typeInfo;
 
 public:
     TextBox(const res::TextBox* pRes, const ResBlockSet& rBlockSet);

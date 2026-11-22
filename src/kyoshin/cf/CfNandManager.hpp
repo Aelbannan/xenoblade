@@ -4,6 +4,7 @@
 #include "kyoshin/menu/MenuSndApi.hpp"
 
 #include <types.h>
+#include "monolib/math/CVec3.hpp"
 #include "monolib/work/CTTask.hpp"
 #include "monolib/work/IWorkEvent.hpp"
 #include "monolib/scn/IScnRender.hpp"
@@ -194,7 +195,7 @@ namespace cf{
         virtual void Move();
         virtual void Init();
         virtual bool handleFileEvent(CEventFile* event);
-        virtual void cbRenderBefore();
+        virtual void cbRenderBefore(CScn* scene);
     }; //size = 0x194
 } //namespace cf
 
@@ -230,24 +231,15 @@ extern u32 __ptmf_null[3];
 // (NandCopyParty) and the fallback float (.sbss).
 extern f32 gmNandFloat54;
 
-// First 8 bytes shared by the snapshot entry and the player info struct;
-// NandCopyParty copies it as one unit.
-struct CfNandPair {
-    u32 field_00;
-    u32 field_04;
-};
-
-// 0x10-byte party snapshot entry {3 words + float} filled by NandCopyParty.
+// 0x10-byte party snapshot entry {position + angle} filled by NandCopyParty.
 struct CfNandPartyEntry {
-    CfNandPair mPair; // 0x00
-    u32 field_08;
-    f32 field_0C;
+    ml::CVec3 mPos; // 0x00
+    f32 field_0C;   // 0x0C
 };
 
 // 12-byte info struct returned by the player vtable slot +0xAC.
 struct CfNandPartyInfo {
-    CfNandPair mPair; // 0x00
-    u32 field_08;
+    ml::CVec3 mPos; // 0x00
 };
 
 // 0x34-byte party snapshot (3 entries + CRC seed word) fed to OSCalcCRC16.
@@ -334,43 +326,13 @@ struct CfNandSaveBuf {
 
 
 
-// Word view of CBattleManager+0x194 (party-snapshot CRC seed read by
-// NandCopyParty).
-struct CfNandBmView {
-    u8 _pad[0x194];
-    u32 field_194;
-};
-
 // 0x80-stride per-player table whose entry address is written into pushed
 // events by NandTitleFile (.data).
 extern u8 lbl_eu_80576AC0[];
 
 // --- imports used only by NandPackEntry ---
 extern "C" void KizunagramPackChart(u8* dst, const u8* src);   // kizuna compaction
-struct CfNandSub14;
-extern "C" void initItemWorkState(void* state);               // scratch initializer (CVision.hpp owner decl)
 
-// Clamp bounds fetched through the per-entry virtual call in NandPackEntry.
-struct CfNandClampView {
-    u8 _pad04[4];
-    f32 f04; // +0x04
-    f32 f08; // +0x08
-    f32 f0C; // +0x0C
-};
-
-
-
-// 0x14-byte scratch initialized by initItemWorkState inside the NandPackEntry
-// entry loop, filled from the source entry, then copied into the destination.
-struct CfNandSub14 {
-    s16 f00;
-    s16 f02;
-    u32 f04;
-    u8 f08;
-    u8 _pad09[3];
-    f32 f0C;
-    f32 f10;
-};
 
 // Player-side view for NandPackEntry's placement bit: getPlayer(0)+0xC4 points
 // at an object whose +0x4EC word bit30 becomes the per-entry flag byte.

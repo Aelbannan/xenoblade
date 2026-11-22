@@ -8,6 +8,7 @@
 #include "kyoshin/cf/object/CfObjectActor.hpp"
 #include "kyoshin/plugin/ocBdat.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
+#include "kyoshin/cf/CtrlObjectParamSymbols.hpp"  // CtrlObjectParam_GetArtsStatsRow (owner)
 
 extern UNKTYPE* findObjectById(BOOL r3);
 extern UNKTYPE* getEffOwner(UNKTYPE* r3);
@@ -52,14 +53,13 @@ namespace cf { class CfObjectImplPc; }
 void ObjPc_ForwardVf0C_A42C(cf::CfObjectImplPc* self, u32 a, u32 b, u32 c,
                             u32 d, u32 e);    // CfObjectImplPc.cpp
 extern "C" void CtrlObjectParam_ClaimArtsSlotRow(u8* obj, int value);      // CtrlObjectParam.cpp
-extern "C" UnkStruct_8009D7E4_Ret* CtrlObjectParam_GetArtsStatsRow(u8* obj, int index);  // arts data lookup
 extern "C" void aiResetTables(u8* obj);                  // CAIAction.cpp
 extern "C" void aiInstallArts(u8* obj, u32 a, u32 b);    // CAIAction.cpp
 
 extern "C" void CtrlObjectParam_RefreshCharEntry(void* self, u32 arg2);     // CtrlObjectParam.cpp
 extern "C" void CfObjectMove_setRegionAttached(void* obj, int flag);      // CfObjectMove.cpp
 extern "C" void ColiSetMoveVec2(void* region, int param, float a, float b);
-extern "C" void __ct__8009ED08(void* destination, u32 itemId);   // CtrlObjectParam.cpp
+extern "C" void CtrlObjectParam_CopyCharRow(u32 rowA, u32 rowB);   // CtrlObjectParam.cpp
 extern "C" unsigned long CfRes_getAllocHandle();   // bdat heap handle getter
 // NOTE: retail keeps the virtual-call result in r3 across the second arg's
 // address computation, so the value is the FIRST declared parameter.
@@ -192,21 +192,6 @@ struct CfObjectPcSubFields {
 // Dtor vtable restores use direct *(void**) stores (same layout as former CfPcVt).
 // Deleted CfPcVt pad; the shared struct is gone - both ctor and dtor write
 // the four retail pointers directly.
-namespace cf {
-// +0x3380 CAIAction subobject base / block views (same shapes as the
-// CfObjectEne dtor's inlined cleanup).
-struct CfPcCAISub {
-    u8 _pad[4];
-    u32 field_4;
-};
-}
-struct CfPcCAIBlock {
-    u8 _pad[8];
-    void* field_8;
-    u8 _padC[0x20C - 0xC];
-    u32 field_20C;
-    u32 field_210;
-};
 
 // Object examined by getValidObject: flags word at +0x64; bit 0x4000 marks
 // the object as valid (returned as-is), otherwise NULL is returned.

@@ -5,11 +5,6 @@
 #include <nw4r/g3d.h>
 #include <nw4r/ut.h>
 
-// ScnMdlSimple vtable
-extern char lbl_eu_80569758[];
-
-
-
 void ExecCallback_DRAW_XLU__Q34nw4r3g3d15IScnObjCallbackFQ44nw4r3g3d6ScnObj6TimingPQ34nw4r3g3d6ScnObjUlPv(void) {}
 
 
@@ -661,9 +656,6 @@ ScnMdlSimple::ScnMdlSimple(MEMAllocator* pAllocator, ResMdl mdl,
 }
 
 ScnMdlSimple::~ScnMdlSimple() {
-    // Retail vtable lives in the shared nw4r data pool.
-    *(void**)this = (void*)lbl_eu_80569758;
-
     if (static_cast<s8>(mCwcbDeleteOption) == 1 &&
         mpCalcWorldCallback != NULL) {
         delete mpCalcWorldCallback;
@@ -694,7 +686,7 @@ bool ScnMdlSimple::IsDerivedFrom(G3dObj::TypeObj other) const {
     return other == TypeObj(TYPE_NAME) ? true
          : other == ScnLeaf::GetTypeObjStatic() ? true
          : other == ScnObj::GetTypeObjStatic() ? true
-         : (other == G3dObj::TypeObj(lbl_eu_8051D640));
+         : (other == G3dObj::GetTypeObjStatic());
 }
 
 const G3dObj::TypeObj ScnMdlSimple::GetTypeObj() const {

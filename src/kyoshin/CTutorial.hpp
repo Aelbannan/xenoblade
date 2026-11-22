@@ -108,9 +108,6 @@ public:
 // Fire a per-window sound/effect event by id (retail reloc
 // playUISound__FUl; declared with C++ linkage so MWCC mangles it).
 
-// Shared loaded-BDAT pointer used by the tutorial data loader.
-extern u32 lbl_eu_80664A30;
-
 // Font/sound helpers (retail reloc getPackedFont__Fv; C++ linkage so MWCC
 // mangles the free function).
 

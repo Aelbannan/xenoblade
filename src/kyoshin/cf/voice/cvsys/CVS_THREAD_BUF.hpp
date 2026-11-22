@@ -83,8 +83,5 @@ struct CVoiceVTV {
 // Typed PTMF triples consumed by the state handlers. The retail blobs are
 // owned by this unit's data range and are named by their split symbols.
 typedef void (CVS_THREAD::*BufState)();
-extern BufState const lbl_eu_805399EC;
-extern BufState const lbl_eu_805399F8;
-
-// Globals: this subclass's vtable.
-extern u32 lbl_eu_80539A04[7];
+extern BufState sBufAdvanceIndexState;
+extern BufState sBufAdvanceSlotState;

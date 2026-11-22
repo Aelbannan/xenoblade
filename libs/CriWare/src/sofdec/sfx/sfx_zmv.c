@@ -4,24 +4,23 @@
 
 void* memset(void* s, int c, size_t n);
 
-u8 sfxz_work_area[0x270]; /* .bss 0x8061A260 size 0x270 */ // name-guess: TU-owned 0x270 bss arena indexed as 8 x 0x4C SFXZ objects
+SFXZmvGlobal sfxz_work_area; /* .bss 0x8061A260 size 0x270 */ // name-guess: TU-owned 0x270 bss arena indexed as 8 x 0x4C SFXZ objects
 extern void MWSFSVM_Error(const char* message, ...);
 
 void SFXZ_Init(void) {
-    memset(sfxz_work_area, 0, 0x26c);
-    *(u32*)(sfxz_work_area + 8) = 8;
-    *(u32*)(sfxz_work_area + 4) = 0;
+    memset(&sfxz_work_area, 0, 0x26c);
+    sfxz_work_area.maxCount = 8;
+    sfxz_work_area._04 = 0;
 }
 
 void* SFXZ_Create(void) {
-    u8* base = sfxz_work_area;
-    u8* p = base + 12;
-    s32 cnt = *(s32*)(base + 8);
+    SFXZmvSlot* p = sfxz_work_area.slots;
+    s32 cnt = sfxz_work_area.maxCount;
     s32 i;
     for (i = 0; i < cnt; i++) {
-        if (*(u32*)p == 0)
+        if (p->active == 0)
             goto found;
-        p += 0x4C;
+        p++;
     }
     p = NULL;
 found:
@@ -29,66 +28,59 @@ found:
         return p;
     {
         float f0 = 0.0f;
-        *(float*)(p + 0x3C) = f0;
-        *(float*)(p + 0x40) = f0;
+        p->_3C = f0;
+        p->_40 = f0;
     }
-    *(u32*)(p + 0x44) = 0;
-    *(u32*)(p + 0x48) = 0;
-    *(u32*)(p + 0x04) = 0;
-    (*(u32*)sfxz_work_area)++;
-    *(u32*)p = 1;
+    p->_44 = 0;
+    p->_48 = 0;
+    p->_04 = 0;
+    sfxz_work_area.count++;
+    p->active = 1;
     return p;
 }
 
-void SFXZ_Destroy(void* self) {
+void SFXZ_Destroy(SFXZmvSlot* self) {
     if (self == NULL) return;
-    *(u32*)((u8*)self) = 0;
-    *(s32*)sfxz_work_area -= 1;
+    self->active = 0;
+    sfxz_work_area.count -= 1;
 }
 void sfxzmv_SetTagGrp();
-struct SFXZTagInf { u32 unk8; u32 tag; u32 a; u32 b; };
-void SFXZ_SetTagInf(void* self, u32 a, u32 b) {
-    *(u32*)((u8*)self + 8) = 1;
-    *(u32*)((u8*)self + 12) = a;
-    *(u32*)((u8*)self + 16) = b;
+void SFXZ_SetTagInf(SFXZmvSlot* self, u32 a, u32 b) {
+    self->_08 = 1;
+    self->_0C = a;
+    self->_10 = b;
     sfxzmv_SetTagGrp();
 }
 extern int SJ_SearchTag(u32* v, const char* a, const char* b, u32* out);
 
-void sfxzmv_SetTagGrp(void* self) {
+void sfxzmv_SetTagGrp(SFXZmvSlot* self) {
     struct { u32 a; u32 b; } v;
     u32 out[2];
-    if (*(s32*)((u8*)self + 0xC) == 0) {
-        *(s32*)((u8*)self + 0x18) = 1;
-        *(s32*)((u8*)self + 0x1C) = 0;
-        *(s32*)((u8*)self + 0x20) = 0;
-        *(s32*)((u8*)self + 0x28) = 1;
-        *(s32*)((u8*)self + 0x2C) = 0;
-        *(s32*)((u8*)self + 0x30) = 0;
+    if (self->_0C == 0) {
+        self->_18 = 1;
+        self->_1C = 0;
+        self->_20 = 0;
+        self->_28 = 1;
+        self->_2C = 0;
+        self->_30 = 0;
         return;
     }
-    v.a = *(u32*)((u8*)self + 0xC);
-    v.b = *(u32*)((u8*)self + 0x10);
+    v.a = self->_0C;
+    v.b = self->_10;
     SJ_SearchTag((u32*)&v, "ZMHDR", "SFXINFE", &out[0]);
-    *(s32*)((u8*)self + 0x18) = 1;
-    *(s32*)((u8*)self + 0x1C) = out[0];
-    *(s32*)((u8*)self + 0x20) = out[1];
+    self->_18 = 1;
+    self->_1C = out[0];
+    self->_20 = out[1];
     SJ_SearchTag((u32*)&v, "ZMVFRM", "SFXINFE", &out[0]);
-    *(s32*)((u8*)self + 0x28) = 1;
-    *(s32*)((u8*)self + 0x2C) = out[0];
-    *(s32*)((u8*)self + 0x30) = out[1];
+    self->_28 = 1;
+    self->_2C = out[0];
+    self->_30 = out[1];
 }
 extern int sscanf(const char* str, const char* fmt, ...);
 
 // Looks up the "zfrm" tag string for this object, parses the frame offset
 // with sscanf, then seeks to (base + offset*a) and parses "min,max" from it.
 // On any lookup failure: *out1 = 0 / *out2 = 0x7FFFFFFF (empty range).
-typedef struct SFXZObj {
-    u8 pad[0x28];
-    s32 flag;   // 0x28: tag table valid flag (must be 1)
-    s32 tag;    // 0x2C: tag group id
-    s32 unk;    // 0x30
-} SFXZObj;
 
 // tag-search key pair (group id + sub-key)
 typedef struct SFXZKey {
@@ -96,7 +88,7 @@ typedef struct SFXZKey {
     u32 key;
 } SFXZKey;
 
-void SFXZ_GetZfrmRange(SFXZObj* self, s32 a, s32* out1, s32* out2) {
+void SFXZ_GetZfrmRange(SFXZmvSlot* self, s32 a, s32* out1, s32* out2) {
     // tag payload format strings; precomputed so the address setup is hoisted
     // above the flag checks (matches retail scheduling)
     char* fmtB = "SFXINFE";
@@ -111,11 +103,11 @@ void SFXZ_GetZfrmRange(SFXZObj* self, s32 a, s32* out1, s32* out2) {
     int lo;
     int hi;
 
-    if (self->flag != 1 || self->tag == 0) {
+    if (self->_28 != 1 || self->_2C == 0) {
         p = 0;
     } else {
-        key1.grp = self->tag;
-        key1.key = self->unk;
+        key1.grp = self->_2C;
+        key1.key = self->_30;
         SJ_SearchTag((u32*)&key1, fmtA, fmtB, &found1);
         p = found1;
     }
@@ -124,11 +116,11 @@ void SFXZ_GetZfrmRange(SFXZObj* self, s32 a, s32* out1, s32* out2) {
         *out2 = 0x7FFFFFFF;
     } else {
         sscanf((char*)p, "%lx", &base);
-        if (self->flag != 1 || self->tag == 0) {
+        if (self->_28 != 1 || self->_2C == 0) {
             p = 0;
         } else {
-            key2.grp = self->tag;
-            key2.key = self->unk;
+            key2.grp = self->_2C;
+            key2.key = self->_30;
             SJ_SearchTag((u32*)&key2, "ZMFDATA", "SFXINFE", &found2);
             p = found2;
         }
@@ -143,12 +135,13 @@ void SFXZ_GetZfrmRange(SFXZObj* self, s32 a, s32* out1, s32* out2) {
 }
 extern int sscanf(const char* str, const char* fmt, ...);
 extern s32 SFX_SetCcirFx(void);
-void sfxzmv_MakeOrgZ32TblByDirect(void* self, u32 f1, u32 f0, u32* dst);
-void sfxzmv_MakeOrgZ32TblByCCIR(void* self, u32 f1, u32 f0, u32* dst);
-void sfxzmv_MakeZ16TblFromOrgZ32(void* self, u32* src, u16* dst);
-void sfxzmv_MakeZ32TblFromOrgZ32(void* self, u32* src, u32* dst);
+void sfxzmv_MakeOrgZ32TblByDirect(SFXZmvSlot* self, u32 f1, u32 f0, u32* dst);
+void sfxzmv_MakeOrgZ32TblByCCIR(SFXZmvSlot* self, u32 f1, u32 f0, u32* dst);
+void sfxzmv_MakeZ16TblFromOrgZ32(SFXZmvSlot* self, u32* src, u16* dst);
+void sfxzmv_MakeZ32TblFromOrgZ32(SFXZmvSlot* self, u32* src, u32* dst);
 
 void SFXZ_MakeCnvZTbl(void* self, s32 a, void* buf) {
+    SFXZmvSlot* slot = self;
     s32 f1, f0;
     s32 o1, o0;
     u8* org;
@@ -162,15 +155,14 @@ void SFXZ_MakeCnvZTbl(void* self, s32 a, void* buf) {
     } else {
         sfxzmv_MakeOrgZ32TblByDirect(self, f1, f0, (u32*)org);
     }
-    if (*(void**)((u8*)self + 0x44) == NULL) {
-        if (*(s32*)((u8*)self + 4) == 16) {
+    if (slot->_44 == NULL) {
+        if (slot->_04 == 16) {
             sfxzmv_MakeZ16TblFromOrgZ32(self, (u32*)org, (u16*)buf);
         } else {
             sfxzmv_MakeZ32TblFromOrgZ32(self, (u32*)org, (u32*)buf);
         }
     } else {
-        ((void (*)(void*, void*, f32, f32))*(void**)((u8*)self + 0x44))(
-            org, buf, *(f32*)((u8*)self + 0x3C), *(f32*)((u8*)self + 0x40));
+        slot->_44(org, buf, slot->_3C, slot->_40);
     }
 }
 // Fill dst[0..255] with a quantizer ramp: 9 zeros, 8 entries of f1,
@@ -211,13 +203,13 @@ void SFXZ_MakeCnvZTbl(void* self, s32 a, void* buf) {
         } \
     } while (0)
 
-void sfxzmv_MakeOrgZ32TblByDirect(void* self, u32 f1, u32 f0, u32* dst) {
+void sfxzmv_MakeOrgZ32TblByDirect(SFXZmvSlot* self, u32 f1, u32 f0, u32* dst) {
     SFXZ_FILL_Z32_RAMP(dst);
 }
 // Build a 256-byte CCIR (1.164 scaling) level table at dst+2048, fill the
 // same quantizer ramp at dst+256, then remap the 256 linear entries through
 // the CCIR table into dst[0..255].
-void sfxzmv_MakeOrgZ32TblByCCIR(void* self, u32 f1, u32 f0, u32* dst) {
+void sfxzmv_MakeOrgZ32TblByCCIR(SFXZmvSlot* self, u32 f1, u32 f0, u32* dst) {
     s32 i;
     f32 scale = 1.164f;
     u8* tbl = (u8*)dst + 2048;
@@ -236,10 +228,10 @@ void sfxzmv_MakeOrgZ32TblByCCIR(void* self, u32 f1, u32 f0, u32* dst) {
 }
 // zmin/zmax are loaded before the mode test in retail (hoisted lfs), so the
 // field reads sit above the branch here too.
-void sfxzmv_MakeZ16TblFromOrgZ32(void* self, u32* src, u16* dst) {
-    f32 zmin = *(f32*)((u8*)self + 0x3C);
-    f32 zmax = *(f32*)((u8*)self + 0x40);
-    if (*(u32*)((u8*)sfxz_work_area + 4) == 1) {
+void sfxzmv_MakeZ16TblFromOrgZ32(SFXZmvSlot* self, u32* src, u16* dst) {
+    f32 zmin = self->_3C;
+    f32 zmax = self->_40;
+    if (sfxz_work_area._04 == 1) {
         u32 i, j;
         for (i = 0; i < 16; i++) {
             for (j = 0; j < 16; j++) {
@@ -285,8 +277,8 @@ void sfxzmv_MakeZ16TblFromOrgZ32(void* self, u32* src, u16* dst) {
 
 
 
-void sfxzmv_MakeZ32TblFromOrgZ32(void* self, u32* src, u32* dst) {
-    if (*(u32*)((u8*)sfxz_work_area + 4) == 1) {
+void sfxzmv_MakeZ32TblFromOrgZ32(SFXZmvSlot* self, u32* src, u32* dst) {
+    if (sfxz_work_area._04 == 1) {
         u32 i, j;
         for (i = 0; i < 16; i++) {
             for (j = 0; j < 16; j++) {
@@ -296,8 +288,8 @@ void sfxzmv_MakeZ32TblFromOrgZ32(void* self, u32* src, u32* dst) {
             dst += 16;
         }
     } else {
-        f32 zminf = *(f32*)((u8*)self + 0x3C);
-        f32 zmaxf = *(f32*)((u8*)self + 0x40);
+        f32 zminf = self->_3C;
+        f32 zmaxf = self->_40;
         double zmax = (double)zmaxf;
         double b = 16777215.0;
         double b1 = b * 1.0;

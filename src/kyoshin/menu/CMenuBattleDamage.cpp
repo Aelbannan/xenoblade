@@ -334,7 +334,7 @@ void CMenuBattleDamage::Move() {
     }
 }
 
-void CMenuBattleDamage::cbRenderBefore() {
+void CMenuBattleDamage::cbRenderBefore(CScn*) {
     CTaskGame::getInstance();
     // Retail: guard 1 folds to `bne done`; guard 2 (rlwinm. bit test) is the
     // branch-over-branch `beq body; b done` - reproduced by the &&-chain
@@ -434,8 +434,8 @@ void CMenuBattleDamage::thunk_IWorkEvent_dtor() {
     this->~CMenuBattleDamage();
 }
 
-void CMenuBattleDamage::thunk_IScnRender_cbRenderBefore() {
-    this->cbRenderBefore();
+void CMenuBattleDamage::thunk_IScnRender_cbRenderBefore(CScn* scene) {
+    this->cbRenderBefore(scene);
 }
 
 void CMenuBattleDamage::thunk_IScnRender_dtor() {
@@ -565,8 +565,8 @@ void BtlDmg_CursorToState4(CPcSelectCursor01* self) {
 
 extern "C" void BtlDmg_ThunkEventDtor(void* self) { ((void(*)(void*))__dt__17CMenuBattleDamageFv)((char*)self - 0x58); }
 
-extern "C" void cbRenderBefore__17CMenuBattleDamageFv(void*);
-extern "C" void BtlDmg_ThunkRenderBefore(void* self) { ((void(*)(void*))cbRenderBefore__17CMenuBattleDamageFv)((char*)self - 0x5c); }
+extern "C" void cbRenderBefore__17CMenuBattleDamageFP4CScn(void*);
+extern "C" void BtlDmg_ThunkRenderBefore(void* self) { ((void(*)(void*))cbRenderBefore__17CMenuBattleDamageFP4CScn)((char*)self - 0x5c); }
 
 extern "C" void BtlDmg_ThunkRenderDtor(void* self) { ((void(*)(void*))__dt__17CMenuBattleDamageFv)((char*)self - 0x5c); }
 

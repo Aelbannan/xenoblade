@@ -239,7 +239,7 @@ struct PcEffectActorView {
 //   +0x08: transform matrix pointer
 //   +0x0C: slot ID (u8)
 struct PcEffectEntry {
-    PcEffectEntry();
+    PcEffectEntry() : mObj(NULL), mActive(0), mField06(0), mMat(NULL), mId(0), _10(0), _14(0) {}
     /* 0x00 */ CPcEffect07Obj* mObj;
     /* 0x04 */ s16 mActive;
     /* 0x06 */ s16 mField06;
@@ -391,16 +391,10 @@ extern "C" void setChildB59__(void* obj, s8 val);
 
 // Effect-id -> wstring table index matrix (indexed by selector slot).
 extern u32 lbl_eu_80533738[];
-// sdata2 float constant (spawn cooldown reset value).
-extern const f32 lbl_eu_80667DEC;
 
 // External data symbols referenced by this TU (defined in other TUs).
 extern PcEffectData* gpPcEffectData;   // PcEffect07 state (three effect slots)
 extern u16 lbl_eu_805049F8[];           // wstring table of slot ids (index = id - 0x700)
-extern const f32 lbl_eu_80667DF4;       // sdata2 float constant (schedule interval)
-extern const f32 lbl_eu_80667DE8;       // sdata2 float constant (ctor initial value)
-extern const f32 lbl_eu_80667DF0;       // sdata2 float constant (spawn reset value)
-extern const f64 lbl_eu_80667DF8;       // sdata2 int->float conversion magic (0x4330000080000000)
 
 // Spawn/attach an effect object into a slot (see CPcEffect07.cpp).
 extern "C" s32 spawnPcEffect(u8 type, s32 slotSel);
@@ -412,23 +406,39 @@ struct PcEffectMatSlot {
     ml::CMat34* mMat;  // 0x18
 };
 
-// Twin vtable-pointer base subobjects (+0 / +4, retail lbl_eu_80533744 and
-// lbl_eu_80533744+0x10). Ctors defined out-of-line in the .cpp so they inline
-// into the CPcEffect07 constructor in retail order.
-struct CPcEffect07VtA {
-    void* mVT;
-    CPcEffect07VtA();
-};
-struct CPcEffect07VtB {
-    void* mVT;
-    CPcEffect07VtB();
-};
-
 namespace cf {
 
-class CPcEffect07 : public CPcEffect07VtA, public CPcEffect07VtB {
+// name-guess: effect-bank base. Primary (+0) vtable group of cf::CPcEffect07
+// is {dtor, release}; CfObjectEff dispatches release through the bank pointer
+// it keeps at +0xB0. Private base: retail RTTI hierarchy lists only
+// cf::IPcEffect. No vtable/RTTI of its own in retail (novtable).
+class __declspec(novtable) CPcEffectBank {
+public:
+    virtual ~CPcEffectBank() {}
+    // Detach an effect object (clears its +0xB0 slot and wipes its entry).
+    virtual void release(CPcEffect07Obj* pEffect) = 0;
+};
+
+// Effect interface (retail RTTI "cf::IPcEffect", base at +4; CfObjectImplPc
+// keeps the bank through this base). Slot order from the retail secondary
+// vtable group: dtor, schedule fetch, update, tick.
+class __declspec(novtable) IPcEffect {
+public:
+    virtual ~IPcEffect() {}
+    // name-guess: slot names follow the CPcEffect07 implementations.
+    virtual PcEffectSchedHolder* getSchedHolder(s32 id, s32 sel, s32 amount) = 0;
+    virtual void update() = 0;
+    virtual void tick() = 0;
+};
+
+class CPcEffect07 : private CPcEffectBank, public IPcEffect {
 public:
     CPcEffect07(PcEffectActorView* actor);
+    virtual ~CPcEffect07();
+    virtual void release(CPcEffect07Obj* pEffect);
+    virtual PcEffectSchedHolder* getSchedHolder(s32 id, s32 sel, s32 amount);
+    virtual void tick();
+    virtual void update();
 
     u32 mField08;                 // 0x08
     PcEffectActorView* mField0C;  // 0x0C: actor whose +0x3E9C sub-object fetches schedules
@@ -436,8 +446,7 @@ public:
     u8 maxEffects;                // 0x58
     f32 mField5C;                 // 0x5C
     f32 mField60;                 // 0x60
-    u8 _64[0x68 - 0x64];          // 0x64-0x67
-};
+};  // size 0x64 (CfObjectImplPc allocates 0x64)
 
 } // namespace cf
 
@@ -455,6 +464,4 @@ s32 startPcEffect(u32 handle, s32 index, s32 bankByte, s32 amount);
 s32 getFirstFreeSlot();
 int hasAnyActiveSlot();
 int countActiveSlots();
-void tickPcEffects(cf::CPcEffect07* self);
-void updatePcEffect(cf::CPcEffect07* self);
 void freePcEffects(PcEffectData* data);

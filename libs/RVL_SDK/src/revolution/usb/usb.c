@@ -223,18 +223,8 @@ void IUSB_OpenDeviceIdsAsync(s32 fd, u16 vid, u16 pid, void* callback,
     USB_ERR("OpenDeviceIdsAsync: Not enough memory\n");
 }
 
-// IUSB_CloseDeviceAsync's own log strings, held as static objects (not literals):
-// MWCC emits function literals in source-token order, which would place
-// "CloseDevice returned" after "CloseDeviceAsync: ..."; retail has it before,
-// so the bytes live here at retail offsets and the function references them.
-static __declspec(section ".data") const char sCloseDevice[13] = {
-    0x43, 0x6C, 0x6F, 0x73, 0x65, 0x44, 0x65, 0x76, 0x69, 0x63, 0x65, 0x0A, 0x00,
-};
-
-static __declspec(section ".data") const char sCloseDeviceReturned[26] = {
-    0x43, 0x6C, 0x6F, 0x73, 0x65, 0x44, 0x65, 0x76, 0x69, 0x63, 0x65, 0x20, 0x72, 0x65, 0x74, 0x75,
-    0x72, 0x6E, 0x65, 0x64, 0x3A, 0x20, 0x25, 0x64, 0x0A, 0x00,
-};
+static char sCloseDevice[] = "CloseDevice\n";
+static char sCloseDeviceReturned[] = "CloseDevice returned: %d\n";
 
 IPCResult IUSB_CloseDeviceAsync(s32 fd, USBCallback callback,
                                 void* callbackArg) {

@@ -245,6 +245,9 @@ CfGimmickJump::~CfGimmickJump() {
 extern "C" void CfGimmickJump_RefreshMatrices(CfGimmickJump* self) {
     self->savedState = self->initialState;
     CfGimmick_BuildColliderMtx(&self->initialState, &self->position, &self->rotation);
+    // The saved collider follows the lift: its vertical (low) extent is the
+    // current jump height.
+    self->savedState.extents[1] = self->height;
     CfGimmick_BuildColliderMtx(&self->savedState, &self->position, &self->rotation);
     CfGimmick_BuildColliderMtx(&self->transformedPosition, &self->position, &self->rotation);
 }
@@ -469,7 +472,7 @@ extern "C" void CfGimmickJump_RunLift(CfGimmickJump* self) {
                                                 const CfGimmickJumpVec3*,
                                                 const CfGimmickJumpVec3*);
             JumpDispatchFunction dispatch = reinterpret_cast<JumpDispatchFunction>(
-                jumptable_eu_80535830[self->savedState.words[8]]);
+                jumptable_eu_80535830[self->savedState.kind]);
             if (dispatch(&self->transformedPosition, playerPos,
                          &self->position) == 0) {
                 continue;

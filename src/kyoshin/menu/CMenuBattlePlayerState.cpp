@@ -41,13 +41,6 @@
 // Term / cbRenderBefore.
 // Batch 2026-07-14k: menu-bps-ctor lives in CMenuBattlePlayerState_ct.cpp (-O4,s).
 
-struct CMenuBpsProcessShim {
-    u8 unk00[0x10];
-    void* vtable;
-    u8 unk14[0x28];
-    u32 callbacks[6]; // +0x3c
-};
-
 void BpsStateClearSlot(CMenuBattlePlayerStateSlot*);
 extern "C" void* __dt__8010B444(CMenuBattlePlayerStateSlot*, s16);
 extern "C" void* __dt__8010B444(CMenuBattlePlayerStateSlot* self, s16 del) {
@@ -88,11 +81,9 @@ extern nw4r::lyt::ArcResourceAccessor* UIBattleGetWordEC();
 
 extern void playUISound(u32);
 
-extern "C" {
-extern s16 sBpsPaneColorWhite[4];
-extern s16 sBpsPaneColorGold[4];
-extern s16 sBpsPaneColorGray[4];
-}
+GXColorS10 sBpsPaneColorWhite;
+GXColorS10 sBpsPaneColorGold;
+GXColorS10 sBpsPaneColorGray;
 
 // Direct-store view
 // SetTranslate here; MWCC refuses to inline the header body inside Move.
@@ -162,9 +153,9 @@ void CMenuBattlePlayerState::Init() {
         // to nonvolatile f28-f31 / r24-r26).
         const f32 zeroF = 0.0f;
         const f32 yStep = lbl_eu_80666F9C;
-        s16* colA = sBpsPaneColorWhite;
-        s16* colB = sBpsPaneColorGold;
-        s16* colC = sBpsPaneColorGray;
+        GXColorS10* colA = &sBpsPaneColorWhite;
+        GXColorS10* colB = &sBpsPaneColorGold;
+        GXColorS10* colC = &sBpsPaneColorGray;
 
         for (u8 i = 0; i < 3; i++) {
             CMenuBattlePlayerStateSlot& slot = mSlots[i];
@@ -218,12 +209,12 @@ void CMenuBattlePlayerState::Init() {
                 s16 v1 = rect.g;
                 s16 v2 = rect.b;
                 s16 v3 = rect.a;
-                colA[0] = v0;
-                colA[1] = v1;
-                colA[2] = v2;
-                colA[3] = v3;
-                colB[3] = v3;
-                colC[3] = v3;
+                colA->r = v0;
+                colA->g = v1;
+                colA->b = v2;
+                colA->a = v3;
+                colB->a = v3;
+                colC->a = v3;
             }
 
             {
@@ -857,7 +848,7 @@ done:
     ;
 }
 
-void CMenuBattlePlayerState::cbRenderBefore() {
+void CMenuBattlePlayerState::cbRenderBefore(CScn*) {
     CTaskGame::getInstance();
     if (CTaskGame::isFlag01Set()) {
         goto done;
@@ -1001,7 +992,7 @@ extern "C" int BpsStateSingletonToInt() { return (int)spBpsState; }
 extern "C" void BpsStateFlag7C9Set(CMenuBattlePlayerState* p) {
     p->unk7C9 = 1;
 }
-extern "C" void sinit_8010E9F8() { sBpsPaneColorWhite[3] = 0xff; sBpsPaneColorWhite[2] = 0xff; sBpsPaneColorWhite[1] = 0xff; sBpsPaneColorWhite[0] = 0xff; sBpsPaneColorGold[3] = 0xff; sBpsPaneColorGold[2] = 0x5c; sBpsPaneColorGold[1] = 0x92; sBpsPaneColorGold[0] = 0xb9; sBpsPaneColorGray[3] = 0xff; sBpsPaneColorGray[2] = 0x50; sBpsPaneColorGray[1] = 0x50; sBpsPaneColorGray[0] = 0x50; }
+extern "C" void sinit_8010E9F8() { sBpsPaneColorWhite.a = 0xff; sBpsPaneColorWhite.b = 0xff; sBpsPaneColorWhite.g = 0xff; sBpsPaneColorWhite.r = 0xff; sBpsPaneColorGold.a = 0xff; sBpsPaneColorGold.b = 0x5c; sBpsPaneColorGold.g = 0x92; sBpsPaneColorGold.r = 0xb9; sBpsPaneColorGray.a = 0xff; sBpsPaneColorGray.b = 0x50; sBpsPaneColorGray.g = 0x50; sBpsPaneColorGray.r = 0x50; }
 // This-adjusting deleting-dtor thunk (secondary base at +0x58):
 // retail emits `subi r3, r3, 0x58; b __dt__22CMenuBattlePlayerStateFv`.
 // Forwarding deleteFlag untouched keeps the tail call (no bl).
@@ -1016,7 +1007,7 @@ extern "C" void* BpsStateDtorThunk58(void* self, int deleteFlag) {
 // IScnRender cbRenderBefore thunk (free-pointer call: member is now virtual,
 // so a member call would bctrl-dispatch; retail is a direct bl). The fwd decl
 // shares the thunk line so extern-C declaration counts are unchanged (pilot).
-extern "C" void cbRenderBefore__22CMenuBattlePlayerStateFv(); extern "C" void BpsStateRenderThunk5C(void* self) { ((void(*)(void*))cbRenderBefore__22CMenuBattlePlayerStateFv)((char*)self - 0x5c); }
+extern "C" void cbRenderBefore__22CMenuBattlePlayerStateFP4CScn(); extern "C" void BpsStateRenderThunk5C(void* self) { ((void(*)(void*))cbRenderBefore__22CMenuBattlePlayerStateFP4CScn)((char*)self - 0x5c); }
 // This-adjusting deleting-dtor thunk (IScnRender base at +0x5c):
 // retail emits `subi r3, r3, 0x5c; b __dt__22CMenuBattlePlayerStateFv`.
 // Forwarding deleteFlag untouched keeps the tail call (no li/bl). Pad pad pad.
@@ -1246,46 +1237,10 @@ extern "C" void BpsStateUpdateHpGauge(CMenuBattlePlayerState* self,
 }
 // Keep names distinct from Move's extern callees or MWCC DCE's the bl sites.
 
-// Cast-only iface for the polymorphic member embedded at actor+0x8 (MWCC RTTI
-// places two hidden slots before the first declared virtual). The icon-query
-// virtuals return void and fill fields on the inner object itself (id at
-// +0x0c, state at +0x30; 0x800 = empty slot); retail's caller keeps r3
-// pointing at the inner object across the call.
-// Battle-state head of the actor (cf::CBattleState base at +0x8): the
-// getEventEntry/fetchStatusEntry icon queries fill the state object in place
-// battle-state +0xC, state word at +0x30, 0x800 = empty slot); retail's
-// caller reads both straight off the sub-object after the call.
-struct MenuBpsActorBattleHead {
-    u8 pad00[0x14];       // actor+0x14 == CBattleState+0x0C
-    u16 unk14;
-    u8 pad16[0x38 - 0x16];
-    u32 unk38;            // actor+0x38 == CBattleState+0x30
-};
-
 // Actor field holding the level icon id (fed in as arts-slot entry 0x20).
 struct MenuBpsMoveActorFields {
     u8 pad00[0x1530];
     u32 unk1530; // +0x1530: level icon id (u16)
-};
-
-// Pane flag byte view: the +0xBB visibility byte plus the retail's mask of
-// bit 0x100 (a promoted-int mask stored back through this byte field).
-struct MenuBpsPaneFlagsView {
-    u8 pad00[0xBB];
-    u8 flagsBB;
-};
-
-// HP/tension gauge pane fields written directly.
-struct MenuBpsGaugePaneView {
-    u8 pad00[0x4C];
-    f32 unk4C; // +0x4C: current gauge width
-    f32 unk50; // +0x50: max gauge width
-};
-
-// AnimTransform frame float stored inline (SetFrame folds to this store).
-struct MenuBpsAnimFrameView {
-    u8 pad00[0x10];
-    f32 frame;
 };
 
 // ---------------------------------------------------------------------------
@@ -1298,7 +1253,7 @@ struct MenuBpsAnimFrameView {
 // (unk26C/unk70 pane).
 // ---------------------------------------------------------------------------
 void CMenuBattlePlayerState::BpsStateUpdateSlotArts(cf::CfObjectActor* actor, CMenuBattlePlayerStateSlot* slot) {
-    MenuBpsPaneFlagsView* starPane;
+    nw4r::lyt::Pane* starPane;
 
     // Tension timer: raises flag bit 0x800 when it exceeds FDC.
     slot->unk264 = slot->unk264 + 1.0f;
@@ -1309,10 +1264,10 @@ void CMenuBattlePlayerState::BpsStateUpdateSlotArts(cf::CfObjectActor* actor, CM
 
         // Pass 1: scan the actor's live arts-icon slots from last match + 1,
         // binding the first hit's icon and lighting the level star pane.
-        starPane = reinterpret_cast<MenuBpsPaneFlagsView*>(slot->unk6C);
+        starPane = slot->unk6C;
         char* tbl = lbl_eu_804FD720;
         const u32 texKey = 0x74696D67;
-        starPane->flagsBB &= static_cast<u8>(~0x01);
+        starPane->SetVisible(false);
 
         u32 cursor = (slot->unk268 + 1) & 0xFF;
         while (true) {
@@ -1333,11 +1288,8 @@ void CMenuBattlePlayerState::BpsStateUpdateSlotArts(cf::CfObjectActor* actor, CM
                             CUICfManager_getArcResourceAccessor())
                             ->GetResource(texKey, tex, NULL));
                     if (bound != 0) {
-                        starPane->flagsBB =
-                            (starPane->flagsBB &
-                             static_cast<u8>(~0x01)) |
-                            0x01;
-                        PaneSetTexPalette((nw4r::lyt::Pane*)starPane, (TPLPalette*)bound);
+                        starPane->SetVisible(true);
+                        PaneSetTexPalette(starPane, (TPLPalette*)bound);
                         slot->unk268 = static_cast<u32>(static_cast<u8>(cursor));
                         break;
                     }
@@ -1352,17 +1304,16 @@ void CMenuBattlePlayerState::BpsStateUpdateSlotArts(cf::CfObjectActor* actor, CM
 
         // Pass 2: snapshot all 32 slots (empty-state slots read as 0), append
         // the actor's level icon as entry 0x20, then scan from last match + 1.
-        starPane = reinterpret_cast<MenuBpsPaneFlagsView*>(slot->unk70);
-        starPane->flagsBB &= static_cast<u8>(~0x01);
+        starPane = slot->unk70;
+        starPane->SetVisible(false);
 
         u16 ids[33];
         // u8 counter: retail zero-extends it for the Func21 arg and derives
         // the ids index as j*2 from the extended value.
         for (u8 j = 0; j < 32; j++) {
-            actor->CBattleState_fetchStatusEntry(j);
-            MenuBpsActorBattleHead* head =
-                reinterpret_cast<MenuBpsActorBattleHead*>(actor);
-            ids[j] = (head->unk38 == 0x800u) ? 0 : head->unk14;
+            cf::CBattleStateEntry* entry =
+                actor->CBattleState_fetchStatusEntry(j);
+            ids[j] = (entry->unk30 == 0x800u) ? 0 : entry->unk0C;
         }
         ids[32] = reinterpret_cast<MenuBpsMoveActorFields*>(actor)->unk1530;
 
@@ -1383,11 +1334,8 @@ void CMenuBattlePlayerState::BpsStateUpdateSlotArts(cf::CfObjectActor* actor, CM
                             CUICfManager_getArcResourceAccessor())
                             ->GetResource(texKey2, tex, NULL));
                     if (bound != 0) {
-                        starPane->flagsBB =
-                            (starPane->flagsBB &
-                             static_cast<u8>(~0x01)) |
-                            0x01;
-                        PaneSetTexPalette((nw4r::lyt::Pane*)starPane, (TPLPalette*)bound);
+                        starPane->SetVisible(true);
+                        PaneSetTexPalette(starPane, (TPLPalette*)bound);
                         slot->unk26C =
                                 static_cast<u32>(static_cast<u8>(cur2));
                         return;
@@ -1402,11 +1350,8 @@ void CMenuBattlePlayerState::BpsStateUpdateSlotArts(cf::CfObjectActor* actor, CM
                                 CUICfManager_getArcResourceAccessor())
                                 ->GetResource(texKey2, tex, NULL));
                         if (bound != 0) {
-                            starPane->flagsBB =
-                            (starPane->flagsBB &
-                             static_cast<u8>(~0x01)) |
-                            0x01;
-                            PaneSetTexPalette((nw4r::lyt::Pane*)starPane, (TPLPalette*)bound);
+                            starPane->SetVisible(true);
+                            PaneSetTexPalette(starPane, (TPLPalette*)bound);
                             slot->unk26C =
                                 static_cast<u32>(static_cast<u8>(cur2));
                             return;
@@ -1454,11 +1399,11 @@ void CMenuBattlePlayerState::BpsStateActivateSlot(CMenuBattlePlayerStateSlot* sl
         LayoutSetTextBoxInt((nw4r::lyt::Layout*)slot->unk50, slot->unk214);
         // Color-set swap keyed on full-HP / dead / other.
         if (slot->unk210 == slot->unk214) {
-            PaneMatSetS16Quad(slot->unk4C, (const GXColorS10*)sBpsPaneColorGold, 1);
+            PaneMatSetS16Quad(slot->unk4C, &sBpsPaneColorGold, 1);
         } else if (slot->unk210 == 0) {
-            PaneMatSetS16Quad(slot->unk4C, (const GXColorS10*)sBpsPaneColorGray, 1);
+            PaneMatSetS16Quad(slot->unk4C, &sBpsPaneColorGray, 1);
         } else {
-            PaneMatSetS16Quad(slot->unk4C, (const GXColorS10*)sBpsPaneColorWhite, 1);
+            PaneMatSetS16Quad(slot->unk4C, &sBpsPaneColorWhite, 1);
         }
     }
 
@@ -1571,11 +1516,11 @@ void CMenuBattlePlayerState::BpsStateRefreshSlot(CMenuBattlePlayerStateSlot* slo
         LayoutSetTextBoxInt((nw4r::lyt::Layout*)slot->unk50, slot->unk214);
         // Color-set swap keyed on full-HP / dead / other.
         if (slot->unk210 == slot->unk214) {
-            PaneMatSetS16Quad(slot->unk4C, (const GXColorS10*)sBpsPaneColorGold, 1);
+            PaneMatSetS16Quad(slot->unk4C, &sBpsPaneColorGold, 1);
         } else if (slot->unk210 == 0) {
-            PaneMatSetS16Quad(slot->unk4C, (const GXColorS10*)sBpsPaneColorGray, 1);
+            PaneMatSetS16Quad(slot->unk4C, &sBpsPaneColorGray, 1);
         } else {
-            PaneMatSetS16Quad(slot->unk4C, (const GXColorS10*)sBpsPaneColorWhite, 1);
+            PaneMatSetS16Quad(slot->unk4C, &sBpsPaneColorWhite, 1);
         }
     }
 
@@ -1610,13 +1555,10 @@ void CMenuBattlePlayerState::BpsStateRefreshSlot(CMenuBattlePlayerStateSlot* slo
         // HP empty: light the party/tension stars, hide the arts/heal stars.
         slot->unk5C->SetVisible(true);
         slot->unk60->SetVisible(true);
-        reinterpret_cast<MenuBpsPaneFlagsView*>(slot->unk64)->flagsBB =
-            reinterpret_cast<MenuBpsPaneFlagsView*>(slot->unk64)->flagsBB & ~0x100u;
-        reinterpret_cast<MenuBpsPaneFlagsView*>(slot->unk68)->flagsBB =
-            reinterpret_cast<MenuBpsPaneFlagsView*>(slot->unk68)->flagsBB & ~0x100u;
-        MenuBpsPaneFlagsView* mainRoot = reinterpret_cast<MenuBpsPaneFlagsView*>(
-            slot->unk08->GetRootPane());
-        mainRoot->flagsBB = mainRoot->flagsBB & ~0x100u;
+        slot->unk64->SetVisible(false);
+        slot->unk68->SetVisible(false);
+        nw4r::lyt::Pane* mainRoot = slot->unk08->GetRootPane();
+        mainRoot->SetVisible(false);
 
         u32 f4 = slot->unk25C;
         if ((f4 & 0x1000) == 0) {
@@ -1661,10 +1603,8 @@ void CMenuBattlePlayerState::BpsStateRefreshSlot(CMenuBattlePlayerStateSlot* slo
     } else {
         u32 f5 = slot->unk25C;
         slot->unk25C = f5 & ~0x1000u;
-        reinterpret_cast<MenuBpsPaneFlagsView*>(slot->unk5C)->flagsBB =
-            reinterpret_cast<MenuBpsPaneFlagsView*>(slot->unk5C)->flagsBB & ~0x100u;
-        reinterpret_cast<MenuBpsPaneFlagsView*>(slot->unk60)->flagsBB =
-            reinterpret_cast<MenuBpsPaneFlagsView*>(slot->unk60)->flagsBB & ~0x100u;
+        slot->unk5C->SetVisible(false);
+        slot->unk60->SetVisible(false);
         slot->unk64->SetVisible(true);
         slot->unk68->SetVisible(true);
         slot->unk08->GetRootPane()->SetVisible(true);
@@ -2004,9 +1944,8 @@ void CMenuBattlePlayerState::BpsStateRefreshSlot(CMenuBattlePlayerStateSlot* slo
     // alternate animation set and move the slot to state 3.
     if (slot->unk80 == 0 && slot->unk240 == 0 && this->unk7C8 != 0 &&
         slot->unk254 == 0xB) {
-        MenuBpsPaneFlagsView* fp = reinterpret_cast<MenuBpsPaneFlagsView*>(
-            slot->unk20->GetRootPane());
-        fp->flagsBB = fp->flagsBB & ~0x100u;
+        nw4r::lyt::Pane* fp = slot->unk20->GetRootPane();
+        fp->SetVisible(false);
         slot->unk18->SetAnimationEnable(slot->unk1C,
             true);
         slot->unk244 = 3;

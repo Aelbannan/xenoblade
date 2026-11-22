@@ -1301,13 +1301,13 @@ extern "C" void* __dynamic_cast(void* obj, long offset, const void* src_type,
                                 const void* dst_type, void* src2dst);
 extern const void* lbl_eu_80661B00;  // RTTI typeinfo pair used by the cam advance cast
 extern const void* lbl_eu_80661B30;  // (pointer-object decls so MWCC emits @sda21 li's)
-extern "C" f32 CosFIdx__Q24nw4r4mathFf(f32);
-
+#include <nw4r/math/math_triangular.h>
+using nw4r::math::CosFIdx;
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" CfCamDataTable cfCamEventDataTable;
 extern "C" CfCamEventGlobal* cfCamEventManagerPtr;
 extern "C" void* MapFx_ResolveOwner(void* source);
-extern "C" void* getPlayer__Q22cf13CfGameManagerFi(int idx);
+#include "kyoshin/cf/CfGameManager.hpp"
 extern "C" void* findObjectById__Fi(int id);
 extern "C" void* func_800BBC0C(void* obj);
 extern "C" f32   lbl_eu_8066641C;
@@ -1320,7 +1320,7 @@ extern "C" u32   Bdat_GetRowBase_B41C(void* bdat);
 extern void* cfCamEventBdatTableA;      // sbss bdat-table pointer (set by Bdat_GetTable_AA34)
 extern char  cfCamEventSdaFloat[8];   // sdata column-name buffer (digit at +4)
 extern char  lbl_eu_80527638[0xA]; // data column-name buffer (digit at +8)
-extern "C" f32   Atan2FIdx__Q24nw4r4mathFff(f32 y, f32 x);
+using nw4r::math::Atan2FIdx;
 extern "C" int   CfRes_getD80Flag();
 extern "C" void  CamEvtCalcAimPoint(ml::CVec3* out, CinemCamSrc* src);
 extern "C" int CamEvtAdvanceBusy(CfCamEventManager* self);
@@ -1331,8 +1331,8 @@ extern "C" int CamEvtPickWeightedRow(int unused, int type_, CamEventSrc* src,
 extern "C" void CamEvtClearSlotBytes(u8* self);
 // Vector-normalize helper (body provided by this TU).
 
-// nw4r debug warning (CamEvtCheckAimAngles range violations)
-extern "C" void Warning__Q24nw4r2dbFPCciPCce(const char* file, int line, const char* fmt, ...);
+#include <nw4r/db/db_assert.h>
+using nw4r::db::Warning;
 extern const char lbl_eu_805262F0[];   // warning file name
 extern const char lbl_eu_805262C8[];   // warning format string
 // Dynamic-cast result region (getCameraDataBlock -> __dynamic_cast): a single
@@ -1383,7 +1383,7 @@ extern "C" void CamEvtSolveAimPair(ml::CVec3* out1, ml::CVec3* out2, CamCamSrc* 
 extern "C" UnkClass_800821F8* getCameraDataBlock__Q22cf13CfGameManagerFv(void);
 extern "C" u32   CfRes_getAllocHandle(void);
 extern "C" void  func_80240878(u8* p);
-extern "C" f32 SinFIdx__Q24nw4r4mathFf(f32);
+using nw4r::math::SinFIdx;
 extern "C" void VecMath_CatmullRom(f32* out, CfCamEventElem* a, CfCamEventElem* b,
                               CfCamEventElem* c, CfCamEventElem* d, f32 t);
 extern "C" void VecMath_LerpVec(f32* out, CfCamEventElem* a, CfCamEventElem* b,

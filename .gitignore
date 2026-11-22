@@ -57,3 +57,4 @@ tools/pi_harness/node_modules/
 .envrc
 tools/coop/.targets.json.*.tmp
 *.tmp
+tools/coop/land/state/

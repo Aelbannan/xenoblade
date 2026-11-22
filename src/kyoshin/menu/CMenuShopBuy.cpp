@@ -118,7 +118,7 @@ void CMenuShopBuy::Move() {
     mTitleAHelp.updateHelp();
 }
 
-void CMenuShopBuy::cbRenderBefore() {
+void CMenuShopBuy::cbRenderBefore(CScn*) {
     // Same single-OR guard shape as Move / CSystemWindow::cbRenderBefore.
     if (CTaskGame::getInstance()->isFlag01Set() ||
         (gmPauseFlags & 0x200000))

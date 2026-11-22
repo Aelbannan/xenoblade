@@ -176,7 +176,7 @@ CTaskCulling* CTaskCulling::getInstance() {
 void CTaskCulling::Move(){}
 void CTaskCulling::Draw(){}
 
-void CTaskCulling::cbRenderBefore(){}
+void CTaskCulling::cbRenderBefore(CScn*){}
 
     CTaskCulling* CTaskCulling::create(CProcess* pParent, CScn* pScene){
         CTaskCulling* taskCulling = new (CWorkThreadSystem::getWorkMem()) CTaskCulling(pScene);

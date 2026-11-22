@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include <types.h>
+#include "monolib/lod/CTaskLOD.hpp"
 #include "kyoshin/cf/CtrlRemoteApi.hpp"
 #include <string.h>
 #include "kyoshin/cf/CTaskREvent.hpp"
@@ -15,7 +16,7 @@
 #include "monolib/device/CDeviceVICb.hpp"
 #include "monolib/scn/CScnNw4r.hpp"
 
-extern "C" void cbRenderBefore__Q22cf11CTaskREventFv(void*);
+extern "C" void cbRenderBefore__Q22cf11CTaskREventFP4CScn(void*);
 
 // name-guess: retail .rodata:0x80502F90 is a 32-entry event-id table walked by evtFillCharRange.
 extern const s16 sEventIdTable[0x20] = {
@@ -66,9 +67,8 @@ cf::CTaskREvent* __ct__cf_CTaskREvent(cf::CTaskREvent* pMem, CScnNw4r* pScene, C
     // Null PTMF members at +0x3C/+0x48 (straight-line null-PTMF assignment;
     // MWCC fills them from __ptmf_null in the retail store order
     // 0x40,0x3C,0x44 / 0x4C,0x48,0x50).
-    CTaskREventPtms* ptms = reinterpret_cast<CTaskREventPtms*>(pMem);
-    ptms->move = nullptr;
-    ptms->draw = nullptr;
+    pMem->mMoveFunc = nullptr;
+    pMem->mDrawFunc = nullptr;
 
     // CDeviceVICb subobject at +0x54.
     __ct__11CDeviceVICbFv(reinterpret_cast<CDeviceVICb*>(&pMem->mVtbl54));
@@ -993,7 +993,7 @@ void cf::CTaskREvent::Move() {
     // allows it, then drive the fade virtuals in the matching direction.
     u32 battleFade = 0;
     if ((gmGameFlags & 0x04000000) != 0) {
-u32 bt = (u32)((cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv())->CBattleMan_FetchVisionObj();
+u32 bt = (u32)((cf::CBattleManager*)cf::CBattleManager::getInstance())->CBattleMan_FetchVisionObj();
         if (bt != 0 && (*(u32*)(bt + 0x824) & 0x00020000) != 0) {
             REvtMgrView* gf = getGimmickListHead__Q22cf13CfGameManagerFv();
             REvtListNode* n = gf->list->first;
@@ -1032,9 +1032,9 @@ u32 bt = (u32)((cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv())->CBa
                     }
                 }
             }
-            deactivateLOD__8CTaskLODFv(3);
-            deactivateLOD__8CTaskLODFv(4);
-            deactivateLOD__8CTaskLODFv(5);
+            CTaskLOD::deactivateLOD(3);
+            CTaskLOD::deactivateLOD(4);
+            CTaskLOD::deactivateLOD(5);
         } else {
             REvtMgrView* gf = getGimmickListHead__Q22cf13CfGameManagerFv();
             for (REvtListNode* n = gf->list->first;
@@ -1056,9 +1056,9 @@ u32 bt = (u32)((cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv())->CBa
                     }
                 }
             }
-            activateLOD__8CTaskLODFv(3);
-            activateLOD__8CTaskLODFv(4);
-            activateLOD__8CTaskLODFv(5);
+            CTaskLOD::activateLOD(3);
+            CTaskLOD::activateLOD(4);
+            CTaskLOD::activateLOD(5);
         }
     }
     if (battleFade != 0) {
@@ -1240,7 +1240,7 @@ void evtSetAutoSleepFlag(CEventMgr* self, u32 arg) {
 // Render-before hook: if the event manager's CRI player is idle, copy the
 // current view's rect into our player. Skips when this task or the manager
 // holds a live CRI controller.
-void cf::CTaskREvent::cbRenderBefore() {
+void cf::CTaskREvent::cbRenderBefore(CScn*) {
     if ((u32)this->mCri == 0xFFFFFFFF) return;
     CView* view = getCurrentView__5CViewFv();
     CEventMgr* mgr = gEventMgr;
@@ -1402,7 +1402,7 @@ void evtFlagEventFillThunk(void* self) { ((void(*)(void*))evtFillCharRange)((cha
 
 void evtFlagEventDtorThunk(void* self) { ((void(*)(void*))__dt__Q22cf11CTaskREventFv)((char*)self - 0x58); }
 
-void evtRenderBeforeThunk(void* self) { ((void(*)(void*))cbRenderBefore__Q22cf11CTaskREventFv)((char*)self - 0x5c); }
+void evtRenderBeforeThunk(void* self) { ((void(*)(void*))cbRenderBefore__Q22cf11CTaskREventFP4CScn)((char*)self - 0x5c); }
 
 extern "C" void evtRenderDtorThunk5C(u8* self) { ((void(*)(void*))__dt__Q22cf11CTaskREventFv)((char*)self - 0x5c); }
 

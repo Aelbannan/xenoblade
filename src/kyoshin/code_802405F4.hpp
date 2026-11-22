@@ -24,24 +24,11 @@ extern "C" {
 extern "C" int CfRes_getD80Flag();
 }
 
-// Imports used by the landmark FX initializer
-extern u32 lbl_eu_80664788;      // .sdata landmark request counter
-extern const float lbl_eu_8066870C;
-extern const float lbl_eu_80668710;
-
 extern "C" {
 // Camera/transform position setters (retail keeps unmangled symbols)
 void ScnCamShiftBy(void* obj, ml::CVec3* pos);
 void ScnCamTurnAim(void* obj, ml::CVec3* pos);
 }
-
-// sdata2 float constants used by the FX easing helpers
-extern const float lbl_eu_80668708;  // 0.0f
-extern const float lbl_eu_80668714;
-extern const float lbl_eu_80668718;  // 1.0f
-extern const float lbl_eu_8066871C;
-extern const float lbl_eu_80668720;
-extern const float lbl_eu_80668724;
 
 // One easing/pulse channel driven by MapFxStepPulseChannel (0x3C bytes).
 struct MapFxChannel {
@@ -68,7 +55,7 @@ struct MapFxChannel {
 struct MenuFxObj {
     u8 field_00;           // +0x00 active flag
     u8 _01[3];
-    u32 field_04;          // +0x04 live counter (from lbl_eu_80664788)
+    u32 field_04;          // +0x04 live counter (from sMapFxAllocCounter)
     MapFxChannel fx[3];    // +0x08 primary channels (8/0x44/0x80)
     MapFxChannel fx2[3];   // +0xBC secondary channels (0xBC/0xF8/0x134)
     ml::CVec3 pos;         // +0x170

@@ -4,6 +4,6 @@
 
 namespace cf {
 u8 CHelp_ItemCole::getItemCole() {
-    return lbl_eu_80664A10->mField14;
+    return cf::CHelpManager::sInstance->mField14;
 }
 } // namespace cf

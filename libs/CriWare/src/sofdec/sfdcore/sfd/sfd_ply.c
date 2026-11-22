@@ -8,89 +8,14 @@
 const s32 SFPLY_cond_dfl[101] = {1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 1, 0, 1, -3, 1, -4, 1, 0, 4, 4096, 0, 1, 60, 1, -1, -1, 0, 0, 0, 0, 0, 0, 0, 1, 0, -30000, -14000, 8000, 59940, 4000, 4000, 41, 0, 0, 0, 0, 5, 0, 5, -1, 0, 0, 0, 2147483647, 0, 0, 1, 10, 16683, 200000, 0, 0, 1, 66732, 133464, 512000, 1, 1, 0, 0, -1, -1, -1, 1, 1, 1, -1, -1, 0, 0, 0, 4, 0, 1515870810, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
 
-// Player configuration passed to SFD_Create / sfply_InitHn
-typedef struct SfdPlyCfg {
-    u8 pad00[4];
-    u32 field_0x04;   /* stream position, aligned to 0x20 by InitHn */
-    u8 pad08[0x3C];
-    void* work;       /* 0x44: work area */
-    u32 workSize;     /* 0x48: work area size */
-} SfdPlyCfg;
 
-// 0x50-byte header block cloned from the config into the handle
-typedef struct SfdCopyBlk {
-    u32 w[0x14];
-} SfdCopyBlk;
-
-// 0x5C-byte block saved/restored around the handle rebuild (self+0xD38)
 typedef struct SfdBlk5C {
     u32 w[0x17];
 } SfdBlk5C;
 
-// Player handle laid out at the start of the (32B-aligned) work area
-typedef struct SfdPlyHn {
-    u8 pad0000[0x50];
-    s32 active;       /* 0x50 */
-    s32 status;       /* 0x54 */
-    s32 substatus;    /* 0x58 */
-    s32 field_0x5C;
-    s32 field_0x60;
-    s32 field_0x64;
-    s32 field_0x68;
-    s32 field_0x6C;
-    s32 field_0x70;
-    u8 pad0074[0x14];
-    SfdFhd fhd;                       /* 0x88 .. 0x91C header work area */
-    s32 field_0x91C;
-    u8 pad0920[0x18];                 /* 0x920 .. 0x938 */
-    s32 field_0x938;
-    u8 pad093C[4];
-    s32 field_0x940;
-    s32 field_0x944;
-    s32 field_0x948;
-    u8 pad094C[0x3F0];                /* 0x94C .. 0xD3C */
-    u8 field_0xD3C[0x50];             /* 0xD3C .. 0xD8C, memset 0 */
-    s32 field_0xD8C;
-    u8 pad0D90[8];
-    u8 tim[0x620];                    /* 0xD98 .. 0x13B8 */
-    u8 buf[0xC20];                    /* 0x13B8 .. 0x1FD8 */
-    u8 trn[0x698];                    /* 0x1FD8 .. 0x2670 */
-    SfdSee see;                       /* 0x2670 seek/head-analysis block */
-    u8 seeki[0x20];                   /* 0x2680 */
-    u8 tsum[0xA0];                    /* 0x26A0 .. 0x2740: 5 x 0x20 */
-    u8 tsumLast[0x20];                /* 0x2740 */
-    u64 field_0x2760;                 /* last frame timer stamp */
-    u64 field_0x2768;                 /* current timer stamp */
-    u64 field_0x2770;                 /* timer unit */
-    s32 field_0x2778;
-    f32 field_0x277C;
-} SfdPlyHn;
 
-// Player handle view used by sfply_StatPrep (offsets verified against retail)
-typedef struct SfdPlyStatView {
-    u8 pad0000[0x50];
-    s32 active;         /* 0x50 */
-    s32 status;         /* 0x54 */
-    s32 substatus;      /* 0x58 */
-    u8 pad005C[0x9D4];
-    s32 avPauseV;       /* 0xA30: video pause-request flag */
-    s32 avPauseA;       /* 0xA34: audio pause-request flag */
-    u8 pad0A38[0x1C];
-    s32 field_0xA54;
-    s32 playMode;       /* 0xA58 */
-    u8 pad0A5C[0x74];
-    s32 field_0xAD0;
-    u8 pad0AD4[0x57C];
-    s32 field_0x1050;
-    u8 pad1054[0x18];
-    s32 field_0x106C;
-    u8 pad1070[0xC];
-    s32 field_0x107C;
-} SfdPlyStatView;
-
-// Forward declarations for internal functions
 void sfply_ExecOne(void* self);
-int sfply_StatPrep(SfdPlyStatView* self, int canExec);
+int sfply_StatPrep(SfdHandle* self, int canExec);
 int fn_803CC170(void* self);
 void fn_803CC238(void* self);
 int sfply_IsBpaOn(void* self);
@@ -99,7 +24,7 @@ int sfply_IsEtrg(void* self);
 int criware_803C9FC0(void* self);
 int sfply_IsPlayTimeAutoStop(void* self);
 void criware_803CA124(void* self, int fpsArg);
-void* sfply_InitHn(SfdPlyCfg* config, void* extra);
+void* sfply_InitHn(SfdCreateCfg* config, void* extra);
 void sfply_InitPlyInf(void* self);
 int sfply_ResetHn(void* self);
 
@@ -174,28 +99,22 @@ extern u32 sSfdWorkMemSize;
 extern u32 gpSfdEventCallback;
 extern void* gpSfdCoreTraceCb;
 extern u8 sSfdGlob[];
-extern u8 sTraceSfdExecOne[];
-extern u8 sTraceSfdCreate[];
-extern u8 sTraceSfdDestroy[];
-extern u8 sTraceSfdStart[];
-extern u8 sTraceSfdStop[];
-extern u8 sTraceSfdRequestStop[];
-extern u8 sTraceSfdTermSupply[];
-extern u8 sTraceSfdGetFrm[];
-extern u8 sTraceSfdRelFrm[];
-extern u8 sTraceAdjustPrepEnd[];
+extern SfdTrcRec sTraceSfdExecOne;
+extern SfdTrcRec sTraceSfdCreate;
+extern SfdTrcRec sTraceSfdDestroy;
+extern SfdTrcRec sTraceSfdStart;
+extern SfdTrcRec sTraceSfdStop;
+extern SfdTrcRec sTraceSfdRequestStop;
+extern SfdTrcRec sTraceSfdTermSupply;
+extern SfdTrcRec sTraceSfdGetFrm;
+extern SfdTrcRec sTraceSfdRelFrm;
+extern SfdTrcRecIn sTraceAdjustPrepEnd;
 
 // Field access helper
 #define FIELD(type, base, off) (*((type*)((u8*)(base) + (off))))
 
-// SofDec global work area (sSfdGlob)
-typedef struct SfdGlob {
-    u8 pad0[0x1F0];
-    int resetFlg;       /* 0x1F0 */
-    u8 pad1[0x8];
-    void* hnSlots[8];   /* 0x1FC */
-} SfdGlob;
-#define SFD_GLOB ((SfdGlob*)sSfdGlob)
+// SofDec global work area (sSfdGlob): canonical process context from sfd_types.h
+#define SFD_GLOB ((SfdSys*)sSfdGlob)
 
 // Trace helper - calls ctx->vtable[9](ctx, traceblock + offset)
 static void traceCall(void* traceBlock, int offset) {
@@ -243,15 +162,15 @@ int SFD_ExecOne(void* self) {
     } else {
         ctx = gpSfdCoreTraceCb;
         if (ctx) {
-            *(void**)(sTraceSfdExecOne + 0x0C) = self;
-            ((SfdTraceCtx*)ctx)->vtbl->trace(ctx, sTraceSfdExecOne + 4);
+            sTraceSfdExecOne.entry.args[0].value = self;
+            ((SfdTraceCtx*)ctx)->vtbl->trace(ctx, &sTraceSfdExecOne.entry);
         }
 
         sfply_ExecOne(self);
 
         ctx = gpSfdCoreTraceCb;
         if (ctx) {
-            ((SfdTraceCtx*)ctx)->vtbl->trace(ctx, sTraceSfdExecOne + 0x6C);
+            ((SfdTraceCtx*)ctx)->vtbl->trace(ctx, &sTraceSfdExecOne.exit);
         }
         return 0;
     }
@@ -426,38 +345,38 @@ void sfply_ExecOne(void* self) {
     FIELD(s32, self, 0x54) = result;
     {
         u64 now = SFTMR_GetTmr(self);
-        SFTMR_AddTsum(((SfdPlyHn*)self)->tsumLast, (u32)now, (s64)(now - startTmr));
+        SFTMR_AddTsum(((SfdHandle*)self)->field_0x2740, (u32)now, (s64)(now - startTmr));
     }
 }
 
 // ---------------------------------------------------------------------------
 // sfply_StatPrep
 // ---------------------------------------------------------------------------
-int sfply_StatPrep(SfdPlyStatView* self, int canExec) {
-    s32 origStatus = self->status;    /* 0x54 */
-    s32 origSub = self->substatus;    /* 0x58 */
+int sfply_StatPrep(SfdHandle* self, int canExec) {
+    s32 origStatus = self->errorState; /* 0x54 */
+    s32 origSub = self->substatus;     /* 0x58 */
     s32 newState;
 
     if (!fn_803CC170(self)) return origStatus;
 
     /* clear a pending pause request once its buffer queue has fully drained */
-    if (self->avPauseV == 1) {
+    if ((s32)self->cond[5] == 1) {
         if (SFBUF_GetWTot(self, 1) == 0 && SFBUF_GetRTot(self, 1) == 0)
-            self->avPauseV = 0;
+            self->cond[5] = 0;
     }
-    if (self->avPauseA == 1) {
+    if ((s32)self->cond[6] == 1) {
         if (SFBUF_GetWTot(self, 2) == 0 && SFBUF_GetRTot(self, 2) == 0)
-            self->avPauseA = 0;
+            self->cond[6] = 0;
     }
 
-    SFSEE_FixAvPlay(self, self->avPauseV, self->avPauseA);
+    SFSEE_FixAvPlay(self, (s32)self->cond[5], (s32)self->cond[6]);
 
-    if (!self->avPauseA && self->playMode == 2)
+    if (!(s32)self->cond[6] && (s32)self->cond[15] == 2)
         SFSET_SetCond(self, 0xF, 1);
-    if (!self->avPauseV && self->playMode == 1)
+    if (!(s32)self->cond[5] && (s32)self->cond[15] == 1)
         SFSET_SetCond(self, 0xF, 2);
-    if (self->playMode == 1) {
-        if (self->field_0x107C)
+    if ((s32)self->cond[15] == 1) {
+        if (self->tim.extClockFn)
             SFSET_SetCond(self, 0xF, 5);
         else
             SFSET_SetCond(self, 0xF, 1);
@@ -470,13 +389,13 @@ int sfply_StatPrep(SfdPlyStatView* self, int canExec) {
  {
         void* ctx = gpSfdCoreTraceCb;
         if (ctx) {
-            *(void**)(sTraceAdjustPrepEnd + 0x0C) = self;
-            *(void**)(sTraceAdjustPrepEnd + 0x18) = &self->avPauseV;
-            *(void**)(sTraceAdjustPrepEnd + 0x24) = &self->avPauseA;
-            *(void**)(sTraceAdjustPrepEnd + 0x30) = &self->playMode;
-            *(void**)(sTraceAdjustPrepEnd + 0x3C) = (u8*)self + 0xA80;
+            sTraceAdjustPrepEnd.entry.args[0].value = self;
+            sTraceAdjustPrepEnd.entry.args[1].value = &self->cond[5];
+            sTraceAdjustPrepEnd.entry.args[2].value = &self->cond[6];
+            sTraceAdjustPrepEnd.entry.args[3].value = &self->cond[15];
+            sTraceAdjustPrepEnd.entry.args[4].value = &self->cond[0x19];
             {
-                ((SfdTraceCtx*)ctx)->vtbl->trace(ctx, sTraceAdjustPrepEnd + 4);
+                ((SfdTraceCtx*)ctx)->vtbl->trace(ctx, &sTraceAdjustPrepEnd.entry);
             }
         }
     }
@@ -488,10 +407,10 @@ int sfply_StatPrep(SfdPlyStatView* self, int canExec) {
     case 6: {
         /* decide whether playback should stop (any stall condition or user event) */
         s32 shouldStop;
-        if (!self->field_0xA54) shouldStop = 1;
-        else if (!self->avPauseV) shouldStop = 1;
-        else if (self->field_0x1050) shouldStop = 1;
-        else if (self->field_0x106C >= self->field_0xAD0) shouldStop = 1;
+        if (!(s32)self->cond[14]) shouldStop = 1;
+        else if (!(s32)self->cond[5]) shouldStop = 1;
+        else if (self->tim.field_0x2b8) shouldStop = 1;
+        else if (self->tim.field_0x2d4 >= (s32)self->cond[45]) shouldStop = 1;
         else {
             s32 etrg = sfply_IsEtrg(self);
             shouldStop = (etrg != 0);
@@ -794,7 +713,7 @@ void criware_803CA124(void* self, int fpsArg) {
 
     condF = SFSET_GetCond(self, 0xF);
     if (condF == 2) {
-        int gf = *(int*)(sSfdGlob + 0x1A4);
+        int gf = ((SfdSys*)sSfdGlob)->tim.field_0x08;
         int gl;
         if (gf >= 1000) gl = (1 - (0x7FFFFFFF / gf)) * -1000;
         else gl = 0x7FFFFFFF - 1000;
@@ -809,7 +728,7 @@ void criware_803CA124(void* self, int fpsArg) {
 // ---------------------------------------------------------------------------
 int SFD_Create(void* config, void* extra) {
     char buf[0x200];
-    u32* hnTable;
+    void** hnTable;
     int err;
     int slot;
     int hn;
@@ -829,13 +748,12 @@ int SFD_Create(void* config, void* extra) {
         /* sprintf is an external call, so the ctx global is re-checked */
         if (gpSfdCoreTraceCb != NULL) {
             void* ctx = gpSfdCoreTraceCb;
-            void** rec = (void**)sTraceSfdCreate;
-            rec[3] = (void*)buf;
-            ((SfdTraceCtx*)ctx)->vtbl->trace(ctx, (char*)rec + 4);
+            sTraceSfdCreate.entry.args[0].value = buf;
+            ((SfdTraceCtx*)ctx)->vtbl->trace(ctx, &sTraceSfdCreate.entry);
         }
     }
 
-    hnTable = (u32*)(sSfdGlob + 0x1FC);
+    hnTable = (void**)(sSfdGlob + 0x1FC);
 
     /* validate config: stream type and minimum work size */
     if (FIELD(u32, config, 0x04) == 0) {
@@ -850,21 +768,21 @@ int SFD_Create(void* config, void* extra) {
         hn = 0;
     } else {
         /* find a free handle-table slot (unrolled 8-entry scan) */
-        slot = ((SfdGlob*)sSfdGlob)->hnSlots[0] == NULL ? 0 :
-               ((SfdGlob*)sSfdGlob)->hnSlots[1] == NULL ? 1 :
-               ((SfdGlob*)sSfdGlob)->hnSlots[2] == NULL ? 2 :
-               ((SfdGlob*)sSfdGlob)->hnSlots[3] == NULL ? 3 :
-               ((SfdGlob*)sSfdGlob)->hnSlots[4] == NULL ? 4 :
-               ((SfdGlob*)sSfdGlob)->hnSlots[5] == NULL ? 5 :
-               ((SfdGlob*)sSfdGlob)->hnSlots[6] == NULL ? 6 :
-               ((SfdGlob*)sSfdGlob)->hnSlots[7] == NULL ? 7 : -1;
+        slot = SFD_GLOB->field_0x1fc[0] == 0 ? 0 :
+               SFD_GLOB->field_0x1fc[1] == 0 ? 1 :
+               SFD_GLOB->field_0x1fc[2] == 0 ? 2 :
+               SFD_GLOB->field_0x1fc[3] == 0 ? 3 :
+               SFD_GLOB->field_0x1fc[4] == 0 ? 4 :
+               SFD_GLOB->field_0x1fc[5] == 0 ? 5 :
+               SFD_GLOB->field_0x1fc[6] == 0 ? 6 :
+               SFD_GLOB->field_0x1fc[7] == 0 ? 7 : -1;
 
         if (slot == -1) {
             SFLIB_SetErr(0, 0xFF000206);
             hn = 0;
         } else {
             hn = (int)sfply_InitHn(config, extra);
-            hnTable[slot] = (u32)hn;
+            hnTable[slot] = (void*)hn;
         }
     }
 
@@ -872,9 +790,8 @@ int SFD_Create(void* config, void* extra) {
     {
         void* ctx = gpSfdCoreTraceCb;
         if (ctx != NULL) {
-            void** rec = (void**)sTraceSfdCreate;
-            rec[0x1D] = (void*)hn;
-            ((SfdTraceCtx*)ctx)->vtbl->trace(ctx, (char*)rec + 0x6C);
+            sTraceSfdCreate.exit.args[0].value = (void*)hn;
+            ((SfdTraceCtx*)ctx)->vtbl->trace(ctx, &sTraceSfdCreate.exit);
         }
     }
     return hn;
@@ -883,7 +800,7 @@ int SFD_Create(void* config, void* extra) {
 // ---------------------------------------------------------------------------
 // sfply_InitHn
 // ---------------------------------------------------------------------------
-void* sfply_InitHn(SfdPlyCfg* config, void* extra) {
+void* sfply_InitHn(SfdCreateCfg* config, void* extra) {
     u8* work = config->work;
     u32 size = config->workSize;
     /* evaluated before the guards in retail: MWCC keeps it at decl point */
@@ -897,78 +814,78 @@ void* sfply_InitHn(SfdPlyCfg* config, void* extra) {
     UTY_MemsetDword(work, 0, words);
 
     {
-        SfdPlyHn* hn;
+        SfdHandle* hn;
         f32 fps;
         int i;
 
-        hn = (SfdPlyHn*)(((u32)work + 0x1F) & ~0x1F);
+        hn = (SfdHandle*)(((u32)work + 0x1F) & ~0x1F);
 
         /* the handle's first 0x50 bytes mirror the config block; the
            stream-position field of the config is 32-byte aligned first */
         hn->substatus = 0;
-        hn->status = 0;
-        config->field_0x04 = (config->field_0x04 + 0x1F) & ~0x1F;
-        *(SfdCopyBlk*)hn = *(SfdCopyBlk*)config;
+        hn->errorState = 0;
+        config->stmBuf = (void*)((((u32)config->stmBuf) + 0x1F) & ~0x1F);
+        *(SfdCreateCfg*)hn = *config;
 
-        hn->active = 1;
-        hn->field_0x5C = 0;
-        hn->field_0x60 = 0;
-        hn->field_0x64 = 0;
-        hn->field_0x68 = 0;
-        hn->field_0x6C = 0;
-        hn->field_0x70 = 0;
+        hn->field_0x0050 = 1;
+        hn->field_0x005c = 0;
+        hn->field_0x0060 = 0;
+        hn->field_0x0064 = 0;
+        hn->field_0x0068 = 0;
+        hn->displayCount = 0;
+        hn->field_0x0070 = 0;
 
         SFHDS_InitFhd(&hn->fhd);
 
-        UTY_MemsetDword(&hn->field_0x91C, 0, 0x10);
-        hn->field_0x91C = 0;
-        *(s32*)&hn->pad0920[0x00] = 0;
-        *(s32*)&hn->pad0920[0x04] = 0;
-        *(s32*)&hn->pad0920[0x08] = 0;
-        *(s32*)&hn->pad0920[0x0C] = 0;
-        *(s32*)&hn->pad0920[0x10] = 0;
-        *(s32*)&hn->pad0920[0x14] = 0;
-        hn->field_0x938 = 1;
-        *(s32*)&hn->pad093C[0] = 0;
-        hn->field_0x940 = -1;
-        hn->field_0x944 = -1;
-        hn->field_0x948 = -1;
+        UTY_MemsetDword(&hn->imageWidth, 0, 0x10);
+        hn->imageWidth = 0;
+        hn->imageHeight = 0;
+        hn->field_0x0924 = 0;
+        hn->field_0x0928 = 0;
+        hn->field_0x092c = 0;
+        hn->field_0x0930 = 0;
+        hn->field_0x0934 = 0;
+        hn->field_0x0938 = 1;
+        hn->field_0x093c = 0;
+        hn->field_0x0940 = -1;
+        hn->field_0x0944 = -1;
+        hn->field_0x0948 = -1;
 
-        sfply_InitPlyInf((u8*)hn + 0x960);
+        sfply_InitPlyInf(&hn->field_0x0960);
 
-        UTY_MemsetDword(hn->tsum, 0, 0x38);
+        UTY_MemsetDword(hn->field_0x26a0, 0, 0x38);
         {
-            u8* tmr = hn->tsum;
+            u8* tmr = hn->field_0x26a0;
             for (i = 0; i < 5; i++) {
                 SFTMR_InitTsum(tmr);
                 tmr += 0x20;
             }
         }
-        SFTMR_InitTsum(hn->tsumLast);
+        SFTMR_InitTsum(hn->field_0x2740);
 
         hn->field_0x2760 = 0;
         fps = 0.0f; /* retail .rodata word 0x00000000 */
         hn->field_0x2768 = 0;
         hn->field_0x2770 = 0;
         hn->field_0x2778 = 0;
-        hn->field_0x277C = fps;
+        hn->field_0x277c = fps;
 
-        fn_803C34DC((u8*)hn + 0xA08);
-        MEM_Copy((u8*)hn + 0xA1C, sSfdGlob, 0x190);
-        MEM_Copy((u8*)hn + 0xBAC, sSfdGlob, 0x190);
-        memset(hn->field_0xD3C, 0, 0x5C);
-        hn->field_0xD8C = 0x7FFFFFFF;
-        SFTIM_InitHn(hn, hn->tim);
+        fn_803C34DC(&hn->errFn);
+        MEM_Copy(hn->cond, sSfdGlob, 0x190);
+        MEM_Copy(hn->condBak, sSfdGlob, 0x190);
+        memset(&hn->hdrCb, 0, 0x5C);
+        hn->field_0x0d8c = (void*)0x7FFFFFFF;
+        SFTIM_InitHn(hn, &hn->tim);
 
         if (SFBUF_InitHn(hn, hn->buf, config)) return NULL;
 
         SFTRN_InitHn(hn, hn->trn, config, extra);
-        SFSEEKI_InitHn(hn->seeki);
+        SFSEEKI_InitHn(&hn->seeki);
         SFSEE_InitHn(&hn->see);
         if (SFTRN_CallTrSetup(hn, 3)) return NULL;
 
         hn->substatus = 1;
-        hn->status = 1;
+        hn->errorState = 1;
         return hn;
     }
 }
@@ -1011,10 +928,11 @@ void sfply_InitPlyInf_x(void* self) {
 // ---------------------------------------------------------------------------
 void SFPLY_AddDecPic(void* self, int delta, void* param) {
     /* decoded-picture counter bump + optional notify callback */
-    void (*cb)(void*, void*, u32*) = *(void (**)(void*, void*, u32*))((u8*)self + 0xD6C);
-    FIELD(u32, self, 0x960) += delta;
+    SfdHandle* hn = (SfdHandle*)self;
+    void (*cb)(void*, void*, u32*) = hn->field_0x0d6c;
+    hn->field_0x0960 += delta;
     if (cb != NULL) {
-        cb(FIELD(void*, self, 0xD70), param, (u32*)((s32)self + 0x960));
+        cb(hn->field_0x0d70, param, (u32*)&hn->field_0x0960);
     }
 }
 
@@ -1022,11 +940,12 @@ void SFPLY_AddDecPic(void* self, int delta, void* param) {
 // SFPLY_AddSkipPic
 // ---------------------------------------------------------------------------
 void SFPLY_AddSkipPic(void* self, int delta, void* param) {
-    void (*cb)(void*, void*, u32*) = *(void(**)(void*, void*, u32*))((u8*)self + 0xD74);
-    u32 count = FIELD(u32, self, 0x964) + delta;
-    FIELD(u32, self, 0x964) = count;
+    SfdHandle* hn = (SfdHandle*)self;
+    void (*cb)(void*, void*, u32*) = hn->field_0x0d74;
+    u32 count = hn->field_0x0964 + delta;
+    hn->field_0x0964 = count;
     if (cb != NULL) {
-        cb(FIELD(void*, self, 0xD78), param, (u32*)((u8*)self + 0x960));
+        cb(hn->field_0x0d78, param, (u32*)&hn->field_0x0960);
     }
 }
 
@@ -1034,7 +953,7 @@ void SFPLY_AddSkipPic(void* self, int delta, void* param) {
 // SFD_Destroy
 // ---------------------------------------------------------------------------
 int SFD_Destroy(void* self) {
-    SfdGlob* g;
+    SfdSys* g;
     int result;
     void* cs;
     void* ctx;
@@ -1044,8 +963,8 @@ int SFD_Destroy(void* self) {
 
     ctx = gpSfdCoreTraceCb;
     if (ctx) {
-        *(void**)(sTraceSfdDestroy + 0x0C) = self;
-        ((SfdTraceCtx*)ctx)->vtbl->trace(ctx, sTraceSfdDestroy + 4);
+        sTraceSfdDestroy.entry.args[0].value = self;
+        ((SfdTraceCtx*)ctx)->vtbl->trace(ctx, &sTraceSfdDestroy.entry);
     }
 
     if (FIELD(int, self, 0x54) == 1) {
@@ -1068,12 +987,12 @@ trJoin:
             g = SFD_GLOB;
             FIELD(int, self, 0x58) = 0;
             FIELD(int, self, 0x54) = 0;
-            g->resetFlg = 1;
+            g->field_0x1f0 = 1;
             sfply_ResetHn(self);
-            g->resetFlg = 0;
+            g->field_0x1f0 = 0;
         }
     }
-    SFHDS_FinishFhd(&((SfdPlyHn*)self)->fhd);
+    SFHDS_FinishFhd(&((SfdHandle*)self)->fhd);
     SFBUF_DestroySj(self);
     cs = NULL;
     SFLIB_LockCs(&cs);
@@ -1087,14 +1006,14 @@ trJoin:
         /* clear any handle-table slot still pointing at us */
         int i;
         for (i = 0; i < 8; i++) {
-            if (SFD_GLOB->hnSlots[i] == self) SFD_GLOB->hnSlots[i] = NULL;
+            if ((void*)SFD_GLOB->field_0x1fc[i] == self) SFD_GLOB->field_0x1fc[i] = 0;
         }
     }
     SFLIB_UnlockCs(&cs);
 
     ctx = gpSfdCoreTraceCb;
     if (ctx) {
-        ((SfdTraceCtx*)ctx)->vtbl->trace(ctx, sTraceSfdDestroy + 0x6C);
+        ((SfdTraceCtx*)ctx)->vtbl->trace(ctx, &sTraceSfdDestroy.exit);
     }
     return result;
 }
@@ -1111,8 +1030,8 @@ int SFD_Start(void* self) {
     }
     ctx = gpSfdCoreTraceCb;
     if (ctx) {
-        *(void**)(sTraceSfdStart + 0x0C) = self;
-        ((SfdTraceCtx*)ctx)->vtbl->trace(ctx, sTraceSfdStart + 4);
+        sTraceSfdStart.entry.args[0].value = self;
+        ((SfdTraceCtx*)ctx)->vtbl->trace(ctx, &sTraceSfdStart.entry);
     }
 
     if (SFSET_GetCond(self, 0x2F) == 1) {
@@ -1125,7 +1044,7 @@ int SFD_Start(void* self) {
 
     ctx = gpSfdCoreTraceCb;
     if (ctx) {
-        ((SfdTraceCtx*)ctx)->vtbl->trace(ctx, sTraceSfdStart + 0x6C);
+        ((SfdTraceCtx*)ctx)->vtbl->trace(ctx, &sTraceSfdStart.exit);
     }
     return result;
 }
@@ -1147,7 +1066,7 @@ int fn_803CD484(void* self) {
 // ---------------------------------------------------------------------------
 int SFD_Stop(void* self) {
     void* ctx;
-    SfdGlob* g;
+    SfdSys* g;
     int result;
     int status;
 
@@ -1156,8 +1075,8 @@ int SFD_Stop(void* self) {
     }
     ctx = gpSfdCoreTraceCb;
     if (ctx) {
-        *(void**)(sTraceSfdStop + 0x0C) = self;
-        ((SfdTraceCtx*)ctx)->vtbl->trace(ctx, sTraceSfdStop + 4);
+        sTraceSfdStop.entry.args[0].value = self;
+        ((SfdTraceCtx*)ctx)->vtbl->trace(ctx, &sTraceSfdStop.entry);
     }
 
     status = FIELD(int, self, 0x54);
@@ -1186,9 +1105,9 @@ stopCheck:
             result = 0;
             FIELD(int, self, 0x58) = 0;
             FIELD(int, self, 0x54) = 0;
-            g->resetFlg = 1;
+            g->field_0x1f0 = 1;
             tr = sfply_ResetHn(self);
-            g->resetFlg = result;
+            g->field_0x1f0 = result;
             if (tr != 0) result = tr;
         }
     }
@@ -1196,7 +1115,7 @@ stopCheck:
 
     ctx = gpSfdCoreTraceCb;
     if (ctx) {
-        ((SfdTraceCtx*)ctx)->vtbl->trace(ctx, sTraceSfdStop + 0x6C);
+        ((SfdTraceCtx*)ctx)->vtbl->trace(ctx, &sTraceSfdStop.exit);
     }
     return result;
 }
@@ -1205,7 +1124,7 @@ stopCheck:
 // SFPLY_GetResetFlg
 // ---------------------------------------------------------------------------
 int SFPLY_GetResetFlg(void) {
-    return *(int*)(sSfdGlob + 0x1F0);
+    return SFD_GLOB->field_0x1f0;
 }
 
 // ---------------------------------------------------------------------------
@@ -1213,10 +1132,10 @@ int SFPLY_GetResetFlg(void) {
 // carrying over every user-configured callback/setting from the old handle.
 // ---------------------------------------------------------------------------
 int sfply_ResetHn(void* self) {
-    u8* hn = (u8*)self;
+    SfdHandle* hn = (SfdHandle*)self;
     /* snapshot of the original config header (bytes 0x00..0x4F), reused as
        the config for the rebuilt handle */
-    SfdCopyBlk cfgHdr;
+    SfdCreateCfg cfgHdr;
     /* output blocks for the transport 'treat' callbacks */
     u32 trifOut[5];
     void* cs;
@@ -1254,8 +1173,8 @@ int sfply_ResetHn(void* self) {
     u32 cycGrp[4];
     u32 tfGrp[4];
 
-    cfgHdr = *(SfdCopyBlk*)hn;
-    hadTrk = FIELD(s32, hn, 0xA3C);
+    cfgHdr = *(SfdCreateCfg*)hn;
+    hadTrk = hn->cond[8];
 
     if (hadTrk != 0) {
         if (SFLIB_CheckHn(hn)) {
@@ -1266,34 +1185,34 @@ int sfply_ResetHn(void* self) {
         savTermId = trifOut[5];
     }
 
-    SFHDS_FinishFhd((SfdFhd*)(hn + 0x88));
+    SFHDS_FinishFhd(&hn->fhd);
     SFBUF_DestroySj(hn);
 
     /* save every piece of runtime state that must survive the rebuild */
     {
         s32 mpvRet;
-        SfdPlyHn* nu;
+        SfdHandle* nu;
 
-        sav0x64 = FIELD(s32, hn, 0x64);
-        blkD38 = *(SfdBlk5C*)(hn + 0xD38);
-        savA0C = FIELD(u32, hn, 0xA0C);
-        sav1078 = FIELD(u32, hn, 0x1078);
-        sav108C = FIELD(u32, hn, 0x108C);
-        sav1090 = FIELD(u32, hn, 0x1090);
-        pA08 = FIELD(void*, hn, 0xA08);
-        p1074 = FIELD(void*, hn, 0x1074);
-        p107C = FIELD(void*, hn, 0x107C);
-        pDB0 = FIELD(void*, hn, 0xDB0);
-        spdNum = FIELD(u32, hn, 0x1048);
-        spdDen = FIELD(u32, hn, 0x104C);
+        sav0x64 = hn->field_0x0064;
+        blkD38 = *(SfdBlk5C*)((u8*)hn + 0xD38);
+        savA0C = hn->errFnArg;
+        sav1078 = (u32)hn->tim.usrTimeFnArg;
+        sav108C = hn->tim.extClockWrap;
+        sav1090 = (u32)hn->tim.extClockArg;
+        pA08 = (void*)hn->errFn;
+        p1074 = hn->tim.usrTimeFn;
+        p107C = hn->tim.extClockFn;
+        pDB0 = hn->tim.field_0x018;
+        spdNum = hn->tim.speedNum;
+        spdDen = hn->tim.speedDen;
         cbGrp1[0] = FIELD(u32, hn, 0x1368);
         cbGrp1[1] = FIELD(u32, hn, 0x136C);
         cbGrp1[2] = FIELD(u32, hn, 0x1370);
         cbGrp2[0] = FIELD(u32, hn, 0x1374);
         cbGrp2[1] = FIELD(u32, hn, 0x1378);
         cbGrp2[2] = FIELD(u32, hn, 0x137C);
-        limitTime = FIELD(s32, hn, 0x1390);
-        seekData = FIELD(void*, hn, 0x2670);
+        limitTime = hn->tim.limitTime;
+        seekData = hn->see.avplay;
         cycGrp[0] = FIELD(u32, hn, 0x1380);
         cycGrp[1] = FIELD(u32, hn, 0x1384);
         cycGrp[2] = FIELD(u32, hn, 0x1388);
@@ -1318,8 +1237,8 @@ int sfply_ResetHn(void* self) {
         tfGrp[2] = FIELD(u32, hn, 0x39A8);
         tfGrp[3] = FIELD(u32, hn, 0x39AC);
         mpvRet = SFMPV_SaveCond(hn, mpvCond, 0x40);
-        FIELD(s32, hn, 0x54) = 0;
-        FIELD(s32, hn, 0x58) = 0;
+        hn->errorState = 0;
+        hn->substatus = 0;
         SFLIB_UnlockCs(&cs);
 
         {
@@ -1327,16 +1246,16 @@ int sfply_ResetHn(void* self) {
             if (tr != 0) return tr;
         }
 
-        MEM_Copy(tmpInfo, hn + 0xBAC, 0x190);
+        MEM_Copy(tmpInfo, hn->condBak, 0x190);
 
         {
-            nu = (SfdPlyHn*)sfply_InitHn((SfdPlyCfg*)&cfgHdr, NULL);
+            nu = (SfdHandle*)sfply_InitHn(&cfgHdr, NULL);
             if (nu == NULL) {
                 return SFLIB_SetErr(NULL, 0xFF000202);
             }
 
-            MEM_Copy((u8*)nu + 0xA1C, tmpInfo, 0x190);
-            MEM_Copy((u8*)nu + 0xBAC, tmpInfo, 0x190);
+            MEM_Copy(nu->cond, tmpInfo, 0x190);
+            MEM_Copy(nu->condBak, tmpInfo, 0x190);
             SFMPV_RestoreCond(nu, mpvCond, mpvRet);
 
             if (hadTrk != 0) {
@@ -1360,20 +1279,18 @@ int sfply_ResetHn(void* self) {
             {
                 void* ctx = gpSfdCoreTraceCb;
                 if (ctx) {
-                    *(void**)(sTraceSfdTermSupply + 0x0C) = nu;
-                    void* vtbl = *(void**)ctx;
-                    void (*trace)(void*, void*) = *(void (**)(void*, void*))((u8*)vtbl + 0x24);
-                    trace(ctx, sTraceSfdTermSupply + 4);
+                    sTraceSfdTermSupply.entry.args[0].value = nu;
+                    ((SfdTraceCtx*)ctx)->vtbl->trace(ctx, &sTraceSfdTermSupply.entry);
                 }
             }
 
             if (SFLIB_CheckHn(nu)) {
                 SFLIB_SetErr(NULL, 0xFF00013D);
             } else {
-                s32 termId = FIELD(s32, nu, 0x1FEC);
+                s32 termId = nu->trn[0].termIdx;
                 if (SFBUF_GetTermFlg(nu, termId) != 1) {
                     SFBUF_SetTermFlg(nu, termId, 1);
-                    nu->active = 1;
+                    nu->field_0x0050 = 1;
                 }
             }
 
@@ -1381,19 +1298,17 @@ int sfply_ResetHn(void* self) {
             {
                 void* ctx = gpSfdCoreTraceCb;
                 if (ctx) {
-                    void* vtbl = *(void**)ctx;
-                    void (*trace)(void*, void*) = *(void (**)(void*, void*))((u8*)vtbl + 0x24);
-                    trace(ctx, sTraceSfdTermSupply + 0x6C);
+                    ((SfdTraceCtx*)ctx)->vtbl->trace(ctx, &sTraceSfdTermSupply.exit);
                 }
             }
 
-            nu->field_0x64 = sav0x64;
+            nu->field_0x0064 = sav0x64;
             *(SfdBlk5C*)((u8*)nu + 0xD38) = blkD38;
 
             {
-                u32 mbEn = FIELD(u32, nu, 0xD84);
+                u32 mbEn = nu->field_0x0d84;
                 if (mbEn != 0) {
-                    SFD_SetMbCb(nu, FIELD(void*, nu, 0xD8C), mbEn, FIELD(u32, nu, 0xD88));
+                    SFD_SetMbCb(nu, nu->field_0x0d8c, mbEn, nu->field_0x0d88);
                 }
             }
             if (pA08 != NULL) fn_803C0D94(nu, (u32)pA08, savA0C);
@@ -1447,8 +1362,8 @@ void SFD_RequestStop(void* self) {
 
     ctx = gpSfdCoreTraceCb;
     if (ctx) {
-        *(void**)(sTraceSfdRequestStop + 0x0C) = self;
-        ((SfdTraceCtx*)ctx)->vtbl->trace(ctx, sTraceSfdRequestStop + 4);
+        sTraceSfdRequestStop.entry.args[0].value = self;
+        ((SfdTraceCtx*)ctx)->vtbl->trace(ctx, &sTraceSfdRequestStop.entry);
     }
 
     FIELD(int, self, 0x70) = 1;
@@ -1458,7 +1373,7 @@ void SFD_RequestStop(void* self) {
 
     ctx = gpSfdCoreTraceCb;
     if (ctx) {
-        ((SfdTraceCtx*)ctx)->vtbl->trace(ctx, sTraceSfdRequestStop + 0x6C);
+        ((SfdTraceCtx*)ctx)->vtbl->trace(ctx, &sTraceSfdRequestStop.exit);
     }
 }
 
@@ -1472,8 +1387,8 @@ int SFD_TermSupply(void* self) {
 
     ctx = gpSfdCoreTraceCb;
     if (ctx) {
-        *(void**)(sTraceSfdTermSupply + 0x0C) = self;
-        ((SfdTraceCtx*)ctx)->vtbl->trace(ctx, sTraceSfdTermSupply + 4);
+        sTraceSfdTermSupply.entry.args[0].value = self;
+        ((SfdTraceCtx*)ctx)->vtbl->trace(ctx, &sTraceSfdTermSupply.entry);
     }
 
     if (SFLIB_CheckHn(self)) {
@@ -1491,7 +1406,7 @@ int SFD_TermSupply(void* self) {
 out:
     ctx = gpSfdCoreTraceCb;
     if (ctx) {
-        ((SfdTraceCtx*)ctx)->vtbl->trace(ctx, sTraceSfdTermSupply + 0x6C);
+        ((SfdTraceCtx*)ctx)->vtbl->trace(ctx, &sTraceSfdTermSupply.exit);
     }
     return result;
 }
@@ -1523,8 +1438,8 @@ int SFD_GetFrm(void* self, void** outFrm) {
 
     ctx = gpSfdCoreTraceCb;
     if (ctx) {
-        *(void**)(sTraceSfdGetFrm + 0x0C) = self;
-        ((SfdTraceCtx*)ctx)->vtbl->trace(ctx, sTraceSfdGetFrm + 4);
+        sTraceSfdGetFrm.entry.args[0].value = self;
+        ((SfdTraceCtx*)ctx)->vtbl->trace(ctx, &sTraceSfdGetFrm.entry);
     }
 
     result = SFTRN_CallTrtTrif(self, 6, 0xB, (int)outFrm, 0);
@@ -1540,18 +1455,18 @@ int SFD_GetFrm(void* self, void** outFrm) {
         ctx = gpSfdCoreTraceCb;
         if (ctx) {
             void* frm = *outFrm;
-            *(void**)(sTraceSfdGetFrm + 0x74) = frm;
-            *(void**)(sTraceSfdGetFrm + 0x80) = (u8*)frm + 0x14;
-            *(void**)(sTraceSfdGetFrm + 0x8C) = (u8*)frm + 0x10;
-            ((SfdTraceCtx*)ctx)->vtbl->trace(ctx, sTraceSfdGetFrm + 0x6C);
+            sTraceSfdGetFrm.exit.args[0].value = frm;
+            sTraceSfdGetFrm.exit.args[1].value = &((SfdFrmInfo*)frm)->time;
+            sTraceSfdGetFrm.exit.args[2].value = &((SfdFrmInfo*)frm)->field_0x10;
+            ((SfdTraceCtx*)ctx)->vtbl->trace(ctx, &sTraceSfdGetFrm.exit);
         }
     } else {
         ctx = gpSfdCoreTraceCb;
         if (ctx) {
-            *(void**)(sTraceSfdGetFrm + 0x74) = NULL;
-            *(void**)(sTraceSfdGetFrm + 0x80) = NULL;
-            *(void**)(sTraceSfdGetFrm + 0x8C) = NULL;
-            ((SfdTraceCtx*)ctx)->vtbl->trace(ctx, sTraceSfdGetFrm + 0x6C);
+            sTraceSfdGetFrm.exit.args[0].value = NULL;
+            sTraceSfdGetFrm.exit.args[1].value = NULL;
+            sTraceSfdGetFrm.exit.args[2].value = NULL;
+            ((SfdTraceCtx*)ctx)->vtbl->trace(ctx, &sTraceSfdGetFrm.exit);
         }
     }
 
@@ -1587,9 +1502,9 @@ int SFD_RelFrm(void* self, void* frm) {
 
     ctx = gpSfdCoreTraceCb;
     if (ctx) {
-        *(void**)(sTraceSfdRelFrm + 0x0C) = self;
-        *(void**)(sTraceSfdRelFrm + 0x18) = frm;
-        ((SfdTraceCtx*)ctx)->vtbl->trace(ctx, sTraceSfdRelFrm + 4);
+        sTraceSfdRelFrm.entry.args[0].value = self;
+        sTraceSfdRelFrm.entry.args[1].value = frm;
+        ((SfdTraceCtx*)ctx)->vtbl->trace(ctx, &sTraceSfdRelFrm.entry);
     }
 
     {
@@ -1603,7 +1518,7 @@ int SFD_RelFrm(void* self, void* frm) {
 
     ctx = gpSfdCoreTraceCb;
     if (ctx) {
-        ((SfdTraceCtx*)ctx)->vtbl->trace(ctx, sTraceSfdRelFrm + 0x6C);
+        ((SfdTraceCtx*)ctx)->vtbl->trace(ctx, &sTraceSfdRelFrm.exit);
     }
     return result;
 }

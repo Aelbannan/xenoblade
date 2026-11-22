@@ -4,11 +4,12 @@
 #include <harness_catalog.h>
 #include "libs/CriWare/src/sofdec/sfdcore/sfh/sfh_types.h"
 
-u32 lbl_eu_80619BE8;
-static u32 _lbl_eu_80619BE8_pad; /* pad to 0x8 */
+// name-guess: 8-byte BSS counter incremented by SFH_Init; the JP/EU maps leave it unnamed.
+u32 SFH_InitCount;
+static u32 sSFH_InitCountPad; /* pad to 0x8 */
 
 void SFH_Init(void) {
-    lbl_eu_80619BE8++;
+    SFH_InitCount++;
 }
 
 SFHContext* SFH_Create(u32 arg0, s32 arg1, SFHContext* ctx) {

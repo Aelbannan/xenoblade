@@ -184,9 +184,6 @@ void CNumSelect::SetArrowVisible(bool visible) {
 }
 #pragma pop
 
-// Retail keeps the four state steps out of line (bl from UpdateStates).
-#pragma push
-#pragma auto_inline off
 void CNumSelect::UpdateOpen() {
     if (advanceAnimTransform(mAnimIn, 1.0f)) {
         mState = 2;
@@ -232,8 +229,6 @@ void CNumSelect::UpdateCountDown() {
     mState = 2;
     mIdle = 1;
 }
-
-#pragma pop
 
 #pragma push
 #pragma optimize_for_size on

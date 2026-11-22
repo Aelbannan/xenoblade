@@ -53,8 +53,6 @@ extern u32 gmPauseFlags;
 // sdata2 animation frame constants.
 extern const f32 lbl_eu_80667C80;
 extern const f32 lbl_eu_80667C84;
-// ARC resource name string table base.
-extern char lbl_eu_80503D80[];
 // Shared battle ARC resource accessor -- retail calls the unmangled name.
 
 // TU-local mirror of reslist::size(); declaration order walks the counter
@@ -90,18 +88,18 @@ CMenuBattleMode::~CMenuBattleMode() {}
  */
 void CMenuBattleMode::Init() {
     mtl::ALLOC_HANDLE handle = mtl::MemManager::getHandleMEM2();
-    mLayoutMem.createRegion(handle, 0xd00, lbl_eu_80503D80, 0);
+    mLayoutMem.createRegion(handle, 0xd00, "CMenuBattleMode", 0);
     // Scoped region guard - destructor releases the region when Init finishes
     Class_8045F858 regionGuard(&mLayoutMem);
 
     nw4r::lyt::ArcResourceAccessor* accessor = CUICfManager_getArcResourceAccessor();
-    buildLayout(&mLayout, accessor, lbl_eu_80503D80 + 0x10);
+    buildLayout(&mLayout, accessor, "mf71_battle40_mark.brlyt");
 
     accessor = CUICfManager_getArcResourceAccessor();
-    bindLayoutAnimTransform(mLayout, &mAnimDefault, accessor, lbl_eu_80503D80 + 0x29);
+    bindLayoutAnimTransform(mLayout, &mAnimDefault, accessor, "mf71_battle40_mark_in.brlan");
 
     accessor = CUICfManager_getArcResourceAccessor();
-    bindLayoutAnimTransform(mLayout, &mAnimLabel, accessor, lbl_eu_80503D80 + 0x45);
+    bindLayoutAnimTransform(mLayout, &mAnimLabel, accessor, "mf71_battle40_mark_roop.brlan");
 
     mLayout->SetAnimationEnable(mAnimLabel, false);
     mLayout->SetAnimationEnable(mAnimDefault, true);
@@ -208,7 +206,7 @@ run:
     }
 }
 
-void CMenuBattleMode::cbRenderBefore() {
+void CMenuBattleMode::cbRenderBefore(CScn*) {
     CTaskGame::getInstance();
     // Gate: skip when the task is busy or the global mode bit (0x200000) is
     // set. Exit label BEFORE the body label keeps the body off the fallthrough

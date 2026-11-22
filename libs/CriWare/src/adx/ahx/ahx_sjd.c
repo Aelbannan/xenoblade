@@ -26,10 +26,9 @@ typedef struct AHXSJD {
     /*0x58*/ void* fltCtx;
 } AHXSJD;
 
-extern const volatile u32 ahxsjd_init_flags[];
-// Kept non-volatile so MWCC allocates the address temporaries in the same
-// order as retail (r3=counter base, r4=flag base) in AHXSJD_Init.
-unsigned char lbl_eu_805E64C0[8];
+// CRI build-banner idiom: AHXSJD_Init touches the banner pointer so the linker keeps it.
+extern const char* const volatile ahxsjd_build;  // volatile-ok: CRI *_build banner pointer; dead reads are retail (0xac), plain form DCEs them (0xa0)
+s32 ahxsjd_init_cnt;
 
 extern void AHXTBL_GetAtblInfo(u32*, u32*);
 extern void AHXTBL_GetMtblInfo(u32*, u32*);
@@ -60,14 +59,11 @@ extern s32 AHXBSR_Tell(void*);
 
 void AHXSJD_Init(void) {
     u32 i0, i1;
-    u32 f;
 
-    // Two dead volatile reads of the table flag reproduce the retail load
-    // schedule (the scheduler also emits one between compare and branch).
-    f = ahxsjd_init_flags[0];
-    f = ahxsjd_init_flags[0];
+    ahxsjd_build;
+    ahxsjd_build;
 
-    if (*(s32*)lbl_eu_805E64C0 == 0) {
+    if (ahxsjd_init_cnt == 0) {
         AHXTBL_GetAtblInfo(&i0, &i1);
         AHXSJD_SetupAtbl(i0, i1);
         AHXTBL_GetMtblInfo(&i0, &i1);
@@ -78,14 +74,14 @@ void AHXSJD_Init(void) {
         AHXSJD_SetupWtbl(i0, i1);
         AHXDCD_Init();
     }
-    (*(s32*)lbl_eu_805E64C0)++;
+    ahxsjd_init_cnt++;
 }
 
 void AHXSJD_Finish(void) {
-    if (*(s32*)lbl_eu_805E64C0 == 1) {
+    if (ahxsjd_init_cnt == 1) {
         AHXDCD_Finish();
     }
-    (*(s32*)lbl_eu_805E64C0)--;
+    ahxsjd_init_cnt--;
 }
 
 void* AHXSJD_Create(void* allocator, s32 numChannels, void* chanInfo, s32 bufSize, s32 extraSize) {
@@ -359,14 +355,7 @@ void AHXSJD_SetLnkSw(void* self, s32 val) {
     }
 }
 
-/* Retail build banner and init flags. */
-const char ahxsjd_version_string[0x30] = {
-    0x0A,0x41,0x48,0x58,0x2F,0x57,0x49,0x49,0x20,0x56,0x65,0x72,0x2E,0x31,0x2E,0x39,
-    0x30,0x20,0x42,0x75,0x69,0x6C,0x64,0x3A,0x4F,0x63,0x74,0x20,0x32,0x38,0x20,0x32,
-    0x30,0x30,0x39,0x20,0x32,0x31,0x3A,0x31,0x31,0x3A,0x32,0x32,0x0A,0x00,0x00,0x00
-};
+/* Retail build banner (JP: anonymous string + ahxsjd_build pointer). */
+const char ahxsjd_version_string[0x30] = "\nAHX/WII Ver.1.90 Build:Oct 28 2009 21:11:22\n";
 
-const volatile u32 ahxsjd_init_flags[] = {
-    0, 0,
-};
-
+const char* const volatile ahxsjd_build = ahxsjd_version_string;  // volatile-ok: CRI *_build banner pointer (see AHXSJD_Init)

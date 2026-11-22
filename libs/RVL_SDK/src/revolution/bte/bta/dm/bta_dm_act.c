@@ -239,8 +239,7 @@ struct bta_dm_authorize_t {
 /* tBTA_DM_PIN_REQ */
 struct bta_dm_pin_req_t {
     unsigned char bd_addr[6];               /* 0x000 */
-    unsigned char bd_name[0x20];            /* 0x006 (0xf8 in the union) */
-    unsigned char _pad26[0xd8];             /* 0x026-0x0fd */
+    unsigned char bd_name[0xf8];            /* 0x006 */
     unsigned char dev_class[3];             /* 0x0fe */
     unsigned char min_16_digit;             /* 0x101 */
 };
@@ -298,10 +297,26 @@ struct bta_dm_cfg_t {
     unsigned short link_timeout;    /* 0x08 */
 };
 
+/* Wii-era BTM application registration block: six callback pointers (0x18).
+   The AOSP-flavoured btm_api.h describes eight, so keep the retail type here.
+   // name-guess: local spelling of btm_sec.c's BtmApplInfo; retail .rodata
+   // bta_security has five callback relocs + one zero word at 0x80514C28. */
+struct bta_dm_appl_info_t {
+    int (*p_authorize_callback)(bd_addr_t, unsigned char *, unsigned char *,
+                                unsigned char *, unsigned char, unsigned char);
+    unsigned char (*p_pin_callback)(bd_addr_t, unsigned char *, unsigned char *);
+    unsigned char (*p_new_link_key_callback)(bd_addr_t, unsigned char *,
+                                             unsigned char *, unsigned char *, unsigned char);
+    int (*p_link_key_request_callback)(void);
+    unsigned char (*p_auth_complete_callback)(bd_addr_t, unsigned char *,
+                                              unsigned char *, unsigned char);
+    void *p_abort_callback;
+};
+
 extern struct bta_dm_cfg_t bta_dm_cfg;
 extern unsigned char bta_dm_conn_srvcs[];
 extern struct bta_dm_compress_srvc_t bta_dm_compress_srvcs[5];
-extern unsigned char bta_security[];
+extern const struct bta_dm_appl_info_t bta_security;
 extern const unsigned int bta_service_id_to_btm_srv_id_lkup_tbl[];
 extern unsigned char *p_bta_dm_rm_cfg;
 extern unsigned char appl_trace_level;
@@ -319,7 +334,7 @@ extern unsigned char bta_dm_co_get_compress_memory(unsigned char, unsigned char 
 extern void BTM_ReadRSSI(unsigned char *, void *);
 extern void BTM_ReadLinkQuality(unsigned char *, void *);
 extern void BTM_SetDeviceClass(unsigned char *);
-extern void BTM_SecRegister(void *);
+extern void BTM_SecRegister(const struct bta_dm_appl_info_t *);
 extern void BTM_SetDefaultLinkSuperTout(unsigned short);
 extern void BTM_WritePageTimeout(unsigned short);
 extern void BTM_SetDefaultLinkPolicy(unsigned short);
@@ -490,7 +505,7 @@ void bta_dm_enable(struct bta_dm_msg *p_data) {
     memcpy(dev_class, bta_dm_cfg.dev_class, 3);
     BTM_SetDeviceClass(dev_class);
     bta_dm_cb.cback = p_data->enable.p_sec_cback;
-    BTM_SecRegister((void *)&bta_security);
+    BTM_SecRegister(&bta_security);
     BTM_SetDefaultLinkSuperTout(bta_dm_cfg.link_timeout);
     BTM_WritePageTimeout(bta_dm_cfg.page_timeout);
     BTM_SetDefaultLinkPolicy(bta_dm_cfg.policy_settings);
@@ -1607,7 +1622,12 @@ const unsigned int bta_service_id_to_btm_srv_id_lkup_tbl[24] = {
     0x0000002c,
     0x00000000,
 };
-// All-zero const aggregates migrate to .sbss2; the non-const zero array
-// honours declspec and stays in .rodata (CCharVoice lbl_eu_805106D4 recipe).
-extern __declspec(section ".rodata") unsigned char bta_security[0x18] = { 0 };
+const struct bta_dm_appl_info_t bta_security = {
+    bta_dm_authorize_cback,
+    bta_dm_pin_cback,
+    bta_dm_new_link_key_cback,
+    bta_dm_link_key_request_cback,
+    bta_dm_authentication_complete_cback,
+    NULL
+};
 struct bta_dm_compress_srvc_t bta_dm_compress_srvcs[5];

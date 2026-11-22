@@ -9,14 +9,6 @@
 // The two vtables (CRootProc, CTTask<CRootProc>) are emitted by MWCC from the
 // class definitions below.
 
-// Blob monolibdata1d dissolve: sbss slots owned by this TU (retail
-// lbl_eu_806655B8/BC/C0/C4). Declared extern "C" in CTaskManager.hpp; the
-// initializers make these the definitions (zero-fill -> .sbss).
-extern "C" CRootProc* lbl_eu_806655B8 = 0;
-extern "C" CRootProc* lbl_eu_806655BC = 0;
-extern "C" CRootProc* lbl_eu_806655C0 = 0;
-extern "C" CRootProc* lbl_eu_806655C4 = 0;
-
 namespace {
 
 /*
@@ -32,6 +24,11 @@ public:
     virtual void Move() {}
     virtual void Draw() {}
 };
+
+CRootProc* spRootProcGame = 0;
+CRootProc* spRootProcRealTime = 0;
+CRootProc* spRootProcScn = 0;
+CRootProc* spRootProcUnknown = 0;
 
 // --- CTTask<CRootProc> out-of-line specializations ---
 // CRootProc is anonymous-namespace-local (no retail counterpart); the
@@ -73,26 +70,26 @@ CTTask<CRootProc>::~CTTask() {}
 // Non-inline MWCC would emit an out-of-line copy (+0x234 over split budget).
 inline void CTaskManager::Start() {
     //All register with NULL parent because they are root-level processes
-    lbl_eu_806655BC = new (CWorkThreadSystem::getWorkMem()) CRootProc();
-    lbl_eu_806655BC->Regist(nullptr, false);
+    spRootProcRealTime = new (CWorkThreadSystem::getWorkMem()) CRootProc();
+    spRootProcRealTime->Regist(nullptr, false);
 
-    lbl_eu_806655B8 = new (CWorkThreadSystem::getWorkMem()) CRootProc();
-    lbl_eu_806655B8->Regist(nullptr, false);
+    spRootProcGame = new (CWorkThreadSystem::getWorkMem()) CRootProc();
+    spRootProcGame->Regist(nullptr, false);
 
-    lbl_eu_806655C0 = new (CWorkThreadSystem::getWorkMem()) CRootProc();
-    lbl_eu_806655C0->Regist(nullptr, false);
+    spRootProcScn = new (CWorkThreadSystem::getWorkMem()) CRootProc();
+    spRootProcScn->Regist(nullptr, false);
 
-    lbl_eu_806655C4 = new (CWorkThreadSystem::getWorkMem()) CRootProc();
-    lbl_eu_806655C4->Regist(nullptr, false);
+    spRootProcUnknown = new (CWorkThreadSystem::getWorkMem()) CRootProc();
+    spRootProcUnknown->Regist(nullptr, false);
 }
 
 void CTaskManager::Release() {
     CProcessMan::Term();
 
-    lbl_eu_806655B8 = nullptr;
-    lbl_eu_806655BC = nullptr;
-    lbl_eu_806655C0 = nullptr;
-    lbl_eu_806655C4 = nullptr;
+    spRootProcGame = nullptr;
+    spRootProcRealTime = nullptr;
+    spRootProcScn = nullptr;
+    spRootProcUnknown = nullptr;
 }
 
 void CTaskManager::Move() {
@@ -112,13 +109,13 @@ void CTaskManager::Reset() {
 }
 
 CProcess* CTaskManager::GetRootProcGame() {
-    return lbl_eu_806655B8;
+    return spRootProcGame;
 }
 
 CProcess* CTaskManager::GetRootProcRealTime() {
-    return lbl_eu_806655BC;
+    return spRootProcRealTime;
 }
 
 CProcess* CTaskManager::GetRootProcScn() {
-    return lbl_eu_806655C0;
+    return spRootProcScn;
 }

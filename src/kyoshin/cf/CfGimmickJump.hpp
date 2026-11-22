@@ -27,10 +27,19 @@ struct CfGimmickJumpVec3 {
     f32 z;
 };
 
+/*
+ * Collider snapshot block: destination of CfGimmick_BuildColliderMtx (3x4
+ * placement matrix at +0x00, box extents after it, interaction distance and
+ * placement kind last) and argument of the shaped overlap checkers.  Retail
+ * copies the block whole: MWCC moves float *arrays* as words and only the
+ * scalar distance at +0x40 through lfs/stfs, which is why the extents below
+ * are one array rather than four scalars.
+ */
 struct CfGimmickJumpStateData {
-    u32 words[0x10];
-    f32 floatValue10; // word 0x10 - bulk-copied as float by retail
-    u32 lastWord;     // word 0x11
+    /* 0x00 */ f32 matrix[12];  // 3x4 placement matrix
+    /* 0x30 */ f32 extents[4];  // name-guess: radius, vertical low, vertical high, depth
+    /* 0x40 */ f32 distance;    // interaction distance
+    /* 0x44 */ u32 kind;        // placement kind / overlap-checker index
 };
 
 /*

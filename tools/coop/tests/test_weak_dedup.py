@@ -305,6 +305,40 @@ class WeakDedupTest(unittest.TestCase):
                             for n in v.excluded))
         self.assertTrue(check_data_sections(retail, v.path).ok)
 
+    def _base_list_case(self, retail_reloc_offsets):
+        # A weak RTTI (deduplicated) is the only user of a local 12-byte,
+        # all-zero base list relocated at its first word.  Retail has 12 zero
+        # bytes at the linked offset too; whether they are the same object
+        # depends on where retail relocates them.
+        obj = build(self.d / "u.o", text=b"\x60\0\0\0" * 4, rodata=b"",
+                    sdata=b"\0" * 20,
+                    symbols=[("f", ".text", 0, 0x10, GLOBAL, FUNC),
+                             ("keep", ".sdata", 0, 4, GLOBAL, OBJECT),
+                             ("__RTTI__4Base", ".sdata", 4, 4, WEAK, OBJECT),
+                             ("@bases", ".sdata", 8, 12, LOCAL, OBJECT)],
+                    sdata_relocs=[(4, "@bases"), (8, "f")])
+        retail = build(self.d / "r.o", text=b"\x60\0\0\0" * 4, rodata=b"",
+                       sdata=b"\0" * 16,
+                       symbols=[("f", ".text", 0, 0x10, GLOBAL, FUNC),
+                                ("keep", ".sdata", 0, 4, GLOBAL, OBJECT),
+                                ("other", ".sdata", 4, 12, GLOBAL, OBJECT)],
+                       sdata_relocs=[(o, "f") for o in retail_reloc_offsets])
+        return linked_view_for(obj, RANGES, {**self.OWN, "__RTTI__4Base": 0x80600004},
+                               "this/Unit.cpp", retail_sections=W._retail_sections(retail))
+
+    def test_local_dropped_when_retail_bytes_match_but_relocs_differ(self):
+        # Retail's 12 zero bytes are a vtable {RTTI*, 0, dtor*} (relocated at
+        # +0 and +8); ours is a base list relocated at +0 only.  Equal bytes are
+        # not evidence: the base list went with the weak RTTI.
+        v = self._base_list_case([4, 12])
+        self.assertEqual(v.removed.get(".sdata"), 16)
+        self.assertTrue(any("@bases" in n for n in v.excluded))
+
+    def test_local_kept_when_retail_bytes_and_relocs_match(self):
+        v = self._base_list_case([4])
+        self.assertEqual(v.removed.get(".sdata"), 4)
+        self.assertFalse(any("@bases" in n for n in v.excluded))
+
     def test_string_only_an_excluded_symbol_references_is_stripped(self):
         obj = unit_object(self.d / "u.o")
         # This unit's own string (referenced by a kept global) stays.

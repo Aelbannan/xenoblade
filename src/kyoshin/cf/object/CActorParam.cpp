@@ -398,7 +398,7 @@ void CActorParam_updateTick(cf::CActorParam* self, int arg, float f1) {
             st.unk10 = self->CActorParam_getGaugeMax();
             st.unk20 = self->CActorParam_getGaugeRateA();
             st.unk24 = lbl_eu_806677E4;
-            CBattleMan_RunBattleEvent((u32)getInstance__Q22cf14CBattleManagerFv(), (u32)self->CBattleState_getOwner(), &st, (u32)0);
+            CBattleMan_RunBattleEvent((u32)cf::CBattleManager::getInstance(), (u32)self->CBattleState_getOwner(), &st, (u32)0);
             if (!isBattleStatusActive(reinterpret_cast<cf::CBattleState*>(self), 0x10)) {
                 self->CActorParam_clearGauge();
             }
@@ -425,7 +425,7 @@ void CActorParam_updateTick(cf::CActorParam* self, int arg, float f1) {
                 st.unk20 = self->CActorParam_getGaugeRateB();
                 st.unk24 = lbl_eu_806677E4;
                 st.unk30 |= 0x80;
-                CBattleMan_RunBattleEvent((u32)getInstance__Q22cf14CBattleManagerFv(), (u32)self->CBattleState_getOwner(), &st, (u32)0);
+                CBattleMan_RunBattleEvent((u32)cf::CBattleManager::getInstance(), (u32)self->CBattleState_getOwner(), &st, (u32)0);
                 if (!isBattleStatusActive(reinterpret_cast<cf::CBattleState*>(self), 0x10)) {
                     self->CActorParam_clearSecondGauge();
                 }
@@ -442,13 +442,13 @@ __attribute__((used)) const double lbl_eu_806677F8 = 4503601774854144.0; // TU p
 void cf::CActorParam::CActorParam_updateStatusEntries(float dt) {
     getInstance__Q22cf13CfGameManagerFv();
     if (isGlobalCamFlagSet(0x04000000)) return;
-    if (((cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv())->CheckUnk84Flag(0x10)) return;
+    if (((cf::CBattleManager*)cf::CBattleManager::getInstance())->CheckUnk84Flag(0x10)) return;
     getInstance__Q22cf13CfGameManagerFv();
     if (isGlobalCamFlagSet(0x10000000)) return;
 
     bool flag = true;
-    if (((cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv())->unk20C8.unk0 == 0) {
-        u8 b = ((cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv())->mChain.mHead.field_2;
+    if (((cf::CBattleManager*)cf::CBattleManager::getInstance())->unk20C8.unk0 == 0) {
+        u8 b = ((cf::CBattleManager*)cf::CBattleManager::getInstance())->mChain.mHead.field_2;
         bool ok = (b >= 1 && b <= 0x18);
         if (!ok) flag = false;
     }
@@ -521,7 +521,7 @@ unk28_done:
                 else if (cl > 3) cl = 3;
                 double rate = 0.15 * (double)cl;
                 a = (int)((double)a - (double)a * rate);
-                getInstance__Q22cf14CBattleManagerFv();
+                cf::CBattleManager::getInstance();
                 float f = calcBattleDamage(0, this->CBattleState_getOwner(), 0);
                 a = (int)((float)a * f);
                 if (a > 0) this->CActorParam_addHp((float)a);
@@ -833,7 +833,7 @@ unk28_done:
             }
             case 0xC6: {
                 void* dmgSrc = this->CBattleState_getOwner();
-                broadcastBattleDamage(getInstance__Q22cf14CBattleManagerFv(), dmgSrc, e->unk10, e->unk14, e->unk16, 0, 0);
+                broadcastBattleDamage(cf::CBattleManager::getInstance(), dmgSrc, e->unk10, e->unk14, e->unk16, 0, 0);
                 break;
             }
             default: break;
@@ -930,7 +930,7 @@ unk28_done:
                         void* actor = MapFx_ResolveOwner(getObjectAt(holder.get(), i2));
                         if (this->CBattleState_getOwner() != actor) {
                             if (!isBattleStatusActive((u8*)actor + 8, st.unk0C)) {
-                                CBattleMan_RunBattleEvent((u32)getInstance__Q22cf14CBattleManagerFv(), (u32)actor, &st, (u32)0);
+                                CBattleMan_RunBattleEvent((u32)cf::CBattleManager::getInstance(), (u32)actor, &st, (u32)0);
                             }
                         }
                         i2++;
@@ -990,7 +990,7 @@ unk28_done:
                             }
                         } else {
                             if (countPcEffectSlots(slotId)) {
-                                CBattleMan_RunBattleEvent((u32)getInstance__Q22cf14CBattleManagerFv(), (u32)actor, &st, (u32)0);
+                                CBattleMan_RunBattleEvent((u32)cf::CBattleManager::getInstance(), (u32)actor, &st, (u32)0);
                             }
                         }
                         i2++;
@@ -2002,7 +2002,7 @@ void cf::CActorParam::CActorParam_updateHateEntries(float dt) {
 // from f1, applies arts-param percentage scaling (0x5C/0x5D/0x9D/0x5E/0x5F),
 // then decays the 3x8 arts matrix (unk7C/unk80) with the scaled deltas.
 void cf::CActorParam::CActorParam_decayArtsMatrix(float f1) {
-    cf::CBattleManager* bm = (cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv();
+    cf::CBattleManager* bm = (cf::CBattleManager*)cf::CBattleManager::getInstance();
     u8 ch = bm->mChain.mHead.field_2;
     if (ch >= 1 && ch <= 0x18) return;
     int sum4 = 0;
@@ -2169,7 +2169,7 @@ void cf::CActorParam::CActorParam_applyStatusHeal(CActorParam11Arg* arg) {
     if ((arg->field_0x74 & 0x100) == 0) return;
     int val;
     if (IdTable_GetSum(this->CActorParam_getStatusTable(), 0x45, &val) == 0) return;
-    getInstance__Q22cf14CBattleManagerFv();
+    cf::CBattleManager::getInstance();
     void* actor = this->CBattleState_getOwner();
     float a = calcBattleDamage(this->CBattleState_getOwner(), actor, NULL);
     float b = this->CActorParam_getDamageScale();
@@ -2241,10 +2241,10 @@ void CActorParam_applyEventStatus__Q22cf11CActorParamFPQ22cf16CActorParam12Arg(c
                 float f31 = self->CActorParam_getDamageScale();
                 if (self->CActorParam_getHp() != f31) {
                     s32 unk10 = e->unk10;
-                    getInstance__Q22cf14CBattleManagerFv();
+                    cf::CBattleManager::getInstance();
                     float rate = calcBattleDamage(0, self->CBattleState_getOwner(), 0);
                     int v = (int)((float)unk10 * rate);
-                    broadcastBattleDamage(getInstance__Q22cf14CBattleManagerFv(),
+                    broadcastBattleDamage(cf::CBattleManager::getInstance(),
                                   self->CBattleState_getOwner(),
                                   (int)(1.5f * (float)v), 0, 0, 1,
                                   (void*)(uintptr_t)((cf::CfObjectActor*)self->CBattleState_getOwner())->field_0x74);
@@ -2278,7 +2278,7 @@ void CActorParam_applyEventStatus__Q22cf11CActorParamFPQ22cf16CActorParam12Arg(c
                     }
                     if (arg->field_0xA8 % 100 < unk1A) {
                         s32 unk10 = e37->unk10;
-                        getInstance__Q22cf14CBattleManagerFv();
+                        cf::CBattleManager::getInstance();
                         float rate = calcBattleDamage(0, self->CBattleState_getOwner(), 0);
                         int v = (int)((float)unk10 * rate);
                         self->CActorParam_addHp((float)v);
@@ -2295,9 +2295,9 @@ void CActorParam_applyEventStatus__Q22cf11CActorParamFPQ22cf16CActorParam12Arg(c
                 float f31 = self->CActorParam_getDamageScale();
                 if (self->CActorParam_getHp() != f31) {
                     int v = (int)((float)e->unk14 * self->CActorParam_getDamageScale() / 100.0f);
-                    getInstance__Q22cf14CBattleManagerFv();
+                    cf::CBattleManager::getInstance();
                     float rate = calcBattleDamage(0, self->CBattleState_getOwner(), 0);
-                    broadcastBattleDamage(getInstance__Q22cf14CBattleManagerFv(),
+                    broadcastBattleDamage(cf::CBattleManager::getInstance(),
                                   self->CBattleState_getOwner(),
                                   (int)(1.5f * (float)v), 0, 0, 1,
                                   (void*)(uintptr_t)((cf::CfObjectActor*)self->CBattleState_getOwner())->field_0x74);
@@ -2336,7 +2336,7 @@ void CActorParam_applyEventStatus__Q22cf11CActorParamFPQ22cf16CActorParam12Arg(c
                                     // truncation: vv = conv(v)*(Func38/scale), vv2 = conv(vv)*rate.
                                     int vv = (int)((float)v *
                                                    (self->CActorParam_getDamageScale() / 100.0f));
-                                    getInstance__Q22cf14CBattleManagerFv();
+                                    cf::CBattleManager::getInstance();
                                     float rate = calcBattleDamage(0, self->CBattleState_getOwner(), 0);
                                     int vv2 = (int)((float)vv * rate);
                                     self->CActorParam_addHp((float)vv2);
@@ -2415,8 +2415,8 @@ void cf::CActorParam::CActorParam_addSecondGauge(int delta) {
 
 void cf::CActorParam::CBattleState_getLinkedActorId(CBattleStateEntry* entry) {
     cf::CActorParam180Arg* arg = (cf::CActorParam180Arg*)entry;
-    if (getInstance__Q22cf14CBattleManagerFv() != NULL) {
-        getInstance__Q22cf14CBattleManagerFv();
+    if (cf::CBattleManager::getInstance() != NULL) {
+        cf::CBattleManager::getInstance();
     }
     if (isBattleEventKind3(arg->field_0xC) != 0) {
         if (isBattleStatusActive(&static_cast<cf::CBattleState&>(*this), 0x90) != 0) {
@@ -3087,12 +3087,8 @@ void CActorParam_UnkVirtualFunc159__Q22cf11CActorParamFv(cf::CActorParam* self, 
 // Returns (vtable slot 0x1F0) - (vtable slot 0x1E8): CActorParam_getLevelExp
 // minus CActorParam_getSpentCurrency (per the header's vtable offset map).
 void cf::CActorParam::CActorParam_initStatusCounter() {
-    // 0x335A = 2 is stored first; the rate byte (0x335E) is widened to
-    // double via the 0x43300000 magic and scaled by the gauge max (0x3368);
-    // the truncating half is stored at 0x3358.
-    *(volatile s16*)&this->unk335A = 2;
-    float max = *(volatile float*)&this->unk3368;
-    this->unk3358 = (u16)((int)(max * (float)(u32)*(volatile u8*)&this->unk335C[2]) / 2);
+    this->unk335A = 2;
+    this->unk3358 = (int)(this->unk3368 * this->unk335C[this->unk335A]) / 2;
 }
 int cf::CActorParam::CActorParam_getCurrencyBalance() {
     // Named locals pin the dispatch order (getLevelExp first): going

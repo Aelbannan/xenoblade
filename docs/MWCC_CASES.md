@@ -24051,3 +24051,10 @@ faithful CFloorMap offset 39→7, CfRes offset 25→0 / section 38→17;
 - Result:    CfGameManager 291 ✓ / 0 LOST, CModelDispMakeCrystal 54 ✓ / 0 LOST, CMakeCrystalWin 16, CMenuMakeCrystal 13. Split back to +0x8C (size gain surrendered). Data identical bytes unchanged (.data 0x1B6, .rodata 0x138, .sdata 0x8, .sdata2 0x78). link-gate missing=39 OK; extab/text-order/registry OK.
 - Concurrent edits: between ~17:33–17:38 another process repeatedly emptied shield replacement text on CfGameManager.cpp lines 70, 71, 442, 443, 444, 445 (`cbattleFunc_8009E344`, `cbattle_dt_CfObjectImplMove`, `unityHelpersWrapFunc_80083D50/800827E4/8007DECC/8008294C`), each time causing MWCC 10115/10121 until restored. Final file matches the 17:28 snapshot except the accepted DECL-CR blanks (lines 55/61/68/88) and the removed guard (line 441).
 - Confidence: repo_proven (`/tmp/xb/MDL-VT/durable/{sweep.fallback.txt,MCM.fallback.hex,CfGameManager.inline4.hex,cfgm.declonly.o,sweep.declonly.txt,final.link}`).
+
+## CfGimmickJump_RefreshMatrices — struct-copy lfs/stfs only for scalar f32 → real block layout (Wii/1.1, FULL_MATCH)
+- Symptom:   75.8%; retail's `savedState = initialState` (0x48 bytes) moves 17 words with `lwz/stw` and only the word at +0x40 with `lfs/stfs`; the placeholder `u32 words[0x10]; f32 floatValue10; u32 lastWord;` reproduced the copy but made the later `stfs` into +0x34 illegal without a cast.
+- Cause:     MWCC's struct-assignment copy moves `f32` **array** members word-wise (integer regs) and **scalar** `f32` members through the FPU. A block whose copy shows exactly one float move is a block of float arrays plus one scalar float.
+- Fix:       declare the real layout `f32 matrix[12]; f32 extents[4]; f32 distance; u32 kind;` (same 0x48), write the jump height to `extents[1]` between the collider-matrix builds, and read the checker index from `kind` (+0x44; the old `words[8]` read +0x20, which retail never reads).
+- Result:    FULL_MATCH (0xF8/0xF8); unit 1/9 → 2/9 ✓, no LOST.
+- Evidence:  probe `/tmp/xb/W1-13/t2.cpp` (project MWCC): array members copy as `lwz/stw`, scalar float as `lfs/stfs`.

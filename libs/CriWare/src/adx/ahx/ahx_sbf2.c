@@ -21,7 +21,7 @@ extern void ahxsbf_mult_float_win13(s32*, s32, s32*);
 extern void ahxsbf_mult_float_win14(s32*, s32, s32*);
 extern void ahxsbf_mult_float_win15(s32*, s32, s32*);
 
-AHXSBF_SynthFunc lbl_eu_805620E0[16] = {
+AHXSBF_SynthFunc pfn_ahxsbf_mult_float_win[16] = {
     ahxsbf_mult_float_win0,
     ahxsbf_mult_float_win1,
     ahxsbf_mult_float_win2,
@@ -40,7 +40,7 @@ AHXSBF_SynthFunc lbl_eu_805620E0[16] = {
     ahxsbf_mult_float_win15,
 };
 
-u32 lbl_eu_80562120[0x220] = {
+u32 ahxtbl_wtbl[0x220] = {
     0x00000000, 0xB9E80004, 0x3B550000, 0xBBE58000,
     0x3CFE9FFE, 0xBDA10800, 0x3DCD7003, 0xBF1270FF,
     0x3F928F00, 0x3F1270FF, 0x3DCD7003, 0x3DA10800,
@@ -195,6 +195,6 @@ void AHXSBF_Synthesize(s32 *base, s32 pcm, s32 idx, s32 *out) {
         while (1) { }
     }
     ahxsbf_mult_flt_ex((float *)pcm, (float *)coeff, (float *)dst);
-    AHXSBF_SynthFunc synth = lbl_eu_805620E0[hdr[1] >> 6];
+    AHXSBF_SynthFunc synth = pfn_ahxsbf_mult_float_win[hdr[1] >> 6];
     synth(buf + hdr[1], base[4], out);
 }

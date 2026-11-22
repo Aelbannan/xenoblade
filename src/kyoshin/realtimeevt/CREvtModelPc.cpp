@@ -9,6 +9,7 @@
 #include <cstring>
 #include "kyoshin/cf/CfGameManagerData.hpp"  // gmScene (CScn)
 #include "kyoshin/cf/object/CfObject.hpp"
+#include "kyoshin/cf/object/CfObjectModel.hpp"
 
 // Per-character body variant used in co-op mode (indexed by character id).
 static const u32 sCoopVariant[12] = {0, 2, 3, 2, 2, 2, 3, 2, 4};
@@ -82,7 +83,7 @@ static inline CREvtModelPcActor* actorOf(cf::CfObject* obj) {
     return obj != 0 ? (CREvtModelPcActor*)((u8*)obj - 0x3E9C) : (CREvtModelPcActor*)obj;
 }
 static inline u32 objToken(cf::CfObject* obj) {
-    return *(u32*)((u8*)obj + 0x70);
+    return (u32)static_cast<cf::CfObjectModel*>(obj)->mTarget70;
 }
 
 // Packed resource token: kind:5 | chara:7 | variant:10 | slot:10.

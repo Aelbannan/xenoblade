@@ -9,12 +9,6 @@ class __declspec(novtable) CDeviceBase;
 extern template class reslist<IDeviceClockFrame*>;
 extern template class _reslist_base<IDeviceClockFrame*>;
 
-// Retail stores the clock singleton pointer in this .sbss slot (referenced
-// directly by isInitialized rather than via spInstance).
-extern CDeviceClock* lbl_eu_80665658;
-
-CDeviceClock* CDeviceClock::spInstance;
-
 /* Won't match because of stupid extab issue (the start pc for the first pc action
 is 0xA0 instead of 0xA4) */
 CDeviceClock::CDeviceClock(const char* pName, CWorkThread* pWorkThread) :
@@ -32,8 +26,7 @@ mFrameDuration(0) {
 }
 
 CDeviceClock::~CDeviceClock(){
-    // Retail stores via the dissolved .sbss slot, not the mangled static.
-    lbl_eu_80665658 = nullptr;
+    spInstance = nullptr;
     // NOTE: the remaining member destruction (inlined _reslist_base dtor:
     // vptr retag + node unlink + sentinel ring close + array free + base
     // CWorkThread dtor + conditional delete) is generated implicitly by
@@ -65,7 +58,7 @@ public:
 };
 
 bool CDeviceClock::isInitialized(){
-    const CDeviceClockFields* self = (const CDeviceClockFields*)lbl_eu_80665658;
+    const CDeviceClockFields* self = (const CDeviceClockFields*)spInstance;
     bool busy;
     if (self->mThreadFlags & CWorkThread::THREAD_FLAG_EXCEPTION) {
         busy = true;

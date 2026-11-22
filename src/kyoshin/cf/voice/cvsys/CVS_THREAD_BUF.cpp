@@ -5,6 +5,14 @@
 #include "kyoshin/cf/voice/cvsys/CVS_THREAD_BUF.hpp"
 #include "kyoshin/harness_catalog.hpp"
 
+// name-guess: base voice-event state installed by advanceSlot(); the retail
+// 12-byte PTMF triple names CVS_THREAD_BUF::advanceIndex.
+BufState sBufAdvanceIndexState = &CVS_THREAD_BUF::advanceIndex;
+
+// name-guess: voice-event state installed by advanceIndex() while slots remain;
+// the retail 12-byte PTMF triple names CVS_THREAD_BUF::advanceSlot.
+BufState sBufAdvanceSlotState = &CVS_THREAD_BUF::advanceSlot;
+
 void CVS_THREAD_BUF::create() {}
 
 void BufVxFillSchedDesc(){}
@@ -15,7 +23,7 @@ void BufVxFillSchedDesc(){}
 // (no handle / active / play rejected) restart via the playback virtual.
 void CVS_THREAD_BUF::advanceSlot() {
     CVS_THREAD_BUF* self = this;
-    mState = lbl_eu_805399EC;
+    mState = sBufAdvanceIndexState;
 
     CVoiceHandle* handle = self->slotHandles[self->field_0x3c];
     if (handle == NULL) {
@@ -53,7 +61,7 @@ void CVS_THREAD_BUF::advanceIndex() {
     int idx = self->field_0x3c + 1;
     self->field_0x3c = idx;
     if (idx < self->field_0x38) {
-        mState = lbl_eu_805399F8;
+        mState = sBufAdvanceSlotState;
     } else {
         self->PlayThreadVoice();
     }

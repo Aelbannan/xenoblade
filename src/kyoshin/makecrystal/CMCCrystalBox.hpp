@@ -63,31 +63,6 @@ public:
 
 
 
-// View into the object returned by CDeviceFont::getFontInfo: vtable+0x24
-// (index 7, no args) yields the u32 bound into the layout's font pane
-// (handed to ApplyFontToTxtPanes). All-pure so no vtable is emitted.
-class CDeviceFontVtblView {
-public:
-    virtual void vf0() = 0; // index 0 -> +0x08
-    virtual void vf1() = 0; // index 1 -> +0x0C
-    virtual void vf2() = 0; // index 2 -> +0x10
-    virtual void vf3() = 0; // index 3 -> +0x14
-    virtual void vf4() = 0; // index 4 -> +0x18
-    virtual void vf5() = 0; // index 5 -> +0x1C
-    virtual void vf6() = 0; // index 6 -> +0x20
-    virtual u32 vf7() = 0;  // index 7 -> +0x24
-};
-
-// Pane +0x4C/+0x50 float pair written by OnFileEvent from the timg-resource
-// u16 position header (same +0x4C offset TagCopyVec2f reads as a drag pair).
-struct PanePosMirror {
-    u8 _pad[0x4C];   // +0x00..+0x4B
-    f32 m4C;         // +0x4C
-    f32 m50;         // +0x50
-};
-
-
-
 // Placed-item selection table at CMCCrystalBox+0x1480 (retail ctor
 // 0x80215CE4, dtor 0x80215D24): 8 item pointers, the placement order, and the
 // aggregated crystal-id list built from them.
@@ -413,9 +388,8 @@ extern const unsigned long sCrystalBoxSortIds[3];
 extern unsigned long gpCrystalBoxSkillBdat;
 // Selection-table helpers on the +0x1480 box-head scratch (not CMCCrystalBox).
 // Crystal-slot refresh callbacks (defined in this TU).
-// Item-kind check (defined in this TU); noinline keeps the bl in the slot
-// refresh callbacks instead of inlining the two-word test.
-extern "C" __declspec(noinline) int isCrystalKindGem(void*);
+// Item-kind check (defined in this TU).
+extern "C" int isCrystalKindGem(void*);
 // Message-resource / text helpers shared with the other kyoshin menu TUs.
 extern "C" void copyVEC3(void*, const void*);
 
@@ -430,15 +404,13 @@ extern "C" u16 CItemBlock_getFlag120EC(int);
 // linkage; getPackedFont uses the plain C++ form that re-derives the retail
 // mangled name (cf::CfGameManager::isClassicController comes from its header).
 // C++ linkage so MWCC mangles to the retail getPackedFont__Fv.
-extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
 extern "C" void* Bdat_GetTable_AA34();   // matches code_801862C0.hpp's declaration
 extern "C" void* CItem_kindPtr(u32, s16);
 extern "C" u32 CItemBlock_countKindSlots(u8);
-extern "C" void deleteRegion__17UnkClass_8045F564Fv(void*);
 
 // State-machine anim-completion callbacks (defined in this TU; retail symbols
 // are unmangled). extern "C" first declaration keeps the switch call relocs
-// unmangled like retail; noinline keeps the bodies out-of-line.
+// unmangled like retail.
 
 // retail masks the u16 crystal id into the argument register (clrlwi 16), so
 // this TU saw a u16 parameter. Literal mangled identifier links to the same
@@ -452,14 +424,7 @@ extern "C" void deleteRegion__17UnkClass_8045F564Fv(void*);
 // getCrystalSelTopCount's s32 prototype is load-bearing: an s64 return made
 // callers compare the high result word (r3/r4 swap) and lost a full match.
 // No casts are needed at the use sites.
-// noinline: these update-callback helpers must stay out-of-line (retail
-// emits bl to them); without it MWCC inlines their bodies into the callers.
 
 // initCrystalBoxResources (ctor-style copy-init) imports.
-extern "C" void* getHandleMEM1__Q23mtl10MemManagerFv();
-extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv();
-extern "C" void* readFile__11CDeviceFileFUlPCcP10IWorkEventii(unsigned long, const char*, void*, int, int);
-extern "C" void* readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii(unsigned long, const char*, void*, int, int);
 extern "C" u32 KyoshinHeap_GetField44();
-extern "C" void __as__17UnkClass_8045F564FRC17UnkClass_8045F564(void*, void*);   // 4-word mem-region copy
 extern "C" void CItemBlock_setFlag120EC(u8, u32);

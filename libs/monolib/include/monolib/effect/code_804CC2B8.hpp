@@ -2,6 +2,7 @@
 
 #include <types.h>
 #include <revolution/MTX.h>
+#include "monolib/effect/EffectNode.hpp"
 
 // Partial layouts for cross-TU data/helpers declared below (retail C-linkage
 // pseudo-imports relocated from code_804CC2B8.cpp). Keep signatures/linkage
@@ -9,23 +10,6 @@
 struct MemManGlob {
     u32 field_0x00;
     const void* field_0x04;
-};
-
-struct EffectNode {
-    s16 field_0x00;
-    s16 field_0x02;
-    s16 field_0x04;
-    s16 field_0x06;
-    s16 field_0x08;
-    s16 field_0x0a;
-    s16 field_0x0c;
-    u8 pad_0x0e[0x18 - 0x0e];
-    u32 field_0x18;
-    void EffFxReleaseNodeChain();
-    EffectNode* EffFxStepNextNode();
-    EffectNode* EffFxFetchHeadNode();
-    void EffFxProcessNodeChain();
-    void EffFxAppendChainNode(s32 index);
 };
 
 struct U16Pair {
@@ -48,8 +32,6 @@ extern "C" f32 lbl_eu_8066B15C;
 extern "C" const u8 sEffectPosPalette0[];
 extern "C" const u8 sEffectPosPalette1[];
 extern "C" void* Scn_FindCamItem(void* src, int index);
-extern "C" u32 getMaxAllocSize__Q23mtl10MemManagerFUl(u32 mem);
-extern "C" void* allocate_array__Q23mtl10MemManagerFUlUl(u32 count_bytes, u32 mem);
 extern "C" u32 lbl_eu_8065FC18[];
 extern "C" s32 sCachedZMode;
 extern "C" s32 sCachedTevMode;

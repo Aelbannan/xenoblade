@@ -157,15 +157,6 @@ public:
     s8 field_0x21;
 };
 
-// Object holding a flag at 0x16F and a value at 0x2A1 (CMenuArtsSet_isListBusy).
-class SArts34C84 {
-public:
-    char _pad[0x16F];
-    u8 field_0x16F;
-    char _pad2[0x2A1-0x170];
-    u8 field_0x2A1;
-};
-
 // Object with a word at 0x1C and flags at 0x28/0x30 (CMenuArtsSet_markLayoutsReady).
 class SArts35108 {
 public:
@@ -475,21 +466,6 @@ public:
     u8 field_0x24;                      // 0x24 state
 };
 
-// Overlay used by CMenuArtsSet_isBusy: a CArtsInfo at 0x74, a CSysWin at
-// 0xE8, and read-only byte flags at 0x16F/0x2A1/0x2A6. Overlaps the
-// CMenuArtsSet object but viewed standalone so its flags are reachable.
-class SArts33888 {
-public:
-    char _pad_00[0x74];
-    CArtsInfo field_0x74;              // 0x74 (0x74 bytes -> ends 0xE8)
-    CSysWin field_0xE8;            // 0xE8
-    char _pad_120[0x16F - (0xE8 + sizeof(CSysWin))];
-    u8 field_0x16F;                    // 0x16F
-    char _pad_170[0x2A1 - 0x170];
-    u8 field_0x2A1;                    // 0x2A1
-    char _pad_2A2[0x2A6 - 0x2A2];
-    u8 field_0x2A6;                    // 0x2A6
-};
 
 // Object used by ArtsBusyPane_showPrimary: two pointees (each read via their field_0x10)
 // plus 0x23/0x24 byte state.
@@ -663,8 +639,8 @@ public:
     virtual void* v157();  // declared index 157 -> vtable +0x27C
 };
 
-// Arc-resource-accessor view of SArts308B0View.field_0x04: its second
-// declared virtual (vtable +0x0C) finds a named resource inside an archive
+// Arc-resource-accessor view reached through the sub-object's +0x04 pointer:
+// its second declared virtual (vtable +0x0C) finds a named resource inside an archive
 // type (a FourCC passed by value) and returns it (NULL when absent).
 class SArtsFindObj {
 public:
@@ -672,8 +648,8 @@ public:
     virtual void* vfind(u32 type, const char* name, int flag); // +0x0C
 };
 
-// Layout-owner view of SArts308B0View.field_0x00: +0x10 holds the pane-fetch
-// driver whose v13 (+0x3C) returns the pane fed to setPaneVisible.
+// Layout-owner view reached through the sub-object's +0x00 pointer: +0x10
+// holds the pane-fetch driver whose v13 (+0x3C) returns the pane fed to setPaneVisible.
 class SArts308B0Layout {
 public:
     char _pad[0x10];
@@ -683,21 +659,7 @@ public:
 // 8-word blocks reloaded by artsSyncSlots: lbl_eu_8050AB08 lands on the
 // object's +0x28 pane-name block, lbl_eu_8050AB88 on a stack-local copy.
 struct SArts308B0Block {
-    u32 w[8];   // 0x20 bytes (MWCC counted word-copy loop)
-};
-extern const SArts308B0Block lbl_eu_8050AB08;
-extern const SArts308B0Block lbl_eu_8050AB88;
-
-// View of the sub-object driven by artsSyncSlots (mSubObj148): two leading
-// pointers, the character id byte at 0x26, and the 8-word block at 0x28.
-class SArts308B0View {
-public:
-    void* field_0x00;      // layout owner (SArts308B0Layout)
-    void* field_0x04;      // arc resource accessor (SArtsFindObj)
-    char _pad08[0x26 - 0x08];
-    u8 field_0x26;         // character id (written from the u8 argument)
-    char _pad27[0x28 - 0x27];
-    SArts308B0Block field_0x28;
+    const char* w[8];   // 0x20 bytes (MWCC counted word-copy loop)
 };
 
 // Pane whose position VEC2 sits at +0x4C (copyVEC2 target/source).
@@ -926,7 +888,7 @@ public:
     virtual void Init();
     virtual void Term();
     virtual void Move();
-    virtual void cbRenderBefore();
+    virtual void cbRenderBefore(CScn* scene);
 
     static CMenuArtsSet* create(CProcess* parent, CScn* scene);
     static CMenuArtsSet* sInstance;
@@ -964,8 +926,6 @@ void CMenuArtsSet_beginOpen(CArtsList* self);
 // ---------------------------------------------------------------------------
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 // ---------------------------------------------------------------------------
-extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv();
-extern "C" void* readFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, const char*, void*, int, int);
 // Sub-object ctor/dtor/body-copy imports for CArtsList::CArtsList's temp
 // copy-init (retail emits the unmangled names at the call sites).
 extern "C" void __ct__10CScrollBarFUc(void* self, int arg);
@@ -976,9 +936,6 @@ extern "C" void __dt__7CSysWinFv(void* self, int flags);
 extern "C" void __as__17UnkClass_8045F564FRC17UnkClass_8045F564(void* dest, void* src);
 // OnFileEvent imports: mem-region resize / font / layout-text helpers
 // (retail emits the unmangled names at the call sites).
-extern "C" void setMemInitFlag__Q23mtl10MemManagerFb(bool);
-extern "C" bool Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(nw4r::lyt::ArcResourceAccessor* self, void* data, const char* name);
-extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
 extern "C" void* CtrlObjectParam_GetCharEntry(u32);
 extern "C" u32 CtrlObjectParam_GetCurrentRowKey(void*);
 // Arts-slot re-arm ctor (CtrlObjectParam.cpp; plain-C retail symbol).
@@ -1095,7 +1052,7 @@ extern "C" void ArtsTable_bumpUsage(SArts322BC* self, int key);
 extern "C" void ArtsTableCursor_refresh(SArts327B0* self);
 extern "C" void artsRenderRow(SArts327B0* self);
 extern "C" void copyVEC2(float* dst, const float* src);
-extern "C" int CMenuArtsSet_isListBusy(SArts34C84* self);
+extern "C" int CMenuArtsSet_isListBusy(CArtsList* self);
 extern "C" int CMenuArtsSet_isLockedArtOpen(SArts34D14* self);
 extern "C" int CMenuArtsSet_isDemoLockedArt(SArts34D14* self);
 extern "C" u32 CMenuArtsSet_getHelpMode(CArtsList* self);
@@ -1196,12 +1153,8 @@ struct SArtsB88Block {
 };
 extern const SArtsB88Block lbl_eu_8050AC4C;
 struct SArts316F8Block {
-    u32 w[9];   // 0x24 bytes
+    const char* w[9];   // 0x24 bytes
 };
-extern const SArts316F8Block lbl_eu_8050ABB4;
-// 9-word label block for the ArtsBusyPane_refreshCursor cursor refresh (field_0x21 twin
-// of ArtsSlotCursor_refresh's lbl_eu_8050ABB4).
-extern const SArts316F8Block lbl_eu_8050ABD8;
 
 // Per-character arts-list block copied onto the stack by artsFillTable
 // (18 bytes: nine {id,count} pairs, indexed by character; declared as
@@ -1250,7 +1203,7 @@ extern "C" int sprintf(char*, const char*, ...);
 extern "C" u32 MenuTutorialIsCreated();
 // Same-TU dispatch helpers (definitions below; C linkage binds the calls to
 // the retail unmangled symbols).
-extern "C" int CMenuArtsSet_isBusy(SArts33888* self);
+extern "C" int CMenuArtsSet_isBusy(CArtsList* self);
 extern "C" void CMenuArtsSet_armSysWin(CArtsList* self);
 extern "C" void CMenuArtsSet_selectPrevChar(CArtsList* self);
 extern "C" void artsStepAhead(CArtsList* self);

@@ -51,82 +51,7 @@ void CMenuCollepedia::Init() {
     mTitleAHelp.CTitleAHelp_load();
 
     // --- Re-initialise the embedded CCollepedia via a temporary ---
-    u8 tempCollepedia[0x2900];
-    __ct__CCollepedia((CCollepedia*)tempCollepedia);
-
-    __as__17UnkClass_8045F564FRC17UnkClass_8045F564(&mCollepedia.field_4, tempCollepedia + 0x4);
-    __as__17UnkClass_8045F564FRC17UnkClass_8045F564(&mCollepedia._14[0], tempCollepedia + 0x14);
-
-    mCollepedia.field_24 = *(void**)(tempCollepedia + 0x24);
-    mCollepedia.field_28 = *(void**)(tempCollepedia + 0x28);
-    mCollepedia.field_2C = *(void**)(tempCollepedia + 0x2C);
-    mCollepedia.field_30 = *(nw4r::lyt::ArcResourceAccessor**)(tempCollepedia + 0x30);
-    mCollepedia.field_34 = *(nw4r::lyt::ArcResourceAccessor**)(tempCollepedia + 0x34);
-    mCollepedia.field_38 = *(nw4r::lyt::Layout**)(tempCollepedia + 0x38);
-    mCollepedia.field_3C = *(nw4r::lyt::AnimTransform**)(tempCollepedia + 0x3C);
-    mCollepedia.field_40 = *(nw4r::lyt::AnimTransform**)(tempCollepedia + 0x40);
-    mCollepedia.field_44 = *(nw4r::lyt::AnimTransform**)(tempCollepedia + 0x44);
-    mCollepedia.field_48 = *(u8*)(tempCollepedia + 0x48);
-    mCollepedia.field_49 = *(u8*)(tempCollepedia + 0x49);
-    mCollepedia.field_4C = *(u32*)(tempCollepedia + 0x4C);
-    mCollepedia.field_50 = *(u8*)(tempCollepedia + 0x50);
-    mCollepedia.field_51 = *(u8*)(tempCollepedia + 0x51);
-    // Copy the 0x54 sub-object region via the 0x10-byte copy helper.
-    *reinterpret_cast<CBaseCur*>((u8*)&mCollepedia + 0x54) = *reinterpret_cast<const CBaseCur*>(tempCollepedia + 0x54);
-    // Region inside the 0x54 sub-object pad: copied as raw words/bytes.
-    *(u32*)((u8*)&mCollepedia + 0x70) = *(u32*)(tempCollepedia + 0x70);
-    *(u32*)((u8*)&mCollepedia + 0x74) = *(u32*)(tempCollepedia + 0x74);
-    *(u32*)((u8*)&mCollepedia + 0x78) = *(u32*)(tempCollepedia + 0x78);
-    *(u32*)((u8*)&mCollepedia + 0x7C) = *(u32*)(tempCollepedia + 0x7C);
-    *(u8*)((u8*)&mCollepedia + 0x80) = *(u8*)(tempCollepedia + 0x80);
-    *(u8*)((u8*)&mCollepedia + 0x81) = *(u8*)(tempCollepedia + 0x81);
-    // Copy the 0x84 sub-object region via the same helper.
-    *reinterpret_cast<CBaseCur*>((u8*)&mCollepedia + 0x84) = *reinterpret_cast<const CBaseCur*>(tempCollepedia + 0x84);
-    __as__17UnkClass_8045F564FRC17UnkClass_8045F564((u8*)&mCollepedia + 0xA0, tempCollepedia + 0xA0);
-    // Tail of the pre-loop region (+0xB0..+0xE9), then the sub-array loop.
-    *(u32*)((u8*)&mCollepedia + 0xB0) = *(u32*)(tempCollepedia + 0xB0);
-    u32 count = 0x500;
-    CollepediaSubEntry* dst = (CollepediaSubEntry*)((u8*)&mCollepedia + 0xE8);
-    CollepediaSubEntry* src = (CollepediaSubEntry*)(tempCollepedia + 0xE8);
-    *(u32*)((u8*)&mCollepedia + 0xB4) = *(u32*)(tempCollepedia + 0xB4);
-    *(u32*)((u8*)&mCollepedia + 0xB8) = *(u32*)(tempCollepedia + 0xB8);
-    *(u32*)((u8*)&mCollepedia + 0xBC) = *(u32*)(tempCollepedia + 0xBC);
-    *(u32*)((u8*)&mCollepedia + 0xC0) = *(u32*)(tempCollepedia + 0xC0);
-    *(u8*)((u8*)&mCollepedia + 0xC4) = *(u8*)(tempCollepedia + 0xC4);
-    *(u32*)((u8*)&mCollepedia + 0xC8) = *(u32*)(tempCollepedia + 0xC8);
-    *(u32*)((u8*)&mCollepedia + 0xCC) = *(u32*)(tempCollepedia + 0xCC);
-    *(u8*)((u8*)&mCollepedia + 0xD0) = *(u8*)(tempCollepedia + 0xD0);
-    *(u8*)((u8*)&mCollepedia + 0xD1) = *(u8*)(tempCollepedia + 0xD1);
-    *(u8*)((u8*)&mCollepedia + 0xD2) = *(u8*)(tempCollepedia + 0xD2);
-    *(u8*)((u8*)&mCollepedia + 0xD3) = *(u8*)(tempCollepedia + 0xD3);
-    *(u8*)((u8*)&mCollepedia + 0xD4) = *(u8*)(tempCollepedia + 0xD4);
-    *(u8*)((u8*)&mCollepedia + 0xD5) = *(u8*)(tempCollepedia + 0xD5);
-    *(u8*)((u8*)&mCollepedia + 0xD8) = *(u8*)(tempCollepedia + 0xD8);
-    *(u8*)((u8*)&mCollepedia + 0xD9) = *(u8*)(tempCollepedia + 0xD9);
-    *(u8*)((u8*)&mCollepedia + 0xDA) = *(u8*)(tempCollepedia + 0xDA);
-    *(u32*)((u8*)&mCollepedia + 0xDC) = *(u32*)(tempCollepedia + 0xDC);
-    *(u32*)((u8*)&mCollepedia + 0xE0) = *(u32*)(tempCollepedia + 0xE0);
-    *(u32*)((u8*)&mCollepedia + 0xE4) = *(u32*)(tempCollepedia + 0xE4);
-    *(u8*)((u8*)&mCollepedia + 0xE8) = *(u8*)(tempCollepedia + 0xE8);
-    *(u8*)((u8*)&mCollepedia + 0xE9) = *(u8*)(tempCollepedia + 0xE9);
-
-    // 0x500-entry sub-array at +0xE8 (8-byte stride) copied element by
-    // element so MWCC emits the retail 8-byte lwzu/stwu loop.
-    do {
-        dst->field_4 = src->field_4;
-        dst->field_0 = src->field_0;
-        dst++;
-        src++;
-    } while (--count != 0);
-
-    // Tail state (end of the embedded CCollepedia body).
-    *(u32*)((u8*)&mCollepedia + 0x28EC) = *(u32*)(tempCollepedia + 0x28EC);
-    mCollepedia.field_28F0 = *(nw4r::lyt::Layout**)(tempCollepedia + 0x28F0);
-    *(u32*)((u8*)&mCollepedia + 0x28F4) = *(u32*)(tempCollepedia + 0x28F4);
-    *(u8*)((u8*)&mCollepedia + 0x28F8) = *(u8*)(tempCollepedia + 0x28F8);
-    mCollepedia.field_28F9 = *(u8*)(tempCollepedia + 0x28F9);
-    mCollepedia.field_28FA = *(u8*)(tempCollepedia + 0x28FA);
-    __dt__11CCollepediaFv((CCollepedia*)tempCollepedia, -1);
+    mCollepedia = CCollepedia();
 
     clpStartLoads(&mCollepedia);
 
@@ -172,7 +97,7 @@ void CMenuCollepedia::Move() {
     clpDoFrameUpd(&mCollepedia);
 }
 
-void CMenuCollepedia::cbRenderBefore() {}
+void CMenuCollepedia::cbRenderBefore(CScn*) {}
 
 void CollepediaCreateSingleton(){}
 

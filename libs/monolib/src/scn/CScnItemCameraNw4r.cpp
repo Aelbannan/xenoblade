@@ -23,28 +23,6 @@ public:
 extern "C" void ScnCamRebuild(CScnItemCameraNw4r* self);
 extern "C" void ScnCamViewReg(CScnItemCameraNw4r* self);
 
-//
-// The base class header (monolib/scn/CScnItemCamera.hpp) is a draft whose
-// member types do not actually lay out to the retail offsets, so matching the
-// retail frustum builders would read the wrong fields. This overlay gives the
-// object the true retail layout: mLocalMatInv at 0xCC (inside CAttrTransform
-// at 0x54), the near/far view params at 0x1E0-0x1F0, and the nw4r FRUSTUM
-// appended at 0x2B8. CScnItemCameraNw4r inherits CScnItemCamera so `this`
-// points at the same base, and this struct simply re-describes that memory.
-//
-struct CScnItemCameraNw4rLayout {
-    u8 pad_0xCC[0xCC];
-    ml::CMat34 mLocalMatInv;    // 0xCC
-    u8 pad_0xFC[0xE4];          // 0xFC -> 0x1E0
-    f32 mFovY;                  // 0x1E0
-    u32 unk_0x1E4;              // 0x1E4
-    f32 mAspect;                // 0x1E8
-    f32 mNearZ;                 // 0x1EC
-    f32 mFarZ;                  // 0x1F0
-    u8 pad_0x1F4[0xC4];         // 0x1F4 -> 0x2B8
-    nw4r::math::FRUSTUM mFrustum; // 0x2B8
-};
-
 // ===========================================================================
 // Constructor - free-function form (retail __ct__CScnItemCameraNw4r). Calls
 // the flat base ctor then installs the Nw4r vtable.
@@ -82,47 +60,44 @@ extern "C" void* __dt__80482054(u8* self, int deleting) {
 // ScnCamNw4r_RefreshFrustumA (vtable slot 9) - rebuild the nw4r camera frustum.
 // ===========================================================================
 void ScnCamNw4r_RefreshFrustumA(CScnItemCameraNw4r* self) {
-    CScnItemCameraNw4rLayout* cam = (CScnItemCameraNw4rLayout*)self;
-
     // Refresh camera internals in the base object first.
     ScnCamRebuild(self);
 
-    f32 farZ = cam->mFarZ;
-    f32 nearZ = cam->mNearZ;
-    f32 aspect = cam->mAspect;
-    f32 fovY = cam->mFovY;
+    f32 farZ = self->mFarZ;
+    f32 nearZ = self->mNearZ;
+    f32 aspect = self->mAspectRatio;
+    f32 fovY = self->mFovY;
 
-    cam->mFrustum.Set(fovY, aspect * CDeviceVI::getWidthScale(), nearZ, farZ,
-                      *cam->mLocalMatInv);
+    self->mFrustum.Set(fovY, aspect * CDeviceVI::getWidthScale(), nearZ, farZ,
+                       *self->mTransform.mLocalMatInv);
 }
 
 // ===========================================================================
 // ScnCamNw4r_RefreshFrustumB (vtable slot 5) - rebuild the nw4r camera frustum.
 // ===========================================================================
 void ScnCamNw4r_RefreshFrustumB(CScnItemCameraNw4r* self) {
-    CScnItemCameraNw4rLayout* cam = (CScnItemCameraNw4rLayout*)self;
-
     // Refresh camera internals in the base object first.
     ScnCamViewReg(self);
 
-    f32 farZ = cam->mFarZ;
-    f32 nearZ = cam->mNearZ;
-    f32 aspect = cam->mAspect;
-    f32 fovY = cam->mFovY;
+    f32 farZ = self->mFarZ;
+    f32 nearZ = self->mNearZ;
+    f32 aspect = self->mAspectRatio;
+    f32 fovY = self->mFovY;
 
-    cam->mFrustum.Set(fovY, aspect * CDeviceVI::getWidthScale(), nearZ, farZ,
-                      *cam->mLocalMatInv);
+    self->mFrustum.Set(fovY, aspect * CDeviceVI::getWidthScale(), nearZ, farZ,
+                       *self->mTransform.mLocalMatInv);
 }
 
 // ===========================================================================
 // Keep the remaining (unmatched) unit symbols as stubs.
 // ===========================================================================
-// retail: addi r3,r3,0x2b8; b IntersectSphere__Q34nw4r4math7FRUSTUMCFPCQ34nw4r4math6SPHERE
-extern "C" bool ScnCamNw4r_TestSphereHit(u8* self, const void* sphere) {
-    const nw4r::math::FRUSTUM* frustum =
-        (const nw4r::math::FRUSTUM*)(self + 0x2b8);
-    return frustum->IntersectSphere((const nw4r::math::SPHERE*)sphere);
+extern "C" bool ScnCamNw4r_TestSphereHit(CScnItemCameraNw4r* self,
+                                        const nw4r::math::SPHERE* sphere) {
+    return self->mFrustum.IntersectSphere(sphere);
 }
-extern "C" void* ScnCamNw4r_NullHook40(u8* self) { return 0; }
+extern "C" void* ScnCamNw4r_NullHook40(CScnItemCameraNw4r* self) { return 0; }
 void ScnCamNw4r_EmptyHook48() {}
-void* ScnCamNw4r_GetField10Ptr(u8* self) { return (void*)((u8*)self + 0x10); }
+void* ScnCamNw4r_GetField10Ptr(u8* self) {
+    CScnItemCamera* cam = static_cast<CScnItemCamera*>(static_cast<void*>(self));
+    return cam->mName;
+}

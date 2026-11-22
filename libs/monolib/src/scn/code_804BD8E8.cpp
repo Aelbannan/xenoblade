@@ -837,7 +837,7 @@ s32 ScnRes_ValidateCrossing(s32 idx) {
 s32 ScnRes_RecordCrossing(s32 index) {
     ScnWork* w = (ScnWork*)lbl_eu_8065F428;
     const f32 thrMin = -0.05f;
-    ScnEntryF* e = (ScnEntryF*)(lbl_eu_8065F428 + index * 0x24);
+    ScnEntryF* e = &w->entries[index];
     f32 y = e->field_0x10;
     if (y >= thrMin) {
         if (y >= 0.5f) {

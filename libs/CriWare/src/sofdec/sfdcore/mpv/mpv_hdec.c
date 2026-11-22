@@ -3,9 +3,18 @@
 
 #include <harness_catalog.h>
 
-// Large section arrays for data diff - generated
-__attribute__((section(".rodata"), aligned(8), used)) const volatile unsigned char __large_rodata_for_CriWare_src_sofdec_sfdcore_mpv_[0x28] = {0x00, 0x00, 0x00, 0x00, 0x80, 0x3A, 0x7F, 0x18, 0x80, 0x3A, 0x83, 0x00, 0x80, 0x3A, 0x8A, 0x78, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x49, 0x44, 0x43, 0x50, 0x52, 0x45, 0x43, 0x00, 0x53, 0x54, 0x43, 0x43, 0x4F, 0x44, 0x45, 0x00}; // .rodata 0x28 at 0x8051C1D8
-__attribute__((used, section(".rodata"))) const volatile unsigned char * const __large_rodata_ptr_for_mpv_hdec = __large_rodata_for_CriWare_src_sofdec_sfdcore_mpv_;
+/* The decoder handle and stream-object types are defined in mpv_dec.c. */
+struct MpvDec;
+struct SjObj;
+typedef s32 (*MpvDecMbFunc)(struct MpvDec*, struct SjObj*);
+extern s32 MPVDEC_DecIpicMb(struct MpvDec*, struct SjObj*);
+extern s32 MPVDEC_DecPpicMb(struct MpvDec*, struct SjObj*);
+extern s32 MPVDEC_DecBpicMb(struct MpvDec*, struct SjObj*);
+
+// name-guess: picture-type-indexed macroblock decoder table (retail 0x8051C1D8).
+MpvDecMbFunc const sMpvHdecMbDecoder[6] = {
+    NULL, MPVDEC_DecIpicMb, MPVDEC_DecPpicMb, MPVDEC_DecBpicMb, NULL, NULL
+};
 
 extern void SJ_SplitChunk(const void* src, int size, void* dst1, void* dst2);
 
@@ -91,7 +100,7 @@ typedef struct MpvHdec {
     s32 c54;                  /* 0xC54 */
     s32 c58;                  /* 0xC58 */
     s32 c5c;                  /* 0xC5C */
-    s32 c60;                  /* 0xC60 */
+    MpvDecMbFunc c60;         /* 0xC60 */
     s32 c64;                  /* 0xC64 */
     u8  padC68[0xC70 - 0xC68];
     s32 c70;                  /* 0xC70 */
@@ -353,7 +362,6 @@ s32 mpvhdec_GetCodec(void* self, s32* param) {
     return h->cfc;
 }
 
-extern u32 lbl_eu_8051C1D8[];
 extern u32 lbl_eu_80602A5C[];
 extern void UTY_MemcpyDword(void* dst, const void* src, s32 n);
 extern void UTY_MemsetDword(void* dst, u32 val, s32 n);
@@ -370,7 +378,7 @@ extern void UTY_MemsetDword(void* dst, u32 val, s32 n);
  */
 #define HDEC_READ(val, hi, lo, sh, ptr, n)                                   \
     do {                                                                     \
-        const s32 nb_ = (n);                                                 \
+        s32 nb_ = (n);                                                       \
         if ((sh) >= 32 - nb_) {                                              \
             (sh) -= 32 - nb_;                                                \
             if ((sh) == 0) {                                                 \
@@ -454,7 +462,7 @@ s32 mpvhdec_DecPscSj(void* selfp, void* sj) {
     flag = (((u32)(3 - self->b28)) | ((u32)(self->b28 - 3))) >> 31; /* b28 != 3 */
     off = v2 * 4;
     idx = flag * 0x14;
-    self->c60 = *(u32*)((char*)lbl_eu_8051C1D8 + off);
+    self->c60 = sMpvHdecMbDecoder[v2];
     self->c64 = *(u32*)((char*)tbl + off + idx);
     self->c70 = *(u32*)((char*)tbl + MPV_HDEC_TBL_B + off + self->b20 * MPV_HDEC_TBL_B + idx);
     self->c78 = *(u32*)((char*)tbl + MPV_HDEC_TBL_D + off + idx);
@@ -763,7 +771,6 @@ s32 mpvhdec_AnalyUd(void* self, const u8* p, s32 size) {
     return found;
 }
 
-extern char lbl_eu_8051C1F0[];
 extern int strncmp(const char* a, const char* b, unsigned long n);
 extern int atoi(const char* s);
 
@@ -772,13 +779,13 @@ s32 mpvhdec_DecSeqUdsc(void* selfp, const u8* p, s32 size) {
     s32 ret = 0;
     s32 i = 0;
     while (i < size - 4) {
-        if (strncmp((const char*)(p + i + 4), lbl_eu_8051C1F0, 7) == 0) {
+        if (strncmp((const char*)(p + i + 4), "IDCPREC", 7) == 0) {
             if (atoi((const char*)(p + i + 4) + 16) == 0)
                 self->d38 = 0;
             else
                 self->d38 = 3;
         }
-        if (strncmp((const char*)(p + i + 4), lbl_eu_8051C1F0 + 8, 7) == 0) {
+        if (strncmp((const char*)(p + i + 4), "STCCODE", 7) == 0) {
             self->d00 = atoi((const char*)(p + i + 4) + 16);
             self->d04 = atoi((const char*)(p + i + 4) + 24);
             self->d08 = atoi((const char*)(p + i + 4) + 32);

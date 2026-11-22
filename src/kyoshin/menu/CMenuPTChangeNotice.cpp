@@ -21,7 +21,7 @@
 
 // forward declaration for scaffold thunk reference (retail calls it by its
 // flat name, so C linkage keeps the thunk's reloc unmangled like retail).
-extern "C" void cbRenderBefore__19CMenuPTChangeNoticeFv(void*);
+extern "C" void cbRenderBefore__19CMenuPTChangeNoticeFP4CScn(void*);
 
 // ---------------------------------------------------------------------------
 // Constructor (unmangled retail symbol). Not yet matched (us-8029573c) -
@@ -286,7 +286,7 @@ extern "C" int PTNotice_BuildLayout_348C(CMenuPTChangeNotice* self, CEventFile* 
     return 0;
 }
 
-void CMenuPTChangeNotice::cbRenderBefore() {}
+void CMenuPTChangeNotice::cbRenderBefore(CScn*) {}
 
 // ---------------------------------------------------------------------------
 // PTNotice_Create_3B9C - task entry: if the notice singleton already exists return 0,
@@ -335,7 +335,7 @@ void CMenuPTChangeNotice::OnFileEvent(CEventFile* pEvent) { ((void(*)(void*))PTN
 
 void PTNotice_DtorThunkA_3D78(void* self) { ((void(*)(void*))__dt__19CMenuPTChangeNoticeFv)((char*)self - 0x6c); }
 
-void PTNotice_RenderThunk_3D80(void* self) { ((void(*)(void*))cbRenderBefore__19CMenuPTChangeNoticeFv)((char*)self - 0x70); }
+void PTNotice_RenderThunk_3D80(void* self) { ((void(*)(void*))cbRenderBefore__19CMenuPTChangeNoticeFP4CScn)((char*)self - 0x70); }
 
 extern "C" void PTNotice_DtorThunkB_3D88(void* self) { ((void(*)(void*))__dt__19CMenuPTChangeNoticeFv)((char*)self - 0x70); }
 

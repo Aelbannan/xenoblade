@@ -522,13 +522,15 @@ int sjrbf_IsGetChunk(SJRBF *self, int mode, int size, int *out) {
         return 0;
     }
     if (mode == 0) {
+        int get_avail = self->get_avail;
         int avail = self->xtr_size + (self->buf_size - self->get_pos);
-        if ((int)self->get_avail < avail) avail = self->get_avail;
+        if (get_avail < avail) avail = get_avail;
         result = size;
         if (avail < size) result = avail;
     } else if (mode == 1) {
+        int put_avail = self->put_avail;
         int avail = self->xtr_size + (self->buf_size - self->put_pos);
-        if ((int)self->put_avail < avail) avail = self->put_avail;
+        if (put_avail < avail) avail = put_avail;
         result = size;
         if (avail < size) result = avail;
     } else {
@@ -536,7 +538,7 @@ int sjrbf_IsGetChunk(SJRBF *self, int mode, int size, int *out) {
         if (self->err_func) self->err_func(self->err_arg, -3);
     }
     *out = result;
-    return (result == size) ? 1 : 0;
+    return result == size;
 }
 #pragma pop
 

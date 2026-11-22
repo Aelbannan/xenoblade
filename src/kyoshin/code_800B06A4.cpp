@@ -5,6 +5,7 @@
 #include <types.h>
 #include "kyoshin/code_800AA008_Tok.hpp"
 #include "kyoshin/cf/object/CfObjectColl.hpp"
+#include "kyoshin/cf/object/CfObjectEff.hpp"
 #include "kyoshin/cf/object/CfObjectModel.hpp"
 #include "kyoshin/cf/object/CfObjectMap.hpp"
 #include "kyoshin/cf/object/CfObjectMove.hpp"
@@ -22,6 +23,7 @@ extern "C" u32 getEneBdatColumn__Q22cf11CfObjectEneFPCc(void* self, const char* 
 #include "kyoshin/cf/CfCamEventApi.hpp"
 #include "kyoshin/cf/object/CfObjectObj.hpp"
 #include "kyoshin/cf/object/CfObjectTbox.hpp"
+#include "kyoshin/cf/object/CfObjectNpc.hpp"
 #include <string.h>
 #include <math.h>
 #include <new>
@@ -170,9 +172,6 @@ struct Buf380View { u32 buf[0xE0]; u32 count380; };                            /
 struct EvtArgHeadView { u8 _00[0x3E9C]; };                                       // evtTypeSlot7E/80 (arg at +0x3E9C)
 struct Obj98View { u8 _00[0x98]; B5994Obj* field_98; };                          // getObjField98
 struct Obj620View { u8 _00[0x620]; int field_620; };                            // getObjField620
-struct Obj720View { u8 _00[0x720]; u32 field_720; };                            // setObjField720
-struct Obj734View { u8 _00[0x734]; u8* field_734; };                           // setObjField734
-struct Obj738View { u8 _00[0x738]; u16 field_738; };                            // setObjField738
 
 extern "C" void __ct__reslist_cf_IFactoryEvent(void* self) {
     extern void* lbl_eu_805290B8[];
@@ -814,7 +813,7 @@ extern "C" void ringInsertSorted(UnkClass_800B0AD8* self, UnkClass_805764CC** it
         }
     }
 }
-u32 UnkClass_805764CC::get_u32_74(){return field_0x20.field_0x74;}
+u32 UnkClass_805764CC::get_u32_74(){return field_0x20.field_0x54;}
 void init_39C8(){}
 
 // us-800b39C8 variant of poolInsertBack that inserts BEFORE the
@@ -1014,7 +1013,7 @@ extern "C" s32 hudCtrlSlot46(Func4CA0Obj* self) {
     // membership via CBattleMan_ListHasValue, and the sub-record's bit 18 before firing
     // the slot-0x46 float callback and returning 1.
     s32 flag;
-    void* mgr = getInstance__Q22cf14CBattleManagerFv();
+    void* mgr = cf::CBattleManager::getInstance();
     flag = 0;
     if (self->unkAF() != 0 || (self->field_3F08 & 0x08000000) != 0) {
         flag = 1;
@@ -1046,16 +1045,16 @@ extern "C" u16 getGlobalU16_4314(){extern u16 sPartsChangeLoadState; return sPar
 void init_4F6C(){}
 void init_4F80(){}
 void init_4F90(){}
-u32 UnkClass_805764CC::get_u32_70(){return field_0x20.field_0x70;}
+u32 UnkClass_805764CC::get_u32_70(){return field_0x20.field_0x50;}
 void init_4FAC(){}
 void init_535C(){}
 void init_570C(){}
 void init_587C(){}
 void init_5944(){}
 void init_5948(){}
-void UnkClass_805764CC::clear_380(){field_0x20.field_0x380 = 0;}
+void UnkClass_805764CC::clear_380(){field_0x20.field_0x360 = 0;}
 void* UnkClass_805764CC::getNull(){return 0;}
-u32 UnkClass_805764CC::get_u32_380(){return field_0x20.field_0x380;}
+u32 UnkClass_805764CC::get_u32_380(){return field_0x20.field_0x360;}
 
 // us-800b13c0 - __dt__800B0AF4
 // Destructor for UnkClass_800B0AD8. Clears counters and frees memory if flags > 0.
@@ -1088,16 +1087,16 @@ void init_6494(){}
 u32 shift_u32_hi8_alt4(u32 val){return (val >> 16) & 0xFF;}
 void init_64B8(){}
 u32 shift_u32_and(u32 a, u32 b){return a & b;}
-u32 UnkClass_805764CC::get_u32_98(){return field_0x20.field_0x98;}
+u32 UnkClass_805764CC::get_u32_98(){return field_0x20.field_0x78;}
 u16 UnkClass_805764CC::get_u16_45C0(){return *(u16*)((u8*)this + 0x45C0);}
 u32 shift_u32_hi8_alt5(u32 val){return (val >> 16) & 0xFF;}
 void init_64F8(){}
 void init_6508(){}
 void UnkClass_805764CC::appendToBuffer(void* other){
-    unsigned int count = field_0x20.field_0x700;
+    unsigned int count = field_0x20.field_0x6E0;
     unsigned int val = *(unsigned int*)other;
     unsigned int newCount = count + 1;
-    field_0x20.field_0x700 = newCount;
+    field_0x20.field_0x6E0 = newCount;
     float fval = *(float*)((unsigned char*)other + 4);
     void* dest = (unsigned char*)this + count * 8;
     *(unsigned int*)dest = val;
@@ -1121,8 +1120,8 @@ extern "C" int isTypeId1to24(void* self) {
     }
     return result;
 }
-void* UnkClass_805764CC::getPtr_1A8(){return &field_0x20.field_0x1A8;}
-void UnkClass_805764CC::clear_700(){field_0x20.field_0x700 = 0;}
+void* UnkClass_805764CC::getPtr_1A8(){return &field_0x20.field_0x188;}
+void UnkClass_805764CC::clear_700(){field_0x20.field_0x6E0 = 0;}
 void init_6800(){}
 void init_68A8(){}
 void init_6AF4(){}
@@ -1190,7 +1189,7 @@ void init_708C(){}
 void init_70FC(){}
 u32 gvar_get40F4(void){ return (u32)::cf::CfBdat::spItmWpnListFileData;}
 
-void* UnkClass_805764CC::getPtr_720(){return &field_0x20.field_0x720;}
+void* UnkClass_805764CC::getPtr_720(){return &field_0x20.field_0x700;}
 void init_7214(){}
 void init_72DC(){}
 
@@ -1204,7 +1203,7 @@ void init_7410(){}
 unsigned short gvar_get408C_alt1(){return lbl_eu_8066408C;}
 unsigned short gvar_get408C_alt2(){return lbl_eu_8066408C;}
 void UnkClass_805764CC::maskField_6C(u32 mask, int enable){
-    u32* field = &field_0x20.field_0x6C;
+    u32* field = &field_0x20.field_0x4C;
     if (enable) { *field |= mask; } else { *field &= ~mask; }
 }
 extern "C" u16 getGlobalU16_3E42(){extern u16 gmGlobalFlag42; return gmGlobalFlag42;}
@@ -1443,7 +1442,7 @@ extern "C" void tickSpeedPass(UnkClass_805764CC* self, void* arg) {
         }
     }
     int result = 0;
-    if (CfRes_getE24Bit22() == 0 && getInstance__Q22cf14CBattleManagerFv() != 0) {
+    if (CfRes_getE24Bit22() == 0 && cf::CBattleManager::getInstance() != 0) {
         void* tmp = getPtr_1A8__17UnkClass_805764CCFv();
         result = isTypeId1to24(tmp);
     }
@@ -1652,12 +1651,12 @@ void init_dispatchTarget_7(){}
 void sub_dispatchWithArgs(u32 a, u32 b){Tok_Pack08(a, b); ((void(*)())init_dispatchTarget_7)();}
 void init_9548(){}
 void init_957C(){}
-void UnkClass_805764CC::set_u32_734(u32 val){field_0x20.field_0x734 = val;}
-void UnkClass_805764CC::set_u8_73A(u8 a, u8 b){field_0x20.field_0x73A = a; field_0x20.field_0x73B = b;}
-void UnkClass_805764CC::set_u32_720(u32 val){field_0x20.field_0x720 = val;}
-void UnkClass_805764CC::set_u16_738(u16 val){field_0x20.field_0x738 = val;}
+void UnkClass_805764CC::set_u32_734(u32 val){field_0x20.field_0x714 = val;}
+void UnkClass_805764CC::set_u8_73A(u8 a, u8 b){field_0x20.field_0x71A = a; field_0x20.field_0x71B = b;}
+void UnkClass_805764CC::set_u32_720(u32 val){field_0x20.field_0x700 = val;}
+void UnkClass_805764CC::set_u16_738(u16 val){field_0x20.field_0x718 = val;}
 void init_96E8(){}
-void UnkClass_805764CC::set_float_730(float val){field_0x20.field_0x730 = val;}
+void UnkClass_805764CC::set_float_730(float val){field_0x20.field_0x710 = val;}
 // us-800ba028 - __ct__800B970C
 // Constructor for a class with base vtable lbl_eu_8052AC98, final vtable lbl_eu_80537FB0,
 // CCharVoice at offset 0x28, and fields at 0x6C/0x70.
@@ -1734,7 +1733,7 @@ extern "C" void spawnFromRecord(void* argA, void* argB, void* argC) {
     mapKindToSpawn(buf, (u32)(uintptr_t)argC);
 }
 void init_98C8(){}
-u32 UnkClass_805764CC::get_u32_620(){return field_0x20.field_0x620;}
+u32 UnkClass_805764CC::get_u32_620(){return field_0x20.field_0x600;}
 void init_998C(){}
 void init_99BC(){}
 void fwd_99EC_body(){}
@@ -2507,16 +2506,16 @@ extern "C" void allocTboxPool(void* self, unsigned long handle, unsigned long co
 // Imports for spawnVoiceActor (voice/actor spawn path).
 extern "C" void* CfRes_packFourFields(unsigned long a, unsigned long b, unsigned long c, void* d);
 extern "C" void set_u8_73A__17UnkClass_805764CCFUcUc(void* obj, unsigned long a, unsigned long b);
-extern "C" void setObjField720(u8* self, u32 val);
+extern "C" void setObjField720(void* self, u32 val);
 extern "C" void copyObjVec724(void* obj, void* arg);
 
 // us-800b9fe0 - store arg at +0x734
 extern "C" void setObjField734(void* obj, void* arg) {
-    ((Obj734View*)obj)->field_734 = (u8*)arg;
+    static_cast<cf::CfObjectTbox*>(obj)->field_734 = (u32)arg;
 }
 // us-800b9ffc - store low 16 bits of arg at +0x738
 extern "C" void setObjField738(void* obj, void* arg) {
-    ((Obj738View*)obj)->field_738 = (u16)(u32)arg;
+    static_cast<cf::CfObjectTbox*>(obj)->field_738 = (u16)(u32)arg;
 }
 
 // us-800b9e98 - spawnVoiceActor
@@ -2697,8 +2696,8 @@ extern "C" void gmSpawnMask8000() {
     spawnMaskedObject(getInstance(), 0x8000, 0, 0);
 }
 // us-800b9ff4 - setter storing val at +0x720
-void setObjField720(u8* self, u32 val) {
-    ((Obj720View*)self)->field_720 = val;
+void setObjField720(void* self, u32 val) {
+    static_cast<cf::CfObjectTbox*>(self)->field_720 = val;
 }
 
 // us-800b6e58 - reloadMatchingItems
@@ -2712,7 +2711,7 @@ void reloadMatchingItems(UnkClass_805764CC* self, const F8C0ListSource* list) {
     if (cf::CfGameManager::isSceneLoading() == 0 || big != 0) {
         if (small == 0) {
         void* ctx = (void*)(u32)CfT_DispatchFrameCounts();
-        getInstance__Q22cf14CBattleManagerFv();
+        cf::CBattleManager::getInstance();
         // Retail keeps three distinct iterator slots (init / step-back / end).
         F8C0IteratorNode outer;
         F8C0IteratorNode mid;
@@ -4160,6 +4159,7 @@ extern "C" s32 scanBattleObjects() {
 // and notify every queued factory event (field_0xC80 list, slot 3).
 
 
+// Generic spawned-object word touched by the tail registration path.
 struct B20B4ObjView {
     u8 _pad00[0x64];
     u32 flags64;                   // +0x64 final mask
@@ -4170,41 +4170,12 @@ struct B20B4ObjView {
 
 // Npc/pc deep fields filled after construction.
 
-// Eff (kind 0x20) fields: name string copy + id halves.
-struct B20B4EffView {
-    u8 _pad00[0x70 - 0x00];
-    u32 field70;                   // +0x70 payload w04
-    u8 _pad74[0x78 - 0x74];
-    char name78[0x10];             // +0x78 strcpy target
-    u32 nameLen;                   // +0x88 strlen result
-    u16 h8C;                       // +0x8C w00 & 0x3ff
-};
+// Eff (kind 0x20) uses cf::CfObjectEff's real name/id fields.
 
 
-// ObjectModel (kind 0x200): inlined ctor body over the raw 0x2f50 block.
-struct B20B4ModelView {
-    u8 _pad00[0xDC - 0x00];
-    u32 zDC;
-    u32 zE0;
-    u32 zE4;
-    u32 zE8;
-    u32 zEC;
-    u8 _padF0[0x100 - 0xF0];       // +0xF0: __dt__8047BDA8 sub-object
-    u32 z100;
-    u32 z104;
-    u8 _pad108[0x110 - 0x108];
-    u32 z110;
-    u8 _pad114[0x2F28 - 0x114];
-    u32 z2F28;
-    u8 _pad2F2C[0x2F38 - 0x2F2C];
-    u32 z2F38;
-    u32 z2F3C;
-    u8 b2F40;
-    u8 _pad41[0x2F48 - 0x2F41];
-    float f2F48;
-};
+// ObjectModel (kind 0x200): CfObjectMap's real embedded fields.
 
-// Resource-pool entry probed by the npc/pc lookup loop (+0x34 slot id).
+
 struct B20B4Entry {
     u8 _pad00[0x04 - 0x00];
     u32 field04;
@@ -4265,10 +4236,6 @@ void* spawnMaskedObject(UnkClass_805764CC* self, u32 mask,
         if (mem != 0) {
             __ct__Q22cf13CfObjectModelFv(mem);
             map = (cf::CfObjectMap*)mem;
-            // Residual: UnkMapSubF0's inner words 0x100/0x104/0x110/0x2F28
-            // are still unnamed in the non-owned CfObjectMap.hpp; keep the
-            // narrow view only until that header names them.
-            B20B4ModelView* mv = (B20B4ModelView*)mem;
             u32 zero = 0;
             *(void**)mem = (void*)lbl_eu_80529128;
             map->field_0xDC = (void*)zero;
@@ -4276,10 +4243,10 @@ void* spawnMaskedObject(UnkClass_805764CC* self, u32 mask,
             map->field_0xE4 = (void*)zero;
             map->field_0xE8 = (void*)zero;
             map->field_0xEC = (void*)zero;
-            mv->z100 = zero;
-            mv->z104 = zero;
-            mv->z110 = zero;
-            mv->z2F28 = zero;
+            map->field_0xF0.flags_0x10 = zero;
+            map->field_0xF0.field_0x14 = zero;
+            map->field_0xF0.field_0x20 = zero;
+            map->field_0xF0.field_0x2E38 = zero;
             __dt__8047BDA8(&map->field_0xF0);
             map->field_0x2F38 = zero;
             float fDCm = lbl_eu_806669DC;
@@ -4305,10 +4272,7 @@ void* spawnMaskedObject(UnkClass_805764CC* self, u32 mask,
         }
         if (payload->h24 != 0) {
             void* mem = mtl::MemManager::allocate(0x724, (unsigned long)CfRes_getHeapHandle());
-            if (mem != 0) {
-                __ct__Q22cf11CfObjectNpcFi(mem, 1);
-            }
-            obj = mem;
+            obj = new (mem) cf::CfObjectNpc(1);
         } else {
             void* mem = mtl::MemManager::allocate(0x45C4, (unsigned long)CfRes_getHeapHandle());
             if (mem != 0) {
@@ -4442,10 +4406,7 @@ void* spawnMaskedObject(UnkClass_805764CC* self, u32 mask,
             }
         } else {
             void* mem = mtl::MemManager::allocate(0x724, (unsigned long)CfRes_getHeapHandle());
-            obj = mem;
-            if (mem != 0) {
-                __ct__Q22cf11CfObjectNpcFi(mem, 0);
-            }
+            obj = new (mem) cf::CfObjectNpc(0);
         }
         if (obj == 0) {
             break;
@@ -4478,10 +4439,7 @@ void* spawnMaskedObject(UnkClass_805764CC* self, u32 mask,
             break;
         }
         void* mem = mtl::MemManager::allocate(0x740, (unsigned long)CfRes_getHeapHandle());
-        if (mem != 0) {
-            mem = __ct__Q22cf12CfObjectTboxFv(mem);
-        }
-        obj = mem;
+        obj = new (mem) cf::CfObjectTbox();
         if (obj == 0) {
             break;
         }
@@ -4515,12 +4473,12 @@ void* spawnMaskedObject(UnkClass_805764CC* self, u32 mask,
         }
         {
             const char* name = "";
-            B20B4EffView* ev = (B20B4EffView*)obj;
-            ev->nameLen = (u32)strlen(name);
-            strcpy(ev->name78, name);
-            ev->h8C = (u16)(w00 & 0x3ff);
-            ev->field70 = w04;
-            B20B4_BUMP(((B20B4ObjView*)obj)->field74);
+            cf::CfObjectEff* eff = static_cast<cf::CfObjectEff*>(obj);
+            eff->mNameLen = (u32)strlen(name);
+            strcpy(eff->mName, name);
+            eff->mCount8C = (u16)(w00 & 0x3ff);
+            eff->mField70 = w04;
+            B20B4_BUMP(eff->mField74);
         }
         break;
     }
@@ -5075,7 +5033,7 @@ extern "C" s32 scanAcquireTarget(UnkClass_805764CC* self, IB7Arg* arg) {
 
     // Battle-manager range gate: objects whose extra byte sits in [1,0x18]
     // suppress acquisition candidates.
-    void* bm = getInstance__Q22cf14CBattleManagerFv();
+    void* bm = cf::CBattleManager::getInstance();
     if (bm != 0) {
         struct BMFlagView {
             u8 _pad00[0x1AA];

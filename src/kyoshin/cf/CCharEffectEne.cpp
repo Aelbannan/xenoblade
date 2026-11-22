@@ -2,17 +2,30 @@
 // High-level C++ reconstruction from retail ASM.
 
 #include <types.h>
+#include "kyoshin/cf/CCharEffectEne.hpp"
 #include "kyoshin/cf/CCharEffect.hpp"
 #include "kyoshin/cf/object/CfObjectMove.hpp"
 #include "kyoshin/cfsys/CfObjectImplPc.hpp"
 #include "kyoshin/cf/object/CfObjectEff.hpp"
 #include "kyoshin/cf/object/CfObjectEffSymbols.hpp"
 
-// External data tables
-extern "C" u16 lbl_eu_80501E48[];
-extern "C" u16 lbl_eu_80501EB8[];
-extern "C" u16 lbl_eu_80501F28[];
-extern "C" u16 lbl_eu_80501F98[];
+// name-guess: 44-entry id table used by ChEff_LoadNpcA_CD04.
+static const u16 sNpcEffectIds[44] = {
+    0x0079, 0x0051, 0x0065, 0x0201, 0x0202, 0x0203, 0x0204, 0x0205,
+    0x0206, 0x020F, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
+    0x0000, 0x00A7, 0x00A6, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
+    0x0000, 0x0000, 0x0000, 0x0000, 0x0055, 0x0056, 0x0057, 0x0052,
+    0x0059, 0x0058, 0x0246, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
+    0x005A, 0x0054, 0x0053, 0x0000,
+};
+
+// Retail .rodata interleaves an unreferenced "cf::CCharEffectEne" string after each
+// table (0x80501EA0/F10/F80) whose producer is not yet decompiled, so these three
+// tables stay retail-label externs until it is (OPUS-T-CCHAREFFECTENE-REGAIN).
+extern "C" const u16 lbl_eu_80501EB8[44];
+extern "C" const u16 lbl_eu_80501F28[44];
+extern "C" const u16 lbl_eu_80501F98[44];
+
 extern "C" void* createNpcActor__Q22cf13CfGameManagerFv(u32 value);
 extern "C" void* createBattleActor__Q22cf13CfGameManagerFv(u32 value, u32 unused);
 
@@ -40,7 +53,7 @@ extern "C" CCharEffectEne* __ct__cf_CCharEffectEne(CCharEffectEne* self) {
 extern "C" void* ChEff_LoadNpcA_CD04(CCharEffectEne* self, u32 index, s32 mode) {
     void* result = nullptr;
     if (mode < 0) {
-        u16 entry = lbl_eu_80501E48[index];
+        u16 entry = sNpcEffectIds[index];
         if (entry != 0) {
             if (entry < 0x200) {
                 result = createNpcActor__Q22cf13CfGameManagerFv(entry);
@@ -131,7 +144,7 @@ extern "C" void ChEff_Dispatch_CF90(CCharEffectEne* self, void* target, u32 type
     }
     bindPartnerO_((cf::CfObjectEff*)target, (u8*)self->mManager, (u8*)(u32)(uintptr_t)dataSrc);
     reinterpret_cast<cf::CfObjectEff*>(target)->setEffLockFg_(bitFlag);
-    setChild34Sc_(target, &self->mManager->mSubObj98->field_304);
+    setChild34Sc_(target, &self->mManager->mSubObj98->mScale304);
     simGetLeafDist7B0(reinterpret_cast<u8*>(self->mManager->mSubObj98));
     setChildF50G_((u8*)target);
 }

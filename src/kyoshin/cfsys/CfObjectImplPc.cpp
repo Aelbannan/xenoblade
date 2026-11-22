@@ -22,6 +22,7 @@
 #include "kyoshin/cf/CfGameManagerData.hpp"  // gmScene (CScn*)
 #include "monolib/scn/CScn.hpp"        // Scn_GetFrameDelta
 #include "kyoshin/CfEnumListHolder.hpp"
+#include "kyoshin/cf/CfObjectEnumList.hpp"
 #include "kyoshin/cf/object/CfObjectMoveHelpers.hpp"
 #include "kyoshin/cf/object/CAIActionApi.hpp"
 
@@ -229,13 +230,6 @@ struct CfObjectImplPcRec90 {
 
 int ObjPc_BattleActorRecount_A294(cf::CfObjectImplPc* self);
 
-// Data overlay over the battle object's arts container (+0x08): pending
-// flag word at +0x1528, forwarded through the container's slot 0x20.
-struct CfObjectImplPcArtsData {
-    u8 _pad00[0x1528];
-    u32 field_1528;
-};
-
 // Retail never caches field_18 across calls: every access reloads it
 // (lwz 0x18(r30)). Textually expand every reference so MWCC allocates a
 // fresh reload per use.
@@ -345,12 +339,8 @@ void ObjPc_BattleChangeDriver_5B00(cf::CfObjectImplPc* self)
             u32 id = *obj->field_04->vf30();
             if (testActorStatus(obj, &id, 6) != 0 &&
                 isBattleStatusActive(&obj->mArts, 0x10a) == 0) {
-                if (reinterpret_cast<CfObjectImplPcArtsData*>(&obj->mArts)
-                        ->field_1528
-                    != 0) {
-                    obj->mArts.vf20(
-                        reinterpret_cast<CfObjectImplPcArtsData*>(&obj->mArts)
-                            ->field_1528);
+                if (obj->mPendingArtsCommand != 0) {
+                    obj->mArts.vf20(obj->mPendingArtsCommand);
                 }
                 CBattleMan_ClearEventNotify(cf::CBattleManager::getInstance(), (u32)obj, (u16)0x10a);
                 goto L_table;
@@ -411,7 +401,7 @@ L_tail:
                 if (findObjB48ById(0x9c5)) {
                     CfEnumListHolder h58;
                     startEnumObjects(h58.get(), 0x20, 0x800);
-                    if (((cf::CfEnumList*)h58.get())->field_620 != 0) {
+                    if (h58.get()->mPtrCount != 0) {
                     } else {
                         // No other actors queued: drop every player into the
                         // battle-start state.
@@ -423,9 +413,7 @@ L_tail:
                             if (pl != 0) {
                                 u32 pid = *pl->field_04->vf30();
                                 if (testActorStatus(pl, &pid, 0x1c) == 0) {
-                                    CfObjectMove_setAnimModeArgs(
-                                        reinterpret_cast<cf::CfObjectImplPcSub3E9C*>(
-                                            (u8*)pl + 0x3e9c),
+                                    CfObjectMove_setAnimModeArgs(&pl->mSub,
                                         5, 0, -1, 1);
                                 }
                             }
@@ -481,7 +469,7 @@ L_tail:
             {
                 CfEnumListHolder h50;
                 startEnumObjects(h50.get(), 0x20, 0x1000);
-                if (((cf::CfEnumList*)h50.get())->field_620 != 0) {
+                if (h50.get()->mPtrCount != 0) {
                     obj->v11C(1.0f);
                     obj->v314();
                     CfObjectMove_setAnimModeArgs(&obj->mSub, 0x2f, 1, -1, 1);
@@ -538,8 +526,8 @@ L_tail:
             // scale, then rebase the chain gauge from the 0x48 query rate.
             CfEnumListHolder h48;
             startEnumObjects(h48.get(), 0x20, 0);
-            cf::CfEnumList* list = (cf::CfEnumList*)h48.get();
-            for (u32 i = 0; i < list->field_620; i++) {
+            cf::CfObjEnumList* list = h48.get();
+            for (u32 i = 0; i < list->mPtrCount; i++) {
                 cf::CfObjectImplPc18* o2 = reinterpret_cast<cf::CfObjectImplPc18*>(
                     MapFx_ResolveOwner(
                         getObjectAt((u8*)h48.get(), i)));
@@ -579,9 +567,8 @@ L_tail:
                     q = ob->vf290();
                     if (q != 0) {
                         if (IdTable_GetSum(q, 0x48, (s32*)&w38)) {
-                            cf::CfEnumList* list2 =
-                                (cf::CfEnumList*)h40.get();
-                            for (u32 i = 0; i < list2->field_620; i++) {
+                            cf::CfObjEnumList* list2 = h40.get();
+                            for (u32 i = 0; i < list2->mPtrCount; i++) {
                                 cf::CfObjectImplPc18* o2 =
                                     reinterpret_cast<cf::CfObjectImplPc18*>(
                                         MapFx_ResolveOwner(getObjectAt(
@@ -597,7 +584,7 @@ L_tail:
                     }
                 }
                 for (u32 i = 0;
-                     i < ((cf::CfEnumList*)h40.get())->field_620;
+                     i < h40.get()->mPtrCount;
                      i++) {
                     cf::CfObjectImplPc18* o2 =
                         reinterpret_cast<cf::CfObjectImplPc18*>(MapFx_ResolveOwner(
@@ -644,7 +631,7 @@ L_tail:
                                       (Func800EA9A8_Arg5*)&eff, (void*)0x9a);
                     }
                     if (IdTable_GetSum(o2->vf290(), 0x62, (s32*)&w38)) {
-                        if (((cf::CfEnumList*)h40.get())->field_620
+                        if (h40.get()->mPtrCount
                             == 1) {
                             cf::PartyGaugeAddClamped(reinterpret_cast<cf::UnkClass_8018C5FC*>(
                                 &cf::CBattleManager::getInstance()->unk194),
@@ -731,7 +718,7 @@ L_flags:
     startEnumObjects(holder.get(), 0x80000002, 0);
     u32 startId = self->vf40();
     sortEntriesByDistance(holder.get(), (void*)startId);
-    if (((cf::CfEnumList*)holder.get())->field_620 != 0) {
+    if (holder.get()->mPtrCount != 0) {
         // Non-empty list: reset iteration (holder passed directly), publish
         // the result via vtable 0x70, and forward entry 0's actor to 0x2C4.
         u32 resetId = (u32)findFirstCleanObjectId(&holder);
@@ -1314,7 +1301,7 @@ L_tail:
     cf::CfObjectImplPc298Res* res = bt->v298();
     bt = self->field_18;
     cf::CfObjectImplPc2A4Sub* sub = res->field_50;
-    u8* info = CtrlObjectParam_GetArtsStatsRow((u8*)CtrlObjectParam_GetCharEntry(bt->field_3F28) + 0x1c, 5);
+    u8* info = (u8*)CtrlObjectParam_GetArtsStatsRow((u8*)CtrlObjectParam_GetCharEntry(bt->field_3F28) + 0x1c, 5);
     if (info[0x1c] != 0) {
         return;
     }
@@ -1572,7 +1559,7 @@ void ObjPc_BattleActorScan_86E8(cf::CfObjectImplPc* self)
         // Unrotated in retail (init; b cond; body; incr; cond) - kept as a plain
         // while since MWCC emits identical bytes either way.
         u32 i = 0;
-        while (i < ((cf::CfEnumList*)holder.get())->field_620) {
+        while (i < holder.get()->mPtrCount) {
             cf::CfObjectImplPc18* obj = (cf::CfObjectImplPc18*)MapFx_ResolveOwner(
                 getObjectAt(holder.get(), i));
             self->field_18->vf2C4((u8*)obj, 0.0f, 0.0f, 0.0f);
@@ -2184,7 +2171,7 @@ int ObjPc_BattleActorRecount_A294(cf::CfObjectImplPc* self)
     self->field_37C = 0;
     CfEnumListHolder holder;
     startEnumObjects(holder.get(), 0x80000000, 0x800);
-    for (u32 i = 0; i < ((cf::CfEnumList*)holder.get())->field_620; i++) {
+    for (u32 i = 0; i < holder.get()->mPtrCount; i++) {
         cf::CfObjectImplPc18* obj = (cf::CfObjectImplPc18*)MapFx_ResolveOwner(
             getObjectAt(holder.get(), i));
         if (obj->mSub.sf4C() == self->field_18->field_3F10) {

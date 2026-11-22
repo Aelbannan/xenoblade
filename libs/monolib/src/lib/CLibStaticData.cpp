@@ -37,20 +37,6 @@ CLibStaticData* CLibStaticData::getInstance(){
     return spInstance;
 }
 
-// Read-only view over the private CMsgParam<8> tail inside
-// CWorkThread::mMsgQueue. The mEntries array ends at 0x1A4 (0x80 queue base +
-// vtable + 8 * 0x24-byte entries); retail folds CMsgParam<8>::find()'s ring
-// walk straight into isInitialized's body, so we scan the queue directly
-// instead of calling the out-of-line find().
-class CMsgQueueView {
-public:
-    u8 field_0x0[0x1A4];             //0x0..0x1A4 (CWorkThread head + queue vtable + entries)
-    CMsgParamEntry* mArrayPtr;       //0x1A4 (CMsgParam::mArrayPtr)
-    u32 mFront;                      //0x1A8 (CMsgParam::mFront)
-    u32 mSize;                       //0x1AC (CMsgParam::mSize)
-    u32 mCapacity;                   //0x1B0 (CMsgParam::mCapacity)
-};
-
 // True once the singleton thread has logged in and started running and no
 // EVT_EXCEPTION is pending -- either flagged in mFlags or still queued in the
 // message ring. The member isRunning() is inlined with 'this' bound to the
@@ -62,12 +48,12 @@ bool CLibStaticData::isInitialized(){
     if (inst->mFlags & THREAD_FLAG_EXCEPTION) {
         exception = true;
     } else {
-        // Inlined CMsgParam<8>::find(EVT_EXCEPTION): ring walk over the queue.
-        const CMsgQueueView* queue = (const CMsgQueueView*)inst;
+        // Inlined CMsgParam<8>::find(EVT_EXCEPTION): ring walk over the real queue.
+        const CMsgParam<8>* queue = &inst->mMsgQueue;
         int found;
         u32 i = 0;
-        for (; i < queue->mSize; i++) {
-            if (queue->mArrayPtr[(queue->mFront + i) % queue->mCapacity].command == EVT_EXCEPTION) {
+        for (; i < queue->mRing.mSize; i++) {
+            if (queue->mRing.mArrayPtr[(queue->mRing.mFront + i) % queue->mRing.mCapacity].command == EVT_EXCEPTION) {
                 found = (int)i;
                 goto merged;
             }

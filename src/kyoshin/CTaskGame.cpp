@@ -3,7 +3,10 @@
 // must declare it instead of defining it inline.
 #define ISCN_RENDER_OUT_OF_LINE_DTOR
 #include <nw4r/lyt/lyt_drawInfo.h>
+#include "monolib/lod/CTaskLOD.hpp"
 #include "kyoshin/CTaskGameImports.hpp"
+#include "monolib/mpfsys/code_8047BB54.hpp"
+#include "kyoshin/CUIErrMesWin.hpp"
 #include "kyoshin/CTaskGame.hpp"
 #include "monolib/device/CDeviceSC.hpp"
 
@@ -215,7 +218,7 @@ void CTaskGame::Init(){
     __ct__8009D604();
     createGameEffTask(this, unk74);
     mtl::ALLOC_HANDLE mem2 = mtl::MemManager::getHandleMEM2();
-    create__8CTaskLODFv(this, unk74, unk70, mem2, 0);
+    CTaskLOD::create(this, unk74, unk70, mem2, 0);
     create__16CTaskColiManagerFv(CTaskManager::GetRootProcGame(), unk74,
                                  unk70);
     __dt__8047BFA8();
@@ -693,14 +696,14 @@ cf::CfObjEnumList* CfEnumListHolder::get() { return list; }
 // IScnRender base impls (retail blr at 0x800444C0 / 0x800444C4): the vtable slot 1
 // body plus the out-of-line destructor (key function -> the class vtable and
 // RTTI live in this TU in retail).
-void IScnRender::cbRenderBefore() {}
+void IScnRender::cbRenderBefore(CScn*) {}
 IScnRender::~IScnRender() {}
 extern "C" void __dt__9CTaskGameFv(CTaskGame*);
 void CProcess::Tail() {}
 extern "C" void CTaskGame_thunkIWorkDtor(void *self) {
     __dt__9CTaskGameFv(&static_cast<CTaskGame&>(*reinterpret_cast<IWorkEvent*>(self)));
 }
-void cbRenderBefore__9CTaskGameFv(CTaskGame*, CScn*);
+void cbRenderBefore__9CTaskGameFP4CScn(CTaskGame*, CScn*);
 // IWorkEvent::OnFileEvent(CEventFile*) override: retail emits a this-adjusting
 // thunk (subi r3,-0x54; b CTaskGame_fileEventStub) named OnFileEvent__9CTaskGameFP10CEventFile.
 class CEventFile;
@@ -708,7 +711,7 @@ extern "C" void OnFileEvent__9CTaskGameFP10CEventFile(CEventFile* ev) {
     CTaskGame_fileEventStub(&static_cast<CTaskGame&>(*reinterpret_cast<IWorkEvent*>(ev)));
 }
 extern "C" void CTaskGame_thunkRenderCB(void* self, void* scene) {
-    cbRenderBefore__9CTaskGameFv(&static_cast<CTaskGame&>(*reinterpret_cast<IScnRender*>(self)),
+    cbRenderBefore__9CTaskGameFP4CScn(&static_cast<CTaskGame&>(*reinterpret_cast<IScnRender*>(self)),
                                 static_cast<CScn*>(scene));
 }
 extern "C" void CTaskGame_thunkScnDtor(void* p) {
@@ -733,14 +736,14 @@ extern "C" void CTaskGame_thunkErrDtor(void* p) {
     __dt__9CTaskGameFv(&static_cast<CTaskGame&>(*reinterpret_cast<IErrMesWinSel*>(p)));
 }
 
-// Retail cbRenderBefore__9CTaskGameFv: IScnRender render-callback. Dispatched
+// Retail cbRenderBefore__9CTaskGameFP4CScn: IScnRender render-callback. Dispatched
 // by CScn::Draw as vt+0xC(cb, scn) through the retail thunk CTaskGame_thunkRenderCB
-// (subi r3,-0x58; b cbRenderBefore__9CTaskGameFv), so r3 = this, r4 = scene.
+// (subi r3,-0x58; b cbRenderBefore__9CTaskGameFP4CScn), so r3 = this, r4 = scene.
 // Sequence:
 //  1. Loading-screen state machine (D24 0..4) while Hbm is disabled.
 //  2. Loading-screen draw gate (camera at idle pose, no active menus).
 //  3. Battery-timer upkeep, then battery show/hide/create/delete logic.
-extern "C" void cbRenderBefore__9CTaskGameFv(CTaskGame* self, CScn* scene) {
+extern "C" void cbRenderBefore__9CTaskGameFP4CScn(CTaskGame* self, CScn* scene) {
     CView::getCurrentView();   // retail bl getCurrentView__5CViewFv, result unused
     if (cf::CfGameManager::isManagerInitialized() == 0) {
         return;
@@ -983,7 +986,7 @@ void CTaskGame::Term() {
         render = &static_cast<IScnRender&>(*this);
     }
     removeRenderCB__4CScnFP10IScnRender(unk74, render);
-    __dt__8009D72C();
+    CtrlObjectParam_DestroyWork();
     // Dual induction mirrors retail: slot byte counter and u32 offset.
     u32 i = 0;
     for (; i < 4; i++) {
@@ -1002,7 +1005,7 @@ void CTaskGame::Term() {
             gLoadScreen = nullptr;
         }
     }
-    __dt__8047BFFC();
+    UnkClass_8047BB54::destroyMpfInstance();
     releasePoolMemory__17UnkClass_8047CD0CFv();
     CLibHbm::setHbmStopFlag(false);
 }
@@ -1315,7 +1318,7 @@ extern "C" void CTaskGame_moveNandReset(CTaskGame* self) {
 // set: no-op. Bit 0x400 set: switch the move-hook ptmf to pool
 // lbl_eu_80525568+0xD8. Otherwise with bit 0x8000 set: set bits 0x12000,
 // pick the factory code (0x60 for unkFC==2, 0x61 for ==3, else 0x5F), create
-// the error-message window (__ct__802B4DF4 with the scene pointer + code/4),
+// the error-message window (ErrWin_Create with the scene pointer + code/4),
 // mark save/load reset-invalid, and switch the move-hook ptmf to pool
 // lbl_eu_80525568+0xC0. Otherwise: switch the move-hook ptmf to pool
 // lbl_eu_80525568+0xCC.
@@ -1343,7 +1346,7 @@ extern "C" void CTaskGame_moveSelectErrWin(CTaskGame* self) {
                 } else if ((s32)fc == 3) {
                     code = 0x61;
                 }
-                __ct__802B4DF4(self, static_cast<u32>(reinterpret_cast<uintptr_t>(self->unk74)), code, 4);
+                ErrWin_Create(self, static_cast<u32>(reinterpret_cast<uintptr_t>(self->unk74)), code, 4);
                 CWorkSystem::setSaveLoadInvalidReset(false);
                 u32* poolC0 = &base[0xC0 / 4];
                 // Read order mirrors the retail schedule (w1, w2, then the
@@ -1426,7 +1429,7 @@ extern "C" void CTaskGame_moveNandChkFc(CTaskGame* self) {
 // is clear: if bit 0x80000 is set, switch the move-hook ptmf to pool
 // lbl_eu_8052567C (retail places this short block out-of-line at the end, so
 // the else comes first); otherwise set bit 0x2000, create the error-message
-// window (factory ctor __ct__802B4DF4 with the scene pointer + 0x56/3), mark
+// window (ErrWin_Create with the scene pointer + 0x56/3), mark
 // save/load reset-invalid, and switch the move-hook ptmf to pool
 // lbl_eu_80525670.
 extern "C" void CTaskGame_moveErrWin56(CTaskGame* self) {
@@ -1440,7 +1443,7 @@ extern "C" void CTaskGame_moveErrWin56(CTaskGame* self) {
         // cached flags word - for the unk74 argument) and lets the store sink
         // below the argument setup, matching retail scheduling.
         reinterpret_cast<CTaskGameFlags68*>(self)->flags |= 0x2000;
-        __ct__802B4DF4(self, static_cast<u32>(reinterpret_cast<uintptr_t>(self->unk74)), 0x56, 3);
+        ErrWin_Create(self, static_cast<u32>(reinterpret_cast<uintptr_t>(self->unk74)), 0x56, 3);
         CWorkSystem::setSaveLoadInvalidReset(false);
         u32 v0;
         u32* pool = reinterpret_cast<u32*>(lbl_eu_80525670);
@@ -1492,7 +1495,7 @@ extern "C" void CTaskGame_moveNandChk860(CTaskGame* self) {
 }
 // Target us-80041ba0: error-window / move-hook setup (CTaskGame_moveErrWin56 variant).
 // When bit 0x100 of unk68 is clear: if bit 0x100000 is clear, set bit 0x2000,
-// create the error-message window (factory ctor __ct__802B4DF4 with the scene
+// create the error-message window (ErrWin_Create with the scene
 // pointer + 0x56/3), mark save/load reset-invalid, and switch the move-hook
 // ptmf to pool lbl_eu_805256A0; otherwise just switch the move-hook ptmf to
 // pool lbl_eu_805256AC (the big block is the fall-through, the short swap is
@@ -1506,7 +1509,7 @@ extern "C" void CTaskGame_moveErrWin56b(CTaskGame* self) {
         // Retail reloads unk68 fresh before the |=.
         volatile u32* f68 = &self->unk68;
         *f68 = *f68 | 0x2000;
-        __ct__802B4DF4(self, scene, 0x56, 3);
+        ErrWin_Create(self, scene, 0x56, 3);
         CWorkSystem::setSaveLoadInvalidReset(false);
         u32 v0;
         u32* pool = reinterpret_cast<u32*>(lbl_eu_805256A0);
@@ -1556,7 +1559,7 @@ extern "C" void CTaskGame_moveNandChkBA0(CTaskGame* self) {
 // 0x200 unk68 bits. Bit 0x100 set: no-op. Bit 0x200 set: switch the
 // move-hook ptmf to pool lbl_eu_805256DC (retail sinks this short block
 // out-of-line at the end, so the else comes first). Otherwise set bit
-// 0x2000, create the error-message window (factory ctor __ct__802B4DF4 with
+// 0x2000, create the error-message window (ErrWin_Create with
 // the scene pointer + 0x54 or 0x55/3 depending on the 0x20000 bit), mark
 // save/load reset-invalid, and switch the move-hook ptmf to pool
 // lbl_eu_805256D0.
@@ -1569,10 +1572,10 @@ extern "C" void CTaskGame_moveErrWin54(CTaskGame* self) {
         volatile u32* f68 = &self->unk68;
         *f68 = *f68 | 0x2000;
         if ((self->unk68 & 0x20000) != 0) {
-            __ct__802B4DF4(self, static_cast<u32>(reinterpret_cast<uintptr_t>(self->unk74)), 0x54, 3);
+            ErrWin_Create(self, static_cast<u32>(reinterpret_cast<uintptr_t>(self->unk74)), 0x54, 3);
             CWorkSystem::setSaveLoadInvalidReset(false);
         } else {
-            __ct__802B4DF4(self, static_cast<u32>(reinterpret_cast<uintptr_t>(self->unk74)), 0x55, 3);
+            ErrWin_Create(self, static_cast<u32>(reinterpret_cast<uintptr_t>(self->unk74)), 0x55, 3);
             CWorkSystem::setSaveLoadInvalidReset(false);
         }
         u32 v1;
@@ -1621,7 +1624,7 @@ extern "C" void CTaskGame_moveNandChk690(CTaskGame* self) {
 // Target us-80041e40: error-window / move-hook setup (CTaskGame_moveErrWin56 variant
 // gated on bit 0x800). When bit 0x100 of unk68 is clear: if bit 0x800 is
 // clear, set bit 0x2000, create the error-message window (factory ctor
-// __ct__802B4DF4 with the scene pointer + 0x56/3), mark save/load
+// ErrWin_Create with the scene pointer + 0x56/3), mark save/load
 // reset-invalid, and switch the move-hook ptmf to pool lbl_eu_80525700;
 // otherwise just switch the move-hook ptmf to pool lbl_eu_8052570C (big block
 // fall-through, short swap sunk out-of-line at the end).
@@ -1634,7 +1637,7 @@ extern "C" void CTaskGame_moveErrWin56c(CTaskGame* self) {
         // Retail reloads unk68 fresh before the |=.
         volatile u32* f68 = &self->unk68;
         *f68 = *f68 | 0x2000;
-        __ct__802B4DF4(self, scene, 0x56, 3);
+        ErrWin_Create(self, scene, 0x56, 3);
         CWorkSystem::setSaveLoadInvalidReset(false);
         u32 v0;
         u32* pool = reinterpret_cast<u32*>(lbl_eu_80525700);
@@ -2391,7 +2394,7 @@ void CTaskGame_openStream(u32 a1, const char* path, u32 a3, u32 a4, u32 a5, u32 
 // alloc-handle selection by max-alloc size, calcStreamBufferSize + 0x800 budget),
 // open it via CLibCri and record the unkE8 handle / unkEC id. When the
 // gate is closed: start streaming via CTaskGame_openStream and record the unkE4 id.
-extern "C" int CTaskGame_openVision(u32 a, u32 b, u32 c, u32 d, u32 e, float f) {
+extern "C" int CTaskGame_openVision(u32 a, u32 b, float f, u32 c, u32 d, u32 e) {
     if (gTaskGameInstance == 0) {
         return 0;
     }
@@ -2631,16 +2634,13 @@ extern "C" void CTaskGame_updateStream(CTaskGame* self) {
         }
     }
     if (self->unk18C.unk18 != 0) {
-        // Sequenced loads mirror the retail order (b, a, f1, c, d, e); the
-        // volatile pins the float load at its statement position.
-        // Both loads volatile-pinned so their statement order survives
-        // scheduling (retail: a into r3, then the float into f1).
-        u32 a = self->unk18C.unk14;
-        const float f = self->unk18C.unk4;
-        if (CTaskGame_openVision(a, self->unk18C.unk18,
-                          static_cast<u32>(self->unk18C.unk8),
-                          self->unk18C.unkC, self->unk18C.unk10,
-                          f) != 0) {
+        // The float is CTaskGame_openVision's third parameter: retail loads
+        // the args in parameter order (r3, f1, r5, r6, r7; r4 is the tested
+        // unk18 already in a register).
+        if (CTaskGame_openVision(self->unk18C.unk14, self->unk18C.unk18,
+                                 self->unk18C.unk4,
+                                 static_cast<u32>(self->unk18C.unk8),
+                                 self->unk18C.unkC, self->unk18C.unk10) != 0) {
             CTaskGame_setVisionParam(reinterpret_cast<Fields*>(&self->unk18C), 0, 1.0f, -1, 2, 0, 0, 0);
         }
     }

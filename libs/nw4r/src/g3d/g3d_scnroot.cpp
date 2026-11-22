@@ -695,7 +695,7 @@ NW4R_G3D_RTTI_DEF(ScnRoot);
 static bool scnRootBaseIsDerivedFrom(G3dObj::TypeObj other) {
     return other == ScnGroup::GetTypeObjStatic() ? true
          : other == ScnObj::GetTypeObjStatic() ? true
-         : (other == G3dObj::TypeObj(lbl_eu_8051D640));
+         : (other == G3dObj::GetTypeObjStatic());
 }
 
 bool ScnRoot::IsDerivedFrom(G3dObj::TypeObj other) const {

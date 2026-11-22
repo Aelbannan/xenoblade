@@ -29,7 +29,10 @@ public:
     void* mFontInfo;
     u16 mState;
     u16 mMode;
-    u8 _14[0x44];
+    u8 _14[0x04];
+    // name-guess: the destructor deallocates this pointer with MemManager.
+    void* mFontBuffer;
+    u8 _1C[0x3C];
     u32 field_58;
     u16 field_5C;
     u16 _5E;

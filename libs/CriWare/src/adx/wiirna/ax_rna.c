@@ -16,9 +16,9 @@ __attribute__((section(".rodata"), aligned(1))) const unsigned char gap_06_80519
     0x00, 0x00, 0x00
 };
 
-__declspec(section ".data") __attribute__((aligned(8))) u32 axrna_src_type = 1; // name-guess: copied into AXRNA_OBJ::srcType at handle creation; value matches AX_SRC_TYPE_LINEAR
+__attribute__((aligned(8))) u32 axrna_src_type = 1; // name-guess: copied into AXRNA_OBJ::srcType at handle creation; value matches AX_SRC_TYPE_LINEAR
 
-__declspec(section ".data") __attribute__((aligned(4))) u32 axrna_pan_table[0x1F] = { // name-guess: MIX pan lookup indexed by pan+0xf in AXRNA_SetOutPan/Create
+__attribute__((aligned(4))) u32 axrna_pan_table[0x1F] = { // name-guess: MIX pan lookup indexed by pan+0xf in AXRNA_SetOutPan/Create
     0x00000000, 0x00000004, 0x00000008, 0x0000000C, 0x00000010, 0x00000014, 0x00000018, 0x0000001C, 0x00000021, 0x00000025, 0x00000029, 0x0000002D, 0x00000031, 0x00000035, 0x00000039, 0x00000040, 0x00000044, 0x00000048, 0x0000004C, 0x00000051, 0x00000055, 0x00000059, 0x0000005D, 0x00000062, 0x00000066, 0x0000006A, 0x0000006E, 0x00000073, 0x00000077, 0x0000007B, 0x0000007F
 };
 

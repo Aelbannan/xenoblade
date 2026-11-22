@@ -39,19 +39,6 @@ cf::CtrlAct::~CtrlAct() {}
 
 cf::CtrlBase::~CtrlBase() {}
 
-// Retail __dt__80087688: deleting destructor of an unrecovered class. Free-
-// function form (like __dt__800A75FC in code_800A75FC.cpp) - a local class
-// with an out-of-line virtual dtor would make MWCC emit its __vt__ into
-// .data, but the retail split for this unit has no .data section. The body
-// reproduces the retail frame: saved self in r31, null-check + flag-gated
-// operator delete, return self.
-void* __dt__80087688(void* self, int flag) {
-    if (self != 0 && flag > 0) {
-        operator delete(self);
-    }
-    return self;
-}
-
 cf::CtrlEnemy::~CtrlEnemy() {
     // novtable class: restore the retail vtable manually (MWCC would emit
     // its own __vt__Q22cf9CtrlEnemy otherwise -> reloc name drift).
@@ -125,7 +112,7 @@ gateOk:
     if (self->field_0x80->mSub.s00C(0x200) == 0) goto L_8839C;
     if (self->field_0x80->field_3F60 == 0) {
         if (self->field_0x80->field_3374 & 0x08000000) {
-            unregisterBattleActor(getInstance__Q22cf14CBattleManagerFv(),
+            unregisterBattleActor(cf::CBattleManager::getInstance(),
                           self->field_0x80);
         }
         self->field_0x80->mSub.s050(0);
@@ -244,9 +231,6 @@ end:
 }
 
 float cf::CfObjectMove::CfObject_getMoveFactor() {
-    // Retail: lfs f1, 0x6ec(r3); blr - the getter returns the field (f1 is
-    // the FP return register). The view class in CtrlEnemy.hpp declares the
-    // float return so the definition compiles.
     return mField6EC;
 }
 
@@ -279,7 +263,7 @@ void* CtrlEnemy_UnkFunc_80087EEC(cf::CtrlEnemy* self) {
         getUnk80664658()->mFlags & 0x20000) {
         return 0;
     }
-    if (((cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv())->CheckUnk84Flag(
+    if (((cf::CBattleManager*)cf::CBattleManager::getInstance())->CheckUnk84Flag(
             0x1000) != 0) {
         return 0;
     }
@@ -427,7 +411,7 @@ void* CtrlEnemy_UnkFunc_80087EEC(cf::CtrlEnemy* self) {
 // the sub-object slot-0xAC position feeds the 800FB044 target ctor first.
 void* CtrlEnemy_UnkFunc_80088620(cf::CtrlEnemy* self) {
     if (self->field_0x80->v260() == 0) return 0;
-    if (((cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv())->CheckUnk84Flag(0x1000) !=
+    if (((cf::CBattleManager*)cf::CBattleManager::getInstance())->CheckUnk84Flag(0x1000) !=
         0) {
         return 0;
     }

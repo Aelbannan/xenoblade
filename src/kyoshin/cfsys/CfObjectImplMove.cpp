@@ -4,6 +4,7 @@
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/cf/CBattleManager.hpp"
 #include "kyoshin/cf/object/CfObjectEffSymbols.hpp"
+#include "kyoshin/cf/object/CfObjectEff.hpp" // canonical cf::CfObjectEff definition
 #include "kyoshin/cf/CfSoundMan.hpp"
 #include "kyoshin/cf/CfMapItemManager.hpp"
 #include "kyoshin/cf/object/CfObjectMove.hpp" // CfObjectMove_setAnimModeArgs (owner decl)
@@ -624,7 +625,7 @@ extern "C" void MoveImplOnBattleEntry(CfObjectImplMoveObj* self, u32 battleId) {
     CfActorObj* actor = self->field_0x18;
     if (actor != 0 && battleId == actor->sub.field_C4) {
         self->vf64();
-        evalBattleTarget(getInstance__Q22cf14CBattleManagerFv(), self->field_0x18);
+        evalBattleTarget(cf::CBattleManager::getInstance(), self->field_0x18);
     }
 }
 
@@ -742,7 +743,7 @@ void MoveImplDispatchRequest(CfObjectImplMoveObj* self, u32 id, CfMoveReqParam* 
         break;
     case 2: {
         // Only the first player's own driver plays the jingle.
-        if (getPlayer__Q22cf13CfGameManagerFi(0) != (void*)self->mSubObj) {
+        if (cf::CfGameManager::getPlayer(0) != (void*)self->mSubObj) {
             return;
         }
         int snd = 0xd0;
@@ -935,7 +936,7 @@ void MoveImplDispatchRequest(CfObjectImplMoveObj* self, u32 id, CfMoveReqParam* 
         // Battle-gated 0x27 request: skipped while a battle intro counter is
         // running (CBattleManager +0x20c8).
         CBattleManagerCcGate* bm =
-            (CBattleManagerCcGate*)getInstance__Q22cf14CBattleManagerFv();
+            (CBattleManagerCcGate*)cf::CBattleManager::getInstance();
         if (bm != nullptr && bm->field_20C8 != 0) {
             break;
         }
@@ -1153,7 +1154,7 @@ void MoveImplDriveTransition(CfObjectImplMoveObj* self, u32 id, u32 kind, u32,
                     dispatchItemLoad(ac2, 0x10);
                     goto tail;
                 }
-                if (CBattleMan_ListHasValue(getInstance__Q22cf14CBattleManagerFv(), (unsigned int)ac2) == 0) {
+                if (CBattleMan_ListHasValue(cf::CBattleManager::getInstance(), (unsigned int)ac2) == 0) {
                     CfActorObj* ac3 = self->field_0x18;
                     if ((ac3->field_3374 & 8) == 0) {
                         u32 v1d = ac3->field_04->b30()->field_0;
@@ -1163,7 +1164,7 @@ void MoveImplDriveTransition(CfObjectImplMoveObj* self, u32 id, u32 kind, u32,
                             if (testActorStatus(ac4, &v8, 8) == 0) {
                                 CfActorObj* ac5 = self->field_0x18;
                                 ac5->sub.vfn00(0x200);
-                                registerBattleActor(getInstance__Q22cf14CBattleManagerFv(),
+                                registerBattleActor(cf::CBattleManager::getInstance(),
                                     self->field_0x18);
                             }
                         }
@@ -1215,7 +1216,7 @@ void MoveImplDriveTransition(CfObjectImplMoveObj* self, u32 id, u32 kind, u32,
         self->field_0x18->sub.vfn20C(0x100);
         self->field_0x18->sub.vfn20C(0x200);
         self->field_0x18->sub.vfn00(4);
-        registerBattleActor(getInstance__Q22cf14CBattleManagerFv(), self->field_0x18);
+        registerBattleActor(cf::CBattleManager::getInstance(), self->field_0x18);
         break;
     case 0x1f:
         dispatchItemLoad(self->field_0x18, 0x1f);
@@ -1232,7 +1233,7 @@ void MoveImplDriveTransition(CfObjectImplMoveObj* self, u32 id, u32 kind, u32,
         a4->mst.field_214 = 0;
         a4->mst.field_210 = 0;
         self->vf70();
-        unregisterBattleActor(getInstance__Q22cf14CBattleManagerFv(), self->field_0x18);
+        unregisterBattleActor(cf::CBattleManager::getInstance(), self->field_0x18);
         CCharVoiceMan_FlushPendingActorVoice(self->field_0x18);
         break;
     }
@@ -1313,7 +1314,7 @@ void MoveImplDriveTransition(CfObjectImplMoveObj* self, u32 id, u32 kind, u32,
         // Knockback-strength scaling: the registered probe gates the float
         // dance driven by the slot-0x218 signed halfword.
         self->field_0x18->sub.vfn204(0, 0, -1, 0, 0);
-        initBattleActorState(getInstance__Q22cf14CBattleManagerFv(), self->field_0x18,
+        initBattleActorState(cf::CBattleManager::getInstance(), self->field_0x18,
             extraParam);
         if (self->field_0x18->vf298()->field_48 >= 0x10) {
             dispatchItemLoad(self->field_0x18, 0xa);
@@ -1688,7 +1689,7 @@ void MoveImplPresentEffect(CfObjectImplMoveObj* self) {
     vy = obj->field_0x1C;
     vx = obj->field_0xC;
     u32 sndId = 0xd9;  // default impact sound
-    CfMoveVec3f vec;
+    ml::CVec3 vec;
     vec.x = vx;
     vec.y = vy;
     vec.z = vz;
@@ -1711,9 +1712,9 @@ void MoveImplPresentEffect(CfObjectImplMoveObj* self) {
     } else if ((sub->mPresentFlags & 0x10000) != 0) {
         sMoveImplEffectCooldown = 0x3c;
     }
-    CfMoveMgrEfView* mgr =
-        (CfMoveMgrEfView*)createNpcActor__Q22cf13CfGameManagerFv(kind);
-    mgr->vfn9C(&vec);
+    cf::CfObjectEff* mgr =
+        static_cast<cf::CfObjectEff*>(createNpcActor__Q22cf13CfGameManagerFv(kind));
+    mgr->CfObject_setMoveTargetVec(&vec);
     CfMoveEvt98* evp = (CfMoveEvt98*)self->mSubObj->field_0x98;
     f32 epos[4] = {evp->field_760, evp->field_764, evp->field_768,
         lbl_eu_80666C64};
@@ -1753,8 +1754,8 @@ void MoveImplGroundProbeA(CfObjectImplMoveObj* self, CfMoveContact* param) {
     if (mtx == nullptr) {
         return;
     }
-    Vec world;
-    PSMTXMultVec((const f32(*)[4])mtx, (Vec*)&param->field_10[0], &world);
+    ml::CVec3 world;
+    PSMTXMultVec((const f32(*)[4])mtx, (Vec*)&param->field_10[0], world);
 
     // Lift by the constant Y offset, run the screen probe on a copy of the
     // lifted point; the normal buffer is filled by ScnRes_CopyEntryMid.
@@ -1793,9 +1794,9 @@ void MoveImplGroundProbeA(CfObjectImplMoveObj* self, CfMoveContact* param) {
         // and fire the fixed 0xce sound chain.
         timer98 = 0.01f +
                   ((CfMoveEvt60*)self->mSubObj->mSomeId)->field_4FC;
-        CfMoveMgrEfView* mgr =
-            (CfMoveMgrEfView*)createNpcActor__Q22cf13CfGameManagerFv(0x15);
-        mgr->vfn9C((CfMoveVec3f*)&world);
+        cf::CfObjectEff* mgr =
+            static_cast<cf::CfObjectEff*>(createNpcActor__Q22cf13CfGameManagerFv(0x15));
+        mgr->CfObject_setMoveTargetVec(&world);
         CfMoveEvt98* evt = (CfMoveEvt98*)self->mSubObj->field_0x98;
         f32 epos[4] = {evt->field_760, evt->field_764, evt->field_768,
             lbl_eu_80666C64};
@@ -1859,24 +1860,24 @@ void MoveImplGroundProbeA(CfObjectImplMoveObj* self, CfMoveContact* param) {
         // Orientation update: spawn the tiered effect, rebuild its rotation
         // from the move direction (quaternion toward the surface normal),
         // then decompose into the angle triple.
-        CfMoveMgrEfView* mgr =
-            (CfMoveMgrEfView*)createNpcActor__Q22cf13CfGameManagerFv(effId);
+        cf::CfObjectEff* mgr =
+            static_cast<cf::CfObjectEff*>(createNpcActor__Q22cf13CfGameManagerFv(effId));
         timer98 += 0.05f;
         if (state == 5) {
             timer98 += 0.04f;
         }
-        mgr->vfn9C((CfMoveVec3f*)&world);
+        mgr->CfObject_setMoveTargetVec(&world);
         CfMoveEvt60* mv = (CfMoveEvt60*)self->mSubObj->mSomeId;
         f32 ang = 0.5f * mv->field_444;
         f32 k = 40.743664f * ang;
-        (void)SinFIdx__Q24nw4r4mathFf(ang);
+        (void)nw4r::math::SinFIdx(ang);
         Quaternion dirq;
         dirq.x = ml::CVec3::unitY.x * k;
         dirq.y = ml::CVec3::unitY.y * k;
         dirq.z = ml::CVec3::unitY.z * k;
         f32 k2 = 40.743664f * ang;
         dirq.w = k2;
-        (void)CosFIdx__Q24nw4r4mathFf(k2);
+        (void)nw4r::math::CosFIdx(k2);
         f32 d = nw4r::math::VEC3Dot((const nw4r::math::VEC3*)&ml::CVec3::unitY,
                                     (const nw4r::math::VEC3*)&nrm);
 
@@ -1939,28 +1940,28 @@ void MoveImplGroundProbeA(CfObjectImplMoveObj* self, CfMoveContact* param) {
                 f32 ayd = q.y * dy2;
                 f32 awx = q.w * dx2;
                 angs[0] = 0.024543693f *
-                          Atan2FIdx__Q24nw4r4mathFff(
+                          nw4r::math::Atan2FIdx(
                               q.y * dz2 + awx,
                               1.0f - (axd + ayd));
                 angs[2] = 0.024543693f *
-                          Atan2FIdx__Q24nw4r4mathFff(
+                          nw4r::math::Atan2FIdx(
                               axy + awd,
                               1.0f - (ayd + azd));
             } else {
                 angs[2] = 0.0f;
                 angs[0] = -(0.024543693f *
-                            Atan2FIdx__Q24nw4r4mathFff(
+                            nw4r::math::Atan2FIdx(
                                 axy - awd,
                                 1.0f - (axd + azd)));
             }
         } else {
             angs[2] = 0.0f;
             angs[0] = 0.024543693f *
-                      Atan2FIdx__Q24nw4r4mathFff(
+                      nw4r::math::Atan2FIdx(
                           axy - awd,
                           1.0f - (axd + azd));
         }
-        mgr->vfBC(angs);
+        mgr->CfObject_setRotVec(angs);
         CfMoveEvt98* evt2 = (CfMoveEvt98*)self->mSubObj->field_0x98;
         f32 epos2[4] = {evt2->field_760, evt2->field_764, evt2->field_768,
             lbl_eu_80666C64};
@@ -2001,9 +2002,9 @@ void MoveImplGroundProbeB(CfObjectImplMoveObj* self, CfMoveContact* param) {
     if (mtx == nullptr)
         return;
 
-    CfMoveVec3f world;
+    ml::CVec3 world;
     PSMTXMultVec((const f32(*)[4])mtx, (Vec*)&param->field_10[0],
-                 (Vec*)&world);
+                 world);
 
     // Lift to presentation height and run the screen/ground probes; the
     // probe buffer at +0xa0 receives the surface normal used below.
@@ -2036,11 +2037,11 @@ void MoveImplGroundProbeB(CfObjectImplMoveObj* self, CfMoveContact* param) {
             return;
         t = 0.01f +
             ((CfMoveEvt60*)self->mSubObj->mSomeId)->field_4FC;
-        CfMoveMgrEfView* mgr =
-            (CfMoveMgrEfView*)createNpcActor__Q22cf13CfGameManagerFv(0x2d);
+        cf::CfObjectEff* mgr =
+            static_cast<cf::CfObjectEff*>(createNpcActor__Q22cf13CfGameManagerFv(0x2d));
         if (mgr == nullptr)
             return;
-        mgr->vfn9C(&world);
+        mgr->CfObject_setMoveTargetVec(&world);
         f32 epos[4];
         epos[0] = ((CfMoveEvt98*)self->mSubObj->field_0x98)->field_760;
         epos[1] = ((CfMoveEvt98*)self->mSubObj->field_0x98)->field_764;
@@ -2079,18 +2080,18 @@ void MoveImplGroundProbeB(CfObjectImplMoveObj* self, CfMoveContact* param) {
             t += 0.05f;
             if (state == 5)
                 t += 0.04f;
-            CfMoveMgrEfView* mgr = (CfMoveMgrEfView*)
-                createNpcActor__Q22cf13CfGameManagerFv(effId);
-            mgr->vfn9C(&world);
+            cf::CfObjectEff* mgr = static_cast<cf::CfObjectEff*>(
+                createNpcActor__Q22cf13CfGameManagerFv(effId));
+            mgr->CfObject_setMoveTargetVec(&world);
             f32 ang = 0.5f *
                       ((CfMoveEvt60*)self->mSubObj->mSomeId)->field_444;
             f32 k = 40.743664f * ang;
-            f32 sy = SinFIdx__Q24nw4r4mathFf(k);
+            f32 sy = nw4r::math::SinFIdx(k);
             Quaternion dirq;
             dirq.x = ml::CVec3::unitY.x * k;
             dirq.y = ml::CVec3::unitY.y * k;
             dirq.z = ml::CVec3::unitY.z * k;
-            f32 cy = CosFIdx__Q24nw4r4mathFf(k);
+            f32 cy = nw4r::math::CosFIdx(k);
             dirq.w = k;
             (void)sy;
             (void)cy;
@@ -2154,28 +2155,28 @@ void MoveImplGroundProbeB(CfObjectImplMoveObj* self, CfMoveContact* param) {
                     f32 aydz = q.y * dz;
                     f32 awdx = q.w * dx;
                     angs[0] = 0.024543693f *
-                              Atan2FIdx__Q24nw4r4mathFff(
+                              nw4r::math::Atan2FIdx(
                                   aydz + awdx,
                                   1.0f - (axd + aydy));
                     angs[2] = 0.024543693f *
-                              Atan2FIdx__Q24nw4r4mathFff(
+                              nw4r::math::Atan2FIdx(
                                   axy + awdz,
                                   1.0f - (aydy + azdz));
                 } else {
                     angs[2] = 0.0f;
                     angs[0] = -(0.024543693f *
-                                Atan2FIdx__Q24nw4r4mathFff(
+                                nw4r::math::Atan2FIdx(
                                     axy - awdz,
                                     1.0f - (axd + azdz)));
                 }
             } else {
                 angs[2] = 0.0f;
                 angs[0] = 0.024543693f *
-                          Atan2FIdx__Q24nw4r4mathFff(
+                          nw4r::math::Atan2FIdx(
                               axy - awdz,
                               1.0f - (axd + azdz));
             }
-            mgr->vfBC(angs);
+            mgr->CfObject_setRotVec(angs);
             f32 epos[4];
             epos[0] = ((CfMoveEvt98*)self->mSubObj->field_0x98)->field_760;
             epos[1] = ((CfMoveEvt98*)self->mSubObj->field_0x98)->field_764;

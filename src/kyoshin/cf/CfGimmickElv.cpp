@@ -2,6 +2,7 @@
 // Decompiled from retail ASM at build/us/asm/kyoshin/cf/CfGimmickElv.s
 
 #include "kyoshin/cf/CfBdat.hpp"
+#include "monolib/lod/CTaskLOD.hpp"
 #include "kyoshin/cf/CfGimmickElv.hpp"
 #include "monolib/scn/CScn.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
@@ -154,7 +155,7 @@ extern "C" void __ct__cf_CfGimmickElv(CfGimmickElvData* self, u16 rowId) {
     // LOD timer setup
     if (lastVal != 0 && self->lod0 != 0) {
         f32 fval = (f32)(u32)lastVal;
-        updateLODObject__8CTaskLODFv(self->lod0, fval);
+        CTaskLOD::updateLODObject(self->lod0, fval);
     }
 
     // LOD init loop for lod0..lod2
@@ -166,8 +167,8 @@ extern "C" void __ct__cf_CfGimmickElv(CfGimmickElvData* self, u16 rowId) {
     }
 
     if (self->lod0 != 0) {
-        attachLODObject__8CTaskLODFv(self->lod0, 0);
-        addLODEntry__8CTaskLODFv(self->lod0, 0);
+        CTaskLOD::attachLODObject(self->lod0, 0);
+        CTaskLOD::addLODEntry(self->lod0, 0);
     }
 
     // LOD1 setup
@@ -177,10 +178,10 @@ extern "C" void __ct__cf_CfGimmickElv(CfGimmickElvData* self, u16 rowId) {
             mode = 1;
             void* snd = getScnHandle();
             ScnData_FwdB7D9C(snd, self->lod1);
-            activateLOD__8CTaskLODFv(self->lod1);
+            CTaskLOD::activateLOD(self->lod1);
         }
-        attachLODObject__8CTaskLODFv(self->lod1, mode);
-        addLODEntry__8CTaskLODFv(self->lod1, mode);
+        CTaskLOD::attachLODObject(self->lod1, mode);
+        CTaskLOD::addLODEntry(self->lod1, mode);
     }
 
     // LOD2 setup
@@ -190,16 +191,16 @@ extern "C" void __ct__cf_CfGimmickElv(CfGimmickElvData* self, u16 rowId) {
             mode = 1;
             void* snd = getScnHandle();
             ScnData_FwdB7D9C(snd, self->lod2);
-            activateLOD__8CTaskLODFv(self->lod2);
+            CTaskLOD::activateLOD(self->lod2);
         }
-        attachLODObject__8CTaskLODFv(self->lod2, mode);
-        addLODEntry__8CTaskLODFv(self->lod2, mode);
+        CTaskLOD::attachLODObject(self->lod2, mode);
+        CTaskLOD::addLODEntry(self->lod2, mode);
     }
 
     // Flag setup based on unk66 bits
     if (self->unk66 & 0x08) {  // rlwinm. r0, r0, 0, 28, 28 = bit 3
         if (self->lod0 != 0) {
-            clearLODEntry__8CTaskLODFv(self->lod0);
+            CTaskLOD::clearLODEntry(self->lod0);
         }
         self->flags |= 0x40;
     } else {
@@ -271,11 +272,11 @@ void CfGimmickElvData::SetLodVisible(int show) {
         this->flags = f;
         if (show != 0) {
             this->flags = f | 0x40;
-            clearLODEntry__8CTaskLODFv(lod);
+            CTaskLOD::clearLODEntry(lod);
         } else {
             this->flags = f | 0x20;
         }
-        getLODOrSelf__8CTaskLODFv(this->lod0);
+        CTaskLOD::getLODOrSelf(this->lod0);
     }
 }
 // ============================================================
@@ -508,7 +509,7 @@ extern "C" void GimmickElv_FadeSingleAxis(CfGimmickElvData* self) {
         // Fading in
         if (flag & 0x10) {
                 // Complete
-                deactivateLOD__8CTaskLODFv(lod);
+                CTaskLOD::deactivateLOD(lod);
                 void* snd = getScnHandle();
                 ScnData_FwdB7DD4(snd, lod);
                 u32 d = self->direction;
@@ -516,9 +517,9 @@ extern "C" void GimmickElv_FadeSingleAxis(CfGimmickElvData* self) {
                 u32 db = 2 << d;
                 self->flags = (self->flags & ~lb) | db;
         } else {
-            f32 cur = getLODDistance__8CTaskLODFv(lod);
+            f32 cur = CTaskLOD::getLODDistance(lod);
             if (cur >= self->val1C0) {
-                attachLODObject__8CTaskLODFv(lod, 0);
+                CTaskLOD::attachLODObject(lod, 0);
                 u32 d = self->direction;
                 u32 lb = 8 << d;
                 u32 db = 2 << d;
@@ -529,11 +530,11 @@ extern "C" void GimmickElv_FadeSingleAxis(CfGimmickElvData* self) {
         // Not yet fading
         if (flag & 0x10) {
         } else {
-            attachLODObject__8CTaskLODFv(lod, 1);
-            detachLODObject__8CTaskLODFv(lod, 0);
+            CTaskLOD::attachLODObject(lod, 1);
+            CTaskLOD::detachLODObject(lod, 0);
         }
 
-        f32 cur = getLODLevel__8CTaskLODFv(lod);
+        f32 cur = CTaskLOD::getLODLevel(lod);
         self->val1C0 = cur;
         self->flags |= lodBit;
 
@@ -582,23 +583,23 @@ extern "C" void GimmickElv_FadeBothAxes(CfGimmickElvData* self) {
                     ScnData_FwdB7D9C(snd, lod);
                     self->flags = self->flags & ~lodBit & ~dirBit;
                 } else {
-                    refreshLOD__8CTaskLODFv(lod, self->val1C8 / lbl_eu_80668384);
+                    CTaskLOD::refreshLOD(lod, self->val1C8 / lbl_eu_80668384);
                 }
             } else {
-                f32 cur = getLODDistance__8CTaskLODFv(lod);
+                f32 cur = CTaskLOD::getLODDistance(lod);
                 if (cur <= lbl_eu_80668380) {
                     self->flags = self->flags & ~lodBit & ~dirBit;
-                    attachLODObject__8CTaskLODFv(lod, 0);
+                    CTaskLOD::attachLODObject(lod, 0);
                 }
             }
         } else {
             // Start the fade
             if (flag & 0x10) {
-                activateLOD__8CTaskLODFv(lod);
-                refreshLOD__8CTaskLODFv(lod, lbl_eu_80668380);
+                CTaskLOD::activateLOD(lod);
+                CTaskLOD::refreshLOD(lod, lbl_eu_80668380);
             } else {
-                attachLODObject__8CTaskLODFv(lod, 1);
-                detachLODObject__8CTaskLODFv(lod, 1);
+                CTaskLOD::attachLODObject(lod, 1);
+                CTaskLOD::detachLODObject(lod, 1);
             }
 
             self->flags |= lodBit;

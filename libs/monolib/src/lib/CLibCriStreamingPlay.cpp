@@ -75,11 +75,6 @@ extern "C" {
     // Pan calculation: (float a, float b, float* out1, float* out2, in1, in2)
     void CamMan_ComputeViewFalloff(float a, float b, float* out1, float* out2, const u8* in1, const u8* in2);
     
-    // Memory management
-    u32 getHandleMEM2__Q23mtl10MemManagerFv(void);
-    void* allocate_head__Q23mtl10MemManagerFUlUli(u32 handle, u32 size, int align);
-    void* allocate_tail__Q23mtl10MemManagerFUlUli(u32 handle, u32 size, int align);
-    
     // CRT/OS
     void VIWaitForRetrace(void);
     void __cvt_fp2unsigned(float f);
@@ -142,6 +137,7 @@ extern "C" {
     extern void wkStandbyLogout__20CLibCriStreamingPlayFv();
     extern void clearAllStreams__20CLibCriStreamingPlayFv();
     extern void onViBeginFrame__20CLibCriStreamingPlayFv();
+    extern void onViDestroy__20CLibCriStreamingPlayFv();
 }
 
 // name-guess: singleton set by the ctor, cleared by the dtor, read by every stream API
@@ -244,8 +240,8 @@ extern "C" CLibCriStreamingPlay* __ct__CLibCriStreamingPlay(CLibCriStreamingPlay
     *(u32*)(base + 0x418) = 4;  *(u32*)(base + 0x41C) = -1;
     
     // Allocate MEM2 audio buffer (~64KB)
-    u32 mem2 = getHandleMEM2__Q23mtl10MemManagerFv();
-    spStreamBuffer = allocate_head__Q23mtl10MemManagerFUlUli(mem2, 0xA000, 4);
+    u32 mem2 = mtl::MemManager::getHandleMEM2();
+    spStreamBuffer = mtl::MemManager::allocate_head(mem2, 0xA000, 4);
     
     // Initialize exception handler
     ((CException*)(base + 0x1C4))->AddToGlobalArray(nullptr);
@@ -354,7 +350,7 @@ extern "C" int startStream__20CLibCriStreamingPlayFv(const char* filename, int p
     u32 d = (c >> 5) * 6;
     slot->bufSize = ((d + 0x800) & ~0x7FF) + (u32)((signb + 2) * 24768) + 100;
 
-    slot->buffer = reinterpret_cast<u8*>(allocate_tail__Q23mtl10MemManagerFUlUli(
+    slot->buffer = static_cast<u8*>(mtl::MemManager::allocate_tail(
         (u32)handle, slot->bufSize, 0x20));
     if (slot->buffer == NULL) {
         if (slot->adxt != NULL) {
@@ -1090,8 +1086,8 @@ void CLibCriStreamingPlay::onViBeginFrame() {
 
 // onViDestroy - CDeviceVICb thunk: adjust this and tail-branch to destructor
 // (virtual ~ call would dispatch via vtable; retail tail-branches to __dt__ directly)
-extern "C" void onViDestroy__20CLibCriStreamingPlayFv(void* self) {
-    ((void(*)(void*))__dt__20CLibCriStreamingPlayFv)((char*)self - 0x1C4);
+void CLibCriStreamingPlay::onViDestroy() {
+    ((void(*)(void*))__dt__20CLibCriStreamingPlayFv)((char*)this - 0x1C4);
 }
 
 // --- Dissolved retail data (novtable + explicit retail-layout arrays) ---

@@ -259,9 +259,9 @@ void __dt__Q34nw4r3snd11FxDelayDpl2Fv(){}
 
 // Single FX-slot destructor (retail __dt__801C2F2C).
 // Clears any active effect, destroys the three FX sub-objects (inline member
-// destructors), then frees the object if deleting.  C-linkage so the
-// __construct_array / __destroy_arr address relocs match retail.
-extern "C" void* __dt__801C2F2C(FxSoundSlot* this_, int flag) {
+// destructors), then frees the object if deleting.
+// name-guess: retail symbol is address-named; MWCC emits the C++ name below.
+void* destroyFxSoundSlot(FxSoundSlot* this_, int flag) {
     if (!this_)
         return this_;
     ClearSlotEffect(this_);
@@ -348,7 +348,7 @@ struct FxSoundPair {
 // array via __construct_array(initFxSoundSlot, __dt__801C2F2C, 0x4FC, 2), then
 // assigns the two bus ids (0 and 1).  Returns this (retail mr r3, r31).
 FxSoundPair* FxPair_Init(FxSoundPair* self) {
-    __construct_array(self, (void*)initFxSoundSlot, (void*)__dt__801C2F2C, 0x4FC, 2);
+    __construct_array(self, (void*)initFxSoundSlot, (void*)destroyFxSoundSlot, 0x4FC, 2);
     self->mSlot[0].mBusId = 0;
     self->mSlot[1].mBusId = 1;
     return self;
@@ -362,7 +362,7 @@ void* __dt__801C3340(FxSoundPair* this_, int flag) {
         return this_;
     ClearSlotEffect(&this_->mSlot[0]);
     ClearSlotEffect(&this_->mSlot[1]);
-    __destroy_arr(this_, (void*)__dt__801C2F2C, 0x4FC, 2);
+    __destroy_arr(this_, (void*)destroyFxSoundSlot, 0x4FC, 2);
     if (flag > 0)
         ::operator delete(this_);
     return this_;

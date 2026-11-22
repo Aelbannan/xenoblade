@@ -12,10 +12,6 @@ extern int memcmp(const void *, const void *, unsigned long);
 extern void *memset(void *, int, unsigned long);
 extern void *memcpy(void *, const void *, unsigned long);
 extern char *strstr(const char *, const char *);
-__declspec(section ".rodata") __attribute__((aligned(8))) const char lbl_eu_8051CEE0[32] = {
-    0x53,0x6F,0x66,0x64,0x65,0x63,0x53,0x74,0x72,0x65,0x61,0x6D,0x20,0x20,0x20,0x20,
-    0x20,0x20,0x20,0x20,0x20,0x20,0x20,0x20,0x00,0x56,0x65,0x72,0x2E,0x00,0x00,0x00
-};
 
 int VER1_AnlyHdrToolVer(SFHContext *work, u32 *out1, u32 *out2);
 int criware_803D2C98(u32 pic_rate_code);
@@ -27,7 +23,7 @@ int VER1_IsSfdHeader(SFHContext *work, int *out) {
 
     *out = 0;
     src = work->header + 0x20;
-    if (memcmp(src, lbl_eu_8051CEE0, 0x18) != 0) {
+    if (memcmp(src, "SofdecStream            ", 0x18) != 0) {
         work->state = -1;
         return 0;
     }
@@ -175,7 +171,7 @@ int VER1_AnlyHdrToolVer(SFHContext *work, u32 *out1, u32 *out2) {
     memcpy(buf, work->header + 0x60, 0x20);
     t1 = 0;
     t2 = 0;
-    p = strstr(buf, lbl_eu_8051CEE0 + 0x19);
+    p = strstr(buf, "Ver.");
     if (p == NULL) {
         ok = 0;
     } else {

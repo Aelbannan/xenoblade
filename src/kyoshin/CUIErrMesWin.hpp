@@ -12,7 +12,7 @@
 #include "kyoshin/code_80135FDC_Lyt.hpp"
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
-extern "C" void cbRenderBefore__12CUIErrMesWinFv();
+extern "C" void cbRenderBefore__12CUIErrMesWinFP4CScn();
 extern "C" void __dt__12CUIErrMesWinFv();
 
 // CSysWin helper imports (retail C-linkage; same declarations as CSaveLoad.hpp).
@@ -26,13 +26,6 @@ extern "C" void __dt__12CUIErrMesWinFv();
 
 // String pool used by ErrWin_LoadText_4F40's error message.
 extern char lbl_eu_805135E0[];
-
-// Pad view for ErrWin_OnConfirm_4FE8: button word at +4.
-struct CErrMesPad {
-    u8 _00[4];
-    u32 field_0x4;
-};
-
 
 
 // cf::CfGameManager helper. Retail names it with the no-arg Fv suffix, but the
@@ -244,12 +237,6 @@ int RequestVoicePlayback(CCharVoice* voicePtr, int voiceId, int arg);
 // C++-mangled retail helper (actor id -> action source).
 void* findObjectById(int id);
 
-// Player accessor (retail pre-mangled cf::CfGameManager static). Canonical
-// void* form (matches CfObjectMove.hpp / CfObjectImplMove.hpp / CtrlEnemy.hpp
-// and every other TU); the CfObjectMove* spelling is an illegal overload
-// when both are visible in one TU.
-extern "C" void* getPlayer__Q22cf13CfGameManagerFi(int index);
-
 // Null pointer-to-member-function constant + the CUIErrMesWin vtable regions
 // (retail .data, written by the factory ctor).
 extern u32 __ptmf_null[3];
@@ -275,7 +262,7 @@ public:
     void Init();
     void Term();
     void Move();
-    void cbRenderBefore();
+    void cbRenderBefore(CScn* scene);
 
     /* 0x54 */ u8 field_0x54[0x04];  // +0x54..+0x58 - unknown region
     /* 0x58 */ u32 mScnRender;       // +0x58 - IScnRender vtable slot (render-callback subobject)
@@ -288,3 +275,9 @@ public:
     /* 0x9E */ u16 field_0x9E;       // message id (string-pool index)
     /* 0xA0 */ u8 field_0xA0;        // window kind
 };
+
+// Singleton creator (us-802b7864). Returns 0 when the window already exists.
+// name-guess: modelled on the retail sibling SysWinLog_Create(CProcess*, u8*)
+// and the JP ErrWin_* prefix of this TU's helpers.
+class CProcess;
+CUIErrMesWin* ErrWin_Create(CProcess* parent, u32 a, u16 b, u8 c);

@@ -2,76 +2,70 @@
 
 #include <types.h>
 #include "monolib/work/CTTask.hpp"
-#include "monolib/lod/LODMemMan.hpp"
+#include "monolib/lod/UnkClass_8046D144.hpp"
+
+class CScn;
+class CView;
 
 /*
-Task wrapper around a LODMemMan instance.
+Task wrapper around the LOD manager (LOD::UnkClass_8046D144).
 
-CTaskLOD manages the LOD (level-of-detail) memory manager lifecycle.  It owns
-an embedded LODMemMan member and can optionally allocate a secondary
-swap-instance.  Most public methods delegate to the active LODMemMan.
+A single instance is created by CTaskGame and published in spInstance; every
+public entry point is a static that forwards to the instance's active manager
+(mpActiveLOD), so callers never need the task pointer.  The secondary manager
+is a separately allocated LOD::UnkClass_8046D144 that temporarily replaces the
+embedded one (acquireLODResource / restorePrimaryLOD / resetActiveLOD).
 
-Inherits from CTTask<CTaskLOD> which provides the Move/Draw callback slots.
+The `id` parameters are the per-element LOD ids forwarded unchanged to the
+manager (retail passes them through r3 -> r4 untouched).
 */
 class CTaskLOD : public CTTask<CTaskLOD> {
 public:
+    CTaskLOD(CScn* scn, CView* view, u32 handle, u32 size);
     virtual ~CTaskLOD();
     virtual void Init();
     virtual void Term();
     virtual void Move();
-    virtual void Draw();
 
-    // Factory: allocate and initialise a full CTaskLOD from work memory.
-    static CTaskLOD* create(CProcess* parent, void* p1, void* p2,
-                            void* p3, void* p4);
-
-    // ---- active-LODMemMan wrappers -----------------------------------------
-
-    bool acquireLODResource(bool enable);
-    void resetActiveLOD();
-    void enableLOD();
-    void disableLOD();
-    void restorePrimaryLOD();
-    void bindTaskToLOD(void* param);
+    // name-guess: all entry-point names below (retail symbols carry no names).
+    static CTaskLOD* create(CProcess* parent, CScn* scn, CView* view, u32 handle, u32 size);
+    static bool acquireLODResource(void* data, bool enable);
+    static void resetActiveLOD(void* data);
+    static void enableLOD();
+    static void disableLOD();
+    static void restorePrimaryLOD();
+    static void bindTaskToLOD(void* scene);
     static void notifyLODTick(float scale);
     static void updateLODFrame(float scale);
-    float getLODScale();
-    void setLODFilterFlag(bool flag);
-    void updateLODRange(bool flag);
-    void syncLODTask(void* param);
-    void dispatchLODArgs(void* a, void* b, void* c);
-    void activateLOD(void* param);
-    void deactivateLOD(void* param);
-    void setLODEnable(void* a, void* b);
-    void* getLODData(void* param);
-    void refreshLOD(void* param);
-    void setLODParam(float val, void* a, void* b);
-    void addLODEntry(void* a, void* b);
-    void removeLODEntry(void* param);
-    void clearLODEntry(void* param);
-    float getLODDistance(void* param);
-    void attachLODObject(void* a, void* b);
-    void detachLODObject(void* a, void* b);
-    void setLODObject(void* a, void* b);
-    void* getLODObject(void* param);
-    void updateLODObject(void* param);
-    float getLODLevel(void* param);
-    void* getLODOrSelf(void* param);
+    static float getLODScale();
+    static void setLODFilterFlag(void* enable);
+    static void updateLODRange(u16 value, float amount);
+    void syncLODTask();
+    static void dispatchLODArgs(u16 a, u16 b, u16 c);
+    static void activateLOD(int id);
+    static void deactivateLOD(int id);
+    static void setLODEnable(int id, int enable);
+    static bool getLODData(int id);
+    static void refreshLOD(int id, f32 value);
+    static void setLODParam(u32 id, u32 flag, f32 value);
+    static void addLODEntry(int id, int flag);
+    static void removeLODEntry(int id, f32 value);
+    static void clearLODEntry(int id);
+    static f32 getLODDistance(int id);
+    static void attachLODObject(int id, int flag);
+    static void detachLODObject(int id, int flag);
+    static void setLODObject(int id, u16 value);
+    static u8 getLODObject(int id);
+    static void updateLODObject(int id, f32 value);
+    static f32 getLODLevel(int id);
+    static void getLODOrSelf(int id);
 
-private:
-    // Layout (0x1D44 total):
-    //   0x00-0x53 : CTTask<CTaskLOD> base (CProcess + PTMFs)
-    //   0x54      : mParam1
-    //   0x58      : mParam2
-    //   0x5C      : mLODMemMan (embedded / primary)
-    //   0x1D3C    : mpSecondaryLOD (optional separately-allocated LODMemMan)
-    //   0x1D40    : mpActiveLOD (preferred: points to &mLODMemMan or mpSecondaryLOD)
+    static CTaskLOD* spInstance;
 
-    void*       mParam1;          // 0x54 (unknowable pointee - never used in code)
-    void*       mParam2;          // 0x58 (unknowable pointee - never used in code)
-    LOD::LODMemMan mLODMemMan;   // 0x5C (shared-header size 0x1500; retail create li 7492 + stw 7484/7488)
-    u8 _5C_pad[0x7E0];            // 0x155C .. 0x1D3C (matches src/lod/CTaskLOD.hpp)
-    LOD::LODMemMan* mpSecondaryLOD; // 0x1D3C
-    LOD::LODMemMan* mpActiveLOD; // 0x1D40
+    CScn* mScn;                                 // 0x54
+    CView* mView;                               // 0x58
+    LOD::UnkClass_8046D144 mLODMemMan;          // 0x5C (0x1CE0)
+    LOD::UnkClass_8046D144* mpSecondaryLOD;     // 0x1D3C
+    LOD::UnkClass_8046D144* mpActiveLOD;        // 0x1D40
 };
 // Size: 0x1D44 bytes

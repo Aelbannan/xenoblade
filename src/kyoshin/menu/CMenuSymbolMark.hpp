@@ -37,7 +37,7 @@ public:
     virtual void Init();
     virtual void Term();
     virtual void Move();
-    virtual void cbRenderBefore();
+    virtual void cbRenderBefore(CScn* scene);
 
     static CMenuSymbolMark* sInstance;
 
@@ -95,7 +95,7 @@ public:
     virtual void Init();
     virtual void Term();
     virtual void Move();
-    virtual void cbRenderBefore();
+    virtual void cbRenderBefore(CScn* scene);
     virtual ~CArrow3D();
 
     // 0x00-0x54: CTTask<CArrow3D>
@@ -263,15 +263,6 @@ struct CfObjListNode {
 struct CfObjList {
     u32 field00;          // +0x00
     CfObjListNode* sentinel; // +0x04
-};
-
-// Field view over the marker objects walked by SymMark_RebuildIdsB: flag bits at
-// +0x64 (0x10000/0x20000 gate) and a name/id word at +0x74.
-struct CfMarkerFields {
-    u8 pad00[0x64];
-    u32 flags64;
-    u8 pad68[0x74 - 0x68];
-    u32 name74;
 };
 
 // Scene-bound object view used by SymMark_RebuildIdsB: two world-space positions

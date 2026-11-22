@@ -4,7 +4,7 @@
 
 #include <types.h>
 #include "kyoshin/CPresentWinApi.hpp"
-#include "monolib/device/CDeviceFontInfo.hpp"
+#include "monolib/device/CDeviceFont.hpp"
 #include "kyoshin/code_80135FDC_Bdat.hpp"
 #include <nw4r/lyt.h>
 #include "monolib/work/IWorkEvent.hpp"
@@ -32,7 +32,6 @@ struct CPresentTexObj {
 };
 
 // --- imports (retail linker names) ---
-extern char CPresentStringPool[]; // layout path + pane-name + message string pool
 extern const float CPresentAnimStepDelta;    // animation advance delta (const -> sdata2 pool, lfs hoist)
 extern f64 CPresentU32ToFloatMagic;    // 2^52 double used by the u32->float conversion
 extern f32 CPresentFrameResetValue;    // frame reset value written into animTrans1

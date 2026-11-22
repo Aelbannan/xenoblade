@@ -3,14 +3,15 @@
 
 #include <harness_catalog.h>
 
-const unsigned int lbl_eu_8051C368[4] = {0, 0, 0, 0}; // .rodata 0x10 at 0x8051C368
+// name-guess: four zero MC16 init words at 0x8051C368, consumed by MPVMC16_Init.
+const unsigned int gMpvMc16InitZeros[4] = {0, 0, 0, 0};
 
 void MPVMC16_Init(void* this_ptr) {
     unsigned int* base = (unsigned int*)this_ptr;
-    base[0x34 / 4] = lbl_eu_8051C368[0];
-    base[0x38 / 4] = lbl_eu_8051C368[1];
-    base[0x3c / 4] = lbl_eu_8051C368[2];
-    base[0x40 / 4] = lbl_eu_8051C368[3];
+    base[0x34 / 4] = gMpvMc16InitZeros[0];
+    base[0x38 / 4] = gMpvMc16InitZeros[1];
+    base[0x3c / 4] = gMpvMc16InitZeros[2];
+    base[0x40 / 4] = gMpvMc16InitZeros[3];
 }
 
 typedef struct MPC16Params_ {

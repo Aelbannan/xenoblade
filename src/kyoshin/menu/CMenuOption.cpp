@@ -63,11 +63,8 @@ extern "C" void BgTex_Release_3D9C(CBgTex* self);
 // retail symbol (0x800FF7F4 - the game-side D2 wrapper, distinct from the
 // library D1 __dt__8CProcessFv at 0x804474D0).
 
-// Shared singleton state flag (cleared by Term).
-extern u32 lbl_eu_80664A38[2];
-
-// Data imports (MWCC does not mangle global-scope data names).
-extern char lbl_eu_805103C4[];  // option title/help string table base
+// name-guess: 0x80664A38 holds the live option-menu instance pointer.
+u32 gOptionMenuPtr[2] = { 0, 0 };
 
 /*
  * CfPadData overlay for the option-menu input handler (retail handleOptionInput).
@@ -102,7 +99,7 @@ void CMenuOption::Init() {
     mBgTex = CBgTex(0);
     BgTex_Acquire_3C14(&mBgTex);
 
-    char* name = BdatTouchStringCell(lbl_eu_805103C4, &lbl_eu_805103C4[9], 0x3b);
+    char* name = BdatTouchStringCell("MNU_main", "name", 0x3b);
     mTitleAHelp = CTitleAHelp(name, 0x6c);
     mTitleAHelp.CTitleAHelp_load();
 
@@ -122,7 +119,7 @@ void CMenuOption::Term() {
     mTitleAHelp.teardown();
     mOption.teardown();
 
-    lbl_eu_80664A38[0] = 0;
+    gOptionMenuPtr[0] = 0;
     setPresentationFlag__Q22cf13CfGameManagerFv(0);
 }
 
@@ -142,7 +139,7 @@ void CMenuOption::Move() {
     mOption.tickState();
 }
 
-void CMenuOption::cbRenderBefore() {
+void CMenuOption::cbRenderBefore(CScn*) {
     CTaskGame::getInstance();
     if (CTaskGame::isFlag01Set() || (gmPauseFlags & 0x200000))
         return;
@@ -161,13 +158,13 @@ void CMenuOption::cbRenderBefore() {
  * 0 if an instance is already live; otherwise constructs the screen in work
  * memory, stores it in the shared flag and registers it under `registParent`. */
 CMenuOption* createOptionMenu(CProcess* registParent, CProcess* parent, u32 arg) {
-    if (lbl_eu_80664A38[0] != 0) {
+    if (gOptionMenuPtr[0] != 0) {
         return NULL;
     }
     CMenuOption* obj = new (CWorkThreadSystem::getWorkMem()) CMenuOption(parent, arg);
-    lbl_eu_80664A38[0] = (u32)obj;
+    gOptionMenuPtr[0] = (u32)obj;
     obj->Regist(registParent, false);
-    return (CMenuOption*)lbl_eu_80664A38[0];
+    return (CMenuOption*)gOptionMenuPtr[0];
 }
 
 /* Advance the option menu to phase 1 once the background texture, title bar
@@ -282,15 +279,10 @@ void flagOptionPhase1(CMenuOption* self) {
     }
 }
 
-unsigned long hasOptionMenu(void) { return lbl_eu_80664A38[0] != 0; }
+unsigned long hasOptionMenu(void) { return gOptionMenuPtr[0] != 0; }
 
 // Retail tables owned by this unit.
-// .rodata (0x20): the "CMenuOption" RTTI name head and the title pool
-// (lbl_eu_805103C4, used above at +0x144/+0x14D/+0x150). The tutorial string
-// pool that used to be defined here belongs to kyoshin/CTutorial (see the
-// splits: CTutorial owns .rodata 0x80510280-0x805103B8).
-// .sbss (0x8): singleton pointer + emitted zero word (retail section is 0x8;
-// no code reads the second word).
-extern __declspec(section ".rodata") char lbl_eu_805103C4[0x14] =
-    "MNU_main\0name\0\0\0\0\0\0";
-u32 lbl_eu_80664A38[2] = { 0, 0 };
+// .rodata (0x20): the "CMenuOption" RTTI name head and the compiler-pooled
+// title/help strings. The tutorial string pool that used to be defined here
+// belongs to kyoshin/CTutorial (see the splits: CTutorial owns .rodata
+// 0x80510280-0x805103B8).

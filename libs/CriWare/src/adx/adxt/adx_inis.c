@@ -5,8 +5,11 @@
 #include <string.h>
 #include <adx/adxt/adx_inis.hpp>
 extern u8 adxini_ctx[0xC];
-__declspec(section ".rodata") __attribute__((aligned(8))) const char lbl_eu_80515FB8[88] = "\nADXT/WII Ver.10.94 Build:Oct 28 2009 21:11:20\n\x00" "Append: MW4302 WII30Jul2008Patch04\n\x00" "\x00\x00\x00\x00";
-__declspec(section ".rodata") __attribute__((aligned(8))) const char lbl_eu_80516010[168] = "adxt_exec_tsvr\x00" "adxt_exec_fssvr\x00" "adxt_exec_main_thrd\x00" "E2006100201: ADXT_Finish function has been executed before initialization.\x00" "E2005041230: ADXT handle is still active.";
+// JP map name adxt_build (.rodata, size 0x54, align 8) owns this pair of build stamps.
+__attribute__((aligned(8))) const struct { char build[0x30]; char append[0x24]; } adxt_build = {
+    {"\nADXT/WII Ver.10.94 Build:Oct 28 2009 21:11:20\n"},
+    {"Append: MW4302 WII30Jul2008Patch04\n"},
+};
 
 // Forward declarations for SVM functions
 s32 SVM_SetCbSvrIdWithString(s32 id, s32 arg, int (*cb)(void), s32 arg2,
@@ -83,7 +86,7 @@ int adxt_exec_fssvr(void) {
 void ADXT_Init(void) {
     struct AdxInisContext* const ctx = (struct AdxInisContext*)&adxini_ctx;
 
-    ctx->field_0x18 = (u8*)lbl_eu_80515FB8;
+    ctx->field_0x18 = adxt_build.build;
     criCrw_GetVersion();
 
     // Only perform full init on the first call (refcount == 0).
@@ -109,12 +112,12 @@ void ADXT_Init(void) {
     memset(ctx->handles, 0, sizeof(ctx->handles));
 
     // Register SVM server callbacks.
-    SVM_SetCbSvrIdWithString(2, 1, adxt_exec_tsvr, 0, lbl_eu_80516010);
+    SVM_SetCbSvrIdWithString(2, 1, adxt_exec_tsvr, 0, "adxt_exec_tsvr");
     ctx->handle_0x10 =
-        SVM_SetCbSvrWithString(4, adxt_exec_fssvr, 0, lbl_eu_80516010 + 0x0f);
+        SVM_SetCbSvrWithString(4, adxt_exec_fssvr, 0, "adxt_exec_fssvr");
     ctx->handle_0x08 =
         SVM_SetCbSvrWithString(5, adxt_exec_main_thrd, 0,
-                               lbl_eu_80516010 + 0x1f);
+                               "adxt_exec_main_thrd");
 
     ctx->field_0x14 = 0;
     ctx->field_0x0C = 0;
@@ -127,14 +130,13 @@ void ADXT_Init(void) {
 
 // Tears down all ADX subsystems when refcount reaches zero.
 void ADXT_Finish(void) {
-    const char* str;
     struct AdxInisContext* ctx = (struct AdxInisContext*)&adxini_ctx;
     struct AdxInisHandle* hndl;
     s32 i;
 
     // If refcount is already zero, report error and return.
     if (ctx->refcount <= 0) {
-        SVM_CallErr1(lbl_eu_80516010 + 0x33);
+        SVM_CallErr1("E2006100201: ADXT_Finish function has been executed before initialization.");
         return;
     }
 
@@ -164,10 +166,9 @@ void ADXT_Finish(void) {
 
     // Destroy any active handles that remain in the array.
     hndl = ctx->handles;
-    str = lbl_eu_80516010;
     for (i = 0; i < 16; i++) {
         if (hndl->flag != 0) {
-            SVM_CallErr1(str + 0x7e);
+            SVM_CallErr1("E2005041230: ADXT handle is still active.");
             ADXT_Destroy((ADXT_Tsvr*)hndl);
         }
         hndl++;
@@ -179,4 +180,5 @@ u8 adxini_handle_pool[0xC40];
 u32 adxini_tick[3];
 u32 adxini_req_flag;
 u32 adxini_pad_805E26D8;
+// name-guess: retail 0x805E26C8 (0xC .bss) is this ADXT init context.
 u8 adxini_ctx[0xC];

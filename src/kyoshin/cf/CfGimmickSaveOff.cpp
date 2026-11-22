@@ -2,6 +2,7 @@
 
 #include "kyoshin/cf/CfBdat.hpp"
 #include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/cf/CfGimmickSaveOff.hpp"
 
 
@@ -116,7 +117,7 @@ struct IUnkVt110 {
 // then dispatch through the state jump table, then act on mType.
 void cf::CfGimmickSaveOff::CfGimmick_Update() {
     if (field_6E != 0) {
-        u32 count = getQueuedFileEventCount__Q22cf13CfGameManagerFv();
+        u32 count = cf::CfGameManager::getQueuedFileEventCount();
         if (field_6C > count || count > field_6E) {
             return;
         }

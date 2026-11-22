@@ -32,7 +32,9 @@ struct ADXAMP {
     u8 field_0x03;              // 0x03
     struct ADXAMP_Obj* listA[2];  // 0x04
     struct ADXAMP_Obj* listB[2];  // 0x0c
-    u32 field_0x14[6];          // 0x14
+    u32 field_0x14[3];          // 0x14
+    u32 sfreq;                  // 0x20
+    u32 field_0x24[2];          // 0x24
     u32 field_0x2c;             // 0x2c
 };
 
@@ -79,6 +81,6 @@ void ADXAMP_Start(struct ADXAMP* self) {
     self->status = 2;
 }
 
-void ADXAMP_Stop(void *self) { *(u8*)((u8*)self + 1) = 0; }
+void ADXAMP_Stop(struct ADXAMP* self) { self->status = 0; }
 
-void ADXAMP_SetSfreq(void* self, u32 val) { *(u32*)((u8*)self + 0x20) = val; }
+void ADXAMP_SetSfreq(struct ADXAMP* self, u32 val) { self->sfreq = val; }

@@ -166,7 +166,7 @@ body:
 // NOTE: Draw() is intentionally NOT defined here. It is inherited from
 // CTTask<IUICf>, and the class vtable is emitted without a local override.
 
-void CMenuTutorial::cbRenderBefore() {
+void CMenuTutorial::cbRenderBefore(CScn*) {
     CTaskGame::getInstance();
     // Gate: skip the render when the task is busy or the global mode bit
     // (0x200000) is set. Same branch-over-branch shape as Move().

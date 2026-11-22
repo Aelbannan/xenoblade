@@ -14,6 +14,7 @@
 #include "monolib/core/CView.hpp"
 #include "monolib/device/CDeviceVI.hpp"
 #include "monolib/work/CWorkThreadSystem.hpp"
+#include "libs/monolib/src/scn/ExtendedTexObj.hpp"
 
 // Assert strings referenced by this unit's panic sites (retail .data symbols).
 // Sized .sdata strings are declared non-const so MWCC addresses them via r13.
@@ -31,11 +32,6 @@ extern char lbl_eu_8056E1A8[];    // assert format
 extern char lbl_eu_80529678[];    // assert source file (line 0x53 asserts)
 extern char lbl_eu_80529658[];    // assert format
 
-// Texture-work object cursor word at +0x28 (read by TexMan_ReleaseArg_02D8).
-struct CScnTexWorkManCursor {
-    u8 field_0x00[0x28];
-    u32 field_0x28; // allocation cursor snapshot
-};
 
 // Node-id collection list used by the node-tree walk (array at 0x0, count
 // at 0x4).
@@ -230,19 +226,17 @@ extern "C" void TexMan_ClampBoxes(CScnTexWorkMan* self, nw4r::g3d::ResNode* pNod
 
 // ---- scaffold stubs (unmatched functions, kept as-is) ----
 
-extern "C" void __dt__804943A0(void* self, int flags);
-
 // Release path: while the busy counter is clear, if the arg matches the last
 // allocated work object, publish its +0x28 word into the allocation cursor;
-// then delete the arg when non-null (retail tail-calls __dt__804943A0). The
+// then delete the arg when non-null (retail tail-calls ~ExtendedTexObj). The
 // arg is the SECOND parameter (retail compares r4; r3 self is unused).
 extern "C" void TexMan_ReleaseArg_02D8(void* self, void* arg) {
     if (lbl_eu_806658FC != 0) return;
     if (sTexWorkLastObject == (u32)arg) {
-        sTexWorkAllocCursor = ((CScnTexWorkManCursor*)arg)->field_0x28;
+        sTexWorkAllocCursor = ((ExtendedTexObj*)arg)->mField28;
     }
     if (arg != 0) {
-        __dt__804943A0(arg, 1);
+        delete (ExtendedTexObj*)arg;
     }
 }
 

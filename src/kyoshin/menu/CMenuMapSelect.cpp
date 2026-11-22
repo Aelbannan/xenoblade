@@ -17,7 +17,6 @@
 #include "kyoshin/code_80135FDC_Lyt.hpp"
 
 extern u32 gmPauseFlags; // .sbss global busy-flag word (bit 21)
-extern u32 lbl_eu_80664790;
 extern void CFade_StartLoad(CFade* fade);
 
 void FloorMapCopy(CFloorMap* dest, const CFloorMap& src);
@@ -163,7 +162,6 @@ extern char lbl_eu_8050B498[];
 void waitForDrawDone__9CDeviceVIFv();
 void Scn_SetPauseFlag(CScn* scn, int flag);
 void BgTex_Release_3D9C(CBgTex* self);
-void FloorMap_Teardown(CFloorMap* self);
 void UIWin_ControlWindowLists(u32, u32);
 
 int CMainMenu_IsOpen();
@@ -172,11 +170,6 @@ void BgTex_Tick_3D54(CBgTex* self);
 
 void CFade_Update(CFade* self);
 void CFade_FadeOut(CFade* self);
-int FloorMap_GetField42Gated(CFloorMap* self);
-void FloorMap_LoadStageLayout(CFloorMap* self);
-int FloorMap_GetField40Flag(CFloorMap* self);
-void FloorMap_UpdateFrame(CFloorMap* self);
-void FloorMap_Draw(CFloorMap* self, nw4r::lyt::DrawInfo* drawInfo);
 void BgTex_Draw_3D7C(CBgTex* self, nw4r::lyt::DrawInfo* drawInfo);
 void CFade_Draw(CFade* self, nw4r::lyt::DrawInfo* drawInfo);
 }
@@ -198,35 +191,11 @@ void ArtsInfo_SetReadyFlag();
 int CFade_IsVisible(CFade* self);
 // (memberized: CFade_FadeIn -> CFade::In; declaration moved into class CFade)
 // (memberized: FloorMap_SetMapTable -> CFloorMap::SetMapTable; declaration moved into class CFloorMap)
-void FloorMap_LoadMapFiles(CFloorMap* self);
 
-int FloorMap_ClassifyByte41(CFloorMap* self);
-int FloorMap_CheckRowVisited(CFloorMap* self);
-u8 FloorMap_GetBdatMaxRow(CFloorMap* self);
-u8 FloorMap_GetField208Plain(CFloorMap* self);
-u8 FloorMap_GetField208Gated(CFloorMap* self);
-int FloorMap_IsSysWinBusy(CFloorMap* self);
-void FloorMap_SetPaneFlag(CFloorMap* self, u32 arg);
-u16 FloorMap_GetU16Field5A(CFloorMap* self);
-void FloorMap_ConfirmSelect(CFloorMap* self);
-void FloorMap_UpdateRowPanePos(CFloorMap* self);
-void FloorMap_CursorNextFloor(CFloorMap* self);
-void FloorMap_OpenRowWindow(CFloorMap* self);
-void FloorMap_UpdateCursorMove(CFloorMap* self);
-void FloorMap_UpdateWorldMap(CFloorMap* self);
-void FloorMap_HandleMapDown(CFloorMap* self);
-void FloorMap_NormalizeMapPos(CFloorMap* self);
-void FloorMap_ScrollDown(CFloorMap* self);
-void FloorMap_ScrollUp(CFloorMap* self);
-void FloorMap_ScrollRight(CFloorMap* self);
-void FloorMap_ScrollLeft(CFloorMap* self);
-void FloorMap_MoveToCursorRow(CFloorMap* self);
 
 // CTitleAHelp help-bar id setter (retail-unmangled).
 }
 
-void FloorMap_Log2Field208(void* self);
-void FloorMap_Log2Field333C(void* self);
 
 // Declared by kyoshin/CMainMenu.hpp.
 
@@ -395,9 +364,9 @@ void CMenuMapSelect::Term() {
     mTitleAHelp.teardown();
     mMapSel.term();
     (&mFade)->Unload();
-    FloorMap_Teardown(&mFloorMap);
+    mFloorMap.Teardown();
 
-    lbl_eu_80664790 = 0;
+    sInstance = nullptr;
     setPresentationFlag__Q22cf13CfGameManagerFv(0);
 }
 
@@ -446,14 +415,14 @@ void CMenuMapSelect::Move() {
         break;
 
     case 5:
-        if (FloorMap_GetField42Gated(&mFloorMap) == 0) break;
+        if (mFloorMap.GetField42Gated() == 0) break;
         mTitleAHelp.func_801C4654(0);
         mTitleAHelp.setInfoText(BdatTouchStringCell(lbl_eu_8050B498, lbl_eu_8050B498 + 8, 3));
         if (CtrlRemote_TouchBitByArg((u32)0x3212) != 0) {
             mTitleAHelp.func_801C46DC(1);
         }
         mTitleAHelp.func_801C41E8(0);
-        FloorMap_LoadStageLayout(&mFloorMap);
+        mFloorMap.LoadStageLayout();
         playUISound(0x6d);
         CFade_FadeOut(&mFade);
         mState = 6;
@@ -470,7 +439,7 @@ void CMenuMapSelect::Move() {
 
     case 8:
         if (CFade_IsVisible(&mFade) == 0) break;
-        FloorMap_Teardown(&mFloorMap);
+        mFloorMap.Teardown();
         mTitleAHelp.func_801C4654(1);
         mTitleAHelp.setInfoText(BdatTouchStringCell(lbl_eu_8050B498, lbl_eu_8050B498 + 8, 3));
         mTitleAHelp.func_801C46DC(0);
@@ -486,7 +455,7 @@ void CMenuMapSelect::Move() {
 
     case 10:
         if (CFade_IsVisible(&mFade) == 0) break;
-        cf::CfGameManager::func_8008413C(FloorMap_GetU16Field5A(&mFloorMap), 0);
+        cf::CfGameManager::func_8008413C(mFloorMap.GetU16Field5A(), 0);
         mState = 0xb;
         if (CMainMenu_IsOpen()) {
             CMainMenu_GetInstancePtr();
@@ -499,19 +468,19 @@ void CMenuMapSelect::Move() {
         break;
     }
 
-    if (FloorMap_GetField40Flag(&mFloorMap) == 0) {
+    if (mFloorMap.GetField40Flag() == 0) {
         BgTex_Tick_3D54(&mBgTex);
         mMapSel.update();
     }
     mTitleAHelp.updateHelp();
     CFade_Update(&mFade);
-    FloorMap_UpdateFrame(&mFloorMap);
+    mFloorMap.UpdateFrame();
 }
 
 // CMenuMapSelect::cbRenderBefore - scene render callback. Skips drawing while
 // the game task is busy or the global bit-21 busy flag is set, then draws bg,
 // map selector, floor map, title help and fade through a stack DrawInfo.
-void CMenuMapSelect::cbRenderBefore() {
+void CMenuMapSelect::cbRenderBefore(CScn*) {
     if (CTaskGame::getInstance()->isFlag01Set() != 0 || (gmPauseFlags & 0x200000)) return;
     if (IsMenuState621F0() == 0) return;
     if (mState >= 0xb) return;
@@ -521,11 +490,11 @@ void CMenuMapSelect::cbRenderBefore() {
     // construction; retail calls the ctor/dtor symbols directly (flag -1).
     nw4r::lyt::DrawInfo drawInfo;
     SetWideLocAdjust(&drawInfo);
-    if (FloorMap_GetField40Flag(&mFloorMap) == 0) {
+    if (mFloorMap.GetField40Flag() == 0) {
         BgTex_Draw_3D7C(&mBgTex, &drawInfo);
         mMapSel.draw(&drawInfo);
     }
-    FloorMap_Draw(&mFloorMap, &drawInfo);
+    mFloorMap.Draw(&drawInfo);
     mTitleAHelp.drawHelp(&drawInfo);
     CFade_Draw(&mFade, &drawInfo);
 }
@@ -643,7 +612,7 @@ void setupFloorMapPhase(CMenuMapSelect* self) {
 
         u8 sel = self->mMapSel.getMapGridCell();
         (&self->mFloorMap)->SetMapTable(sel);
-        FloorMap_LoadMapFiles(&self->mFloorMap);
+        self->mFloorMap.LoadMapFiles();
         self->mState = 5;
     }
 }
@@ -654,7 +623,7 @@ void setupFloorMapPhase(CMenuMapSelect* self) {
 // zoom / cursor / selection actions based on the active controller layout.
 // ---------------------------------------------------------------------------
 void handleFloorMapInput(CMenuMapSelect* self) {
-    if (FloorMap_ClassifyByte41(&self->mFloorMap) != 0) {
+    if (self->mFloorMap.ClassifyByte41() != 0) {
         return;
     }
 
@@ -665,14 +634,14 @@ void handleFloorMapInput(CMenuMapSelect* self) {
 
     if (cf::CfGameManager::isClassicController(-1) != 0) {
         // Classic controller layout.
-        if (FloorMap_CheckRowVisited(&self->mFloorMap) != 0) {
-            if (FloorMap_GetBdatMaxRow(&self->mFloorMap) > 1 && FloorMap_GetField208Plain(&self->mFloorMap) != 0) {
+        if (self->mFloorMap.CheckRowVisited() != 0) {
+            if (self->mFloorMap.GetBdatMaxRow() > 1 && self->mFloorMap.GetField208Plain() != 0) {
                 self->mTitleAHelp.func_801C41E8(0x4b);
             } else {
                 self->mTitleAHelp.func_801C41E8(0x4c);
             }
         } else {
-            if (FloorMap_GetBdatMaxRow(&self->mFloorMap) > 1 && FloorMap_GetField208Plain(&self->mFloorMap) != 0) {
+            if (self->mFloorMap.GetBdatMaxRow() > 1 && self->mFloorMap.GetField208Plain() != 0) {
                 self->mTitleAHelp.func_801C41E8(0x4d);
             } else {
                 self->mTitleAHelp.func_801C41E8(0x4e);
@@ -682,75 +651,75 @@ void handleFloorMapInput(CMenuMapSelect* self) {
         // Zoom is only allowed while the floor map is fully shown and idle.
         u32 zoomReady = 0;
         u32 zooming = 0;
-        if (FloorMap_GetBdatMaxRow(&self->mFloorMap) > 1 && FloorMap_GetField208Gated(&self->mFloorMap) != 0) {
+        if (self->mFloorMap.GetBdatMaxRow() > 1 && self->mFloorMap.GetField208Gated() != 0) {
             zooming = 1;
         }
-        if (zooming != 0 && FloorMap_IsSysWinBusy(&self->mFloorMap) == 0) {
+        if (zooming != 0 && self->mFloorMap.IsSysWinBusy() == 0) {
             zoomReady = 1;
         }
 
-        FloorMap_SetPaneFlag(&self->mFloorMap, 0);
+        self->mFloorMap.SetPaneFlag(0);
 
         CPad* pad = cf::CfGameManager::getCurrentPad();
         if ((pad->mTurboPressButtonFlags & 0x02000000) != 0 && zoomReady != 0) {
-            FloorMap_UpdateRowPanePos(&self->mFloorMap);
+            self->mFloorMap.UpdateRowPanePos();
             return;
         }
         if ((pad->mTurboPressButtonFlags & 0x04000000) != 0 && zoomReady != 0) {
-            FloorMap_CursorNextFloor(&self->mFloorMap);
+            self->mFloorMap.CursorNextFloor();
             return;
         }
 
         u32 pressed = pad->mPressedButtonFlags;
         if ((pressed & 0x00200000) != 0) {
-            FloorMap_OpenRowWindow(&self->mFloorMap);
-            if (FloorMap_GetU16Field5A(&self->mFloorMap) != 0) {
+            self->mFloorMap.OpenRowWindow();
+            if (self->mFloorMap.GetU16Field5A() != 0) {
                 (&self->mFade)->In();
                 self->mState = 10;
             }
         } else if ((pressed & 0x00400000) != 0) {
             if (self->mFloorMap.GetActiveFlag58() != 0) {
-                FloorMap_ConfirmSelect(&self->mFloorMap);
-            } else if (FloorMap_IsSysWinBusy(&self->mFloorMap) == 0) {
+                self->mFloorMap.ConfirmSelect();
+            } else if (self->mFloorMap.IsSysWinBusy() == 0) {
                 (&self->mFade)->In();
                 self->mState = 8;
                 playUISound(6);
             } else {
-                FloorMap_OpenRowWindow(&self->mFloorMap);
+                self->mFloorMap.OpenRowWindow();
             }
         } else if ((pad->mTurboPressButtonFlags & 0x4) != 0) {
-            FloorMap_UpdateCursorMove(&self->mFloorMap);
+            self->mFloorMap.UpdateCursorMove();
         } else if ((pad->mTurboPressButtonFlags & 0x8) != 0) {
-            FloorMap_UpdateWorldMap(&self->mFloorMap);
+            self->mFloorMap.UpdateWorldMap();
         } else if ((pad->mTurboPressButtonFlags & 0x80000000) != 0) {
-            FloorMap_HandleMapDown(&self->mFloorMap);
+            self->mFloorMap.HandleMapDown();
         } else if ((pad->mTurboPressButtonFlags & 0x2) != 0) {
-            FloorMap_NormalizeMapPos(&self->mFloorMap);
+            self->mFloorMap.NormalizeMapPos();
         } else if ((pressed & 0x01000000) != 0) {
-            FloorMap_Log2Field208(reinterpret_cast<void*>(&self->mFloorMap));
+            self->mFloorMap.Log2Field208();
         } else if ((pressed & 0x200) != 0) {
-            FloorMap_Log2Field333C(reinterpret_cast<void*>(&self->mFloorMap));
+            self->mFloorMap.Log2Field333C();
         } else if ((pressed & 0x800000) != 0) {
-            if (FloorMap_IsSysWinBusy(&self->mFloorMap) == 0) {
+            if (self->mFloorMap.IsSysWinBusy() == 0) {
                 if (CMainMenu_GetInstancePtr() != 0) {
                     ArtsInfo_SetReadyFlag();
                     playUISound(6);
                 }
                 self->mState = 11;
             } else {
-                FloorMap_OpenRowWindow(&self->mFloorMap);
+                self->mFloorMap.OpenRowWindow();
             }
         }
     } else {
         // Wiimote/Nunchuk layout.
-        if (FloorMap_CheckRowVisited(&self->mFloorMap) != 0) {
-            if (FloorMap_GetBdatMaxRow(&self->mFloorMap) > 1 && FloorMap_GetField208Plain(&self->mFloorMap) != 0) {
+        if (self->mFloorMap.CheckRowVisited() != 0) {
+            if (self->mFloorMap.GetBdatMaxRow() > 1 && self->mFloorMap.GetField208Plain() != 0) {
                 self->mTitleAHelp.func_801C41E8(0x4b);
             } else {
                 self->mTitleAHelp.func_801C41E8(0x4c);
             }
         } else {
-            if (FloorMap_GetBdatMaxRow(&self->mFloorMap) > 1 && FloorMap_GetField208Plain(&self->mFloorMap) != 0) {
+            if (self->mFloorMap.GetBdatMaxRow() > 1 && self->mFloorMap.GetField208Plain() != 0) {
                 self->mTitleAHelp.func_801C41E8(0x4d);
             } else {
                 self->mTitleAHelp.func_801C41E8(0x4e);
@@ -759,90 +728,90 @@ void handleFloorMapInput(CMenuMapSelect* self) {
 
         u32 zooming = 0;
         u32 zoomReady = 0;
-        if (FloorMap_GetBdatMaxRow(&self->mFloorMap) > 1 && FloorMap_GetField208Gated(&self->mFloorMap) != 0) {
+        if (self->mFloorMap.GetBdatMaxRow() > 1 && self->mFloorMap.GetField208Gated() != 0) {
             zooming = 1;
         }
-        if (zooming != 0 && FloorMap_IsSysWinBusy(&self->mFloorMap) == 0) {
+        if (zooming != 0 && self->mFloorMap.IsSysWinBusy() == 0) {
             zoomReady = 1;
         }
 
-        FloorMap_SetPaneFlag(&self->mFloorMap, 0);
+        self->mFloorMap.SetPaneFlag(0);
 
         CPad* pad = cf::CfGameManager::getCurrentPad();
         u32 pressed = pad->mPressedButtonFlags;
         if ((pressed & 0x10) != 0) {
-            FloorMap_OpenRowWindow(&self->mFloorMap);
-            if (FloorMap_GetU16Field5A(&self->mFloorMap) != 0) {
+            self->mFloorMap.OpenRowWindow();
+            if (self->mFloorMap.GetU16Field5A() != 0) {
                 (&self->mFade)->In();
                 self->mState = 10;
             }
         } else if ((pressed & 0x20) != 0) {
             if (self->mFloorMap.GetActiveFlag58() != 0) {
-                FloorMap_ConfirmSelect(&self->mFloorMap);
-            } else if (FloorMap_IsSysWinBusy(&self->mFloorMap) == 0) {
+                self->mFloorMap.ConfirmSelect();
+            } else if (self->mFloorMap.IsSysWinBusy() == 0) {
                 (&self->mFade)->In();
                 self->mState = 8;
                 playUISound(6);
             } else {
-                FloorMap_OpenRowWindow(&self->mFloorMap);
+                self->mFloorMap.OpenRowWindow();
             }
         } else if ((pad->mHeldButtonFlags & 0x1000) != 0 && zooming != 0 &&
-                   FloorMap_IsSysWinBusy(&self->mFloorMap) == 0) {
+                   self->mFloorMap.IsSysWinBusy() == 0) {
             self->mTitleAHelp.func_801C41E8(0x4f);
             if (self->mTimer > 1.0f) {
                 playUISound(2);
             }
             self->mTimer = 0.0f;
-            FloorMap_SetPaneFlag(&self->mFloorMap, 1);
+            self->mFloorMap.SetPaneFlag(1);
             if ((pad->mTurboPressButtonFlags & 0x4) != 0) {
-                FloorMap_UpdateRowPanePos(&self->mFloorMap);
+                self->mFloorMap.UpdateRowPanePos();
             } else if ((pad->mTurboPressButtonFlags & 0x8) != 0) {
-                FloorMap_CursorNextFloor(&self->mFloorMap);
+                self->mFloorMap.CursorNextFloor();
             }
         } else if ((pressed & 0x400) != 0) {
-            if (FloorMap_IsSysWinBusy(&self->mFloorMap) == 0) {
+            if (self->mFloorMap.IsSysWinBusy() == 0) {
                 if (CMainMenu_GetInstancePtr() != 0) {
                     ArtsInfo_SetReadyFlag();
                     playUISound(6);
                 }
                 self->mState = 11;
             } else {
-                FloorMap_OpenRowWindow(&self->mFloorMap);
+                self->mFloorMap.OpenRowWindow();
             }
         } else if ((pad->mTurboPressButtonFlags & 0x4) != 0) {
-            FloorMap_UpdateCursorMove(&self->mFloorMap);
+            self->mFloorMap.UpdateCursorMove();
         } else if ((pad->mTurboPressButtonFlags & 0x8) != 0) {
-            FloorMap_UpdateWorldMap(&self->mFloorMap);
+            self->mFloorMap.UpdateWorldMap();
         } else if ((pad->mTurboPressButtonFlags & 0x80000000) != 0) {
-            FloorMap_HandleMapDown(&self->mFloorMap);
+            self->mFloorMap.HandleMapDown();
         } else if ((pad->mTurboPressButtonFlags & 0x2) != 0) {
-            FloorMap_NormalizeMapPos(&self->mFloorMap);
+            self->mFloorMap.NormalizeMapPos();
         } else if ((pressed & 0x800) != 0) {
-            FloorMap_Log2Field208(reinterpret_cast<void*>(&self->mFloorMap));
+            self->mFloorMap.Log2Field208();
         } else if ((pressed & 0x200) != 0) {
-            FloorMap_Log2Field333C(reinterpret_cast<void*>(&self->mFloorMap));
+            self->mFloorMap.Log2Field333C();
         } else {
             // D-pad held: each direction moves the cursor once per press
             // transition; when no direction is held, confirm the selection.
             u32 flag = 1;
             if ((pad->mHeldButtonFlags & 0x8000) != 0) {
-                FloorMap_ScrollDown(&self->mFloorMap);
+                self->mFloorMap.ScrollDown();
                 flag = 0;
             }
             if ((pad->mHeldButtonFlags & 0x10000) != 0) {
-                FloorMap_ScrollUp(&self->mFloorMap);
+                self->mFloorMap.ScrollUp();
                 flag = 0;
             }
             if ((pad->mHeldButtonFlags & 0x2000) != 0) {
-                FloorMap_ScrollRight(&self->mFloorMap);
+                self->mFloorMap.ScrollRight();
                 flag = 0;
             }
             if ((pad->mHeldButtonFlags & 0x4000) != 0) {
-                FloorMap_ScrollLeft(&self->mFloorMap);
+                self->mFloorMap.ScrollLeft();
                 flag = 0;
             }
             if (flag != 0) {
-                FloorMap_MoveToCursorRow(&self->mFloorMap);
+                self->mFloorMap.MoveToCursorRow();
             }
         }
     }

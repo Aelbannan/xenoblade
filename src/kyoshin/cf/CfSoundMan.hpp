@@ -287,14 +287,6 @@ extern u8 gSoundSystemInitFlag;
 // Left intentionally empty in the retail binary (single blr).
 extern "C" void CfSoundMan_PlayFailHook();
 
-// nw4r member dtors called directly by __dt__801BF80C (retail symbols).
-// extern "C" keeps the call relocs bound to the retail-unmangled names (a
-// plain global-scope C++ declaration would have MWCC append the parameter
-// mangling). Explicit member-dtor syntax would make MWCC virtual-dispatch
-// through the vtable, but the retail binary calls these directly.
-extern "C" void __dt__Q34nw4r3snd18SoundArchivePlayerFv(nw4r::snd::SoundArchivePlayer* self, int flag);
-extern "C" void __dt__Q34nw4r3snd18MemorySoundArchiveFv(nw4r::snd::MemorySoundArchive* self, int flag);
-
 // nw4r archive ctors called directly by CfSoundMan_CtorRecord (retail symbols):
 // placement new would add MWCC's exceptions-on NULL check around the call,
 // which the retail binary does not have (whole TU compiled without it).

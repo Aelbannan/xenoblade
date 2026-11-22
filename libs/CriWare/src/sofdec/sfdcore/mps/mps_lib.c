@@ -1,8 +1,5 @@
 #include <harness_catalog.h>
-__declspec(section ".rodata") __attribute__((aligned(8))) u32 lbl_eu_8051C488[22] = {
-    0x0A435249,0x204D5053,0x2F574949,0x20566572,0x2E322E30,0x36372042,0x75696C64,0x3A4F6374,0x20323820,0x32303039,0x2031313A,0x33373A35,
-    0x330A0041,0x7070656E,0x643A204D,0x57343330,0x32205749,0x4933304A,0x756C3230,0x30385061,0x74636830,0x340A0000
-};
+const char MPSLIB_version_str[] = "\nCRI MPS/WII Ver.2.067 Build:Oct 28 2009 11:37:53\n\0Append: MW4302 WII30Jul2008Patch04\n";
 __attribute__((aligned(4))) u32 sMpsVersionString; // name-guess: MPS_Init stores the CRI MPS version string address (.rodata:0x8051C488) here; no other TU xrefs
 __attribute__((aligned(4))) u32 sMpsWorkBase[1]; // name-guess: work-buffer base pointer written by MPS_Init and reloaded by the MPS handle/error routines
 __attribute__((aligned(4))) u32 sMpsLastHandle[2]; // name-guess: handle cached by MPSLIB_CheckHn and the MPS_Finish error path; retail size 0x8
@@ -45,7 +42,7 @@ int MPS_Init(int max_streams, void *work_buf) {
 
     /* endianness check: first byte of 0x01020304 must be 0x01 (big-endian);
      * the default-handler store is scheduled below the check */
-    sMpsVersionString = (u32)lbl_eu_8051C488;
+    sMpsVersionString = (u32)MPSLIB_version_str;
     magic = 0x01020304;
     if (((u8 *)&magic)[0] != 1) {
         for (;;) ((void (*)(void))-1)();

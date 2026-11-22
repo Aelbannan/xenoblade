@@ -273,7 +273,7 @@ void CException::wkRender() {
     if (mAnimState >= 1 && (mFlags & 1) != 0) {
         return;
     }
-    drawExceptionText__10CExceptionFv(mMessage);
+    drawExceptionText__10CExceptionFv(static_cast<const wchar_t*>(mMessage));
 }
 
 // Main exception text renderer.
@@ -566,7 +566,7 @@ void CException::RemoveFromGlobalArray(IException* pException) {
 // Store this to global
 void CException::setGlobalMessage() {
     if (spExceptionInstance != nullptr) {
-        *(CException**)((u8*)spExceptionInstance + 0x1F0) = this;
+        spExceptionInstance->mMessage = this;
     }
 }
 

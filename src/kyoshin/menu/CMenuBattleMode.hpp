@@ -18,7 +18,7 @@ public:
     virtual void Init();
     virtual void Term();
     virtual void Move();
-    virtual void cbRenderBefore();
+    virtual void cbRenderBefore(CScn* scene);
 
     // Only one battle-mode menu exists at a time (subsequent calls return NULL).
     static CMenuBattleMode* create(CProcess* parent, CScn* scene);

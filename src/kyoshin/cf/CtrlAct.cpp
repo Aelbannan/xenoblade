@@ -21,6 +21,14 @@
 #include "kyoshin/CfEnumListHolder.hpp"
 #include "kyoshin/cf/object/CAIActionApi.hpp"
 
+// name-guess: retail lbl_eu_80573A20 (.bss, 0x10-byte f32[4]); written by
+// sinit_800D79B4 and indexed by the action parameter word as facing angles.
+f32 gCtrlActFacingAngles[4];
+
+// name-guess: retail lbl_eu_80663EF8 (.sbss, 0x8-byte f32[2]); written by
+// sinit_800D79B4 and selected by action kinds 5/6 as facing angles.
+f32 gCtrlActFacingAnglePair[2];
+
 // Retail CAttackParam_getArtsGaugeMax__Q22cf12CAttackParamFv lives in this
 // TU's absorbed split (CtrlAct.s @ 800D34CC), so its out-of-line definition
 // stays here and dispatches through the real base virtuals.
@@ -77,7 +85,7 @@ extern "C" void updateActMain(cf::CtrlAct* self) {
     // probe reads exactly 0 (otherwise the source resolution below runs).
     {
         u8 rangeByte =
-            (((cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv())->mChain.mHead.field_2);
+            (((cf::CBattleManager*)cf::CBattleManager::getInstance())->mChain.mHead.field_2);
         if ((rangeByte >= 1 && rangeByte <= 0x18) == 0) {
             if (((CVoiceOwnerIntfPc*)&self->mPlayer->mSub3E9C)->v33() ==
                 0.0f) {
@@ -272,11 +280,11 @@ extern "C" void updateActMain(cf::CtrlAct* self) {
         // positive-f27 branch positions the action.
         {
             u8 rangeByte2 =
-                (((cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv())->mChain.mHead.field_2);
+                (((cf::CBattleManager*)cf::CBattleManager::getInstance())->mChain.mHead.field_2);
             if ((rangeByte2 >= 1 && rangeByte2 <= 0x18) != 0
                 && 3.0f > f28) {
                 int r = CChain_ValidateTarget(
-                    &((cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv())->mChain,
+                    &((cf::CBattleManager*)cf::CBattleManager::getInstance())->mChain,
                     self->mPlayer);
                 // Retail lowers this via cntlzw/srwi: nonzero result picks
                 // D1C, zero keeps CF8.
@@ -648,7 +656,7 @@ void parseActEntry(cf::CtrlAct* self) {
             CfObjectMove_setAnimModeArgs((u8*)&self->mPlayer->mSub3E9C, 0x11, 0, -1, 1);
             CtrlActEntryObj* eo = (CtrlActEntryObj*)entry.mPtr18;
             eo->mField7C = eo->mField2C;
-            void* bm = getInstance__Q22cf14CBattleManagerFv();
+            void* bm = cf::CBattleManager::getInstance();
             ((CtrlActBm2*)bm)->table->fn2C(bm, self->mPlayer, sub);
         }
         return;
@@ -748,7 +756,7 @@ void parseActEntry(cf::CtrlAct* self) {
         memset(&req, 0, sizeof(req));
         req.mField20 = 60.0f;
         req.mIdC = 0x111;
-        void* bm = getInstance__Q22cf14CBattleManagerFv();
+        void* bm = cf::CBattleManager::getInstance();
         CBattleMan_RunBattleEvent((u32)bm, (u32)self->mPlayer, &req, (u32)0);
         break;
     }
@@ -757,7 +765,7 @@ void parseActEntry(cf::CtrlAct* self) {
         memset(&req, 0, sizeof(req));
         req.mField20 = 60.0f;
         req.mIdC = 0x112;
-        void* bm = getInstance__Q22cf14CBattleManagerFv();
+        void* bm = cf::CBattleManager::getInstance();
         CBattleMan_RunBattleEvent((u32)bm, (u32)self->mPlayer, &req, (u32)0);
         break;
     }
@@ -785,7 +793,7 @@ void parseActEntry(cf::CtrlAct* self) {
         if ((self->mPlayer->mField3F00 & 4) == 0) {
             break;
         }
-        void* bm = getInstance__Q22cf14CBattleManagerFv();
+        void* bm = cf::CBattleManager::getInstance();
         CChain_TryActivateChain(&((cf::CBattleManager*)bm)->mChain, (u32)self->mPlayer);
         break;
     }
@@ -948,7 +956,7 @@ extern "C" int runArtsAttack(cf::CtrlAct* self, CtrlActAtkArg* arg) {
             return 0;
         }
     }
-    void* bm = getInstance__Q22cf14CBattleManagerFv();
+    void* bm = cf::CBattleManager::getInstance();
     if (((cf::CBattleManager*)bm)->CBattleMan_FetchVisionObj() != 0) {
         cf::CVisionSub* bs = (cf::CVisionSub*)((cf::CBattleManager*)bm)->CBattleMan_FetchVisionObj();
         if ((bs->field_824 & 0x100000) == 0
@@ -957,7 +965,7 @@ extern "C" int runArtsAttack(cf::CtrlAct* self, CtrlActAtkArg* arg) {
         }
     }
     CtrlActSub2A4* sub = self->mPlayer->table->method2A4(self->mPlayer);
-    bm = getInstance__Q22cf14CBattleManagerFv();
+    bm = cf::CBattleManager::getInstance();
     if (((cf::CBattleManager*)bm)->CBattleMan_FetchVisionObj() != 0
         && ((cf::CVisionSub*)((cf::CBattleManager*)bm)->CBattleMan_FetchVisionObj())->field_00
                == self->mPlayer->mField3F10) {
@@ -1058,7 +1066,7 @@ extern "C" int runArtsAttack(cf::CtrlAct* self, CtrlActAtkArg* arg) {
     }
     if (isBattleEventKind3(atk->mField48) != 0) {
         if (self->mPlayer->mField1530 != 0) {
-            u8 v = (((cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv())->mChain.mHead.field_2);
+            u8 v = (((cf::CBattleManager*)cf::CBattleManager::getInstance())->mChain.mHead.field_2);
             if (v < 1 || v > 0x18) {
                 if ((self->mPlayer->mField3E6C & 0x1000) == 0
                     && self->mPlayer->mField1530 == atk->mField48) {
@@ -2221,11 +2229,11 @@ void snapFacingAng(cf::CtrlAct* self) {
     f32 f3 = 0.024543693f * ang;
     f32 f4, f2;
     if (kind == 6) {
-        f4 = self->mField48 + lbl_eu_80663EF8[0];
-        f2 = self->mField48 + lbl_eu_80663EF8[1];
+        f4 = self->mField48 + gCtrlActFacingAnglePair[0];
+        f2 = self->mField48 + gCtrlActFacingAnglePair[1];
     } else if (kind == 5) {
-        f4 = self->mField48 + lbl_eu_80573A20[0];
-        f2 = self->mField48 + lbl_eu_80573A20[1];
+        f4 = self->mField48 + gCtrlActFacingAngles[0];
+        f2 = self->mField48 + gCtrlActFacingAngles[1];
     }
     while (ml::pi <= f4) f4 -= ml::tau;
     while (f4 < -ml::pi) f4 += ml::tau;
@@ -2264,7 +2272,7 @@ extern "C" int testFacingGap(cf::CtrlAct* self, CtrlActSrc* src) {
     // whether the action state must be cleared (return 0) or kept (1).
     // Retail indexes the facing table with flag-word bits 18-19
     // (rlwinm rX, rX, 10, 28, 29) - the upper half of mParam.
-    f32 f31 = lbl_eu_80573A20[(self->mFlags58.mParam >> 4) & 3];
+    f32 f31 = gCtrlActFacingAngles[(self->mFlags58.mParam >> 4) & 3];
     CVoicePos* ppos = self->mPlayer->mSub3E9C.getPosition();
     CVoicePos* spos = src->mOwner3E9C.getPosition();
     // Retail spills each difference twice (paired store + component
@@ -2833,16 +2841,17 @@ finish:
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 // Static init: fill the facing tables with scaled defaults -
-// lbl_eu_80573A20[0..3] (index 2 untouched) and lbl_eu_80663EF8[0..1].
+// gCtrlActFacingAngles[0..3] (index 2 untouched) and
+// gCtrlActFacingAnglePair[0..1].
 void sinit_800D79B4() {
     f32 a = 90.0f * ml::deg2rad;
     f32 b = -90.0f * ml::deg2rad;
     f32 c = 180.0f * ml::deg2rad;
     f32 d = 170.0f * ml::deg2rad;
     f32 e = -170.0f * ml::deg2rad;
-    lbl_eu_80573A20[0] = a;
-    lbl_eu_80573A20[1] = b;
-    lbl_eu_80573A20[3] = c;
-    lbl_eu_80663EF8[0] = d;
-    lbl_eu_80663EF8[1] = e;
+    gCtrlActFacingAngles[0] = a;
+    gCtrlActFacingAngles[1] = b;
+    gCtrlActFacingAngles[3] = c;
+    gCtrlActFacingAnglePair[0] = d;
+    gCtrlActFacingAnglePair[1] = e;
 }

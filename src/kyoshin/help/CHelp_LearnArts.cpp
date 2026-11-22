@@ -1,5 +1,6 @@
 #include "kyoshin/cf/CfBdat.hpp"
 #include "kyoshin/help/CHelp_LearnArts.hpp"
+#include "kyoshin/cf/CtrlObjectParam.hpp"
 #include "kyoshin/CQuestWindowApi.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/cf/CHelpManager.hpp"
@@ -27,7 +28,7 @@ bool CHelp_LearnArts::isLearnArtsReady() {
     if (cf::CfGameManager::isSceneLoading()) {
         return false;
     }
-    if (lbl_eu_80664A10->mLearnArtsFlag == 0) {
+    if (cf::CHelpManager::sInstance->mLearnArtsFlag == 0) {
         return false;
     }
     if (hasQuestWindow() != 0) {
@@ -45,13 +46,13 @@ bool CHelp_LearnArts::isLearnArtsReady() {
     // Clear the manager-side flag, then scan every party weapon-type row:
     // character 1 only checks its first 8 art slots, the rest check all 16.
     // Returns true as soon as some character knows >= mWpnTypeCount arts.
-    lbl_eu_80664A10->mLearnArtsFlag = 0;
+    cf::CHelpManager::sInstance->mLearnArtsFlag = 0;
     threshold = mWpnTypeCount;
     for (int character = 1; character <= 13; ++character) {
         colName = (const char*)lbl_eu_805138AC;
-        cf::CHelpLearnArtsCharData* charData = (cf::CHelpLearnArtsCharData*)CtrlObjectParam_GetCharEntry((u16)character);
-        artsBase = charData->mArts;
-        col.v = getBdatStringColumnValue(::cf::CfBdat::spItmWpnListFileData, colName, charData->mWpnType);
+        cf::CtrlObjectParamArtsSlotOwner* charData = (cf::CtrlObjectParamArtsSlotOwner*)CtrlObjectParam_GetCharEntry((u16)character);
+        artsBase = charData->rows;
+        col.v = getBdatStringColumnValue(::cf::CfBdat::spItmWpnListFileData, colName, charData->field_0C);
         byteVal = col.b[0];
         bound = ((s16)character == 1) ? 8 : 16;
         counter = 0;

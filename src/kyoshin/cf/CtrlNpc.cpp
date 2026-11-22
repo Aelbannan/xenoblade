@@ -16,6 +16,8 @@
 #include <nw4r/math/math_triangular.h>
 
 #include "kyoshin/cf/CtrlNpc.hpp"
+#include "kyoshin/cf/CfGameManager.hpp"  // real C++ CfGameManager declarations
+#include "kyoshin/cfsys/CfObjectImplMove.hpp"
 #include "kyoshin/cf/CfTFile.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"
 #include "kyoshin/plugin/ocBdat.hpp"
@@ -164,7 +166,7 @@ extern "C" void CtrlNpcAdvanceBehavior(cf::CtrlNpc* self);
 void CtrlNpcUpdateAction(cf::CtrlNpc* self) {
     u16 act;
     // Singleton fetched but unused at this site (retail discards the result).
-    getInstance__Q22cf13CfGameManagerFv();
+    cf::CfGameManager::getInstance();
     if (isGlobalCamFlagSet(0x1000000))
         goto gateFail;
     if (reinterpret_cast<cf::CObjectState*>(self->field_28)->checkStateFlags8(1) != 0)
@@ -486,7 +488,7 @@ void CtrlNpcUpdateTalk(cf::CtrlNpc* self) {
                     continue;
 
                 const char* col2 =
-                    gNpcTimeColumnNames[(u16)getControllerWordA33C__Q22cf13CfGameManagerFv() /
+                    gNpcTimeColumnNames[(u16)cf::CfGameManager::getControllerWordA33C() /
                                     3];
                 v3C.w = getBdatStringColumnValue(fp2, col2, count);
                 if (v3C.b == 0)
@@ -571,7 +573,7 @@ fp2, "npcmeet_no", count);
         } else if (reinterpret_cast<cf::CObjectState*>(self->field_28)->checkStateFlags8(0x2000) != 0 &&
                    self->field_17C != 0) {
             const char* col3 =
-                gNpcTimeColumnNamesAlt[(u16)getControllerWordA33C__Q22cf13CfGameManagerFv() /
+                gNpcTimeColumnNamesAlt[(u16)cf::CfGameManager::getControllerWordA33C() /
                                 3];
             v08.w = getBdatStringColumnValue(fp2, col3, self->field_17C);
             if (v08.b == 0) {
@@ -640,7 +642,7 @@ void CtrlNpcSetupMoveAction(cf::CtrlNpc* self,
     self->field_E0w[4] = vw[1];
     self->field_E0w[5] = vw[2];
     self->field_158 = paramB;
-    self->field_160 = getFieldD90Value__Q22cf13CfGameManagerFv();
+    self->field_160 = cf::CfGameManager::getFieldD90Value();
     self->field_C4 = 1;
     self->field_15C = 2;
     const ml::CVec3* posf = reinterpret_cast<const ml::CVec3*>(pos);
@@ -832,7 +834,7 @@ void CtrlNpcFireAnimMode16CorE(cf::CtrlNpc* self) {
 // into the battle-status helper and bump the busy counter.
 void CtrlNpcFireAnimModeIdleE(cf::CtrlNpc* self) {
     cf::CfObjectMove* obj = self->field_28;
-    cf::CCtrlNpcC4Object* flag = NpcCharView(obj)->field_C4;
+    CfMoveC4Obj* flag = static_cast<CfMoveC4Obj*>(obj->mTargetC4);
     if (flag != 0 && (reinterpret_cast<cf::CfObject*>(obj)->CfObject_queryTargetState() != 0 || getAnimModelId(flag) == 1)) {
         if (self->field_16E != 0) {
             int zero = (reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_getNpcTargetAction() == 0);
@@ -1002,7 +1004,7 @@ void CtrlNpcRestartMoveTimer(cf::CtrlNpc* self) {
     u16 second;
     getControllerValues__Q22cf13CfGameManagerFv(&first, &second);
     clearControllerState__Q22cf13CfGameManagerFv();
-    u32 tick = getFieldD90Value__Q22cf13CfGameManagerFv();
+    u32 tick = cf::CfGameManager::getFieldD90Value();
 
     if (second < self->field_160 || second >= self->field_164)
         return;
@@ -1121,8 +1123,8 @@ void CtrlNpcRestartMoveTimer(cf::CtrlNpc* self) {
                    (f32)__fabs((f64)d.y) >= 5.9f;
         if (far) {
             // Teleport / reposition near the interpolated point.
-            u32 mgrA = getControllerWordA33C__Q22cf13CfGameManagerFv();
-            getControllerWordA37C__Q22cf13CfGameManagerFv();
+            u32 mgrA = cf::CfGameManager::getControllerWordA33C();
+            cf::CfGameManager::getControllerWordA37C();
             u16 evt = gmGlobalFlag42;
             if (evt == 1 && NpcCharView(ch)->field_8C == 0x91 && (u16)mgrA == 4) {
                 if (flag20) {
@@ -1242,7 +1244,7 @@ void CtrlNpcAdvanceWaypoint(cf::CtrlNpc* self) {
 
     // While a forced-wait flag is set on the C4 status object and few
     // waypoints remain, creep forward until within the small threshold.
-    cf::CCtrlNpcC4Object* flag = NpcCharView(self->field_28)->field_C4;
+    CfMoveC4Obj* flag = static_cast<CfMoveC4Obj*>(self->field_28->mTargetC4);
     if (flag != 0) {
         if ((flag->field_4EC & 0x02000000) != 0 && self->field_15C <= 2) {
             f32 mag = PSVECMag(

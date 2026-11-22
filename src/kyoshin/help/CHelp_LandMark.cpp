@@ -2,104 +2,40 @@
 #include "kyoshin/cf/CtrlRemoteApi.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
 
-
-// Vtable symbol
-extern cf::CHelpVtbl lbl_eu_8053B5F8;
-
-// C-linkage constructor to match retail symbol __ct__cf_CHelp_LandMark
-extern "C" cf::CHelp_LandMark* __ct__cf_CHelp_LandMark(cf::CHelp_LandMark* self, void* owner, u32 param, u32 field_10_val) {
-    // Call CHelp base constructor; r4/r5 (owner/param) passed through from caller
-    __ct__Q22cf5CHelpFUlUl(self, owner, param);
-
-    // Load vtable pointer and zero value early (matching MWCC scheduling)
-    cf::CHelpVtbl* vtbl = &lbl_eu_8053B5F8;
-    s32 zero = 0;
-
-    // Set up vtable pointers and fields
-    self->vtbl() = vtbl;
-    self->mSecondBase = (char*)vtbl + 0x1c;
-    self->field_10 = field_10_val;
-    self->mTimer = zero;
-
-    // Call CtrlRemote_ResetSlotArrayObj on second base subobject, or self if null
-    // Retail: default r3 = self (mr), then conditionally override with self+0xc (beq+addi)
-    u8* subobj = (u8*)self;
-    if (self != nullptr) {
-        subobj = (u8*)self + 0xc;
-    }
-    CtrlRemote_ResetSlotArrayObj(subobj);
-
-    return self;
-}
-
-// Destructor - extern "C" with explicit deleteFlag parameter matching retail __dt__ symbol
-// Uses the same pattern as the constructor (which is 100% matched)
-extern "C" __declspec(noinline) cf::CHelp_LandMark* __dt__Q22cf14CHelp_LandMarkFv(cf::CHelp_LandMark* self, s32 deleteFlag) {
-    if (self != nullptr) {
-        // Restore vtable before destruction
-        cf::CHelpVtbl* vtbl = &lbl_eu_8053B5F8;
-        self->vtbl() = vtbl;
-        self->mSecondBase = reinterpret_cast<void*>(reinterpret_cast<u32>(vtbl) + 0x1c);
-
-        // Call subobject destructor on second base (same pattern as constructor)
-        u8* subobj = reinterpret_cast<u8*>(self);
-        if (self != nullptr) {
-            subobj = reinterpret_cast<u8*>(reinterpret_cast<u32>(subobj) + 0xc);
-        }
-        CtrlRemote_ResetSlotArrayByIndex((u32)subobj);
-
-        if (deleteFlag > 0) {
-            operator delete(self);
-        }
-    }
-
-    return self;
-}
-
-// tryActivate - extern "C" to match the Fv retail symbol (takes params in registers)
-// 100% matched
-extern "C" __declspec(noinline) void tryActivate__Q22cf14CHelp_LandMarkFv(cf::CHelp_LandMark* self, u32 param1, u32 param2) {
-    // Use bool to trigger MWCC's neg/or/rlwinm idiom for != 0 check
-    bool hasResult = CtrlRemote_TouchBitByArg((u32)(uintptr_t)self->mOwner) != 0;
-    if (hasResult) return;
-    if ((s32)(self->field_10 + 0x20c8) != (s32)param1) return;
-    if (param2 == 0) return;
-
-    self->mSavedFlags = cf::CfGameManager::getEnabledInputFlags();
-    cf::CfGameManager::enablePadFlags(-1, false);
-    gmGameFlags |= 0x2000;
-    self->mTimer = 0x4B;
-}
-
-// func_802B8388 - thunk: adjusts this by -0xC and tail-calls tryActivate
-// Retail is 0x8 bytes (subi r3, r3, 12; b tryActivate); cannot be expressed in C++
-extern "C" __declspec(noinline) void tryActivateThunk__Q22cf14CHelp_LandMarkFv(cf::CHelp_LandMark* self, u32 param1, u32 param2) {
-    // Adjusted-this thunk: restore real object pointer (-0xC) and tail-call.
-    tryActivate__Q22cf14CHelp_LandMarkFv((cf::CHelp_LandMark*)((char*)self - 0xc), param1, param2);
-}
-
-// func_802B8390 - thunk: adjusts this by -0xC and tail-calls destructor
-// Retail is 0x8 bytes (subi r3, r3, 12; b __dt__); cannot be expressed in C++
-extern "C" __declspec(noinline) void destroyThunk__Q22cf14CHelp_LandMarkFv(cf::CHelp_LandMark* self, s32 deleteFlag) {
-    // Adjusted-this thunk: restore real object pointer (-0xC) and tail-call.
-    // Retail passes r4 (deleteFlag) through unchanged - no literal is loaded.
-    __dt__Q22cf14CHelp_LandMarkFv((cf::CHelp_LandMark*)((char*)self - 0xc), deleteFlag);
-}
-
 namespace cf {
 
-void CHelp_LandMark::resetState() {
+CHelp_LandMark::CHelp_LandMark(u32 owner, u32 param, s32 landmarkId) : CHelp(owner, param) {
+    mLandmarkId = landmarkId;
+    mTimer = 0;
+    CtrlRemote_ResetSlotArrayObj(static_cast<IFlagEvent*>(this));
+}
+
+CHelp_LandMark::~CHelp_LandMark() {
+    CtrlRemote_ResetSlotArrayByIndex((u32)static_cast<IFlagEvent*>(this));
+}
+
+void CHelp_LandMark::CHelp_UnkVirtualFunc1() {
     mTimer = 0;
     mSavedFlags = 0;
 }
 
-u32 CHelp_LandMark::tickUpdate() {
+void CHelp_LandMark::FlagEvent1(int eventId, int arg2, int arg3) {
+    bool touched = CtrlRemote_TouchBitByArg(mOwner) != 0;
+    if (touched) return;
+    if (mLandmarkId + 0x20C8 != eventId) return;
+    if (arg2 == 0) return;
+
+    mSavedFlags = CfGameManager::getEnabledInputFlags();
+    CfGameManager::enablePadFlags(-1, false);
+    gmGameFlags |= 0x2000;
+    mTimer = 75;
+}
+
+UNKWORD CHelp_LandMark::f10() {
     if (mTimer <= 0) {
         return 0;
     }
-    s32 newVal = mTimer - 1;
-    mTimer = newVal;
-    if (newVal > 0) {
+    if (--mTimer > 0) {
         return 0;
     }
     CfGameManager::enablePadFlags(mSavedFlags, true);

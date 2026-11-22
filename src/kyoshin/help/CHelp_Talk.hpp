@@ -95,13 +95,6 @@ struct CVoiceRec {
     CVoiceSub30* field_04; // 0x04
 };
 
-// Player record view with the parameter sub-object embedded at +0x3E9C
-// (embedded members make MWCC emit the retail lwzu dispatch sequence).
-struct CPlayerTalkRec {
-    u8 _pad00[0x3E9C];
-    CParamSub4C field_3E9C;
-};
-
 // CHelp_Talk inherits CHelpSwitch (mFlag at +0xC). Extra fields at +0x10..+0x16.
 class __declspec(novtable) CHelp_Talk : public CHelpSwitch {
 public:

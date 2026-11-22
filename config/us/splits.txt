@@ -1918,7 +1918,7 @@ kyoshin/cf/CfNandManager.cpp:
 	.bss        start:0x80576cc0 end:0x80576cf8
 	.data        start:0x80536b2c end:0x80536cf8
 	.rodata        start:0x8050b440 end:0x8050b488
-	.sbss        start:0x80664768 end:0x80664790
+	.sbss        start:0x80664768 end:0x80664788
 	.sdata        start:0x806628c8 end:0x806628d8
 	.sdata2     start:0x806686e0 end:0x80668708
 kyoshin/code_802405F4.cpp:
@@ -1926,6 +1926,7 @@ kyoshin/code_802405F4.cpp:
 	extabindex  start:0x8002F35C end:0x8002F398
 	.text       start:0x802427CC end:0x80243624
 
+	.sbss        start:0x80664788 end:0x80664790
 	.sdata2     start:0x80668708 end:0x80668728
 kyoshin/menu/CMenuMapSelect.cpp:
 	extab       start:0x80016208 end:0x800163C8
@@ -2324,6 +2325,7 @@ kyoshin/cf/CHelpManager.cpp:
 	.data        start:0x80538d28 end:0x80539128
 	.rodata        start:0x8050fe00 end:0x8050ff18
 	.sdata        start:0x80662B40 end:0x80662C40
+	.sbss        start:0x80664a10 end:0x80664a18
 	.sdata2        start:0x80668bc8 end:0x80668bd0
 kyoshin/code_80296898.cpp:
 	extab       start:0x80019CB0 end:0x80019CC8
@@ -2340,7 +2342,7 @@ kyoshin/makecrystal/CMCGetItemBox.cpp:
 	.data        start:0x80539128 end:0x805391B0
 	.rodata        start:0x8050ff18 end:0x80510250
 	.sdata        start:0x80662C40 end:0x80662C48
-	.sbss        start:0x80664a10 end:0x80664a28
+	.sbss        start:0x80664a18 end:0x80664a28
 	.sdata2        start:0x80668bd0 end:0x80668c08
 kyoshin/menu/CMenuTutorial.cpp:
 	extab       start:0x8001A0C8 end:0x8001A1B8
@@ -2349,7 +2351,7 @@ kyoshin/menu/CMenuTutorial.cpp:
 
 	.data        start:0x805391B0 end:0x80539230
 	.rodata        start:0x80510250 end:0x80510280
-	.sbss        start:0x80664a28 end:0x80664a38
+	.sbss        start:0x80664a28 end:0x80664a30
 	.sdata        start:0x80662C48 end:0x80662C50
 kyoshin/CTutorial.cpp:
 	extab       start:0x8001A1B8 end:0x8001A294
@@ -2360,6 +2362,7 @@ kyoshin/CTutorial.cpp:
 	.sdata2        start:0x80668c08 end:0x80668c10
 	.data       start:0x80539230 end:0x805392C8
 	.sdata      start:0x80662C50 end:0x80662C58
+	.sbss       start:0x80664a30 end:0x80664a38
 kyoshin/menu/CMenuOption.cpp:
 	extab       start:0x8001A294 end:0x8001A3B0
 	extabindex  start:0x80032464 end:0x800324E8
@@ -3944,7 +3947,6 @@ RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_material.cpp:
 	.rodata     start:0x805153D0 end:0x80515400
 	.data       start:0x8054A150 end:0x8054A1D8
 
-	.sbss2        start:0x8066b550 end:0x8066b558
 RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_pane.cpp:
 	.text       start:0x80334050 end:0x803351A0 align:16
 	.ctors      start:0x804FA0AC end:0x804FA0B0
@@ -5163,6 +5165,7 @@ nw4r/src/g3d/g3d_anmvis.cpp:
 nw4r/src/g3d/g3d_anmclr.cpp:
 	.text       start:0x803E3F4C end:0x803E4CD0
 	.sdata2     start:0x80669b48 end:0x80669b58
+	.sdata      start:0x80663458 end:0x80663460
 
 	.data        start:0x80569180 end:0x80569210
 	.rodata        start:0x8051d530 end:0x8051d560
@@ -5193,16 +5196,18 @@ nw4r/src/g3d/g3d_anmscn.cpp:
 	.sdata2     start:0x80669ba0 end:0x80669bc0
 
 	.data        start:0x80569490 end:0x805695b0
-	.rodata        start:0x8051d620 end:0x8051d660
+	.rodata        start:0x8051d620 end:0x8051d640
 nw4r/src/g3d/g3d_obj.cpp:
 	.text       start:0x803E95F8 end:0x803E9714
 
 	.data        start:0x805695b0 end:0x805695d0
+	.rodata        start:0x8051d640 end:0x8051d650
 nw4r/src/g3d/g3d_anmobj.cpp:
 	.text       start:0x803E9714 end:0x803E97CC
 
-	.sdata        start:0x80663458 end:0x80663468
+	.sdata        start:0x80663460 end:0x80663468
 	.sdata2        start:0x80669BC0 end:0x80669BC8
+	.rodata        start:0x8051d650 end:0x8051d660
 nw4r/src/g3d/platform/g3d_gpu.cpp:
 	.text       start:0x803E97CC end:0x803E9CDC
 	.sdata2     start:0x80669bc8 end:0x80669be0
@@ -5311,11 +5316,12 @@ nw4r/src/g3d/g3d_calcmaterial.cpp:
 nw4r/src/g3d/g3d_init.cpp:
 	.text       start:0x803FF0A0 end:0x803FF19C
 
-	.data        start:0x80569828 end:0x805698a8
+	.data        start:0x80569828 end:0x80569870
 	.sdata        start:0x806634b0 end:0x806634b8
 nw4r/src/g3d/g3d_scnproc.cpp:
 	.text       start:0x803FF19C end:0x803FF48C
 	.rodata        start:0x8051d7e8 end:0x8051d7f8
+	.data       start:0x80569870 end:0x805698a8
 	.sdata2     start:0x80669cf0 end:0x80669cf8
 
 nw4r/src/g3d/g3d_fog.cpp:
@@ -5383,6 +5389,7 @@ nw4r/src/lyt/lyt_bounding.cpp:
 nw4r/src/lyt/lyt_material.cpp:
 	.text       start:0x804077EC end:0x8040A660
 	.sdata2     start:0x80669d98 end:0x80669db8
+	.sbss2      start:0x8066B550 end:0x8066B558
 
 	.data        start:0x80569bf8 end:0x80569c68
 nw4r/src/lyt/lyt_texMap.cpp:
@@ -5539,7 +5546,7 @@ nw4r/src/snd/snd_MmlParser.cpp:
 	.text       start:0x80419954 end:0x8041AAF8
 	.sdata2     start:0x80669fe0 end:0x8066a000
 
-	.data        start:0x8056a890 end:0x8056ab60
+	.data        start:0x8056a890 end:0x8056aae8
 	.sbss        start:0x806654e8 end:0x806654f0
 	.sdata        start:0x806634d8 end:0x806634e8
 nw4r/src/snd/snd_MmlSeqTrack.cpp:
@@ -5550,6 +5557,7 @@ nw4r/src/snd/snd_MmlSeqTrackAllocator.cpp:
 
 nw4r/src/snd/snd_PlayerHeap.cpp:
 	.text       start:0x8041ACCC end:0x8041AECC
+	.data        start:0x8056aae8 end:0x8056aaf8
 
 nw4r/src/snd/snd_RemoteSpeaker.cpp:
 	.text       start:0x8041AECC end:0x8041B6B8
@@ -5567,6 +5575,7 @@ nw4r/src/snd/snd_SeqPlayer.cpp:
 	.sdata2     start:0x8066a000 end:0x8066a018
 
 	.bss        start:0x806382c0 end:0x806382e0
+	.data        start:0x8056aaf8 end:0x8056ab60
 nw4r/src/snd/snd_SeqSound.cpp:
 	.text       start:0x8041CF20 end:0x8041D668
 	.ctors      start:0x804FA0E0 end:0x804FA0E4
@@ -6300,11 +6309,9 @@ monolib/src/lib/CLibLayout.cpp:
 	.rodata	start:0x805231B0 end:0x805231D0
 	.sbss	start:0x80665710 end:0x80665720
 	.sdata	start:0x806637D8 end:0x806637E0
-	.text	start:0x80462F54 end:0x80463534
-monolib/src/lib/UnkClass_8045F564.cpp:
-	extab       start:0x8001D9B8 end:0x8001D9D8
-	extabindex  start:0x8003574C end:0x8003577C
-	.text       start:0x80463534 end:0x80463828
+	.text	start:0x80462F54 end:0x80463828
+	extab       start:0x8001D90C end:0x8001D9D8
+	extabindex  start:0x800356D4 end:0x8003577C
 
 monolib/src/lib/Class_8045F858.cpp:
 	extab       start:0x8001D9D8 end:0x8001D9E8
@@ -6382,7 +6389,7 @@ monolib/src/mpfsys/UnkClass_80471EC8.cpp:
 	.sbss	start:0x80665860 end:0x80665888
 	.sdata	start:0x80663848 end:0x80663868
 	.text	start:0x80475E98 end:0x80478F50
-	.sdata2     start:0x8066a72c end:0x8066a7e0
+	.sdata2     start:0x8066a728 end:0x8066a7e0
 monolib/src/mpfsys/MPFDrawDisplayList.cpp:
 	.bss	start:0x80658488 end:0x806584E8
 	.data	start:0x8056DBA0 end:0x8056DBC0
@@ -6408,7 +6415,7 @@ monolib/src/mpfsys/MPFDrawCross.cpp:
 	.text	start:0x8047DED4 end:0x8047DEFC
 monolib/src/mpfsys/MPFDrawBillLayTex.cpp:
 	.data	start:0x8056DC00 end:0x8056DC68
-	.rodata	start:0x80523E00 end:0x80523E98
+	.rodata	start:0x80523E00 end:0x80523E70
 	.sbss	start:0x806658B0 end:0x806658B8
 	.sdata	start:0x80663888 end:0x806638A0
 	.text	start:0x8047DEFC end:0x8047FB24
@@ -6446,6 +6453,8 @@ monolib/src/scn/CScnItemCameraNw4r.cpp:
 	extabindex  start:0x80036490 end:0x800364CC
 	.text       start:0x80485E3C end:0x80486064
 	.data       start:0x8056DC90 end:0x8056DCD8
+	.rodata     start:0x80523E70 end:0x80523E98
+	.sdata      start:0x806638A8 end:0x806638B8
 
 monolib/src/scn/CScnItemId.cpp:
 	.data	start:0x8056DCD8 end:0x8056DD08
@@ -6568,7 +6577,7 @@ monolib/src/scn/CScnCameraMan.cpp:
 	.data	start:0x8056EA40 end:0x8056EAD8
 	.rodata	start:0x805240D8 end:0x80524108
 	.text	start:0x8049EDA0 end:0x8049FA78
-	.sdata	start:0x80663A10 end:0x80663A18
+	.sdata	start:0x80663A08 end:0x80663A18
 	.sdata2     start:0x8066ab48 end:0x8066ab70
 monolib/src/scn/CScnEffectActNw4r.cpp:
 	.data	start:0x8056EAD8 end:0x8056EB50

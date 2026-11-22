@@ -35,7 +35,7 @@ public:
     virtual void Move();
 
     // Render callback (dispatched through the IScnRender subobject)
-    virtual void cbRenderBefore();
+    virtual void cbRenderBefore(CScn* scene);
 
     CProcess* mParentRef;         // 0x5C: parent process reference
     CBgTex mBgTex;                // 0x60

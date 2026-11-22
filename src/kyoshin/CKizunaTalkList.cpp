@@ -12,22 +12,17 @@
 #include "kyoshin/plugin/ocBdat.hpp"
 // Single definitions of this TU's retail .sbss globals.
 extern "C" void* sKizunaTalkBdatData = nullptr;
-extern "C" void* sKizunaTalkRowColorNeutralA = nullptr;
-extern "C" void* sKizunaTalkRowColorNeutralB = nullptr;
-extern "C" void* sKizunaTalkRowColorSelectedA = nullptr;
-extern "C" void* sKizunaTalkRowColorSelectedB = nullptr;
+GXColorS10 sKizunaTalkRowColorNeutralA;
+GXColorS10 sKizunaTalkRowColorNeutralB;
+GXColorS10 sKizunaTalkRowColorSelectedA;
+GXColorS10 sKizunaTalkRowColorSelectedB;
 
 // Retail-unmangled helper (canonical spelling from the calling TUs).
 #include "kyoshin/cf/CtrlRemoteApi.hpp"
 
 // Retail-unmangled callees that have no canonical header declaration yet.
-extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv();
-extern "C" void* readFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, const char*, void*, int, int);
-extern "C" void* readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, const char*, void*, int, int);
 extern "C" int KyoshinHeap_GetField44();
 extern "C" void deleteRegion(UnkClass_8045F564* self);
-extern "C" void setMemInitFlag__Q23mtl10MemManagerFb(bool value);
-extern "C" bool Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(nw4r::lyt::ArcResourceAccessor* self, void* data, const char* name);
 extern "C" void* Bdat_GetTable_AA34();
 extern "C" u32 Bdat_GetMaxRow_B1EC(void* fp);
 
@@ -209,36 +204,23 @@ TalkListEntry* TalkListEntryArray::GetEntry(int idx) {
     return &mEntries[idx];
 }
 
-// Virtual slot 3: resource lookup (this, "timg", name, 0).
-typedef u32 (*KtlResFn)(void*, const char*, const char*, u32);
-
-// Pure-virtual view of the BDAT/resource-list object whose vtable slot at
-// offset 0x0C resolves a "timg" resource by name. MWCC prepends
-// offset-to-top + RTTI entries, so vtable offset = (index + 2) * 4;
-// index 1 -> +0x0C. All-pure so MWCC emits no vtable for the view itself.
-class KtlResView {
-public:
-    virtual void v00() = 0;                                              // 0x08
-    virtual void* v01(const char* type, const char* name, u32 unk) = 0; // 0x0C
-};
-
 // Whether an icon/texture row exists for the given subtype, by asking the
 // owning layout's shared resource accessor for the "timg" resource (retail
 // findTalkIcon). v==0 queries the parent accessor directly; v!=0 re-resolves
 // the icon name through the shared character table first. 
 u32 TalkListEntryArray::FindIcon(u8 v) {
     if (v == 0) {
-        void* found = ((KtlResView*)(void*)mParent)->v01(
-            (const char*)0x74696d67 /* "timg" */, "mf31_kiztalk_face00.tpl", 0);
+        void* found = mParent->GetResource(
+            nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE, "mf31_kiztalk_face00.tpl", NULL);
         if (found != 0)
             return (u32)found;
         return 0;
     }
     u16 id = BdatGetU16Direct(::cf::CfBdat::spBtlPcListFileData, "tag_icon", v);
     char* name = MakeTplNameSysFile(id);
-    void* resAcc = CUICfManager_getArcResourceAccessor();
-    void* found = ((KtlResView*)resAcc)->v01(
-        (const char*)0x74696d67 /* "timg" */, name, 0);
+    nw4r::lyt::ArcResourceAccessor* resAcc = CUICfManager_getArcResourceAccessor();
+    void* found = resAcc->GetResource(
+        nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE, name, NULL);
     if (found != 0)
         return (u32)found;
     return 0;
@@ -257,9 +239,9 @@ CKizunaTalkList::~CKizunaTalkList() {}
 // Initialise the Kizuna talk list (retail initTalkList): load the talk-list
 // file and the shared archive, then set up the scroll bar.
 void CKizunaTalkList::initTalkList() {
-    void* handle = getHandleMEM2__Q23mtl10MemManagerFv();
-    this->mFileHandle = (CFileHandle*)readFile__11CDeviceFileFUlPCcP10IWorkEventii((u32)handle, "menu/jp/KizunaTalkList.arc", this, 0, 0);
-    this->mBdatHandle = (CFileHandle*)readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii(KyoshinHeap_GetField44(), "common/jp/bdat_menu_kzn.bin", this, 0, 0);
+    mtl::ALLOC_HANDLE handle = mtl::MemManager::getHandleMEM2();
+    this->mFileHandle = CDeviceFile::readFile(handle, "menu/jp/KizunaTalkList.arc", this, 0, 0);
+    this->mBdatHandle = CDeviceFile::readCommonArchiveFile(KyoshinHeap_GetField44(), "common/jp/bdat_menu_kzn.bin", this, 0, 0);
     this->mScrollBar.loadLayoutArc();
     this->mUnknown86 = 0;
 }
@@ -591,20 +573,20 @@ void CKizunaTalkList::renderTalkRows() {
         GXColorS10* c1;
         bool vis;
         if (entry->field_12 == 0) {
-            c0 = (GXColorS10*)&sKizunaTalkRowColorSelectedA;
-            c1 = (GXColorS10*)&sKizunaTalkRowColorSelectedB;
+            c0 = &sKizunaTalkRowColorSelectedA;
+            c1 = &sKizunaTalkRowColorSelectedB;
             vis = true;
         } else if (entry->field_12 == 1) {
-            c0 = (GXColorS10*)&sKizunaTalkRowColorSelectedA;
-            c1 = (GXColorS10*)&sKizunaTalkRowColorSelectedB;
+            c0 = &sKizunaTalkRowColorSelectedA;
+            c1 = &sKizunaTalkRowColorSelectedB;
             vis = false;
         } else if (entry->field_12 == 2) {
-            c0 = (GXColorS10*)&sKizunaTalkRowColorNeutralA;
-            c1 = (GXColorS10*)&sKizunaTalkRowColorNeutralB;
+            c0 = &sKizunaTalkRowColorNeutralA;
+            c1 = &sKizunaTalkRowColorNeutralB;
             vis = false;
         } else {   // == 3
-            c0 = (GXColorS10*)&sKizunaTalkRowColorNeutralA;
-            c1 = (GXColorS10*)&sKizunaTalkRowColorNeutralB;
+            c0 = &sKizunaTalkRowColorNeutralA;
+            c1 = &sKizunaTalkRowColorNeutralB;
             vis = false;
         }
 
@@ -664,7 +646,7 @@ void CKizunaTalkList::rebuildTalkList() {
 // matching archive, 0 otherwise.
 bool CKizunaTalkList::OnFileEvent(CEventFile* pEventFile) {
     if (this->mFileHandle == pEventFile->mFileHandle) {
-        u32 handle = (u32)getHandleMEM2__Q23mtl10MemManagerFv();
+        u32 handle = mtl::MemManager::getHandleMEM2();
 
         // Create the region backing the base memory area, then scope a guard
         // object so the region is torn down on exit.
@@ -673,11 +655,11 @@ bool CKizunaTalkList::OnFileEvent(CEventFile* pEventFile) {
 
         CFileHandle* fh = this->mFileHandle;
         void* fileData = fh->getData();
-        setMemInitFlag__Q23mtl10MemManagerFb(false);
+        mtl::MemManager::setMemInitFlag(false);
 
         // Attach the layout archive to a fresh ArcResource accessor.
         this->mAccessor = CLibLayout::createArcResourceAccessor();
-        Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(this->mAccessor, fileData, "arc");
+        this->mAccessor->Attach(fileData, "arc");
 
         // Create the layout and its two animation transforms.
         buildLayout(&this->mpLayout20, this->mAccessor, "mf31_kiztalk00.brlyt");
@@ -721,10 +703,10 @@ bool CKizunaTalkList::OnFileEvent(CEventFile* pEventFile) {
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 void sinit_80274458() {
-    setGXColorS10((GXColorS10*)&sKizunaTalkRowColorNeutralA, 0x8c, 0x8c, 0x8c, 0);
-    setGXColorS10((GXColorS10*)&sKizunaTalkRowColorNeutralB, 0x8c, 0x8c, 0x8c, 0xff);
-    setGXColorS10((GXColorS10*)&sKizunaTalkRowColorSelectedA, 0x48, 0x3a, 0x21, 0);
-    setGXColorS10((GXColorS10*)&sKizunaTalkRowColorSelectedB, 0x48, 0x3a, 0x21, 0xff);
+    setGXColorS10(&sKizunaTalkRowColorNeutralA, 0x8c, 0x8c, 0x8c, 0);
+    setGXColorS10(&sKizunaTalkRowColorNeutralB, 0x8c, 0x8c, 0x8c, 0xff);
+    setGXColorS10(&sKizunaTalkRowColorSelectedA, 0x48, 0x3a, 0x21, 0);
+    setGXColorS10(&sKizunaTalkRowColorSelectedB, 0x48, 0x3a, 0x21, 0xff);
 }
 
 

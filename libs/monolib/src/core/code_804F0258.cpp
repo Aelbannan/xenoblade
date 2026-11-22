@@ -12,6 +12,7 @@
 #include "monolib/math/CVec3.hpp"
 #include "monolib/math/CCol4.hpp"
 #include "monolib/math/CMat34.hpp"
+#include "monolib/scn/CScnItemCamera.hpp"
 namespace nw4r { namespace math { f32 FrSqrt(f32 x); } }
 
 // === .sbss size=0x28 align=8 (zero-fill globals owned by this TU) ===
@@ -109,13 +110,6 @@ struct CDrawCtxLocal {
     void* field_0x00;
     s32 field_0x04;
     u8 field_0x08;
-};
-
-// Projection info fetched during the depth-sorted path of emitGradQuad;
-// the perspective factor lives at +0x1e0.
-struct ProjInfo {
-    u8 pad_0x00[0x1e0];
-    f32 field_0x1e0;
 };
 
 // GX cache device state: signed viewport extents at +0x4bc/+0x4be feed the
@@ -1621,8 +1615,8 @@ void emitGradQuad(int texMap, CDrawCtxLocal* drawCtx, const ml::CVec3* pos,
 
     if (flag != 0 && pos->z != 0.0f) {
         // Depth-sorted path.
-        ProjInfo* pi = static_cast<ProjInfo*>(Scn_FindCamItem(drawCtx->field_0x00, -1));
-        f32 persp = 0.5f * pi->field_0x1e0;
+        CScnItemCamera* cam = static_cast<CScnItemCamera*>(Scn_FindCamItem(drawCtx->field_0x00, -1));
+        f32 persp = 0.5f * cam->mFovY;
         if (pos->z == 0.0f || 0.0f < pos->z) {
             GXSetZMode(GX_TRUE, GX_LEQUAL, GX_FALSE);
             z = pos->z;

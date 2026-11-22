@@ -175,7 +175,7 @@ void CMenuGetItem::Term() {
 
 void CMenuGetItem::Move() {}
 
-void CMenuGetItem::cbRenderBefore() {
+void CMenuGetItem::cbRenderBefore(CScn*) {
     CTaskGame::getInstance();
     // Combined short-circuit produces retail's double branch for the bit-21
     // gate (bne return; beq continue; b return) - same shape as CMenuGCItem::Move.

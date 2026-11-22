@@ -33,7 +33,7 @@ void MoveImplEne_InitFieldsToken(cf::CfObjectImplEneObj* self) {
     CharEffInit(self->vfE4(), self->field_14, self->field_18);
     attachOwner(self->field_28, self->field_14);
 
-    cf::CfObjectImplEneToken* p = (cf::CfObjectImplEneToken*)self->field_14;
+    cf::CfObjectImplEne14* p = static_cast<cf::CfObjectImplEne14*>(self->field_14);
     if (p != 0) {
         ml::FixStr<64> buf(true);
         if (Tok_FormatStr(buf, p->field_70, 0, 0) != 0) {
@@ -45,7 +45,7 @@ void MoveImplEne_InitFieldsToken(cf::CfObjectImplEneObj* self) {
 }
 
 void* MoveImplEne_GetField6CPtr(void* self) {
-    return &static_cast<cf::CfObjectImplEneSlotView*>(self)->slot6C;
+    return &static_cast<cf::CfObjectImplEneObj*>(self)->field_6C;
 }
 
 // Releases the effect token at +0x36C (if set) and clears it, then forwards
@@ -360,8 +360,8 @@ int MoveImplEne_SyncTargetArrow(cf::CfObjectImplEneObj* self, int flag) {
                                      gmScene, 0xa5, 0, 0);
         self->field_36C = (u32)effect;
         if (effect != 0) {
-            void* parent = (u8*)self;
-            if (self != 0) parent = (u8*)self + 0x68;
+            void* parent = self;
+            if (self != 0) parent = &self->field_68;
             schedAttachChildSlot(effect, parent);
         }
     }
@@ -396,7 +396,7 @@ void MoveImplEne_MatchTokenRelease(cf::CfObjectImplEneObj* self, u32 arg) {
     u32 v = self->field_36C;
     if (v == arg) {
         void* p = (u8*)self;
-        if (self != 0) p = &reinterpret_cast<cf::CfObjectImplEneSlotView*>(self)->slot68;
+        if (self != 0) p = &static_cast<cf::CfObjectImplEneObj*>(self)->field_68;
         schedDetachChildSlot((void*)v, p);
         self->field_36C = 0;
     }

@@ -181,10 +181,10 @@ void CMenuQstCnt::Move() {
     if (cf::CfGameManager::isSceneLoading()) return;
     if (gmGameFlags & (1u << 9)) return;
     {
-        CTaskGameCamView* cam = (CTaskGameCamView*)Scn_QueryUnk80State(gmScene);
+        ScnFadeColor* cam = Scn_QueryUnk80State(gmScene);
         // Load camDist into a local first so MWCC emits lfs f1,0xc(r3)
         // before lfs f0,CONST (retail operand order for the fsubs/fcmpo).
-        f32 camDist = *(f32*)((u8*)cam + 0xC);
+        f32 camDist = cam->field_0C;
         f32 result = 1.0f - camDist;
         if (result < 1.0f) return;
     }
@@ -204,7 +204,7 @@ void CMenuQstCnt::Move() {
     mLayout->Animate(0);
 }
 
-void CMenuQstCnt::cbRenderBefore() {
+void CMenuQstCnt::cbRenderBefore(CScn*) {
     // Single short-circuit OR so MWCC emits: func test -> bne exit;
     // bit test -> beq continue / b exit (CSystemWindow::Move shape).
     if (CTaskGame::getInstance()->isFlag01Set() ||
@@ -220,8 +220,8 @@ void CMenuQstCnt::cbRenderBefore() {
     if (!(e24a & (1u << 24)) && (e24b & 0xAFE40000u)) return;
     if (cf::CfGameManager::isSceneLoading()) return;
     {
-        CTaskGameCamView* cam = (CTaskGameCamView*)Scn_QueryUnk80State(gmScene);
-        f32 camDist = cam->field_C;
+        ScnFadeColor* cam = Scn_QueryUnk80State(gmScene);
+        f32 camDist = cam->field_0C;
         f32 result = 1.0f - camDist;
         if (result < 1.0f) return;
     }

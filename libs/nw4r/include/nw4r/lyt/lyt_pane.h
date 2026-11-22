@@ -10,8 +10,6 @@
 #include <nw4r/ut.h>
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
-extern "C" const float lbl_eu_80669D38; // 0.0f
-extern "C" const float lbl_eu_80669D3C; // 1.0f
 
 namespace nw4r {
 namespace lyt {

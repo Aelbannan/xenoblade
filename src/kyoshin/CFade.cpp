@@ -141,7 +141,7 @@ bool CFade::OnFileEvent(CEventFile* pEventFile) {
         // Retail evaluates the MEM2 handle call before materializing the
         // string pool base (kept in r30 with per-use addi offsets below).
         mtl::ALLOC_HANDLE memHandle = mtl::MemManager::getHandleMEM2();
-        char* str = lbl_eu_8050B5A0;
+        const char* str = lbl_eu_8050B5A0;
 
         // Reserve a scratch region inside the memory handle for the layout build,
         // then RAII-register it with CLibLayout (frees on scope exit).
@@ -159,7 +159,7 @@ bool CFade::OnFileEvent(CEventFile* pEventFile) {
 
         // Load the fade layout and its animation transform.
         buildLayout(&mLayout, mArcResAcc, &str[0x1B]);
-        bindLayoutAnimTransform(mLayout, &mAnimTrans, mArcResAcc, &str[0x2B]);
+        bindLayoutAnimTransform(mLayout, &mAnimTrans, mArcResAcc, const_cast<char*>(&str[0x2B]));
 
         // Enable the animation and kick off the first frame.
         mLayout->SetAnimationEnable(mAnimTrans, true);
@@ -180,25 +180,25 @@ bool CFade::OnFileEvent(CEventFile* pEventFile) {
 // Retail data owned by this TU. Defined here at EOF so -ipa codegen for the
 // functions above is unaffected.
 // NOTE (wave DL): the sdata2 tail ("CFade" pool + zeros after the 1.0f)
-// stays out: only lbl_eu_80668750 carries a label and the section has no
-// other references. sdata2 therefore rebuilds as 4/16 bytes (gate notes it).
+// stays out: only the frame-target constant carries a label and the section
+// has no other references. sdata2 therefore rebuilds as 4/16 bytes (gate notes it).
 // ============================================================================
 
 // [.rodata] 0x8050B5A0-0x8050B798 (0x1F8): fade layout arc/branch/anim
 // strings. This blob is the pool base reached with fixed offsets by the two
 // matched callers; the marker names below are ordinary C string literals.
-__declspec(section ".rodata") __attribute__((used, aligned(8)))
-char lbl_eu_8050B5A0[0x48] = {
+__attribute__((used, aligned(8)))
+const char lbl_eu_8050B5A0[0x48] = {
     0x6D,0x65,0x6E,0x75,0x2F,0x6A,0x70,0x2F,0x46,0x61,0x64,0x65,0x2E,0x61,0x72,0x63,
     0x00,0x43,0x46,0x61,0x64,0x65,0x00,0x61,0x72,0x63,0x00,0x6D,0x66,0x30,0x30,0x5F,
     0x66,0x61,0x64,0x65,0x2E,0x62,0x72,0x6C,0x79,0x74,0x00,0x6D,0x66,0x30,0x30,0x5F,
     0x66,0x61,0x64,0x65,0x5F,0x66,0x61,0x64,0x65,0x5F,0x69,0x6E,0x2E,0x62,0x72,0x6C,
     0x61,0x6E,0x00,0x00,0x00,0x00,0x00,0x00,
 };
-// Marker-name pointer table (retail lbl_eu_80536F40, 28 entries). The
-// names are ordinary C string literals, so the compiler emits the retail
+// name-guess: real object at .data:0x80536F40, 28 markerlist* name pointers.
+// The names are ordinary C string literals, so the compiler emits the retail
 // .rodata pool in first-use order; no linker name is needed for a string.
-extern const char* lbl_eu_80536F40[28] = {
+extern const char* markerNameTable[28] = {
     "markerlist0000", "markerlist0101", "markerlist0201", "markerlist0301",
     "markerlist0401", "markerlist0402", "markerlist0501", "markerlist0601",
     "markerlist0701", "markerlist0801", "markerlist0901", "markerlist1001",
@@ -210,5 +210,5 @@ extern const char* lbl_eu_80536F40[28] = {
 // [.sdata2] 0x80668750: 1.0f frame target (the "CFade" RTTI name string that
 // follows it is compiler-emitted).
 #pragma section data_type ".sdata2" ".sdata2"
-extern __declspec(section ".sdata2") const f32 lbl_eu_80668750 = 1.0f;
+extern const f32 lbl_eu_80668750 = 1.0f;
 #pragma section data_type ".data" ".data"

@@ -1,8 +1,11 @@
 #pragma once
 
+class CScn;
+
 // Retail IScnRender vtable (__vt__10IScnRender, 0x10 bytes, owned by
 // kyoshin/CTaskGame.cpp): [RTTI, 0, ~IScnRender, cbRenderBefore]. Its only
-// virtuals are the destructor and cbRenderBefore; slot 1's out-of-line empty
+// virtuals are the destructor and cbRenderBefore(CScn*) - CScn::Draw passes its
+// own `this` in r4 (mr r4,r29 before the slot-1 bctrl); slot 1's out-of-line empty
 // body is the retail 4-byte `blr` at 0x800444C0.
 //
 // The destructor has three spellings, all used by real retail TUs:
@@ -26,5 +29,5 @@ public:
 #else
     virtual ~IScnRender() {}
 #endif
-    virtual void cbRenderBefore();
+    virtual void cbRenderBefore(CScn* scene);
 };

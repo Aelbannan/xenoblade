@@ -2,6 +2,10 @@
 // High-level C/C++ reconstruction from retail PPC.
 
 #include "kyoshin/cf/CfGameManager.hpp"
+#include "kyoshin/cf/CfPadData.hpp"
+#include "monolib/work/CWorkThreadSystem.hpp"
+#include "monolib/work/CProcess.hpp"
+#include "monolib/device/CDeviceVI.hpp"
 #include <nw4r/lyt/lyt_drawInfo.h>
 #include "kyoshin/menu/CMenuItemExchange.hpp"
 #include "kyoshin/CScrollBar.hpp"
@@ -16,21 +20,10 @@
 #include "kyoshin/CTitleAHelpImports.hpp"
 #include "kyoshin/code_80135FDC_State.hpp"
 
-extern "C" void cbRenderBefore__17CMenuItemExchangeFv(void*);
-extern "C" void __dt__17CMenuItemExchangeFv(void*, int);
-
 // name-guess: ItemEx_Create/HasInstance treat this as the screen singleton at 0x80664428.
 CMenuItemExchange* sItemExInstance = NULL;
 // name-guess: item-box line tab mode latch at 0x8066442C, read by ItemEx_GetFlagByte.
 u8 sItemExTabMode = 0;
-
-/**
- * Offset from the OC thunk interface (CMenuItemExchangeOC*) to the
- * containing CMenuItemExchange object. The OC system passes a pointer
- * to a sub-object embedded at this offset; thunks subtract this value
- * to recover the real this pointer before delegating.
- */
-static const u32 CMENU_ITEM_EXCHANGE_OC_OFFSET = 0x6c;
 
 /**
  * Class constructor. The base initialisers run IUIWindow's inline constructor
@@ -98,13 +91,12 @@ void CMenuItemExchange::Init() {
     mScene->addRenderCB(render, 0xd, 0);
 }
 
-extern "C" void waitForDrawDone__9CDeviceVIFv();
 extern "C" void BgTex_Release_3D9C(void*);
 
 // Detach the render callback, tear down the embedded widgets, clear the
 // global active flag, and reset the CfGameManager state.
 void CMenuItemExchange::Term() {
-    waitForDrawDone__9CDeviceVIFv();
+    CDeviceVI::waitForDrawDone();
     IScnRender* render = this;
     mScene->removeRenderCB(render);
     BgTex_Release_3D9C(&mBgTex);
@@ -159,7 +151,7 @@ body:
  * (`bne end`), then the global mode flag tested with branch-over-branch
  * (`beq body`; fallthrough = end).
  */
-void CMenuItemExchange::cbRenderBefore() {
+void CMenuItemExchange::cbRenderBefore(CScn*) {
     CTaskGame::getInstance();
     if (CTaskGame::isFlag01Set() == 0 &&
         (gmPauseFlags & 0x200000) == 0) {
@@ -189,10 +181,10 @@ extern "C" CMenuItemExchange* ItemEx_Create(CProcess* registParent, CScn* scene,
         return NULL;
     }
     CMenuItemExchange* obj = new (mtl::MemManager::allocate(
-        0x5124, reinterpret_cast<u32>(getWorkMem__17CWorkThreadSystemFv())))
+        0x5124, CWorkThreadSystem::getWorkMem()))
         CMenuItemExchange(scene, arg);
     sItemExInstance = obj;
-    Regist__8CProcessFP8CProcessb(sItemExInstance, registParent, false);
+    sItemExInstance->Regist(registParent, false);
     return sItemExInstance;
 }
 
@@ -270,22 +262,22 @@ void CMenuItemExchange::GateFrom5() {
  * bit positions depend on the game-manager mode), dispatch one cursor/grid
  * action, then run the help-bar sync and the two phase transitions. */
 void CMenuItemExchange::Phase6Input() {
-    CMIExPadData* pad = getCfPadData__Q22cf13CfGameManagerFv();
-    int turboCancel = (pad->mTurboFlags & 0x8004) != 0;
-    int pageTurn = (pad->mTurboFlags & 0x10010000) != 0;
-    int cancel = (pad->mTurboFlags & 0x2001) != 0;
-    int decide = (pad->mTurboFlags & 0x4002) != 0;
+    cf::CfPadData* pad = cf::CfGameManager::getCfPadData();
+    int turboCancel = (pad->mTurboPressButtonFlags & 0x8004) != 0;
+    int pageTurn = (pad->mTurboPressButtonFlags & 0x10010000) != 0;
+    int cancel = (pad->mTurboPressButtonFlags & 0x2001) != 0;
+    int decide = (pad->mTurboPressButtonFlags & 0x4002) != 0;
     int up, down, leftTrigger, yHeld;
     if (cf::CfGameManager::isClassicController(-1) != 0) {
-        up = (pad->mPressedFlags & 0x00400000) != 0;
-        down = (pad->mPressedFlags & 0x00800000) != 0;
-        leftTrigger = (pad->mPressedFlags & 0x01000000) != 0;
-        yHeld = (pad->mPressedFlags & 0x00000400) != 0;
+        up = (pad->mPad.mPressedButtonFlags & 0x00400000) != 0;
+        down = (pad->mPad.mPressedButtonFlags & 0x00800000) != 0;
+        leftTrigger = (pad->mPad.mPressedButtonFlags & 0x01000000) != 0;
+        yHeld = (pad->mPad.mPressedButtonFlags & 0x00000400) != 0;
     } else {
-        up = (pad->mPressedFlags & 0x00000010) != 0;
-        down = (pad->mPressedFlags & 0x00000020) != 0;
-        leftTrigger = (pad->mPressedFlags & 0x00000800) != 0;
-        yHeld = (pad->mPressedFlags & 0x00000040) != 0;
+        up = (pad->mPad.mPressedButtonFlags & 0x00000010) != 0;
+        down = (pad->mPad.mPressedButtonFlags & 0x00000020) != 0;
+        leftTrigger = (pad->mPad.mPressedButtonFlags & 0x00000800) != 0;
+        yHeld = (pad->mPad.mPressedButtonFlags & 0x00000040) != 0;
     }
 
     if (up != 0) {
@@ -348,20 +340,4 @@ void CMenuItemExchange::GateFrom8() {
         mItemBoxLine.IsReadyFlag() != 0) {
         field_5118 = 2;
     }
-}
-
-/**
- * OC thunk for cbRenderBefore. Adjusts the OC wrapper pointer back to the
- * containing CMenuItemExchange and delegates to cbRenderBefore.
- */
-extern "C" void ItemEx_ThunkRender(CMenuItemExchangeOC* param) {
-    ((void(*)(void*))cbRenderBefore__17CMenuItemExchangeFv)((char*)param - 0x6c);
-}
-
-/**
- * OC thunk for the destructor. Adjusts the OC wrapper pointer back to the
- * containing CMenuItemExchange and delegates to the real destructor.
- */
-extern "C" void ItemEx_ThunkDtor(CMenuItemExchangeOC* param) {
-    ((void(*)(void*))__dt__17CMenuItemExchangeFv)((char*)param - 0x6c);
 }

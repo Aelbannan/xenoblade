@@ -20,7 +20,7 @@ public:
     virtual void Init();
     virtual void Term();
     virtual void Move();
-    virtual void cbRenderBefore();
+    virtual void cbRenderBefore(CScn* scene);
 
     // Only one title menu exists at a time; returns null when one is already
     // running, otherwise the new instance (also stored in sInstance).

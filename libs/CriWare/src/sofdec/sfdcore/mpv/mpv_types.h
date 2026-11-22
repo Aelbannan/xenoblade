@@ -85,8 +85,28 @@ typedef struct MpvMcWork {
     u8* src2;               /* +0xc ref 1 plane */
 } MpvMcWork;                /* 0x10 */
 
+// name-guess: per-macroblock descriptor at handle+0x9c4, filled by the two
+// mpvcdec_IntraBlocksInt1 variants and consumed by their DCT callbacks.
+typedef struct MpvIntraBlock {
+    u8  _pad0x00[0x1c];     /* +0x00 */
+    u32 ref;                /* +0x1c */
+    u32 work;               /* +0x20 */
+    u32 quant;              /* +0x24 */
+    u32 src;                /* +0x28 */
+    u32 dst;                /* +0x2c */
+    u32 flag;               /* +0x30 */
+} MpvIntraBlock;            /* 0x34 */
+
+// name-guess: u32-returning intra-block callback used by the two MPVCDEC
+// intra decoders; the retail table at handle+0xd3c stores both entry points.
+typedef u32 (*MpvIntraFn)(void*, void*);
+
 typedef struct MpvHn {
-    u8  _pad0x000[0x380];   /* 0x000 decoder state (mpv_dec.c owns it) */
+    // name-guess: DCT/intra work regions addressed by the MPVCDEC decoders.
+    u32 intraWork[0xC0];    /* 0x000..0x2ff */
+    u32 intraWorkB[0x10];   /* 0x300..0x33f */
+    u32 nintraWork;         /* 0x340 */
+    u8  _pad0x344[0x3c];    /* 0x344..0x37f */
     u8  mcWork[0x600];      /* 0x380 motion-compensation work area */
     u32 bitsHi;             /* 0x980 bit accumulator, high word */
     u32 bitsLo;             /* 0x984 bit accumulator, low word */
@@ -95,11 +115,13 @@ typedef struct MpvHn {
     u32 vlcTbl[7];          /* 0x990 copied-in code-table addresses */
     u8  _pad0x9ac[0x04];    /* 0x9ac */
     u32 vlcBufA;            /* 0x9b0 VLC block + 0x1100 */
-    u8  _pad0x9b4[0x04];    /* 0x9b4 */
+    // name-guess: DCT-block base published by MPVCDEC_StartFrame.
+    u32 dctBlockBase;       /* 0x9b4 */
     u32 vlcBufB;            /* 0x9b8 VLC block + 0x11e0 */
     u32 vlcBufC;            /* 0x9bc VLC block + 0x1200 */
     u8* clipTbl;            /* 0x9c0 clip table (0x180 = unity entry) */
-    u8  _pad0x9c4[0xa10 - 0x9c4];
+    MpvIntraBlock intraBlk; /* 0x9c4..0x9f7 */
+    u8  _pad0x9f8[0xa10 - 0x9f8];
     u32 dctCntFwd;          /* 0xa10 forward DCT count (MPV_GetDctCnt) */
     u32 dctCntBwd;          /* 0xa14 backward DCT count */
     u8  _pad0xa18[0xa4c - 0xa18];
@@ -139,7 +161,12 @@ typedef struct MpvHn {
     void (*c6c)(void*);     /* 0xc6c */
     void (*c70)(void*);     /* 0xc70 */
     void (*skipMbCb)(struct MpvHn*); /* 0xc74 skipped-MB dispatcher */
-    u8  errInfoTailC78[0xc90 - 0xc78]; /* 0xc78 MPVERR error tail */
+    u8  errInfoTailC78[0xc84 - 0xc78]; /* 0xc78 MPVERR error tail */
+    // name-guess: DCT transform callback installed by MPVCDEC_StartFrame.
+    void (*dctTransFn)(void*, s32); /* 0xc84 */
+    u8  errInfoTailC88[0xc8c - 0xc88]; /* 0xc88 MPVERR error tail */
+    // name-guess: quantiser selector copied into the intra-block descriptor.
+    u32 intraQuant;         /* 0xc8c */
     MpvMvPair fwdMv;        /* 0xc90 forward motion params */
     u8  padCB0[0xcb4 - 0xcb0]; /* 0xcb0 gap before the backward pair */
     MpvMvPair backMv;       /* 0xcb4 backward motion params */
@@ -149,15 +176,24 @@ typedef struct MpvHn {
     s32 mbRow;              /* 0xce0 */
     u8  padCE4[0xcec - 0xce4]; /* 0xce4 */
     s32 mcMode;             /* 0xcec */
-    u8  errInfoTailCF0[0xcfc - 0xcf0]; /* 0xcf0 MPVERR error tail */
-    u8  _pad0xcfc[0xD0C - 0xcfc];
+    // name-guess: intra-block source pointers at 0xcf0/4/8.
+    u32 intraSrc[3];        /* 0xcf0..0xcf8 */
+    // name-guess: MPV_DecodeFrmSj/MPV_RequestStop compare this with 2 (MPEG2 video).
+    s32 codecMode;          /* 0xcfc codec selector */
+    u8  _pad0xd00[0xD0C - 0xd00];
     u8* plane[6];           /* 0xd0c reference plane pointers handed to MC */
     u8  _pad0xd24[0xD38 - 0xd24];
     u32 field_0xd38;        /* 0xd38 */
-    u8  _pad0xd3c[0xD54 - 0xd3c];
+    // name-guess: intra/non-intra decode callbacks and their quantiser params.
+    MpvIntraFn intraFn;     /* 0xd3c */
+    MpvIntraFn nintraFn;    /* 0xd40 */
+    u8  _pad0xd44[8];       /* 0xd44..0xd4b */
+    u32 intraParamA;        /* 0xd4c */
+    u32 intraParamB;        /* 0xd50 */
     void* m2v;              /* 0xd54 motion-vector helper (MPVM2V_Create) */
     u8  _pad0xd58[0xDA8 - 0xd58];
-    u32 field_0xda8;        /* 0xda8 */
+    // name-guess: MPV_RequestStop sets this to 1 to request decoder shutdown.
+    u32 stopRequest;        /* 0xda8 stop flag */
     u8  _pad0xdac[MPV_HN_SIZE - 0xdac];
 } MpvHn;                    /* 0xDC0 */
 

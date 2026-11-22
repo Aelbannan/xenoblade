@@ -59,7 +59,7 @@ public:
 
     //0x0-0x1EC: CProc
     s32 mExceptionCode;          //0x1EC
-    const wchar_t* mMessage;     //0x1F0
+    const void* mMessage;        //0x1F0
     float mAlphaStep;            //0x1F4
     float mAlpha;                //0x1F8
     s32 mAnimState;              //0x1FC

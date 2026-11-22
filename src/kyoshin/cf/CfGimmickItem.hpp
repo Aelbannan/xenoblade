@@ -66,14 +66,14 @@ void CfGimmick_UnregisterSpawnedObject(CfGimmickReg* self);                     
 void CfGimmick_PostGimmickName(unsigned short id);
 unsigned int CfGimmick_IsMessageSystemBusy(void);
 void CfGimmick_SetGlobalFlagC0042(void);
-void CfGimmick_UpdateProximity(CfGimmickReg* reg, const CfGimmickVec3* point,
+void CfGimmick_UpdateProximity(CfGimmickReg* reg, const ml::CVec3* point,
                    unsigned short c, float d, int e, int g);
 void CItem_consumeFamilyCnt(unsigned int a, int b);
 void CItem_thunkAllocRecord(unsigned int a, unsigned int b);
 
-int CfGimmick_CheckTriggerGated(u32 mask, cf::CfGimmick* gimmick, const CfGimmickVec3* point,
+int CfGimmick_CheckTriggerGated(u32 mask, cf::CfGimmick* gimmick, const ml::CVec3* point,
                   const f32* ang, u32 partyId);
-void CfGimmick_PlaySoundAtPos(u32 id, const CfGimmickVec3* pos);
+void CfGimmick_PlaySoundAtPos(u32 id, const ml::CVec3* pos);
 u32 getQueuedFileEventCount__Q22cf13CfGameManagerFv(void);
 u32 getResourceFromTable__Q22cf13CfGameManagerFv(u32 a);
 unsigned int CItem_findRecByFamily(unsigned short id);
@@ -83,12 +83,6 @@ extern "C" void CfGimmick_LoadBdatAreaExtents(cf::CfGimmick* self, cf::CfGimmick
 extern "C" void CfGimmick_LoadBdatAreaRotation(cf::CfGimmick* self, f32* out, void* bdat, void* table);
 void CamEvtProgramEventCam(int idx);
 int CfGimmick_CheckStateFlag2CC8(u8* obj);
-void attachLODObject__8CTaskLODFv(u8 lod, int mode);
-void removeLODEntry__8CTaskLODFv(u8 lod, float f);
-void clearLODEntry__8CTaskLODFv(u8 lod);
-void detachLODObject__8CTaskLODFv(u8 lod, int mode);
-void addLODEntry__8CTaskLODFv(u8 lod, int mode);
-void setLODObject__8CTaskLODFv(u8 lod, u16 id);
 }
 
 // Area manager object factory (void* form matches CTaskGameEff.hpp).

@@ -17,13 +17,6 @@ struct PaneSizeRegion {
     f32 height;  // +0x50
 };
 
-// Whole-pane view so the size fields land at their real offsets (+0x4C/+0x50).
-struct CSortMenuPaneSizeView {
-    u8 _00[0x4c];
-    f32 width;
-    f32 height;
-};
-
 // Interface view of the font object returned by CDeviceFont::getFontInfo.
 // Slot layout mirrors the retail vtable: destructor pair (+0x00/+0x04), six
 // reserved slots (+0x08..+0x1c), then the resource getter at +0x24. Declared

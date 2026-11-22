@@ -88,7 +88,6 @@ struct CUIBattleInitProcess {
 
 extern "C" {
 void* UIBattleArtsSelectHandle;
-char UIBattleArcPathStrings[];
 u32 __ptmf_null[3];
 u32 gmPauseFlags;
 
@@ -135,6 +134,104 @@ static inline Fn vslot(void* obj, u32 offset) {
 static IWorkEvent* battleWorkEvent(CUIBattleManager* self) {
     if (self == NULL) return NULL;
     return static_cast<IWorkEvent*>(self);
+}
+
+// The real constructor lets MWCC emit the CTTask/base and CUIBattleManager
+// vtables (including the IWorkEvent secondary vptr) in retail order.
+// The body mirrors the retail store order: null move/draw PTMF triples into
+// 0x3C..0x50 (each triple stores its middle word first), child reslist at
+// 0x5C with the sentinel node self-looped at 0x64, per-party resource slots
+// zeroed in the retail interleaved pass order, then the node-pool allocation
+// and the battle heap install.
+CUIBattleManager::CUIBattleManager(CScnNw4r* pScene, mtl::ALLOC_HANDLE handle)
+    : unk58((u8*)pScene) {
+    u32 movePmf0;
+    u32 movePmf1;
+    u32 drawPmf2;
+    u32 hookPmf1;
+    u32 hookPmf2;
+    u32 zero;
+
+    u32* const self = reinterpret_cast<u32*>(this);
+    zero = 0;
+    {
+        // Null move/draw PTMF copies from __ptmf_null (first word read with
+        // update addressing, as in retail).
+        u32* np = __ptmf_null;
+        movePmf0 = *np++;
+        movePmf1 = *np;
+        drawPmf2 = np[1];
+    }
+    reinterpret_cast<u32*>(self)[0x10] = movePmf1;
+    reinterpret_cast<u32*>(self)[0xF] = movePmf0;
+    reinterpret_cast<u32*>(self)[0x11] = drawPmf2;
+    reinterpret_cast<u32*>(self)[0x13] = movePmf1;
+    reinterpret_cast<u32*>(self)[0x12] = movePmf0;
+    reinterpret_cast<u32*>(self)[0x14] = drawPmf2;
+    // Child reslist at 0x5C: empty slot array/capacity and sentinel node
+    // self-looped at 0x64 (the reslist base ctor installs the vptr).
+    reinterpret_cast<u32*>(self)[0x1C] = zero;
+    reinterpret_cast<u32*>(self)[0x1D] = zero;
+    reinterpret_cast<u8*>(self)[0x78] = (u8)zero;
+    {
+        u32* sentinel = reinterpret_cast<u32*>(reinterpret_cast<char*>(self) + 0x64);
+        reinterpret_cast<u32*>(self)[0x18] = reinterpret_cast<u32>(sentinel);
+        sentinel[0] = reinterpret_cast<u32>(sentinel);
+        sentinel[1] = reinterpret_cast<u32>(sentinel);
+    }
+    reinterpret_cast<u32*>(self)[0x1F] = zero;
+    reinterpret_cast<u8*>(self)[0x80] = (u8)zero;
+    reinterpret_cast<u8*>(self)[0x81] = (u8)zero;
+    // Arc-handle/accessor slots.
+    mFileArtsElem = NULL;
+    mFileArtsElemDone = NULL;
+    mFileArtsSys = NULL;
+    mFileArtsSysDone = NULL;
+    unkE8 = 0;
+    unkE9 = 0;
+    mHeap = static_cast<mtl::ALLOC_HANDLE>(-1);
+    // Per-party resource slots; MWCC unrolls this into the retail
+    // three-pass interleaved store order (arts arc, busy accessor, face arc,
+    // three face textures, face accessor per party).
+    {
+        int i;
+        for (i = zero; i < 3; i++) {
+            mFileArtsPc[i] = NULL;
+            mFileArtsPcBusy[i] = NULL;
+            mFileFacePc[i] = NULL;
+            mFaceTex[i][0] = NULL;
+            mFaceTex[i][1] = NULL;
+            mFaceTex[i][2] = NULL;
+            mFaceAccessor[i] = NULL;
+        }
+    }
+    unk82 = (u8)(zero | 8);
+    {
+        // Child-node slot array (8 x 0xC nodes) from the scene's alloc region.
+        u32* list = reinterpret_cast<u32*>(
+            mtl::MemManager::allocate_array(0x60, Scn_CallUnk8C_V10(pScene)));
+        int i;
+        mChildList.mList = reinterpret_cast<_reslist_node<IUIBattle*>*>(list);
+        for (i = 0; i < 8; i++) {
+            list[i * 3] = zero;
+        }
+        mChildList.mCapacity = 8;
+    }
+    // Initial move-hook pmf from the split1 pool (w1 word stored first).
+    {
+        u32* ip = reinterpret_cast<u32*>(&UIBattleInitialMovePmf);
+        movePmf0 = *ip++;   // w0
+        hookPmf1 = *ip;     // w1
+        hookPmf2 = *(ip + 1); // w2
+    }
+    reinterpret_cast<u32*>(self)[0x10] = hookPmf1;
+    reinterpret_cast<u32*>(self)[0xF] = movePmf0;
+    reinterpret_cast<u32*>(self)[0x11] = hookPmf2;
+    mtl::MemManager::getHandleMEM2();
+    reinterpret_cast<u32*>(self)[0x3B] = mtl::MemManager::create(
+        mtl::MemManager::getHandleMEM1(), 0x44800, "ARTS_FACE");
+    CMenuArtsSelect_clearArtsRef();
+    UIBattleArtsSelectHandle = reinterpret_cast<void*>(zero);
 }
 
 void CUIBattleManager::Init() {
@@ -308,11 +405,11 @@ void CUIBattleManager::Move() {
         if (cf::CfGameManager::getPlayer(0) != NULL) {
             if (mFileArtsElemDone == NULL) {
                 mFileArtsElem = CDeviceFile::readFile(
-                    mHeap, UIBattleArcPathStrings + 0xA, battleWorkEvent(), 0, 0);
+                    mHeap, "menu/jp/tpl/arts_elem.arc", battleWorkEvent(), 0, 0);
             }
             if (mFileArtsSysDone == NULL) {
                 mFileArtsSys = CDeviceFile::readFile(
-                    mHeap, UIBattleArcPathStrings + 0x24, battleWorkEvent(), 0, 0);
+                    mHeap, "menu/jp/tpl/arts_sys.arc", battleWorkEvent(), 0, 0);
             }
             for (i = 0; i < 3; i++) {
                 partyId = CtrlObjectParam_GetSlotTableBase()[i + 1];
@@ -325,11 +422,11 @@ void CUIBattleManager::Move() {
                             (int)CtrlRemote_TouchBitByArg(0x3508) == 0) {
                             faceId = 0xC;
                         }
-                        sprintf(pathBuf178, UIBattleArcPathStrings + 0x3D, faceId);
+                        sprintf(pathBuf178, "menu/jp/tpl/arts_pc%02d.arc", faceId);
                         mFileArtsPc[i] = CDeviceFile::readFile(
                             mHeap, pathBuf178, battleWorkEvent(), 0, 0);
                     }
-                    sprintf(pathBufF8, UIBattleArcPathStrings + 0x59, partyId);
+                    sprintf(pathBufF8, "menu/jp/tpl/face_pc%02d.arc", partyId);
                     mFileFacePc[i] = CDeviceFile::readFile(
                         mHeap, pathBufF8, battleWorkEvent(), 0, 0);
                 }
@@ -554,104 +651,6 @@ extern "C" void UIBattleDelete(void* p) {
     __dt__16CUIBattleManagerFv(reinterpret_cast<CUIBattleManager*>((char*)p - 0x54));
 }
 
-// The real constructor lets MWCC emit the CTTask/base and CUIBattleManager
-// vtables (including the IWorkEvent secondary vptr) in retail order.
-// The body mirrors the retail store order: null move/draw PTMF triples into
-// 0x3C..0x50 (each triple stores its middle word first), child reslist at
-// 0x5C with the sentinel node self-looped at 0x64, per-party resource slots
-// zeroed in the retail interleaved pass order, then the node-pool allocation
-// and the battle heap install.
-CUIBattleManager::CUIBattleManager(CScnNw4r* pScene, mtl::ALLOC_HANDLE handle)
-    : unk58((u8*)pScene) {
-    u32 movePmf0;
-    u32 movePmf1;
-    u32 drawPmf2;
-    u32 hookPmf1;
-    u32 hookPmf2;
-    u32 zero;
-
-    u32* const self = reinterpret_cast<u32*>(this);
-    zero = 0;
-    {
-        // Null move/draw PTMF copies from __ptmf_null (first word read with
-        // update addressing, as in retail).
-        u32* np = __ptmf_null;
-        movePmf0 = *np++;
-        movePmf1 = *np;
-        drawPmf2 = np[1];
-    }
-    reinterpret_cast<u32*>(self)[0x10] = movePmf1;
-    reinterpret_cast<u32*>(self)[0xF] = movePmf0;
-    reinterpret_cast<u32*>(self)[0x11] = drawPmf2;
-    reinterpret_cast<u32*>(self)[0x13] = movePmf1;
-    reinterpret_cast<u32*>(self)[0x12] = movePmf0;
-    reinterpret_cast<u32*>(self)[0x14] = drawPmf2;
-    // Child reslist at 0x5C: empty slot array/capacity and sentinel node
-    // self-looped at 0x64 (the reslist base ctor installs the vptr).
-    reinterpret_cast<u32*>(self)[0x1C] = zero;
-    reinterpret_cast<u32*>(self)[0x1D] = zero;
-    reinterpret_cast<u8*>(self)[0x78] = (u8)zero;
-    {
-        u32* sentinel = reinterpret_cast<u32*>(reinterpret_cast<char*>(self) + 0x64);
-        reinterpret_cast<u32*>(self)[0x18] = reinterpret_cast<u32>(sentinel);
-        sentinel[0] = reinterpret_cast<u32>(sentinel);
-        sentinel[1] = reinterpret_cast<u32>(sentinel);
-    }
-    reinterpret_cast<u32*>(self)[0x1F] = zero;
-    reinterpret_cast<u8*>(self)[0x80] = (u8)zero;
-    reinterpret_cast<u8*>(self)[0x81] = (u8)zero;
-    // Arc-handle/accessor slots.
-    mFileArtsElem = NULL;
-    mFileArtsElemDone = NULL;
-    mFileArtsSys = NULL;
-    mFileArtsSysDone = NULL;
-    unkE8 = 0;
-    unkE9 = 0;
-    mHeap = static_cast<mtl::ALLOC_HANDLE>(-1);
-    // Per-party resource slots; MWCC unrolls this into the retail
-    // three-pass interleaved store order (arts arc, busy accessor, face arc,
-    // three face textures, face accessor per party).
-    {
-        int i;
-        for (i = zero; i < 3; i++) {
-            mFileArtsPc[i] = NULL;
-            mFileArtsPcBusy[i] = NULL;
-            mFileFacePc[i] = NULL;
-            mFaceTex[i][0] = NULL;
-            mFaceTex[i][1] = NULL;
-            mFaceTex[i][2] = NULL;
-            mFaceAccessor[i] = NULL;
-        }
-    }
-    unk82 = (u8)(zero | 8);
-    {
-        // Child-node slot array (8 x 0xC nodes) from the scene's alloc region.
-        u32* list = reinterpret_cast<u32*>(
-            mtl::MemManager::allocate_array(0x60, Scn_CallUnk8C_V10(pScene)));
-        int i;
-        mChildList.mList = reinterpret_cast<_reslist_node<IUIBattle*>*>(list);
-        for (i = 0; i < 8; i++) {
-            list[i * 3] = zero;
-        }
-        mChildList.mCapacity = 8;
-    }
-    // Initial move-hook pmf from the split1 pool (w1 word stored first).
-    {
-        u32* ip = reinterpret_cast<u32*>(&UIBattleInitialMovePmf);
-        movePmf0 = *ip++;   // w0
-        hookPmf1 = *ip;     // w1
-        hookPmf2 = *(ip + 1); // w2
-    }
-    reinterpret_cast<u32*>(self)[0x10] = hookPmf1;
-    reinterpret_cast<u32*>(self)[0xF] = movePmf0;
-    reinterpret_cast<u32*>(self)[0x11] = hookPmf2;
-    mtl::MemManager::getHandleMEM2();
-    reinterpret_cast<u32*>(self)[0x3B] = mtl::MemManager::create(
-        mtl::MemManager::getHandleMEM1(), 0x44800, UIBattleArcPathStrings);
-    CMenuArtsSelect_clearArtsRef();
-    UIBattleArtsSelectHandle = reinterpret_cast<void*>(zero);
-}
-
 // Retail __dt__8012E534: battle-UI teardown helper (the Term virtual).
 // Cancels pending file loads, destroys every arc accessor, marks the init
 // child for removal, clears the child list, and releases the manager heap.
@@ -738,7 +737,7 @@ int CUIBattleManager::OnFileEvent(CUIBattleFileEvt* evt) {
         void* buf = mFileArtsElem->getData();
         acc = CLibLayout::createArcResourceAccessor();
         mFileArtsElemDone = acc;
-        acc->Attach(buf, &UIBattleArcPathStrings[0x75]);
+        acc->Attach(buf, "arc");
         mFileArtsElem = NULL;
         return 1;
     }
@@ -746,7 +745,7 @@ int CUIBattleManager::OnFileEvent(CUIBattleFileEvt* evt) {
         void* buf = mFileArtsSys->getData();
         acc = CLibLayout::createArcResourceAccessor();
         mFileArtsSysDone = acc;
-        acc->Attach(buf, &UIBattleArcPathStrings[0x75]);
+        acc->Attach(buf, "arc");
         mFileArtsSys = NULL;
         return 1;
     }
@@ -756,7 +755,7 @@ int CUIBattleManager::OnFileEvent(CUIBattleFileEvt* evt) {
                 void* buf = mFileArtsPc[i]->getData();
                 acc = CLibLayout::createArcResourceAccessor();
                 mFileArtsPcBusy[i] = acc;
-                acc->Attach(buf, &UIBattleArcPathStrings[0x75]);
+                acc->Attach(buf, "arc");
             }
             mFileArtsPc[i] = NULL;
             return 1;
@@ -768,7 +767,7 @@ int CUIBattleManager::OnFileEvent(CUIBattleFileEvt* evt) {
         mFileFacePc[i] = NULL;
         acc = CLibLayout::createArcResourceAccessor();
         mFaceAccessor[i] = acc;
-        acc->Attach(buf, &UIBattleArcPathStrings[0x75]);
+        acc->Attach(buf, "arc");
         // Pointer-arithmetic spelling: reduces to retail's bare i*4
         // induction (add r3,base,i*4 / lwz r0,4(r3)) instead of an indexed
         // load.
@@ -779,7 +778,7 @@ int CUIBattleManager::OnFileEvent(CUIBattleFileEvt* evt) {
         }
         tex = acc->GetResource(
             0x74696D67,
-            MakeTplNameSysFile(BdatGetU16Direct(::cf::CfBdat::spBtlPcListFileData, &UIBattleArcPathStrings[0x79],
+            MakeTplNameSysFile(BdatGetU16Direct(::cf::CfBdat::spBtlPcListFileData, "icon_type2",
                                         (int)(u8)partyId)),
             0);
         if (tex != NULL) {
@@ -787,7 +786,7 @@ int CUIBattleManager::OnFileEvent(CUIBattleFileEvt* evt) {
         }
         tex = acc->GetResource(
             0x74696D67,
-            MakeTplNameSysFile(BdatGetU16Direct(::cf::CfBdat::spBtlPcListFileData, &UIBattleArcPathStrings[0x84],
+            MakeTplNameSysFile(BdatGetU16Direct(::cf::CfBdat::spBtlPcListFileData, "icon_type3",
                                         (int)(u8)partyId)),
             0);
         if (tex != NULL) {
@@ -795,7 +794,7 @@ int CUIBattleManager::OnFileEvent(CUIBattleFileEvt* evt) {
         }
         tex = acc->GetResource(
             0x74696D67,
-            MakeTplNameSysFile(BdatGetU16Direct(::cf::CfBdat::spBtlPcListFileData, &UIBattleArcPathStrings[0x8f],
+            MakeTplNameSysFile(BdatGetU16Direct(::cf::CfBdat::spBtlPcListFileData, "icon_type",
                                         (int)(u8)partyId)),
             0);
         if (tex != NULL) {

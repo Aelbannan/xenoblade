@@ -30,6 +30,7 @@
 #include <nw4r/math/math_arithmetic.h>
 #include <nw4r/db/db_assert.h>
 #include "kyoshin/cf/CfCamSymbols.hpp"
+#include "kyoshin/cf/CtrlObjectParam.hpp"  // cf::CtrlObjectParamStats (arts data block)
 // BMIf removed: CVision real vt used via mVision.
 #include "kyoshin/UnkClass_805764CC.hpp"
 #include "kyoshin/cf/object/CfObjectPc.hpp"
@@ -49,12 +50,14 @@
 // (getEffOwner: CfObjectMove.hpp and CfGameManager.hpp now carry the
 // identical void*(void*) C++-linkage form - no guard needed.)
 #include "kyoshin/cf/CfGameManager.hpp"
+#include "kyoshin/cf/CHelpManager.hpp"
 // (UIWin_BuildFlagBuf is owned by kyoshin/CUIWindowManager.hpp; single decl.)
 #include "monolib/work.hpp"
 #include "kyoshin/cf/code_800F42AC.hpp"
 #include "kyoshin/CfEnumListHolder.hpp"
 #include "kyoshin/cf/CfObjectEnumList.hpp"
 #include "kyoshin/CUICfManager.hpp"
+#include "kyoshin/cf/CActParamAnimGame.hpp"
 #include "kyoshin/cf/CSuddenCommu.hpp"
 
 // Retail C++ symbol getEffOwner____FPv (0x800AE12C); the plain C++ name
@@ -65,7 +68,6 @@ void* getEffOwner__(void* obj);
 // scanArtsEntries starts at +0x1C (passed to CtrlObjectParam_GetArtsStatsRow). (CtrlObjectParam_GetCharEntry
 // itself resolves via the aligned u32 owner-form decls: CfObjectPc.hpp /
 // CVision.hpp; defined in CtrlObjectParam.cpp - no local copy needed.)
-extern void CtrlObjectParam_GetArtsStatsRow(UNKTYPE* base, u32 idx);
 
 // Status add/remove helper (retail CfObjectMove_setAnimModeArgs). The shared headers carry
 // two incompatible extern "C" forms ((u8*,...) and (void*,...)); this TU uses
@@ -207,30 +209,11 @@ __declspec(section ".sdata2") __attribute__((used)) float lbl_eu_80666E10 = 0.02
 }
 
 // ============================================================
-// Retail .sdata pointer tables (6 pairs, 0x30, __RTTI__Q22cf15CfObjectImplEne..78).
-// Cross-TU members stay extern (804FC7F8/8052AEC8 live in other objects);
-// the reslist name strings are defined with .rodata below. The three .data
-// tables (BD20/BD38/BD5C) have no decomp emitter (reslist.hpp gap: MWCC
-// emits only the vtables/RTTI here), so those three members stay UNDEF
-// extern refs by retail name; data-diff ignores relocs once bytes match.
+// Retail .sdata RTTI records 0x80661D58..0x80661D90 (CBattleManager, the four
+// reslist/_reslist_base specializations, CChainTime, IFactoryEvent) and the
+// .data hierarchy lists (0x8052BD20/BD38/BD5C) are emitted by the compiler
+// from the real classes (-RTTI on); no hand records.
 // ============================================================
-// BA0-region note: an earlier revision split the 34 content bytes into
-// sized pieces to dodge an MWCC pad quirk; unsized arrays pack correctly
-// so the retail names stand directly (sdata below references them).
-extern const char lbl_eu_804FCB70[];
-extern const char lbl_eu_804FCB84[];
-extern const char lbl_eu_804FCBA0[];
-extern const char lbl_eu_804FCBC4[];
-extern const char lbl_eu_804FCBE4[];
-extern "C" u8 lbl_eu_804FC7F8[];
-extern "C" u8 lbl_eu_8052AEC8[];
-extern "C" u8 lbl_eu_8052BD20[];
-extern "C" u8 lbl_eu_8052BD38[];
-extern "C" u8 lbl_eu_8052BD5C[];
-__attribute__((used)) const void* lbl_eu_80661D60[2] = { lbl_eu_804FCB84, lbl_eu_8052BD38 };
-__attribute__((used)) const void* lbl_eu_80661D68[2] = { lbl_eu_804FCBA0, 0 };
-__attribute__((used)) const void* lbl_eu_80661D70[2] = { lbl_eu_804FCBC4, lbl_eu_8052BD5C };
-__attribute__((used)) const void* lbl_eu_80661D78[2] = { lbl_eu_804FCBE4, 0 };
 
 // ============================================================
 // Retail .rodata (sBattleEventTable..lbl_eu_804FCBE4) as typed definitions
@@ -751,7 +734,6 @@ extern "C" void refreshPtStateAccum(cf::UnkClass_80192BF4* self);
 extern "C" void ChainTmr_Update_D20C(cf::UnkClass_800D8DBC* self);
 extern "C" void SysWinBuff_EmptyStubB20(void* self);
 void SysWinLog_PollBattleEnd();
-extern "C" s32 isGimmickActive__Q22cf13CfGameManagerFv(void* self);
 
 // --- registerBattleActor imports
 extern "C" void CCharVoiceMan_ResetAndAppend();
@@ -3505,12 +3487,12 @@ CtrlObjectParam_RunPartyArtsFlow(obj, 0, (void*)(uintptr_t)((u32)((cf::CActorPar
                 eventWorkspace.case260PlayerEvent.eventType = 0x58;                  // r19 = 0x58
                 eventWorkspace.case260PlayerEvent.field_18 = 50;                     // r21 = 0x32
                 {
-                    void* accArts = ((cf::CActorParam*)acc)->CActorParam_getArtsDataBlock();
-                    s32 v1 = *(s16*)((u8*)accArts + 0x1C);
+                    cf::CtrlObjectParamStats* accArts = (cf::CtrlObjectParamStats*)((cf::CActorParam*)acc)->CActorParam_getArtsDataBlock();
+                    s32 v1 = accArts->field_1C;
                     f32 t = 0.1f * (f32)(s32)v1;       // f28 = 0.1 (80666E84)
                     s32 pct = (s32)((f64)t + (t > lbl_eu_80666DDC ? 0.5 : -0.5));  // E58/E60
-                    void* pcArts = ((cf::CActorParam*)pc)->CActorParam_getArtsDataBlock();
-                    s32 v2 = *(s16*)((u8*)pcArts + 0x1C);
+                    cf::CtrlObjectParamStats* pcArts = (cf::CtrlObjectParamStats*)((cf::CActorParam*)pc)->CActorParam_getArtsDataBlock();
+                    s32 v2 = pcArts->field_1C;
                     eventWorkspace.case260PlayerEvent.field_10 = pct * 100 / v2;     // mulli 0x64 ; divw
                 }
                 chainResult = 4; selectedArts = 5;
@@ -3522,12 +3504,12 @@ CtrlObjectParam_RunPartyArtsFlow(obj, 0, (void*)(uintptr_t)((u32)((cf::CActorPar
                 eventWorkspace.case260PlayerEvent.eventType = 0x59;                  // r14 = 0x59
                 eventWorkspace.case260PlayerEvent.field_18 = 50;
                 {
-                    void* accArts = ((cf::CActorParam*)acc)->CActorParam_getArtsDataBlock();
-                    s32 v1 = *(s16*)((u8*)accArts + 0x1E);
+                    cf::CtrlObjectParamStats* accArts = (cf::CtrlObjectParamStats*)((cf::CActorParam*)acc)->CActorParam_getArtsDataBlock();
+                    s32 v1 = accArts->field_1E;
                     f32 t = 0.1f * (f32)(s32)v1;
                     s32 pct = (s32)((f64)t + (t > lbl_eu_80666DDC ? 0.5 : -0.5));
-                    void* pcArts = ((cf::CActorParam*)pc)->CActorParam_getArtsDataBlock();
-                    s32 v2 = *(s16*)((u8*)pcArts + 0x1E);
+                    cf::CtrlObjectParamStats* pcArts = (cf::CtrlObjectParamStats*)((cf::CActorParam*)pc)->CActorParam_getArtsDataBlock();
+                    s32 v2 = pcArts->field_1E;
                     eventWorkspace.case260PlayerEvent.field_10 = pct * 100 / v2;
                 }
                 chainResult = 5; selectedArts = 7;
@@ -3539,12 +3521,12 @@ CtrlObjectParam_RunPartyArtsFlow(obj, 0, (void*)(uintptr_t)((u32)((cf::CActorPar
                 eventWorkspace.case260PlayerEvent.eventType = 0x5A;
                 eventWorkspace.case260PlayerEvent.field_18 = 50;
                 {
-                    void* accArts = ((cf::CActorParam*)acc)->CActorParam_getArtsDataBlock();
-                    s32 v1 = *(s16*)((u8*)accArts + 0x20);
+                    cf::CtrlObjectParamStats* accArts = (cf::CtrlObjectParamStats*)((cf::CActorParam*)acc)->CActorParam_getArtsDataBlock();
+                    s32 v1 = accArts->field_20;
                     f32 t = 0.1f * (f32)(s32)v1;
                     s32 pct = (s32)((f64)t + (t > lbl_eu_80666DDC ? 0.5 : -0.5));
-                    void* pcArts = ((cf::CActorParam*)pc)->CActorParam_getArtsDataBlock();
-                    s32 v2 = *(s16*)((u8*)pcArts + 0x20);
+                    cf::CtrlObjectParamStats* pcArts = (cf::CtrlObjectParamStats*)((cf::CActorParam*)pc)->CActorParam_getArtsDataBlock();
+                    s32 v2 = pcArts->field_20;
                     eventWorkspace.case260PlayerEvent.field_10 = pct * 100 / v2;
                 }
                 chainResult = 6; selectedArts = 6;
@@ -4162,7 +4144,7 @@ extern "C" void updateBattleManager(cf::CBattleManager* self) {
             _reslist_node<cf::CfObjectActor*>* node = self->mActorList1.mStartNodePtr->mNext;
             while (node != self->mActorList1.mStartNodePtr) {
                 cf::CfObjectActor* obj = node->mItem;
-                if (isGimmickActive__Q22cf13CfGameManagerFv(static_cast<cf::CfObjectMove*>(obj)) == 0) {
+                if (cf::CfGameManager::isGimmickActive(obj) == 0) {
                     self->mActorList1.remove(obj);
                     _reslist_node<cf::CfObjectActor*>* n;
                     for (n = self->mActorList2.mStartNodePtr->mNext; n != self->mActorList2.mStartNodePtr; n = n->mNext) {
@@ -4884,7 +4866,7 @@ if (CChain_HasMemberEntry(&((cf::CBattleManager*)self)->mChain, (CChainBattleObj
 
     if ((move->field_74 & 1) && !(move->field_74 & 2) &&
         !(enemy->field_3374 & 0x1000) &&
-((cf::CfObject*)((u8*)enemy + 0x3E9C))->CfObject_getMoveFactor() &&
+((cf::CfObjectActor*)enemy)->CfObject_getMoveFactor() &&
         isBattleStatusActive(&enemy->statusBase, 0x32) == 0) {
         s32 flag = 0;
 
@@ -4940,7 +4922,7 @@ void handleBattleMoveEvent(void* mgr, void* attacker, void* enemyArg, void* arg4
 
     if (!(move->field_74 & 2) &&
         !(enemy->field_3374 & 0x1000) &&
-        ((cf::CfObject*)((u8*)enemy + 0x3E9C))->CfObject_getMoveFactor() &&
+        ((cf::CfObjectActor*)enemy)->CfObject_getMoveFactor() &&
         isBattleStatusActive(&enemy->statusBase, 0x32) == 0) {
         s32 flag = 0;
 
@@ -5023,7 +5005,7 @@ void prepareBattleMove(void* self, BattleObjAccessor* arg1, void* arg2, void* mo
 
     void* prm1 = ((cf::CActorParam*)arg1)->CActorParam_getBattleParams();
     void* prm2 = ((cf::CActorParam*)arg2)->CActorParam_getBattleParams();
-    cf::CActorParam_UnkStruct2* sub = move->unk50;
+    cf::CAttackParam* sub = (cf::CAttackParam*)move->unk50;
 
     s32 res = 0;
     if (sub->unk78 & 0x8) res = 2;
@@ -5058,7 +5040,7 @@ void prepareBattleMove(void* self, BattleObjAccessor* arg1, void* arg2, void* mo
 
         if (!blocked) {
             f32 chance = lbl_eu_80666DDC;
-            if (sub->field_3C == 1 || sub->field_3C == 5) {
+            if (sub->unk3C == 1 || sub->unk3C == 5) {
                 f32 lo = lbl_eu_80666DDC;   // floor
                 f32 hi = 95.0f;   // cap
                 f32 mod = lbl_eu_80666DD4;  // party modifier
@@ -5106,7 +5088,7 @@ void prepareBattleMove(void* self, BattleObjAccessor* arg1, void* arg2, void* mo
                     if (((cf::CActorParam*)arg2)->CActorParam_getHitRate() < 0.15f) chance -= k25_0f;
                 }
                 if (isBattleStatusActive((u8*)arg2 + 8, 0x114)) chance += 200.0f;
-                f32 f1 = chance - (f32)(*(s16*)((u8*)sub + 0x36) * artsSubGetMax(sub));
+                f32 f1 = chance - (f32)(sub->unk36 * artsSubGetMax(sub));
                 f1 = f1 + (f32)(*(s16*)((u8*)prm2 + 0x1E) - *(s16*)((u8*)prm1 + 0x1E));
                 if (f1 < lo) f1 = lo;
                 if (f1 > hi) f1 = hi;
@@ -5128,7 +5110,7 @@ void prepareBattleMove(void* self, BattleObjAccessor* arg1, void* arg2, void* mo
                 void* v290 = ((cf::CActorParam*)arg1)->CActorParam_getStatusTable();
                 if (v290 != nullptr) {
                     if (Counter_TestBit(((cf::CActorParam*)arg1)->CActorParam_getStatusTable(), 0x82)) {
-                        chance -= (f32)(*(s16*)((u8*)sub + 0x36) * artsSubGetMax(sub));
+                        chance -= (f32)(sub->unk36 * artsSubGetMax(sub));
                     }
                 }
                 s32 lv = ((cf::CActorParam*)arg2)->CActorParam_getActorLevel() - ((cf::CActorParam*)arg1)->CActorParam_getActorLevel();
@@ -5136,7 +5118,7 @@ void prepareBattleMove(void* self, BattleObjAccessor* arg1, void* arg2, void* mo
                 if (lv > 10) lv = 10;
                 if ((u32)(lv + 5) > 10) chance += (f32)(lv * 11);
                 else if ((u32)(lv + 2) > 4) chance += (f32)(lv * 6);
-                if (atk->unk64 & 0x2) chance -= (f32)(*(s16*)((u8*)sub + 0x36) * artsSubGetMax(sub));
+                if (atk->unk64 & 0x2) chance -= (f32)(sub->unk36 * artsSubGetMax(sub));
                 if (chance < lo) chance = lo;
                 if (chance > hi) chance = hi;
                 if (res == 0) {
@@ -5155,7 +5137,7 @@ void prepareBattleMove(void* self, BattleObjAccessor* arg1, void* arg2, void* mo
     if (move->mFlagsArray[1].flags & 0x1000) return;
 
     bool splash = false;
-    if (sub->field_3C == 1 || sub->field_3C == 5) {
+    if (sub->unk3C == 1 || sub->unk3C == 5) {
         if (!(sub->unk78 & 0x8) && (move->mFlagsArray[0].flags & 1)) {
             s32 e0 = ((cf::CActorParam*)arg2)->CActorParam_getActorType();
             u32 f3374 = atk->unk3374;
@@ -5178,7 +5160,7 @@ void prepareBattleMove(void* self, BattleObjAccessor* arg1, void* arg2, void* mo
                 if ((f3374 & 0x4000) && !(f3374 & 0x8000) && move->unk84[1] < 100) splash = true;
             }
         }
-    } else if (sub->field_3C == 2 || sub->field_3C == 6) {
+    } else if (sub->unk3C == 2 || sub->unk3C == 6) {
         if (isBattleStatusActive((u8*)arg2 + 8, 0xf7)) {
             if (((cf::CfObjectActor*)arg2)->CfObjectActor_sharesMoveFlags((cf::CfObjectActor*)arg1) == 0) {
                 if (move->mFlagsArray[0].flags & 1) {
@@ -5223,7 +5205,7 @@ void prepareBattleMove(void* self, BattleObjAccessor* arg1, void* arg2, void* mo
     if (!blocked2) blocked2 = isBattleStatusActive((u8*)arg2 + 8, 0xf1) != 0;
     if (!blocked2) blocked2 = isBattleStatusActive((u8*)arg2 + 8, 0xf8) != 0;
     if (blocked2) res2 = 1;
-    if (res2 == 0 && sub->field_3C != 1) res2 = 1;
+    if (res2 == 0 && sub->unk3C != 1) res2 = 1;
     if (res2 == 0 && isBattleStatusActive((u8*)arg2 + 8, 0xeb) && !(move->mFlagsArray[1].flags & 0x800)) res2 = 2;
     if (res2 == 0 && isBattleStatusActive((u8*)arg2 + 8, 0x10c) && !(move->mFlagsArray[1].flags & 0x800)) res2 = 2;
     if (res2 == 0 && (atk->unk64 & 0x4) && (sub->unk78 & 0x1)) res2 = 1;
@@ -5392,7 +5374,7 @@ extern "C" void func_800DCB54(void* self, void* attacker, void* target,
     BattleParamData* tgtParam =
         (BattleParamData*)(BattleParamData*)((cf::CActorParam*)(target))->CActorParam_getBattleParams();
     {
-        void* res20C = ((cf::CActorParam*)(target))->CActorParam_getArtsDataBlock();
+        BattleParamData* res20C = (BattleParamData*)((cf::CActorParam*)(target))->CActorParam_getArtsDataBlock();
 
         // 0x5230: type gate -- only 1 and 5 take the main block (lhz + signed cmpi)
         if ((s32)sub->type_3C == 1 || (s32)sub->type_3C == 5) {
@@ -5401,7 +5383,7 @@ extern "C" void func_800DCB54(void* self, void* attacker, void* target,
         f32 f26;
         f32 f28;
         {
-            f26 = (f32)*(s16*)((u8*)res20C + 0x60) / 100.0f;
+            f26 = (f32)res20C->field_60 / 100.0f;
             f28 = (f32)tgtParam->field_60 / 100.0f - f26;
         }
         s32 atkValue = atkParam->field_2C;
@@ -5533,22 +5515,22 @@ extern "C" void func_800DCB54(void* self, void* attacker, void* target,
         // --- 0x800DDC80: target vf0x2A4 (combo) checks ---
         {
             void* p = ((cf::CActorParam*)(target))->CActorParam_getMoveRecord();
-            if (*(u32*)((u8*)p + 0x78) & 0x400) {
+            if (((cf::CActorParam_UnkStruct1*)p)->mFlagsArray[1].flags & 0x400) {
                 void* f4 = *(void**)(tgtB + 0x4);
                 outVal = *(s32*)(((cf::CObjectState*)(f4))->getStateData());
                 // Retail: cmpi r3,0 (no bool-normalize neg/or).
                 if (testActorStatus(target, &outVal, 0x806) == 0 &&
                     !(*(u16*)(tgtB + 0x3E6C) & 0x20))
                     goto main_combo_skip;
-                void* sub2 = ((cf::CActorParam*)(target))->CActorParam_getMoveRecord();
-                if (*(void**)((u8*)sub2 + 0x50) == 0) goto main_combo_skip;
-                void* sub3 = ((cf::CActorParam*)(target))->CActorParam_getMoveRecord();
-                void* sub4 = *(void**)((u8*)sub3 + 0x50);
+                cf::CActorParam_UnkStruct1* sub2 = (cf::CActorParam_UnkStruct1*)((cf::CActorParam*)(target))->CActorParam_getMoveRecord();
+                if (sub2->unk50 == 0) goto main_combo_skip;
+                cf::CActorParam_UnkStruct1* sub3 = (cf::CActorParam_UnkStruct1*)((cf::CActorParam*)(target))->CActorParam_getMoveRecord();
+                cf::CAttackParam* sub4 = (cf::CAttackParam*)sub3->unk50;
                 // MAIN: bonus applies when combo target type != 1
-                if ((s32)*(u16*)((u8*)sub4 + 0x3C) == 1) goto main_combo_skip;
-                void* sub5 = ((cf::CActorParam*)(target))->CActorParam_getMoveRecord();
-                void* sub6 = *(void**)((u8*)sub5 + 0x50);
-                if ((s32)*(u8*)((u8*)sub6 + 0x42) == 1) goto main_combo_skip;
+                if ((s32)sub4->unk3C == 1) goto main_combo_skip;
+                cf::CActorParam_UnkStruct1* sub5 = (cf::CActorParam_UnkStruct1*)((cf::CActorParam*)(target))->CActorParam_getMoveRecord();
+                cf::CAttackParam* sub6 = (cf::CAttackParam*)sub5->unk50;
+                if ((s32)sub6->unk42 == 1) goto main_combo_skip;
                 move->field_58 += 0.5f;                 // 0x800DDD48
             }
         main_combo_skip:;
@@ -5825,7 +5807,7 @@ extern "C" void func_800DCB54(void* self, void* attacker, void* target,
             f32 f26;
             f32 f28;
             {
-                f26 = (f32)*(s16*)((u8*)res20C + 0x62) / 100.0f;
+                f26 = (f32)res20C->field_62 / 100.0f;
                 f28 = (f32)tgtParam->field_62 / 100.0f - f26;
             }
             s32 atkValue = atkParam->field_30;
@@ -5995,21 +5977,21 @@ extern "C" void func_800DCB54(void* self, void* attacker, void* target,
             // --- 0x800DF050: target vf0x2A4 (combo) checks ---
             {
                 void* p = ((cf::CActorParam*)(target))->CActorParam_getMoveRecord();
-                if (*(u32*)((u8*)p + 0x78) & 0x400) {
+                if (((cf::CActorParam_UnkStruct1*)p)->mFlagsArray[1].flags & 0x400) {
                     void* f4 = *(void**)(tgtB + 0x4);
                     outVal = *(s32*)(((cf::CObjectState*)(f4))->getStateData());
                     if (testActorStatus(target, &outVal, 0x806) == 0 &&
                         !(*(u16*)(tgtB + 0x3E6C) & 0x20))
                         goto alt_combo_skip;
-                    void* sub2 = ((cf::CActorParam*)(target))->CActorParam_getMoveRecord();
-                    if (*(void**)((u8*)sub2 + 0x50) == 0) goto alt_combo_skip;
-                    void* sub3 = ((cf::CActorParam*)(target))->CActorParam_getMoveRecord();
-                    void* sub4 = *(void**)((u8*)sub3 + 0x50);
+                    cf::CActorParam_UnkStruct1* sub2 = (cf::CActorParam_UnkStruct1*)((cf::CActorParam*)(target))->CActorParam_getMoveRecord();
+                    if (sub2->unk50 == 0) goto alt_combo_skip;
+                    cf::CActorParam_UnkStruct1* sub3 = (cf::CActorParam_UnkStruct1*)((cf::CActorParam*)(target))->CActorParam_getMoveRecord();
+                    cf::CAttackParam* sub4 = (cf::CAttackParam*)sub3->unk50;
                     // ALT: bonus applies when combo target type == 1
-                    if ((s32)*(u16*)((u8*)sub4 + 0x3C) != 1) goto alt_combo_skip;
-                    void* sub5 = ((cf::CActorParam*)(target))->CActorParam_getMoveRecord();
-                    void* sub6 = *(void**)((u8*)sub5 + 0x50);
-                    if ((s32)*(u8*)((u8*)sub6 + 0x42) == 1) goto alt_combo_skip;
+                    if ((s32)sub4->unk3C != 1) goto alt_combo_skip;
+                    cf::CActorParam_UnkStruct1* sub5 = (cf::CActorParam_UnkStruct1*)((cf::CActorParam*)(target))->CActorParam_getMoveRecord();
+                    cf::CAttackParam* sub6 = (cf::CAttackParam*)sub5->unk50;
+                    if ((s32)sub6->unk42 == 1) goto alt_combo_skip;
                     move->field_58 += 0.5f;             // 0x800DF11C
                 }
             alt_combo_skip:;
@@ -7455,7 +7437,7 @@ void emitBattleEvents(void* self_, void* attacker_, void* target_, void* move_) 
         if (isBattleStatusActive((u8*)target + 8, 0x0F)) hit = 1;
         break;
     case 0x08:
-        if ((u32)((cf::CObjectParam*)((u8*)target + 0x3E9C))->CObjectParam_getSelfObjectId() ==
+        if ((u32)((cf::CfObjectActor*)target)->CObjectParam_getSelfObjectId() ==
             ((cf::CfObjectActor*)attacker)->field_0x74) {
             hit = 1;
         }
@@ -7924,7 +7906,7 @@ static inline void accumulateMoveDamage(f32& total, E2A9C_BattleMoveData* slot) 
 void previewBattleDamage(void* self, ScMain* actor, cf::CActorParam* obj, f32* outDamage, s32* outFlag) {
 
     // r23: selected target sub-object from obj's move slot; r31: its action.
-    void* subObj = *(void**)((u8*)obj->CActorParam_getBattleStats() + 0x50);
+    cf::CAttackParam* subObj = (cf::CAttackParam*)obj->CActorParam_getBattleStats()->unk50;
     cf::CActorParam* action = (cf::CActorParam*)MapFx_ResolveOwner((void*)(intptr_t)findObjectById__Fi(
         *(s32*)((u8*)obj->CActorParam_getBattleStats() + 4)));
 
@@ -7942,8 +7924,8 @@ void previewBattleDamage(void* self, ScMain* actor, cf::CActorParam* obj, f32* o
     }
 
     // Party size / arts-count gate for the preview loop.
-    if ((s32)*(u8*)((u8*)subObj + 0x43) == 1) {
-        *outFlag = *(u8*)((u8*)subObj + 0x44);
+    if ((s32)subObj->unk43 == 1) {
+        *outFlag = subObj->unk44;
     } else {
         *outFlag = 1;
     }
@@ -8378,15 +8360,14 @@ skipScan:
 // Arts-data auxiliary dispatch (vtable pointer at sub+0x84, this = sub).
 // Slot 0x0C returns the s32 count/index (CAttackParam::getMax shape, cf.
 // CtrlAct.cpp - the arts rows share that vtable for the count slot).
-// NOTE: this shape (vtable from sub+0x84, this = sub) is not expressible
-// as a C++ virtual call (which reads the vtable at this+0), so it stays a
-// named manual dispatch; the owner and arity are recovered, not padded.
+// CAttackParam lays its vptr after the 0x84-byte record prefix, so these are
+// plain virtual calls of the real class.
 static inline s32 artsSubGetMax(void* sub) {
-    return ((s32(*)(void*))(*(void***)((u8*)sub + 0x84))[0x0C / 4])(sub);
+    return ((cf::CAttackParam*)sub)->CAttackParam_getArtsFlagByte();
 }
-// Slot 0x14 sibling (returns f32); same owner/shape caveat as above.
+// Slot 0x14 sibling (returns f32).
 static inline f32 artsSubGetF14(void* sub) {
-    return ((f32(*)(void*))(*(void***)((u8*)sub + 0x84))[0x14 / 4])(sub);
+    return ((cf::CAttackParam*)sub)->CAttackParam_getArtsGaugeMax();
 }
 
 // status id of an object = *(CObjectState::Func11(unk4-holder)) -- slot 0x30
@@ -8507,10 +8488,10 @@ extern "C" void updateBattleAction(cf::CBattleManager* self, cf::CfObjectActor* 
         if (isBattleStatusActive((u8*)target + 8, 0xF8)) return;
     }
     if (((cf::CfObjectActor*)target)->unk3374 & 0x08000000) return;
-    if (*(u32*)((u8*)attacker + 0x3F60) == 0) return;
-    if (*(u32*)((u8*)target + 0x3F60) == 0) return;
+    if (((cf::CfObjectActor*)attacker)->mTargetC4 == nullptr) return;
+    if (((cf::CfObjectActor*)target)->mTargetC4 == nullptr) return;
 
-    void* sub = move->field_50;
+    cf::CAttackParam* sub = (cf::CAttackParam*)move->field_50;
 
     // ---- 0xCE "reaction" block ----
     if (isBattleStatusActive((u8*)target + 8, 0xCE) &&
@@ -8525,7 +8506,7 @@ extern "C" void updateBattleAction(cf::CBattleManager* self, cf::CfObjectActor* 
 
     // ---- 0xEB "knockback" block ----
     if (isBattleStatusActive((u8*)target + 8, 0xEB) && !(move->field_74 & 0x2)) {
-        u16 type = *(u16*)((u8*)sub + 0x3C);
+        u16 type = sub->unk3C;
         if (type == 1 || type == 5) {
             move->field_74 &= ~0x00030000;
             if (!(move->field_78 & 0x00000800)) {
@@ -8606,9 +8587,9 @@ SysWinLog_PollSequenceProgress((CScenarioLogOwner*)target, (s32)(move->field_5C 
         // 0x3BF4
         if (!(move->field_78 & 0x00000200)) {
             if (move->field_50 == nullptr) return;
-            u32 subFlags = *(u32*)((u8*)sub + 0x78);
+            u32 subFlags = sub->unk78;
             if (!(subFlags & 0x00002000) ||
-                (u32)(((cf::CActorParam*)(attacker))->CActorParam_getStatsSlot() + 1) != *(u8*)((u8*)sub + 0x44)) {
+                (u32)(((cf::CActorParam*)(attacker))->CActorParam_getStatsSlot() + 1) != sub->unk44) {
                 processBattleMove(self, attacker, target, move);
             }
         }
@@ -8809,8 +8790,8 @@ SysWinLog_PollSequenceProgress((CScenarioLogOwner*)attacker, appliedDamage, (CSc
                     u16 hA = *(u16*)((u8*)getLiveParamPtr((u8*)(*(u32*)((u8*)attacker + 0x3F60)) + 0x10) + 0x0A);
                     attachEffectById(who, attacker, hA, b8);
                 } else {
-                    u32 sf = *(u32*)((u8*)sub + 0x78);
-                    u32* tbl = elementTable(*(u16*)((u8*)sub + 0x40));
+                    u32 sf = sub->unk78;
+                    u32* tbl = elementTable(sub->unk40);
                     if (sf & 0x100) {
                         attachEffectById(target, attacker, tbl[1], 0);
                     } else if (sf & 0x200) {
@@ -9129,50 +9110,50 @@ SysWinLog_DrivePair((CScenarioLogOwner*)target, (CScenarioLogOwner*)attacker);
                     if (localMove.field_74 & 0x10000) {
                         // knockback
                         if (!hasStatus(target, 0xA) && !hasStatus(target, 0xB)) {
-                            void* st = (void*)((cf::CfObjectActor*)target)->mTargetC4;
-                            if (!(*(u16*)((u8*)st + 0x530) & 0x1)) {
+                            cf::CActParamAnimGame* st = static_cast<cf::CActParamAnimGame*>(((cf::CfObjectActor*)target)->mTargetC4);
+                            if (!(st->field530 & 0x1)) {
                                 ((cf::CfObjectActor*)target)->CfObject_setMoveHeadAngle(ml::pi + ((cf::CfObjectActor*)(attacker))->CfObject_getMoveHeadAngle());
                             }
                             nw4r::math::VEC3 d = actorDelta(attacker, target);
                             // retail: horizontal dist^2 = x^2+z^2 only (y stored, unused)
                             f32 dist2 = d.x * d.x + d.z * d.z;
-                            void* st2 = (void*)((cf::CfObjectActor*)target)->mTargetC4;
+                            cf::CActParamAnimGame* st2 = static_cast<cf::CActParamAnimGame*>(((cf::CfObjectActor*)target)->mTargetC4);
                             if (dist2 <= 0.010000001f) {
-                                *(f32*)((u8*)st2 + 0x46C) = ((cf::CfObjectActor*)(attacker))->CfObject_getMoveHeadAngle();
+                                st2->field46C = ((cf::CfObjectActor*)(attacker))->CfObject_getMoveHeadAngle();
                             } else {
-                                *(f32*)((u8*)st2 + 0x46C) =
+                                st2->field46C =
                                     0.024543693f * nw4r::math::Atan2FIdx(d.x, d.z);
                             }
                             if (((cf::CBattleManager*)self)->mChain.mHead.field_2 < 1 || ((cf::CBattleManager*)self)->mChain.mHead.field_2 > 0x18) {
-                                *(f32*)((u8*)st2 + 0x468) = getArtsFacing(sub);
+                                st2->field468 = getArtsFacing(sub);
                             } else {
-                                *(f32*)((u8*)st2 + 0x468) = lbl_eu_80666DDC;
+                                st2->field468 = lbl_eu_80666DDC;
                             }
                             CfObjectMove_setAnimModeArgs((u8*)static_cast<cf::CfObjectMove*>((cf::CfObjectActor*)target), 0x1D, 0, -1, 1);
                         }
                     } else if (localMove.field_74 & 0x20000) {
                         // ether hit
                         if (!hasStatus(target, 0xA) && !hasStatus(target, 0xB)) {
-                            void* st = (void*)((cf::CfObjectActor*)target)->mTargetC4;
-                            if (!(*(u16*)((u8*)st + 0x530) & 0x1)) {
+                            cf::CActParamAnimGame* st = static_cast<cf::CActParamAnimGame*>(((cf::CfObjectActor*)target)->mTargetC4);
+                            if (!(st->field530 & 0x1)) {
                                 ((cf::CfObjectActor*)target)->CfObject_setMoveHeadAngle(ml::pi + ((cf::CfObjectActor*)(attacker))->CfObject_getMoveHeadAngle());
                             }
                             nw4r::math::VEC3 d = actorDelta(attacker, target);
                             f32 dist2 = d.x * d.x + d.z * d.z;   // horizontal only
-                            void* st2 = (void*)((cf::CfObjectActor*)target)->mTargetC4;
+                            cf::CActParamAnimGame* st2 = static_cast<cf::CActParamAnimGame*>(((cf::CfObjectActor*)target)->mTargetC4);
                             if (dist2 <= 0.010000001f) {
-                                *(f32*)((u8*)st2 + 0x478) = ((cf::CfObjectActor*)(attacker))->CfObject_getMoveHeadAngle();
+                                st2->field478 = ((cf::CfObjectActor*)(attacker))->CfObject_getMoveHeadAngle();
                             } else {
-                                *(f32*)((u8*)st2 + 0x478) =
+                                st2->field478 =
                                     0.024543693f * nw4r::math::Atan2FIdx(d.x, d.z);
                             }
                             if (((cf::CBattleManager*)self)->mChain.mHead.field_2 < 1 || ((cf::CBattleManager*)self)->mChain.mHead.field_2 > 0x18) {
-                                *(f32*)((u8*)st2 + 0x470) = getArtsClampedRate(sub);
-*(f32*)((u8*)st2 + 0x474) = getArtsScaledSpeed((const u8*)sub);
+                                st2->field470 = getArtsClampedRate(sub);
+st2->field474 = getArtsScaledSpeed((const u8*)sub);
                             } else {
-                                *(f32*)((u8*)st2 + 0x470) = lbl_eu_80666DDC;
+                                st2->field470 = lbl_eu_80666DDC;
 f32 c0 = getArtsScaledSpeed((const u8*)sub);
-                                *(f32*)((u8*)st2 + 0x474) = c0 < lbl_eu_80666DDC ? lbl_eu_80666DDC : c0;
+                                st2->field474 = c0 < lbl_eu_80666DDC ? lbl_eu_80666DDC : c0;
                             }
                             f32 f134 = getArtsGaugeRate(sub);
                             if (f134 != lbl_eu_80666DDC) {
@@ -9272,7 +9253,7 @@ f32 c0 = getArtsScaledSpeed((const u8*)sub);
                 if (CChain_HasMemberEntry(&self->mChain, (CChainBattleObjTail*)target) == 0) {
                     s32 chainSlot = 0;
                     if (localMove.field_78 & 0x200) {
-                        chainSlot = *(u8*)((u8*)sub + 0x77);
+                        chainSlot = sub->unk77;
                         if (chainSlot >= 3) chainSlot -= 3;
                     } else if (localMove.field_78 & 0x400) {
                         if (rand() & 1) chainSlot = 1;
@@ -9409,17 +9390,6 @@ struct BtlStatusEntry {
     s16 unk14;   // +0x14 range
     s16 unk16;   // +0x16 event id
     s16 unk18;   // +0x18 event value
-};
-
-struct BtlMoveData {
-    u8 pad_00[0x468];
-    f32 mFacing468;    // +0x468
-    f32 mFacing46C;    // +0x46C
-    f32 mSpeed470;     // +0x470
-    f32 mSpeed474;     // +0x474
-    f32 mFacing478;    // +0x478
-    u8 pad_47C[0xB4];
-    u16 mFlags530;     // +0x530 (bit0 gating the heading-set)
 };
 
 // 0x34-byte battle-event struct consumed by func_800EC918
@@ -10096,8 +10066,8 @@ postLoop:
                 }
 
                 if (bm->mFlags74 & 0x10000) {       // 0x8C24
-                    BtlMoveData* md = *(BtlMoveData**)((u8*)target + 0x3F60);
-                    if (!(md->mFlags530 & 1)) {
+                    cf::CActParamAnimGame* md = static_cast<cf::CActParamAnimGame*>(((cf::CfObjectActor*)target)->mTargetC4);
+                    if (!(md->field530 & 1)) {
                         f32 f1 = ((cf::CfObjectActor*)(actor))->CfObject_getMoveHeadAngle();
                         ((cf::CfObjectActor*)target)->CfObject_setMoveHeadAngle(ml::pi + f1);
                     }
@@ -10107,22 +10077,22 @@ postLoop:
                         Vec3f* pt = (Vec3f*)((cf::CfObjectActor*)target)->CfObject_getPosVector();
                         f32 dx = pt->x - pa->x;
                         f32 dz = pt->z - pa->z;
-                        BtlMoveData* md2 = *(BtlMoveData**)((u8*)target + 0x3F60);
+                        cf::CActParamAnimGame* md2 = static_cast<cf::CActParamAnimGame*>(((cf::CfObjectActor*)target)->mTargetC4);
                         if (dx * dx + dz * dz <= 0.010000001f) {
-                            md2->mFacing46C = ((cf::CfObjectActor*)(actor))->CfObject_getMoveHeadAngle();
+                            md2->field46C = ((cf::CfObjectActor*)(actor))->CfObject_getMoveHeadAngle();
                         } else {
-                            md2->mFacing46C = nw4r::math::Atan2FIdx(dx, dz) * 0.024543693f;
+                            md2->field46C = nw4r::math::Atan2FIdx(dx, dz) * 0.024543693f;
                         }
                         if (chapterInRange(self)) {
-                            md2->mFacing468 = lbl_eu_80666DD4;   // 1.0f (0x8D5C)
+                            md2->field468 = lbl_eu_80666DD4;   // 1.0f (0x8D5C)
                         } else {
-                            md2->mFacing468 = getArtsFacing(sub);   // 0x8D48
+                            md2->field468 = getArtsFacing(sub);   // 0x8D48
                         }
                     }
                     CfObjectMove_setAnimModeArgs((u8*)static_cast<cf::CfObjectMove*>((cf::CfObjectActor*)target), 0x1D, 0, -1, 1);   // 0x8D68
                 } else if (bm->mFlags74 & 0x4000) { // 0x8D84
-                    BtlMoveData* md = *(BtlMoveData**)((u8*)target + 0x3F60);
-                    if (!(md->mFlags530 & 1)) {
+                    cf::CActParamAnimGame* md = static_cast<cf::CActParamAnimGame*>(((cf::CfObjectActor*)target)->mTargetC4);
+                    if (!(md->field530 & 1)) {
                         f32 f1 = ((cf::CfObjectActor*)(actor))->CfObject_getMoveHeadAngle();
                         ((cf::CfObjectActor*)target)->CfObject_setMoveHeadAngle(ml::pi + f1);
                     }
@@ -10132,20 +10102,20 @@ postLoop:
                         Vec3f* pt = (Vec3f*)((cf::CfObjectActor*)target)->CfObject_getPosVector();
                         f32 dx = pt->x - pa->x;
                         f32 dz = pt->z - pa->z;
-                        BtlMoveData* md2 = *(BtlMoveData**)((u8*)target + 0x3F60);
+                        cf::CActParamAnimGame* md2 = static_cast<cf::CActParamAnimGame*>(((cf::CfObjectActor*)target)->mTargetC4);
                         if (dx * dx + dz * dz <= 0.010000001f) {
-                            md2->mFacing478 = ((cf::CfObjectActor*)(actor))->CfObject_getMoveHeadAngle();
+                            md2->field478 = ((cf::CfObjectActor*)(actor))->CfObject_getMoveHeadAngle();
                         } else {
-                            md2->mFacing478 = nw4r::math::Atan2FIdx(dx, dz) * 0.024543693f;
+                            md2->field478 = nw4r::math::Atan2FIdx(dx, dz) * 0.024543693f;
                         }
                         if (chapterInRange(self)) {
 f32 v = getArtsScaledSpeed((const u8*)sub);
                             if (v >= lbl_eu_80666DD4) v = lbl_eu_80666DD4;   // min(v,1.0f) (0x8ED4)
-                            md2->mSpeed470 = lbl_eu_80666DDC;
-                            md2->mSpeed474 = v;
+                            md2->field470 = lbl_eu_80666DDC;
+                            md2->field474 = v;
                         } else {
-                            md2->mSpeed470 = getArtsClampedRate(sub);
-md2->mSpeed474 = getArtsScaledSpeed((const u8*)sub);
+                            md2->field470 = getArtsClampedRate(sub);
+md2->field474 = getArtsScaledSpeed((const u8*)sub);
                         }
                     }
                     if (getArtsGaugeRate(sub) != lbl_eu_80666DDC) {   // 0x8EF4-0x8F38
@@ -10243,7 +10213,6 @@ extern "C" void followUpBattleMove(void*, void*, void*, void*);
 extern "C" void dispatchBattleMove(void*, void*, void*, void*);
 extern "C" void CBattleManager_preCalcTotalDamage(void*, void*, f32*, u32*);
 extern "C" void spreadChainArtsHits(void*, void*, void*, void*);
-// lbl_eu_80664A10 (CHelpManager-ish singleton) is declared by an included header
 extern f32 lbl_eu_80666E78;     // 30.0f
 extern u32 sArtsPowerTable[];   // {80,60,40,25,10,...} arts-power table
 
@@ -10355,7 +10324,7 @@ extern "C" void CBattleManager_preCalcTotalDamage(void* self, void* actor, f32* 
     // r3 (self) is not used by the retail body
     void* obj = actor;                                       // r27
 
-    void* sub = ((E2A9C_BattleMoveData*)((cf::CActorParam*)(obj))->CActorParam_getMoveRecord())->field_50;         // r31
+    cf::CAttackParam* sub = (cf::CAttackParam*)((E2A9C_BattleMoveData*)((cf::CActorParam*)(obj))->CActorParam_getMoveRecord())->field_50;         // r31
     void* action = MapFx_ResolveOwner(
         (void*)(intptr_t)findObjectById((s32)((BtlMove*)((cf::CActorParam*)(obj))->CActorParam_getMoveRecord())->mSubId)); // r30
 
@@ -10365,7 +10334,7 @@ extern "C" void CBattleManager_preCalcTotalDamage(void* self, void* actor, f32* 
     if (sub == nullptr) return;
 
     // Hit count: 1 per sub-object flag, else a single hit.
-    if ((s32)*(u8*)((u8*)sub + 0x43) == 1) *outCount = *(u8*)((u8*)sub + 0x44);
+    if ((s32)sub->unk43 == 1) *outCount = sub->unk44;
     else *outCount = 1;
 
     // Clear the selection flag on the action, the 3 party members, and obj.
@@ -10483,7 +10452,7 @@ CtrlObjectParam_RunPartyArtsFlow(arts, (s32)(uintptr_t)((cf::CActorParam*)target
             if (cnt <= 1) {
                 CCharVoiceMan_FlagBattleActiveVoice();
                 SysWinLog_PollBattleStart();
-                dispatchScenarioHelp((void*)lbl_eu_80664A10);
+                dispatchScenarioHelp((void*)cf::CHelpManager::sInstance);
             } else if (((BattleObjAccessor*)attacker)->field_3f00 & 0x2) {
                 // ---- 0x800EA854: enum-list walk ----
                 CfEnumListHolder holder;
@@ -10547,7 +10516,7 @@ CtrlObjectParam_RunPartyArtsFlow(arts, (s32)(uintptr_t)((cf::CActorParam*)target
     } else {
         // 0x800EAA88: target is a player -- rescue via the help manager
         if (((BattleObjAccessor*)target)->field_3f00 & 0x2) {
-            updateBattleHelpState((void*)lbl_eu_80664A10, target);
+            updateBattleHelpState((void*)cf::CHelpManager::sInstance, target);
         }
     }
 
@@ -10794,8 +10763,7 @@ extern "C" void refreshBattleActors(cf::CBattleManager* self, f32 value, int fla
                     if (a != nullptr) {
                         void* b = (void*)(uintptr_t)((cf::CfObjectActor*)a)->mActionSrcHandle;
                         if (b != nullptr) {
-                            void* c = MapFx_ResolveOwner(findObjectById((s32)(uintptr_t)b));
-                            if (c != nullptr) c = (u8*)c + 0x3E9C;
+                            void* c = static_cast<cf::CfObjectMove*>((cf::CfObjectActor*)MapFx_ResolveOwner(findObjectById((s32)(uintptr_t)b)));
                             if (((E484_TypeObj*)typeObj)->field_9C == c)
                                 ((cf::CfObject*)typeObj)->CfObject_pushRefreshValue((float)value);
                         }
@@ -10871,8 +10839,7 @@ extern "C" void refreshBattleActors(cf::CBattleManager* self, f32 value, int fla
                     if (ownerA != nullptr) {
                         void* b = (void*)(uintptr_t)((cf::CfObjectActor*)ownerA)->mActionSrcHandle;
                         if (b != nullptr) {
-                            void* c = MapFx_ResolveOwner(findObjectById((s32)(uintptr_t)b));
-                            if (c != nullptr) c = (u8*)c + 0x3E9C;
+                            void* c = static_cast<cf::CfObjectMove*>((cf::CfObjectActor*)MapFx_ResolveOwner(findObjectById((s32)(uintptr_t)b)));
                             if (((E484_TypeObj*)typeObj)->field_9C == c)
                                 ((cf::CfObject*)typeObj)->CfObject_pushRefreshValue((float)value);
                         }
@@ -11000,9 +10967,9 @@ extern "C" s32 emitBattleMoveEvents(void* mgr /*r24*/, void* actorA /*r25*/, voi
     ((cf::CActorParam*)(actorB))->CActorParam_getBattleParams();                // result discarded by retail
 
     // ---- Sub-object / event fixups. ----
-    void* subObj = (void*)evt->field_04;  // r29
+    cf::CAttackParam* subObj = (cf::CAttackParam*)evt->field_04;  // r29
     if (subObj == nullptr && stat != nullptr) {
-        subObj = stat->unk50;
+        subObj = (cf::CAttackParam*)stat->unk50;
     }
     if (stat != nullptr) {
         evt->field_2C = stat->unk80;
@@ -11469,10 +11436,10 @@ extern "C" s32 emitBattleMoveEvents(void* mgr /*r24*/, void* actorA /*r25*/, voi
         f64 scaled = (f64)0.01f * (f64)(s32)stat->unk84[0];
         // first vfunc_C: art level of sub-object +0x84 vtable[0x0C]
         s32 lvl1 = artsSubGetMax(subObj) - 1;
-        s32 v1 = *(s16*)((u8*)subObj + 0x38) + *(u8*)((u8*)subObj + 0x6C) * lvl1;       // r31
+        s32 v1 = subObj->unk38[0] + subObj->unk6C[0] * lvl1;       // r31
         // second vfunc_C: recompute level (retail calls it again)
         s32 lvl2 = artsSubGetMax(subObj) - 1;
-        s32 v2 = *(s16*)((u8*)subObj + 0x3A) + *(u8*)((u8*)subObj + 0x6D) * lvl2;       // r0
+        s32 v2 = subObj->unk38[1] + subObj->unk6C[1] * lvl2;       // r0
         // scaled *= (v2 - v1)
         f64 power = scaled * (f64)(s32)(v2 - v1);
         // round-half-away-from-zero (retail: +0.5 / -0.5 doubles + fctiwz)
@@ -11480,7 +11447,7 @@ extern "C" s32 emitBattleMoveEvents(void* mgr /*r24*/, void* actorA /*r25*/, voi
         s32 rounded = (s32)(power + rnd);                                // f29 (as double) afterwards
         // recompute v2 with a THIRD vfunc_C call, then store the new power.
         s32 lvl3 = artsSubGetMax(subObj) - 1;
-        s32 v2b = *(s16*)((u8*)subObj + 0x3A) + *(u8*)((u8*)subObj + 0x6D) * lvl3;
+        s32 v2b = subObj->unk38[1] + subObj->unk6C[1] * lvl3;
         stat->unk5C = (f32)((f64)(s32)*(s16*)((u8*)a224 + 0x30) *
                                ((f64)0.01f * ((f64)(s32)rounded + (f64)(s32)v2b)));
         // accumulate from the damage helper.
@@ -11488,13 +11455,13 @@ extern "C" s32 emitBattleMoveEvents(void* mgr /*r24*/, void* actorA /*r25*/, voi
         f32 f31 = stat->unk58 + dmg;
         if (((BattleActor*)actorA)->flags_3F00 & 2) {
             if (((BattleActor*)actorA)->field_3F28 == 5) {
-                s32 v = (s32)(((cf::CActorParam*)(actorA))->CActorParam_getArtsGauge() + (f64)(s32)*(s16*)((u8*)subObj + 0x34));
+                s32 v = (s32)(((cf::CActorParam*)(actorA))->CActorParam_getArtsGauge() + (f64)(s32)subObj->unk34);
                 if (v < 0) v = 0;
                 if (v > 100) v = 100;
                 f31 += (f64)(s32)(50 - v) / (f64)200.0f;
             }
         }
-        if (*(u16*)((u8*)subObj + 0x48) == 263) {
+        if (subObj->unk48 == 263) {
             s32 count = 0;
             for (f32 x = lbl_eu_80666DDC; x < 32.0f; x += lbl_eu_80666DD4) {
                 void* o = (void*)((cf::CBattleState*)((u8*)(actorB) + 8))->CBattleState_getEventEntry((int)((s32)(f64)x));
@@ -11525,7 +11492,7 @@ extern "C" s32 emitBattleMoveEvents(void* mgr /*r24*/, void* actorA /*r25*/, voi
             if ((stat->unk84[11] % 100) >= evt->field_10) return 0;
             // Both arms of the sub-object type split are identical in retail
             // (0x148C0 and 0x14904); kept as two blocks to mirror the codegen.
-            if (subObj != nullptr && *(u16*)((u8*)subObj + 0x3C) == 3) {
+            if (subObj != nullptr && subObj->unk3C == 3) {
                 if (actorA != actorB) {
                     f32 v = ((cf::CActorParam*)(actorB))->CActorParam_getDamageScale();
                     if (stat->unk5C < v) stat->unk5C = v;
@@ -11561,8 +11528,8 @@ extern "C" s32 emitBattleMoveEvents(void* mgr /*r24*/, void* actorA /*r25*/, voi
     // ---- cmd 224: damage calculation via sub-object art levels (0x14A1C). ----
     case 224: {
         if (stat == nullptr) break;
-        s32 base = *(s16*)((u8*)subObj + 0x4A) +
-                   *(u8*)((u8*)subObj + 0x6F) * (artsSubGetMax(subObj) - 1);   // r29
+        s32 base = subObj->unk4A +
+                   subObj->unk6C[3] * (artsSubGetMax(subObj) - 1);   // r29
         s32 v = (s32)((f64)0.01f * (f64)(s32)base * (f64)((cf::CActorParam*)(actorB))->CActorParam_getDamageScale());
         stat->unk60 = (f32)(f64)(s32)v;
         f32 dmg = calcBattleDamage(actorA, actorA, stat);
@@ -12004,14 +11971,12 @@ void CBattleMan_RefreshChainEnum(cf::CBattleManager* mgr) {
             mgr->mActorList3.mStartNodePtr->mNext;
         while (cur != mgr->mActorList3.mStartNodePtr) {
             cf::CfObjectActor* actor = cur->mItem;
-            // Retail: store flags first, then branch over the moveBase
-            // adjustment only (adjusted-this pattern: the call still happens
-            // with the raw pointer when actor is null).
+            // Retail: store flags first, then the null-checked
+            // CfObjectActor -> CfObjectMove base conversion.
             ((cf::CfObjectActor*)actor)->mFlags68 |= 0x40;
 
             {
-                void* base = (actor != nullptr) ? (void*)((u8*)actor + 0x3e9c) : (void*)actor;
-                void* result = getEffOwner__(base);
+                void* result = getEffOwner__(static_cast<cf::CfObjectMove*>(actor));
                 if (result != nullptr) {
                     *(u32*)((u8*)result + 0x3f08) |= 0x8000000;
                     CPartsChange_ResetBattleEntry(result, 0, 0);

@@ -5,6 +5,7 @@
 // Cleaned-up C++ for CCol6CheckBat; other stubs pending decomp.
 
 #include "kyoshin/cf/CfBdat.hpp"
+#include "monolib/lod/CTaskLOD.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/cf/CItem.hpp"  // canonical CItemImpl instances accessor
 #include "kyoshin/CCol6CheckBat.hpp"
@@ -239,7 +240,7 @@ extern "C" void* __dt__9CCol6HintFv(CCol6Hint* self, int flags) {
     if (self != 0) {
         __dt__10CScrollBarFv(&self->mScrollBar, -1);
         __dt__6CCur18Fv(&self->mCur18, -1);
-        __dt__17UnkClass_8045F564Fv(&self->mMemRegion, -1);
+        self->mMemRegion.~UnkClass_8045F564();
         if (self != 0) {
             if (self != 0) {
                 __dt__8CProcessFv(reinterpret_cast<CProcess*>(self), 0);
@@ -446,7 +447,7 @@ fail:
 // through a stack DrawInfo. The gate chain mirrors retail: task-game ready /
 // mode bit 0x400000 / game running / arc loaded / bar visible; the goto-body
 // form emits the bne-end + beq-body/b-end pair (CSysWinSelect precedent).
-void CCol6Hint::cbRenderBefore() {
+void CCol6Hint::cbRenderBefore(CScn*) {
     // First two gates use the if-&&-goto-body / goto-end chain (bne end +
     // beq body/b end); the running/loaded checks are early returns; the
     // visibility check positively wraps the draw block.
@@ -515,7 +516,7 @@ extern "C" void col6HintBuild(CCol6Hint* self) {
 
     // Bind the device font into the layout's root pane.
     nw4r::lyt::Pane* rootPane = self->mLayout->GetRootPane();
-    CDeviceFontInfo* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
+    IDeviceFontInfo* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
         1, self->mLayout);
     ApplyFontToTxtPanes(rootPane,
                   fontObj->getFont());
@@ -884,7 +885,7 @@ extern "C" void* __dt__11CCol6SystemFv(CCol6System* self, int flags) {
         __dt__7CSysWinFv(&self->mSysWin1, -1);
         __dt__6CCur18Fv(&self->mCur2, -1);
         __dt__6CCur18Fv(&self->mCur1, -1);
-        __dt__17UnkClass_8045F564Fv(&self->mMemRegion, -1);
+        self->mMemRegion.~UnkClass_8045F564();
         if (self != 0) {
             if (self != 0) {
                 __dt__8CProcessFv(reinterpret_cast<CProcess*>(self), 0);
@@ -1519,7 +1520,7 @@ fail:
 // Gates 1-3 are single beq-to-exit branches; gate 4 must stay as the
 // two-instruction bne-body / b-exit pair, so use the goto-body/goto-end
 // split (CCol6Hint::cbRenderBefore precedent).
-void CCol6System::cbRenderBefore() {
+void CCol6System::cbRenderBefore(CScn*) {
     if (IsMenuState621F0() == 0) goto end;
     if (mFlagA0 == 0) goto end;
     if (reinterpret_cast<CSysWin*>(&mSysWin1)->isReady() == 0) goto end;
@@ -1573,7 +1574,7 @@ extern "C" void col6SysLayout(CCol6System* self) {
     // Bind the device font into the layout's root pane.
     nw4r::lyt::Pane* rootPane =
         self->mLayout->GetRootPane();
-    CDeviceFontInfo* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
+    IDeviceFontInfo* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
         1, self->mLayout);
     ApplyFontToTxtPanes(rootPane, fontObj->getFont());
 
@@ -2245,173 +2246,173 @@ extern "C" void col6DoOpenBox(CCol6System* self) {
     UnkClass_80083298* gm = getGameSubManager__Q22cf13CfGameManagerFv();
     if (gm != 0) {
         u8 v1 = (u8)(((s8)self->mPadA5_0 + 1) * 10 + f + 1);
-        activateLOD__8CTaskLODFv(v1);
+        CTaskLOD::activateLOD(v1);
         ScnData_FwdB7D9C(getScnHandle(), v1);
         forwardMpfCallB__17UnkClass_8047BB54Fv(&gm->field_0xF0, v1);
 
         u8 v2 = (u8)(f + 0x3d);
-        activateLOD__8CTaskLODFv(v2);
+        CTaskLOD::activateLOD(v2);
         ScnData_FwdB7D9C(getScnHandle(), v2);
         forwardMpfCallB__17UnkClass_8047BB54Fv(&gm->field_0xF0, v2);
 
         u8 v3 = (u8)(f + 0x47);
-        deactivateLOD__8CTaskLODFv(v3);
+        CTaskLOD::deactivateLOD(v3);
         ScnData_FwdB7DD4(getScnHandle(), v3);
         forwardMpfCallC__17UnkClass_8047BB54Fv(&gm->field_0xF0, v3);
 
         if (v2 == 0x3d) {
-            activateLOD__8CTaskLODFv(0x55);
+            CTaskLOD::activateLOD(0x55);
             ScnData_FwdB7D9C(getScnHandle(), 0x55);
             forwardMpfCallB__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x55);
         }
         if (v2 == 0x3e) {
-            activateLOD__8CTaskLODFv(0x56);
+            CTaskLOD::activateLOD(0x56);
             ScnData_FwdB7D9C(getScnHandle(), 0x56);
             forwardMpfCallB__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x56);
         }
         if (v2 == 0x3d) {
-            activateLOD__8CTaskLODFv(0x57);
+            CTaskLOD::activateLOD(0x57);
             ScnData_FwdB7D9C(getScnHandle(), 0x57);
             forwardMpfCallB__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x57);
         }
         if (v2 == 0x3d) {
-            activateLOD__8CTaskLODFv(0x58);
+            CTaskLOD::activateLOD(0x58);
             ScnData_FwdB7D9C(getScnHandle(), 0x58);
             forwardMpfCallB__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x58);
         }
         if (CtrlRemote_TouchBitByArg(0x20) >= 0x16e) {
-            activateLOD__8CTaskLODFv(0x59);
+            CTaskLOD::activateLOD(0x59);
             ScnData_FwdB7D9C(getScnHandle(), 0x59);
             forwardMpfCallB__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x59);
             if (v1 == 0xe) {
-                activateLOD__8CTaskLODFv(0x5a);
+                CTaskLOD::activateLOD(0x5a);
                 ScnData_FwdB7D9C(getScnHandle(), 0x5a);
                 forwardMpfCallB__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x5a);
             }
         }
         if (v2 == 0x3d) {
-            activateLOD__8CTaskLODFv(0x5b);
+            CTaskLOD::activateLOD(0x5b);
             ScnData_FwdB7D9C(getScnHandle(), 0x5b);
             forwardMpfCallB__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x5b);
         }
         if (v2 == 0x3d) {
-            activateLOD__8CTaskLODFv(0x5c);
+            CTaskLOD::activateLOD(0x5c);
             ScnData_FwdB7D9C(getScnHandle(), 0x5c);
             forwardMpfCallB__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x5c);
         }
         if (v2 == 0x3e) {
-            activateLOD__8CTaskLODFv(0x5d);
+            CTaskLOD::activateLOD(0x5d);
             ScnData_FwdB7D9C(getScnHandle(), 0x5d);
             forwardMpfCallB__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x5d);
         }
         if (v2 == 0x3f) {
-            activateLOD__8CTaskLODFv(0x5e);
+            CTaskLOD::activateLOD(0x5e);
             ScnData_FwdB7D9C(getScnHandle(), 0x5e);
             forwardMpfCallB__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x5e);
         }
         if (v2 == 0x40) {
-            activateLOD__8CTaskLODFv(0x5f);
+            CTaskLOD::activateLOD(0x5f);
             ScnData_FwdB7D9C(getScnHandle(), 0x5f);
             forwardMpfCallB__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x5f);
         }
         if (v2 == 0x40) {
-            activateLOD__8CTaskLODFv(0x60);
+            CTaskLOD::activateLOD(0x60);
             ScnData_FwdB7D9C(getScnHandle(), 0x60);
             forwardMpfCallB__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x60);
         }
         if (v2 == 0x41) {
-            activateLOD__8CTaskLODFv(0x61);
+            CTaskLOD::activateLOD(0x61);
             ScnData_FwdB7D9C(getScnHandle(), 0x61);
             forwardMpfCallB__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x61);
         }
         if (v2 == 0x41) {
-            activateLOD__8CTaskLODFv(0x62);
+            CTaskLOD::activateLOD(0x62);
             ScnData_FwdB7D9C(getScnHandle(), 0x62);
             forwardMpfCallB__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x62);
         }
 
-        if (getLODData__8CTaskLODFv(0x2d)) {
-            deactivateLOD__8CTaskLODFv(0x50);
+        if (CTaskLOD::getLODData(0x2d)) {
+            CTaskLOD::deactivateLOD(0x50);
             ScnData_FwdB7DD4(getScnHandle(), 0x50);
             forwardMpfCallC__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x50);
         }
-        if (getLODData__8CTaskLODFv(0xe)) {
-            deactivateLOD__8CTaskLODFv(0x51);
+        if (CTaskLOD::getLODData(0xe)) {
+            CTaskLOD::deactivateLOD(0x51);
             ScnData_FwdB7DD4(getScnHandle(), 0x51);
             forwardMpfCallC__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x51);
         }
-        if (getLODData__8CTaskLODFv(0x2a)) {
-            deactivateLOD__8CTaskLODFv(0x52);
+        if (CTaskLOD::getLODData(0x2a)) {
+            CTaskLOD::deactivateLOD(0x52);
             ScnData_FwdB7DD4(getScnHandle(), 0x52);
             forwardMpfCallC__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x52);
         }
-        if (getLODData__8CTaskLODFv(0x22)) {
-            deactivateLOD__8CTaskLODFv(0x53);
+        if (CTaskLOD::getLODData(0x22)) {
+            CTaskLOD::deactivateLOD(0x53);
             ScnData_FwdB7DD4(getScnHandle(), 0x53);
             forwardMpfCallC__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x53);
         }
-        if (getLODData__8CTaskLODFv(0x23)) {
-            deactivateLOD__8CTaskLODFv(0x54);
+        if (CTaskLOD::getLODData(0x23)) {
+            CTaskLOD::deactivateLOD(0x54);
             ScnData_FwdB7DD4(getScnHandle(), 0x54);
             forwardMpfCallC__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x54);
         }
-        if (getLODData__8CTaskLODFv(0x3e)) {
-            deactivateLOD__8CTaskLODFv(0x55);
+        if (CTaskLOD::getLODData(0x3e)) {
+            CTaskLOD::deactivateLOD(0x55);
             ScnData_FwdB7DD4(getScnHandle(), 0x55);
             forwardMpfCallC__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x55);
         }
-        if (getLODData__8CTaskLODFv(0x2d)) {
-            deactivateLOD__8CTaskLODFv(0x57);
+        if (CTaskLOD::getLODData(0x2d)) {
+            CTaskLOD::deactivateLOD(0x57);
             ScnData_FwdB7DD4(getScnHandle(), 0x57);
             forwardMpfCallC__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x57);
         }
-        if (getLODData__8CTaskLODFv(0x2d)) {
-            deactivateLOD__8CTaskLODFv(0x58);
+        if (CTaskLOD::getLODData(0x2d)) {
+            CTaskLOD::deactivateLOD(0x58);
             ScnData_FwdB7DD4(getScnHandle(), 0x58);
             forwardMpfCallC__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x58);
         }
-        if (getLODData__8CTaskLODFv(0xe)) {
-            deactivateLOD__8CTaskLODFv(0x59);
+        if (CTaskLOD::getLODData(0xe)) {
+            CTaskLOD::deactivateLOD(0x59);
             ScnData_FwdB7DD4(getScnHandle(), 0x59);
             forwardMpfCallC__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x59);
         }
-        if (getLODData__8CTaskLODFv(0xb)) {
-            deactivateLOD__8CTaskLODFv(0x5b);
+        if (CTaskLOD::getLODData(0xb)) {
+            CTaskLOD::deactivateLOD(0x5b);
             ScnData_FwdB7DD4(getScnHandle(), 0x5b);
             forwardMpfCallC__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x5b);
         }
-        if (getLODData__8CTaskLODFv(0x15)) {
-            deactivateLOD__8CTaskLODFv(0x5c);
+        if (CTaskLOD::getLODData(0x15)) {
+            CTaskLOD::deactivateLOD(0x5c);
             ScnData_FwdB7DD4(getScnHandle(), 0x5c);
             forwardMpfCallC__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x5c);
         }
-        if (getLODData__8CTaskLODFv(0xc)) {
-            deactivateLOD__8CTaskLODFv(0x5d);
+        if (CTaskLOD::getLODData(0xc)) {
+            CTaskLOD::deactivateLOD(0x5d);
             ScnData_FwdB7DD4(getScnHandle(), 0x5d);
             forwardMpfCallC__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x5d);
         }
-        if (getLODData__8CTaskLODFv(0xd)) {
-            deactivateLOD__8CTaskLODFv(0x5e);
+        if (CTaskLOD::getLODData(0xd)) {
+            CTaskLOD::deactivateLOD(0x5e);
             ScnData_FwdB7DD4(getScnHandle(), 0x5e);
             forwardMpfCallC__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x5e);
         }
-        if (getLODData__8CTaskLODFv(0xe)) {
-            deactivateLOD__8CTaskLODFv(0x5f);
+        if (CTaskLOD::getLODData(0xe)) {
+            CTaskLOD::deactivateLOD(0x5f);
             ScnData_FwdB7DD4(getScnHandle(), 0x5f);
             forwardMpfCallC__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x5f);
         }
-        if (getLODData__8CTaskLODFv(0x2c)) {
-            deactivateLOD__8CTaskLODFv(0x60);
+        if (CTaskLOD::getLODData(0x2c)) {
+            CTaskLOD::deactivateLOD(0x60);
             ScnData_FwdB7DD4(getScnHandle(), 0x60);
             forwardMpfCallC__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x60);
         }
-        if (getLODData__8CTaskLODFv(0xf)) {
-            deactivateLOD__8CTaskLODFv(0x61);
+        if (CTaskLOD::getLODData(0xf)) {
+            CTaskLOD::deactivateLOD(0x61);
             ScnData_FwdB7DD4(getScnHandle(), 0x61);
             forwardMpfCallC__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x61);
         }
-        if (getLODData__8CTaskLODFv(0x19)) {
-            deactivateLOD__8CTaskLODFv(0x62);
+        if (CTaskLOD::getLODData(0x19)) {
+            CTaskLOD::deactivateLOD(0x62);
             ScnData_FwdB7DD4(getScnHandle(), 0x62);
             forwardMpfCallC__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x62);
         }
@@ -2562,7 +2563,7 @@ void Col6_OpenBox_2DB4(CCol6System* self) {
     gm = getGameSubManager__Q22cf13CfGameManagerFv();
     if (gm != 0) {
         u8 v = (u8)(count + 0x32);
-        activateLOD__8CTaskLODFv(v);
+        CTaskLOD::activateLOD(v);
         ScnData_FwdB7D9C(getScnHandle(), v);
         forwardMpfCallB__17UnkClass_8047BB54Fv(&gm->field_0xF0, v);
     }

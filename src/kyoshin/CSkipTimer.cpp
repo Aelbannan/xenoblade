@@ -118,10 +118,9 @@ extern "C" void CSkipTimer2OnFwdDone(CSkipTimer2* self) {
     nw4r::lyt::Pane* pan52 =
         reinterpret_cast<nw4r::lyt::Layout*>(self->mField18)
             ->GetRootPane()->FindPaneByName("nul_all", true);
-    reinterpret_cast<PaneAlphaB8*>(reinterpret_cast<nw4r::lyt::Layout*>(self->mField18)
-                                       ->GetRootPane()->FindPaneByName("txt_time", true))
-        ->field_0xB8 =
-        reinterpret_cast<PaneAlphaB8*>(pan52)->field_0xB8;
+    reinterpret_cast<nw4r::lyt::Layout*>(self->mField18)
+        ->GetRootPane()->FindPaneByName("txt_time", true)
+        ->SetAlpha(pan52->GetAlpha());
 }
 
 extern "C" void CSkipTimer2OnRewindDone(CSkipTimer2* self) {
@@ -135,10 +134,9 @@ extern "C" void CSkipTimer2OnRewindDone(CSkipTimer2* self) {
     nw4r::lyt::Pane* pan52 =
         reinterpret_cast<nw4r::lyt::Layout*>(self->mField18)
             ->GetRootPane()->FindPaneByName("nul_all", true);
-    reinterpret_cast<PaneAlphaB8*>(reinterpret_cast<nw4r::lyt::Layout*>(self->mField18)
-                                       ->GetRootPane()->FindPaneByName("txt_time", true))
-        ->field_0xB8 =
-        reinterpret_cast<PaneAlphaB8*>(pan52)->field_0xB8;
+    reinterpret_cast<nw4r::lyt::Layout*>(self->mField18)
+        ->GetRootPane()->FindPaneByName("txt_time", true)
+        ->SetAlpha(pan52->GetAlpha());
 }
 
 extern "C" void func_8029F6EC(CSkipTimer2* self) {

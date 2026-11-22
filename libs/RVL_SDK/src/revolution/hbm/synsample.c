@@ -2,9 +2,17 @@
 // High-level C reconstruction from retail ASM reference.
 
 #include <harness_catalog.h>
+#include <revolution/AX/AXPB.h>
 
 #define ADPCM_SAMPLES_PER_FRAME 14
 #define ADPCM_FRAME_SIZE 8  // 1 header + 7 nibble data
+
+// name-guess: local name for the ADPCM coefficient/loop-tail block consumed by
+// __HBMSYNSetupAdpcm; the three u16 tail fields use the SDK's AXPBADPCMLOOP layout.
+typedef struct HBMSYNADPCM {
+    u32 coef[10];
+    AXPBADPCMLOOP loop;
+} HBMSYNADPCM;
 
 typedef struct HBMSYNVOICE {
     u32     _00;
@@ -14,7 +22,7 @@ typedef struct HBMSYNVOICE {
     u32*    pSample;
     u32     _14;
     u32*    pRegion;
-    u32*    pAdpcm;
+    HBMSYNADPCM* pAdpcm;
     s32     active;
 } HBMSYNVOICE;
 
@@ -49,7 +57,7 @@ void __HBMSYNSetupAdpcm__FP11HBMSYNVOICE(HBMSYNVOICE* voice)
         u32 loopStart = sp[2];
         u32 loopEnd   = sp[3];
         u32 basePtr   = voice->pWave[9] + voice->pRegion[1];
-        u32* ap       = voice->pAdpcm;
+        HBMSYNADPCM* ap = voice->pAdpcm;
 
         // endAddr = basePtr + ((total-1) % 14) + ((total-1) / 14) * 16 + 2
         u32 t2 = loopStart + loopEnd - 1;
@@ -69,21 +77,20 @@ void __HBMSYNSetupAdpcm__FP11HBMSYNVOICE(HBMSYNVOICE* voice)
         O_W32(0xA2, basePtr + 2);
 
         // Copy ADPCM coefficients - 10 u32 + 3 u16 (then-branch only)
-        O_W32(0xA6, ap[0]);  O_W32(0xAA, ap[1]);
-        O_W32(0xAE, ap[2]);  O_W32(0xB2, ap[3]);
-        O_W32(0xB6, ap[4]);  O_W32(0xBA, ap[5]);
-        O_W32(0xBE, ap[6]);  O_W32(0xC2, ap[7]);
-        O_W32(0xC6, ap[8]);  O_W32(0xCA, ap[9]);
-        // Three u16 values at AP+0x28 (predictor), +0x2A (stepIdx), +0x2C (loopCtx)
-        O_W16(0xDC, *(u16*)((u8*)ap + 0x28));
-        O_W16(0xDE, *(u16*)((u8*)ap + 0x2A));
-        O_W16(0xE0, *(u16*)((u8*)ap + 0x2C));
+        O_W32(0xA6, ap->coef[0]);  O_W32(0xAA, ap->coef[1]);
+        O_W32(0xAE, ap->coef[2]);  O_W32(0xB2, ap->coef[3]);
+        O_W32(0xB6, ap->coef[4]);  O_W32(0xBA, ap->coef[5]);
+        O_W32(0xBE, ap->coef[6]);  O_W32(0xC2, ap->coef[7]);
+        O_W32(0xC6, ap->coef[8]);  O_W32(0xCA, ap->coef[9]);
+        O_W16(0xDC, ap->loop.loop_pred_scale);
+        O_W16(0xDE, ap->loop.loop_yn1);
+        O_W16(0xE0, ap->loop.loop_yn2);
 
         O_WU32(0x1C, (O_RU32(0x1C) & ~0x7800) | 0x40000 | 0x8400);
     } else {
         voice->active = 0;
 
-        u32* ap       = voice->pAdpcm;
+        HBMSYNADPCM* ap = voice->pAdpcm;
         u32 totalSamp = voice->pRegion[2];
         u32 basePtr   = voice->pWave[9] + voice->pRegion[1];
 
@@ -100,11 +107,11 @@ void __HBMSYNSetupAdpcm__FP11HBMSYNVOICE(HBMSYNVOICE* voice)
         O_W32(0xA2, basePtr + 2);
 
         // Copy ADPCM coefficients - 10 u32 (else-branch has no u16 tail)
-        O_W32(0xA6, ap[0]);  O_W32(0xAA, ap[1]);
-        O_W32(0xAE, ap[2]);  O_W32(0xB2, ap[3]);
-        O_W32(0xB6, ap[4]);  O_W32(0xBA, ap[5]);
-        O_W32(0xBE, ap[6]);  O_W32(0xC2, ap[7]);
-        O_W32(0xC6, ap[8]);  O_W32(0xCA, ap[9]);
+        O_W32(0xA6, ap->coef[0]);  O_W32(0xAA, ap->coef[1]);
+        O_W32(0xAE, ap->coef[2]);  O_W32(0xB2, ap->coef[3]);
+        O_W32(0xB6, ap->coef[4]);  O_W32(0xBA, ap->coef[5]);
+        O_W32(0xBE, ap->coef[6]);  O_W32(0xC2, ap->coef[7]);
+        O_W32(0xC6, ap->coef[8]);  O_W32(0xCA, ap->coef[9]);
 
         O_WU32(0x1C, (O_RU32(0x1C) & ~0x7800) | 0x8400);
     }

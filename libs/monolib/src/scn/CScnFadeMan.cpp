@@ -71,7 +71,7 @@ void CScnFadeMan::update() {
 
 // The const self view preserves the retail load schedule (MWCC_CASES
 // "const-self lever").
-void CScnFadeMan::cbRenderBefore() {
+void CScnFadeMan::cbRenderBefore(CScn*) {
     const CScnFadeMan* self = this;
     if (0.0f == self->mCurrentColor.a) {
         return;

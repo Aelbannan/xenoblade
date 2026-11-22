@@ -63,7 +63,7 @@ void CMenuTitle::Move() {
 // CMenuTitle::cbRenderBefore (us-802b87f0) - when the input-enable byte is
 // set, disable Z testing and draw the title with a layout DrawInfo.
 
-void CMenuTitle::cbRenderBefore() {
+void CMenuTitle::cbRenderBefore(CScn*) {
     if (mInputEnable != 0) {
         GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
         nw4r::lyt::DrawInfo drawInfo;

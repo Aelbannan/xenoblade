@@ -9,7 +9,6 @@ struct CScheduleChild;
 
 extern "C" s16 SchedItem_ClaimFree(void* param0, void* param1, void* param2);
 extern "C" void SchedItem_ReleaseHandle(s16 handle);
-extern "C" u32 lbl_eu_80570068[];
 extern "C" float lbl_eu_8066B2E0;
 extern "C" float lbl_eu_8066B2E4;
 
@@ -42,17 +41,9 @@ struct CScheduleChild {
 };
 
 // CSchedule manages a list of schedule entries, resolving each to a handle.
-// The vtable pointer lives at offset 0xec (non-standard layout).
+// MWCC places the vtable pointer after the data members (offset 0xec).
 // Total size: 0xf0.
 struct CSchedule {
-    ~CSchedule();
-    int Init(ScheduleEntry* entries, u8* field_0x08_ptr, u8* field_0x0c_ptr, unsigned int flags_a, unsigned int flags_b, u8* field_0x10_ptr);
-    int RebuildHandles();
-    void ReleaseHandles();
-    void Update(f32 dt);
-    void StepEntries(f32 delta);
-    void FeedTargetDist();
-
     CScheduleFlags field_0x00; // 0x00: packed flags built from init params
     ScheduleEntry* mEntries; // 0x04: pointer to ScheduleEntry array
     u8* field_0x08;          // 0x08
@@ -85,5 +76,15 @@ struct CSchedule {
     u8 mEntryCount;          // 0xd8: entry count
     s8 field_0xd9;           // 0xd9: active-item count for the last step
     CScheduleChild* mChildren[4]; // 0xdc: child objects with virtual destructors
-    u8* mTablePtr;           // 0xec: pointer to vtable-like structure
+
+    CSchedule();
+    virtual ~CSchedule();
+    int Init(ScheduleEntry* entries, u8* field_0x08_ptr, u8* field_0x0c_ptr, unsigned int flags_a, unsigned int flags_b, u8* field_0x10_ptr);
+    int RebuildHandles();
+    void ReleaseHandles();
+    void Update(f32 dt);
+    void StepEntries(f32 delta);
+    void FeedTargetDist();
+    // 0xec: vtable pointer (__vt__9CSchedule); MWCC places it at the first
+    // virtual declaration, which follows the data members.
 };

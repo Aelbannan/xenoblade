@@ -9,11 +9,20 @@ u32 advanceAnimTransform(nw4r::lyt::AnimTransform*, f32);
 extern "C" u32 AnimRewindFrame(nw4r::lyt::AnimTransform*, f32);
 extern void playUISound(u32);
 
-extern u8 lbl_eu_8053948C[0x30];           // option-cell maximum table
+// name-guess: 0x30-byte option-cell maximum table at retail 0x8053948C,
+// owned by this TU (section_owners.py text vote: kyoshin/COption.cpp).
+u8 sOptionCellMax[0x30] = {
+    0x02, 0x10, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02,
+    0x02, 0x02, 0x05, 0x05, 0x05, 0x03, 0x02, 0x02,
+    0x02, 0x02, 0x02, 0x02, 0x02, 0x00, 0x00, 0x00,
+    0x00, 0x01, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x01, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00,
+};
 extern Class_80296898 lbl_eu_80577308;     // game configuration singleton
 
-// Semantic names for the flat retail objects.
-inline u8 optionCellMax(s32 index) { return lbl_eu_8053948C[index]; }
+// Semantic name for the remaining flat retail object.
+inline u8 optionCellMax(s32 index) { return sOptionCellMax[index]; }
 inline Class_80296898& optionConfig() { return lbl_eu_80577308; }
 
 CCur19::CCur19(nw4r::lyt::ArcResourceAccessor* accessor) : CBaseCur(accessor) {}

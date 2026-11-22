@@ -39,8 +39,6 @@ extern "C" void* Bdat_GetTable_AA34();
 // Global data imports (MWCC does not mangle global-scope variable names).
 extern u32 spCtrlObjectParamWork;    // work-buffer pointer (.sbss, sda21)
 extern u32 __vt__Q22cf12CBattleState[];   // 0x90-byte .data object; its address is snapshot to the stack (.data, __ct__8009ED08)
-namespace cf { struct CHelpManager; }
-extern cf::CHelpManager* lbl_eu_80664A10;  // CHelpManager singleton pointer (.sbss, CtrlObjectParam_ClaimArtsSlotRow byte flag at +0x16)
 
 // -- CtrlObjectParam_ClaimArtsSlotRow view: 8-word offset table (sCtrlObjectParamOffsetTable, .rodata) ----
 // Copied to a local as a struct so MWCC inlines the 8 lwz/stw pairs
@@ -49,9 +47,9 @@ extern cf::CHelpManager* lbl_eu_80664A10;  // CHelpManager singleton pointer (.s
 struct CtrlObjectParamOffsetTable {
     u32 words[8];
 };
-extern CtrlObjectParamOffsetTable sCtrlObjectParamOffsetTable;
-extern u32 sCtrlObjectParamPermTableB[8];   // arts-learn offset table A (.rodata, CtrlObjectParam_LearnArtsSlots)
-extern u32 sCtrlObjectParamPermTableA[8];   // arts-learn offset table B (.rodata, CtrlObjectParam_LearnArtsSlots)
+extern const CtrlObjectParamOffsetTable sCtrlObjectParamOffsetTable;
+extern const u32 sCtrlObjectParamPermTableB[8];   // arts-learn offset table A (.rodata, CtrlObjectParam_LearnArtsSlots)
+extern const u32 sCtrlObjectParamPermTableA[8];   // arts-learn offset table B (.rodata, CtrlObjectParam_LearnArtsSlots)
 extern f32 sReslistGaugeA;    // (.sdata2, CtrlObjectParam_RefreshCharEntry arts-set float)
 extern char lbl_eu_805280E8[];  // vtable-like pointer stored at entry+0x34FC (work-buffer ctor); array type forces lis/addi @ha/@l (retail relocs are ADDR16_HA/LO)
 extern const void* lbl_eu_805280D8[4];  // arts stat column-name pointer table (.data, CtrlObjectParam_RampArtsStatStep)
@@ -74,14 +72,13 @@ extern "C" void CActorParam_updateTick(void* actor, f32 value, u32 arg);        
 extern "C" int Tok_FormatStr(ml::FixStr<64>& buf, u32 packed, int prefixFlag, int suffixFlag);  // code_800AA008.cpp (token formatter)
 
 
-extern "C" void* getArtsParamRC2(void* base, int row, int slot);               // CAttackSet.cpp (arts-slot record)
+extern "C" void* getArtsParamRC2(const void* base, int row, int slot);              // CAttackSet.cpp (arts-slot record)
 extern "C" void setArtsSlotRC(void* base, int artsId, int row, int slot);     // CAttackSet.cpp (arts-slot write)
 
 extern "C" u16 CItem_getNameIdFromFam(u16 value);                                        // CItem.cpp (arts level lookup)
 
-// NOTE: CItem_initItemImplInstances is declared (with an item-pointer form)
-// by kyoshin/CItemBoxInfo.hpp; include that header rather than redeclaring
-// it here (cf/CfGameManager.hpp already declares a no-arg form globally).
+// NOTE: CItem_initItemImplInstances(CItemData*) is declared by
+// kyoshin/cf/CItem.hpp and kyoshin/cf/CfGameManager.hpp; do not redeclare it.
 
 extern "C" void* getAtkParam(void* base, int index);                           // CAttackSet.cpp (attack-parameter record lookup)
 

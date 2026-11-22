@@ -59,8 +59,11 @@ typedef struct ADXT_OBJ_ {
     u8 fA8;         /* 0xA8 */
     u8 volSw;       /* 0xA9 */
     u8 _pad7[0xAC - 0xAA];
-    u8* sjTail;     /* 0xAC */
-    u8 _pad8[0xC0 - 0xB0];
+    void* sjTail;   /* 0xAC */
+    void* fname;    /* 0xB0 file name / stream-start argument for adxt_start_stm */
+    u32 sctOfst;    /* 0xB4 stream-start sector offset */
+    u32 sctLen;     /* 0xB8 stream-start sector length */
+    u32 startNumChan; /* 0xBC stream-start channel count; name-guess: adxt_start_stm(... numChan) */
     u32 lpStartOfs; /* 0xC0 loop start offset the position is aligned to */
 } ADXT_OBJ_;        /* 0xC4 */
 

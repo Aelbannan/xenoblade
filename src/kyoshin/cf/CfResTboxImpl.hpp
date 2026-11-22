@@ -55,8 +55,6 @@ typedef void (cf::CfResTboxImpl::*CfResTboxImplPMF)();
 extern CfPmf3 lbl_eu_805351E0[3];
 extern char lbl_eu_80664660[8];
 extern cf::CfResObjImplVtbl lbl_eu_80535204;
-extern float lbl_eu_806681D0;
-extern float lbl_eu_806681D4;
 extern "C" void ResTbox_SetCellBit40(u8* base, int idx1, int idx2, int idx3);
 extern "C" bool isSceneActive__Q22cf13CfGameManagerFv();
 extern "C" char* CfRes_getInstPtr29C();

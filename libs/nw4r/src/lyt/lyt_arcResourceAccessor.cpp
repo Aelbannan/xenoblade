@@ -4,29 +4,6 @@
 
 #include <cstring>
 
-// Retail vtable lbl_eu_80569CB8 (0x18) now owned by this TU (absorbed).
-extern "C" void __dt__Q34nw4r3lyt19ArcResourceAccessorFv();
-extern "C" void* GetResource__Q34nw4r3lyt19ArcResourceAccessorFUlPCcPUl();
-extern "C" void* GetFont__Q34nw4r3lyt19ArcResourceAccessorFPCc();
-extern "C" __declspec(section ".data") __attribute__((aligned(8))) const void* lbl_eu_80569CB8[6] = {
-    nullptr, nullptr, (const void*)&__dt__Q34nw4r3lyt19ArcResourceAccessorFv,
-    (const void*)&GetResource__Q34nw4r3lyt19ArcResourceAccessorFUlPCcPUl,
-    (const void*)&GetFont__Q34nw4r3lyt19ArcResourceAccessorFPCc, nullptr
-};
-// .sdata - retail 0x806634C8 (2) "." and 0x806634CC (3) ".." with padding to 8
-extern "C" __declspec(section ".sdata") __attribute__((aligned(4), used)) char lbl_eu_806634C8[4] = ".";
-extern "C" __declspec(section ".sdata") __attribute__((aligned(4), used)) char lbl_eu_806634CC[4] = "..";
-// code below and renamed to lbl_eu_806634C8/CC via data_pool_patterns; the
-// section is kept (extern removed) so the retail 8B layout is preserved.
-
-namespace {
-// Retail schedules the derived vptr store inside the member-init phase
-// (standard ABI order: base call -> vptr -> member ctors), not in the ctor
-// body. Attaching it to the mArcBuf initializer via a comma expression puts
-// it in that phase; the scheduler then weaves it between the FontRefLinkList
-// member stores exactly as retail does.
-inline void InitVptr(void* obj) { *(void**)obj = (void*)lbl_eu_80569CB8; }
-} // namespace
 
 /******************************************************************************
  *
@@ -39,14 +16,14 @@ s32 FindNameResource(ARCHandle* pHandle, const char* pName) {
     s32 entrynum = -1;
 
     ARCDir dir;
-    ARCOpenDir(pHandle, lbl_eu_806634C8, &dir);
+    ARCOpenDir(pHandle, ".", &dir);
 
     ARCDirEntry ent;
     while (ARCReadDir(&dir, &ent)) {
         if (ent.isDir) {
             ARCChangeDir(pHandle, ent.name);
             entrynum = FindNameResource(pHandle, pName);
-            ARCChangeDir(pHandle, lbl_eu_806634CC);
+            ARCChangeDir(pHandle, "..");
 
             if (entrynum != -1) {
                 break;
@@ -84,11 +61,11 @@ void* GetResourceSub(ARCHandle* pHandle, const char* pRootDir, u32 type,
                     ARCChangeDir(pHandle, resDir)) {
 
                     entrynum = ARCConvertPathToEntrynum(pHandle, pName);
-                    ARCChangeDir(pHandle, lbl_eu_806634CC);
+                    ARCChangeDir(pHandle, "..");
                 }
             }
 
-            ARCChangeDir(pHandle, lbl_eu_806634CC);
+            ARCChangeDir(pHandle, "..");
         }
     }
 
@@ -138,7 +115,7 @@ inline ut::Font* FindFont(FontRefLinkList* pFontList, const char* pName) { // in
  * ArcResourceAccessor
  *
  ******************************************************************************/
-ArcResourceAccessor::ArcResourceAccessor() : mArcBuf((InitVptr(this), (void*)NULL)) {}
+ArcResourceAccessor::ArcResourceAccessor() : mArcBuf(NULL) {}
 
 bool ArcResourceAccessor::Attach(void* pArchive, const char* pRootDir) {
     BOOL success = ARCInitHandle(pArchive, &mArcHandle);

@@ -193,7 +193,7 @@ bool onQuestFileEvent(CQuestWindow* self, CEventFile* event) {
 // activity, then draw the layout through a stack DrawInfo, plus the cursor
 // when the +0xC0 gate is non-negative.
 // ---------------------------------------------------------------------------
-void CQuestWindow::cbRenderBefore() {
+void CQuestWindow::cbRenderBefore(CScn*) {
     CTaskGame::getInstance();
     if (CTaskGame::isFlag01Set() || (gmPauseFlags & 0x200000)) return;
     if (IsMenuState621F0() == 0) return;

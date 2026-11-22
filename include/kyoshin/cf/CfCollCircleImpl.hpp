@@ -10,17 +10,3 @@ extern "C" void TexMan_ApplyCamPersp_034C(void* a, void* b, int c);
 // VecMath_PushOutCircleXZ: defined in kyoshin/code_800A3B24 (retail symbol is unmangled).
 extern "C" void VecMath_PushOutCircleXZ(void* a, void* b, float c, void* d);
 // Global CScn instance (defined CScn* in kyoshin/cf/CfGameManager.cpp)
-
-namespace cf {
-
-// Collision circle shape implementation.
-// Layout offsets derived from CfCollCircleImpl.s. The debug-draw functions
-// in this TU take the shape as cf::CfObjectColl (radius at 0xB8, position
-// via CfObject_getPosVector at +0xAC, cf. CfCollSphereImpl), so this
-// struct only documents the layout; the pad vtable view is deleted.
-struct CfCollCircleImpl {
-    u8 pad_00[0xB8];    // 0x00: vtable + unknown fields
-    float field_B8;     // 0xB8: circle radius/scale field
-};
-
-} // namespace cf

@@ -11,6 +11,7 @@
 #include "monolib/util/MemManager.hpp"  // canonical mtl::MemManager::allocate
 
 #include "kyoshin/cf/CfGameManagerData.hpp"
+#include "kyoshin/cf/object/CActorParam.hpp"
 #include "kyoshin/cf/object/CfObject.hpp"
 #include "kyoshin/cf/object/CfObjectMove.hpp"
 #include "kyoshin/code_80296898.hpp"
@@ -74,7 +75,7 @@ extern "C" int cfCam_isVecNear0(void* v);
 // C++ free function; MWCC mangles it to the retail getFP__FPCc.
 void* getFP(const char* name);
 // In-TU definitions further down this file.
-int cfCam_probeKeepClosest(ml::CVec3* out, u32 probeArg, float f);
+extern "C" int cfCam_probeKeepClosest(ml::CVec3* out, u32 probeArg, f32 lift, f32 rayArg);
 int cfCam_maintainFlg(cf::CfCamFollow* self, float val);
 void resetCamConsts(cf::CfCamFollow* self);
 void cfCam_updateFrame(cf::CfCamFollow* self);
@@ -260,48 +261,17 @@ __attribute__((used, aligned(4)))
 float cfCamVar_0p4f = 0.4f;
 // .sdata2 storage (const cam_-named; unread by code so values never
 // fold; code uses the added lbl_ symbols via extern decls, compiling to
-// single SDA loads with CSE like retail). Zero words use const-float
-// and the joint-strings struct (kept as-is below).
+// single SDA loads with CSE like retail). Zero words use const-float.
 // f374 + f378 + pad word + dead double-zero as exact u32 words (float
 // arrays pad starts/ends to 8; u32 arrays pack; the nonzero f374/f378 words
 // keep the object in .sdata2; only f374 is code-read, via plain deref).
-// Joint-name strings + zero word as one plain struct (address-taken only;
-// never value-read).
-struct Sdata2_CfCamStr { u32 m3D8; char sDC[8]; char sE4[8]; char sEC[8]; char sF4[8]; char sFC[8]; char s404[8]; };
-__declspec(section ".sdata2") __attribute__((used, aligned(4)))
-Sdata2_CfCamStr sdata2_CfCamStr = {0, "JUhead", "JUhd_L", "JUhd_R", "JLhip", "JLft_L", "JLft_R"};
 
-// .data float lookup tables as individual scalars (NOT float[5] arrays:
-// MWCC pads each 20-byte array to 24, breaking the pack). Code indexes
-// them dynamically; array-view macros preserve the indexing (and the hpp
-// array decls stay dormant). Only this TU uses these names (verified).
-// Scalars are small-data-eligible, so each is pinned to .data explicitly.
-__declspec(section ".data") __attribute__((used, aligned(4))) float cam_t208_0 = 0.1f;
-__declspec(section ".data") __attribute__((used, aligned(4))) float cam_t208_1 = 0.08f;
-__declspec(section ".data") __attribute__((used, aligned(4))) float cam_t208_2 = 0.06f;
-__declspec(section ".data") __attribute__((used, aligned(4))) float cam_t208_3 = 0.045f;
-__declspec(section ".data") __attribute__((used, aligned(4))) float cam_t208_4 = 0.03f;
-#define cfCamTuneRatesA (*((float(*)[5])&cam_t208_0))
-__declspec(section ".data") __attribute__((used, aligned(4))) float cam_t21C_0 = 0.07f;
-__declspec(section ".data") __attribute__((used, aligned(4))) float cam_t21C_1 = 0.05f;
-__declspec(section ".data") __attribute__((used, aligned(4))) float cam_t21C_2 = 0.03f;
-__declspec(section ".data") __attribute__((used, aligned(4))) float cam_t21C_3 = 0.02f;
-__declspec(section ".data") __attribute__((used, aligned(4))) float cam_t21C_4 = 0.01f;
-#define cfCamTuneRatesB (*((float(*)[5])&cam_t21C_0))
-__declspec(section ".data") __attribute__((used, aligned(4))) float cam_t230_0 = 0.27f;
-__declspec(section ".data") __attribute__((used, aligned(4))) float cam_t230_1 = 0.2f;
-__declspec(section ".data") __attribute__((used, aligned(4))) float cam_t230_2 = 0.13f;
-__declspec(section ".data") __attribute__((used, aligned(4))) float cam_t230_3 = 0.1f;
-__declspec(section ".data") __attribute__((used, aligned(4))) float cam_t230_4 = 0.07f;
-#define cfCamTuneRatesC (*((float(*)[5])&cam_t230_0))
-// .data joint-name pointer table (all slots are relocs, zero in-file; a real
-// pointer table keeps MWCC from exiling an all-zero blob to .bss).
-__declspec(section ".data") __attribute__((used, aligned(8)))
-const void* cfCamJointNamePtrTable[7] = {
-    &sdata2_CfCamStr.m3D8, &sdata2_CfCamStr.sDC, &sdata2_CfCamStr.sE4,
-    &sdata2_CfCamStr.sEC, &sdata2_CfCamStr.sF4, &sdata2_CfCamStr.sFC,
-    &sdata2_CfCamStr.s404,
-};
+// .data float lookup tables (non-const, so they land in .data). C linkage
+// comes from the CfCam.hpp declarations.
+// name-guess: cfCamTuneRatesA/B/C (no JP symbol at these addresses)
+float cfCamTuneRatesA[5] = { 0.1f, 0.08f, 0.06f, 0.045f, 0.03f };
+float cfCamTuneRatesB[5] = { 0.07f, 0.05f, 0.03f, 0.02f, 0.01f };
+float cfCamTuneRatesC[5] = { 0.27f, 0.2f, 0.13f, 0.1f, 0.07f };
 
 
 extern "C" cf::CfCamFollow* __ct__cf_CfCamFollow(cf::CfCamFollow* self, void* arg1,
@@ -1555,7 +1525,7 @@ cfCam_frameUpdate(void* self, void* arg, int a, int b, int c, int d, int e);
 // (z at +8 before x at +0).
 float cfCam_pitchFromVec(const ml::CVec3* v) {
     return nw4r::math::Atan2FIdx(v->y, (float)sqrt((double)(v->x * v->x + v->z * v->z))) *
-           lbl_eu_8066632C;
+           0.024543693f;
 }
 // cfCam_yawFromVec: yaw from the x/z components of a vector, scaled by a fixed
 // lookup-index factor (nw4r Atan2FIdx returns FIdx units). z is read first so
@@ -1563,7 +1533,7 @@ float cfCam_pitchFromVec(const ml::CVec3* v) {
 extern "C" float cfCam_yawFromVec(const ml::CVec3* v) {
     float z = v->z;
     float x = v->x;
-    return nw4r::math::Atan2FIdx(x, z) * lbl_eu_8066632C;
+    return nw4r::math::Atan2FIdx(x, z) * 0.024543693f;
 }
 // cfCam_acosF32: acos wrapper; retail converts the double result back to f32.
 extern "C" float cfCam_acosF32(float x) {
@@ -1856,7 +1826,7 @@ int sel = findObjectById__Fi(cfCam_getInt90E4((int)Selector_GetInstance()));
                 cfCam_zeroVec3(&tmp2c);
                 void* actor = MapFx_ResolveOwner(reinterpret_cast<void*>(sel));
                 if (actor != 0) {
-                    switch (CActorParam_UnkVirtualFunc22__Q22cf11CActorParamFv(actor)) {
+                    switch (static_cast<cf::CActorParam*>(actor)->CActorParam::CActorParam_UnkVirtualFunc22()) {
                     case 3:
                         tmp2c.y = 0.25f;
                         flag = 0;
@@ -2694,8 +2664,8 @@ int cfCam_clampHeading(cf::CfCamFollow* self, float* angle) {
     if (cfCam_maskUnk1D4((int)self, 0x400) != 0 && self->unk164 != 0) {
         f32 w = wrapAnglePi(ml::pi +
                               self->unk164->CfObject_getMoveHeadAngle());
-        f32 lo = w - lbl_eu_8066635C * ml::halfpi / lbl_eu_80666324;
-        f32 hi = w + lbl_eu_8066635C * ml::halfpi / lbl_eu_80666324;
+        f32 lo = w - lbl_eu_8066635C * ml::halfpi / 90.0f;
+        f32 hi = w + lbl_eu_8066635C * ml::halfpi / 90.0f;
         if (*angle < lo - ml::halfpi) {
             *angle += ml::tau;
         } else if (*angle > hi + ml::halfpi) {
@@ -3421,17 +3391,15 @@ int cfCam_probeCamPos(ml::CVec3* arg1, ml::CVec3* arg2, int arg3) {
     }
     return result;
 }
-int cfCam_probeKeepClosest(ml::CVec3* out, u32 probeArg, float f) {
-    // ScnRes_VertRayForward_E398's retail ABI here passes only four GPR args.
-    typedef int (*BE398Fn4)(void*, u32, u32, u32);
-    int probe = ((BE398Fn4)ScnRes_VertRayForward_E398)(out, probeArg, 0, 0);  // DEBT(callcast): C symbol; retail callers use several incompatible arities / GPR-vs-FPR arg views
+extern "C" int cfCam_probeKeepClosest(ml::CVec3* out, u32 probeArg, f32 lift, f32 rayArg) {
+    bool probe = ScnRes_VertRayForward_E398(out, probeArg, 0, 0, lift, rayArg) != 0;
     if (probe != 0) {
         cfCam_seedProbeVec(reinterpret_cast<ml::CVec3*>(cfCamProbeVec),
                       reinterpret_cast<ml::CVec3*>(cfCamProbeWeights));
     }
     ml::CVec3 tmp;
     copyVec3f(&tmp, out);
-    tmp.y += f;
+    tmp.y += lift;
     cf::CfCamFollow* cam = cfCam_getActiveCam();
     int hit = ColiQuerySegment(cam, out, &tmp, 5, 0);
     if (hit != 0) {
@@ -3591,8 +3559,7 @@ extern "C" void cfCam_pickFollowAim(ml::CVec3* out, cf::CfObject* src, ml::CVec3
     } else if (sel < 0) {
         ml::CVec3 v;
         cfCam_extractTrans(&v.x, reinterpret_cast<const float*>(
-                                 src->CfObject_findNodeMatrix(
-                                     reinterpret_cast<const char*>(cfCamJointNamePtrTable[-sel]))));
+                                 src->CfObject_findNodeMatrix(cfCamJointNamePtrTable[-sel])));
         copyVec3Words(&cur, &v);
     } else {
         if (cfCam_isVecNear0(reinterpret_cast<void*>(pos)) != 0) {
@@ -4162,10 +4129,7 @@ extern "C" int CfObject_findNodeMatrix__Q22cf8CfObjectCFPCc() { return 0; }
 // cf::CfObject base virtuals (retail: li r3,0; blr / li r3,1; blr)
 extern "C" u32 CfObject_getSubPosWord__Q22cf8CfObjectFv(void* self) { return 0; }
 extern "C" u32 CfObject_isMoveActiveNow__Q22cf8CfObjectFv(void* self) { return 1; }
-// cf::CActorParam base virtual (retail: lwz r3,0x15e4(r3); blr)
-// noinline keeps the retail `bl CActorParam_UnkVirtualFunc22...` in cfCam_updateFollowCam
-// instead of inlining the field load at the call site.
-extern "C" int CActorParam_UnkVirtualFunc22__Q22cf11CActorParamFv(void* self) { return *(u32*)((char*)self + 0x15e4); }
+int cf::CActorParam::CActorParam_UnkVirtualFunc22() { return unk15E4; }
 
 extern "C" bool cfCam_alwaysTrue() { return true; }
 extern "C" void cfCam_storeZeroU16(u16* p) { *p = 0; }
@@ -4194,3 +4158,9 @@ bool cfCam_set1E0Check(cf::CfCamFollow* self, float val) {
     return ScnCamDepthUp((CScnItemCamera*)self);
 }
 extern "C" u8* cfCam_getPlus6C(cf::CfCamFollow* self) { return self->unk1C + 0x50; }
+
+// Joint-name table (indexed by -sel in cfCam_pickFollowAim); the string
+// literals land in .sdata2, the pointer table in .data.
+const char* cfCamJointNamePtrTable[7] = {
+    "", "JUhead", "JUhd_L", "JUhd_R", "JLhip", "JLft_L", "JLft_R",
+};

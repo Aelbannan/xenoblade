@@ -11,7 +11,6 @@
 
 class CEventFile;
 class CFileHandle;
-class CItemImplInstances;
 
 namespace nw4r { namespace lyt { class DrawInfo; class AnimTransform; class ArcResourceAccessor; class Layout; class Pane; } }
 

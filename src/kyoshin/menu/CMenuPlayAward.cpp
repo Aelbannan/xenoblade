@@ -126,7 +126,7 @@ body:
     PlayAward_UpdateList(&mPlayAwardList);
 }
 
-void CMenuPlayAward::cbRenderBefore() {
+void CMenuPlayAward::cbRenderBefore(CScn*) {
     CTaskGame::getInstance();
     if (CTaskGame::isFlag01Set()) {
         goto exit;

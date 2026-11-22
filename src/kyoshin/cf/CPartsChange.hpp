@@ -25,7 +25,7 @@ struct CfPartyInfo {
     /* 0x18 */ f32 field_18;
     /* 0x1C */ f32 field_1C;
     /* 0x20 */ f32 field_20;
-    /* 0x24 */ u32 field_24;
+    /* 0x24 */ f32 field_24;
     /* 0x28 */ f32 field_28;
     /* 0x2C */ u8 field_2C;
     /* 0x2D */ u8 field_2D;

@@ -23,7 +23,7 @@
 #include "monolib/math/CVec3.hpp"
 
 #include <nw4r/lyt.h>
-#include "monolib/device/CDeviceFontInfo.hpp"
+#include "monolib/device/CDeviceFont.hpp"
 #include <revolution/GX.h>
 
 #include "monolib/scn/CScn.hpp"
@@ -38,7 +38,7 @@ public:
     void Init();
     void Term();
     void Move();
-    virtual void cbRenderBefore();
+    virtual void cbRenderBefore(CScn* scene);
     virtual ~CCol6Hint();
 
     /* 0x74 */ UnkClass_8045F564 mMemRegion;
@@ -79,7 +79,7 @@ public:
     void Init();
     void Term();
     void Move();
-    virtual void cbRenderBefore();
+    virtual void cbRenderBefore(CScn* scene);
     virtual ~CCol6System();
     // Cursor/window position sync; MWCC inlines this into every Move() call site.
     void updateCursorPos();
@@ -185,9 +185,6 @@ void* getCfPadData__Q22cf13CfGameManagerFv();                        // cf::CfGa
 void* Bdat_GetTable_AA34();                                               // bdat manager
 u32 Bdat_GetMaxRow_B1EC(void*);                                            // bdat row count
 // CTaskLOD/audio helpers: u8 params (values are passed unmasked by callers).
-void activateLOD__8CTaskLODFv(u8);                                  // CTaskLOD.cpp
-void deactivateLOD__8CTaskLODFv(u8);                                  // CTaskLOD.cpp
-int getLODData__8CTaskLODFv(u8);                                   // CTaskLOD.cpp
 void ScnData_FwdB7D9C(void*, u8);                                        // code_80135FDC.cpp
 void ScnData_FwdB7DD4(void*, u8);                                        // code_80135FDC.cpp
 void forwardMpfCallB__17UnkClass_8047BB54Fv(void*, u8);                 // code_80135FDC.cpp
@@ -202,7 +199,7 @@ int sprintf(char*, const char*, ...);                                // stdio (C
 // etc.); declare with the full mangled name so the call-site relocs bind
 // verbatim (same convention as CItemBoxGrid.hpp / CTalkWindow.hpp).
 extern "C" {
-CDeviceFontInfo* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
+IDeviceFontInfo* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
     u32 arg, nw4r::lyt::Layout* layout);
 }
 
@@ -232,7 +229,6 @@ extern "C" const f32 lbl_eu_8066755C;
 extern "C" const f32 lbl_eu_80667560;
 extern "C" const f32 lbl_eu_80667564;
 extern "C" const f32 lbl_eu_80667578;
-extern "C" const f64 lbl_eu_80667580;  // 2^52 magic constant for (f32)(s16) conversions
 // Two 7-byte count-threshold tables (u32 + u16 + u8, read as byte arrays by
 // col6HintBuild's item-box scan).
 extern "C" const u32 lbl_eu_80667568;
@@ -243,7 +239,6 @@ extern "C" const u16 lbl_eu_80667574;
 extern "C" const u8 lbl_eu_80667576;
 #include "kyoshin/cf/CtrlRemoteApi.hpp"
 extern "C" void __dt__7CSysWinFv(void*, int);
-extern "C" void __dt__17UnkClass_8045F564Fv(void*, int);
 
 void Col6_ClearGlobals_D0B8();
 int Col6_ScanItemSlots_D310();

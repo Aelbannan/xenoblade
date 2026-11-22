@@ -2,6 +2,7 @@
 
 #include <types.h>
 #include <revolution/GX.h>
+#include <revolution/tpl/TPL.h>
 
 #include "monolib/device/CFileHandle.hpp"
 #include "monolib/work/CProcess.hpp"
@@ -33,18 +34,6 @@ extern char lbl_eu_80538BC0[];
 // (retail unmangled CTaskGame_setVec4 symbol).
 #include "functions.hpp"
 
-// Shared .sdata2 float used as the GX texture LOD bias in the file-event
-// handler (OnFileEvent). `const` routes it into the readonly sdata2 pool so
-// MWCC schedules its load early (cf. CExchangeWin lfs-hoist fix).
-extern const f32 lbl_eu_80668BB0;
-
-// Shared .sdata2 constants used by Move's 8.8 fixed-point colour blend:
-// 0x80668BB4 = 1/256 scale, 0x80668BB8 = 1.0f complement, 0x80668BC0 =
-// 2^52 + 2^31 magic double subtracted from the xoris-biased conversion slot.
-extern const f32 lbl_eu_80668BB4;
-extern const f32 lbl_eu_80668BB8;
-extern const f64 lbl_eu_80668BC0;
-
 // cbRenderBefore imports: CView::fitRectToView's retail symbol is the
 // pre-mangled global name (member `this` unused in the body, rect in r3 /
 // view in r4 - see monolib/src/core/CView.cpp); the C++ member declaration
@@ -60,12 +49,12 @@ extern "C" void fitRectToView__5CViewFRQ22ml5CRectP5CView(ml::CRect& rect, CView
 // Bottom edge of an ml::CRect (retail C-linkage helper defined in this unit).
 extern "C" s16 GamePicRectBottom(const ml::CRect* r);
 
-// Texture/palette file data header read by cbRenderBefore: the loaded TPL
-// palette (field_68) carries the texture's height/width at 0x14/0x16.
+// Texture/palette file data read by cbRenderBefore: the loaded TPL image is
+// a palette header, its descriptor, and the first texture header.
 struct CTaskGamePicTexData {
-    u8 pad[0x14];
-    u16 mHeight; // 0x14
-    u16 mWidth;  // 0x16
+    TPLPalette mPalette;        // 0x00
+    TPLDescriptor mDescriptor;  // 0x0C
+    TPLHeader mTextureHeader;   // 0x14
 };
 
 // First-word view of the stack CDrawGX so cbRenderBefore can clear the
@@ -87,7 +76,7 @@ public:
     void Init();
     void Term();
     void Move();
-    virtual void cbRenderBefore();
+    virtual void cbRenderBefore(CScn* scene);
     void create();
     void Draw();
     virtual bool OnFileEvent(CEventFile* pEvent);

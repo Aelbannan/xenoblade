@@ -1,14 +1,5 @@
 #include <types.h>
 
-// us-8043ef34: deleting-dtor shell (class id 0x8043C59C -- vtbl/typeinfo anchor
-// in this TU): if (self && flags > 0) operator delete(self); return self;
-extern "C" void* __dt__8043C59C(void* self, int flags) {
-    if (self != NULL && flags > 0) {
-        operator delete(self);
-    }
-    return self;
-}
-
 // us-8043ef74: CViewFrame::~CViewFrame -- same deleting-dtor shell.
 extern "C" void* __dt__10CViewFrameFv(void* self, int flags) {
     if (self != NULL && flags > 0) {
@@ -54,12 +45,6 @@ void render__10CViewFrameFv(CViewFrame* frame);
 // instead of pooling TU-local copies; CView.o has .sdata2 size 0).
 extern float lbl_eu_8066A2D0;  // 1.0f
 extern float lbl_eu_8066A2D4;  // 0.6f
-// reslist<IWorkEvent*> / _reslist_base<IWorkEvent*> / CMsgParam<10> vtable
-// addresses used by the ctor -- the objects are emitted by the explicit
-// instantiations below and renamed by UNIT_RULES["CView.o"].
-extern char lbl_eu_8056B6F0[];
-extern char lbl_eu_8056B6D8[];
-extern char lbl_eu_8056B6CC[];
 // reslist<IWorkEvent*> / _reslist_base<IWorkEvent*> / CMsgParam<10> vtables are
 // emitted by MWCC itself from the FORCEKEEP construction below (their dtor
 // slots reference template-mangled symbols that cannot be spelled in C++);
@@ -292,12 +277,9 @@ struct CViewVtC4If {
 };
 
 
-// sbss singleton (retail 8 bytes; only offset 0 is referenced by code, the
-// second word is dead). The 8-byte struct reproduces the retail symbol size.
-struct CViewSbssSingleton {
-    CView* ptr;
-    u32 pad;
-} lbl_eu_806655C8;
+// Real JP name sCurrentView__5CView (retail slot 8 bytes: 4-byte pointer +
+// proven zero tail padding).
+CView* CView::sCurrentView;
 
 // Keep the not-yet-decompiled wkStandbyLogout check-timeout message alive.
 
@@ -310,7 +292,7 @@ void CView::setDefaultFrameColor(const ml::CCol4& color) {
 }
 
 CView* CView::getCurrentView() {
-    return lbl_eu_806655C8.ptr;
+    return sCurrentView;
 }
 
 // Enqueue tag 6 onto this view's own context ring.
@@ -1566,7 +1548,7 @@ renderView_wk_split_check:
         goto renderView_children;
     }
 
-    lbl_eu_806655C8.ptr = this;
+    sCurrentView = this;
 
     if (isRunning()) {
         wkRender();
@@ -1581,7 +1563,7 @@ renderView_attach_wk_body:
     if (attachWork == nullptr) {
         goto renderView_attach_wk_next;
     }
-    lbl_eu_806655C8.ptr = this;
+    sCurrentView = this;
     if (attachWork == this) {
         goto renderView_attach_wk_next;
     }
@@ -1603,7 +1585,7 @@ renderView_attach_wk_check:
         goto renderView_attach_wk_body;
     }
 
-    lbl_eu_806655C8.ptr = nullptr;
+    sCurrentView = nullptr;
     resetGXStateA__8CGXCacheFv(CDeviceGX::getCacheInstance());
     updateViewRoot__9CViewRootFv();
     fontFlush__10CFontLayerFi(static_cast<CFontLayer*>(this), 1);
@@ -1632,7 +1614,7 @@ renderView_attach_after_body:
     if (attachWork == nullptr) {
         goto renderView_attach_after_next;
     }
-    lbl_eu_806655C8.ptr = this;
+    sCurrentView = this;
     if (attachWork == this) {
         goto renderView_attach_after_next;
     }
@@ -1649,7 +1631,7 @@ renderView_attach_after_check:
         goto renderView_attach_after_body;
     }
 
-    lbl_eu_806655C8.ptr = nullptr;
+    sCurrentView = nullptr;
     resetGXStateA__8CGXCacheFv(CDeviceGX::getCacheInstance());
     updateViewRoot__9CViewRootFv();
     fontFlush__10CFontLayerFi(static_cast<CFontLayer*>(this), 1);
@@ -1797,9 +1779,9 @@ CView::CView(const char* pName, CWorkThread* pParent)
     mWorkIDList.reserve(mAllocHandle, 0x10);
     mEventList.reserve(mAllocHandle, 0x10);
 
-    unk444.x = lbl_eu_8066A2D4;  // 0.6f -- FloatUtils-owned
-    unk444.y = lbl_eu_8066A2D4;
-    unk444.z = lbl_eu_8066A2D4;
+    unk444.x = 0.6f;  // 0.6f -- FloatUtils-owned
+    unk444.y = 0.6f;
+    unk444.z = 0.6f;
     unk444.w = lbl_eu_8066A2D0;  // 1.0f
     unk464 = 0;
     unk466 = 0;

@@ -2,16 +2,12 @@
 #include "monolib/core.hpp"
 #include "monolib/lib.hpp"
 
-// .sbss 0x80665638: CDeviceRemotePad singleton (8 bytes; word 0 in use).
-// (tentative definition with C linkage; header declares it extern "C")
-extern "C" {
-CDeviceRemotePad* lbl_eu_80665638[2];
-}
+CDeviceRemotePad* CDeviceRemotePad::spInstance;
 
 CDeviceRemotePad::CDeviceRemotePad(const char* pName, CWorkThread* pParent) :
 CDeviceBase(pName, pParent, MAX_CHILD){
     mPadUpdateFunc = nullptr;
-    lbl_eu_80665638[0] = this;
+    CDeviceRemotePad::spInstance = this;
 
     for(int i = 0; i < TOTAL_CONTROLLERS; i++){
         mpPads[i] = nullptr;
@@ -19,23 +15,23 @@ CDeviceBase(pName, pParent, MAX_CHILD){
 }
 
 CDeviceRemotePad::~CDeviceRemotePad(){
-    lbl_eu_80665638[0] = nullptr;
+    CDeviceRemotePad::spInstance = nullptr;
 }
 
 CDeviceRemotePad* CDeviceRemotePad::getInstance(){
-    return lbl_eu_80665638[0];
+    return CDeviceRemotePad::spInstance;
 }
 
 bool CDeviceRemotePad::isConnected(u32 index){
-    return lbl_eu_80665638[0]->mpPads[index]->mConnected;
+    return CDeviceRemotePad::spInstance->mpPads[index]->mConnected;
 }
 
 u32 CDeviceRemotePad::getHeldButtonFlags(u32 index){
-    return lbl_eu_80665638[0]->mpPads[index]->mHeldButtonFlags;
+    return CDeviceRemotePad::spInstance->mpPads[index]->mHeldButtonFlags;
 }
 
 u32 CDeviceRemotePad::getPressedButtonFlags(u32 index){
-    return lbl_eu_80665638[0]->mpPads[index]->mPressedButtonFlags;
+    return CDeviceRemotePad::spInstance->mpPads[index]->mPressedButtonFlags;
 }
 
 CPad* CDeviceRemotePad::getMainGCPad(){

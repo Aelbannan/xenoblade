@@ -160,7 +160,7 @@ void CSysWinBuff::Move() {
 // Gate prefix (task busy / global render flag / scene active / cf busy) then
 // draw the embedded CSysWin through a stack DrawInfo.
 // ---------------------------------------------------------------------------
-void CSysWinBuff::cbRenderBefore() {
+void CSysWinBuff::cbRenderBefore(CScn*) {
     CTaskGame::getInstance();
     if (CTaskGame::isFlag01Set() || (gmPauseFlags & 0x200000))
         return;

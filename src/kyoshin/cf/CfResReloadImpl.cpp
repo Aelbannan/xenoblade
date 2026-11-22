@@ -703,7 +703,6 @@ u16 sReloadLocationChanged;
 float lbl_eu_806676C8;
 
 float lbl_eu_806676B0;
-float lbl_eu_80666210;
 // 2^52 doubles used by the s16/u16 -> f32 conversion magic (MWCC's pool
 // reuses these named .sdata2 symbols instead of emitting TU-local @N labels).
 // const so the literals land in the readonly sdata2 pool where MWCC's cast
@@ -716,7 +715,7 @@ extern "C" u16 getReloadParam0() { return sReloadCount; }
 extern "C" void updateReloadFloat(short param_1)
 {
     sReloadCount = param_1;
-    sReloadTimer = 120.0f * lbl_eu_80666210;
+    sReloadTimer = 120.0f * gCfTFrameRate;
 }
 
 // Refreshes the reload timer globals for a given type: stores the type,
@@ -727,14 +726,14 @@ extern "C" void seedReloadTmr(u32 type) {
     sReloadType = (u16)type;
     if ((type & 0xFFFF) == 0) {
         sReloadCount = 1;
-        sReloadTimer = 120.0f * lbl_eu_80666210;
+        sReloadTimer = 120.0f * gCfTFrameRate;
     } else {
         u16 v;
         // Cast through the stub so the -ipa inliner cannot fold the call.
         ((u16(*)(u16, u16, u16, u16*, u16*))calcReloadPrm)(
             sReloadType, 0x64, (u16)CfT_DispatchFrameCounts(), &v, &sReloadCount);
         // u16 -> float via the 2^52 double-magic trick.
-        sReloadTimer = (f32)v * lbl_eu_80666210;
+        sReloadTimer = (f32)v * gCfTFrameRate;
     }
     float delay;
     if (gmGameFlags & 0x00400000) {
@@ -1226,7 +1225,7 @@ extern "C" void runReloadMain(cf::CfResReloadImpl* self) {
             u32 chkA = gmGameFlags;
             sReloadCount = ret;
             u32 chkB = gmGameFlags;
-            sReloadTimer = (f32)o1 * lbl_eu_80666210;
+            sReloadTimer = (f32)o1 * gCfTFrameRate;
             float delay;
             if ((chkA & 0x00400000) || ((chkB & 0x02000000) | (chkB & 0x400))) {
                 delay = lbl_eu_806676B4;

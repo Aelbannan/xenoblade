@@ -17,43 +17,11 @@
 #include "kyoshin/CfEnumListHolder.hpp"
 #include "kyoshin/cf/object/CfObjectMoveHelpers.hpp"
 
-// Cross-TU calls (retail unmangled symbols; declared in CModelDisp.hpp)
 extern "C" void ModelDispUpdateSlots(CModelDisp* self);
 extern "C" __declspec(noinline) void ModelDispFlushSlotAnims(CModelDisp* self);
 extern "C" __declspec(noinline) void ModelDispDriveFadeIn(CModelDisp* self);
 extern "C" __declspec(noinline) void ModelDispDriveFadeOut(CModelDisp* self);
 
-// Sub-object ctor/dtor stubs (retail ModelDispConstructSub / __dt__801FBF0C). Their
-// bodies are separate match targets; they exist here only so the constructor's
-// __construct_array call carries the exact retail reloc names.
-// (CActParamAnimGame ctor/dtor declared in CModelDispEquip.hpp.)
-extern "C" void* ModelDispConstructSub(CModelDispSub* sub) {
-    __ct__Q22cf17CActParamAnimGameFv((cf::CActParamAnimGame*)((u8*)sub + 0xC));
-    __construct_array((CModelDispSub*)((u8*)sub + 0x550), (void*)__ct__Q22cf17CActParamAnimGameFv,
-                      (void*)__dt__Q22cf17CActParamAnimGameFv, 0x53C, 2);
-    return sub;
-}
-
-
-// Sub-object destructor: destroys the two-member CActParamAnimGame array at
-// +0x550 (0x53C stride) and the single one at +0xC, then frees the object
-// when the delete flag is set; returns the object (retail mr r3, r30). The
-// scoped optimize_for_size merges the r30/r31 saves into stmw/lmw like the
-// retail body (plain -O4,p emits two stw's; MWCC_CASES stmw pattern).
-#pragma push
-#pragma optimize_for_size on
-u8* __dt__801FBF0C(CModelDispSub* obj, int flag) {
-    if (obj != 0) {
-        __destroy_arr((char*)obj + 0x550, (ConstructorDestructor*)__dt__Q22cf17CActParamAnimGameFv,
-                      0x53C, 2);
-        __dt__Q22cf17CActParamAnimGameFv((cf::CActParamAnimGame*)((char*)obj + 0xC), -1);
-        if (flag > 0) {
-            ::operator delete(obj);
-        }
-    }
-    return (u8*)obj;
-}
-#pragma pop
 
 // Static helper inlined by -ipa file: its inner loops carry PARAMETER bounds,
 // so MWCC keeps them as mtctr/bdnz countdown loops even after the call-site
@@ -85,10 +53,7 @@ struct CModelDispCtorWords {
 
 #pragma push
 #pragma optimize_for_size on
-CModelDisp::CModelDisp(u8* initParam) {
-    mVtbl = lbl_eu_80535390;
-    mInitParam = initParam;
-    __construct_array(&mSubs[0], (void*)ModelDispConstructSub, (void*)__dt__801FBF0C, 0xff0, 3);
+CModelDisp::CModelDisp(u8* initParam) : mVtbl(lbl_eu_80535390), mInitParam(initParam) {
 
     // Both .sdata2 floats are loaded into registers up front, then stored
     // after the flag-byte initialisation (retail load/store grouping).
@@ -118,15 +83,12 @@ CModelDisp::CModelDisp(u8* initParam) {
         }
     }
 }
-#pragma pop
 
 // Bind the three 0xFF0-strided slot sub-objects (+8 payload) via
 // ModelDispTeardownSlot (retail stmw frame + indexed loop).
 // extern "C" keeps the call-site relocs at the retail unmangled name;
 // noinline keeps -ipa from folding the body into its callers.
 extern "C" __declspec(noinline) void ModelDispTeardownSlot(void* self, CActParamHolder* h);
-#pragma push
-#pragma optimize_for_size on
 // Tears down one 0xFF0-stride holder payload: releases both animation-model
 // slots and their controllers, unbinds the two act params, flushes the main
 // act param, frees all held objects and clears the owner pointer.
@@ -202,7 +164,7 @@ extern "C" __declspec(noinline) void ModelDispDriveFadeOut(CModelDisp* self) {
         // Iterate over 3 sub-objects and call vmethod (+0x48) on the
         // controller pointer with the current display alpha.
         for (u8 i = 0; i < 3; i++) {
-            CModelDispSub* sub = (CModelDispSub*)((u8*)self + i * 0xFF0);
+            CModelDispSub* sub = &self->mSubs[i];
             if (sub->mpController != NULL) {
                 ((CScnItemModel*)sub->mpController)->vfunc48(self->field_2FDC);
             }
@@ -210,13 +172,12 @@ extern "C" __declspec(noinline) void ModelDispDriveFadeOut(CModelDisp* self) {
     }
 }
 
-// Retail: destroys the three 0xFF0-stride sub-objects via __destroy_arr,
-// then frees the object when the compiler-generated delete flag is set.
+// Retail: the compiler-emitted member-array teardown destroys the three
+// sub-objects, then frees the object when the delete flag is set.
 // -O4,s gives the retail stmw/lmw two-register save frame.
 #pragma push
 #pragma optimize_for_size on
 CModelDisp::~CModelDisp() {
-    __destroy_arr(&mSubs[0], (ConstructorDestructor*)__dt__801FBF0C, 0xFF0, 3);
 }
 #pragma pop
 
@@ -233,8 +194,7 @@ extern "C" __declspec(noinline) void ModelDispDriveFadeIn(CModelDisp* self) {
     }
 
     for (u8 i = 0; i < 3; i++) {
-        // sub-objects viewed at self + i*0xFF0 (mpController sits at +8)
-        CModelDispSub* sub = (CModelDispSub*)((u8*)self + i * 0xFF0);
+        CModelDispSub* sub = &self->mSubs[i];
         if (sub->mpController != NULL) {
             // vmethod at vtable +0x48 takes the current alpha
             ((CScnItemModel*)sub->mpController)->vfunc48(self->field_2FDC);
@@ -466,12 +426,13 @@ extern "C" __declspec(noinline) void ModelDispFlushSlotAnims(CModelDisp* self) {
     CModelDispSub* sub;
     for (u8 i = 0; i < 3; i++) {
         sub = (CModelDispSub*)((u8*)self + i * 0xFF0);
-        if (sub->mpController == NULL) {
+        CModelDispSub* realSub = &self->mSubs[i];
+        if (realSub->mpController == NULL) {
             continue;
         }
-        if (sub->field_550 <= 0) {
-            func_8004B9D4((u8*)sub + 0x14, 1, 0, -1, 0);
-            sub->field_550 = 150;
+        if (realSub->mTimer548 <= 0) {
+            func_8004B9D4(&realSub->mObj0C, 1, 0, -1, 0);
+            realSub->mTimer548 = 150;
         }
         tickAnimFrame((CActParamAnimView*)((u8*)sub + 0x14));
     }
@@ -494,7 +455,7 @@ extern "C" __declspec(noinline) void ModelDispRebindSlot(CModelDisp* self, s32 e
 void ModelDispScanRebind(CModelDisp* self, CModelDispParent* param, s32 enable,
                    s32 slotIdx) {
     for (u8 i = 0; i < 3; i++) {
-        CModelDispSub* sub = (CModelDispSub*)((u8*)self + i * 0xFF0);
+        CModelDispSub* sub = &self->mSubs[i];
         if (sub->mpController == param->field_0x3A0) {
             u32 names[3];
             // Post-increment loads fold the base materialization into the
@@ -569,8 +530,8 @@ extern "C" __declspec(noinline) void ModelDispRebindSlot(CModelDisp* self, s32 e
         CModelDispSub* sub = &self->mSubs[idx];
         entry = (CModelDispSub*)((char*)sub + slotIdx * 4);
         if (entry->mSlotPtrA != NULL) {
-            ((CScnItemModel*)sub->field_00)->vfuncC8((CScnItemModel*)entry->mSlotPtrA);
-            ((CScnItemModel*)sub->field_00)->vfuncC4((CScnItemModel*)entry->mSlotPtrA, reinterpret_cast<u32>((CModelDispNameParam*)arg), 0);
+            ((CScnItemModel*)sub->mpController)->vfuncC8((CScnItemModel*)entry->mSlotPtrA);
+            ((CScnItemModel*)sub->mpController)->vfuncC4((CScnItemModel*)entry->mSlotPtrA, reinterpret_cast<u32>((CModelDispNameParam*)arg), 0);
         }
     }
 }
@@ -584,16 +545,16 @@ int simVtableFalse4(void* self) { return 0; }
 // then dispatches getNextChainObj / setParam calls for active slots.
 void ModelDispDispatchChain(CModelDisp* self, void* param, void* chainArg) {
     for (u8 i = 0; i < 3; i++) {
-        CModelDispSub* sub = (CModelDispSub*)((u8*)self + i * 0xFF0);
+        CModelDispSub* sub = &self->mSubs[i];
         if ((u32)sub->mpController == *(u32*)((u8*)param + 0x3A0)) {
-            if (sub->mFlagFD0 != 0) {
-                sub->mResultA = getAnimChain((u8*)sub + 0x14);
-                func_8004B9D4(sub->mBuffer, (int)(u32)chainArg, 0, -1, 0);
+            if (sub->mSlotPtrA != NULL) {
+                sub->mActParams[0].field4B4 = (u32)getAnimChain(&sub->mObj0C);
+                func_8004B9D4(&sub->mActParams[0], (int)(u32)chainArg, 0, -1, 0);
             }
 
-            if (sub->mFlagFD4 != 0) {
-                sub->mResultB = getAnimChain((u8*)sub + 0x14);
-                func_8004B9D4(sub->_A94, (int)(u32)chainArg, 0, -1, 0);
+            if (sub->mSlotPtrB != NULL) {
+                sub->mActParams[1].field4B4 = (u32)getAnimChain(&sub->mObj0C);
+                func_8004B9D4(&sub->mActParams[1], (int)(u32)chainArg, 0, -1, 0);
             }
 
             break;

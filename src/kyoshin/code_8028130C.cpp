@@ -132,7 +132,7 @@ void SysWinLog_PollBattleStart() {
     CBattleListNode* p;
     s32 count;
     CBattleListNode* head =
-        ((CBattleListOwner*)getInstance__Q22cf14CBattleManagerFv())->list;
+        ((CBattleListOwner*)cf::CBattleManager::getInstance())->list;
     count = 0;
     p = head->next;
     while (p != head) {
@@ -183,7 +183,7 @@ void SysWinLog_PollBattleEnd() {
         CSysWinListNode* node;
         s32 count;
         CSysWinListNode* sentinel =
-            ((CSysWinBattleMgrView*)getInstance__Q22cf14CBattleManagerFv())->mListSentinel;
+            ((CSysWinBattleMgrView*)cf::CBattleManager::getInstance())->mListSentinel;
         count = 0;
         node = sentinel->next;
         while (node != sentinel) {
@@ -761,7 +761,7 @@ emit:
 // ---------------------------------------------------------------------------
 void SysWinLog_GateOwner(CScenarioLogOwner* self) {
     if ((self->field_0x3F00 & 4) != 0) {
-        if (CBattleMan_ListHasValue(getInstance__Q22cf14CBattleManagerFv(), (unsigned int)self) != 0) {
+        if (CBattleMan_ListHasValue(cf::CBattleManager::getInstance(), (unsigned int)self) != 0) {
             SysWinLog_DriveCounters(csysWinCall28C(self), 0);
         }
     }

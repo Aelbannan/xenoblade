@@ -10,6 +10,7 @@
 //   sinit_8048EAA4 -- static initializer (empty, .ctors registration)
 
 #include <harness_catalog.h>
+#include "monolib/lib/CLibStaticData.hpp"
 #include "monolib/scn/code_804BD8E8.hpp"
 #include "libs/monolib/src/scn/CScnMaruShadowNw4r.hpp"
 #include <monolib/scn/MaruShadowData.hpp>
@@ -24,8 +25,6 @@ namespace nw4r { namespace db { void Panic(const char* file, int line, const cha
 void MaruShadowDrawQuad(CScnMaruShadowNw4r* self, ShadowCtx* ctx, float f1, float f2, u32 unk);
 
 // MaruShadowSetupTexturePipe support: static-data loader + nw4r g3d texture accessors.
-extern "C" int getStaticFileData__14CLibStaticDataFPCcP16StaticDataHandlePUl(
-    const char* name, void* handle, u32* size);
 extern "C" void Init__Q34nw4r3g3d7ResFileFv(void* res);
 extern "C" void* GetResTex__Q34nw4r3g3d7ResFileCFPCc(void* res, const char* name);
 extern "C" void GetTexObjParam__Q34nw4r3g3d6ResTexCFPPvPUsPUsP9_GXTexFmtPfPfPUc(
@@ -37,11 +36,6 @@ extern const char lbl_eu_8052637C[];  // panic site file
 extern const char lbl_eu_80526354[];  // panic site fmt
 extern const char* lbl_eu_80663958;   // texture resource name
 
-// MaruShadowSetupTexturePipe local storage: StaticDataHandle is the CLibStaticData handle
-// (first word = loaded data pointer).
-struct ShadowStaticDataHandle {
-    void* data;
-};
 
 extern "C" u32 lbl_eu_8056E598[8];  // CScnMaruShadowNw4r vtable (defined below)
 
@@ -101,7 +95,7 @@ extern "C" int MaruShadowSetupTexturePipe(void* self) {
     u8 lodBias;
     u16 texH;
     u16 texW;
-    ShadowStaticDataHandle handle;
+    StaticDataHandle handle;
     void* resFile;
     s32 texFmt;
     float maxLod;
@@ -111,8 +105,7 @@ extern "C" int MaruShadowSetupTexturePipe(void* self) {
     GXTexObj texObj;
     Mtx44 projMtx;
 
-    if (getStaticFileData__14CLibStaticDataFPCcP16StaticDataHandlePUl(
-            "SHA", &handle, NULL) != 0) {
+    if (CLibStaticData::getStaticFileData("SHA", &handle, NULL) != 0) {
         resFile = handle.data;
         if ((u32)resFile & 0x1F) {
             nw4r::db::Panic(lbl_eu_8052637C, 60, lbl_eu_80526354);
@@ -200,12 +193,12 @@ void MaruShadowUpdate(CScnMaruShadowNw4r* self, ShadowCtx* ctx) {
     } else {
         u32 cfg2 = ctx->field_0x7a4;
         if ((cfg2 & 0x20) == 0 && (cfg2 & 0x100) == 0) {
-            void* p = ctx->field_0x14AC;
+            ml::CMat34* p = ctx->field_0x14AC;
             fscale = 5.0f;
             if (p != NULL) {
-                pos.x = *(float*)((char*)p + 0xC);
-                pos.y = *(float*)((char*)p + 0x1C);
-                pos.z = *(float*)((char*)p + 0x2C);
+                pos.x = p->m[0][3];
+                pos.y = p->m[1][3];
+                pos.z = p->m[2][3];
             }
             pos.y += 0.1f;
         } else {

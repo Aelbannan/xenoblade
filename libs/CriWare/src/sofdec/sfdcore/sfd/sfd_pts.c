@@ -92,15 +92,6 @@ s32 SFPTS_WritePtsQue(SfdHandle* self, s32 idx, void* data, u32* o) {
     return 0;
 }
 
-// Per-stream PTS control block (one per demux index, stride 0x74).
-typedef struct SfdPtsCtrl {
-    u8 pad[0x13D0];
-    u32 winStart; // 0x13D0 search window start
-    u32 winLen;   // 0x13D4 search window length
-    u8 pad2[0x18];
-    SfdPtsQue que; // 0x13F0
-} SfdPtsCtrl;
-
 s32 SFPTS_ReadPtsQue(SfdHandle* self, s32 idx, u32 arg, void* out) {
     u32* o = (u32*)out;
     SfdPtsQue* q;

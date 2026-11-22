@@ -78,9 +78,9 @@ extern "C" __declspec(noreturn) void __throw(char* throwtype, void* location, vo
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 
-// Random voice ID tables (short arrays in .sdata).
-extern "C" short lbl_eu_80662D58[4];
-extern "C" short lbl_eu_80662D60[4];
+// Voice-ID tables indexed by mtRand(4)/mtRand(3).
+extern s16 visionTellActiveVoiceIds[4];
+extern s16 visionTellInactiveVoiceIds[4];
 
 // Vtable for CVS_THREAD_VISION_TELL (0x1C = 28 bytes = 7 entries).
 extern u32 lbl_eu_80539DD4[7];

@@ -504,7 +504,7 @@ namespace cf {
         virtual u32 CActorParam_getActorType();  //0xE0
         virtual void CActorParam_setEnemyType(u32 val);  //0xE4 (was UnkVirtualFunc20)
         virtual void CActorParam_setScale(float val);  //0xE8
-        virtual void CActorParam_UnkVirtualFunc22();  //0xEC
+        virtual int CActorParam_UnkVirtualFunc22();  //0xEC
         virtual float CActorParam_getScale();  //0xF0
         virtual void CActorParam_UnkVirtualFunc24();  //0xF4
         virtual void CActorParam_UnkVirtualFunc25();  //0xF8
@@ -805,7 +805,7 @@ virtual void* CActorParam_getBonusStats(); //0x22C (retail impl returns the +0x1
         u8 unk3354;
         u8 unk3355[3]; //padding?
         u16 unk3358;
-        u16 unk335A;
+        s16 unk335A;
         u8 unk335C[5];
         u8 unk3361[3]; //padding?
         float unk3364;

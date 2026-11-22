@@ -126,7 +126,6 @@ extern "C" int addAwardFlagF16(VMThread* pThread) {
 }
 
 extern "C" void queueEventId__Q22cf13CfGameManagerFv(u32 value);
-extern "C" bool processEventQueueB__Q22cf13CfGameManagerFv();
 
 extern "C" int setAwardFlagF1(VMThread* pThread) {
     // Set the award flag for the event passed as arg 1.
@@ -136,7 +135,6 @@ extern "C" int setAwardFlagF1(VMThread* pThread) {
 
 // Start a realtime event. If the request yields while syncing with the UI,
 // suspend the script; otherwise fire the event and battle-camera reset.
-extern "C" void processFieldLoad__Q22cf13CfGameManagerFv();
 extern "C" int realtimeEventStart(VMThread* pThread) {
     // Arg 1: skip-if-busy flag (default TRUE).
     int skipIfBusy;
@@ -151,7 +149,7 @@ extern "C" int realtimeEventStart(VMThread* pThread) {
         proceeding = 0;
     }
     if (proceeding != 0) {
-        processFieldLoad__Q22cf13CfGameManagerFv();
+        cf::CfGameManager::processFieldLoad();
         CBattleMan_MarkList48Flag40(cf::CBattleManager::getInstance());
     }
     return 0;
@@ -170,16 +168,14 @@ extern "C" int realtimeEventPlay(VMThread* pThread) {
     return 0;
 }
 
-extern "C" void clearBattleFlagsAndQueue__Q22cf13CfGameManagerFv();
-
 extern "C" int realtimeEventEnd(VMThread* pThread) {
-    clearBattleFlagsAndQueue__Q22cf13CfGameManagerFv();
+    cf::CfGameManager::clearBattleFlagsAndQueue();
     return 0;
 }
 
 extern "C" int waitRealtimeEvent(VMThread* pThread) {
     // Suspend the script while realtime event playback is active.
-    if (processEventQueueB__Q22cf13CfGameManagerFv()) {
+    if (cf::CfGameManager::processEventQueueB()) {
         vmWaitModeSet(pThread);
     }
     return 0;
@@ -294,9 +290,8 @@ extern "C" int fadeOut(VMThread* pThread) {
 
 // Query whether a fade/blank is active (/fadeWait command). If the game
 // is not currently presenting, suspend the script until it finishes.
-extern "C" int resetCameraManager__Q22cf13CfGameManagerFv();
 extern "C" int fadeWait(VMThread* pThread) {
-    if (resetCameraManager__Q22cf13CfGameManagerFv() == 0) {
+    if (cf::CfGameManager::resetCameraManager() == nullptr) {
         vmWaitModeSet(pThread);
     }
     return 0;

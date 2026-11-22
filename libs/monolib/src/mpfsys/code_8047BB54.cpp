@@ -11,6 +11,7 @@
 #include "monolib/mpfsys/MPFDrawMdlColor.hpp"
 #include "monolib/mpfsys/MPFDrawMdlNoColor.hpp"
 #include "monolib/mpfsys/code_8047CA88.hpp"
+#include "libs/monolib/src/scn/CScnRootNw4r.hpp"
 #include "monolib/util/MemManager.hpp"
 #include <cstring>
 #include <nw4r/math.h>
@@ -40,13 +41,6 @@ struct UnkSceneDataObj {
 
 // Global singleton slot (retail .sbss 0x806658B8), now the class's real
 // static spInstance; no retail occupant was found for the second word.
-
-// Overlay for the ScnObj returned by getScnGroupChild: the destructor probes
-// the flag at +0xE4 before removing the object from its parent group.
-struct UnkScnObjFlagE4 {
-    u8 pad[0xE4];
-    u32 field_0xE4;
-};
 
 // Singleton draw-object table filled by sinit_8047CA2C (retail .bss
 // 0x806584E8, six pointers).
@@ -131,12 +125,6 @@ struct UnkViewFrame {
     f32 field_0x1E0;
 };
 
-// Scene-root child object: the byte at +0x19 gates the map callback.
-struct CScnRootNw4rGate {
-    u8 pad[0x19];
-    u8 field_0x19;
-};
-
 // MPF draw-object vtable mirrors (MWCC vtables carry an 8-byte RTTI header,
 // so declared slot 0 sits at vtable+0x8, slot 1 at vtable+0xC).
 struct MPFDrawVt8 {
@@ -180,7 +168,7 @@ extern "C" void setPlainDrawNode__Q26mpfsys18MPFDrawDisplayListFv(
 extern "C" void setColorDrawNode__Q26mpfsys18MPFDrawDisplayListFv(
     mpfsys::MPFDrawDisplayList* self, void* arg);
 extern "C" void* getScnRoot45C(CScn* self);
-extern "C" u32 getScnRootPtr(CScn* self);
+extern "C" CScnRootNw4r* getScnRootPtr(CScn* self); // CScn::mUnk8C
 extern "C" void mpfRunDescQuery__17UnkClass_8047CA88Fv(
     UnkClass_8047CA88* self, void* desc, void* dataPtr,
     nw4r::math::VEC3* vec, f32 scale);
@@ -204,9 +192,7 @@ struct UnkClass_8047BB54Layout {
     /* 0x18 */ u8* field_0x18;                    // buffer + sizeA
     /* 0x1C */ u8* field_0x1C;                    // buffer + (sizeA - headerSize)
     /* 0x20 */ nw4r::g3d::ResFile mResFile;
-    /* 0x24 */ u8 gap_0x24[0x2E2C - 0x24];        // embedded UnkClass_80471EC8
-    /* 0x2E2C */ CScn* field_0x2E2C;
-    /* 0x2E30 */ u8 gap_0x2E30[8];
+    /* 0x24 */ mpfsys::UnkClass_80471EC8 mSub;    // embedded map-layer state
     /* 0x2E38 */ nw4r::g3d::G3dObj* field_0x2E38;
 };
 
@@ -217,33 +203,36 @@ extern "C" nw4r::g3d::ScnObj* getScnGroupChild(CScn* self, u32 idx);
 // MWCC's operator-delete runtime symbol; C linkage keeps the unmangled name
 // (same pattern as CNBanner.cpp).
 
-extern "C" void forwardMpfCallA__17UnkClass_8047BB54Fv(u8* self, int mode) {
-    ((mpfsys::UnkClass_80471EC8*)((char*)self + 0x24))->setColorMode(mode);
+extern "C" void forwardMpfCallA__17UnkClass_8047BB54Fv(
+    UnkClass_8047BB54Layout* self, int mode) {
+    self->mSub.setColorMode(mode);
 }
 
 extern "C" void setMpfFloatParam__17UnkClass_8047BB54Fv(u8* self, float val) {
     *(float*)((u8*)self + 0x2e14) = val;
 }
 
-extern "C" void forwardMpfCallB__17UnkClass_8047BB54Fv(u8* self, int index) {
-    ((mpfsys::UnkClass_80471EC8*)((char*)self + 0x24))->clearFlag(index);
+extern "C" void forwardMpfCallB__17UnkClass_8047BB54Fv(
+    UnkClass_8047BB54Layout* self, int index) {
+    self->mSub.clearFlag(index);
 }
 
-extern "C" void forwardMpfCallC__17UnkClass_8047BB54Fv(u8* self, int index) {
-    ((mpfsys::UnkClass_80471EC8*)((char*)self + 0x24))->setFlag(index);
+extern "C" void forwardMpfCallC__17UnkClass_8047BB54Fv(
+    UnkClass_8047BB54Layout* self, int index) {
+    self->mSub.setFlag(index);
 }
 
 extern "C" void __dt__8047BDA8(UnkClass_8047BB54* obj);
 void UnkClass_8047BB54::resetMpfInstance(void) { __dt__8047BDA8(this); }
 
-extern "C" void flushMpfBuffer__17UnkClass_8047BB54Fv(u8* self) {
-    ((void(*)(void*))markDirty__Q26mpfsys17UnkClass_80471EC8Fv)((char*)self + 0x24);
-
+extern "C" void flushMpfBuffer__17UnkClass_8047BB54Fv(
+    UnkClass_8047BB54Layout* self) {
+    self->mSub.markDirty();
 }
 
 // --- Target 2: us-8047ffcc ---------------------------------------------------
 // Global singleton cleanup: free the slot object and clear the pointer.
-void __dt__8047BFFC() {
+void UnkClass_8047BB54::destroyMpfInstance() {
     if (UnkClass_8047BB54::spInstance) {
         delete UnkClass_8047BB54::spInstance;
     }
@@ -284,8 +273,8 @@ extern "C" void __dt__8047BDA8(UnkClass_8047BB54* obj) {
     }
     self->field_0x14 = NULL;
     if (self->field_0x2E38 != NULL) {
-        nw4r::g3d::ScnObj* scnObj = getScnGroupChild(self->field_0x2E2C, 8);
-        if (((UnkScnObjFlagE4*)scnObj)->field_0xE4 != 0) {
+        nw4r::g3d::ScnObj* scnObj = getScnGroupChild(self->mSub.mCamera, 8);
+        if (((nw4r::g3d::ScnGroup*)scnObj)->Size() != 0) {
             ((nw4r::g3d::ScnGroup*)scnObj)->Remove(
                 (nw4r::g3d::ScnObj*)self->field_0x2E38);
             self->field_0x2E38->Destroy();
@@ -310,14 +299,6 @@ struct UnkLayerView {
     u16 field_0x0;   // +0x00 layer entry index into obj->field_0x10
     u16 field_0x2;   // +0x02 element count (inner loop bound)
     u32 field_0x4;   // +0x04 element base index (x 0xC into obj->field_0xC)
-};
-
-// Tail of the embedded UnkClass_80471EC8 subobject (self+0x24) holding the
-// two per-frame culling constants read by mpfCullMarkLayers.
-struct EmbeddedCullParams {
-    u8 pad_0x0[0x2DFC];
-    f32 field_0x2DFC;   // +0x2DFC
-    f32 field_0x2E00;   // +0x2E00
 };
 
 struct MpfCullMark {
@@ -354,13 +335,13 @@ extern "C" int initMpfSystem__17UnkClass_8047BB54Fv(UnkClass_8047BB54* self,
                                          CScn* cscn, u32 a6) {
     UnkClass_8047BB54Layout* layout = (UnkClass_8047BB54Layout*)self;
     __dt__8047BDA8(self);
-    if (((mpfsys::UnkClass_80471EC8*)layout->gap_0x24)->tryAttach(
+    if (layout->mSub.tryAttach(
             desc, (MpfsysResFileHandle*)&layout->mResFile, cscn, a6) != 0) {
         layout->field_0xC = desc;
         layout->field_0x10 = 0x15;
         __dt__8047BC74(self, 0x96000, 0x64000);
         setLayerScale__Q26mpfsys17UnkClass_80471EC8Fv(
-            (mpfsys::UnkClass_80471EC8*)layout->gap_0x24, 4.0);
+            &layout->mSub, 4.0);
         u32 size;
         nw4r::g3d::ScnProc* proc = nw4r::g3d::ScnProc::Construct(
             (MEMAllocator*)getScnRoot45C(cscn), &size,
@@ -389,10 +370,10 @@ extern "C" void mpfCullMarkLayers__17UnkClass_8047BB54Fv(void* self, void* ptr,
                                          u32 count) {
     UnkDrawObj* obj = (UnkDrawObj*)self;
     UnkLayerView* view = (UnkLayerView*)ptr;
-    const EmbeddedCullParams* subobj =
-        (const EmbeddedCullParams*)sMpfsysDrawState;
-    f32 f29 = subobj->field_0x2DFC;
-    f32 f28 = subobj->field_0x2E00;
+    const mpfsys::UnkClass_80471EC8* subobj =
+        static_cast<const mpfsys::UnkClass_80471EC8*>(sMpfsysDrawState);
+    f32 f29 = subobj->mLayerScale;
+    f32 f28 = subobj->mFoldedLayerScale;
     nw4r::math::VEC3 diff;
     nw4r::math::VEC3 scratch;
 
@@ -536,7 +517,7 @@ extern "C" void __dt__8047BC74(UnkClass_8047BB54* self, u32 sizeA, u32 sizeB) {
         ((UnkBuf8047BB54*)layout->field_0x1C)->field_0x0 = 0x80;
         layout->field_0x18 = (u8*)layout->field_0x14 + sizeA;
         buildDisplayList__Q26mpfsys17UnkClass_80471EC8Fv(
-            (mpfsys::UnkClass_80471EC8*)layout->gap_0x24, layout->field_0xC,
+            &layout->mSub, layout->field_0xC,
             (u8*)layout->field_0x14 + sizeA, sizeB);
     }
 }
@@ -553,27 +534,26 @@ extern "C" void initMpfDrawBuffer__17UnkClass_8047BB54Fv(
         (UnkClass_8047BB54Layout*)proc->GetUserData();
     if ((self->field_0x10 & 1) == 0) return;
     if ((self->field_0x10 & 4) == 0) return;
-    if (((CScnRootNw4rGate*)getScnRootPtr(self->field_0x2E2C))->field_0x19 != 0)
-        return;
+    if (getScnRootPtr(self->mSub.mCamera)->mInBloomPass != 0) return;
     view = getCurrentView__5CViewFv();
     vf = Scn_HasCamItem(Scn_GetCurrentScene(view), view);
-    sMpfsysDrawState = (u8*)self + 0x24;
+    sMpfsysDrawState = &self->mSub;
     if (opa) {
         void* frame = submitDraw__Q26mpfsys17UnkClass_80471EC8Fv(
-            (mpfsys::UnkClass_80471EC8*)self->gap_0x24, self->field_0xC,
+            &self->mSub, self->field_0xC,
             self->field_0x14, self->field_0x18, (self->field_0x10 >> 4) & 1);
         f32 f = ((UnkViewFrame*)vf)->field_0x1E0;
         void* obj = getMpfStatus__17UnkClass_8047BB54Fv(frame);
         mpfDrawLayerOpa__17UnkClass_8047BB54Fv(
             (UnkDrawObj*)obj, self->field_0xC, self->field_0x14,
-            self->field_0x18, self->field_0x1C, (u8*)self + 0x20,
+            self->field_0x18, self->field_0x1C, &self->mResFile,
             ((UnkViewFrame*)vf)->field_0x9C, self->field_0x10 & 0x8, f);
     } else {
         f32 f = ((UnkViewFrame*)vf)->field_0x1E0;
         void* obj = getMpfStatus__17UnkClass_8047BB54Fv(vf);
         mpfDrawLayerXlu__17UnkClass_8047BB54Fv(
             (UnkDrawObj*)obj, self->field_0xC, self->field_0x14,
-            self->field_0x18, self->field_0x1C, (u8*)self + 0x20,
+            self->field_0x18, self->field_0x1C, &self->mResFile,
             ((UnkViewFrame*)vf)->field_0x9C, self->field_0x10 & 0x8, f);
     }
 }
@@ -592,19 +572,22 @@ extern "C" void mpfDrawLayerXlu__17UnkClass_8047BB54Fv(
     drawMapLayer__Q26mpfsys17UnkClass_80471EC8Fv(
         desc, a8, a9, a5, a6, a10);
     if (desc->field_0x28) {
-        int count = (int)desc->field_0xC;
-        for (int i = 0; i < count; i++) {
-            if (obj->field_0x4[obj->field_0x4[0] * (i + count) + 1] > 1) {
+        for (int i = 0, count = desc->field_0xC; i < count; i++) {
+            u32* slot =
+                &obj->field_0x4[obj->field_0x4[0] * (i + count) + 1];
+            if (slot[0] > 1) {
                 UnkDrawEntry* e = &obj->field_0x10[i];
                 void* draw = ((void**)&sMpfDrawObjects)[e->field_0x2];
-                ((MPFDrawVtC*)draw)->vf1((u8*)obj->field_0x0 + e->field_0x18);
+                ((MPFDrawVtC_2*)draw)->vf1(
+                    (u8*)obj->field_0x0 + e->field_0x18, slot);
             }
         }
     }
-    if (desc->field_0x10) {
+    u32 dlNode = desc->field_0x10;
+    if (dlNode) {
         mpfsys::MPFDrawDisplayList* dl = mpfsys::MPFDrawDisplayList::getInstance();
         setColorDrawNode__Q26mpfsys18MPFDrawDisplayListFv(
-            dl, (u8*)obj->field_0x0 + desc->field_0x10);
+            dl, (u8*)obj->field_0x0 + dlNode);
     }
     resetTevSwap__Q26mpfsys17UnkClass_80471EC8Fv();
 }
@@ -690,6 +673,6 @@ void UnkClass_8047BB54::checkMpfFlags() {
     u32 flags = self->field_0x10;
     if ((flags & 1) == 0) return;
     if ((flags & 4) == 0) return;
-    ((mpfsys::UnkClass_80471EC8*)self->gap_0x24)->update();
+    self->mSub.update();
 }
 

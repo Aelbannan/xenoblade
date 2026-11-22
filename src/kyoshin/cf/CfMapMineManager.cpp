@@ -1,5 +1,6 @@
 // CfMapMineManager - mine-point management (field collection points)
 #include "kyoshin/cf/CfBdat.hpp"
+#include "monolib/lod/CTaskLOD.hpp"
 #include "kyoshin/cf/CfMapMineManager.hpp"
 #include "kyoshin/cf/object/CfObjectEffSymbols.hpp"
 #include "kyoshin/cf/object/CfObjectSelectorObj.hpp"
@@ -387,7 +388,7 @@ extern "C" CfMapMineManager* __ct__80205A7C(CfMapMineManager* self) {
 
     // Allocate the node array (150 nodes x 0x2C).
     u32 handle = CfRes_getAllocHandle();
-    void* mem = allocate_array__Q23mtl10MemManagerFUlUl(0x19D8, handle);
+    void* mem = mtl::MemManager::allocate_array(0x19D8, handle);
     self->mPoints.mList = (MineNode*)__construct_new_array(mem, (void*)mineNodeCtorClear, 0,
                                                            0x2C, 0x96);
     MineNode* nodes = self->mPoints.mList;
@@ -553,7 +554,7 @@ extern "C" int mineFillPointFromRow(CfMapMineManager* self, u32 rowId, MinePoint
             BdatFilePointer* file2 = (BdatFilePointer*)::cf::CfBdat::spCurMineListFileData;
             u8 lo = (u8)getBdatStringColumnValue(file2, cols + 0x00, rowId);
             u8 hi = (u8)getBdatStringColumnValue(file2, cols + 0x08, rowId);
-            int r = mtRand__Q22ml4mathFi((hi - lo) + 1);
+            int r = ml::math::mtRand((hi - lo) + 1);
             pt->mTimer14 = 0.0f;
             u32 fl2 = pt->mFlags;
             fl2 = (fl2 & ~(0xFFu << 8)) | (((lo + r) & 0xFF) << 8);
@@ -701,7 +702,7 @@ extern "C" void mineUpdatePoint(CfMapMineManager* self, MinePoint* pt) {
     u32 id = fl >> 22;
     u8 lo = (u8)getBdatStringColumnValue(file, cols, id);
     u8 hi = (u8)getBdatStringColumnValue(file, cols + 8, id);
-    int r = mtRand__Q22ml4mathFi((hi - lo) + 1);
+    int r = ml::math::mtRand((hi - lo) + 1);
     u32 f2 = pt->mFlags;
     f2 = (f2 & 0xFFFF00FF) | ((lo + r) << 8);
     pt->mFlags = f2;
@@ -710,9 +711,9 @@ extern "C" void mineUpdatePoint(CfMapMineManager* self, MinePoint* pt) {
         if (((f2 >> 15) & 1) != 0) {
             // (double)(0xA0 & ~bit): the int->f64 conversion leaves the
             // 0x4330 magic in fp0 and subtracts it in the callee's fp1.
-            setLODParam__8CTaskLODFv(
+            CTaskLOD::setLODParam(
                 pt->mPointId1C, 1,
-                (f64)(0xA0 & ~(u32)-(s32)((gmGameFlags >> 20) & 1)));
+                (f32)(0xA0 & ~(u32)-(s32)((gmGameFlags >> 20) & 1)));
         } else {
             void* v = ArtsSelect_GetEntry(pt->mPointId1C);
             if (v != 0) {
@@ -906,9 +907,9 @@ void CfMapMineManager::ScanPoints() {
                 mineRespawnPoint(this, &found->mItem);
                 if ((found->mItem.mFlags & 0x00010000) != 0) {
                     u32 g = gmGameFlags;
-                    setLODParam__8CTaskLODFv(
+                    CTaskLOD::setLODParam(
                         found->mItem.mPointId1C, 1,
-                        (f64)(0xA0 & ~(u32)-(s32)((g >> 20) & 1)));
+                        (f32)(0xA0 & ~(u32)-(s32)((g >> 20) & 1)));
                 } else {
                     cf::CfObjectObj* obj = (cf::CfObjectObj*)ArtsSelect_GetEntry(found->mItem.mPointId1C);
                     if (obj != 0) {
@@ -922,9 +923,9 @@ void CfMapMineManager::ScanPoints() {
                                   found->mItem.mAreaSub1F) != 0) {
                     if ((found->mItem.mFlags & 0x00010000) != 0) {
                         u32 g = gmGameFlags;
-                        setLODParam__8CTaskLODFv(
+                        CTaskLOD::setLODParam(
                             found->mItem.mPointId1C, 0,
-                            (f64)(0xA0 & ~(u32)-(s32)((g >> 20) & 1)));
+                            (f32)(0xA0 & ~(u32)-(s32)((g >> 20) & 1)));
                     } else {
                         cf::CfObjectObj* obj = (cf::CfObjectObj*)ArtsSelect_GetEntry(found->mItem.mPointId1C);
                         if (obj != 0) {
@@ -995,8 +996,8 @@ extern "C" int mineDropItem(CfMapMineManager* self, MinePoint* pt,
     }
 
     CItemData_enableFamFlag(item);
-    CItemImpl* impl = (CItemImpl*)CItem_initItemImplInstances((CItemData*)item);
-    impl->vf1C(item);
+    CItemImpl* impl = CItem_initItemImplInstances((CItemData*)item);
+    impl->vf1C((CItemData*)item);
 
     u8 colA;
     u8 colB;
@@ -1018,7 +1019,7 @@ extern "C" int mineDropItem(CfMapMineManager* self, MinePoint* pt,
     }
 
     // Rare-drop gate: (weighted ^ rnd) sign trick on the top bit.
-    int rnd = mtRand__Q22ml4mathFi(10000);
+    int rnd = ml::math::mtRand(10000);
     u32 weighted = (total + sMineLotteryBias[(pt->mFlags >> 16) & 1]) * 100;
     u32 x = weighted ^ rnd;
     u32 q = ((s32)x >> 1) - (x & weighted);
@@ -1041,10 +1042,10 @@ extern "C" int mineDropItem(CfMapMineManager* self, MinePoint* pt,
     u8 hi = sMineRangeBounds[rangeIdx * 2 + 1];
 
     for (int k = 0; k < 4; k++) {
-        CItemImpl* im = (CItemImpl*)CItem_initItemImplInstances((CItemData*)item);
-        im->vf50(item, k, 0);
-        CItemImpl* im2 = (CItemImpl*)CItem_initItemImplInstances((CItemData*)item);
-        im2->vf68(item, k, 0);
+        CItemImpl* im = CItem_initItemImplInstances((CItemData*)item);
+        im->vf50((CItemData*)item, k, 0);
+        CItemImpl* im2 = CItem_initItemImplInstances((CItemData*)item);
+        im2->vf68((CItemData*)item, k, 0);
     }
 
     // Rare drops allow up to 4 items, normal drops only 2 (need at least 1).
@@ -1077,7 +1078,7 @@ extern "C" int mineDropItem(CfMapMineManager* self, MinePoint* pt,
         if (*outFlag != 0 && rateRaw != 0) {
             effRate = rateRaw + 100;
         }
-        int roll = mtRand__Q22ml4mathFi(100);
+        int roll = ml::math::mtRand(100);
         if (itemId != 0 && roll < effRate) {
             int dup = 0;
             for (int j = 0; j < got; j++) {
@@ -1087,11 +1088,11 @@ extern "C" int mineDropItem(CfMapMineManager* self, MinePoint* pt,
                 }
             }
             if (dup == 0) {
-                u16 qty = mtRand__Q22ml4mathFii(lo, hi);
-                CItemImpl* im = (CItemImpl*)CItem_initItemImplInstances((CItemData*)item);
-                im->vf50(item, got, itemId);
-                CItemImpl* im2 = (CItemImpl*)CItem_initItemImplInstances((CItemData*)item);
-                im2->vf68(item, got, qty);
+                u16 qty = ml::math::mtRand(lo, hi);
+                CItemImpl* im = CItem_initItemImplInstances((CItemData*)item);
+                im->vf50((CItemData*)item, got, itemId);
+                CItemImpl* im2 = CItem_initItemImplInstances((CItemData*)item);
+                im2->vf68((CItemData*)item, got, qty);
                 *dst++ = itemId;
                 got++;
                 if (got >= limit) {
@@ -1176,8 +1177,8 @@ extern "C" void mineUpdateAll(CfMapMineManager* self) {
     }
     if (isSceneReadyForInput__Q22cf13CfGameManagerFv() == 0) return;
     if ((gmGameFlags & 0x00002000) != 0) return;
-    void* pad = cf::CfGameManager::getCurrentPad();
-    if ((*(u32*)((u8*)pad + 0x4) & 0x00000010) == 0) return;
+    CPad* pad = cf::CfGameManager::getCurrentPad();
+    if ((pad->mPressedButtonFlags & 0x00000010) == 0) return;
 
     // Generate the drop payload for this mine point.
     MineDrop drop;
@@ -1217,9 +1218,9 @@ extern "C" void mineUpdateAll(CfMapMineManager* self) {
                 fl2 = nearest->mItem.mFlags;
                 if ((fl2 & 0x00010000) != 0) {
                     u32 bit = (gmGameFlags >> 20) & 1;
-                    setLODParam__8CTaskLODFv(
+                    CTaskLOD::setLODParam(
                         nearest->mItem.mPointId1C, 0,
-                        (f64)(0xA0 & ~(u32)-(s32)bit));
+                        (f32)(0xA0 & ~(u32)-(s32)bit));
                 } else {
                     void* v = ArtsSelect_GetEntry(nearest->mItem.mPointId1C);
                     if (v != 0) {
@@ -1256,8 +1257,8 @@ extern "C" void mineUpdateAll(CfMapMineManager* self) {
     // Push a message into the ring buffer (evicting the oldest when full).
     char msgText[0x40];
     msgText[0] = 0;
-    CItemImpl* im = (CItemImpl*)CItem_initItemImplInstances((CItemData*)&drop);
-    const char* nm = im->vf20(&drop);
+    CItemImpl* im = CItem_initItemImplInstances((CItemData*)&drop);
+    const char* nm = im->vf20((CItemData*)&drop);
     u32 msgLen = strlen(nm);
     strcpy(msgText, nm);
     f32 msgTime = 22.0f;
@@ -1290,8 +1291,8 @@ extern "C" void mineUpdateAll(CfMapMineManager* self) {
     else if (cval == 0x32) queueEventId__Q22cf13CfGameManagerFv(0x71);
     else if (cval == 0x1F4) queueEventId__Q22cf13CfGameManagerFv(0x72);
 
-    CItemImpl* im2 = (CItemImpl*)CItem_initItemImplInstances((CItemData*)&drop);
-    u32 rarity = im2->vf08(&drop);
+    CItemImpl* im2 = CItem_initItemImplInstances((CItemData*)&drop);
+    u32 rarity = im2->vf08((CItemData*)&drop);
     if ((rarity & 0xFFFF) >= 5) {
         queueEventId__Q22cf13CfGameManagerFv(0x76);
     }

@@ -16,7 +16,7 @@
 // dispatchItemLoad / testActorStatus: single unified decls on the owner header.
 #include "kyoshin/cf/CfMapItemManager.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
-#include "kyoshin/cf/object/CfObjectEne.hpp" // cf::CfObjectEne + CfEneTablePtrs/CfEneTailView/CfEneReloadSlot views
+#include "kyoshin/cf/object/CfObjectEne.hpp" // cf::CfObjectEne + CfEneTailView views
 
 #include "kyoshin/code_801F3BE0.hpp"  // getUnk80664658, GimBind/UnbindEnemyActor (owner)
 #include "kyoshin/cf/CSuddenCommu.hpp"
@@ -125,7 +125,7 @@ void cf::CfObjectEne::CfObject_UnkVirtualFunc4() {
     // site through distinct expression shapes (member-view / u32-domain /
     // byte-add) so GVN cannot merge them into one cached register
     ::CScn* sceneTimeSrc = gmScene;
-    f32 sub = ((cf::CfObjectAt3E9C*)this)->CfObject_getMoveSpeedRate();
+    f32 sub = this->CfObject_getMoveSpeedRate();
     // retail multiplies as time * sub
     f32 t = Scn_GetFrameDelta(sceneTimeSrc);
     f32 f = t * sub;
@@ -141,13 +141,13 @@ void cf::CfObjectEne::CfObject_UnkVirtualFunc4() {
             ->getStateData();
         if (testActorStatus(this, &wordC, 0x1) != 0)
             goto defaultPath;
-        u8* p = ((cf::CfEneField3F34*)this)->field_0x3F34;
+        cf::CfObjectModelSub98* p = this->mSubObj98;
         if (p != 0)
-            ((cf::CfEneField7A4*)p)->field_0x7A4 |= 0x80000000;
+            p->field_7A4 |= 0x80000000;
         // distinct expression families keep MWCC from CSE-ing +0x3E9C
         // (slots +0x80/+0x64 = UVF12/UVF5)
-        ((cf::CfObject*)((u8*)this + 0x3E9C))->CfObject_refreshSubB0();
-        ((cf::CfObject*)(u32)&((cf::CfEneTablePtrs*)this)->vt3E9C)->CfObject_updateMoveRate();
+        this->CfObject_refreshSubB0();
+        this->CfObject_updateMoveRate();
     }
     goto done;
 defaultPath:
@@ -650,14 +650,14 @@ u32 cf::CfObjectEne::getEneBdatByIndex(const char* col, u32 index) {
 // through the primary vtable +0x11C slot before clearing field_0x45CC and
 // returning on the first hit.
 void cf::CfObjectEne::applyEnemyReward() {
-    if ((((cf::CfActorParamFields*)this)->field_0x3374 & 0x100000) != 0) return;
+    if ((unk3374 & 0x100000) != 0) return;
     if ((gmGameFlags & 0xAFA40000) != 0) return;
-    if (((cf::CfActorField3F60*)this)->field_0x3F60 == NULL) return;
-    // retail reloads the +0x3F60 target for the flag test (short-lived r4)
-    if (((((cf::CfEneMoveTgtView*)((cf::CfActorField3F60*)this)->field_0x3F60)->field_0x4EC) & 0x100) == 0) return;
+    if (mTargetC4 == NULL) return;
+    // retail reloads the +0x3F60 (CfObjectMove::mTargetC4) target for the flag test (short-lived r4)
+    if (((((cf::CfEneMoveTgtView*)mTargetC4)->field_0x4EC) & 0x100) == 0) return;
     if (CActorParam_isBattleLocked() != 0) return;
     cf::CBattleManager* bm =
-        static_cast<cf::CBattleManager*>(getInstance__Q22cf14CBattleManagerFv());
+        static_cast<cf::CBattleManager*>(cf::CBattleManager::getInstance());
     // goto form blocks MWCC's unsigned range-check fusion
     // (cf. CfObjectPc.cpp CItemBlock_testKindFlag)
     int ok = 0;
@@ -667,16 +667,16 @@ void cf::CfObjectEne::applyEnemyReward() {
 bmCheck:
     if (ok != 0) return;
     cf::CBattleManager* bm2 =
-        static_cast<cf::CBattleManager*>(getInstance__Q22cf14CBattleManagerFv());
+        static_cast<cf::CBattleManager*>(cf::CBattleManager::getInstance());
     if (SuddenCommuIsStateActive(&bm2->mSuddenCommu) != 0) return;
     cf::CBattleManager* bm3 =
-        static_cast<cf::CBattleManager*>(getInstance__Q22cf14CBattleManagerFv());
+        static_cast<cf::CBattleManager*>(cf::CBattleManager::getInstance());
     s16 idx = (s16)bm3->unk20C8.unk0;
     if (idx != 0) return;
     // mode word is read SDA-indexed by the (always-zero) idx register
     u32 modeOff = (u32)*(u16*)((u8*)&gmGlobalFlag42 + idx) * 100;
     int channel = (int)*(u16*)((u8*)&gmGlobalFlag44 + modeOff) + (int)modeOff;
-    s32 key = ((cf::CfEneMoveTgtView*)((cf::CfActorField3F60*)this)->field_0x3F60)->field_0x4B0;
+    s32 key = ((cf::CfEneMoveTgtView*)mTargetC4)->field_0x4B0;
     Bdat_GetTable_AA34();
     u8* bdat = (u8*)::cf::CfBdat::spFldDmObjListFileData;
     int row = (int)Bdat_GetRowBase_B41C(bdat);
@@ -690,7 +690,7 @@ bmCheck:
         // pin the scene-time source across the m8C() call so MWCC hoists
         // the SDA load above the bctrl (retail keeps it in a saved reg)
         ::CScn* sceneSrc = gmScene;
-        f32 sub = ((cf::CfObjectAt3E9C*)this)->CfObject_getMoveSpeedRate();
+        f32 sub = this->CfObject_getMoveSpeedRate();
         f32 t = Scn_GetFrameDelta(sceneSrc);
         f32 now = t * sub + this->field_0x45cc;
         // retail stores the accumulated time back BEFORE the threshold compare
@@ -1305,7 +1305,7 @@ float cf::CActorParam::CActorParam_UnkVirtualFunc39() { return this->unk17E4.fie
 // val by the gauge field at 0x17F4 and tail-dispatches vtable slot +0x11C
 // (CActorParam_addHp).
 extern "C" void CActorParam_UnkVirtualFunc36__Q22cf11CActorParamFv(cf::CActorParam* self, float val) {
-    self->CActorParam_addHp(((cf::CfActorParamFields*)self)->field_0x17F4 * val);
+    self->CActorParam_addHp(self->unk17E4.field_10 * val);
 }
 
 
@@ -1316,8 +1316,8 @@ extern "C" void CActorParam_UnkVirtualFunc36__Q22cf11CActorParamFv(cf::CActorPar
 // floors sub-1.0 results back to 0.0f, then clamps into [0.0f, 0x17F4].
 // Same rounding tail as CActorParam_applyDamage (CfObjectActor.cpp).
 extern "C" void CActorParam_addHp__Q22cf11CActorParamFv(cf::CActorParam* self, float amount) {
-    float v = ((cf::CfActorParamFields*)self)->field_0x17E8 + amount;
-    ((cf::CfActorParamFields*)self)->field_0x17E8 = v;
+    float v = self->unk17E4.field_04 + amount;
+    self->unk17E4.field_04 = v;
     double round;
     if (v > 0.0f) {
         round = 0.5;
@@ -1325,16 +1325,16 @@ extern "C" void CActorParam_addHp__Q22cf11CActorParamFv(cf::CActorParam* self, f
         round = -0.5;
     }
     v = (float)(s32)((double)v + round);
-    ((cf::CfActorParamFields*)self)->field_0x17E8 = v;
+    self->unk17E4.field_04 = v;
     if (v < 1.0f) {
-        ((cf::CfActorParamFields*)self)->field_0x17E8 = 0.0f;
+        self->unk17E4.field_04 = 0.0f;
     }
-    v = ((cf::CfActorParamFields*)self)->field_0x17E8;
-    float max = ((cf::CfActorParamFields*)self)->field_0x17F4;
+    v = self->unk17E4.field_04;
+    float max = self->unk17E4.field_10;
     if (v < 0.0f) {
-        ((cf::CfActorParamFields*)self)->field_0x17E8 = 0.0f;
+        self->unk17E4.field_04 = 0.0f;
     } else if (v > max) {
-        ((cf::CfActorParamFields*)self)->field_0x17E8 = max;
+        self->unk17E4.field_04 = max;
     }
 }
 

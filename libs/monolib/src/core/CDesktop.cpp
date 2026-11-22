@@ -37,13 +37,9 @@ struct CWorkEvent3Param {
     s32 field_0;   // +0x00 event id
 };
 
-// Retail installs the dissolved vtable by hand (novtable TU) and reads the
-// frame-color constants from the shared .sdata2 pool, not literals.
-extern u32 __vt__8CDesktop[40];
 CDesktop::CDesktop(const char* pName, CWorkThread* pParent) :
 CProc(pName, pParent, MAX_CHILD),
 mView(nullptr) {
-    *(u32**)this = __vt__8CDesktop;
     mType = THREAD_CDESKTOP;
     lbl_eu_806656AC = this;
     unk1EC.set(0.5f, 0.5f, 0.5f, 1.0f);

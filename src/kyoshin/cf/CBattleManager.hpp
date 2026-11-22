@@ -8,6 +8,7 @@
 #include "kyoshin/cf/chain/UnkClass_800D8DBC.hpp"
 #include "kyoshin/cf/CVision.hpp"
 #include "kyoshin/cf/CSuddenCommu.hpp"
+#include "kyoshin/menu/code_8018C5FC.hpp"
 #include "monolib/util/reslist.hpp"
 
 // Lean public header: the class plus the types it holds by value. The
@@ -19,13 +20,6 @@ namespace cf {
 }
 
 namespace cf{
-    class UnkClass_8018C5FC {
-    public:
-        UnkClass_8018C5FC();
-        
-        u8 unk0[8];
-    };
-
     class UnkClass_80192BF4 {
     public:
         UnkClass_80192BF4();

@@ -111,13 +111,8 @@ done:
 // us-8020144c | __dt__15CModelDispEquipFv
 // ============================================================
 // NOTE: retail prologue is `stmw r30` (shape a, -O4,s unit).
-extern "C" void* __dt__15CModelDispEquipFv(CModelDispEquip* self, int param) {
-    if (self != 0) {
-        __dt__801FF6F0(&self->actParamHolder, -1);
-        if (param > 0)
-            ::operator delete(self);
-    }
-    return self;
+CModelDispEquip::~CModelDispEquip() {
+    __dt__801FF6F0(&this->actParamHolder, -1);
 }
 
 // ============================================================
@@ -163,7 +158,7 @@ extern "C" void ModelDispEquip_StepStateDispatch(CModelDispEquip* self) {
 // Reset the equip display: drain the 9 slot + model file jobs, free loaded
 // slot buffers and the model arc buffer, then mark the state-21 flag.
 extern "C" void ModelDispEquip_ResetDisplay(CModelDispEquip* self) {
-    waitForDrawDone__9CDeviceVIFv();
+    CDeviceVI::waitForDrawDone();
     for (u8 i = 0; i < 9; i++) {
         closeFileHandle(&self->fileSlots[i].handle);
     }
@@ -320,7 +315,7 @@ extern "C" void ModelDispEquip_StepFadeIn(CModelDispEquip* self) {
 // beq/addi shape), and the anim-slot pointers are re-read from memory after
 // the stop call instead of being cached.
 extern "C" void ModelDispEquip_TeardownHolder(CModelDispEquip* self, CActParamHolder* holder) {
-    waitForDrawDone__9CDeviceVIFv();
+    CDeviceVI::waitForDrawDone();
     if (holder->field_0x00 == 0)
         return;
     for (u8 i = 0; i < 2; i++) {
@@ -530,7 +525,11 @@ if (reinterpret_cast<cf::CfObject*>(&actor->move)->CfObject_getSlotBits(idx) != 
 // us-80202078 | ModelDispEquip_SetActParamParent
 // ============================================================
 // Retail always calls this (never inlines it).
-extern "C" void ModelDispEquip_SetActParamParent(void* self, u32 val) { *(u32*)((u8*)self + 4) = val; *(u32*)((u8*)self + 0x34) = val; }
+extern "C" void ModelDispEquip_SetActParamParent(void* self, u32 val) {
+    CActParamAnim* anim = static_cast<CActParamAnim*>(self);
+    anim->field04 = val;
+    anim->mData.mField24 = val;
+}
 
 // ============================================================
 // us-80202084 | ModelDispEquip_BuildEquipModel
@@ -582,7 +581,7 @@ extern "C" void ModelDispEquip_BuildEquipModel(CModelDispEquip* self) {
             u32 alloc = PartyStateWin_PickAllocHandle(&ctx, (u32)size);
             CFileHandle* fh = (CFileHandle*)readFile__11CDeviceFileFUlPCcP10IWorkEventii(alloc, buf1, self, 0, 0);
             self->fileSlots[6].handle = fh;
-            setHandleFlag1__11CDeviceFileFP11CFileHandle(fh);
+            CDeviceFile::setHandleFlag1(fh);
         }
         allLoaded = 0;
     }
@@ -598,7 +597,7 @@ extern "C" void ModelDispEquip_BuildEquipModel(CModelDispEquip* self) {
             u32 alloc = PartyStateWin_PickAllocHandle(&ctx, (u32)size);
             CFileHandle* fh = (CFileHandle*)readFile__11CDeviceFileFUlPCcP10IWorkEventii(alloc, buf2, self, 0, 0);
             self->fileSlots[7].handle = fh;
-            setHandleFlag1__11CDeviceFileFP11CFileHandle(fh);
+            CDeviceFile::setHandleFlag1(fh);
         }
         allLoaded = 0;
     }
@@ -620,7 +619,7 @@ extern "C" void ModelDispEquip_BuildEquipModel(CModelDispEquip* self) {
                 u32 alloc = PartyStateWin_PickAllocHandle(&ctx, (u32)size);
                 CFileHandle* fh = (CFileHandle*)readFile__11CDeviceFileFUlPCcP10IWorkEventii(alloc, buf3, self, 0, 0);
                 self->fileSlots[8].handle = fh;
-                setHandleFlag1__11CDeviceFileFP11CFileHandle(fh);
+                CDeviceFile::setHandleFlag1(fh);
             }
         }
         allLoaded = 0;
@@ -651,7 +650,7 @@ extern "C" void ModelDispEquip_BuildEquipModel(CModelDispEquip* self) {
             u32 alloc = PartyStateWin_PickAllocHandle(&ctx, (u32)size);
             CFileHandle* fh = (CFileHandle*)readFile__11CDeviceFileFUlPCcP10IWorkEventii(alloc, buf.mString, self, 0, 0);
             fs->handle = fh;
-            setHandleFlag1__11CDeviceFileFP11CFileHandle(fh);
+            CDeviceFile::setHandleFlag1(fh);
         } else {
             fs->flag = 1;
             fs->data = (u8*)CfRes_tryResolveToken(holder->equipPtrs[i], &outType);
@@ -810,7 +809,7 @@ int CModelDispEquip::LoadModelArc(u32 param) {
             CFileHandle* fh =
                 (CFileHandle*)readFile__11CDeviceFileFUlPCcP10IWorkEventii(alloc, buf.mString, this, 0, 0);
             this->modelFileHandle = fh;
-            setHandleFlag1__11CDeviceFileFP11CFileHandle(fh);
+            CDeviceFile::setHandleFlag1(fh);
         }
     }
     return 0;
@@ -829,8 +828,7 @@ void ModelDispEquip_TickAnim(CModelDispEquip* self) {
     if (self->actParamHolder.field_0x00 == 0)
         return;
     if (holder->timer <= 0) {
-        getInstance__Q22ml6MTRandFv();
-        u32 r = rand31__Q22ml6MTRandFv();
+        u32 r = ml::MTRand::getInstance()->rand31();
         s32 sign = (s32)(((r & 1) ^ (r >> 31)) - (r >> 31));
         s32 anim = equipSignAnimTable[sign];
         if ((anim == 0x12 && holder->actParam.field_0x374 == 0) ||

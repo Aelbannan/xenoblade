@@ -1,11 +1,7 @@
 // nw4r/src/g3d/platform/g3d_gpu - fifo GPU command emitters
-// Matched against retail via hexdiff; GX fifo writes via the 0xCC008000 port.
+// Matched against retail via hexdiff; GX fifo writes use the SDK WGPIPE.
 
 #include <nw4r/g3d/platform/g3d_gpu.h>
-
-// Retail nw4r data-pool float constants (sdata2, owned by nw4r_data.o -
-// extern only). Named after the retail symbols so the generated sda21 float
-// relocations match retail exactly (instead of TU-local pool labels).
 
 namespace nw4r {
 namespace g3d {
@@ -13,117 +9,53 @@ namespace fifo {
 
 void GDSetGenMode2(u8 numTexGens, u8 numChans, u8 numTevs, u8 numInds,
                    GXCullMode cullMode) {
-    volatile unsigned char* const fifo = (volatile unsigned char*)0xCC008000;
+    WGPIPE.uc = GX_FIFO_CMD_LOAD_BP_REG;
+    WGPIPE.ui = 0xFE07FC3F;
 
-    register const f32* cullTbl = &lbl_eu_80669BC8;
-    const unsigned char* cull = (const unsigned char*)cullTbl;
-
-    *fifo = 0x61;
-    *(volatile unsigned int*)fifo = 0xFE07FC3F;
-
-    *fifo = 0x61;
-    *(volatile unsigned int*)fifo =
+    WGPIPE.uc = GX_FIFO_CMD_LOAD_BP_REG;
+    WGPIPE.ui =
         numTexGens | (numChans << 4) | ((numTevs - 1) << 10) |
-        (cull[cullMode] << 14) | (numInds << 16);
+        (cm2hw[cullMode] << GX_BP_GENMODE_CULLMODE_SHIFT) |
+        (numInds << GX_BP_GENMODE_NUMINDSTAGES_SHIFT);
 
-    *fifo = 0x10;
-    *(volatile unsigned short*)fifo = 0x0000;
-    *(volatile unsigned short*)fifo = 0x1009;
-    *(volatile unsigned int*)fifo = numChans;
+    WGPIPE.uc = GX_FIFO_CMD_LOAD_XF_REG;
+    WGPIPE.us = 0;
+    WGPIPE.us = GX_XF_REG_NUMCOLORS;
+    WGPIPE.ui = numChans;
 
-    *fifo = 0x10;
-    *(volatile unsigned short*)fifo = 0x0000;
-    *(volatile unsigned short*)fifo = 0x103F;
-    *(volatile unsigned int*)fifo = numTexGens;
+    WGPIPE.uc = GX_FIFO_CMD_LOAD_XF_REG;
+    WGPIPE.us = 0;
+    WGPIPE.us = GX_XF_REG_NUMTEX;
+    WGPIPE.ui = numTexGens;
 }
 
 void GDSetCullMode(GXCullMode cullMode) {
-    volatile unsigned char* const fifo = (volatile unsigned char*)0xCC008000;
+    WGPIPE.uc = GX_FIFO_CMD_LOAD_BP_REG;
+    WGPIPE.ui = 0xFE00C000;
 
-    register const f32* cullTbl = &lbl_eu_80669BC8;
-    const unsigned char* cull = (const unsigned char*)cullTbl;
-
-    *fifo = 0x61;
-    *(volatile unsigned int*)fifo = 0xFE00C000;
-
-    *fifo = 0x61;
-    *(volatile unsigned int*)fifo = cull[cullMode] << 14;
+    WGPIPE.uc = GX_FIFO_CMD_LOAD_BP_REG;
+    WGPIPE.ui = cm2hw[cullMode] << GX_BP_GENMODE_CULLMODE_SHIFT;
 }
 
 void GDSetTexCoordScale2(GXTexCoordID coord, u16 scaleS, GXBool biasS,
                          GXBool wrapS, u16 scaleT, GXBool biasT,
                          GXBool wrapT) {
-    volatile unsigned char* const fifo = (volatile unsigned char*)0xCC008000;
-
     u32 tex0 = (scaleS - 1) | (biasS << 16) | (wrapS << 17) |
-               ((coord * 2 + 0x30) << 24);
+               ((coord * 2 + GX_CP_REG_MATRIXINDEXA) << 24);
     u32 tex1 = (scaleT - 1) | (biasT << 16) | (wrapT << 17) |
-               ((coord * 2 + 0x31) << 24);
+               ((coord * 2 + GX_CP_REG_MATRIXINDEXA + 1) << 24);
 
-    *fifo = 0x61;
-    *(volatile unsigned int*)fifo = 0xFE03FFFF;
+    WGPIPE.uc = GX_FIFO_CMD_LOAD_BP_REG;
+    WGPIPE.ui = 0xFE03FFFF;
 
-    *fifo = 0x61;
-    *(volatile unsigned int*)fifo = tex0;
+    WGPIPE.uc = GX_FIFO_CMD_LOAD_BP_REG;
+    WGPIPE.ui = tex0;
 
-    *fifo = 0x61;
-    *(volatile unsigned int*)fifo = tex1;
-}
-
-void GDResetCurrentMtx() {
-    volatile unsigned char* const fifo = (volatile unsigned char*)0xCC008000;
-    *fifo = 0x08;
-    *fifo = 0x30;
-    *(volatile unsigned int*)fifo = 0x3cf40000 - 0x3100;
-    *fifo = 0x08;
-    *fifo = 0x40;
-    *(volatile unsigned int*)fifo = 0x00f40000 - 0x30c4;
-    *fifo = 0x10;
-    *(volatile unsigned short*)fifo = 0x0001;
-    *(volatile unsigned short*)fifo = 0x1018;
-    *(volatile unsigned int*)fifo = 0x3cf40000 - 0x3100;
-    *(volatile unsigned int*)fifo = 0x00f40000 - 0x30c4;
-}
-
-void GDSetCurrentMtx(const u32* pIdArray) {
-    volatile unsigned char* const fifo = (volatile unsigned char*)0xCC008000;
-
-    // BP register 0x18 (current matrix id): pack both matrix ids into the
-    // two 32-bit words with their 6-bit fields pre-shifted.
-    u32 w0 = (pIdArray[0] << 6) | (pIdArray[1] << 12) | (pIdArray[2] << 18) |
-             (pIdArray[3] << 24);
-    u32 w1 = pIdArray[4] | (pIdArray[5] << 6) | (pIdArray[6] << 12) |
-             (pIdArray[7] << 18);
-
-    *fifo = 0x10;
-    *(volatile unsigned short*)fifo = 0x0001;
-    *(volatile unsigned short*)fifo = 0x1018;
-    *(volatile unsigned int*)fifo = w0;
-    *(volatile unsigned int*)fifo = w1;
-}
-
-void GDLoadTexMtxImm3x3(const math::MTX33& rMtx, u32 id) {
-    // Promote the 3x3 matrix to a 3x4 (identity translation column) and pass
-    // it straight to GXLoadTexMtxImm.
-    math::MTX34 mtx;
-    mtx.m[0][0] = rMtx.m[0][0];
-    mtx.m[0][1] = rMtx.m[0][1];
-    mtx.m[0][2] = rMtx.m[0][2];
-    mtx.m[0][3] = 0.0f;
-    mtx.m[1][0] = rMtx.m[1][0];
-    mtx.m[1][1] = rMtx.m[1][1];
-    mtx.m[1][2] = rMtx.m[1][2];
-    mtx.m[1][3] = 0.0f;
-    mtx.m[2][0] = rMtx.m[2][0];
-    mtx.m[2][1] = rMtx.m[2][1];
-    mtx.m[2][2] = rMtx.m[2][2];
-    mtx.m[2][3] = 0.0f;
-    GXLoadTexMtxImm(mtx.mtx, id, GX_MTX_3x4);
+    WGPIPE.uc = GX_FIFO_CMD_LOAD_BP_REG;
+    WGPIPE.ui = tex1;
 }
 
 void GDSetIndTexMtx(u32 id, const math::MTX34& rMtx) {
-    volatile unsigned char* const fifo = (volatile unsigned char*)0xCC008000;
-
     // Top two rows of the 3x4 matrix (the offset matrix), with absolute
     // values kept alongside for the normalization search below.
     f32 m00, m01, m10, a00, m02, m11, m12, a01, a02, a10, a11, a12;
@@ -201,23 +133,71 @@ void GDSetIndTexMtx(u32 id, const math::MTX34& rMtx) {
     s32 w00 = (s32)(scl * m00);
     u32 word0 = ((id + 6) << 24) | (((exp) & 3) << 22);
     s32 w10 = (s32)(scl * m10);
-    *fifo = 0x61;
-    *(volatile unsigned int*)fifo =
+    WGPIPE.uc = GX_FIFO_CMD_LOAD_BP_REG;
+    WGPIPE.ui =
         word0 | (((u32)w00 & 0x7FF) | (((u32)w10 & 0x7FF) << 11));
 
     s32 w01 = (s32)(scl * m01);
     s32 w11 = (s32)(scl * m11);
     u32 word1 = ((id + 7) << 24) | ((((exp) >> 2) & 3) << 22);
-    *fifo = 0x61;
-    *(volatile unsigned int*)fifo =
+    WGPIPE.uc = GX_FIFO_CMD_LOAD_BP_REG;
+    WGPIPE.ui =
         word1 | (((u32)w01 & 0x7FF) | (((u32)w11 & 0x7FF) << 11));
 
     s32 w02 = (s32)(scl * m02);
     s32 w12 = (s32)(scl * m12);
     u32 word2 = ((id + 8) << 24) | ((((exp) >> 4) & 3) << 22);
-    *fifo = 0x61;
-    *(volatile unsigned int*)fifo =
+    WGPIPE.uc = GX_FIFO_CMD_LOAD_BP_REG;
+    WGPIPE.ui =
         word2 | (((u32)w02 & 0x7FF) | (((u32)w12 & 0x7FF) << 11));
+}
+
+void GDResetCurrentMtx() {
+    WGPIPE.uc = GX_FIFO_CMD_LOAD_CP_REG;
+    WGPIPE.uc = GX_CP_REG_MATRIXINDEXA;
+    WGPIPE.ui = 0x3CF3CF00;
+
+    WGPIPE.uc = GX_FIFO_CMD_LOAD_CP_REG;
+    WGPIPE.uc = GX_CP_REG_MATRIXINDEXB;
+    WGPIPE.ui = 0x00F3CF3C;
+
+    WGPIPE.uc = GX_FIFO_CMD_LOAD_XF_REG;
+    WGPIPE.us = 1;
+    WGPIPE.us = GX_XF_REG_MATRIXINDEX0;
+    WGPIPE.ui = 0x3CF3CF00;
+    WGPIPE.ui = 0x00F3CF3C;
+}
+
+void GDSetCurrentMtx(const u32* pIdArray) {
+    u32 w0 = (pIdArray[0] << 6) | (pIdArray[1] << 12) |
+             (pIdArray[2] << 18) | (pIdArray[3] << 24);
+    u32 w1 = pIdArray[4] | (pIdArray[5] << 6) |
+             (pIdArray[6] << 12) | (pIdArray[7] << 18);
+
+    WGPIPE.uc = GX_FIFO_CMD_LOAD_XF_REG;
+    WGPIPE.us = 1;
+    WGPIPE.us = GX_XF_REG_MATRIXINDEX0;
+    WGPIPE.ui = w0;
+    WGPIPE.ui = w1;
+}
+
+void GDLoadTexMtxImm3x3(const math::MTX33& rMtx, u32 id) {
+    // Promote the 3x3 matrix to a 3x4 (identity translation column) and pass
+    // it straight to GXLoadTexMtxImm.
+    math::MTX34 mtx;
+    mtx.m[0][0] = rMtx.m[0][0];
+    mtx.m[0][1] = rMtx.m[0][1];
+    mtx.m[0][2] = rMtx.m[0][2];
+    mtx.m[0][3] = 0.0f;
+    mtx.m[1][0] = rMtx.m[1][0];
+    mtx.m[1][1] = rMtx.m[1][1];
+    mtx.m[1][2] = rMtx.m[1][2];
+    mtx.m[1][3] = 0.0f;
+    mtx.m[2][0] = rMtx.m[2][0];
+    mtx.m[2][1] = rMtx.m[2][1];
+    mtx.m[2][2] = rMtx.m[2][2];
+    mtx.m[2][3] = 0.0f;
+    GXLoadTexMtxImm(mtx.mtx, id, GX_MTX_3x4);
 }
 
 } // namespace fifo

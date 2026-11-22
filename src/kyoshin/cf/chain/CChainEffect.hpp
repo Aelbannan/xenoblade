@@ -55,15 +55,6 @@ struct CChainNode {
     void* field_08;                      //0x8: object pointer
 };
 
-// Object produced by CollObjHasFlag64Bit5 (examined in chainUnbindMatchingObjects).
-struct CChainItem {
-    u8 pad_00[0x8C];
-    u16 field_8C;                 //0x8C
-    u8 pad_8E[0xE];               //0x8E
-    u32 field_9C;                 //0x9C
-};
-
-
 // TU-private imports for kyoshin/cf/chain/CChainEffect.cpp (moved out of the public
 // CChainEffect.hpp, which keeps the classes).
 
@@ -79,7 +70,6 @@ void removeManagedObject(class UnkClass_805764CC* self, void* target);
 // Definition (code_800B06A4.cpp) returns the raw manager pointer with C linkage.
 void* getReslistBE8(void);
 void* CollObjHasFlag64Bit5(void* param);
-extern f32 lbl_eu_80668C50;
 }
 // Plain global C++ callee (retail symbol getInstance__Fv); canonical
 // declaration lives in the owning code_800B06A4.hpp.

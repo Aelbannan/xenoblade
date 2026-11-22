@@ -7,6 +7,8 @@
 
 #include "kyoshin/CTutorial.hpp"
 
+// name-guess: loaded MNU_ttrl BDAT table pointer; .sbss 0x80664A30 is owned by this TU.
+u32 gTutorialBdatTable;
 
 #include "monolib/device/CDeviceVI.hpp"
 #include "monolib/util/MemManager.hpp"
@@ -140,7 +142,7 @@ void CTutorial::Tutorial_TeardownTutorial() {
         mtl::MemManager::deallocate(field_4C);
         field_4C = nullptr;
     }
-    lbl_eu_80664A30 = 0;
+    gTutorialBdatTable = 0;
     mRegion0.deleteRegion();
     mRegion1.deleteRegion();
 }
@@ -262,13 +264,13 @@ void CTutorial::Tutorial_ReloadTutorialData() {
             return;
         // Resolve the tutorial BDAT table handle by its pooled tag string.
         Bdat_GetTable_AA34();
-        lbl_eu_80664A30 = (u32)getFP("MNU_ttrl");
+        gTutorialBdatTable = (u32)getFP("MNU_ttrl");
     }
     field_46 = 1;
     field_44 = 1;
     field_50 = 0;
     field_51 =
-        (s8)(u8)BdatGetU8Direct((const void*)lbl_eu_80664A30, (const char*)("page"), field_48);
+        (s8)(u8)BdatGetU8Direct((const void*)gTutorialBdatTable, (const char*)("page"), field_48);
     Tutorial_RefreshPage();
 }
 
@@ -349,7 +351,7 @@ bool CTutorial::OnFileEvent(CEventFile* pEventFile) {
         field_4C = (u8*)data;
         CBdat::setBdatEntry(4, data);
         Bdat_GetTable_AA34();
-        lbl_eu_80664A30 = (u32)getFP("MNU_ttrl");
+        gTutorialBdatTable = (u32)getFP("MNU_ttrl");
         Tutorial_ReloadTutorialData();
         mFileHandle1 = nullptr;
         return true;

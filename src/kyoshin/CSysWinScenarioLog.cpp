@@ -26,8 +26,16 @@
 #include <revolution/gx/GXPixel.h>
 #include <nw4r/lyt/lyt_layout.h>
 #include <nw4r/lyt/lyt_arcResourceAccessor.h>
+#include <nw4r/lyt/lyt_pane.h>
+#include <nw4r/lyt/lyt_textBox.h>
+#include "monolib/core/CPadManager.hpp"
 #include "kyoshin/code_80135FDC_State.hpp"
 #include "kyoshin/code_80135FDC_Lyt.hpp"
+
+// name-guess: no JP map name; cached scenario-log singleton pointer.
+CSysWinScenarioLog* sSysWinScenarioLogInstance;
+// name-guess: no JP map name; cached MNU_scenario BDAT file pointer.
+void* sSysWinScenarioLogBdat;
 
 // ---------------------------------------------------------------------------
 // CSysWinScenarioLog::CSysWinScenarioLog (us-80280934)
@@ -39,7 +47,7 @@
 // ---------------------------------------------------------------------------
 CSysWinScenarioLog::CSysWinScenarioLog(CScn* scene)
     : mFileHandle74(NULL), mFileHandle78(NULL), mMemRegion(), mScene(scene), mState(0),
-      mField94(NULL), mpAccessor(NULL), mpLayout(NULL), mpAnim(NULL) {
+      mpTagProcessor(NULL), mpAccessor(NULL), mpLayout(NULL), mpAnim(NULL) {
     setPresentationFlag__Q22cf13CfGameManagerFv(true);
     code80135FDC_postIncByte_64080();
 }
@@ -97,18 +105,18 @@ void CSysWinScenarioLog::Term() {
         }
         mpLayout = 0;
     }
-    if (mField94 != 0) {
-        nw4r::lyt::Layout* p = mField94;
+    if (mpTagProcessor != 0) {
+        nw4r::ut::WideTagProcessor* p = mpTagProcessor;
         if (p != 0) {
             ((CSysWinLayoutSlot2View*)p)->mSlot2(1);
         }
-        mField94 = 0;
+        mpTagProcessor = 0;
     }
     releaseArcResourceAccessor(mpAccessor);
     mpAccessor = 0;
-    lbl_eu_8066490C = 0;
+    sSysWinScenarioLogBdat = 0;
     mMemRegion.deleteRegion();
-    lbl_eu_80664908 = 0;
+    sSysWinScenarioLogInstance = 0;
 
     IScnRender* render = this;
     mScene->removeRenderCB(render);
@@ -152,12 +160,12 @@ void CSysWinScenarioLog::Move() {
             }
             break;
         case 2: {
-            CSysWinPadView* pad = (CSysWinPadView*)cf::CfGameManager::getCurrentPad();
+            CPad* pad = cf::CfGameManager::getCurrentPad();
             bool pressed;
             if (cf::CfGameManager::isClassicController(-1) != 0) {
-                pressed = (pad->mButtons & 0x4600000) != 0;
+                pressed = (pad->mPressedButtonFlags & 0x4600000) != 0;
             } else {
-                pressed = (pad->mButtons & 0x1030) != 0;
+                pressed = (pad->mPressedButtonFlags & 0x1030) != 0;
             }
             if (pressed) {
                 mState = 3;
@@ -173,8 +181,8 @@ void CSysWinScenarioLog::Move() {
             }
             break;
         }
-        // Layout virtual update (vtable slot 0x38) with a null argument.
-        ((CSysWinLayoutHook*)mpLayout)->mAt38(0);
+        // Layout virtual update at vtable slot 0x38.
+        mpLayout->Animate(0);
     }
 }
 
@@ -186,7 +194,7 @@ void CSysWinScenarioLog::Move() {
 // noinline keeps the this-adjusting vtable thunk SysWinLog_RenderThunk70 a two-instruction
 // subi + tail-call instead of a full inline copy.
 // ---------------------------------------------------------------------------
-__declspec(noinline) void CSysWinScenarioLog::cbRenderBefore() {
+__declspec(noinline) void CSysWinScenarioLog::cbRenderBefore(CScn*) {
     // OR-combined guards with early return (MWCC_CASES control_flow pattern):
     // the first disjunct folds to a direct branch to the shared epilogue and
     // the second becomes the branch-over-branch gate (beq forward + b end).
@@ -220,14 +228,14 @@ __declspec(noinline) void CSysWinScenarioLog::cbRenderBefore() {
 // created. (Regist is called even if the allocation failed, matching retail.)
 // ---------------------------------------------------------------------------
 CSysWinScenarioLog* SysWinLog_Create(CProcess* parent, u8* param) {
-    if (lbl_eu_80664908 != 0) {
+    if (sSysWinScenarioLogInstance != 0) {
         return nullptr;
     }
     CSysWinScenarioLog* obj = new (mtl::MemManager::allocate(0xA4, CWorkThreadSystem::getWorkMem()))
         CSysWinScenarioLog((CScn*)param);
-    lbl_eu_80664908 = (u32)obj;
+    sSysWinScenarioLogInstance = obj;
     obj->Regist(parent, false);
-    return (CSysWinScenarioLog*)lbl_eu_80664908;
+    return sSysWinScenarioLogInstance;
 }
 
 extern "C" bool SysWinLog_BuildLayout(CSysWinScenarioLog* self, CFileHandle* fh);
@@ -244,7 +252,7 @@ extern "C" void SysWinLog_OpenContent(CSysWinScenarioLog* self) {
     if (self->mpLayout == 0) {
         return;
     }
-    if (lbl_eu_8066490C == 0) {
+    if (sSysWinScenarioLogBdat == 0) {
         return;
     }
     self->mState = 1;
@@ -253,10 +261,10 @@ extern "C" void SysWinLog_OpenContent(CSysWinScenarioLog* self) {
     // would otherwise mangle the reloc to CtrlRemote_TouchBitByArg__Fi).
     u16 maxId = (u16)CtrlRemote_TouchBitByArg((u32)0x20);
     int chosen = 1;
-    u16 count = (u16)Bdat_GetMaxRow_B1EC((void*)lbl_eu_8066490C);
+    u16 count = (u16)Bdat_GetMaxRow_B1EC(sSysWinScenarioLogBdat);
     int i = 1;
     while ((u16)i <= count) {
-        if ((u16)BdatGetU16Direct((void*)lbl_eu_8066490C, "flag",
+        if ((u16)BdatGetU16Direct(sSysWinScenarioLogBdat, "flag",
                                (u16)i) >= maxId) {
             chosen = i;
             break;
@@ -265,9 +273,9 @@ extern "C" void SysWinLog_OpenContent(CSysWinScenarioLog* self) {
     }
     char* s = BdatTouchStringCell("MNU_main", "name", 0x19);
     LayoutSetTextBoxFmtValue(self->mpLayout, "txt_titlemes", s, 0);
-    char* t = BdatGetPtrDirect((void*)lbl_eu_8066490C, "help",
+    char* t = BdatGetPtrDirect(sSysWinScenarioLogBdat, "help",
                             (u16)chosen);
-    LayoutSetTextBoxFmtValue(self->mpLayout, "txt_sysmes01", t, (u32)self->mField94);
+    LayoutSetTextBoxFmtValue(self->mpLayout, "txt_sysmes01", t, (u32)self->mpTagProcessor);
     char* u = BdatTouchStringCell("MNU_kyeassign", "help", 0x2c);
     LayoutSetTextBoxFmtValue(self->mpLayout, "txt_close00", u, 0);
     const char* sel = cf::CfGameManager::isClassicController(-1) != 0
@@ -284,21 +292,12 @@ extern "C" void SysWinLog_OpenContent(CSysWinScenarioLog* self) {
     CSysWinTexMeta* meta = (CSysWinTexMeta*)mat;
     u16 w = meta->field_0x8->field_0x2;
     u16 h = meta->field_0x8->field_0x0;
-    void* pane =
-        ((CSysWinPaneView*)self->mpLayout->GetRootPane())->mSetText(
-            "pic_btn00", 1);
+    nw4r::lyt::Pane* pane =
+        self->mpLayout->GetRootPane()->FindPaneByName("pic_btn00", 1);
     if (pane == 0) {
         return;
     }
-    CSysWinF64Conv convW;
-    CSysWinF64Conv convH;
-    CSysWinPaneView* pv = (CSysWinPaneView*)pane;
-    convW.w[1] = w;
-    convW.w[0] = 0x43300000;
-    pv->field_0x4C = (f32)(convW.d - lbl_eu_80668AD8);
-    convH.w[1] = h;
-    convH.w[0] = 0x43300000;
-    pv->field_0x50 = (f32)(convH.d - lbl_eu_80668AD8);
+    pane->SetSize(nw4r::lyt::Size((f32)(u32)w, (f32)(u32)h));
 }
 
 // ---------------------------------------------------------------------------
@@ -308,7 +307,7 @@ extern "C" void SysWinLog_OpenContent(CSysWinScenarioLog* self) {
 // allocate + construct the tag processor, build the arc accessor + layout +
 // animation, bind the font and animate, then return 1. When it matches
 // mFileHandle78 instead: release the BDAT archive and store the loaded FP in
-// lbl_eu_8066490C, return 1. Otherwise return 0.
+// sSysWinScenarioLogBdat, return 1. Otherwise return 0.
 // ---------------------------------------------------------------------------
 extern "C" bool SysWinLog_BuildLayout(CSysWinScenarioLog* self, CFileHandle* fh) {
     void* data = fh->mData;
@@ -322,20 +321,21 @@ extern "C" bool SysWinLog_BuildLayout(CSysWinScenarioLog* self, CFileHandle* fh)
         if (tag != 0) {
             tag = __ct__CTagProcessor(tag);
         }
-        self->mField94 = (nw4r::lyt::Layout*)tag;
+        self->mpTagProcessor = static_cast<nw4r::ut::WideTagProcessor*>(tag);
         self->mpAccessor = CLibLayout::createArcResourceAccessor();
         self->mpAccessor->Attach(fileData, "arc");
         buildLayout(&self->mpLayout, self->mpAccessor, "mf70_cf60_syswin14.brlyt");
         bindLayoutAnimTransform(self->mpLayout, &self->mpAnim, self->mpAccessor, "mf70_cf60_syswin14_in.brlan");
         nw4r::lyt::Pane* rootPane = self->mpLayout->GetRootPane();
-        void* fontObj = CDeviceFont::getFontInfo(1, self->mpLayout);
-        u32 fontHandle = ((CSysWinFontObjView*)fontObj)->getFontHandle();
-        ApplyFontToTxtPanes(rootPane, (const nw4r::ut::Font*)fontHandle);
+        IDeviceFontInfo* fontObj =
+            static_cast<IDeviceFontInfo*>(CDeviceFont::getFontInfo(1, self->mpLayout));
+        nw4r::ut::Font* fontHandle = fontObj->getFont();
+        ApplyFontToTxtPanes(rootPane, fontHandle);
         self->mpLayout->SetAnimationEnable(self->mpAnim, true);
         self->mpLayout->Animate(0);
-        void* pane = ((CSysWinPaneView*)self->mpLayout->GetRootPane())->mSetText(
-            "txt_sysmes01", 1);
-        ((CSysWinPaneView*)pane)->field_0xF8 = (u32)self->mField94;
+        nw4r::lyt::Pane* pane = self->mpLayout->GetRootPane()
+                                    ->FindPaneByName("txt_sysmes01", 1);
+        static_cast<nw4r::lyt::TextBox*>(pane)->SetTagProcessor(self->mpTagProcessor);
         self->mFileHandle74 = 0;
         self->mMemRegion.validateHeap();
         return 1;
@@ -344,7 +344,7 @@ extern "C" bool SysWinLog_BuildLayout(CSysWinScenarioLog* self, CFileHandle* fh)
         void* fileData78 = self->mFileHandle78->getData();
         CBdat::setBdatEntry(2, fileData78);
         Bdat_GetTable_AA34();
-        lbl_eu_8066490C = (u32)getFP("MNU_scenario");
+        sSysWinScenarioLogBdat = getFP("MNU_scenario");
         self->mFileHandle78 = 0;
         return 1;
     }

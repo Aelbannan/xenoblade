@@ -19,6 +19,7 @@ public:
 };
 
 class CfImplEneBattleObj;  // forward decl for the typed member below
+class CfObjectImplEne14;   // forward decl for the typed field_14 member below
 
 // ---------------------------------------------------------------------------
 // vtable dispatch views (never instantiated; no vtables emitted).
@@ -99,23 +100,12 @@ public:
     void* field_14;                          // 0x14
     void* field_18;                          // 0x18 (battle object base)
     u8 _pad1C[0x0C];                         // 0x1C-0x27
-    u8 field_28[0x344];                      // 0x28-0x36B (opaque; address taken)
+    u8 field_28[0x40];                       // 0x28-0x67
+    u8 field_68;                             // 0x68 - child-slot anchor
+    u8 field_69[0x03];                       // 0x69-0x6B
+    u8 field_6C;                             // 0x6C - field anchor
+    u8 field_6D[0x2FF];                      // 0x6D-0x36B
     u32 field_36C;                           // 0x36C
-};
-
-// Typed anchor view over CfObjectImplEneObj+0x68/0x6C (inside field_28):
-// exact layout with explicit pads; address-taken for sched slot calls.
-struct CfObjectImplEneSlotView {
-    u8 _pad00[0x68];                         // 0x00-0x67
-    u8 slot68;                               // 0x68 - child-slot anchor
-    u8 _pad69[0x03];                         // 0x69-0x6B
-    u8 slot6C;                               // 0x6C - field anchor
-};
-
-// Object with a u32 token at +0x70 (read by MoveImplEne_InitFieldsToken).
-struct CfObjectImplEneToken {
-    u8 _pad00[0x70];                         // 0x00-0x6F
-    u32 field_70;                            // 0x70
 };
 
 // Battle-actor result of lookupCA0By45C0: u16 flag word at +0xA0 (bit 0 tested
@@ -244,7 +234,9 @@ public:
     virtual void w1C() = 0;                  // index 71
     virtual void* v128() = 0;                // index 72 -> vtable offset 0x128
 
-    u8 _pad04[0x90 - 0x04];                  // 0x04-0x8F
+    u8 _pad04[0x70 - 0x04];                  // 0x04-0x6F
+    u32 field_70;                            // 0x70
+    u8 _pad74[0x90 - 0x74];                  // 0x74-0x8F
     u32 field_90;                            // 0x90
     u8 _pad94[0x98 - 0x94];                  // 0x94-0x97
     void* field_98;                          // 0x98 (CfObjectImplEne98*)

@@ -15,6 +15,9 @@
  * `field_0x....` spelling with their offset recorded.
  */
 
+typedef void (*mps_dechd_fn)(void *obj, void *arg1, void *arg2,
+                             void *out1, void *out2);
+
 /* MPS pack header, decoded by mpsdec_DecPackHd (work + 0x18) */
 typedef struct MPS_PACKHD {
     u32 scr_h;   /* 0x18: SCR bits [31:15] (2 + 15 bits) */
@@ -58,7 +61,7 @@ typedef struct MPS_WORK {
     MPS_SYSHDR   sys_save[3];      /* 0x48 per-stream saved copies */
     MPS_PKETHD  pket;             /* 0xA8 packet header */
     u8         field_0xd0[0x04]; /* 0xD0 */
-    void      *dec_fn;           /* 0xD4 MPS_SetDecHdFn hook */
+    mps_dechd_fn dec_fn;         /* 0xD4 MPS_DecHd callback */
     u8         field_0xd8[0x0C]; /* 0xD8 */
     void      *sys_fn;           /* 0xE4 MPS_SetSystemFn hook */
     void      *sys_obj;          /* 0xE8 */

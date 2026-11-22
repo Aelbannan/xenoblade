@@ -58,14 +58,6 @@ struct CfCamNode {
     void* field_8;        // 0x08 - payload object
 };
 
-// Payload object referenced by CfCamNode::field_8.
-struct CfCamNodePayload {
-    u8 unk00[0x68];        // 0x00
-    u32 field_68;          // 0x68 - flags (bit 0x8000 skips the reset call)
-    u8 unk6C[0x98 - 0x6C]; // 0x6C
-    void* field_98;        // 0x98 - target object
-};
-
 // List head returned by CfGameManager::getFirstGimmick. field_4 is a sentinel
 // node: iteration starts at sentinel->next and stops back at the sentinel.
 struct CfCamNodeList {
@@ -187,7 +179,6 @@ extern "C" void ScnRes_CopyEntryHead(void*, int);
 extern "C" void scnImN4DynStart();
 extern "C" void simSetValue7E8(void*, int);
 extern "C" void scnImN4SetShadFlg(void*);
-extern "C" void Warning__Q24nw4r2dbFPCciPCce(const char*, int, const char*, ...);
 extern const f32 lbl_eu_8066626C;
 extern const f32 lbl_eu_80666270;
 extern const f32 lbl_eu_80666274;

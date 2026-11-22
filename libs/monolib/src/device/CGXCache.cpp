@@ -333,7 +333,7 @@ public:
     u32 mSize;                   //0x48C
     u32 mCapacity;               //0x490
     u32 field6;                  //0x494
-    u32 field7;                  //0x498
+    void* field7;                //0x498 (message target)
 };
 
 class __declspec(novtable) CGXCache : public IStateCache {
@@ -1404,9 +1404,6 @@ void CGXCache::resetTevState() {
     }
 }
 
-extern "C" void disableTexGen__8CGXCacheFv(void* self);
-extern "C" void resetTevState__8CGXCacheFv(void* self);
-
 // Inline ring-entry search: the mid-loop return yields retail's two-branch
 // exit and the runtime member bound compiles to mtctr/bdnz. Defined before
 // the dont_inline region so -inline auto can fold it into every caller.
@@ -1436,7 +1433,7 @@ void CGXCache::resetGXFull() {
     GXSetCoPlanar(GX_DISABLE);
     GXSetCullMode(GX_CULL_BACK);
     GXSetClipMode(GX_CLIP_ENABLE);
-    disableTexGen__8CGXCacheFv(this);
+    disableTexGen();
     GXInvalidateVtxCache();
     GXInvalidateTexAll();
     GXClearVtxDesc();
@@ -1489,7 +1486,7 @@ void CGXCache::resetGXFull() {
     GXSetAlphaCompare(GX_ALWAYS, 0, GX_AOP_AND, GX_ALWAYS, 0);
     GXSetZTexture(GX_ZT_DISABLE, GX_TF_Z8, 0);
 
-    resetTevState__8CGXCacheFv(this);
+    resetTevState();
 
     GXSetNumIndStages(0);
     GXSetIndTexCoordScale(GX_INDTEXSTAGE0, GX_ITS_1, GX_ITS_1);
@@ -1618,35 +1615,11 @@ void CGXCache::resetGXFull() {
     GXSetTevColor(GX_TEVREG1, gxCol);
 }
 
-struct MsgParam32Entry {
-    u32 command;
-    u32 wid;
-    u32 unk8;
-    u32 unkC;
-    u32 unk10;
-    u32 unk14;
-    u32 unk18;
-    u32 unk1C;
-    u16 unk20;
-    u8 unk22;
-    u8 unk23;
-};
-
-struct MsgParam32Ring {
-    u8 pad[0x484];
-    MsgParam32Entry* mArrayPtr;
-    u32 mFront;
-    u32 mSize;
-    u32 mCapacity;
-    u32 field6;
-    void* field7;
-};
-
 // Ring search: returns the loop index of the first entry with command == cmd,
 // or 0xFFFFFFFF. The return-in-loop shape is what makes MWCC emit retail's
 // `bne skip; b found` two-branch exit (docs/MWCC_CASES.md BD-address search
 // loops); the caller then recomputes the slot from the returned index.
-static u32 msgRingFind(MsgParam32Ring* ring, u32 cmd) {
+static u32 msgRingFind(CMsgParam_32* ring, u32 cmd) {
     for (u32 i = 0; i < ring->mSize; i++) {
         u32 idx = ring->mFront + i;
         u32 slot = idx % ring->mCapacity;
@@ -1670,7 +1643,7 @@ public:
 // -ipa off policy keeps it out-of-line.
 // Inlined-helper form: the `return i` inside the loop is what makes MWCC
 // emit the two-branch exit (`bne next; b found`) of the retail search loop.
-static inline u32 gxCacheFindCmd(MsgParam32Ring* ring, u32 cmd) {
+static inline u32 gxCacheFindCmd(CMsgParam_32* ring, u32 cmd) {
     for (u32 i = 0; i < ring->mSize; i++) {
         u32 idx = ring->mFront + i;
         u32 slot = idx % ring->mCapacity;
@@ -1681,19 +1654,19 @@ static inline u32 gxCacheFindCmd(MsgParam32Ring* ring, u32 cmd) {
 }
 
 extern "C" void dispatchCmdGX__8CGXCacheFv(void* self, u32 cmd) {
-    MsgParam32Ring* ring = (MsgParam32Ring*)self;
+    CMsgParam_32* ring = static_cast<CMsgParam_32*>(self);
     u32 i = gxCacheFindCmd(ring, cmd);
     // Statement order reproduces retail's schedule; the virtual-call syntax
     // pins the target object to r3 and pushes the ring copy into r9.
     u32 idx = ring->mFront + i;
     void* obj = ring->field7;
     u32 slot2 = idx % ring->mCapacity;
-    MsgParam32Entry* entry = &ring->mArrayPtr[slot2];
+    CMsgParamEntry* entry = &ring->mArrayPtr[slot2];
     static_cast<CGxMessageTarget*>(obj)->dispatch(cmd, &entry->wid);
 }
 
 extern "C" void* getCmdPayload__8CGXCacheFv(void* self, u32 cmd) {
-    MsgParam32Ring* ring = (MsgParam32Ring*)self;
+    CMsgParam_32* ring = static_cast<CMsgParam_32*>(self);
     u32 i = msgRingFind(ring, cmd);
     u32 idx = ring->mFront + i;
     u32 slot = idx % ring->mCapacity;
@@ -1702,8 +1675,7 @@ extern "C" void* getCmdPayload__8CGXCacheFv(void* self, u32 cmd) {
 // Find the ring entry whose command == id and return a pointer to its payload
 // word (wid). If not found, the slot is computed with i = -1 (wraps to the
 // last ring slot), mirroring retail's fallthrough li r8, -1.
-extern "C" u32* findRingEntry__8CGXCacheFv(CMsgParam_32* ringp, u32 id) {
-    MsgParam32Ring* ring = (MsgParam32Ring*)ringp;
+extern "C" u32* findRingEntry__8CGXCacheFv(CMsgParam_32* ring, u32 id) {
     u32 i = msgRingFind(ring, id);
     u32 idx = ring->mFront + i;
     u32 slot = idx % ring->mCapacity;

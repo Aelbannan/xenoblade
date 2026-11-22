@@ -3,6 +3,15 @@
 #include <types.h>
 #include <nw4r/math/math_types.h>
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
+#include "kyoshin/cf/object/CfObjectMove.hpp"
+
+// Root of the cf::CtrlBase hierarchy: RTTI name string "CActInput" is the
+// first base of cf::CtrlBase in the retail CtrlEnemy RTTI tables, and the
+// DESTROYBASE records in CtrlAct/CtrlNpc ctors name this 0x40 empty dtor.
+class CActInput {
+public:
+    virtual ~CActInput() {}
+};
 
 namespace ml {
 struct CVec3;
@@ -12,7 +21,7 @@ namespace cf {
 
 class CCtrlMoveBase;
 
-class CtrlBase {
+class CtrlBase : public ::CActInput {
 public:
     virtual ~CtrlBase();
 };
@@ -378,22 +387,6 @@ public:
     void* field_0x1E0;               // 0x1E0
     u8 _pad1E4[0x200 - 0x1E4];       // 0x1E4-0x1FF
     u32 field_0x200;                 // 0x200 (flags)
-};
-
-// Minimal cf::CfObjectMove view for this TU's CfObject_getMoveFactor
-// getter. The full CfObjectMove.hpp header declares that member with a void
-// return, but retail emits `lfs f1, 0x6ec(r3)` - f1 is the FP return
-// register, so the source must return float, and MWCC rejects a definition
-// that widens the declared return type. The view is only used here, so it
-// lives in this unit header instead (same convention as the CtrlActView
-// family in CtrlAct.hpp).
-class CfObjectMove {
-public:
-    float CfObject_getMoveFactor();
-
-    // +0x00: vptr (not modelled - no virtuals in this view)
-    u8 _00[0x6EC];              // 0x00
-    float mField6EC;            // 0x6EC
 };
 
 } // namespace cf

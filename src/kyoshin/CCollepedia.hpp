@@ -12,8 +12,8 @@
 #include "kyoshin/CQuestWindow_Pane.hpp"
 #include "kyoshin/code_80135FDC_State.hpp"
 #include "kyoshin/CUICfManager_Res.hpp"
-
-class CSysWin;
+#include "kyoshin/CSysWin.hpp"
+#include "monolib/lib/UnkClass_8045F564.hpp"
 
 namespace nw4r {
 namespace lyt {
@@ -64,10 +64,12 @@ struct CLPPageTable {
 }; // sizeof == 0x2800
 
 // Catalog at CCollepedia+0xE8: count, selected page, then the page table.
+// Retail emits CCollepedia's assignment member-wise through this struct (count,
+// page index, then the page-table block), so it is not a trivial aggregate.
 struct CLPCatalog {
+    ~CLPCatalog();
     /* 0x00 */ u8 mCount;
     /* 0x01 */ s8 mCurrentPage;
-    /* 0x02 */ u8 _02[2];
     /* 0x04 */ CLPPageTable mPageTable;
 }; // sizeof == 0x2804
 
@@ -79,37 +81,21 @@ struct CLPInitTemp {
     CLPPageTable data;
 };
 
-// Container with a layout pointer at +0x04 (used by clpCalcCurPos)
-struct LayoutContainer {
-    u8 _00[0x04];
-    nw4r::lyt::Layout* mpLayout; // at +0x04
-};
-
-// Cursor class derived from CBaseCur, used by CCollepedia for cursor display.
-// Vtable at lbl_eu_80537474 (3 entries, size 0x18 with padding).
-class CCLPCur : public CBaseCur {
+// Stand-alone cursor embedded at CCollepedia+0x6C. Not a CBaseCur: its
+// vtable (one slot, initLayout) and RTTI ("CCLPCur", no bases) are emitted by
+// the compiler, and retail copies its members inline in CCollepedia's
+// implicit assignment.
+class CCLPCur {
 public:
     CCLPCur(nw4r::lyt::ArcResourceAccessor* pAccessor);
-};
-
-// Cursor body shared by CCur07/CCur18/CCLPCur (everything after the vtable
-// pointer); OnFileEvent builds cursors on the stack and copies this region
-// into the embedded members.
-struct CLPCurBody {
-    void* field_04;
-    void* field_08;
-    void* field_0C;
-    void* field_10;
-    u8 mActive;   // +0x14
-    u8 mVisible;  // +0x15
-};
-
-// Second-page setup record (built by clpInitPgInfo, finished by
-// clpSetupDetPg): accessor, loaded layout, bound animation transform.
-struct CLPPageSetup {
-    nw4r::lyt::ArcResourceAccessor* mpAccessor;   // +0x00
-    nw4r::lyt::Layout* mpLayout;                  // +0x04
-    nw4r::lyt::AnimTransform* mpAnimTrans;        // +0x08
+    ~CCLPCur();
+    virtual void initLayout();
+    nw4r::lyt::ArcResourceAccessor* mArcResAcc; // +0x04
+    nw4r::lyt::Layout* mpLayout;                // +0x08
+    nw4r::lyt::AnimTransform* mpAnimTrans0;     // +0x0C
+    nw4r::lyt::AnimTransform* mpAnimTrans1;     // +0x10
+    u8 mActive;                                 // +0x14
+    u8 mVisible;                                // +0x15
 };
 
 // Texture size header reachable from a lyt texture resource's +0x08 pointer.
@@ -129,26 +115,23 @@ struct CLPSize {
 };
 
 
-// Page-info record produced by clpInitPgInfo and stored at +0x28EC.
+// Detail-page record at CCollepedia+0x28EC (built by clpInitPgInfo, finished
+// by clpSetupDetPg): accessor, detail layout, its open/close animation, then
+// the open/close state machine bytes.
 struct CLPPageInfo {
-    u32 field_00;                // +0x28EC
-    nw4r::lyt::Layout* mpLayout; // +0x28F0
-    u32 field_08;                // +0x28F4
-    u8 field_0C;                 // +0x28F8
-    u8 field_0D;                 // +0x28F9
-    u8 field_0E;                 // +0x28FA
+    ~CLPPageInfo();
+    nw4r::lyt::ArcResourceAccessor* mpAccessor; // +0x00
+    nw4r::lyt::Layout* mpLayout;                // +0x04
+    nw4r::lyt::AnimTransform* mpAnimTrans;      // +0x08
+    u8 mState;                                  // +0x0C 0 closed, 1 opening, 2 open, 3 closing
+    u8 field_0D;                                // +0x0D
+    u8 field_0E;                                // +0x0E detail view shown
 };
 
-
-
 // CCollepedia is a real IWorkEvent: MWCC emits its vptr and event virtuals.
-// +0x0C doubles as state bytes/AnimTransform* in the recovered bodies.
 struct CCollepedia : public IWorkEvent {
-    /* 0x04 */ nw4r::lyt::Layout* field_4;
-    /* 0x08 */ nw4r::lyt::Layout* field_8; // used as Layout* in rendering, AnimTransform* in state checks
-    /* 0x0C */ nw4r::lyt::AnimTransform* field_c_ptr; // state machine (low bytes) or AnimTransform*
-    /* 0x10 */ nw4r::lyt::AnimTransform* field_10_ptr;
-    /* 0x14 */ u8 _14[0x24 - 0x14];
+    /* 0x04 */ UnkClass_8045F564 mRegion0;
+    /* 0x14 */ UnkClass_8045F564 mRegion1;
     /* 0x24 */ void* field_24; // CFileHandle* - file handle 1
     /* 0x28 */ void* field_28; // CFileHandle* - file handle 2
     /* 0x2C */ void* field_2C; // CFileHandle* - archive file handle
@@ -160,25 +143,19 @@ struct CCollepedia : public IWorkEvent {
     /* 0x44 */ nw4r::lyt::AnimTransform* field_44; // AnimTransform* at 0x44
     /* 0x48 */ u8 field_48;
     /* 0x49 */ u8 field_49;
-    /* 0x4A */ u8 _4A[0x4C - 0x4A];
     /* 0x4C */ u32 field_4C;
     /* 0x50 */ u8 field_50;
     /* 0x51 */ u8 field_51;
-    /* 0x52 */ u8 _52[0x54 - 0x52];
-    /* 0x54 */ u8 field_54[0x9C - 0x54]; // sub-object at 0x54 (two embedded cursors at +0x54/+0x84)
-    /* 0x9C */ u8 field_9C; // CSysWin sub-object starts here
-    /* 0x9D */ u8 _9D[0xD8 - 0x9D];
+    /* 0x54 */ CCur07 mCur07;
+    /* 0x6C */ CCLPCur mClpCur;
+    /* 0x84 */ CCur18 mCur18;
+    /* 0x9C */ CSysWin mSysWin;
     /* 0xD8 */ u8 field_D8;
     /* 0xD9 */ u8 field_D9;
     /* 0xDA */ u8 field_DA;
-    /* 0xDB */ u8 _DB; // padding
     /* 0xDC */ float field_DC[3]; // VEC3 copied from pane position (0xDC-0xE7)
     /* 0xE8 */ CLPCatalog mCatalog; // page catalog (ends at 0x28EC)
-    /* 0x28EC */ u8 field_28EC[0x28F0 - 0x28EC];
-    /* 0x28F0 */ nw4r::lyt::Layout* field_28F0; // Layout* at 0x28F0 (used by clpDrawWindow)
-    /* 0x28F4 */ u8 _28F4[0x28F9 - 0x28F4];
-    /* 0x28F9 */ u8 field_28F9;
-    /* 0x28FA */ u8 field_28FA;
+    /* 0x28EC */ CLPPageInfo mPageInfo;
 
     bool OnFileEvent(CEventFile* pEventFile);
 
@@ -214,15 +191,11 @@ extern "C" const float lbl_eu_806687FC;
 extern "C" const float lbl_eu_80668810;
 extern "C" const float lbl_eu_80668814;
 extern "C" const double lbl_eu_80668818;
-extern "C" void* lbl_eu_80537474[];
 extern "C" void UIWin_CreateItemMulti(u32, u32, u32, u32, u32, u32, u32, u32, u32);
 extern "C" char* gpClpCollectMsgTable;
 extern "C" void* gpClpItemMsgTable;
 extern "C" u32 CtrlObjectParam_GetStateBitFlag(u16);
 // CCur per-frame update
-extern "C" void __dt__7CSysWinFv(void*, int);
-extern "C" void __dt__6CCur07Fv(void*, int);
-extern "C" void deleteRegion__17UnkClass_8045F564Fv(void*);
 
 extern "C" u32 CItem_findRecByFamily(u16);
 extern "C" void CItemData_initFromFamily(void*, u16, u32);
@@ -233,9 +206,6 @@ extern "C" u32 KyoshinHeap_GetField44();
 
 extern "C" void copyVEC3(void*, const void*);
 
-// Additional imports for the CCollepedia constructor
-extern "C" void __ct__CCur07(void* self, void* param);   // CCur07 ctor (+0x54)
-extern "C" void __ct__7CSysWinFUc(CSysWin* self, int arg);   // CSysWin ctor
 
 // Imports used by OnFileEvent / clpBuildPages
 extern "C" u32 Bdat_GetMaxRow_B1EC(void*);                     // bdat row count
@@ -248,23 +218,3 @@ extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32,
 // import must keep C++ linkage (MWCC appends __Fv).
 // Verbatim-mangled import: the real retail CfGameManager controller-type check
 
-// Mirror of CSysWin +0x04..end (everything after the vtable pointer), used to
-// member-wise copy a stack-constructed CSysWin into the embedded window at
-// +0x9C the way retail does in the CCollepedia constructor.
-struct CLPSysWinBody {
-    UnkClass_8045F564 mMemRegion;                  // +0x04
-    void* mFileHandle;                             // +0x14
-    void* mTagProcessor;                           // +0x18
-    nw4r::lyt::ArcResourceAccessor* mArcAccessor;  // +0x1C
-    nw4r::lyt::Layout* mLayout;                    // +0x20
-    nw4r::lyt::AnimTransform* mAnimTrans;          // +0x24
-    u8 field_28;                                   // +0x28
-    u32 field_2C;                                  // +0x2C
-    u32 field_30;                                  // +0x30
-    u8 field_34;                                   // +0x34
-    u8 field_35;
-    u8 field_36;
-    u8 field_37;
-    u8 field_38;
-    u8 field_39;
-};

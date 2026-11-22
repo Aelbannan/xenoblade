@@ -9,6 +9,7 @@
 #include <harness_catalog.h>
 #include "revolution/bte/stack/include/bt_types.h"
 #include "revolution/bte/stack/include/hcidefs.h"
+#include "revolution/BTE/gki/common/gki.h"
 
 extern void LogMsg_0(UINT32 trace_set_mask, const char *fmt_str);
 extern void LogMsg_1(UINT32 trace_set_mask, const char *fmt_str, UINT32 p1);
@@ -847,12 +848,12 @@ void btm_acl_role_changed(UINT8 hci_status, BD_ADDR bd_addr, UINT8 new_role)
     }
 }
 
-void btm_acl_timeout(void *p_acl_cb)
+void btm_acl_timeout(TIMER_LIST_ENT *p_tle)
 {
     tBTM_CMPL_CB cback;
     unsigned char evt[0x10];
 
-    if (*(unsigned int *)((char *)p_acl_cb + 0x10) == 4) {
+    if (p_tle->param == 4) {
         cback = btm_cb.p_rlinkp_cmpl_cb;
         evt[0] = 0xa;
         *(unsigned short *)(evt + 8) = 0;

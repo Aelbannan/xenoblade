@@ -130,7 +130,7 @@ public:
     void Init();
     void Term();
     void Move();
-    void cbRenderBefore();
+    void cbRenderBefore(CScn* scene);
 
     // 0x04-0x0F: CDoubleListNode
     u8 _04[0x10 - 0x04];            // 0x04..0x0F

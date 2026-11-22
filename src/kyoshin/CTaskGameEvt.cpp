@@ -47,7 +47,7 @@ void CTaskGameEvt::Move() {
     }
 }
 
-void CTaskGameEvt::cbRenderBefore() {}
+void CTaskGameEvt::cbRenderBefore(CScn*) {}
 
 bool CTaskGameEvt::OnFileEvent(CEventFile* event) {
     return false;

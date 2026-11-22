@@ -59,9 +59,15 @@ int PlugHelp_OpenPTChangeMenu(VMThread* pThread) {
     return 0;
 }
 
+// name-guess: three-entry VM command table registered by pluginHelpRegist
+// (retail .data object at 0x8053A498).
+static PluginFuncData sHelpPluginFuncs[] = {
+    { "gameStart", PlugHelp_QueueTutorial1 },
+    { "itemVision", PlugHelp_QueueTutorial3E },
+    { "ptChange", PlugHelp_OpenPTChangeMenu },
+    { nullptr, nullptr },
+};
+
 extern "C" void pluginHelpRegist() {
-    extern void vmPluginRegist(void*, void*);
-    extern char lbl_eu_8051347C[];
-    extern char lbl_eu_8053A498[];
-    vmPluginRegist((void*)lbl_eu_8051347C, (void*)lbl_eu_8053A498);
+    vmPluginRegist("help", sHelpPluginFuncs);
 }

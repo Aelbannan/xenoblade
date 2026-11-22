@@ -1,12 +1,8 @@
 #define IWORK_EVENT_INLINE_DTOR // ~CEquipChange elides the empty base dtor (retail)
 
-// harness_catalog dropped: this TU uses none of its VM/script-helper
-// headers, and it drags in the stale void*/void* CItem_initItemImplInstances
-// declaration (via CTaskGameEff -> CfGameManager) that conflicts with the
-// real one in kyoshin/cf/CItem.hpp (see below).
-// Real item-impl owner first (before CItemBoxInfo.hpp's shim macro exists,
-// which would otherwise rewrite this header's own declaration). Its decls are
-// canonical for the item tables, CItem_kindPtr and CItem_slotCnt.
+// harness_catalog dropped: this TU uses none of its VM/script-helper headers.
+// Real item-impl owner: its decls are canonical for the item tables,
+// CItem_initItemImplInstances, CItem_kindPtr and CItem_slotCnt.
 #include "kyoshin/cf/CfBdat.hpp"
 #include "kyoshin/cf/CItem.hpp"
 #include "monolib/lib/CLibLayout.hpp"
@@ -16,9 +12,6 @@
 // Out-of-line CCur copy (weak CBaseCur-family operator=, deduped into CMenuShopSell).
 #include "kyoshin/CBaseCur.hpp"
 #include "kyoshin/CItemBoxInfo.hpp"
-// Real item-impl accessor (CItem.hpp) for this TU only: undo the
-// itemimplshim macro from CItemBoxInfo.hpp (other TUs keep using it).
-#undef CItem_initItemImplInstances
 #include "monolib/device/CDeviceFont.hpp"  // IDeviceFontInfo::getFont (+0x24)
 #include "kyoshin/cf/object/CActorParam.hpp"  // CActorParam_getBattleParams (+0x224)
 #include "monolib/device/CDeviceFile.hpp"
@@ -33,6 +26,13 @@
 extern const float lbl_eu_806682A8;
 static const u32 sEquipSceneNameTags[3] = { 0x10, 0x100000, 0x200000 };
 
+// .sbss 0x30: the six cursor colour quads owned by this TU, in retail order.
+GXColorS10 sEquipCursorSrcColorA;
+GXColorS10 sEquipCursorSrcColorB;
+GXColorS10 sEquipCursorColorA0;
+GXColorS10 sEquipCursorColorB0;
+GXColorS10 sEquipCursorColorA1;
+GXColorS10 sEquipCursorColorB1;
 
 CEquipChange::~CEquipChange() {}
 
@@ -943,7 +943,7 @@ void CEquipChange::RebuildCursorList() {
         u8 equipped = CItem_initItemImplInstances((CItemData*)weaponItem)->vf30((CItemData*)weaponItem);
         if (equipped != 0) {
             LayoutSetTextBoxFmtValue(layout, &base[0x55], getErrMesText16(), 0);
-            PaneMatSetTevColorsByName(layout, &base[0x55], (const GXColorS10*)&sEquipCursorColorA0, (const GXColorS10*)&sEquipCursorColorB0);
+            PaneMatSetTevColorsByName(layout, &base[0x55], &sEquipCursorColorA0, &sEquipCursorColorB0);
         }
 
         for (int i = 0; i < 3; i++) {
@@ -1001,7 +1001,7 @@ void CEquipChange::RebuildCursorList() {
                             break;
                         }
                         LayoutSetTextBoxFmtValue(layout, &base[0x55], getErrMesText15(), 0);
-                        PaneMatSetTevColorsByName(layout, &base[0x55], (const GXColorS10*)&sEquipCursorColorA1, (const GXColorS10*)&sEquipCursorColorB1);
+                        PaneMatSetTevColorsByName(layout, &base[0x55], &sEquipCursorColorA1, &sEquipCursorColorB1);
                     } else {
                         marks[count++] = 1;
                         char* lbl = BdatTouchStringCell(&base[0xff], &base[0x108], 0x2a);
@@ -1092,7 +1092,7 @@ void CEquipChange::RebuildCursorList() {
             if (CItem_initItemImplInstances((CItemData*)item)->vf30((CItemData*)item) != 0) {
                 sprintf(rebuildName, &base[0x1d8], i + 1);
                 LayoutSetTextBoxFmtValue(layout, rebuildName, getErrMesText16(), 0);
-                PaneMatSetTevColorsByName(layout, rebuildName, (const GXColorS10*)&sEquipCursorColorA0, (const GXColorS10*)&sEquipCursorColorB0);
+                PaneMatSetTevColorsByName(layout, rebuildName, &sEquipCursorColorA0, &sEquipCursorColorB0);
                 int slot =
                     (s16)CItem_initItemImplInstances((CItemData*)item)->vf40((CItemData*)item, 0);
                 if (slot == -1) {
@@ -1136,7 +1136,7 @@ void CEquipChange::RebuildCursorList() {
                             break;
                         }
                         LayoutSetTextBoxFmtValue(layout, rebuildName, getErrMesText15(), 0);
-                        PaneMatSetTevColorsByName(layout, rebuildName, (const GXColorS10*)&sEquipCursorColorA1, (const GXColorS10*)&sEquipCursorColorB1);
+                        PaneMatSetTevColorsByName(layout, rebuildName, &sEquipCursorColorA1, &sEquipCursorColorB1);
                     } else {
                         marks[count++] = 1;
                         char* lbl = BdatTouchStringCell(&base[0xff], &base[0x108], 0x2a);
@@ -1186,7 +1186,7 @@ void CEquipChange::RebuildCursorList() {
                             break;
                         }
                         LayoutSetTextBoxFmtValue(layout, rebuildName, getErrMesText15(), 0);
-                        PaneMatSetTevColorsByName(layout, rebuildName, (const GXColorS10*)&sEquipCursorColorA1, (const GXColorS10*)&sEquipCursorColorB1);
+                        PaneMatSetTevColorsByName(layout, rebuildName, &sEquipCursorColorA1, &sEquipCursorColorB1);
                     }
                 }
             } else {
@@ -1267,9 +1267,9 @@ bool CEquipChange::OnFileEvent(CEventFile* file) {
         // not the cached base pointer.
         scratch = ((nw4r::lyt::Layout*)field_34)->GetRootPane()->FindPaneByName(lbl_eu_80508168 + 0x60, true);
         GXColorS10 color = PaneMatGetS16Quad((nw4r::lyt::Pane*)scratch, (u32)0);
-        CopyVec4s((GXColorS10*)&sEquipCursorSrcColorA, &color);
+        CopyVec4s(&sEquipCursorSrcColorA, &color);
         color = PaneMatGetS16Quad((nw4r::lyt::Pane*)scratch, (u32)1);
-        CopyVec4s((GXColorS10*)&sEquipCursorSrcColorB, &color);
+        CopyVec4s(&sEquipCursorSrcColorB, &color);
         // Alpha halves propagate to the paired colour entries; retail keeps
         // each table address in its own register (pointer locals).
         char* colA = (char*)&sEquipCursorSrcColorA;

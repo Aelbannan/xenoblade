@@ -281,7 +281,7 @@ void mkCrystalRebuildOnChargeC(CMakeCrystalWin* self) {
 // Render callback: draw the crystal window's four subobjects once the task
 // gate is clear. Same guard + stack DrawInfo scheme as
 // CSystemWindow::cbRenderBefore.
-void CMakeCrystalWin::cbRenderBefore() {
+void CMakeCrystalWin::cbRenderBefore(CScn*) {
     CTaskGame::getInstance();
     if (CTaskGame::isFlag01Set() || (gmPauseFlags & 0x200000))
         return;
@@ -296,8 +296,8 @@ void CMakeCrystalWin::cbRenderBefore() {
     mTitleAHelp.drawHelp(&drawInfo);
 }
 
-void cbRenderBefore__15CMakeCrystalWinFv(void*);
+void cbRenderBefore__15CMakeCrystalWinFP4CScn(void*);
 
-void mkCrystalRenderBeforeThunk(void* self) { ((void(*)(void*))cbRenderBefore__15CMakeCrystalWinFv)((char*)self - 0x4); }
+void mkCrystalRenderBeforeThunk(void* self) { ((void(*)(void*))cbRenderBefore__15CMakeCrystalWinFP4CScn)((char*)self - 0x4); }
 
 void mkCrystalDtorThunk04(void* self) { ((void(*)(void*))__dt__15CMakeCrystalWinFv)((char*)self - 0x4); }

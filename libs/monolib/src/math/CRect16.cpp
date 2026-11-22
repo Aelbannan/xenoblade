@@ -1,8 +1,8 @@
 #include "monolib/math.hpp"
 
-extern "C" ml::CRect16 lbl_eu_80665588(0, 0, 0, 0);
-
 namespace ml{
+
+    CRect16 CRect16::zero = CRect16(0, 0, 0, 0);
 
 //Checks whether a point is within the given rect
 bool CRect16::isInside(const CPnt16& point) const {

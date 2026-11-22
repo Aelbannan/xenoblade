@@ -6,6 +6,7 @@
 // CViewRectDataCore: viewport rectangle state at CView::mRectData (size 0x14).
 class CViewRectDataCore {
 public:
+    ~CViewRectDataCore() {}
     CViewRectDataCore* initViewRect();
     void updateScrollForSize(const ml::CPnt16& size);
     void setBoundsSize(const ml::CPnt16& maxSize);

@@ -135,24 +135,6 @@ CScnItemCamera* ScnCamFactory(CScnCameraItemHost* self, int idx);
 // it with C linkage and the exact name, so the call site must too.
 extern "C" void parseLines__11CScriptCodeFv(void* self, u8* pData, u32 dataSize);
 
-// .sdata2 constants shared by the free camera-item functions in this TU.
-// The retail values live in the retail data blob; referencing them by name
-// keeps the @sda21 relocs identical (no pooling drift).
-extern const f32 lbl_eu_8066AB48;    // +0x00 (float pair with 8066AB4C)
-extern const f32 lbl_eu_8066AB50;    // 0.0f
-extern const f32 lbl_eu_8066AB54;    // 1.0f
-extern const f32 lbl_eu_8066AB58;    // viewport-width scale
-extern const double lbl_eu_8066AB60; // s16->f32 magic double (2^52 + 2^31)
-extern const f32 lbl_eu_8066AB68;    // 0.0f
-// Volatile-qualified: pins the load at its program position (mid-conversions
-// in retail) instead of letting MWCC hoist it to the function top.
-extern const volatile f32 lbl_eu_8066AB6C;    // aspect multiplier
-
-// .sdata globals for this TU.
-extern u32 lbl_eu_80663A08;  // camera-select command pointer (compared in WorkEvent1)
-// Volatile: retail reloads the "no view" sentinel for every mViews slot.
-extern const volatile u32 lbl_eu_80663A0C;
-
 // Tail mirror of CGXCache: the read-only CGXCache.hpp header stops before the
 // scissor-rect fields, so the s16 scissor deltas used by the camera aspect
 // computation are declared here (cacheInstance + 0x4BC / + 0x4BE).

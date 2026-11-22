@@ -183,7 +183,7 @@ extern const float kLgtBlendHalf;
 // mCount entries.
 struct CScnEnvLgtCtrlFogGate {
     u16 mFlags;    // +0x00
-    u8 _02[2];
+    u16 mFogCount; // +0x02, returned by scnLgtGetFogCount // name-guess: only the +2 lhz in scnLgtGetFogCount names this word
     u32 mCount;    // +0x04
     u32 mOffset;   // +0x08
 };

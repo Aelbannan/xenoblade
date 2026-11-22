@@ -6,6 +6,7 @@
 #include "kyoshin/menu/CMenuGCItem.hpp"
 #include "kyoshin/cf/CInfoCf.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
+#include "kyoshin/cf/CfPadData.hpp"
 #include "monolib/core/CPadManager.hpp"
 #include "monolib/device/CDeviceVI.hpp"
 #include "monolib/util/MemManager.hpp"
@@ -56,18 +57,7 @@ extern void ArtsInfo_SetReadyFlag();
 extern void playUISound(u32);
 
 
-// cf::CfPadData view: only the flag words the menu input handler reads
-// (+0x00 held, +0x04 pressed, +0x104 turbo/short-press).
-struct CfMenuPadData {
-    u32 mHeldFlags;                  // +0x00
-    u32 mPressedFlags;               // +0x04
-    u8 _pad08[0x104 - 0x08];         // 0x08..0x103
-    u32 mTurboFlags;                 // +0x104
-};
-
 // Input-handler callees (retail unmangled names).
-extern "C" CfMenuPadData* getCfPadData__Q22cf13CfGameManagerFv();
-
 extern "C" void BgTex_Tick_3D54(CBgTex* self);
 extern "C" void BgTex_Draw_3D7C(CBgTex* self, nw4r::lyt::DrawInfo* drawInfo);
 extern "C" int BgTex_IsLoaded_3E34(CBgTex* self);
@@ -203,7 +193,7 @@ void CMenuItem::Move() {
     mTitleAHelp.updateHelp();
 }
 
-void CMenuItem::cbRenderBefore() {
+void CMenuItem::cbRenderBefore(CScn*) {
     CTaskGame::getInstance();
     if (CTaskGame::isFlag01Set() || (gmPauseFlags & 0x200000))
         return;
@@ -247,31 +237,31 @@ void CMenuItem::HandleInput() {
     u8 mode = mItemBoxGrid.GetPromptState();
     mTitleAHelp.func_801C41E8(mode);
 
-    CfMenuPadData* pad = getCfPadData__Q22cf13CfGameManagerFv();
+    cf::CfPadData* pad = cf::CfGameManager::getCfPadData();
     bool up, down;
     int turboCancel, cancel, pageTurn, decide;
     bool leftTrigger, xHeld, yHeld;
     if (cf::CfGameManager::isClassicController(-1) != 0) {
         // Classic controller bit layout.
-        turboCancel = (pad->mTurboFlags & 0x8004) != 0;
-        pageTurn = (pad->mTurboFlags & 0x10008) != 0;
-        up = (pad->mPressedFlags & 0x00200000) != 0;
-        down = (pad->mPressedFlags & 0x00400000) != 0;
-        cancel = (pad->mTurboFlags & 0x2001) != 0;
-        decide = (pad->mTurboFlags & 0x4002) != 0;
-        leftTrigger = (pad->mPressedFlags & 0x01000000) != 0;
-        xHeld = (pad->mPressedFlags & 0x00000200) != 0;
-        yHeld = (pad->mPressedFlags & 0x00000400) != 0;
+        turboCancel = (pad->mTurboPressButtonFlags & 0x8004) != 0;
+        pageTurn = (pad->mTurboPressButtonFlags & 0x10008) != 0;
+        up = (pad->mPad.mPressedButtonFlags & 0x00200000) != 0;
+        down = (pad->mPad.mPressedButtonFlags & 0x00400000) != 0;
+        cancel = (pad->mTurboPressButtonFlags & 0x2001) != 0;
+        decide = (pad->mTurboPressButtonFlags & 0x4002) != 0;
+        leftTrigger = (pad->mPad.mPressedButtonFlags & 0x01000000) != 0;
+        xHeld = (pad->mPad.mPressedButtonFlags & 0x00000200) != 0;
+        yHeld = (pad->mPad.mPressedButtonFlags & 0x00000400) != 0;
     } else {
-        turboCancel = (pad->mTurboFlags & 0x8004) != 0;
-        pageTurn = (pad->mTurboFlags & 0x10008) != 0;
-        up = (pad->mPressedFlags & 0x00000010) != 0;
-        down = (pad->mPressedFlags & 0x00000020) != 0;
-        cancel = (pad->mTurboFlags & 0x2001) != 0;
-        decide = (pad->mTurboFlags & 0x4002) != 0;
-        leftTrigger = (pad->mPressedFlags & 0x00000800) != 0;
-        xHeld = (pad->mPressedFlags & 0x00000200) != 0;
-        yHeld = (pad->mPressedFlags & 0x00000040) != 0;
+        turboCancel = (pad->mTurboPressButtonFlags & 0x8004) != 0;
+        pageTurn = (pad->mTurboPressButtonFlags & 0x10008) != 0;
+        up = (pad->mPad.mPressedButtonFlags & 0x00000010) != 0;
+        down = (pad->mPad.mPressedButtonFlags & 0x00000020) != 0;
+        cancel = (pad->mTurboPressButtonFlags & 0x2001) != 0;
+        decide = (pad->mTurboPressButtonFlags & 0x4002) != 0;
+        leftTrigger = (pad->mPad.mPressedButtonFlags & 0x00000800) != 0;
+        xHeld = (pad->mPad.mPressedButtonFlags & 0x00000200) != 0;
+        yHeld = (pad->mPad.mPressedButtonFlags & 0x00000040) != 0;
     }
 
     if (up != 0) {

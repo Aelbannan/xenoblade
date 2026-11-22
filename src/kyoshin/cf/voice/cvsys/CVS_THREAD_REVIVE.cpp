@@ -206,8 +206,6 @@ extern "C" int CCharVoiceMan_NullVoiceDispatch(void* self);
 extern u32 __RTTI__Q22cf10CVS_THREAD[2];
 extern u32 __RTTI__Q22cf17CVS_THREAD_REVIVE[2];
 
-extern const char lbl_eu_805107E8[0x18] = "cf::CVS_THREAD_REVIVE";
-
 u32 lbl_eu_80539CBC[7] = {
     (u32)__RTTI__Q22cf17CVS_THREAD_REVIVE,
     0,
@@ -226,7 +224,7 @@ u32 lbl_eu_80539CD8[4] = {
 };
 
 __declspec(section ".sdata") extern u32 __RTTI__Q22cf17CVS_THREAD_REVIVE[2] = {
-    (u32)lbl_eu_805107E8,
+    (u32)"cf::CVS_THREAD_REVIVE",
     (u32)lbl_eu_80539CD8,
 };
 

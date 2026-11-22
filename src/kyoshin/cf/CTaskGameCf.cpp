@@ -1,7 +1,7 @@
 #pragma once
 
 #include "kyoshin/cf/CTaskGameCf.hpp"
-#include "kyoshin/CTaskEnvironment.hpp"
+#include "kyoshin/cf/CTaskEnvironment.hpp"
 #include "kyoshin/CTaskGameImports.hpp"
 #include "kyoshin/CUIBattleManager.hpp"
 #include "kyoshin/CUICfManager.hpp"
@@ -20,7 +20,6 @@
 // different return types), so this TU re-declares only the members it uses.
 // Signatures match the real header so the mangled symbols link to retail.
 extern "C" void func_80086B5C__Q22cf13CfGameManagerFv(int, int, int);
-extern "C" void Env_CreateTask__FP8CProcessP8CProcess(CProcess*, CProcess*);
 
 namespace cf {
     class CTaskREvent : public CProcess {
@@ -216,7 +215,7 @@ void CTaskGameCf::setPooledMove(){
         func_80086B5C__Q22cf13CfGameManagerFv(unk_60, unk_62, 0);
         func_8007E514__Q22cf13CfGameManagerFv(unk_5C, unk_5E,
             unk_64.mString[0] ? unk_64.c_str() : nullptr, unk_88, NandImageLive());
-        Env_CreateTask__FP8CProcessP8CProcess(pTaskGame, pTaskGame->getScene());
+        Env_CreateTask(pTaskGame, pTaskGame->getScene());
         CTaskCulling::create(pTaskGame, pTaskGame->getScene());
         if(CtrlRemote_TouchBitByArg((u32)0x20) == 0){
             CtrlRemote_SetSharedBit(0x20, 1);

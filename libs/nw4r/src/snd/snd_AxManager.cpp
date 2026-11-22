@@ -12,9 +12,6 @@ namespace detail {
 
 NW4R_UT_LINKLIST_TYPEDEF_FORCE(FxBase);
 
-// Retail .sdata2 float constants referenced by name so the SDA21 relocations
-// match the stripped retail object (MWCC_CASES §1b float pools).
-extern "C" const f64 lbl_eu_80669E80; // 0x43300000_00000000 (u32->f64 conv)
 
 u8 AxManager::sZeroBuffer[AxManager::ZERO_BUFFER_SIZE];
 

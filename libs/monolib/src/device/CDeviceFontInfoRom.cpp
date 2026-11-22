@@ -7,8 +7,9 @@
 #include "monolib/device/CDeviceFontInfoRom.hpp"
 #include <revolution/os/OSFont.h>
 
-// Retail singleton pointer (sdata2), set in the ctor, cleared in the dtor.
-extern CDeviceFontInfoRom* lbl_eu_80665688;
+// name-guess: current ROM font-info singleton, set in the ctor and cleared in
+// the dtor (adjacent to spDeviceFont/sDeviceFontInitCount in retail .sbss).
+CDeviceFontInfoRom* spDeviceFontInfoRom;
 
 // No-arg import of the retail RomFont::GetRequireBufferSize symbol (retail
 // callers invoke it without a this-arg; see the ctor comment).
@@ -44,7 +45,7 @@ CDeviceFontInfoRom::CDeviceFontInfoRom(void)
         mtl::MemManager::getHandleStatic(), bufSize, 0x20);
     mRomFont.Load(mFontBuffer);
 
-    lbl_eu_80665688 = this;
+    spDeviceFontInfoRom = this;
 }
 
 // ---- CDeviceFontInfoRom destructor (0x80457760) ----
@@ -64,7 +65,7 @@ CDeviceFontInfoRom::~CDeviceFontInfoRom(void) {
         mFontData = NULL;
     }
 
-    lbl_eu_80665688 = NULL;
+    spDeviceFontInfoRom = NULL;
 }
 
 // ---- getCharGlyph (0x80457808) - OSGetFontTexture passthrough ----
@@ -139,5 +140,5 @@ s32 CDeviceFontInfoRom::getFlags() {
 }
 
 // [.sbss] 0x80665688-0x80665690 (8B) zero-fill
-CDeviceFontInfoRom* lbl_eu_80665688;
-u32 lbl_eu_8066568C;
+// name-guess: paired zero word at 0x8066568C; no live retail reference found.
+u32 sDeviceFontInfoRomReserved;

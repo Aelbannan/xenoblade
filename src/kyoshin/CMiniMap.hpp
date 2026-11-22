@@ -254,7 +254,11 @@ public:
     virtual void Init();
     virtual void Term();
     virtual void Move();
-    virtual void cbRenderBefore();  // IScnRender override (+0x5C subobject)
+    virtual void cbRenderBefore(CScn* scene);  // IScnRender override (+0x5C subobject)
+
+    // name-guess: create (singleton factory; JP names sibling CMenu* factories
+    // CMenuSymbolMark::create / CMenuKeyAssign::create(CProcess*, CScn*)).
+    static CMenuMiniMap2* create(CProcess* parent, CScn* scene);
 
     CScn* mScn;                   // 0x60 - owning scene (removeRenderCB receiver)
     CMMClock mClock;              // 0x64..0x90 (declared first -> destroyed last)

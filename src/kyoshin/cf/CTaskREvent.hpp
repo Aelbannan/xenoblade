@@ -34,16 +34,6 @@ class CTaskREvent;
 struct CInfoCf;
 }
 
-namespace cf {
-class CTaskREvent;
-// Layout view exposing the CTTask PTMF slots (+0x3C/+0x48) for null-init.
-struct CTaskREventPtms {
-    u8 pad[0x3C];
-    void (CTaskREvent::*move)();
-    void (CTaskREvent::*draw)();
-};
-}
-
 // Object pointed at by CEventMgr::field_0xB0; only byte +0x39 is touched
 // (evtTeardownActive clears it to 1 while tearing an event down).
 struct CEventMgrB0 {
@@ -365,8 +355,6 @@ extern "C" {
     REvtMgrView* getGimmickList__Q22cf13CfGameManagerFv();
     REvtActor* getCfObjectPc__FPQ22cf12CfObjectMove(REvtActor* obj);
     REvtActor* getEffOwner____FPv(REvtActor* obj);
-    void deactivateLOD__8CTaskLODFv(s16 taskID);
-    void activateLOD__8CTaskLODFv(s16 taskID);
     // Imports for cf::CTaskREvent::Move
     u32 EvtSeqGetCounter100();
     int CTaskGame_isStreamPaused();
@@ -380,6 +368,8 @@ extern "C" {
 namespace cf{
     class CTaskREvent : public CTTask<CTaskREvent>{
     public:
+        using CTTask<CTaskREvent>::mMoveFunc;
+        using CTTask<CTaskREvent>::mDrawFunc;
         static CTaskREvent* getInstance();
         static CTaskREvent* create(CProcess* pParent, CScnNw4r* pScene, CView* pView);
 
@@ -422,7 +412,7 @@ public:
     void Term();
     void Move();
     void Draw();
-    void cbRenderBefore();
+    void cbRenderBefore(CScn* scene);
     void OnFileEvent();
     }; //size = 0x1F8
 } //namespace cf

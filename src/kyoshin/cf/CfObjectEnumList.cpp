@@ -14,6 +14,7 @@
 #include <nw4r/db/db_assert.h>    // nw4r::db::Warning
 #include <revolution/mtx/vec.h>   // PSVECAdd
 #include "kyoshin/cf/CfEnumObject.hpp"  // canonical CfEnumObject + flags64/type91
+#include "monolib/core/CView.hpp"       // real CView viewport/frame members
 // Forward decl (was pulled in via CfCam.hpp, which now conflicts with this
 // TU's extern "C" declarations of MapFx_ResolveOwner/func_800BBC0C).
 namespace cf { class CfCamFollow; }
@@ -389,11 +390,6 @@ public:
 
 #undef ENUM_DUMMY_VIRTUAL
 
-struct CfEnumKind {
-    u8 _pad_00[0x91];
-    s8 kind91;
-};
-
 extern "C" {
 void* getInstance__Fv();
 CfEnumObject* resetMgrReslist();
@@ -418,7 +414,7 @@ CfEnumActor* func_800BBC0C(CfEnumObject*);
 int isBattleStatusActive(void*, int);
 int isSpeedAbove(CfEnumActorAux*);
 
-CfEnumKind* CollObjHasFlag64Bit15(CfEnumObject*);
+CfEnumObject* CollObjHasFlag64Bit15(CfEnumObject*);
 CfEnumObject* Selector_GetInstance();
 CfEnumObject* findObjectById__Fi(int);
 CfEnumObject* getPlayer__Q22cf13CfGameManagerFi(int);
@@ -429,8 +425,6 @@ extern "C" int probePartnerSegment(cf::CfObjEnumList* list, CfEnumActor* aux,
 void* Scn_FindCamItem(void* scene, int index);   // scene pose/xform block
 void* Scn_SetCamIndex(void* scene, int flag);    // scene view frame
 int CamMan_ProjectToScreen(void* out, void* pose, void* pos); // view-space transform
-void getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(
-    void* rect, const void* frame);
 int ColiCheckStateGate(void* self, void* a, void* b); // aux cone probe (two vecs)
 }
 
@@ -515,7 +509,7 @@ int ColiCheckStateGate(void* self, void* a, void* b); // aux cone probe (two vec
             (rejected_) = true;                                               \
         }                                                                     \
         if (!(rejected_) && ((options_) & 0x2000) &&                          \
-            !CBattleMan_ListHasValue(getInstance__Q22cf14CBattleManagerFv(), (unsigned int)actor_)) { \
+            !CBattleMan_ListHasValue(cf::CBattleManager::getInstance(), (unsigned int)actor_)) { \
             (rejected_) = true;                                               \
         }                                                                     \
     } while (false)
@@ -724,7 +718,7 @@ void cf::CfObjEnumList::runEnumObjects(int flags, u32 options) {
                 rejected = true;
             }
             if (!rejected && (options & 0x2000) &&
-                !CBattleMan_ListHasValue(getInstance__Q22cf14CBattleManagerFv(), (unsigned int)actor)) {
+                !CBattleMan_ListHasValue(cf::CBattleManager::getInstance(), (unsigned int)actor)) {
                 rejected = true;
             }
             if (rejected) {
@@ -762,7 +756,7 @@ void cf::CfObjEnumList::runEnumObjects(int flags, u32 options) {
                 rejected = true;
             }
             if (!rejected && (options & 0x2000) &&
-                !CBattleMan_ListHasValue(getInstance__Q22cf14CBattleManagerFv(), (unsigned int)actor)) {
+                !CBattleMan_ListHasValue(cf::CBattleManager::getInstance(), (unsigned int)actor)) {
                 rejected = true;
             }
             if (rejected) {
@@ -895,8 +889,8 @@ void cf::CfObjEnumList::runEnumObjects(int flags, u32 options) {
             if (!rejected) {
                 bool unavailable = CtrlRemote_TouchBitByArg(0x3354) == 0;
                 if (unavailable) {
-                    CfEnumKind* kind = CollObjHasFlag64Bit15(object);
-                    if (kind != 0 && kind->kind91 == 6) {
+                    CfEnumObject* kind = CollObjHasFlag64Bit15(object);
+                    if (kind != 0 && kind->type91 == 6) {
                         rejected = true;
                     }
                 }
@@ -932,7 +926,7 @@ void cf::CfObjEnumList::runEnumObjects(int flags, u32 options) {
         }
         flags &= ~0x1000u;
     } else if (flags & 0x4000) {
-        void* manager = getInstance__Q22cf14CBattleManagerFv();
+        void* manager = cf::CBattleManager::getInstance();
         CfEnumActor* source = (CfEnumActor*)CBattleMan_NextListItem(manager);
         object = source;
         float one = 1.0f;
@@ -942,19 +936,19 @@ void cf::CfObjEnumList::runEnumObjects(int flags, u32 options) {
             actor = (CfEnumActor*)MapFx_ResolveOwner(object);
             ENUM_ACTOR_FILTERS(rejected, object, actor, options, zero, one);
             if (rejected) {
-                manager = getInstance__Q22cf14CBattleManagerFv();
+                manager = cf::CBattleManager::getInstance();
                 source = (CfEnumActor*)CBattleMan_FindNextActorRef(manager, object);
                 object = source;
                 continue;
             }
             ENUM_ADD_OBJECT(info15, object);
-            manager = getInstance__Q22cf14CBattleManagerFv();
+            manager = cf::CBattleManager::getInstance();
             source = (CfEnumActor*)CBattleMan_FindNextActorRef(manager, object);
             object = source;
         }
         flags &= ~0x4000u;
     } else if (flags & 0x8000) {
-        void* manager = getInstance__Q22cf14CBattleManagerFv();
+        void* manager = cf::CBattleManager::getInstance();
         CfEnumActor* source = (CfEnumActor*)CBattleMan_NextListItem(manager);
         object = source;
         float one = 1.0f;
@@ -967,19 +961,19 @@ void cf::CfObjEnumList::runEnumObjects(int flags, u32 options) {
             }
             ENUM_ACTOR_FILTERS(rejected, object, actor, options, zero, one);
             if (rejected) {
-                manager = getInstance__Q22cf14CBattleManagerFv();
+                manager = cf::CBattleManager::getInstance();
                 source = (CfEnumActor*)CBattleMan_FindNextActorRef(manager, object);
                 object = source;
                 continue;
             }
             ENUM_ADD_OBJECT(info16, object);
-            manager = getInstance__Q22cf14CBattleManagerFv();
+            manager = cf::CBattleManager::getInstance();
             source = (CfEnumActor*)CBattleMan_FindNextActorRef(manager, object);
             object = source;
         }
         flags &= ~0x8000u;
     } else if (flags & 0x10000) {
-        void* manager = getInstance__Q22cf14CBattleManagerFv();
+        void* manager = cf::CBattleManager::getInstance();
         CfEnumActor* source = (CfEnumActor*)CBattleMan_NextListItem(manager);
         object = source;
         float zero = 0.0f;
@@ -992,19 +986,19 @@ void cf::CfObjEnumList::runEnumObjects(int flags, u32 options) {
             }
             ENUM_ACTOR_FILTERS(rejected, object, actor, options, zero, one);
             if (rejected) {
-                manager = getInstance__Q22cf14CBattleManagerFv();
+                manager = cf::CBattleManager::getInstance();
                 source = (CfEnumActor*)CBattleMan_FindNextActorRef(manager, object);
                 object = source;
                 continue;
             }
             ENUM_ADD_OBJECT(info17, object);
-            manager = getInstance__Q22cf14CBattleManagerFv();
+            manager = cf::CBattleManager::getInstance();
             source = (CfEnumActor*)CBattleMan_FindNextActorRef(manager, object);
             object = source;
         }
         flags &= ~0x10000u;
     } else if (flags & 0x20000) {
-        void* manager = getInstance__Q22cf14CBattleManagerFv();
+        void* manager = cf::CBattleManager::getInstance();
         CfEnumActor* source = (CfEnumActor*)CBattleMan_NextListItem(manager);
         object = source;
         while (object != 0) {
@@ -1017,13 +1011,13 @@ void cf::CfObjEnumList::runEnumObjects(int flags, u32 options) {
                 rejected = true;
             }
             if (rejected) {
-                manager = getInstance__Q22cf14CBattleManagerFv();
+                manager = cf::CBattleManager::getInstance();
                 source = (CfEnumActor*)CBattleMan_FindNextActorRef(manager, object);
                 object = source;
                 continue;
             }
             ENUM_ADD_OBJECT_ALT(info18, object);
-            manager = getInstance__Q22cf14CBattleManagerFv();
+            manager = cf::CBattleManager::getInstance();
             source = (CfEnumActor*)CBattleMan_FindNextActorRef(manager, object);
             object = source;
         }
@@ -1206,15 +1200,6 @@ void sortEntriesByDistance(cf::CfObjEnumList* self, ml::CVec3* spot) {
                   hi);
 }
 
-struct EnumViewFrameShorts {
-    u8 _pad[0x1C8];
-    s16 originX;             // 0x1C8
-    s16 originY;             // 0x1CA
-    u8 _pad2[0x230 - 0x1CC];
-    s16 sizeX;               // 0x230
-    s16 sizeY;               // 0x232
-};
-
 // us-800f94c4 | sortEntriesByScreenX: project every entry through the scene view
 // transform (marking processed entries with the 0x1 bit), recompute each sort
 // value as screen-x minus half the frame origin, quicksort, find the largest
@@ -1224,8 +1209,7 @@ extern "C" void sortEntriesByScreenX(cf::CfObjEnumList* self) {
     if (self->mPtrCount < 2) {
         return;
     }
-    EnumViewFrameShorts* vf = reinterpret_cast<EnumViewFrameShorts*>(
-        Scn_SetCamIndex((void*)self->field_303C, 0));
+    CView* vf = static_cast<CView*>(Scn_SetCamIndex((void*)self->field_303C, 0));
     void* pose = Scn_FindCamItem((void*)self->field_303C, 0);
 
     // Pass 1: view-space transform of each entry without the bit-0 mark.
@@ -1262,13 +1246,9 @@ extern "C" void sortEntriesByScreenX(cf::CfObjEnumList* self) {
 
     // Pass 2: sort value = view-space x - frame origin/2.  The halved origin
     // stays an int; the int->float conversion happens inside the loop.
-    struct SRect16 {
-        s16 x, y, w, h;
-    };
-    SRect16 rc;
-    getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(
-        &rc, (u8*)vf + 0x1DC);
-    int half = vf->originX / 2;
+    ml::CRect16 rc;
+    getFrame2ViewOffset(rc, &vf->mFrame);
+    int half = vf->mRectData.mViewSize.x / 2;
     for (u32 i = 0; i < self->mPtrCount; i++) {
         cf::CfObjEnumList::sObjInfo* p = self->mPtrArray[i];
         p->field_14 = p->field_08 - (float)half;
@@ -1336,8 +1316,7 @@ void __ct__800FA9B4(cf::CfObjEnumList* list, void* scene, u32 options) {
         return;
     }
     void* pose = Scn_FindCamItem(scene, 0);
-    EnumViewFrameShorts* vf =
-        reinterpret_cast<EnumViewFrameShorts*>(Scn_SetCamIndex(scene, 0));
+    CView* vf = static_cast<CView*>(Scn_SetCamIndex(scene, 0));
     s16 border = -20;   // screen-space border, live across the whole loop
 
     // Snapshot context: leading never-written word, array copy, sort descriptor.
@@ -1402,16 +1381,15 @@ void __ct__800FA9B4(cf::CfObjEnumList* list, void* scene, u32 options) {
             if (keep) {
                 // Screen-rect gate: reject when (x,y) falls outside the frame
                 // box expanded by the border (converted via the 2^52 idiom).
-                SRect16 rc;
-                getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(
-                    &rc, (u8*)vf + 0x1DC);
-                s16 ox = vf->originX;
-                s16 oy = vf->originY;
-                s16 sx = vf->sizeX;
-                s16 sy = vf->sizeY;
+                ml::CRect16 rc;
+                getFrame2ViewOffset(rc, &vf->mFrame);
+                s16 ox = vf->mRectData.mViewSize.x;
+                s16 oy = vf->mRectData.mViewSize.y;
+                s16 sx = vf->mFrame.mContentX;
+                s16 sy = vf->mFrame.mContentY;
                 SRect16 clip;
-                clip.x = sx + rc.x;
-                clip.y = sy + rc.y;
+                clip.x = sx + rc.mPos.x;
+                clip.y = sy + rc.mPos.y;
                 SRect16 clipCopy = clip;
                 clip.x = border;
                 clip.y = border;
@@ -2454,7 +2432,7 @@ extern "C" void __ct__800FCA24(cf::CfObjEnumList* list, u32 spotId, u32 options)
         bool rejected = false;
         u32 subId = actorView->sub.vfn13();
         if (subId != spotId ||
-            CBattleMan_ListHasValue(getInstance__Q22cf14CBattleManagerFv(), (unsigned int)actor) == 0) {
+            CBattleMan_ListHasValue(cf::CBattleManager::getInstance(), (unsigned int)actor) == 0) {
             rejected = true;
         }
         if (options & 2) {
@@ -2577,7 +2555,7 @@ extern "C" void __ct__800FCD10(cf::CfObjEnumList* list, u32 arg1, u32 options) {
         bool found = false;
         // Adjust the call result in place (stays in r3 through the null
         // check), then copy to cur once: retail cmpwi/beq/addi/mr order.
-        CfEnumActor* t = (CfEnumActor*)CBattleMan_NextListItem(getInstance__Q22cf14CBattleManagerFv());
+        CfEnumActor* t = (CfEnumActor*)CBattleMan_NextListItem(cf::CBattleManager::getInstance());
         if (t != 0) {
             t = reinterpret_cast<CfEnumActor*>(reinterpret_cast<u8*>(t) + 0x3E9C);
         }
@@ -2586,7 +2564,7 @@ extern "C" void __ct__800FCD10(cf::CfObjEnumList* list, u32 arg1, u32 options) {
             CfEnumActor* cand = (CfEnumActor*)MapFx_ResolveOwner(cur);
             if (cand == 0 || cand == actor) {
                 CfEnumActor* t2 = (CfEnumActor*)CBattleMan_FindNextActorRef(
-                    getInstance__Q22cf14CBattleManagerFv(), cur);
+                    cf::CBattleManager::getInstance(), cur);
                 if (t2 != 0) {
                     t2 = reinterpret_cast<CfEnumActor*>(
                         reinterpret_cast<u8*>(t2) + 0x3E9C);
@@ -2594,7 +2572,7 @@ extern "C" void __ct__800FCD10(cf::CfObjEnumList* list, u32 arg1, u32 options) {
                 cur = reinterpret_cast<CfEnumObject*>(t2);
             } else if (reinterpret_cast<CfEnumActorView*>(cand)->field_3F10 == arg1) {
                 CfEnumActor* t2 = (CfEnumActor*)CBattleMan_FindNextActorRef(
-                    getInstance__Q22cf14CBattleManagerFv(), cur);
+                    cf::CBattleManager::getInstance(), cur);
                 if (t2 != 0) {
                     t2 = reinterpret_cast<CfEnumActor*>(
                         reinterpret_cast<u8*>(t2) + 0x3E9C);
@@ -2604,12 +2582,12 @@ extern "C" void __ct__800FCD10(cf::CfObjEnumList* list, u32 arg1, u32 options) {
                 actorId = reinterpret_cast<CfEnumActorView*>(actor)->field_3F10;
                 if (actorId ==
                         reinterpret_cast<CfEnumActorView*>(cand)->sub.vfn13() &&
-                    CBattleMan_ListHasValue(getInstance__Q22cf14CBattleManagerFv(), (unsigned int)cand) != 0) {
+                    CBattleMan_ListHasValue(cf::CBattleManager::getInstance(), (unsigned int)cand) != 0) {
                     found = true;
                     break;
                 }
                 CfEnumActor* t2 = (CfEnumActor*)CBattleMan_FindNextActorRef(
-                    getInstance__Q22cf14CBattleManagerFv(), cur);
+                    cf::CBattleManager::getInstance(), cur);
                 if (t2 != 0) {
                     t2 = reinterpret_cast<CfEnumActor*>(
                         reinterpret_cast<u8*>(t2) + 0x3E9C);

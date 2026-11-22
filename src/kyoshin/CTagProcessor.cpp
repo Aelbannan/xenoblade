@@ -8,6 +8,15 @@
 
 #include <wchar.h>  // wcstol (MSL, C-linkage)
 
+// name-guess: retail .rodata:0x804FEFB8, colour-tag value table (1..55).
+extern const TagColorValues sTagColorValues;
+const TagColorValues sTagColorValues = {
+    { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17,
+      18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32,
+      33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47,
+      48, 49, 50, 51, 52, 53, 54, 55 }
+};
+
 /* Tag-code handler hierarchy.
  *
  * Retail .data carries 23 vtable + base-list pairs (0x8052D618..0x8052DA08)
@@ -2190,7 +2199,7 @@ u16* CTagCodeAct::v14(u16* buf, const wchar_t* arg, TagParam* prm) {
     TagColorValues values;
     TagColorNames names;
     int count = SplitWStringTrim((u16*)str, 0x3a, (u16**)tokens);
-    values = lbl_eu_804FEFB8;
+    values = sTagColorValues;
     names = lbl_eu_804FF488;
     out.w.c1 = lbl_eu_80667188;
     out.w.c2 = lbl_eu_8066718C;

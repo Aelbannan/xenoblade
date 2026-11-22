@@ -13,22 +13,6 @@ class ScnRoot;
 } // namespace nw4r
 
 // ---------------------------------------------------------------------------
-// Retail data symbols referenced by this TU.
-// Global-scope names are not C++-mangled, so plain extern decls emit the
-// exact retail lbl_eu_* symbols (no extern "C" needed).
-// ---------------------------------------------------------------------------
-
-
-// .sdata2 constants used by the CScnRootNw4r constructor.
-extern const f32 lbl_eu_8066A9E8;  // 20.0f (default viewport scale)
-extern const f32 lbl_eu_8066A9EC;  // 0.01f (scale multiplier)
-extern const f32 lbl_eu_8066A9F0;  // 0.08f (region overhead ratio)
-extern const f32 lbl_eu_8066A9F4;  // 0.0f  (allocator-selection threshold)
-extern const f64 lbl_eu_8066A9F8;  // 0x4330000080000000 (s32 -> f64 magic)
-
-
-
-
 // Alloc-region object behind CScn::unk88.
 struct CScnRootMgrRegion {
     u8 pad_0x0[0x8];

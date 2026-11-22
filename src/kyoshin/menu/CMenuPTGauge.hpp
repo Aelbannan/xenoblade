@@ -37,7 +37,7 @@ class __declspec(novtable) CMenuPTGauge : public PTGaugeTaskMid {
 public:
     void Init();
     void Move();
-    void cbRenderBefore();
+    void cbRenderBefore(CScn* scene);
 
     // 0x00: base classes (CProcess at +0x00, CTTask<IUICf> region, IWorkEvent,
     // IScnRender vtable slot at +0x5c)

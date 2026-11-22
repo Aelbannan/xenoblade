@@ -14,7 +14,11 @@
 struct CREvtModelMapNameInfo {
     u8 field_0x0[0x10];
     char mName[2];
-    u8 field_0x12[0x58 - 0x12];
+    u8 field_0x12[0x20 - 0x12];
+    u32 field_0x20;   // +0x20: packed token decoded by Tok_Unpack
+    u8 field_0x24[0x30 - 0x24];
+    s32 field_0x30;   // +0x30: nonzero selects extended map flags
+    u8 field_0x34[0x58 - 0x34];
     u32 field_0x58;   // +0x58: load flags
 };
 

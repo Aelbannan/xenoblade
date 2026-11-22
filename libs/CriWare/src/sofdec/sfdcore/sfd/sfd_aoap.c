@@ -5,9 +5,6 @@
 
 #include "libs/CriWare/src/sofdec/sfdcore/sfd/sfd_types.h"
 
-// Large section arrays for data diff - generated
-__declspec(section ".rodata") __attribute__((aligned(8), used)) const unsigned char __large_rodata_for_CriWare_src_sofdec_sfdcore_sfd_[0x40] = {0x80, 0x3C, 0x12, 0x38, 0x80, 0x3C, 0x12, 0x40, 0x80, 0x3C, 0x12, 0x48, 0x80, 0x3C, 0x12, 0xFC, 0x80, 0x3C, 0x13, 0x48, 0x80, 0x3C, 0x13, 0x50, 0x80, 0x3C, 0x13, 0x78, 0x80, 0x3C, 0x13, 0xE4, 0x80, 0x3C, 0x14, 0x50, 0x80, 0x3C, 0x14, 0xC8, 0x80, 0x3C, 0x14, 0xD4, 0x80, 0x3C, 0x14, 0xE0, 0x80, 0x3C, 0x14, 0xEC, 0x80, 0x3C, 0x14, 0xF8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}; // .rodata 0x40 at 0x8051C550
-
 s32 SFLIB_CheckHn(void* h);
 s32 SFLIB_SetErr(void* h, u32 err_code);
 u32 SFSET_GetCond(void* self, u32 idx);
@@ -152,3 +149,43 @@ s32 SFAOAP_AddRead(void* h) {
 }
 
 int SFAOAP_Seek(void) { return 0x0; }
+
+/* name-guess: the only map name for the retail .rodata object at 0x8051C550
+ * is the generic lbl_eu_8051C550.  Its fourteen ADDR32 relocations name the
+ * SFAOAP service functions below, followed by two zero slots. */
+typedef struct SfdAoapFuncTable {
+    int (*init)(void);                  /* 0x00 */
+    int (*finish)(void);                /* 0x04 */
+    int (*execServer)(SfdHandle*);      /* 0x08 */
+    int (*create)(SfdHandle*);          /* 0x0C */
+    int (*destroy)(void);               /* 0x10 */
+    int (*requestStop)(void*);          /* 0x14 */
+    int (*start)(void*);                /* 0x18 */
+    int (*stop)(void*);                 /* 0x1C */
+    int (*pause)(void*, s32);           /* 0x20 */
+    s32 (*getWrite)(void*);             /* 0x24 */
+    s32 (*addWrite)(void*);             /* 0x28 */
+    s32 (*getRead)(void*);              /* 0x2C */
+    s32 (*addRead)(void*);              /* 0x30 */
+    int (*seek)(void);                  /* 0x34 */
+    void* reserved[2];                  /* 0x38 */
+} SfdAoapFuncTable;
+
+__attribute__((aligned(8), used)) const SfdAoapFuncTable sSfdAoapFuncTable = {
+    SFAOAP_Init,
+    SFAOAP_Finish,
+    SFAOAP_ExecServer,
+    SFAOAP_Create,
+    SFAOAP_Destroy,
+    SFAOAP_RequestStop,
+    SFAOAP_Start,
+    SFAOAP_Stop,
+    SFAOAP_Pause,
+    SFAOAP_GetWrite,
+    SFAOAP_AddWrite,
+    SFAOAP_GetRead,
+    SFAOAP_AddRead,
+    SFAOAP_Seek,
+    NULL,
+    NULL,
+};

@@ -80,17 +80,6 @@ ResTev ScnMdl::CopiedMatAccess::GetResTevEx() {
 } // namespace g3d
 } // namespace nw4r
 
-// ScnMdl vtable (data lives in nw4r_data.o; the shared header declares no
-// ScnMdl ctor, so Construct patches the base ctor's vtable manually). The
-// incomplete-array declaration keeps MWCC from choosing SDA-relative
-// addressing (retail materialises the vtable address with lis/addi).
-extern char lbl_eu_805697A0[];
-
-class ScnMdlVtblSlot {
-public:
-    u32 field_0x0; // vtable pointer
-};
-
 // MonolithSoft extension bit in the buffer option: when set, vertex data is
 // restored from the model resource when a shape animation object is removed
 // (the request is kept in mFlagRestoreVtx and mirrored inverted in
@@ -107,7 +96,7 @@ bool ScnMdl::IsDerivedFrom(G3dObj::TypeObj other) const {
          : other == ScnMdlSimple::GetTypeObjStatic() ? true
          : other == ScnLeaf::GetTypeObjStatic() ? true
          : other == ScnObj::GetTypeObjStatic() ? true
-         : (other == G3dObj::TypeObj(lbl_eu_8051D640));
+         : (other == G3dObj::GetTypeObjStatic());
 }
 
 const G3dObj::TypeObj ScnMdl::GetTypeObj() const {
@@ -491,6 +480,22 @@ void ScnMdl::CleanMatBuffer(u32 idx, u32 option) {
         ~option;
 }
 
+inline ScnMdl::ScnMdl(MEMAllocator* pAllocator, ResMdl mdl,
+                      math::MTX34* pWorldMtxArray, u32* pWorldMtxAttribArray,
+                      math::MTX34* pViewPosMtxArray,
+                      math::MTX33* pViewNrmMtxArray,
+                      math::MTX34* pViewTexMtxArray, int numView,
+                      int numViewMtx, DrawResMdlReplacement* pReplacement,
+                      u32* pMatBufferDirtyFlag)
+    : ScnMdlSimple(pAllocator, mdl, pWorldMtxArray, pWorldMtxAttribArray,
+                   pViewPosMtxArray, pViewNrmMtxArray, pViewTexMtxArray,
+                   numView, numViewMtx) {
+    mpAnmObjShp = NULL;
+    mFlagVisBuffer = 0;
+    mpMatBufferDirtyFlag = pMatBufferDirtyFlag;
+    mReplacement = *pReplacement;
+}
+
 // ---------------------------------------------------------------------------
 // ScnMdl::Construct
 //
@@ -668,8 +673,6 @@ ScnMdl* ScnMdl::Construct(MEMAllocator* pAllocator, u32* pSize, ResMdl mdl,
         if (buf == NULL) {
             return NULL;
         }
-        pObj = reinterpret_cast<ScnMdl*>(buf);
-
         // Vertex restore request (bit 24): kept in mFlagRestoreVtx.
         u32 vtxRestore = bufferOption & BUFFER_RESTORE_VTX;
 
@@ -817,47 +820,38 @@ ScnMdl* ScnMdl::Construct(MEMAllocator* pAllocator, u32* pSize, ResMdl mdl,
             }
         }
 
-        if (pObj != NULL) {
-            // Base construction + vtable patch (no out-of-line ScnMdl ctor
-            // in retail).
-            new (buf) ScnMdlSimple(
-                pAllocator, mdl,
-                reinterpret_cast<math::MTX34*>(buf + ofsWorldMtxArray),
-                reinterpret_cast<u32*>(buf + ofsWorldMtxAttribArray),
-                reinterpret_cast<math::MTX34*>(buf + ofsViewPosMtxArray),
-                sizeViewNrmMtx
-                    ? reinterpret_cast<math::MTX33*>(buf + ofsViewNrmMtxArray)
-                    : NULL,
-                sizeViewTexMtx
-                    ? reinterpret_cast<math::MTX34*>(buf + ofsViewTexMtxArray)
-                    : NULL,
-                numView, numViewMtx);
-            reinterpret_cast<ScnMdlVtblSlot*>(pObj)->field_0x0 =
-                reinterpret_cast<u32>(&lbl_eu_805697A0);
+        DrawResMdlReplacement replacement;
+        replacement.flag = replFlag;
+        replacement.visArray = pVisArray;
+        replacement.texObjDataArray = pTexObjDataArray;
+        replacement.tlutObjDataArray = pTlutObjDataArray;
+        replacement.texSrtDataArray = pTexSrtDataArray;
+        replacement.chanDataArray = pChanDataArray;
+        replacement.genModeDataArray = pGenModeDataArray;
+        replacement.matMiscDataArray = pMatMiscDataArray;
+        replacement.pixDLArray = pPixDLArray;
+        replacement.tevColorDLArray = pTevColorDLArray;
+        replacement.indMtxAndScaleDLArray = pIndMtxAndScaleDLArray;
+        replacement.texCoordGenDLArray = pTexCoordGenDLArray;
+        replacement.tevDataArray = pTevDataArray;
+        replacement.vtxPosTable = pVtxPosTable;
+        replacement.vtxNrmTable = pVtxNrmTable;
+        replacement.vtxClrTable = pVtxClrTable;
 
-            // ScnMdl-specific tail fields.
-            pObj->mpAnmObjShp = NULL;
-            pObj->mFlagVisBuffer = 0;
-            pObj->mpMatBufferDirtyFlag =
-                reinterpret_cast<u32*>(buf + ofsDirtyFlags);
-            pObj->mReplacement.flag = replFlag;
-            pObj->mReplacement.visArray = pVisArray;
-            pObj->mReplacement.texObjDataArray = pTexObjDataArray;
-            pObj->mReplacement.tlutObjDataArray = pTlutObjDataArray;
-            pObj->mReplacement.texSrtDataArray = pTexSrtDataArray;
-            pObj->mReplacement.chanDataArray = pChanDataArray;
-            pObj->mReplacement.genModeDataArray = pGenModeDataArray;
-            pObj->mReplacement.matMiscDataArray = pMatMiscDataArray;
-            pObj->mReplacement.pixDLArray = pPixDLArray;
-            pObj->mReplacement.tevColorDLArray = pTevColorDLArray;
-            pObj->mReplacement.indMtxAndScaleDLArray = pIndMtxAndScaleDLArray;
-            pObj->mReplacement.texCoordGenDLArray = pTexCoordGenDLArray;
-            pObj->mReplacement.tevDataArray = pTevDataArray;
-            pObj->mReplacement.vtxPosTable = pVtxPosTable;
-            pObj->mReplacement.vtxNrmTable = pVtxNrmTable;
-            pObj->mReplacement.vtxClrTable = pVtxClrTable;
-            pObj->mFlagRestoreVtx = vtxRestore ? 1 : 0;
-        }
+        pObj = new (buf) ScnMdl(
+            pAllocator, mdl,
+            reinterpret_cast<math::MTX34*>(buf + ofsWorldMtxArray),
+            reinterpret_cast<u32*>(buf + ofsWorldMtxAttribArray),
+            reinterpret_cast<math::MTX34*>(buf + ofsViewPosMtxArray),
+            sizeViewNrmMtx
+                ? reinterpret_cast<math::MTX33*>(buf + ofsViewNrmMtxArray)
+                : NULL,
+            sizeViewTexMtx
+                ? reinterpret_cast<math::MTX34*>(buf + ofsViewTexMtxArray)
+                : NULL,
+            numView, numViewMtx, &replacement,
+            reinterpret_cast<u32*>(buf + ofsDirtyFlags));
+        pObj->mFlagRestoreVtx = vtxRestore ? 1 : 0;
         pObj->InitBuffer();
     }
     return pObj;

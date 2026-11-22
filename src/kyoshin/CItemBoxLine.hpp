@@ -30,6 +30,8 @@ struct CIBLTabEntry {
 /* Tab holder embedded in CItemBoxLine (+0x3A4): 12 entries, a halfword count
  * and two selector bytes (field93 written by ItemBoxLine_CompactTabList). */
 struct CIBLTab {
+    ~CIBLTab();
+
     CIBLTabEntry entries[12]; // +0x00..0x8F
     u16 count;                // +0x90
     u8 field92;               // +0x92

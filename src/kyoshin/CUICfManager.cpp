@@ -1,8 +1,10 @@
 #include "kyoshin/CSystemWindowApi.hpp"
 #include "kyoshin/cf/CtrlRemoteApi.hpp"
 #include "kyoshin/CUICfManager.hpp"
+#include "kyoshin/CUIBattleManager.hpp"
 #include "kyoshin/CUICfManager_Res.hpp"
 #include "kyoshin/CfEnumListHolder.hpp"
+#include "kyoshin/cf/CfObjectEnumList.hpp"
 #include "kyoshin/CTaskGame.hpp"
 #include "libs/monolib/src/scn/CScn_8049603C.hpp" // Scn_QueryUnk80State (single owner decl)
 #include "kyoshin/cf/CfGameManager.hpp"
@@ -62,9 +64,6 @@ CUICfManager::CTest::~CTest() {}
 // dtor calls from CUICfManager::~CUICfManager (reference: CTaskCulling dtor
 // note - the body must be visible in the same TU). IWorkEvent's strong copy
 // also lives in CTaskGame.cpp; the per-TU build tolerates the duplicate.
-namespace cf {
-IFlagEvent::~IFlagEvent() {}
-}
 IWorkEvent::~IWorkEvent() {}
 
 CUICfManager* CUICfManager::spInstance;
@@ -163,7 +162,7 @@ void CUICfManager::Init() {
         process->callbacks[5] = ptmfWord2;
         process->vtable = vtFinal;
     }
-    unk144 = reinterpret_cast<CUICfUnk144*>(process);
+    unk144 = reinterpret_cast<CProcess*>(process);
     reinterpret_cast<CProcess*>(process)->Regist((CProcess*)CUICfManager::spInstance, false);
 
     // Retail: r27=&tail end, r26/r25/r24 = blocks, r22 = 0x34 stride.
@@ -237,7 +236,7 @@ void CUICfManager::Term() {
     CtrlRemote_FetchSharedBufPtr();
     CtrlRemote_ResetSlotArrayByIndex((u32)flagEvent);
 
-    unk144->unk39 = 1;
+    unk144->SetRemove();
     CUICfManager::spInstance = NULL;
 }
 
@@ -264,6 +263,7 @@ void CUICfManager::Term() {
 #include "kyoshin/menu/CMenuTutorial.hpp"
 #include "kyoshin/menu/CMenuTutorialList.hpp"
 #include "kyoshin/menu/CMenuZeal.hpp"
+#include "kyoshin/CMiniMap.hpp"
 #include "kyoshin/menu/CMenuBattleMode.hpp"
 #include "kyoshin/menu/CMenuGCItem.hpp"
 #include "kyoshin/menu/CMenuKeyAssign.hpp"
@@ -281,14 +281,14 @@ extern "C" {
 int lbl_eu_80664050;
 int CMenuGetItem_CreateMulti(void*, u32, u8, int);
 // Menu factories used by the CUICfManager_queueQuestLogMenu-family create helpers below.
-u32 createOptionMenu(CUICfUnk144*, u32, u32);
-u32 CMenuGetItem_CreateVariant(CUICfUnk144*, u32, u32);
-u32 createQuestLogMenu(CUICfUnk144*, u32, u32);
+u32 createOptionMenu(CProcess*, u32, u32);
+u32 CMenuGetItem_CreateVariant(CProcess*, u32, u32);
+u32 createQuestLogMenu(CProcess*, u32, u32);
 // Additional menu factories used by the CUICfManager_queueQuestLogMenu-family create helpers.
 // 6-arg factory: (ctx, scene, a, b, y, x) - CUICfManager_queueFadeMenu forwards its two
 // dead int params as args 3/4 (retail materializes them in the prologue).
-u32 createFadeMenu(CUICfUnk144*, u32, u32, u32, f32, f32);
-u32 MapSelectSCCreate(CUICfUnk144*, u32);
+u32 createFadeMenu(CProcess*, u32, u32, u32, f32, f32);
+u32 MapSelectSCCreate(CProcess*, u32);
 // Menu factories used by the CUICfManager_queueSkipTimerMenu-family queue helpers below.
 // Local flat decls (same caller-shape as the defining TUs' headers:
 // CMenuSkipTimer.hpp / CMenuShopSell.hpp /
@@ -297,8 +297,8 @@ u32 MapSelectSCCreate(CUICfUnk144*, u32);
 u32 ShopBuy_CreateMenu(u32, u32, u32);
 // Factories for the remaining queue helpers (CUICfManager_queueMapSelectMenu family); same
 // caller-shape as the defining TUs' flat decls.
-u32 KizunagramCreateSingleton(CUICfUnk144*, u32, u32);
-u32 CollepediaCreateSingleton(CUICfUnk144*, u32);
+u32 KizunagramCreateSingleton(CProcess*, u32, u32);
+u32 CollepediaCreateSingleton(CProcess*, u32);
 // cpp-only imports: declared here rather than in the .hpp because other
 // headers declare these same flat symbols with different signatures
 // (SysWinGetSingleton: CMenuQstCnt.hpp int vs CMainMenu.hpp u32; MenuTutorialCreate:
@@ -315,9 +315,6 @@ struct CTaskGameCamView {
     u32 field_0x8;
     float field_0xC;
 };
-// Matches the global UnkScnResult declared in CfGameManager.hpp (included
-// at the top of this file).
-void* __ct__8011C1B8(void* ctx, u32 scene);
 // gmScene comes from CfGameManagerData.hpp (CScn*) - no local redecl.
 }
 
@@ -370,7 +367,7 @@ int CUICfManager_isWorldMapBusy(CUICfManager* singleton) {
     return (c - v) < c;
 }
 // Additional menu factories (CMenuGCItem / CMenuGetItem / CMenuSave TUs).
-u32 CMenuGetItem_CreateSingle(CUICfUnk144*, u32, u16);
+u32 CMenuGetItem_CreateSingle(CProcess*, u32, u16);
 void UIWin_CreateQuestWin(int, int, int);
 void* CtrlObjectParam_GetCharEntry(u32);
 // Same caller-shape as the decl in include/kyoshin/cf/CfGameManager.hpp
@@ -674,7 +671,7 @@ void CUICfManager::Move() {
     f32 posA[3];
     f32 posB[3];
     f32 posC[3];
-    _reslist_node<CUICfMenuItem*>* pending[18];
+    _reslist_node<IUIBattle*>* pending[18];
     CUICfManager* inst;
     int i;
     int byteOff;
@@ -688,13 +685,13 @@ void CUICfManager::Move() {
     void* pose;
     void* slot;
     void* createdArg;
-    _reslist_node<CUICfMenuItem*>* head;
-    _reslist_node<CUICfMenuItem*>* it;
-    _reslist_node<CUICfMenuItem*>* walk;
-    _reslist_node<CUICfMenuItem*>* node;
-    _reslist_node<CUICfMenuItem*>* prev;
-    _reslist_node<CUICfMenuItem*>* next;
-    CUICfMenuItem* item;
+    _reslist_node<IUIBattle*>* head;
+    _reslist_node<IUIBattle*>* it;
+    _reslist_node<IUIBattle*>* walk;
+    _reslist_node<IUIBattle*>* node;
+    _reslist_node<IUIBattle*>* prev;
+    _reslist_node<IUIBattle*>* next;
+    IUIBattle* item;
     int enumIdx;
     int pendingCount;
     int needWait;
@@ -986,7 +983,7 @@ after_flags:
     // Retail: dual SDA load + rlwinm/rlwimi on bits 6|21, then bit 13 alone.
     {
         u32 g0 = gmGameFlags;
-        u32 g1 = *(volatile u32*)&gmGameFlags;
+        u32 g1 = gmGameFlags;
         u32 bits = __rlwinm(g0, 0, 6, 6);
         bits = __rlwimi(bits, g0, 0, 21, 21);
         if (bits != 0) {
@@ -1059,14 +1056,14 @@ after_flags:
         enumIdx++;
     enum_check:
         list = holder.get();
-        if ((u32)enumIdx < reinterpret_cast<CUICfEnumList620*>(list)->count) {
+        if ((u32)enumIdx < static_cast<cf::CfObjEnumList*>(list)->mPtrCount) {
             goto enum_body;
         }
     }
 
 after_enum:
     // Mark-from-head (retail reloads head only inside the set-loop).
-    head = (_reslist_node<CUICfMenuItem*>*)unk128;
+    head = (_reslist_node<IUIBattle*>*)unk128;
     walk = head->mNext;
     it = walk;
     goto mark_scan_check;
@@ -1082,7 +1079,7 @@ mark_set_body:
     walk->mItem->unk55 = 1;
     walk = walk->mNext;
 mark_set_check:
-    head = (_reslist_node<CUICfMenuItem*>*)unk128;
+    head = (_reslist_node<IUIBattle*>*)unk128;
     if (walk != head) {
         goto mark_set_body;
     }
@@ -1096,7 +1093,7 @@ mark_scan_check:
 mark_done:
 
     // Collect: snapshot idx, bump count, indexed store (retail stwx schedule).
-    head = (_reslist_node<CUICfMenuItem*>*)unk128;
+    head = (_reslist_node<IUIBattle*>*)unk128;
     node = head->mNext;
     pendingCount = 0;
     needWait = 1;
@@ -1112,13 +1109,13 @@ collect_body:
     }
     item = node->mItem;
     idx = pendingCount;
-    item->unk39 = 1;
+    item->SetRemove();
     pendingCount = idx + 1;
-    *(_reslist_node<CUICfMenuItem*>**)((u8*)pending + (idx << 2)) = node;
+    *(_reslist_node<IUIBattle*>**)((u8*)pending + (idx << 2)) = node;
 collect_next:
     node = node->mNext;
 collect_check:
-    head = (_reslist_node<CUICfMenuItem*>*)unk128;
+    head = (_reslist_node<IUIBattle*>*)unk128;
     if (node != head) {
         goto collect_body;
     }
@@ -1147,11 +1144,11 @@ unlink_unroll_test:
 unlink_unroll_body:
     for (byteOff = 0; byteOff < 8; byteOff++) {
         temp = (_reslist_node<void*>*)pending[i + byteOff];
-        prev = (_reslist_node<CUICfMenuItem*>*)((_reslist_node<CUICfMenuItem*>*)temp)->mPrev;
-        next = (_reslist_node<CUICfMenuItem*>*)((_reslist_node<CUICfMenuItem*>*)temp)->mNext;
+        prev = (_reslist_node<IUIBattle*>*)((_reslist_node<IUIBattle*>*)temp)->mPrev;
+        next = (_reslist_node<IUIBattle*>*)((_reslist_node<IUIBattle*>*)temp)->mNext;
         prev->mNext = next;
         next->mPrev = prev;
-        ((_reslist_node<CUICfMenuItem*>*)temp)->mNext = NULL;
+        ((_reslist_node<IUIBattle*>*)temp)->mNext = NULL;
     }
     i += 8;
 unlink_unroll_check:
@@ -2386,7 +2383,7 @@ slot_found:
     }
     return savedRet;
 }
-// CUICfManager_createQueuedMenus: create the menu via __ct__8011C1B8 and queue it
+// CUICfManager_createQueuedMenus: create the menu via CMenuMiniMap2::create and queue it
 // (mFlags bit 0x2; busy-bit/accessor gates + scene-mode guard).
 extern "C" u32 CUICfManager_createQueuedMenus(CUICfManager* self) {
     CUICfManager* inst;
@@ -2417,7 +2414,7 @@ extern "C" u32 CUICfManager_createQueuedMenus(CUICfManager* self) {
     }
     inst = (CUICfManager*)CUICfManager::spInstance;
     {
-        u32 tempRet = (u32)__ct__8011C1B8(inst->unk144, inst->unk11C);
+        u32 tempRet = (u32)CMenuMiniMap2::create(inst->unk144, (CScn*)inst->unk11C);
         savedRet = tempRet;
         if (tempRet == 0) {
             return 0;
@@ -4119,9 +4116,9 @@ int CUICfManager_isUIBusy() {
     return 0;
 }
 #include "kyoshin/cf/CBattleManager.hpp"
-#include "kyoshin/cf/CfActorMoveLayout.hpp"
+#include "kyoshin/cf/object/CfObjectActor.hpp"
 // Float-returning vtable slot (vtable +0x128) of the player wrapper.
-typedef float (*CUICfVFloatFn)(cf::CfActorMoveLayout*);
+typedef float (*CUICfVFloatFn)(cf::CfObjectActor*);
 #include "kyoshin/cf/CActParamAnimGame.hpp"
 
 // CUICfManager_checkMenuOpenGate (us-80136480): busy/slot-state probe. Returns 1 when any
@@ -4135,8 +4132,8 @@ extern "C" int CUICfManager_checkMenuOpenGate(u8* singleton) {
     (void)singleton;
     int count;
     int slotUsed;
-    CUICfEnumList620* enumList;
-    cf::CfActorMoveLayout* actor;
+    cf::CfObjEnumList* enumList;
+    cf::CfObjectActor* actor;
     cf::CActParamAnimGame* battleObj;
     CUICfManager* inst;
 
@@ -4160,10 +4157,10 @@ extern "C" int CUICfManager_checkMenuOpenGate(u8* singleton) {
     }
     {
         CfEnumListHolder holder(0x20, 0x800);
-        enumList = reinterpret_cast<CUICfEnumList620*>(holder.get());
+        enumList = holder.get();
         __ct__800FC32C(reinterpret_cast<u8*>(enumList), 3, 4, 0);
-        enumList = reinterpret_cast<CUICfEnumList620*>(holder.get());
-        if (enumList->count == 0) {
+        enumList = holder.get();
+        if (enumList->mPtrCount == 0) {
             return 2;
         }
     }
@@ -4183,7 +4180,7 @@ extern "C" int CUICfManager_checkMenuOpenGate(u8* singleton) {
     }
     {
         cf::CfObjectMove* player = cf::CfGameManager::getPlayer(0);
-        actor = static_cast<cf::CfActorMoveLayout*>(player);
+        actor = static_cast<cf::CfObjectActor*>(player);
         if (actor != NULL) {
             u8** vt = *reinterpret_cast<u8***>(actor);
             f32 v = reinterpret_cast<CUICfVFloatFn>(vt[0x128 / 4])(actor);  // DEBT(callcast): manual vtable slot-0x128 dispatch cast; retail uses r12 ABI

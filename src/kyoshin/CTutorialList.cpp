@@ -32,7 +32,7 @@ extern "C" int KyoshinHeap_GetField44();
 
 // .sdata2 u16 -> f32 conversion goes through MWCC's 0x4330-magic double.
 // Global term/active flag: the loaded common BDAT table (.sbss word, sda21).
-u32 lbl_eu_80664BF0;  // loaded MNU_ttrl BDAT table (.sbss, owned by this unit)
+void* sTutorialListBdatData;  // name-guess: cached getFP("MNU_ttrl") BDAT entry; only this TU reads/writes it
 
 // Overlay structs for OnFileEvent's 'timg' message resource: the resource
 // object holds a chain whose first field points at the u16 row/column pair
@@ -71,9 +71,9 @@ CTutorialIdTable::~CTutorialIdTable() {}
 // after the table.
 // -O4,s (unit) keeps the retail rolled mtctr/bdnz loops.
 void CTutorialIdTable::Rebuild(u16 target, int filter) {
-    if (lbl_eu_80664BF0 == 0) return;
+    if (sTutorialListBdatData == 0) return;
     mCount = 0;
-    void* table = (void*)lbl_eu_80664BF0;
+    void* table = sTutorialListBdatData;
     int total = Bdat_GetMaxRow_B1EC(table);
     const int catFilter = filter - 1;
     for (int id = 1; id <= total; id++) {
@@ -206,7 +206,7 @@ void CTutorialList::TutorialList_ReleaseResources() {
         mLayout = 0;
     }
     releaseArcResourceAccessor(mAccessor);
-    lbl_eu_80664BF0 = 0;
+    sTutorialListBdatData = 0;
     mCursor.cleanup();
     mScrollBar.Teardown();
     mSortMenu.Term();
@@ -554,9 +554,9 @@ void CTutorialList::TutorialList_UpdateRowTexts() {
         if (sel == 0) {
             LayoutSetTextBoxFmtValue(mLayout, buf, "", 0);
         } else {
-            char* txt = BdatGetPtrDirect((const void*)lbl_eu_80664BF0, "title", sel);
+            char* txt = BdatGetPtrDirect(sTutorialListBdatData, "title", sel);
             LayoutSetTextBoxFmtValue(mLayout, buf, txt, 0);
-            if (BdatGetU8Direct((const void*)lbl_eu_80664BF0, (const char*)("type"), sel) == 0) {
+            if (BdatGetU8Direct(sTutorialListBdatData, (const char*)("type"), sel) == 0) {
                 if (CtrlRemote_TouchBitByArg((u16)sel + 0x33bf) == 0) {
                     setPaneVisible(text, 1);
                 }
@@ -692,7 +692,7 @@ bool CTutorialList::OnFileEvent(CEventFile* event) {
         void* data2 = mFileHandle1->getData();
         CBdat::setBdatEntry(4, data2);
         Bdat_GetTable_AA34();
-        lbl_eu_80664BF0 = (u32)getFP("MNU_ttrl");
+        sTutorialListBdatData = getFP("MNU_ttrl");
         mFileHandle1 = 0;
         TutorialList_OpenAfterFilesReady();
         return true;

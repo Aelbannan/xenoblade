@@ -1920,8 +1920,11 @@ def run(argv: list[str] | None = None) -> int:
     lock_path.parent.mkdir(parents=True, exist_ok=True)
     import time as _time
     t0 = _time.monotonic()
+    # --no-build only reads objects: a shared lock keeps builders out while
+    # letting read-only comparisons run in parallel (land gate snapshots).
+    mode = fcntl.LOCK_SH if args.no_build else fcntl.LOCK_EX
     with lock_path.open("a+") as lock:
-        fcntl.flock(lock, fcntl.LOCK_EX)
+        fcntl.flock(lock, mode)
         t1 = _time.monotonic()
         rc = 2
         try:

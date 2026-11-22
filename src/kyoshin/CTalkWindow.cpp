@@ -16,6 +16,8 @@
 #define IUIWINDOW_INLINE_DTOR
 #include "kyoshin/CTalkWindow.hpp"
 #include "monolib/lib/CLibLayout.hpp"
+#include "monolib/device/CDeviceFont.hpp"
+#include "monolib/core/CPadManager.hpp"
 
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "monolib/util/MemManager.hpp"
@@ -54,8 +56,8 @@ nw4r::math::VEC3 TalkWinPagePos[16] = {
 };
 
 // .sbss (retail 0x80664040): page-mode flag byte + live talk-window counter.
-u8 lbl_eu_80664040 = 0;
-u32 lbl_eu_80664044 = 0;
+u8 gTalkWinPageModeFlag = 0; // name-guess: page-mode flag (retail .sbss 0x80664040)
+u32 gTalkWinLiveCount = 0; // name-guess: live talk-window counter (retail .sbss 0x80664044)
 
 // ---------------------------------------------------------------------------
 // CTalkWindow::CTalkWindow (us-8012c710)
@@ -83,8 +85,8 @@ CTalkWindow::CTalkWindow(CScn* scene, u32 sourceId, u8* msg, u32 a0, u32 a1,
 // ---------------------------------------------------------------------------
 CTalkWindow::~CTalkWindow() {}
 
-// (lbl_eu_80664044 is the live talk-window counter)
-extern "C" void TalkWin_ClearFlag_BDD0() { lbl_eu_80664044 = 0; }
+// (gTalkWinLiveCount is the live talk-window counter)
+extern "C" void TalkWin_ClearFlag_BDD0() { gTalkWinLiveCount = 0; }
 
 // ---------------------------------------------------------------------------
 // CTalkWindow::Init (us-8012c8a8)
@@ -117,7 +119,7 @@ void CTalkWindow::Init() {
         mtl::MemManager::getHandleMEM2(), 0x4000, "CTalkWindow", 0);
     Class_8045F858 guard(&mMemRegion);
 
-    lbl_eu_80664044++;
+    gTalkWinLiveCount++;
 
     void* tagMem = mtl::MemManager::allocate(
         0x858, CLibLayout::getAllocHandle());
@@ -184,8 +186,7 @@ void CTalkWindow::Init() {
         bindLayoutAnimTransform(mLayout, &field_94, CUICfManager_getArcResourceAccessor(), "mf70_cf00_twin00_fadeout.brlan");
         bindLayoutAnimTransform(mLayout, &field_98, CUICfManager_getArcResourceAccessor(), "mf70_cf00_twin00_fadein.brlan");
 
-        void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
-            1, mLayout);
+        void* fontObj = CDeviceFont::getFontInfo(1, mLayout);
         ApplyFontToTxtPanes(mLayout->GetRootPane(),
                       (const nw4r::ut::Font*)(reinterpret_cast<CTalkFontObj*>(fontObj)->getFontHandle()));
 
@@ -241,7 +242,7 @@ void CTalkWindow::Init() {
 
         // Default animation set: intro anim active, page anims off.
         if (field_A0 == 0) {
-            lbl_eu_80664040 = 0;
+            gTalkWinPageModeFlag = 0;
             mLayout->SetAnimationEnable(field_8C, false);
             mLayout->SetAnimationEnable(field_90, false);
             mLayout->SetAnimationEnable(field_94, false);
@@ -287,7 +288,7 @@ void CTalkWindow::Init() {
                         0x74696d67, "mf70_cf00_twin_tail_a.tpl", 0);
                     CUICfManager_getArcResourceAccessor()->GetResource(
                         0x74696d67, "mf70_cf00_twin_line_a.tpl", 0);
-                    lbl_eu_80664040 = 1;
+                    gTalkWinPageModeFlag = 1;
                     reinterpret_cast<CTalkWinPane*>(mLayout->GetRootPane()->
                         FindPaneByName("pic_tail_over", 1))->mFlag &= ~1;
                     reinterpret_cast<CTalkWinPane*>(mLayout->GetRootPane()->
@@ -306,7 +307,7 @@ void CTalkWindow::Init() {
                 }
             }
             if ((opt & 0x1) != 0) {
-                lbl_eu_80664040 = 1;
+                gTalkWinPageModeFlag = 1;
                 reinterpret_cast<CTalkWinPane*>(mLayout->GetRootPane()->
                     FindPaneByName("pic_tail_over", 1))->mFlag &= ~1;
                 reinterpret_cast<CTalkWinPane*>(mLayout->GetRootPane()->
@@ -341,7 +342,7 @@ void CTalkWindow::Init() {
 // ---------------------------------------------------------------------------
 void CTalkWindow::Term() {
     CDeviceVI::waitForDrawDone();
-    lbl_eu_80664044--;
+    gTalkWinLiveCount--;
     mScene->removeRenderCB(this);
     if (mField5C != 0) {
         delete reinterpret_cast<nw4r::lyt::AnimTransform*>(mField5C);
@@ -431,7 +432,7 @@ void CTalkWindow::Draw() {}
 // Gate prefix (task busy / global bit / scene-active / talk source) then draw
 // the layout through a stack DrawInfo.
 // ---------------------------------------------------------------------------
-void CTalkWindow::cbRenderBefore() {
+void CTalkWindow::cbRenderBefore(CScn*) {
     CTaskGame::getInstance();
     if (CTaskGame::isFlag01Set() || (gmPauseFlags & 0x200000))
         return;
@@ -466,7 +467,7 @@ extern "C" CTalkWindow* TalkWin_Create_CC78(CProcess* parent, u32 arg1, u32 arg2
 }
 
 extern "C" bool TalkWin_IsActive_CD24() {
-    u32 v = lbl_eu_80664044;
+    u32 v = gTalkWinLiveCount;
     return ((-v) & ~v) >> 31;
 }
 
@@ -807,14 +808,13 @@ void driveTalkMessage(CTalkWindow* self) {
     if (GetSysStateFlag31() != 0) {
         state = TagProcPumpMessage(reinterpret_cast<nw4r::lyt::AnimTransform*>(self->mField5C), p1, p2, p3);
     } else {
-        CTalkPadView* pad = reinterpret_cast<CTalkPadView*>(
-            cf::CfGameManager::getCurrentPad());
+        CPad* pad = cf::CfGameManager::getCurrentPad();
         int confirm;
         // Co-op (Classic) vs single-player (Wiimote) confirm-press bits.
         if (cf::CfGameManager::isClassicController(-1) != 0)
-            confirm = (pad->field_04 & 0x00600000) != 0;
+            confirm = (pad->mPressedButtonFlags & 0x00600000) != 0;
         else
-            confirm = (pad->field_04 & 0x00000030) != 0;
+            confirm = (pad->mPressedButtonFlags & 0x00000030) != 0;
         if (confirm != 0)
             state = TagProcPumpMessage(reinterpret_cast<nw4r::lyt::AnimTransform*>(self->mField5C), p1, p2, p3);
         else

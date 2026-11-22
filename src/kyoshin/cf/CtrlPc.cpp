@@ -7,6 +7,7 @@
 // non-target matches.
 #include "kyoshin/cf/CfCamSymbols.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
+#include "kyoshin/cf/CBattleManager.hpp"
 #include "kyoshin/cf/CtrlMoveBase.hpp"
 #include "kyoshin/cf/object/CfObjectEffSymbols.hpp"
 #include "kyoshin/harness_catalog.hpp"
@@ -210,7 +211,7 @@ void CtrlPc_UpdatePadState(cf::CtrlPc* self) {
     if (testActorStatus(obj, &v5, 0x800000) != 0) {
         goto probe100;
     }
-    if (CBattleMan_ListHasValue(getInstance__Q22cf14CBattleManagerFv(), (unsigned int)obj) == 0) {
+    if (CBattleMan_ListHasValue(cf::CBattleManager::getInstance(), (unsigned int)obj) == 0) {
         goto probe100;
     }
     self->mField5C->mSub3E9C.v00(0x100);
@@ -269,7 +270,7 @@ probe100:
     self->mField10 = self->mFieldC;
     if (isBattleStatusActive(&self->mField5C->mField8, 6) != 0 ||
         (cf::CfGameManager::getInstance(), isGlobalCamFlagSet(0x400000) != 0)) {
-        self->mField14 = 0.0f;
+        self->mField14 = lbl_eu_80666720;
     }
 tail:
     self->vf35();
@@ -307,7 +308,7 @@ void dispatchCtrlPcActions(cf::CtrlPc* self) {
     if (isBattleStatusActive(&self->mField5C->mField8, 0xF) != 0 ||
         isBattleStatusActive(&self->mField5C->mField8, 9) != 0) {
     fail:
-        self->mField14 = 0.0f;
+        self->mField14 = lbl_eu_80666720;
         return;
     }
 
@@ -330,7 +331,7 @@ void dispatchCtrlPcActions(cf::CtrlPc* self) {
     p = self->mField5C;
     v5 = *p->mField4->vf30();
     if (testActorStatus(p, &v5, 5) != 0) {
-        self->mField14 = 0.0f;
+        self->mField14 = lbl_eu_80666720;
     } else {
         p = self->mField5C;
         v6 = *p->mField4->vf30();
@@ -349,7 +350,7 @@ void dispatchCtrlPcActions(cf::CtrlPc* self) {
     if (testActorStatus(p, &v8, 0x4000) != 0 ||
         isBattleStatusActive(&self->mField5C->mField8, 6) != 0 ||
         isBattleStatusActive(&self->mField5C->mField8, 0xCD) != 0) {
-        self->mField14 = 0.0f;
+        self->mField14 = lbl_eu_80666720;
     }
     {
         // Any of the three actor-id probes set routes into the voice sync.
@@ -370,7 +371,7 @@ void dispatchCtrlPcActions(cf::CtrlPc* self) {
     if (self->mField5C->mSub3E9C.v01(4) == 0) {
         return;
     }
-    self->mField14 = 0.0f;
+    self->mField14 = lbl_eu_80666720;
     self->mField5C->mSub3E9C.v47(self->mFieldC);
     CfObjectMove_setAnimModeArgs((u8*)&self->mField5C->mSub3E9C, 3, 0, -1, 1);
     self->mField5C->mSub3E9C.v02(4);
@@ -457,12 +458,12 @@ void CtrlPc_UpdateBattleState(cf::CtrlPc* self) {
     CtrlPlayerObj* obj;
     u32 v6, v7, v8, v9, v10, v11;
     if (self->mField5C->mField3F60 != 0) {
-        u8 bs = ((CBattleManagerViewPc*)getInstance__Q22cf14CBattleManagerFv())->mField1AA;
+        u8 bs = cf::CBattleManager::getInstance()->mChain.mHead.field_2;
         // Commuted second compare keeps retail's two cmplwi branches (avoids
         // subi/cmpli range-check fusion).
         int inBattle = (bs >= 1u && 0x18u >= bs) ? 1 : 0;
         if (inBattle != 0 ||
-            ((CBattleManagerViewPc*)getInstance__Q22cf14CBattleManagerFv())->mField20C8 != 0) {
+            cf::CBattleManager::getInstance()->unk20C8.unk0 != 0) {
             self->mField5C->mField3F60->mField4EC |= 4;
         } else {
             // rlwinm keep-range with wraparound == clearing a single bit.
@@ -485,7 +486,7 @@ void CtrlPc_UpdateBattleState(cf::CtrlPc* self) {
     if (testActorStatus(p, &v8, 0x4000) != 0 ||
         isBattleStatusActive(&self->mField5C->mField8, 6) != 0 ||
         isBattleStatusActive(&self->mField5C->mField8, 0xCD) != 0) {
-        self->mField14 = 0.0f;
+        self->mField14 = lbl_eu_80666720;
     }
     // Any of the three actor-id probes set routes into the voice sync.
     p = self->mField5C;
@@ -504,7 +505,7 @@ void CtrlPc_UpdateBattleState(cf::CtrlPc* self) {
     if (self->mField5C->mSub3E9C.v01(4) == 0) {
         return;
     }
-    self->mField14 = 0.0f;
+    self->mField14 = lbl_eu_80666720;
     self->mField5C->mSub3E9C.v47(self->mFieldC);
     CfObjectMove_setAnimModeArgs((u8*)&self->mField5C->mSub3E9C, 3, 0, -1, 1);
     self->mField5C->mSub3E9C.v02(4);
@@ -517,13 +518,13 @@ void emptyCtrlPcHook() {}
 // handler. Returns 1 when the player is in a usable (non-busy) state, else 0.
 extern "C" int CtrlPc_IsPadIdle(cf::CtrlPc* self) {
     CtrlPlayerObj* pl;
-    u32 battleState = ((CBattleManagerViewPc*)getInstance__Q22cf14CBattleManagerFv())->mField1AA;
+    u32 battleState = cf::CBattleManager::getInstance()->mChain.mHead.field_2;
     u32 chainActive;
     int inBattle = 0;
     if (battleState >= 1 && 0x18 >= battleState) {
         inBattle = 1;
     }
-    chainActive = (((CBattleManagerViewPc*)getInstance__Q22cf14CBattleManagerFv())->mField20C8 != 0);
+    chainActive = (cf::CBattleManager::getInstance()->unk20C8.unk0 != 0);
     cf::CfGameManager::getInstance();
     if (isGlobalCamFlagSet(0x4000000) != 0) {
         return 0;
@@ -583,8 +584,7 @@ void CtrlPc_InstallArtsAction(cf::CtrlPc* self, char arg1, char arg2) {
     int slotIdx = arg1 + scaled8;
 
     // Pad mask depends on whether a chain/counter state is active.
-    u32 mask = ((CBattleManagerViewPc*)getInstance__Q22cf14CBattleManagerFv())
-                   ->mField20C8 != 0
+    u32 mask = cf::CBattleManager::getInstance()->unk20C8.unk0 != 0
                    ? 0x1800
                    : 0x804;
     slot.w00 = (u32)slotIdx;
@@ -592,7 +592,7 @@ void CtrlPc_InstallArtsAction(cf::CtrlPc* self, char arg1, char arg2) {
     slot.b_0D = (u8)arg2;
     slot.b_0E = 0x64;
     slot.h_10 = (u16)mask;
-    slot.f_14 = 0.0f;
+    slot.f_14 = lbl_eu_80666720;
     aiRingPrepend(self->mField5C, &slot);
     void* hand = self->mField5C->mSub3E9C.v17();
     if (hand == 0) {

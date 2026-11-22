@@ -18,7 +18,7 @@ struct CActParamAnimOwner {
     u32 field04;
     u8 _pad08[0x0C - 0x08];
     f32 field0C;
-    u8 _pad10[0x14 - 0x10];
+    f32 field10;  // +0x10 target heading (getOwnerFloat)
     f32 field14;
     u32 field18;
     u32 field1C;

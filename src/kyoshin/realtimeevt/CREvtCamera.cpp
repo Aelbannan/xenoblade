@@ -2,6 +2,7 @@
 // High-level C/C++ reconstruction.
 
 #include "kyoshin/realtimeevt/CREvtCamera.hpp"
+#include "monolib/lod/CTaskLOD.hpp"
 #include "monolib/math/CVec4.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/cf/CTaskREvtSequence.hpp"
@@ -11,9 +12,6 @@
 extern "C" {
     UnkClass_800821F8* getCameraDataBlock__Q22cf13CfGameManagerFv();
     void cfCam_setClear04(void* mgr, u32 mask, int flag);
-    void activateLOD__8CTaskLODFv(s16 taskID);
-    void deactivateLOD__8CTaskLODFv(s16 taskID);
-    void attachLODObject__8CTaskLODFv(s16 taskID, int flag);
     CScnItemModel* Scn_SetupAnim(u32 global, u8* handle, int flag, int flag2);
     bool Scn_IsAnimActiveOrNull(void* ptr);
     void* Scn_InitGlobalA(void* mgr, void* param, int flag);
@@ -31,6 +29,11 @@ extern "C" {
 }
 
 CREvtCamera* cf::CREvtCamera::sInstance;
+
+// name-guess: retail .sdata pointer at 0x80662448 targets the "camAtr" name.
+const char* sCamAtrAnimName = "camAtr";
+// name-guess: retail .sdata pointer at 0x8066244C targets the "cam" name.
+const char* sCamAnimName = "cam";
 
 // ============================================================================
 // Constructor (0x80181374, size 0x110): base CREvtObj(0) (camera kind).
@@ -127,7 +130,7 @@ extern "C" void REvtCam_ActivateTasks(int taskData) {
     if (taskData) {
         for (s32 i = 0; i < (s32)CREvtCamera::sInstance->mTaskCount2A8; i++) {
             s16 taskID = CREvtCamera::sInstance->mTaskArrayA6[i];
-            u8 isActive = getLODData__8CTaskLODFv(taskID);
+            u8 isActive = CTaskLOD::getLODData(taskID);
             s32 found = 0;
             s32 count = (s32)CREvtCamera::sInstance->mTaskCount434;
             for (s32 j = 0; j < count; j++) {
@@ -141,18 +144,18 @@ extern "C" void REvtCam_ActivateTasks(int taskData) {
                 CREvtCamera::sInstance->mTaskArray334[CREvtCamera::sInstance->mTaskCount434] = taskID;
                 CREvtCamera::sInstance->mTaskCount434++;
             }
-            if (isActive) deactivateLOD__8CTaskLODFv(taskID);
+            if (isActive) CTaskLOD::deactivateLOD(taskID);
         }
         CREvtCamera::sInstance->mField438 = 1;
     } else {
         if (CREvtCamera::sInstance->mField438) {
             for (s32 i = 0; i < (s32)CREvtCamera::sInstance->mTaskCount434; i++) {
                 s16 taskID = CREvtCamera::sInstance->mTaskArray334[i];
-                u8 isActive = getLODData__8CTaskLODFv(taskID);
+                u8 isActive = CTaskLOD::getLODData(taskID);
                 if (CREvtCamera::sInstance->mFlagArray2B4[i]) {
-                    if (!isActive) activateLOD__8CTaskLODFv(taskID);
+                    if (!isActive) CTaskLOD::activateLOD(taskID);
                 } else {
-                    if (isActive) deactivateLOD__8CTaskLODFv(taskID);
+                    if (isActive) CTaskLOD::deactivateLOD(taskID);
                 }
             }
             CREvtCamera::sInstance->mField438 = 0;
@@ -168,8 +171,8 @@ extern "C" void REvtCam_ActivateLodTasks() {
     if (!CREvtCamera::sInstance) return;
     for (s32 i = 0; i < (s32)CREvtCamera::sInstance->mTaskCount2AC; i++) {
         s16 taskID = CREvtCamera::sInstance->mTaskArray1A6[i];
-        activateLOD__8CTaskLODFv(taskID);
-        attachLODObject__8CTaskLODFv(taskID, 1);
+        CTaskLOD::activateLOD(taskID);
+        CTaskLOD::attachLODObject(taskID, 1);
     }
 }
 
@@ -187,8 +190,8 @@ void cf::CREvtCamera::vfunc_04() {
         simSetFlag2000Chain(obj, 1);
         simSetLeafDist7B0((CScnItemModel*)mField1C, lbl_eu_806678B0);
         ((CScnItemModel*)mField1C)->flags7A8 |= 4;
-        mField90 = (u32)((CScnItemModel*)mField1C)->vfunc3C(lbl_eu_80662448);
-        mField94 = (u32)((CScnItemModel*)mField1C)->vfunc3C(lbl_eu_8066244C);
+        mField90 = (u32)((CScnItemModel*)mField1C)->vfunc3C(sCamAtrAnimName);
+        mField94 = (u32)((CScnItemModel*)mField1C)->vfunc3C(sCamAnimName);
     }
 }
 
@@ -221,10 +224,10 @@ void cf::CREvtCamera::vfunc_1C() {
 
     CScnItemModel* sceneObj = (CScnItemModel*)mField1C;
     nw4r::g3d::ChrAnmResult* result =
-        scnImN4AnimFn(sceneObj, lbl_eu_8066244C, ConvU32ToTime((u32)EvtSeqGetCounter100()));
+        scnImN4AnimFn(sceneObj, sCamAnimName, ConvU32ToTime((u32)EvtSeqGetCounter100()));
     result->GetRotTrans((nw4r::math::MTX34*)mMatrix58);
     mFieldA4 = 1;
-    result = scnImN4AnimFn(sceneObj, lbl_eu_80662448, ConvU32ToTime((u32)EvtSeqGetCounter100()));
+    result = scnImN4AnimFn(sceneObj, sCamAtrAnimName, ConvU32ToTime((u32)EvtSeqGetCounter100()));
     result->GetRotTrans((nw4r::math::MTX34*)mMatrix28);
 
     CREvtCamObj* camObj = Scn_FindCamItem((u32)gmScene, -1);
@@ -327,9 +330,7 @@ extern "C" void REvtCam_SetupEvent(CREvtCamera* self, void* eventData, void* som
 // REvtCam_IsTaskListEmpty (0x80181D3C, size 0x14) - already implemented
 // ============================================================================
 u32 REvtCam_IsTaskListEmpty() {
-    unsigned long* ptr = (unsigned long*)CREvtCamera::sInstance;
-    unsigned long v = ptr[0xa0 / 4];
-    return v ? 0 : 1;
+    return CREvtCamera::sInstance->mFieldA0 ? 0 : 1;
 }
 
 // ============================================================================

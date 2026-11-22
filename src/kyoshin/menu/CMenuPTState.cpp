@@ -14,6 +14,7 @@
 #include "kyoshin/CMainMenu.hpp"
 #include "monolib/device/CDeviceVI.hpp"
 #include "monolib/scn/CScn.hpp"
+#include "monolib/core/CPadManager.hpp"
 #include "monolib/work/CWorkThreadSystem.hpp"
 #include "monolib/util/MemManager.hpp"
 #include "monolib/scn/CScn.hpp"
@@ -194,12 +195,9 @@ struct CMenuPTBlob41F4 {
 // form; same convention as BgTex_Tick_3D54 below).
 extern "C" bool BgTex_Acquire_3C14(CBgTex* self);
 
-// Retail ctor/dtor symbols for the stack temporaries built by Init are the
-// unmangled slice names (not the C++-mangled member forms), so Init calls
-// them under C linkage into raw storage, mirroring CMenuPTState.cpp.
-extern "C" void __ct__6CBgTexFUc(CBgTex* self, u8 arg);
+// The retail local-window ctor/dtor are imported with their literal symbols
+// so the stack temporary keeps the retail -1 cleanup flag at destruction.
 extern "C" void __ct__14CPartyStateWinFUlUl(CPartyStateWin* self, u32 arg1, u32 arg2);
-extern "C" CBgTex* __dt__6CBgTexFv(CBgTex* self, int flags);
 extern "C" CPartyStateWin* __dt__14CPartyStateWinFv(CPartyStateWin* self,
                                                       int flags);
 
@@ -1052,13 +1050,6 @@ void CMenuPTState::Term() {
     CUICfManager_setTimeout30();
 }
 
-// Minimal view of the pad word block returned by getCurrentPad() (only the
-// +4 button word is read by CMenuPTState::Move).
-struct MenuPTPadView {
-    u8 _0[4];
-    u32 buttons; // 0x4
-};
-
 // Per-frame party-menu update: gate on task state, run the open/close input
 // edge while the window is settling, then advance the 4-state phase byte.
 void CMenuPTState::Move() {
@@ -1071,14 +1062,13 @@ void CMenuPTState::Move() {
     {
         if ((u8)(mPhase + 0xff) <= 1) {
             if (PartyStateWin_QueryMenuClose(&mPartyStateWin) == 0) {
-                MenuPTPadView* pad = reinterpret_cast<MenuPTPadView*>(
-                    cf::CfGameManager::getCurrentPad());
+                CPad* pad = cf::CfGameManager::getCurrentPad();
                 int accept;
                 // Retail extracts single bits via rotate-left forms.
                 if (cf::CfGameManager::isClassicController(-1) != 0) {
-                    accept = (pad->buttons >> 23) & 1;
+                    accept = (pad->mPressedButtonFlags >> 23) & 1;
                 } else {
-                    accept = (pad->buttons >> 10) & 1;
+                    accept = (pad->mPressedButtonFlags >> 10) & 1;
                 }
                 if (accept != 0) {
                     PartyStateWin_StepPartySub(&mPartyStateWin);
@@ -1121,7 +1111,7 @@ void CMenuPTState::Move() {
     }
 }
 
-void CMenuPTState::cbRenderBefore() {
+void CMenuPTState::cbRenderBefore(CScn*) {
     // OR-combined guard: MWCC emits the retail beq-body/b-exit pair for the
     // second disjunct (MWCC_CASES "OR-combined guard" pattern).
     CTaskGame::getInstance();

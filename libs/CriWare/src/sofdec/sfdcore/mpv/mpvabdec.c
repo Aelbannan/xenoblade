@@ -39,10 +39,20 @@ typedef struct MPVABDEC_BLK_ {
 } MPVABDEC_BLK;
 
 extern u32 lbl_eu_806046A8[];
-const unsigned int lbl_eu_8051C378[4] = {0, 0, 0, 0}; // .rodata 0x10 at 0x8051C378
+s32 mpvabdec_IntraBlock_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk);
+s32 mpvabdec_IntraBlockDc11_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk);
+s32 mpvabdec_NintraBlock_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk);
+
+/* Block-decoder ISR table (name from the JP symbol map). */
+s32 (*const mpvabdec_funcs_isr[4])(MPVABDEC_CTX *, MPVABDEC_BLK *) = {
+    mpvabdec_IntraBlock_Isr,
+    mpvabdec_IntraBlockDc11_Isr,
+    mpvabdec_NintraBlock_Isr,
+    0,
+};
 
 void MPVABDEC_Init(void) {
-    lbl_eu_806046A8[2] = (u32)lbl_eu_8051C378;
+    lbl_eu_806046A8[2] = (u32)mpvabdec_funcs_isr;
 }
 
 /* 6-bit run + 8/16-bit level escape (ISO 11172-2 escape code). A level byte

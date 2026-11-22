@@ -38,40 +38,8 @@ struct CrystalItemBuf {
     u8 pad22[2];       // 0x22 (size 0x24)
 };
 
-// Fake polymorphic facade over the object returned by
-// CItem_initItemImplInstances (real class layout unknown; only the dispatch
-// slots 2/19/25 at vtable offsets 0x8/0x4C/0x64 are used). novtable keeps
-// MWCC from emitting a vtable -- the object is created elsewhere and the
-// dispatch loads the vptr from the object at runtime (retail lwz r12 form).
-// MWCC reserves vtable slots 0-1 for the implicit dtor pair, so the first
-// declared virtual lands at slot 2 (offset 0x08).
-class __declspec(novtable) CItemImplInstancesFacade {
-public:
-    virtual u8 GetCount(void* item);         // [2] = 0x08
-    virtual void v3();
-    virtual void v4();
-    virtual void v5();
-    virtual void v6();
-    virtual void v7();
-    virtual void v8();
-    virtual void v9();
-    virtual void v10();
-    virtual void v11();
-    virtual void v12();
-    virtual void v13();
-    virtual void v14();
-    virtual void v15();
-    virtual void v16();
-    virtual void v17();
-    virtual void v18();
-    virtual u16 GetName(void* item, u8 idx); // [19] = 0x4C
-    virtual void v20();
-    virtual void v21();
-    virtual void v22();
-    virtual void v23();
-    virtual void v24();
-    virtual u8 GetFlag(void* item, u8 idx);  // [25] = 0x64
-};
+// Item-impl virtual interface returned by CItem_initItemImplInstances (owner).
+#include "kyoshin/cf/CItemImpl.hpp"
 
 // View into the object returned by CDeviceFont::getFontInfo: vtable+0x24
 // (declared index 7, no args) yields the u32 passed to ApplyFontToTxtPanes.
@@ -148,21 +116,20 @@ extern "C" void MCCrystal_BindAnim3(CMCCrystalInfo* self);
 extern "C" void MCCrystal_BindAnim4(CMCCrystalInfo* self);
 extern "C" void MCCrystal_ClearTexts(CMCCrystalInfo* self);
 extern "C" void MCCrystal_ShowSlots(CMCCrystalInfo* self, u16 arg2, CMCCItemHandle* item);
-extern const float lbl_eu_80668498;
 
 // Imports whose retail symbols are unmangled (plain global C++ would be
 // mangled by MWCC, e.g. CUICfManager_getPackedFont9C__Fv) -- C linkage keeps the call relocs
 // bound to the retail names.
 // GXColorS10-style shared slot colours (4 s16 channels each); the alpha
 // channel is refreshed from the layout panes during file load.
-extern s16 sPane1Color0[4];
-extern s16 sPane1Color1[4];
-extern s16 sPane1Alpha0[4];
-extern s16 sPane1Alpha1[4];
-extern s16 sPane2Color0[4];
-extern s16 sPane2Color1[4];
-extern s16 sPane2Alpha0[4];
-extern s16 sPane2Alpha1[4];
+extern GXColorS10 sPane1Color0;
+extern GXColorS10 sPane1Color1;
+extern GXColorS10 sPane1Alpha0;
+extern GXColorS10 sPane1Alpha1;
+extern GXColorS10 sPane2Color0;
+extern GXColorS10 sPane2Color1;
+extern GXColorS10 sPane2Alpha0;
+extern GXColorS10 sPane2Alpha1;
 
 // Cross-TU imports with unmangled retail symbols (C linkage required so call
 // relocs bind to the retail names, not MWCC-mangled C++ forms).

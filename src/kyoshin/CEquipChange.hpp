@@ -141,8 +141,8 @@ struct CPaneScaleView {
 
 
 // Color/sound palette entries initialised by sinit_802059E8 (sdata2).
-extern void* sEquipCursorSrcColorA;
-extern void* sEquipCursorSrcColorB;
+extern GXColorS10 sEquipCursorSrcColorA;
+extern GXColorS10 sEquipCursorSrcColorB;
 extern GXColorS10 sEquipCursorColorA0;
 extern GXColorS10 sEquipCursorColorB0;
 extern GXColorS10 sEquipCursorColorA1;

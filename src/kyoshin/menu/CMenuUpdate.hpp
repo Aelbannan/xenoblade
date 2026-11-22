@@ -100,7 +100,7 @@ public:
     virtual void Init();
     virtual void Term();
     virtual void Move();
-    virtual void cbRenderBefore();
+    virtual void cbRenderBefore(CScn* scene);
     void UpsertEntry(int type, u32 arg1, u32 arg2, u32 arg3);
 
     // Accessors
@@ -116,22 +116,6 @@ public:
 // (Layout*) argument arrives as the &mAnim2 pointer the preceding
 // bindLayoutAnimTransform call left in r4.
 extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32);
-extern "C" void __dt__17UnkClass_8045F564Fv(void*, int);
-extern "C" void __dt__14Class_8045F858Fv(void*, int);
-extern "C" void __ct__14Class_8045F858FP17UnkClass_8045F564(void*, void*);
-extern "C" void __ct__17UnkClass_8045F564Fv(UnkClass_8045F564*);
-extern "C" void* getInstance__9CTaskGameFv();
-extern "C" bool isFlag01Set__9CTaskGameFv(void*);
-extern "C" void addRenderCB__4CScnFP10IScnRenderUlUl(void*, void*, u32, u32);
-extern "C" void removeRenderCB__4CScnFP10IScnRender(void*, void*);
-// One-arg form: retail emits 'li r3,1; bl' with no r4 setup - the second
-// (Layout*) argument arrives as the &mAnim2 pointer the preceding
-// bindLayoutAnimTransform call left in r4.
-extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32);
-extern "C" void waitForDrawDone__9CDeviceVIFv();
-extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv();
-extern "C" void* getWorkMem__17CWorkThreadSystemFv();
-extern "C" void Regist__8CProcessFP8CProcessb(void*, void*, bool);
 // BdatGetPtrDirect: declared with char* return in code_80135FDC.hpp
 // BdatTouchStringCell: declared with char* return in code_80135FDC.hpp (caller-tuned)
 extern "C" bool CUICfManager_hasInUseSlot();
@@ -146,9 +130,6 @@ extern "C" bool SkipTimer_IsActiveFlag();
 
 extern "C" void* CfRes_getE14();
 extern "C" void CtrlRemote_SetSharedBit(u32, u32);
-extern "C" void format__Q22ml10FixStr_32_FPCce(void*, const char*, ...);
-extern "C" bool isSceneLoading__Q22cf13CfGameManagerFv();
-extern "C" bool isSceneReadyForInput__Q22cf13CfGameManagerFv();
 
 // C-linkage helpers for thunks
 extern "C" void* MenuUpdate_SpawnProcessForMode(void* self, u32 r4, int r5, int r6, int r7, int r8);

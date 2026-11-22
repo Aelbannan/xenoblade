@@ -30,7 +30,7 @@ public:
     virtual void Init();
     virtual void Term();
     virtual void Move();
-    void cbRenderBefore();
+    void cbRenderBefore(CScn* scene);
 
     static CMenuShopSell* create(CProcess* parent, CScn* scene);
     static CMenuShopSell* sInstance;

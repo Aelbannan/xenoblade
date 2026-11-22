@@ -4701,14 +4701,9 @@ monolib/src/lib/CLibHbmControl.cpp:
 	.text       start:0x80462520 end:0x80462F54
 
 monolib/src/lib/CLibLayout.cpp:
-	extab       start:0x8001D90C end:0x8001D9B8
-	extabindex  start:0x800356D4 end:0x8003574C
-	.text       start:0x80462F54 end:0x80463534
-
-monolib/src/lib/UnkClass_8045F564.cpp:
-	extab       start:0x8001D9B8 end:0x8001D9D8
-	extabindex  start:0x8003574C end:0x8003577C
-	.text       start:0x80463534 end:0x80463828
+	extab       start:0x8001D90C end:0x8001D9D8
+	extabindex  start:0x800356D4 end:0x8003577C
+	.text       start:0x80462F54 end:0x80463828
 
 monolib/src/lib/Class_8045F858.cpp:
 	extab       start:0x8001D9D8 end:0x8001D9E8

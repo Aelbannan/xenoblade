@@ -835,16 +835,15 @@ u32 nw4r::ut::detail::ArchiveFontBase::CachedStreamReader::GetRemain() const {
 
 void nw4r::ut::detail::ArchiveFontBase::CachedStreamReader::CopyTo(
     void* pDst, u32 size) {
-    // Fast path: requested range is fully inside the stream buffer.
-    if (mBufferEnd - mBufferPos >= size) {
-        memcpy(pDst, mBufferPos, size);
+    u32 buffered = mBufferEnd - mBufferPos;
+    u8* dst = static_cast<u8*>(pDst);
+    if (buffered >= size) {
+        memcpy(dst, mBufferPos, size);
         mBufferPos += size;
     } else {
-        // Wrap around: consume the buffer tail, then read the rest from the stream.
-        u32 buffered = mBufferEnd - mBufferPos;
         u32 rest = size - buffered;
-        memcpy(pDst, mBufferPos, buffered);
-        memcpy(static_cast<u8*>(pDst) + buffered, mStreamPos, rest);
+        memcpy(dst, mBufferPos, buffered);
+        memcpy(dst + buffered, mStreamPos, rest);
         mBufferPos = mBufferEnd;
         mStreamPos += rest;
     }

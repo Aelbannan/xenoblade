@@ -31,10 +31,23 @@ struct CColiProcTarget {
     u16 field_0x6;
 };
 
-// The collision source matrix pair a res object tracks (ColiMoverUpdate reads
-// both matrices of the node it follows; the type itself is local to the
-// code_804B2FF0 unit that walks it).
-struct CColiMtxSrc;
+// Matrix source a res object tracks: ColiMoverUpdate reads cur.m0 (the world
+// matrix) and old.m1 (the previous inverse), while the matrix-history helpers
+// in code_804B2FF0 shift cur into old. CObjMtx keeps the word-copy shape those
+// helpers use. Defined here once so both units see the same real type.
+struct CObjMtx {
+    f32 m[3][4];
+};
+
+struct CColiMtxPair {
+    CObjMtx m0; //0x0
+    CObjMtx m1; //0x30
+};
+
+struct CColiMtxOut {
+    CColiMtxPair cur; //0x0
+    CColiMtxPair old; //0x60
+};
 
 class CColiProc {
 public:
@@ -71,7 +84,7 @@ class CColiResCall : public CColiProc {
 public:
     virtual void Update(); // ColiMoverUpdate
     nw4r::math::VEC3 acc;          // +0x38 accumulated displacement
-    CColiMtxSrc* src;              // +0x44 matrix source (cleared by the walkers)
+    CColiMtxOut* src;              // +0x44 matrix source (cleared by the walkers)
     void* target;                  // +0x48 object the points are resolved against
     u32 field_0x4c;                // +0x4C
 };

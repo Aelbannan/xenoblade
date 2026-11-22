@@ -76,6 +76,10 @@ class __declspec(novtable) CHelpManager : public CHelpManagerData {
 public:
     CHelpManager();
     virtual ~CHelpManager(); // vptr at 0x1C
+
+    // name-guess: retail .sbss singleton (US/EU lbl_eu_80664A10; JP unnamed),
+    // set by the ctor and cleared by destroyHelpManager.
+    static CHelpManager* sInstance;
 };
 
 // Layout mirror of CHelpManager used to install the retail vtable at +0x1C
@@ -265,7 +269,6 @@ extern "C" void clearHelpList(cf::CHelpListHolder* self);
 extern "C" int isHelpPopupReady(cf::CHelpManager* self);
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
-extern cf::CHelpManager* lbl_eu_80664A10;
 extern u32 gmPauseFlags; // menu-open flag (bit 24)
 extern u8 lbl_eu_8053911C[]; // CHelpManager vtable (retail .data)
 extern cf::CHelpTableFull sHelpDispatchObjects; // static CHelp dispatch objects

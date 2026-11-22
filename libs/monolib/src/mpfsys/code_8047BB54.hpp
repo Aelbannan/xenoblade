@@ -10,14 +10,6 @@ struct UnkLayerView {
     u32 field_0x4;   // +0x04 element base index (x 0xC into obj->field_0xC)
 };
 
-// Tail of the embedded UnkClass_80471EC8 subobject (this+0x24) holding the
-// two per-frame culling constants read by mpfCullMarkLayers.
-struct EmbeddedCullParams {
-    u8 pad_0x0[0x2DFC];
-    f32 field_0x2DFC;   // +0x2DFC
-    f32 field_0x2E00;   // +0x2E00
-};
-
 // MPF draw-object vtable mirrors for the two-argument mark-flush virtuals:
 // path C flushes via vtable slot 0 (+0x8), paths A/B via slot 1 (+0xC).
 struct MPFDrawVt8_2 {

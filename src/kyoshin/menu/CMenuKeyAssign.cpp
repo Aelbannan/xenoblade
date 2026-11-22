@@ -223,7 +223,7 @@ void CMenuKeyAssign::Move() {
         // ---- in battle ----
         int battleMode = 0;
         cf::CBattleManager* bm =
-            (cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv();
+            (cf::CBattleManager*)cf::CBattleManager::getInstance();
         if (bm->unk20C8.unk0 != 0) {
             battleMode = 1;
         }
@@ -412,7 +412,7 @@ void CMenuKeyAssign::Move() {
     // ---- not in battle ----
     int battleMode = 0;
     cf::CBattleManager* bm =
-        (cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv();
+        (cf::CBattleManager*)cf::CBattleManager::getInstance();
     if (bm->unk20C8.unk0 != 0) {
         battleMode = 1;
     }
@@ -597,7 +597,7 @@ void CMenuKeyAssign::Draw() {}
 // us-80115964 - CMenuKeyAssign::cbRenderBefore
 // Gate prefix (task busy / global bits / scene-active / presentation flags)
 // then draw the embedded layout through a stack DrawInfo.
-void CMenuKeyAssign::cbRenderBefore() {
+void CMenuKeyAssign::cbRenderBefore(CScn*) {
     CTaskGame::getInstance();
     // Combined short-circuit produces retail's double branch for the bit-21
     // gate (bne return; beq continue; b return) - same shape as CMenuGCItem::Move.

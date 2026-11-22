@@ -4,6 +4,8 @@
 #include <harness_catalog.h>
 
 #include "libs/CriWare/src/sofdec/mwply/mwsfd_types.h"
+#include "libs/CriWare/src/sofdec/sfx/sfx_types.h"
+#include "libs/CriWare/src/sofdec/sfdcore/sfd/sfd_types.h"
 
 
 
@@ -11,7 +13,7 @@
 extern void SFX_Init(void);
 extern void SFX_SetErrFn(u32 a, u32 b);
 void mwsfsfx_SfxErrCbFn(void* context, int code);
-void mwsfsfx_SetYcc420plnInfToSfx(void* a, void* src, void* sfx);
+void mwsfsfx_SetYcc420plnInfToSfx(MWSFDPLY* a, MwlSfdFrmInf* src, SFXStmInf* sfx);
 extern int MWSFD_IsEnableHndl(void*);
 
 void MWSFSFX_Init(void) {
@@ -28,7 +30,7 @@ void MWSFSFX_Create(void) { SFX_Create(); }
 
 void MWSFSFX_Destroy(void) { SFX_Destroy(); }
 
-void MWSFD_CnvFrmInfToSfx(MWSFDPLY* self, MwlSfdFrmInf* frm, void* sfx) {
+void MWSFD_CnvFrmInfToSfx(MWSFDPLY* self, MwlSfdFrmInf* frm, SFXStmInf* sfx) {
     s32 mode;
     s32 v;
 
@@ -160,15 +162,15 @@ int MWSFD_GetFxType(MWSFDPLY* self, int idx) {
 
 extern void mwPlyCalcYccPlane(s32 a, s32 b, s32 c, s32* out);
 
-void mwsfsfx_SetYcc420plnInfToSfx(void* a, void* src, void* sfx) {
-    s32 h = *(s32*)((u8*)src + 0xc);
-    s32 v = *(s32*)((u8*)src + 0x10);
-    *(u32*)((u8*)sfx + 0x48) = v;
-    *(u32*)((u8*)sfx + 0x44) = h;
-    if (*(s32*)((u8*)src + 8) != 3) {
-        *(u32*)((u8*)sfx + 4) = *(u32*)((u8*)src + 0);
-        *(u32*)((u8*)sfx + 8) = h;
-        *(u32*)((u8*)sfx + 0xc) = v;
+void mwsfsfx_SetYcc420plnInfToSfx(MWSFDPLY* a, MwlSfdFrmInf* src, SFXStmInf* sfx) {
+    s32 h = src->field_0x0c;
+    s32 v = src->field_0x10;
+    sfx->bytesPerLine = v;
+    sfx->width = h;
+    if (src->field_0x08 != 3) {
+        sfx->_04 = src->field_0x00;
+        sfx->_08 = h;
+        sfx->_0C = v;
     } else {
         s32 plane[6];
         s32 w3;
@@ -177,23 +179,23 @@ void mwsfsfx_SetYcc420plnInfToSfx(void* a, void* src, void* sfx) {
         s32 t4;
         s32 t5;
         s32 t2;
-        mwPlyCalcYccPlane(*(s32*)((u8*)src + 0), h, v, plane);
+        mwPlyCalcYccPlane(src->field_0x00, h, v, plane);
         w3 = plane[3];
         w0 = plane[0];
-        *(s32*)((u8*)sfx + 4) = w0;
+        sfx->_04 = w0;
         w0 = v / 2;
-        *(s32*)((u8*)sfx + 8) = w3;
-        *(s32*)((u8*)sfx + 0xc) = v;
+        sfx->_08 = w3;
+        sfx->_0C = v;
         t1 = plane[1];
         t4 = plane[4];
-        *(s32*)((u8*)sfx + 0x18) = t4;
-        *(s32*)((u8*)sfx + 0x14) = t1;
-        *(s32*)((u8*)sfx + 0x1c) = w0;
+        sfx->_18 = t4;
+        sfx->_14 = t1;
+        sfx->_1C = w0;
         t5 = plane[5];
         t2 = plane[2];
-        *(s32*)((u8*)sfx + 0x24) = t2;
-        *(s32*)((u8*)sfx + 0x28) = t5;
-        *(s32*)((u8*)sfx + 0x2c) = w0;
+        sfx->_24 = t2;
+        sfx->_28 = t5;
+        sfx->_2C = w0;
     }
 }
 
@@ -307,8 +309,8 @@ s32 MWSFTAG_CreateAinfSj(MWSFDPLY* self) {
 void MWSFTAG_DestroyAinfSj(MWSFDPLY* self) {
     void* p = self->ainfSj;
     if (p == NULL) return;
-    void** vtable = *(void***)p;
-    ((void (*)(void*))vtable[3])(p);
+    SfdSjObj* sj = p;
+    sj->vtbl->destroy(sj);
 }
 
 extern s32 SFD_SetUsrSj(void* sst, s32 a, s32 b, s32 c);
@@ -343,8 +345,8 @@ void MWSFTAG_InitTagInf(MWSFDPLY* self) {
 void MWSFTAG_ResetAinfSj(MWSFDPLY* self) {
     void* p = self->ainfSj;
     if (p == NULL) return;
-    void** vtable = *(void***)p;
-    ((void (*)(void*))vtable[5])(p);
+    SfdSjObj* sj = p;
+    sj->vtbl->reset(sj);
 }
 
 extern void mwsftag_GetAinfFromSj(MWSFDPLY* self);
@@ -376,11 +378,12 @@ void MWSFTAG_UpdateTagInf(MWSFDPLY* self) {
 
 void mwsftag_GetAinfFromSj(MWSFDPLY* self) {
     void* sj = self->ainfSj;
+    SfdSjObj* sjObj = sj;
     u32 buf[2];
     u32 out[2];
     s32 ret;
     buf[0] = (u32)self->ainfBuf;
-    ret = ((s32 (*)(void*))*(void**)((u8*)*(void**)((u8*)sj) + 0x24))(sj);
+    ret = sjObj->vtbl->getAvail(sjObj, 1);
     if (ret == 0) {
         self->tagData = 0;
         self->tagSize = 0;
@@ -401,8 +404,8 @@ void mwsftag_GetAinfFromSj(MWSFDPLY* self) {
         self->tagSize = 0x7fffffff;
         self->tagValid = 1;
         ((void (*)(void*, s32, s32*))*(void**)((u8*)*(void**)((u8*)sj) + 0x18))(sj, 1, &t);
-        ((void (*)(void*, s32, s32*))*(void**)((u8*)*(void**)((u8*)sj) + 0x20))(sj, 0, &t);
-        ((void (*)(void*))*(void**)((u8*)*(void**)((u8*)sj) + 0x14))(sj);
+        sjObj->vtbl->putChunk(sjObj, 0, &t);
+        sjObj->vtbl->reset(sjObj);
     } else {
         self->tagData = out[0];
         self->tagSize = out[1];

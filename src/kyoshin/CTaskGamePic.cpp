@@ -200,7 +200,7 @@ void CTaskGamePic::Move() {
 // so the function sits under the same optimize_for_size wrap as the ctor/
 // create (r28-r31 live across the many CDrawGX calls).
 // ---------------------------------------------------------------------------
-void CTaskGamePic::cbRenderBefore() {
+void CTaskGamePic::cbRenderBefore(CScn*) {
     const CTaskGamePicTexData* tex;
     if (field_8C == 0) return;
     CView* view = CView::getCurrentView();
@@ -215,8 +215,8 @@ void CTaskGamePic::cbRenderBefore() {
     fitRectToView__5CViewFRQ22ml5CRectP5CView(rectA, view);
     if (CDeviceVI::isWideAspectRatio()) {
         // Signed /2 (round toward zero): MWCC lowers to srawi+addze.
-        rectA.mPos.x = (rectA.mSize.x - (s32)(tex->mWidth * 75 / 100)) / 2;
-        rectA.mSize.x = tex->mWidth * 75 / 100;
+        rectA.mPos.x = (rectA.mSize.x - (s32)(tex->mTextureHeader.width * 75 / 100)) / 2;
+        rectA.mSize.x = tex->mTextureHeader.width * 75 / 100;
     } else {
         s16 h = (s16)CDeviceVI::getRenderModeObj()->efbHeight;
         s16 w = (s16)CDeviceVI::getRenderModeObj()->fbWidth;
@@ -241,19 +241,19 @@ void CTaskGamePic::cbRenderBefore() {
         ml::CRect16 rectB;
         fitRectToView__5CViewFRQ22ml5CRectP5CView(*(ml::CRect*)&rectB, view);
         dgx0.renderRect(rectB);
-        dgx0.setTex(&mTexObj, tex->mWidth, tex->mHeight);
+        dgx0.setTex(&mTexObj, tex->mTextureHeader.width, tex->mTextureHeader.height);
         dgx0.begin(6, 4);
         dgx0.add(rectA.mPos.x, rectA.mPos.y, 0, 0);
         dgx0.add((s16)(rectA.mPos.x + rectA.mSize.x), rectA.mPos.y,
-                 tex->mWidth, 0);
+                 tex->mTextureHeader.width, 0);
         // x computed into a local first so MWCC stages it in a callee-saved
         // register across the nested helper call (retail shape).
         s16 vx3 = rectA.mPos.x;
         dgx0.add(vx3, GamePicRectBottom(&rectA), 0,
-                 tex->mHeight);
+                 tex->mTextureHeader.height);
         s16 vx4 = rectA.mPos.x + rectA.mSize.x;
         dgx0.add(vx4, GamePicRectBottom(&rectA),
-                 tex->mWidth, tex->mHeight);
+                 tex->mTextureHeader.width, tex->mTextureHeader.height);
         dgx0.end();
     }
 

@@ -9,7 +9,6 @@
 #include "monolib/util/reslist.hpp"
 
 extern "C" void schedReleaseAllItems(CSchedule* self);
-extern "C" void __ct__CSchedule(CSchedule* self);
 
 // name-guess: the class names are the retail RTTI strings; the member names
 // follow the existing SchedList_* retail entry points at their vtable slots.
@@ -71,8 +70,8 @@ extern "C" char    lbl_eu_80665A5C = 0;
 
 // ---------------------------------------------------------------------------
 // Virtual-dispatch interfaces. Both object families carry their vtable
-// pointer inside the retail layout (SLList at 0x00 as mSelfVtbl; CSchedule
-// at 0xEC as mTablePtr), so the retail entry points are reached with
+// pointer inside the retail layout (SLList at 0x00 as mSelfVtbl), so the
+// retail entry points are reached with
 // genuine C++ virtual calls. These abstract interface types mirror the
 // retail slots (two reserved entries precede the destructor slot in both
 // tables); nothing here is constructed or deleted, so MWCC emits no
@@ -91,14 +90,6 @@ struct SLDispatch {
     virtual u32 count() = 0;                                // +0x28
 };
 
-struct CSchedDispatchBase { u8 opaque[0xec]; };
-struct CSchedDispatch : CSchedDispatchBase {
-    virtual void destroy(int flag) = 0;                     // +0x08
-};
-
-static void scheduleDestroy(CSchedule* item) {
-    ((CSchedDispatch*)item)->destroy(1);
-}
 
 
 // Global schedule-list mode flag (bit 12 selects the alternate list) packed
@@ -163,9 +154,7 @@ void ScheduleList::step(f32 dt) {
                 item = rnode->mItem;
                 if (item->field_0x00.b10 && !item->field_0x00.b15) {
                     if (item != 0) {
-                        if (item != 0) {
-                            scheduleDestroy(item);
-                        }
+                        delete item;
                         rnode->mItem = 0;
                     }
                     {
@@ -241,10 +230,7 @@ CSchedule* ScheduleList::add(ScheduleEntry* entries, u8* p8, u8* pc,
     CSchedule* tmp;
 
     if (mtl::MemManager::getMaxAllocSize(slAllocHandle()) >= 0xf0) {
-        tmp = (CSchedule*)mtl::MemManager::allocate(0xf0, slAllocHandle());
-        if (tmp != 0) {
-            __ct__CSchedule(tmp);
-        }
+        tmp = new (slAllocHandle()) CSchedule;
     } else {
         tmp = 0;
     }
@@ -254,9 +240,7 @@ CSchedule* ScheduleList::add(ScheduleEntry* entries, u8* p8, u8* pc,
     }
     if (p->Init(entries, p8, pc, fa, fb, p10) == 0) {
         if (p != 0) {
-            if (p != 0) {
-                scheduleDestroy(p);
-            }
+            delete p;
         }
         return 0;
     }
@@ -301,9 +285,7 @@ void ScheduleList::drop(CSchedule* x) {
     }
     if (node == sentinel) return;
     if (x != 0) {
-        if (x != 0) {
-            scheduleDestroy(x);
-        }
+        delete x;
     }
     {
         SLNode* prev = node->mPrev;
@@ -328,9 +310,7 @@ void ScheduleList::dropByField14(u32 x) {
         item = cur->mItem;
         if (item->field_0x14 == x) {
             if (item != 0) {
-                if (item != 0) {
-                    scheduleDestroy(item);
-                }
+                delete item;
                 cur->mItem = 0;
             }
             {
@@ -425,9 +405,7 @@ ScheduleList::~ScheduleList() {
     while (iNode != mRes.mStartNodePtr) {
         item = iNode->mItem;
         if (item != 0) {
-            if (item != 0) {
-                scheduleDestroy(item);
-            }
+            delete item;
             iNode->mItem = 0;
         }
         iNode = iNode->mNext;

@@ -22,7 +22,7 @@ class CScnFadeMan {
 public:
     CScnFadeMan(CScn* scene);
     virtual ~CScnFadeMan();
-    virtual void cbRenderBefore();
+    virtual void cbRenderBefore(CScn* scene);
     void update();
 
     CScn* mScene;             //0x4

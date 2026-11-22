@@ -44,7 +44,7 @@ public:
     virtual void Init();
     virtual void Term();
     virtual void Move();
-    virtual void cbRenderBefore();
+    virtual void cbRenderBefore(CScn* scene);
 
     /* 0x60 */ CScn* mScn;                 // owning scene (render-callback target)
     /* 0x64 */ UnkClass_8045F564 mMemRegion; // scratch region for the layout file data

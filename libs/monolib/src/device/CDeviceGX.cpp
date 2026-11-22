@@ -51,8 +51,8 @@ extern "C" {
     extern void wkStandbyExceptionRetry__11CWorkThreadFUl(unsigned int);
 }
 extern "C" __declspec(section ".rodata") u32 lbl_eu_80522ED0[4] = { 0x43446576, 0x69636547, 0x58000000, 0x00000000 };
-extern "C" __declspec(section ".sdata") int gxHeapSize__9CDeviceGX = 0x00200000;
-extern "C" __declspec(section ".sdata") const char* someString__9CDeviceGX = lbl_eu_8066A428;
+int CDeviceGX::gxHeapSize = 0x00200000;
+const char* CDeviceGX::someString = lbl_eu_8066A428;
 // Retail .data layout: the compiler emits __vt__9CDeviceGX (0xC0) itself;
 // lbl_eu_8056CA20 (the RTTI base-list, 0x28) resolves to the retail data
 // object at link -- only its reloc name must match.
@@ -88,8 +88,8 @@ unk274(1),
 mFilter(VFILTER_NONE){
     spInstance = this;
     cacheInstance = &unk27C;
-    mGxHeap = new (CDevice::getDevSys1Handle(), 32) u8[gxHeapSize__9CDeviceGX];
-    mGxHeapEndAddr = mGxHeap + gxHeapSize__9CDeviceGX;
+    mGxHeap = new (CDevice::getDevSys1Handle(), 32) u8[gxHeapSize];
+    mGxHeapEndAddr = mGxHeap + gxHeapSize;
     cacheInstance->unk50C = 0;
     updateVerticalFilter(VFILTER_NONE);
     cacheInstance->clearStubFunc(0);
@@ -296,7 +296,7 @@ void CDeviceGX::onRenderWork(){
 }
 
 int CDeviceGX::getHeapSize(){
-    return gxHeapSize__9CDeviceGX;
+    return gxHeapSize;
 }
 
 bool CDeviceGX::wkStandbyLogin(){

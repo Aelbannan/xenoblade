@@ -128,9 +128,12 @@ public:
     static void* create(int arg);
 };
 
-extern "C" BattleMainState const lbl_eu_8053AA58 = &CVS_THREAD_BATTLE_MAIN::refreshBase;
-extern "C" BattleMainState const lbl_eu_8053AA64 = &CVS_THREAD_BATTLE_MAIN::refreshRemap;
-extern "C" BattleMainState const lbl_eu_8053AA70 = &CVS_THREAD_BATTLE_MAIN::dispatchUpdate;
+// name-guess: US 0x8053AA58 / JP 0x8053E170 has no retail name; typed refreshBase PTMF state object.
+extern "C" BattleMainState const bmRefreshBaseState = &CVS_THREAD_BATTLE_MAIN::refreshBase;
+// name-guess: US 0x8053AA64 / JP 0x8053E17C has no retail name; typed refreshRemap PTMF state object.
+extern "C" BattleMainState const bmRefreshRemapState = &CVS_THREAD_BATTLE_MAIN::refreshRemap;
+// name-guess: US 0x8053AA70 / JP 0x8053E188 has no retail name; typed dispatchUpdate PTMF state object.
+extern "C" BattleMainState const bmDispatchUpdateState = &CVS_THREAD_BATTLE_MAIN::dispatchUpdate;
 
 // Phantom view over the owner object's vtable exposing the slot at byte
 // offset 0x2A4 (declared slot 166), which returns the work object whose
@@ -682,7 +685,7 @@ void* CVS_THREAD_BATTLE_MAIN::create(int arg) {
     // Seed the init-state triple; load word 1 before word 0 so the register
     // colours match retail (r0 = word 1, r4 = word 0).  Returns self (the
     // constructed thread), which keeps r3 live to the epilogue.
-    self->mState = lbl_eu_8053AA58;
+    self->mState = bmRefreshBaseState;
 
     return self;
 }
@@ -693,7 +696,7 @@ void* CVS_THREAD_BATTLE_MAIN::create(int arg) {
 // by the thread's flag byte) through the embedded voice.
 void CVS_THREAD_BATTLE_MAIN::refreshBase() {
     CVS_THREAD_BATTLE_MAIN* self = this;
-    mState = lbl_eu_8053AA64;
+    mState = bmRefreshRemapState;
 
     CCharVoice* voice = (CCharVoice*)cf::CfGameManager::getPlayer(0);
     CVoiceHandle* handle = (CVoiceHandle*)voice;
@@ -727,7 +730,7 @@ void CVS_THREAD_BATTLE_MAIN::refreshRemap() {
     if (IsThreadVoiceActive((CVS_THREAD*)self) != 0)
         return;
 
-    mState = lbl_eu_8053AA70;
+    mState = bmDispatchUpdateState;
 
     CCharVoice* voice = (CCharVoice*)cf::CfGameManager::getPlayer(0);
     CVoiceHandle* handle = (CVoiceHandle*)voice;

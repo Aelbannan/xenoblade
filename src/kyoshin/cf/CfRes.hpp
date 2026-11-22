@@ -34,7 +34,6 @@ extern "C" int CfRes_acquireSlot(int id, int incRef, int incCount);
 
 // Helpers used by the CfRes_dispatchLoad load dispatcher (defined across cf TUs;
 // C linkage keeps the call relocs carrying the retail unmangled names).
-extern "C" bool isSceneLoading__Q22cf13CfGameManagerFv(void* self);
 extern "C" void CfRes_clearE28Mask(u32 mask);
 extern "C" void CfRes_setE28Mask(u32 mask);
 extern "C" int CfRes_getE24Bit18();
@@ -55,10 +54,6 @@ extern "C" void CfRes_orBits_649CC(u8* self, u32 bits);
 extern "C" u8* CfRes_findHighEntry(int instField, u32 packed, u32* out10, u32* outC);
 extern "C" u8* CfRes_findLowEntryOrMark(int instField, u32 packed, u32* out10, u32* outC);
 extern "C" bool findResEntry(int instField, u32 packed, u32* out10, u32* outC);
-extern "C" u32 getHandleMEM2__Q23mtl10MemManagerFv();
-extern "C" u32 getMaxAllocSize__Q23mtl10MemManagerFUl(u32 handle);
-extern "C" void* allocate_tail__Q23mtl10MemManagerFUlUli(u32 handle, u32 size, int align);
-extern "C" void* allocate_head__Q23mtl10MemManagerFUlUli(u32 handle, u32 size, int align);
 extern "C" void CfRes_attachEntryData(u8* res, void* buf, u32 kind);
 extern "C" int KyoshinHeap_Contains38(void* buf);
 extern "C" void KyoshinHeap_Register38(void* buf, int mode, u32 packed);
@@ -151,7 +146,6 @@ extern u32 __ptmf_null[3];
 // member ctors / allocators from other TUs). extern "C" keeps the call
 // relocs carrying the retail unmangled names (plain global declarations get
 // an `__F...` arg suffix appended by the MWCC mangler).
-extern "C" u32 getWorkMem__17CWorkThreadSystemFv();
 extern "C" void __ct__8CProcessFv(CProcess* p);
 extern "C" void __ct__80066F9C(u8* self);
 
@@ -331,19 +325,16 @@ extern "C" u32 CfResEntry_getHandle(u8* self);
 extern "C" u32 CfResEntry_getField4(u8* self);
 extern "C" void CfResEntry_setHandle(u8* self, u32 val);
 
-// +0x28 load-request flag of the CfResPcTableEntry record (CfRes_getPcGridEntry's
-// result; only this word is read by CfRes_isGridLoadIdle - the full record layout
-// is declared in CfResPcImpl.hpp).
-struct CfResPcEntry28View {
-    u8 _00[0x28];
-    u32 field_28;
-};
+// Forward declaration: CfRes_getPcGridEntry returns the 0x3C-stride
+// resource-table entry defined below. CfRes_isGridLoadIdle only reads its
+// +0x28 pending-load word.
+struct CfResCleanupEntry;
 
 // vtable +0x38 dispatch over the resource-entry lookup object (CResLookup::vfunc0A at +0x38).
 
 // Same-unit resource-table accessor (stub defined in CfRes.cpp; C linkage so
 // call relocs carry the retail unmangled name).
-extern "C" CfResPcEntry28View* CfRes_getPcGridEntry(int id, int a);
+extern "C" CfResCleanupEntry* CfRes_getPcGridEntry(int id, int a);
 
 // Same-TU bit-field helpers (defined in CfRes.cpp). C linkage so call relocs
 // carry the retail unmangled names; the unit's -inline noauto keeps them

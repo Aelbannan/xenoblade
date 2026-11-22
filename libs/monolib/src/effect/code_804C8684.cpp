@@ -11,7 +11,7 @@ extern "C" void EffCtl_EmptyStub8C(void) {}
 
 // ---------------------------------------------------------------------------
 // EffCtl_StoreFlagAndParams: unconditionally store the flag byte (stb - the destination
-// lbl_eu_806659A0 is a single u8) into lbl_eu_806659A0, then (when the source
+// sEffCtlFlagState.flag into sEffCtlFlagState.flag, then (when the source
 // pointer is non-null) copy its 12-byte parameter block into the global
 // lbl_eu_8065FC08. The retail copies the first 8 bytes as a 2-word pair
 // (reversed store order) and the last word separately, so the source keeps
@@ -26,11 +26,18 @@ struct CEffectParam {
     u32 field_0x08;    // 0x08
 }; struct SInitBlk;  // complete below (sinit block); fwd for the FC08 extern.
 
-extern u8 lbl_eu_806659A0;
+// name-guess: retail exposes one 8-byte .sbss object here with only the first
+// byte named by a store; the remaining word has no independent retail symbol.
+struct EffCtlFlagState {
+    u8 flag;      // 0x00
+    u32 field_0x4; // 0x04
+};
+
+extern EffCtlFlagState sEffCtlFlagState;
 extern SInitBlk lbl_eu_8065FC08;
 
 extern "C" void EffCtl_StoreFlagAndParams(u8 flag, const CEffectParam* src) {
-    lbl_eu_806659A0 = flag;
+    sEffCtlFlagState.flag = flag;
     if (src) {
         // 2+1 word split: load both pair words before the dst base addi and
         // store hi-before-lo, then the word at 0x08 (retail schedule).
@@ -45,7 +52,7 @@ extern "C" void EffCtl_StoreFlagAndParams(u8 flag, const CEffectParam* src) {
 
 // ---------------------------------------------------------------------------
 // sinit_804C86C0: static-initializer writing the 11 float constants into the
-// 3-block array rooted at lbl_eu_8065FBE8. The float constants are referenced
+// 3-block array rooted at sEffInitBlockTable. The float constants are referenced
 // through their retail sdata2 symbols so the lfs relocs stay pinned.
 // Block 2 is addressed as p[2] through the local pointer (== FC08's address)
 // so no FC08/FBE8+32 reloc is emitted; MWCC still emits one partial+LO store
@@ -81,12 +88,13 @@ struct SInitBlk {
     SInitV3 tail;
 };
 
-extern SInitBlk lbl_eu_8065FBE8[2];
+// name-guess: no recovered retail name exists for this 32-byte .bss table.
+extern SInitBlk sEffInitBlockTable[2];
 
 extern "C" void sinit_804C86C0() {
     // Every block address flows through the single table pointer (see the
     // residual note above for why only 2 of retail's 4 GPR bases survive).
-    SInitBlk* p = lbl_eu_8065FBE8;
+    SInitBlk* p = sEffInitBlockTable;
     p[0].head = 1.0f;
     p[0].tail.x = 0.0f;
     p[0].tail.y = 0.0f;
@@ -104,12 +112,11 @@ extern "C" void sinit_804C86C0() {
 
 // ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
 // [.bss] 0x8065FBE8-0x8065FCA0 (0xB8 = 184B) zero-fill. Retail splits this
-// contiguous zero block into lbl_eu_8065FBE8(32B) + lbl_eu_8065FC08(16B) +
-// lbl_eu_8065FC18(136B); FC08 is one SInitBlk (16B), written by sinit as the
-// third table block (retail sinit references both FBE8 and FC08).
-SInitBlk lbl_eu_8065FBE8[2];   // 32B: table blocks 0-1
-SInitBlk lbl_eu_8065FC08;      // 16B @0x20: table block 2 (also the 12B copy dst)
+// contiguous zero block into sEffInitBlockTable(32B) + lbl_eu_8065FC08(16B) +
+// lbl_eu_8065FC18(136B); FC08 is one SInitBlk (16B), written by sinit as
+// the third table block (retail sinit references both the table and FC08).
+SInitBlk sEffInitBlockTable[2];   // 32B: table blocks 0-1
+SInitBlk lbl_eu_8065FC08;         // 16B @0x20: table block 2 (also the 12B copy dst)
 u8 lbl_eu_8065FC18[136];   // 136B
 // [.sbss] 0x806659A0-0x806659A8 (8B)
-u8 lbl_eu_806659A0;   // sbss byte 0
-u32 lbl_eu_806659A4;   // sbss word 1
+EffCtlFlagState sEffCtlFlagState;  // sbss byte 0 + word 1

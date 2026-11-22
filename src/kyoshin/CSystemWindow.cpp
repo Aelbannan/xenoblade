@@ -23,7 +23,9 @@
 
 // Retail .sbss singleton slot owned by this TU (split 0x80663FD8-0x80663FDC).
 // Tentative definition -> .sbss, zero-initialized like retail.
-CSystemWindow* lbl_eu_80663FD8;
+// name-guess: SysWinGetSingleton() returns this CSystemWindow singleton; no
+// real name exists at 0x80663FD8 in us/eu/jp symbols.txt.
+CSystemWindow* spSystemWindow;
 
 CSystemWindow::CSystemWindow(CScn* scene, u32 opt, const char* str1, const char* str2)
     : mScene(scene), mSysWin(0), mState(0), field_B5(opt), mFlag2B6(0) {
@@ -80,14 +82,14 @@ void CSystemWindow::Init() {
     __dt__7CSysWinFv(temp, -1);
 
     // Dispatch the layout-build virtual at vtable+0x88 on the rebuilt CSysWin.
-    reinterpret_cast<CSysWinView*>(&mSysWin)->v20();
+    mSysWin.loadSystemArc();
 }
 
 void CSystemWindow::Term() {
     CDeviceVI::waitForDrawDone();
     mSysWin.termLayout();
 
-    lbl_eu_80663FD8 = 0;
+    spSystemWindow = 0;
 
     IScnRender* render = this;
     mScene->removeRenderCB(render);
@@ -149,7 +151,7 @@ void CSystemWindow::Move() {
 }
 
 
-void CSystemWindow::cbRenderBefore() {
+void CSystemWindow::cbRenderBefore(CScn*) {
     CTaskGame::getInstance();
     if (CTaskGame::isFlag01Set() || (gmPauseFlags & 0x200000))
         return;
@@ -165,24 +167,26 @@ void CSystemWindow::cbRenderBefore() {
 // CProcess under `parent`. Returns 0 if the singleton already exists.
 extern "C" CSystemWindow* SysWinCreateSingleton(CProcess* parent, CScn* scene, u32 opt,
                              const char* str1, const char* str2) {
-    if (lbl_eu_80663FD8 != 0) return 0;
+    if (spSystemWindow != 0) return 0;
 
     u32 workMem = CWorkThreadSystem::getWorkMem();
     CSystemWindow* obj =
         new (mtl::MemManager::allocate(0x2b8, workMem)) CSystemWindow(scene, opt, str1, str2);
-    lbl_eu_80663FD8 = obj;
+    spSystemWindow = obj;
     reinterpret_cast<CProcess*>(obj)->Regist(parent, 0);
-    return lbl_eu_80663FD8;
+    return spSystemWindow;
 }
 
-/* Returns the singleton CSystemWindow instance (lbl_eu_80663FD8 in .sbss). */
+/* Returns the singleton CSystemWindow instance (.sbss slot at 0x80663FD8). */
 CSystemWindow* SysWinGetSingleton() {
-    return lbl_eu_80663FD8;
+    return spSystemWindow;
 }
 
 // __vt__13CSysWinSelect, its RTTI base list/record and the "CSysWinSelect"
 // type-name string are compiler-emitted.
-CSysWinSelect* lbl_eu_80663FDC = nullptr;
+// name-guess: SysWinSelectCreate() returns this CSysWinSelect singleton; no
+// real name exists at 0x80663FDC in us/eu/jp symbols.txt.
+CSysWinSelect* spSysWinSelect = nullptr;
 
 // CSysWinSelect::~CSysWinSelect (us-80282058-style D1/D0 dtor): the compiler
 // destroys mCur18@0xB4 and the embedded CSysWin@0x78, then the CProcess base
@@ -218,14 +222,14 @@ CSysWinSelect::CSysWinSelect(void* a2, void* a3, void* a4, void* a5)
 // child of `parent`. Returns 0 when the singleton already exists.
 extern "C" CSysWinSelect* SysWinSelectCreate(CProcess* parent, void* a2, void* a3, void* a4,
                                         void* a5) {
-    if (lbl_eu_80663FDC != 0)
+    if (spSysWinSelect != 0)
         return 0;
 
     CSysWinSelect* obj = new (mtl::MemManager::allocate(0x250, CWorkThreadSystem::getWorkMem()))
         CSysWinSelect(a2, a3, a4, a5);
-    lbl_eu_80663FDC = obj;
+    spSysWinSelect = obj;
     reinterpret_cast<CProcess*>(obj)->Regist(parent, 0);
-    return lbl_eu_80663FDC;
+    return spSysWinSelect;
 }
 
 // SysWinSelectHandleInput (us-80125bd8)

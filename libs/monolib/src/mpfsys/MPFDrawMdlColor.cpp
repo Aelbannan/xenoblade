@@ -75,8 +75,6 @@ struct MPFDrawMdlGroupPairList {
 
 extern "C" {
 
-extern s8 sMpfDrawMdlColorInitialized;                       // MPFDrawMdlColor singleton init flag
-extern mpfsys::MPFDrawMdlColor* spMpfDrawMdlColorInstance; // MPFDrawMdlColor singleton slot
 extern u8* lbl_eu_80665840;                      // model data arena base
 extern MPFDrawMdlData* sLastBillDrawData;          // last draw data handed to the unit
 
@@ -102,24 +100,12 @@ void enableZMode__Q26mpfsys17UnkClass_80471EC8Fv(void);
 
 } // extern "C"
 
-// The retail prototype slots point at the compiler-emitted vtables.
-extern "C" u32 __vt__Q26mpfsys15MPFDrawMdlColor[4];
-extern "C" u32 __vt__Q26mpfsys17MPFDrawMdlNoColor[4];
-
-// === .sbss size=0x8 align=8 (zero-fill) ===
-extern "C" s8 sMpfDrawMdlColorInitialized = 0; // name-guess: TU-only .sbss guard read/written by MPFDrawMdlColor::getInstance
-extern "C" mpfsys::MPFDrawMdlColor* spMpfDrawMdlColorInstance = 0; // name-guess: TU-only .sbss slot returned by MPFDrawMdlColor::getInstance
-
-// Instance body, defined by monolibdata2 (.data, 0x10 bytes).
 
 namespace mpfsys {
 
 MPFDrawMdlColor* MPFDrawMdlColor::getInstance(){
-    if(!sMpfDrawMdlColorInitialized){
-        spMpfDrawMdlColorInstance = (mpfsys::MPFDrawMdlColor*)&__vt__Q26mpfsys15MPFDrawMdlColor;
-        sMpfDrawMdlColorInitialized = 1;
-    }
-    return (mpfsys::MPFDrawMdlColor*)&spMpfDrawMdlColorInstance;
+    static MPFDrawMdlColor instance;
+    return &instance;
 }
 
 } // namespace mpfsys

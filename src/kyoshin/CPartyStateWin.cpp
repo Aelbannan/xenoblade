@@ -153,7 +153,7 @@ extern "C" u8* PartyStateWin_CopyBlockFF0(u8* dst, u8* src) {
 // yet.
 CPartyStateWinBlob58* PartyStateWin_CopyStateBlob58(CPartyStateWinBlob58* self,
                                      CPartyStateWinBlob58* src) {
-    __as__17UnkClass_8045F564FRC17UnkClass_8045F564(&self->field_0x4[0], &src->field_0x4[0]);
+    self->field_0x4 = src->field_0x4;
     self->field_0x14 = src->field_0x14;
     self->field_0x18 = src->field_0x18;
     self->field_0x1C = src->field_0x1C;
@@ -246,8 +246,8 @@ extern "C" void PartyStateWin_CopyEquipChange(CEquipChange* dstP,
                                                     CEquipChange* srcP) {
     CEquipChangeCopyView* self = reinterpret_cast<CEquipChangeCopyView*>(dstP);
     CEquipChangeCopyView* src = reinterpret_cast<CEquipChangeCopyView*>(srcP);
-    __as__17UnkClass_8045F564FRC17UnkClass_8045F564(&self->f04[0], &src->f04[0]);
-    __as__17UnkClass_8045F564FRC17UnkClass_8045F564(&self->f14[0], &src->f14[0]);
+    self->f04 = src->f04;
+    self->f14 = src->f14;
     for (int i = 0; i < 8; i++) {
         self->f24[i] = src->f24[i];
     }
@@ -265,8 +265,8 @@ extern "C" void PartyStateWin_CopyEquipChange(CEquipChange* dstP,
     u32 vHi = src->f9e;
     self->f9e = vHi;
     self->f9a = vLo;
-    __as__17UnkClass_8045F564FRC17UnkClass_8045F564(&self->fa8[0], &src->fa8[0]);
-    __as__17UnkClass_8045F564FRC17UnkClass_8045F564(&self->fb8[0], &src->fb8[0]);
+    self->fa8 = src->fa8;
+    self->fb8 = src->fb8;
     for (int i = 0; i < 27; i++) {
         self->fc8[i] = src->fc8[i];
     }
@@ -285,9 +285,9 @@ extern "C" void PartyStateWin_CopyEquipChange(CEquipChange* dstP,
     self->f148 = vLo;
     self->f150 = src->f150;
     self->f152 = src->f152;
-    __as__12CItemBoxPageFRC12CItemBoxPage(&self->f154[0], &src->f154[0]);
-    __as__17UnkClass_8045F564FRC17UnkClass_8045F564(&self->f2b4[0], &src->f2b4[0]);
-    __as__17UnkClass_8045F564FRC17UnkClass_8045F564(&self->f2c4[0], &src->f2c4[0]);
+    self->f154 = src->f154;
+    self->f2b4 = src->f2b4;
+    self->f2c4 = src->f2c4;
     for (int i = 0; i < 7; i++) {
         self->f2d4[i] = src->f2d4[i];
     }
@@ -297,14 +297,14 @@ extern "C" void PartyStateWin_CopyEquipChange(CEquipChange* dstP,
     *reinterpret_cast<CEIBCur*>(&self->f2f4[0]) = *reinterpret_cast<const CEIBCur*>(&src->f2f4[0]);
     *reinterpret_cast<CEIBCur*>(&self->f30c[0]) = *reinterpret_cast<const CEIBCur*>(&src->f30c[0]);
     *reinterpret_cast<CBaseCur*>(&self->f324[0]) = *reinterpret_cast<const CBaseCur*>(&src->f324[0]);
-    __as__17UnkClass_8045F564FRC17UnkClass_8045F564(&self->f340[0], &src->f340[0]);
+    self->f340 = src->f340;
     for (int i = 0; i < 5; i++) {
         self->f350[i] = src->f350[i];
     }
     for (int i = 0; i < 4; i++) {
         self->f364[i] = src->f364[i];
     }
-    __as__17UnkClass_8045F564FRC17UnkClass_8045F564(&self->f36c[0], &src->f36c[0]);
+    self->f36c = src->f36c;
     // Tail of the +0x368 sub-record: the source base sits at +0x368 and the
     // copied fields start at +0x14 (dst +0x37c).
     self->f37c[0] = src->f37c[0];
@@ -344,7 +344,7 @@ extern "C" void PartyStateWin_CopyEquipChange(CEquipChange* dstP,
     self->f4b0 = vLo;
     self->f4b8 = src->f4b8;
     self->f4bc = src->f4bc;
-    __as__12CItemBoxPageFRC12CItemBoxPage(&self->f4c0[0], &src->f4c0[0]);
+    self->f4c0 = src->f4c0;
     self->f61c = src->f61c;
     self->f620 = src->f620;
     for (int i = 0; i < 11; i++) {
@@ -1306,7 +1306,7 @@ extern "C" void PartyStateWin_RefreshTitleHelp(CPartyStateWin* self) {
 // the byte flags and the field_6BE8 float.
 
 // cbRenderBefore is a large out-of-line function, 0xBC bytes).
-void CPartyStateWin::cbRenderBefore() {
+void CPartyStateWin::cbRenderBefore(CScn*) {
     CTaskGame::getInstance();
     // Gate: when the task game is not ready or the global mode bit (0x200000)
     // is set, skip the render. The if-&&-goto body / goto end / end: return
@@ -1350,7 +1350,7 @@ CPartyStateWin::~CPartyStateWin() {
     __dt__11CTitleAHelpFv(reinterpret_cast<CTitleAHelp*>(&_pad18), -1);
 }
 
-void PartyStateWin_ThunkRenderBefore(void* self) { reinterpret_cast<CPartyStateWin*>((char*)self - 0x4)->cbRenderBefore(); }
+void PartyStateWin_ThunkRenderBefore(void* self, CScn* scene) { reinterpret_cast<CPartyStateWin*>((char*)self - 0x4)->cbRenderBefore(scene); }
 
 // r4-passthrough thunk for the +4 interface: call the dtor through a 1-arg
 // function-pointer cast so the incoming delete flag survives untouched

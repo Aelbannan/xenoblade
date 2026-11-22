@@ -445,11 +445,6 @@ extern "C" void UIWin_DtorAdaptor(CUIWindowManager* p) {
 // Retail dtor: destroys the two reslist window queues (the reslist dtors
 // inline to the vtable-store + clear + free shape), then the CProcess base
 // and the delete-this guard driven by the r4 delete flag.
-// The IFlagEvent base dtor body must be visible in this TU so MWCC inlines
-// it (retail emits no IFlagEvent dtor call here).
-namespace cf {
-IFlagEvent::~IFlagEvent() {}
-}
 CUIWindowManager::~CUIWindowManager() {}
 extern "C" void UIWin_FlagBufReset(CFlagBuffer* self);
 extern "C" void UIWin_ThunkFlagBufReset(CUIWindowManager* self) { UIWin_FlagBufReset((CFlagBuffer*)self); }
@@ -2188,7 +2183,7 @@ extern "C" IUIWindow* UIWin_CreateSaveWin() {
         return NULL;
     }
     {
-        u32 tempRet = (u32)__ct__802944D8((CProcess*)inst->unk9C, inst->unk58);
+        u32 tempRet = (u32)SysWinSave_Create((CProcess*)inst->unk9C, inst->unk58);
         savedRet = tempRet;
         if (tempRet == 0) {
             return NULL;
@@ -2323,17 +2318,7 @@ int UIWin_HasPendingUpdate() {
 // Retail dtor of the CTest view (complete-object flavor): run the CProcess
 // base dtor behind a null guard (the dead second beq mirrors retail), then
 // free the object when the delete flag is positive.
-extern "C" void* __dt__Q216CUIWindowManager5CTestFv(void* self, s32 flags) {
-    if (self != NULL) {
-        if (self != NULL) {
-            __dt__8CProcessFv(self, 0);
-        }
-        if (flags > 0) {
-            operator delete(self);
-        }
-    }
-    return self;
-}
+CUIWindowManager::CTest::~CTest() {}
 // Clamp the +0x52 page id into the 544..1543 range, then when the clamp is
 // valid run the +0xC4 layout resize (0, 0, 8) and a 4-byte memset.
 extern "C" void UIWin_FlagBufClear(void* self) {

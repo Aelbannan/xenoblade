@@ -241,57 +241,39 @@ extern "C" CItemRec* CItem_slotRec(CItemExt* self, s32 idx) {
     return rec;
 }
 
-// Lazy-initialize the per-category item-impl instances (4-byte vtable-only
-// shells at sPurifyKessyouImpl..F8, guarded by the s8 flags at BC..F4), then
-// dispatch on the packed record's kind field: kinds 9 (byte-7 low bits 2/3)
-// and 3 (byte-7 low bits 3) map to dedicated instances; anything else falls
-// back to the per-kind table at lbl_8052F67C.
+// Return the item-impl singleton for self: kinds 9 (byte-7 low bits 2/3) and
+// 3 (byte-7 low bits 3) map to the crystal / purified variants, anything else
+// goes through the per-kind table. The singletons are function-local statics
+// (guard byte + 4-byte vptr-only object each; the inlined implicit ctors are
+// the lazy vptr stores) and the table is a constant-initialized local.
+// name-guess: sDummy..sPurifyKessyou, sTable (retail local names unknown)
 extern "C" __declspec(noinline) CItemImpl* CItem_initItemImplInstances(CItemData* self) {
-    if (sPurifyKessyouImplInit == 0) {
-        sPurifyKessyouImpl.vtable = (void*)&lbl_eu_8052FC58;
-        sPurifyKessyouImplInit = 1;
-    }
-    if (sKessyouImplInit == 0) {
-        sKessyouImpl.vtable = (void*)&lbl_eu_8052FBA8;
-        sKessyouImplInit = 1;
-    }
-    if (sPurifyCrystalImplInit == 0) {
-        sPurifyCrystalImpl.vtable = (void*)&lbl_eu_8052FAF8;
-        sPurifyCrystalImplInit = 1;
-    }
-    if (sDropCrystalImplInit == 0) {
-        sDropCrystalImpl.vtable = (void*)&lbl_eu_8052FA48;
-        sDropCrystalImplInit = 1;
-    }
-    if (sCrystalImplInit == 0) {
-        sCrystalImpl.vtable = (void*)&lbl_eu_8052F990;
-        sCrystalImplInit = 1;
-    }
-    if (sEquipImplInit == 0) {
-        sEquipImpl.vtable = (void*)&lbl_eu_8052F8D8;
-        sEquipImplInit = 1;
-    }
-    if (sConsImplInit == 0) {
-        sConsImpl.vtable = (void*)&lbl_eu_8052F828;
-        sConsImplInit = 1;
-    }
-    if (sDummyImplInit == 0) {
-        sDummyImpl.vtable = (void*)&lbl_eu_8052F770;
-        sDummyImplInit = 1;
-    }
+    static cf::ItemDummyImpl sDummy;
+    static cf::ItemConsImpl sCons;
+    static cf::ItemEquipImpl sEquip;
+    static cf::ItemCrystalImpl sCrystal;
+    static cf::ItemDropCrystalImpl sDropCrystal;
+    static cf::ItemPurifyCrystalImpl sPurifyCrystal;
+    static cf::ItemKessyouImpl sKessyou;
+    static cf::ItemPurifyKessyouImpl sPurifyKessyou;
+    static cf::ItemImpl* sTable[15] = {
+        &sDummy, &sCons, &sEquip, &sKessyou, &sEquip,
+        &sEquip, &sEquip, &sEquip, &sEquip, &sCrystal,
+        &sCons, &sCons, &sCons, &sCons, &sDropCrystal,
+    };
     u16 kind = (self->field_00 >> 16) & 0xF;
     u32 flag = 0;
     if (kind == 9u && (self->field_07 & 3u) == 2u) flag = 1;
-    if (flag) return (CItemImpl*)&sCrystalImpl;
+    if (flag) return &sDropCrystal;
     flag = 0;
     if (kind == 9u && (self->field_07 & 3u) == 3u) flag = 1;
-    if (flag) return (CItemImpl*)&sEquipImpl;
+    if (flag) return &sPurifyCrystal;
     flag = 0;
     if (kind == 3u && (self->field_07 & 3u) == 3u) flag = 1;
-    if (flag) return (CItemImpl*)&sDummyImpl;
+    if (flag) return &sPurifyKessyou;
     // u16 index: MWCC keeps the retail's clrlslwi 16-bit mask for the
     // table load (a u32 index with proven range gets mask 0-29 instead).
-    return sItemKindImplTable[kind];
+    return sTable[kind];
 }
 
 // retail: lwz r0,0x0(r4); extrwi r3,r0,3,27 = (x>>2)&7
@@ -980,8 +962,9 @@ extern "C" void __dt__801570F0() {
     memset(spItemBlock, 0, size);
 }
 
-// Destructor of the global item block: frees spItemBlock and nulls it.
-extern "C" void __dt__80157150() {
+// Release the global item block: frees spItemBlock and nulls it.
+// name-guess: not a destructor (no this); sibling of CItemBlock_setCount.
+extern "C" void CItemBlock_free() {
     if (spItemBlock != 0) {
         operator delete(spItemBlock);
         spItemBlock = 0;
@@ -3615,13 +3598,6 @@ int CItemExt_getSize8_dup(CItemExt*) { return 8; }
 CItemFour lbl_eu_80573E18;
 CItemFour lbl_eu_80573EEC;
 
-CItemFour::CItemFour() {
-    mCount = 0;
-    for (s32 i = 0; i < 4; i++) {
-        mItems[i].field_00 = 0;
-        *(u16*)&mItems[i].field_04 = 0;
-    }
-}
 
 // cf::CfBdat file-data statics live in this unit's .sbss slice (retail ownership).
 void* cf::CfBdat::spCurGimListFileData;

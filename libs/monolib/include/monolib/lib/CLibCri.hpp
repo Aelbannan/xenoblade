@@ -76,6 +76,3 @@ extern "C" int startStream__20CLibCriStreamingPlayFv(
     int afsSubId,
     bool forceAhx
 );
-
-// String constant (CRI file extension marker: lbl_eu_80522FD8)
-extern "C" const char lbl_eu_80522FD8[];

@@ -146,7 +146,7 @@ body:
     QstLogInfo_StepStateMachine(&mQstLogInfo);
 }
 
-void CMenuQuestLog::cbRenderBefore() {
+void CMenuQuestLog::cbRenderBefore(CScn*) {
     CTaskGame::getInstance();
     if (CTaskGame::isFlag01Set()) {
         goto exit;

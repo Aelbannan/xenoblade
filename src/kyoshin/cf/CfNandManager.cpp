@@ -4,6 +4,7 @@
 #include "kyoshin/cf/CtrlRemoteApi.hpp"
 #include <cstring>
 #include "kyoshin/cf/CfNandManager.hpp"
+#include "kyoshin/cf/CfMapItemManager.hpp"
 #include "kyoshin/cf/CfTFile.hpp"
 
 #include "monolib/util/MemManager.hpp"
@@ -563,12 +564,12 @@ extern "C" int NandApplySave(CfNandSaveImage_Local* img) {
 // Retail US 0x8024058C: apply the +0x5C save image (NandApplySave), then
 // operator-delete it. The in-progress flag at gNandTeardownFlag is armed
 // around the apply so CSysWinScenarioLog can poll the teardown.
+// The retail symbol name is an address-derived placeholder, not a destructor
+// mangling (this TU declares no class whose dtor it could be), so it stays a
+// flat function name.
 extern "C" int __dt__8023E448() {
     u8* none = 0;
-    u8* img = gpCfNandManager->field_0x5C;
-    if (img == none) {
-        img = none;
-    }
+    u8* img = gpCfNandManager->field_0x5C ? gpCfNandManager->field_0x5C : none;
     if (img == none) {
         return 0;
     }
@@ -590,7 +591,7 @@ extern "C" int __dt__8023E448() {
 
 // While the counter is armed (1), copy the EFB into the shared texture
 // buffer and flush it, then disarm. Body recovered from CfNandManager.ctx.c.
-void cf::CfNandManager::cbRenderBefore() {
+void cf::CfNandManager::cbRenderBefore(CScn*) {
     if (gCfNandCaptureState == 1) {
         u16 h1;
         u16 h2;
@@ -638,14 +639,10 @@ extern "C" CfNandPartySnapshot* NandCopyParty(CfNandPartySnapshot* snapshot) {
         void* player = cf::CfGameManager::getPlayer(i);
         if (player != 0) {
             ml::CVec3* pos = ((cf::CfObjectMove*)player)->CfObject_getPosVector();
-            entry->mPair.field_00 = *(u32*)&pos->x;
-            entry->mPair.field_04 = *(u32*)&pos->y;
-            entry->field_08 = *(u32*)&pos->z;
+            entry->mPos = *pos;
             entry->field_0C = ((cf::CfObjectMove*)player)->CfObject_getScaledAngle();
         } else {
-            entry->mPair.field_00 = *(u32*)&gmAimPoint[0];
-            entry->mPair.field_04 = *(u32*)&gmAimPoint[1];
-            entry->field_08 = *(u32*)&gmAimPoint[2];
+            entry->mPos = gmAimPoint;
             entry->field_0C = gmNandFloat54;
         }
         entry++;
@@ -736,23 +733,23 @@ extern "C" u16 NandPackEntry(u8* dst) {
         if (bp->p0C <= out->f194) out->f188 = bp->p0C;
         if (bp->p08 <= out->f190) out->f184 = bp->p08;
 
-        CfNandSub14 scratch;
+        ItemWorkState scratch;
         initItemWorkState(&scratch);
-        scratch.f00 = src->f34D4;
-        scratch.f02 = src->f34D6;
-        scratch.f04 = src->f34D8;
-        scratch.f08 = src->f34DC;
-        scratch.f0C = src->f34E0;
-        scratch.f10 = src->f34E4;
+        scratch.field_00 = src->f34D4;
+        scratch.field_02 = src->f34D6;
+        scratch.field_04 = src->f34D8;
+        scratch.field_08 = src->f34DC;
+        scratch.field_0C = src->f34E0;
+        scratch.field_10 = src->f34E4;
         out->f2A0 = src->f177C;
         out->f2A4 = src->f1780;
         out->f2A8 = src->f1784;
-        out->f2AC = scratch.f00;
-        out->f2AE = scratch.f02;
-        out->f2B0 = scratch.f04;
-        out->f2B4 = scratch.f08;
-        out->f2B8 = scratch.f0C;
-        out->f2BC = scratch.f10;
+        out->f2AC = scratch.field_00;
+        out->f2AE = scratch.field_02;
+        out->f2B0 = scratch.field_04;
+        out->f2B4 = scratch.field_08;
+        out->f2B8 = scratch.field_0C;
+        out->f2BC = scratch.field_10;
         out->f2C0 = placeFlag;
         std::memset(out->tail, 0, sizeof(out->tail));
         KizunagramPackChart(out->kizuna, src->kizunaSrc);
@@ -1421,12 +1418,6 @@ void CTTask<cf::CfNandManager>::Draw() {
     if (mDrawFunc != nullptr) (self->*mDrawFunc)();
 }
 
-// Manager head view: the capture-buffer pointer at +0x5C.
-struct CfNandMgrHead {
-    u8 _pad5C[0x5C];
-    u8* field_0x5C;
-};
-
 // True while the save-image capture buffer (+0x5C) is present.
 extern "C" u32 NandImageLive() {
     return gpCfNandManager != 0
@@ -1442,7 +1433,7 @@ extern "C" void NandDownsample(void* self) {
     }
     double scale = (lbl_eu_806686F8 + 1.0) / (lbl_eu_80668700 + 1.0);
     double xOffset = lbl_eu_806686E8 + scale;
-    double yOffset = lbl_eu_806686F0 + scale;
+    double yOffset = -lbl_eu_806686E8 + scale;
     u8* out = (u8*)gpCfNandCaptureBuf;
     for (u32 y = 0; y < 0x74; y++) {
         u8* row = out + (u32)(y * yOffset) * 0xA4;

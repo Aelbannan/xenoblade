@@ -259,3 +259,57 @@ class ExternCBlockTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class SlotGateAndRevertTests(unittest.TestCase):
+    """FLDIAG: retail-slot gate, whole-label reverts, attribution."""
+
+    def _edit(self, label, kind, fns=()):
+        return fl.Edit(Path("x.cpp"), 0, 0, "", "", label, kind, tuple(fns))
+
+    def test_label_group_takes_whole_label_and_pool(self) -> None:
+        edits = [self._edit("lbl_a", "literal", ["f"]), self._edit("lbl_a", "decl"),
+                 self._edit("lbl_b", "literal", ["g"]), self._edit("lbl_c", "defn")]
+        self.assertEqual(fl._label_group(edits, {"lbl_a"}), {0, 1})
+        edits.append(self._edit("lbl_a", "defn"))
+        self.assertEqual(fl._label_group(edits, {"lbl_a"}), {0, 1, 4})
+
+    def test_pick_reverts_attributed_and_unattributed(self) -> None:
+        edits = [self._edit("lbl_lo", "literal", ["f"]), self._edit("lbl_hi", "literal", ["g"]),
+                 self._edit("lbl_hi", "decl")]
+        offs = {"lbl_lo": (0x0, 4), "lbl_hi": (0x10, 4)}
+        self.assertEqual(fl.pick_reverts(["f"], edits, offs), {0})
+        # Nothing attributable: drop only the highest-offset label, never everything.
+        self.assertEqual(fl.pick_reverts(["unrelated"], edits, offs), {1, 2})
+
+    def test_misplaced_labels_requires_compiler_symbol_at_retail_slot(self) -> None:
+        retail = struct.pack(">ff", 0.5, 2.0)
+        offs = {"lbl_ok": (0, 4), "lbl_moved": (4, 4)}
+        slots = {0: (4, "@12"), 8: (4, "@13")}
+        decomp = struct.pack(">fff", 0.5, 1.0, 2.0)
+        with patch.object(fl, "decomp_slots", return_value=(slots, decomp)):
+            self.assertEqual(fl.misplaced_labels(set(offs), offs, retail, Path("o")), {"lbl_moved"})
+        # A hand-defined (non-@) symbol at the right offset is not a converted literal.
+        with patch.object(fl, "decomp_slots", return_value=({0: (4, "hand")}, decomp)):
+            self.assertEqual(fl.misplaced_labels({"lbl_ok"}, offs, retail, Path("o")), {"lbl_ok"})
+
+    def test_promote_shared_refuses_cross_unit_labels(self) -> None:
+        one = fl.LabelValue(fl.KIND_SHARED, f32_bits(1.0), 4)
+        vals = {"lbl_mine": one, "lbl_theirs": one}
+        refused = fl.promote_shared(vals, {"lbl_theirs"})
+        self.assertEqual(set(refused), {"lbl_theirs"})
+        self.assertEqual(vals["lbl_mine"].kind, fl.KIND_FLOAT)
+        self.assertEqual(vals["lbl_theirs"].kind, fl.KIND_SHARED)
+
+    def test_declspec_is_not_a_function_name(self) -> None:
+        code = '__declspec(section ".sdata2") const float k = 1.0f;\nvoid realFunc(void) {\n}\n'
+        names = [n for _, _, n in fl._function_spans(code, [])]
+        self.assertNotIn(("__declspec",), names)
+        self.assertIn(("realFunc",), names)
+
+    def test_proof_rows(self) -> None:
+        rows = fl.proof_rows({"functions": [
+            {"symbol": "f", "present": True, "mismatch": 3, "relocation_errors": [1, 2],
+             "retail_size": 0x10, "decomp_size": 0x14},
+            {"symbol": "g", "present": False}]})
+        self.assertEqual(rows, {"f": (3, 2, 4)})

@@ -43,7 +43,9 @@ struct CVoiceHandle {
     u32 unk10;                           // 0x10
     u32 unk14;                           // 0x14
     u32 unk18;                           // 0x18
-    u8 _pad[0x3E9C - 0x1C];             // 0x1C-0x3E9B
+    u8 _pad[0x3374 - 0x1C];             // 0x1C-0x3373
+    u32 field_0x3374;                   // 0x3374: handle state flags
+    u8 _padB[0x3E9C - 0x3378];          // 0x3378-0x3E9B
     CCharVoice voice;                    // 0x3E9C-0x3EDB: embedded voice object
     u8 _pad2[0x3F00 - 0x3EDC];          // 0x3EDC-0x3EFF
     u32 field_0x3F00;                    // 0x3F00: manager flags (bit 1 = factory active)
@@ -67,14 +69,15 @@ public:
 
     CVS_THREAD();
 
-    //Virtual table (0x1c)
+    // Virtual table: {RTTI, 0, PlayThreadVoice, DetachThreadVoice, blank1,
+    // func_802A1EA0, func_802A3740} (retail base vtable in CVS_THREAD.o
+    // .data+0x18; slot 2 is 0 there (pure virtual in retail; kept non-pure
+    // until the CVS_THREAD_ORDER_Data view in code_802B8A3C.hpp is retired).
     virtual void PlayThreadVoice();
-    virtual void DetachThreadVoice(u32 id);
+    virtual void DetachThreadVoice(CCharVoice* voice);
     virtual int blank1();
-    virtual void func_802A1EA0();
-    virtual void func_802A3740();
-    virtual int blank2();
-    int downVoiceFixed240() { return 240; }
+    virtual int func_802A1EA0();
+    virtual void* func_802A3740(void* a, void* b);
 };
 
 extern "C" int IsThreadVoiceActive(CVS_THREAD* thread);  // unmangled retail symbol (matches code_802B8A3C.hpp)

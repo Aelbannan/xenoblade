@@ -27,7 +27,8 @@ struct TagColorValues {
 struct TagColorNames {
     const wchar_t* names[56];  // +0x00 (224 bytes)
 };
-extern const TagColorValues lbl_eu_804FEFB8;
+// The 55-value table (retail .rodata:0x804FEFB8) is a real object defined in
+// CTagProcessor.cpp as sTagColorValues; only the name table remains imported.
 extern const TagColorNames lbl_eu_804FF488;
 
 /* int->float conversion scratch (retail tag-proc idiom): seed hi with
@@ -60,32 +61,14 @@ extern const f32 lbl_eu_806671F0;
 // the TextWriter font size from it; retail: .sdata2:0x80667260).
 extern const f32 lbl_eu_80667260;
 
-// sdata2 float constant used by TagProcStepMessage's auto-speed gate
-// (retail .sdata2:0x80667208).
-extern const f32 lbl_eu_80667208;
-
-// sdata2 float constants used by the tag-writer family (TagProcBuildOpenText's
-// message-speed select / line math; retail .sdata2:0x806671F8..0x80667258).
-extern const f32 lbl_eu_806671F8;
-extern const f32 lbl_eu_8066720C;
-extern const f32 lbl_eu_80667210;
-extern const f32 lbl_eu_80667214;
-extern const f32 lbl_eu_80667218;
+// sdata2 float constants used by the tag-writer family
+// (retail .sdata2:0x806671F8..0x80667258). Only the still-referenced entries
+// are declared here; the unused imports were dead declarations.
 extern const f32 lbl_eu_8066721C;
-extern const f32 lbl_eu_80667220;
-extern const f32 lbl_eu_80667224;
-extern const f32 lbl_eu_80667228;
-extern const f32 lbl_eu_8066722C;
-extern const f32 lbl_eu_80667254;
-extern const f32 lbl_eu_80667258;
 
 // f64 magic constant (0x4330000080000000 = 2^52 + 2^31) used by
 // TagWriterParseColonParam's long->float conversion (retail .sdata2:0x80667200).
 extern const f64 lbl_eu_80667200;
-
-// f32 fallback value used by TagWriterParseColonParam's single-token tag-param init
-// (retail .sdata2:0x8066725C).
-extern const f32 lbl_eu_8066725C;
 
 // sdata2 color defaults used by TagWriterColorBlock's color-tag writer
 // (retail .sdata2:0x80667188 / 0x8066718C).
@@ -105,7 +88,7 @@ extern char lbl_eu_804FFC48[];
 // write these pointers directly so the emitted relocs name the retail symbols.
 extern u32 lbl_eu_8052DA08[];  // CTagProcessorSE vtable
 extern u32 lbl_eu_8052DA38[];  // CTagProcessor vtable
-extern u32 lbl_eu_8052DA68[];  // CTagProcessorBase vtable
+// CTagProcessorBase's vtable is emitted by its real polymorphic class.
 
 // nw4r db Panic file/message strings used by the tag-writer accessors
 // (retail .data:0x8052DBAC..0x8052DF60). First symbol of each pair is the
@@ -278,10 +261,6 @@ struct TagFlagTable {
 };
 extern const TagFlagTable lbl_eu_804FF608;
 extern const TagFlagTable lbl_eu_804FF6E0;
-
-// sdata2 float constants used by TagProcStepSEMessage's tag-5 auto-speed gate
-// (retail .sdata2:0x80667250).
-extern const f32 lbl_eu_80667250;
 
 /* Text-pane view for TagProcStepMessage's message pane (`a`) and its context
  * node list (a->field_0C): the vtable slots called are the context-pane

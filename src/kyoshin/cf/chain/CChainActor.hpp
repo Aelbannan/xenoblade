@@ -6,8 +6,10 @@
 #include <cstring>
 
 namespace cf {
+    class CChainBattleObj;
+
     struct CChainActorData {
-        u32 unk0;
+        CChainBattleObj* unk0;
         CChainTemp mChainTemp;
         u16 unk6C;
         u8 _pad6E[2];

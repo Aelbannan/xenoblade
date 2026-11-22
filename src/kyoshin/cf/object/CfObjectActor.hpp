@@ -158,51 +158,6 @@ namespace cf {
         u32 field_0x3E74;  // 0x3E74
     };
 
-    // View of CfObjectActor's word at absolute offset 0x3F10 (the
-    // CfObjectModel.field_0x74 slot inside the CfObjectMove subobject) - used
-    // by CActorParam_addHate to compare two actors.
-    struct CfActorField3F10 {
-        u8 _pad[0x3F10];
-        u32 field_0x3F10;  // 0x3F10
-    };
-
-    // View of CfObjectActor's flag word at absolute offset 0x3F00
-    // (CfObjectMove+0x64) - compared between two actors by
-    // CfObjectActor_sharesMoveFlags (bits 0x2 / 0x4 select the dispatch).
-    struct CfActorField3F00 {
-        u8 _pad[0x3F00];
-        u32 field_0x3F00;  // 0x3F00
-    };
-
-    // Same flag word viewed relative to the CfObjectMove subobject pointer
-    // (findObjectById returns one; CfObject_pushRefreshValue reads it).
-    struct CfMoveFlags64 {
-        u8 _pad[0x64];
-        u32 field_0x64;  // 0x64
-    };
-
-    // Absolute-offset views for CfObjectMove-subobject fields. The C++ base
-    // layout in the headers is 8 bytes off retail (CfObjectMove lands at
-    // +0x3EA4 instead of +0x3E9C), so subobject fields are reached through
-    // raw views instead of static_cast upcasts.
-    struct CfActorField3EE8 {
-        u8 _pad[0x3EE8];
-        float field_0x3EE8;  // 0x3EE8 (CfObjectMove+0x4C base height)
-    };
-    struct CfActorField3F60 {
-        u8 _pad[0x3F60];
-        u8* field_0x3F60;  // 0x3F60 (CfObjectMove+0xC4 move target)
-    };
-    struct CfActorField45B8 {
-        u8 _pad[0x45B8];
-        u8* field_0x45B8;  // 0x45B8 (action-source handle id)
-        s32 field_0x45BC;  // 0x45BC (ctor seeds -1)
-    };
-
-    // vtable-pointer slots written explicitly by the CfObjectActor
-    // constructor from the __vt__Q22cf13CfObjectActor group via direct *(void**)
-    // stores in the .cpp (offsets 0x0 / 0x8 / 0x3380 / 0x3E9C).
-
     // View of CfObjectActor's pointer at absolute offset 0x04 (the
     // CActorState sub-object pointer): its vtable slot +0x30 returns a u32*
     // whose first word is the actor id queried by testActorStatus.
@@ -218,62 +173,5 @@ namespace cf {
     union CfActorF64Conv {
         u32 w[2];
         double d;
-    };
-
-    // Argument passed through the CActorParam_UnkVirtualFunc179/180 slots
-    // (retail ABI r4): u16 dispatch id at +0xC.
-    struct CfActorParamArg {
-        u8 _pad[0xC];
-        u16 field_0xC;  // 0xC
-    };
-
-    // Absolute-offset view of CfObjectActor's CActorParam-region gauge/flag
-    // fields (the C++ class layout in the headers is not trusted for these
-    // functions; raw views pin the retail offsets).
-    struct CfActorParamFields {
-        u8 _pad[0x160C];
-        s16 field_0x160C;  // 0x160C (arts/tension gauge current)
-        s16 field_0x160E;  // 0x160E (gauge max)
-        u8 _pad1610[0x1614 - 0x1610];
-        s16 field_0x1614;  // 0x1614 (second gauge current)
-        s16 field_0x1616;  // 0x1616 (second gauge max)
-        u8 _pad1618[0x1634 - 0x1618];
-        u32 field_0x1634;  // 0x1634
-        u32 field_0x1638;  // 0x1638
-        u32 field_0x163C;  // 0x163C
-        u32 field_0x1640;  // 0x1640
-        u32 field_0x1644;  // 0x1644
-        u8 _pad1648[0x17E8 - 0x1648];
-        f32 field_0x17E8;  // 0x17E8
-        u8 _pad17EC[0x17F4 - 0x17EC];
-        f32 field_0x17F4;  // 0x17F4 (gauge max)
-        u8 _pad17F8[0x3374 - 0x17F8];
-        u32 field_0x3374;  // 0x3374 (flags, bit 0x40000 gates the battle-state path)
-    };
-
-    // Stack buffer built by CActorParam_UnkVirtualFunc179 and passed to the
-    // CBattleState subobject vtable slot +0x18 (exactly 0x34 bytes, matching
-    // the memset size).
-    struct CfActor179Buf {
-        u32 field_0x00;       // 0x00
-        u32 field_0x04;       // 0x04
-        u8  field_0x08[4];    // 0x08
-        u16 field_0x0C;       // 0x0C
-        u32 field_0x10;       // 0x10
-        u16 field_0x14;       // 0x14
-        u16 field_0x16;       // 0x16
-        u16 field_0x18;       // 0x18
-        u8  field_0x1C[4];    // 0x1C
-        f32 field_0x20;       // 0x20
-        u8  field_0x24[0xC];  // 0x24
-        u32 field_0x30;       // 0x30
-    };
-
-    // CfObjectActor's pointer at absolute offset 0x3ED4 (CfObjectMove+0x38
-    // sub-object pointer; vtable slots +0x88/+0x8C take (self, arg) -
-    // dispatched as cf::CfObjectSub38::m88/m8C (see CfObject.hpp).
-    struct CfActorField3ED4 {
-        u8 _pad[0x3ED4];
-        u8* field_0x3ED4;  // 0x3ED4
     };
 }

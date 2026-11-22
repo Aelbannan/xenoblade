@@ -12,6 +12,9 @@
 #include "kyoshin/CTitleAHelpImports.hpp"
 void playUISound(u32);
 
+// name-guess: sole TU-owned .sbss singleton pointer at 0x80664250; assigned by
+// the constructor, cleared by the destructor, and read by the accessors below.
+cf::CInfoCf* gpInfoCfInstance;
 
 // The retail ctor symbol __ct__cf_CInfoCf is a C-linkage name (no C++ mangling
 // markers), so it is emitted as a global function taking the instance (same
@@ -22,19 +25,19 @@ cf::CInfoCf* __ct__cf_CInfoCf(cf::CInfoCf* self) {
     self->vtable = lbl_eu_805309B0;
     self->mFlags = 0;
     self->mField08 = 0;
-    lbl_eu_80664250 = self;
+    gpInfoCfInstance = self;
     return self;
 }
 
 // Destructor: clear the singleton pointer. The null check and delete-flag
 // handling (conditional __dl__FPv) are emitted by MWCC for the member dtor.
 cf::CInfoCf::~CInfoCf() {
-    lbl_eu_80664250 = 0;
+    gpInfoCfInstance = 0;
 }
 
-extern "C" void* InfoCfGetUnk0C() { return (void*)lbl_eu_80664250->mField0C; }
+extern "C" void* InfoCfGetUnk0C() { return (void*)gpInfoCfInstance->mField0C; }
 
-extern "C" void* InfoCfGetUnk10() { return (void*)lbl_eu_80664250->mField10; }
+extern "C" void* InfoCfGetUnk10() { return (void*)gpInfoCfInstance->mField10; }
 
 // FULL_MATCH - no-op virtual function (vtable slot 2).  Immediately returns.
 void InfoCfNoopVirt() {
@@ -45,8 +48,8 @@ void InfoCfNoopVirt() {
 // between the two (retail reloads it), so both statements dereference the
 // global directly rather than sharing a local.
 void InfoCfSetBit2ClearBit1() {
-    lbl_eu_80664250->mFlags |= 0x2;
-    lbl_eu_80664250->mFlags &= ~0x1;
+    gpInfoCfInstance->mFlags |= 0x2;
+    gpInfoCfInstance->mFlags &= ~0x1;
 }
 
 void InfoCfRefreshSettings(cf::CInfoCf* self) {

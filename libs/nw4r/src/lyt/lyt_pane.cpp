@@ -57,10 +57,10 @@ Pane::Pane() {
     std::memset(mName, 0, sizeof(mName));
     std::memset(mUserData, 0, sizeof(mUserData));
 
-    mTranslate = math::VEC3(lbl_eu_80669D38, lbl_eu_80669D38, lbl_eu_80669D38);
-    mRotate = math::VEC3(lbl_eu_80669D38, lbl_eu_80669D38, lbl_eu_80669D38);
-    mScale = math::VEC2(lbl_eu_80669D3C, lbl_eu_80669D3C);
-    mSize = Size(lbl_eu_80669D38, lbl_eu_80669D38);
+    mTranslate = math::VEC3(0.0f, 0.0f, 0.0f);
+    mRotate = math::VEC3(0.0f, 0.0f, 0.0f);
+    mScale = math::VEC2(1.0f, 1.0f);
+    mSize = Size(0.0f, 0.0f);
     
     mAlpha = -1;
     mGlbAlpha = -1;

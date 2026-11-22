@@ -49,21 +49,25 @@ extern "C" {
 // lbl_eu_80669E50 (8 bytes in the retail nw4r data pool); we reference the
 // same external symbol so relocations (and objdiff fuzzy) match exactly.
 extern const f32 lbl_eu_80669E50[2];
-// The sin/cos table (256 entries of {sin_val, cos_val, sin_delta,
-// cos_delta} = 16 bytes each).  Retail: lbl_eu_8051D7F8 in the nw4r data
-// pool; the decomp port defines the same data as detail::gSinCosTbl in
-// math_triangular.cpp.  Referencing the retail name keeps relocs identical.
-extern const f32 lbl_eu_8051D7F8[];
 }
+
+// The sin/cos table (256 entries of {sin_val, cos_val, sin_delta,
+// cos_delta} = 16 bytes each), defined in math_triangular.cpp.  MWCC asm
+// operands resolve unqualified in-scope C++ names (emitting the mangled
+// reloc), so the table is brought into scope with a using-declaration.
+namespace detail {
+extern const f32 gSinCosTbl[];
+}
+using detail::gSinCosTbl;
 
 // clang-format off
 
 asm MTX34* MTX34RotXYZFIdx(register MTX34* pMtx, register f32 fx, register f32 fy, register f32 fz) {
     nofralloc
-    lis        r4, lbl_eu_8051D7F8@ha
+    lis        r4, gSinCosTbl@ha
     li         r0, lbl_eu_80669E50@l
     stwu       r1, -0x10(r1)
-    addi       r4, r4, lbl_eu_8051D7F8@l
+    addi       r4, r4, gSinCosTbl@l
     psq_lx     f0, r0, r0, 0, 0
     ps_merge00 f6, f1, f2
     ps_merge00 f0, f0, f0

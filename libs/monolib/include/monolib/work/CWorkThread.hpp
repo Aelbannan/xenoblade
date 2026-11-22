@@ -9,11 +9,7 @@
 #include "monolib/util.hpp"
 
 //size: 0x1C4
-// novtable: the retail vtable/RTTI live in the blob range owned by this TU
-// (lbl_eu_8056B110) and are defined explicitly in CWorkThread.cpp (blob
-// monolibdata1 dissolve) so MWCC does not emit a duplicate vtable + RTTI
-// base-list here.
-class __declspec(novtable) CWorkThread : public IWorkEvent{
+class CWorkThread : public IWorkEvent{
 public:
     /* Enum used to keep track of the type of this work thread, which is useful when
      casting from a generic instance of CWorkThread. Most classes inheriting from

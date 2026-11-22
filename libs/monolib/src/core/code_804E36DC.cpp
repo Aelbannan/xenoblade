@@ -151,7 +151,7 @@ void CScheduleItem::FeedDistance(f32 delta, CSchedule* sched) {
     CEffectObj* obj;
     for (int i = 0; i < 32; i++) {
         obj = SchedFx_FetchByHandle(this->mSlots[i]);
-        if (obj != NULL && obj->mField2E > 0) {
+        if (obj != NULL && obj->mNodeHead.field_0x0a > 0) {
             void* arg = EffObj_GetPriority(obj);
             SchedElem_ClaimNode(sched, arg, obj, delta);
         }

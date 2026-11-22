@@ -24,4 +24,11 @@ public:
     /// Delegates to CDeviceFont internally; the int parameter is passed
     /// through to the device layer but may be unused depending on context.
     void fontFlush(int channel);
+
+    void resetCursor();
+    void clearBuffer();
+    void updateLayout();
+    void drawText();
+    void flushBuffer();
+    void setupDraw();
 };

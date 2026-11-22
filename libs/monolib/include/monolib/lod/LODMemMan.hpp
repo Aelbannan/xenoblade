@@ -5,8 +5,22 @@
 
 struct CEventFile;
 struct CFileHandle;
+struct CScn;
+struct LODElemList;
+struct LODElem20;
+struct LODPoolBlock;
+struct LODChildDesc;
+
+namespace nw4r {
+namespace g3d {
+class ResFile;
+class ScnProc;
+}
+}
 
 namespace LOD {
+
+class UnkClass_8046D144;
 
 /**
  * LOD file / element-pool manager.  0x78 bytes, IWorkEvent-derived; the retail
@@ -39,6 +53,23 @@ public:
                                u32 count4, u8** outBase, u8** out18,
                                u8** out48, u8** out4);
     void adjustBufferOffsets(int unused, int unused2, int delta);
+
+    static void registerChildSlot(UnkClass_8046D144* self, ::LODChildDesc* desc,
+                                  u8* mtx, int index);
+    static void handleViewUpdate(nw4r::g3d::ScnProc* proc, int param);
+    static int bindResMdl(UnkClass_8046D144* self, CScn* archive, u32 mdlIdx,
+                          u32 packed, const f32* mtxSrc);
+    static s32 acquireResFileSlot(UnkClass_8046D144* self,
+                                  UnkClass_8046D144* pool, s32 id, s32* out);
+    static int bindModelToSlot(UnkClass_8046D144* self, CScn* archive,
+                               nw4r::g3d::ResFile* resFile, u32 id, int mdlIdx,
+                               const f32* mtxSrc);
+    static void delegateMergeToSub(LODMemMan* self, u32 target);
+    static void mergeElementList(LODElem20* list, u32 target);
+    static u8* allocatePoolBlock(LODPoolBlock* self, u32 size, int id);
+    static LODPoolBlock* findPoolBlockById(LODPoolBlock* self, int id);
+    static void markPoolBlockReady(LODPoolBlock* list, u32 target);
+    static void initElementList(LODElemList* head, u32 arg);
 
 private:
     /* 0x04 */ u8* mData;            // archive header / element data buffer

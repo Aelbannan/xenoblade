@@ -2,11 +2,12 @@
 // SVM server API glue for the Sofdec movie player (MWSFSVM).
 
 #include <harness_catalog.h>
-__attribute__((aligned(4))) u32 lbl_eu_805FF1D0;
-__attribute__((aligned(4))) u32 lbl_eu_805FF1D4;
-__attribute__((aligned(4))) u32 lbl_eu_805FF1D8;
-__attribute__((aligned(4))) u32 lbl_eu_805FF1DC;
-__attribute__((aligned(8))) char lbl_eu_805FF1E0[256];
+#include "libs/CriWare/src/sofdec/sfdcore/sfd/sfd_types.h"
+__attribute__((aligned(4))) u32 mwsfSvmCbSpare; // name-guess: 0x805FF1D0
+__attribute__((aligned(4))) u32 mwsfSvmIdCbFunc; // name-guess: 0x805FF1D4
+__attribute__((aligned(4))) u32 mwsfSvmIdleSvrId; // name-guess: 0x805FF1D8
+__attribute__((aligned(4))) u32 mwsfSvmMainSvrId; // name-guess: 0x805FF1DC
+__attribute__((aligned(8))) char mwsfSvmErrMsg[256]; // name-guess: 0x805FF1E0
 
 #include <string.h>
 #include <stdarg.h>
@@ -27,7 +28,7 @@ void SVM_CallErr1(const char* msg);
 /* Zero the SVM server callback table after bringing up the server. */
 void MWSFSVM_Init(void) {
     u32* base;
-    base = (u32*)&lbl_eu_805FF1D0;
+    base = (u32*)&mwsfSvmCbSpare;
     SVM_Init();
     base[0] = 0;
     base[1] = 0;
@@ -39,40 +40,28 @@ void MWSFSVM_Init(void) {
  * in the callback table (+0x04). */
 void MWSFSVM_EntryIdVfunc(void* self, void* a, void* b, void* c) {
     SVM_SetCbSvrIdWithString(2, (u32)self, a, b, c);
-    lbl_eu_805FF1D4 = (u32)self;
+    mwsfSvmIdCbFunc = (u32)self;
 }
 
 /* Register the idle server callback; SVM returns its assigned svr id,
  * stored in the callback table (+0x08). */
 void MWSFSVM_EntryIdleFunc(void* p1, void* p2, void* p3) {
-    lbl_eu_805FF1D8 = SVM_SetCbSvrWithString(6, p1, p2, p3);
+    mwsfSvmIdleSvrId = SVM_SetCbSvrWithString(6, p1, p2, p3);
 }
 
 /* Register the main server callback; SVM returns its assigned svr id,
  * stored in the callback table (+0x0C). */
 void MWSFSVM_EntryMainFunc(int arg1, int arg2, int arg3) {
     int result = SVM_SetCbSvrWithString(5, (void*)arg1, (void*)arg2, (void*)arg3);
-    lbl_eu_805FF1DC = result;
+    mwsfSvmMainSvrId = result;
 }
 /* Test-and-set passthrough on an SVM flag word (used by mwsfdsvr.c to
  * claim per-worker state). */
 s32 MWSFSVM_TestAndSet(void* p) { return SVM_TestAndSet(p); }
 
 /* ---- SVM trace callback infrastructure ----
- * gpMwPlyTraceCb is a global pointer to an optional trace object whose
- * vtable exposes a "trace" method at offset 0x24; sTraceSvmError is this
- * module's error data record (entry sub-record at +0x04, exit at +0x6c). */
-
-typedef struct TraceCb TraceCb;
-
-typedef struct TraceCbVtable {
-    u8 pad_0x00[0x24];
-    void (*trace)(TraceCb* self, void* data);   /* 0x24 */
-} TraceCbVtable;
-
-struct TraceCb {
-    const TraceCbVtable* vtable;
-};
+ * gpMwPlyTraceCb is the canonical SfdTraceCtx with the trace hook at +0x24;
+ * sTraceSvmError is this module's error data record (entry +0x04, exit +0x6c). */
 
 /* Error data record. Entry sub-record at +0x04, exit at +0x6c; the
  * formatted message pointer is stashed at +0x0c. */
@@ -86,7 +75,7 @@ struct TraceRec {
     u32 exit;           /* 0x6c (exit sub-record) */
 };
 
-extern TraceCb* gpMwPlyTraceCb;
+extern SfdTraceCtx* gpMwPlyTraceCb;
 extern TraceRec sTraceSvmError;
 
 /* Shared 256-byte scratch buffer for formatted error messages. */
@@ -106,17 +95,17 @@ extern TraceRec sTraceSvmError;
 void MWSFSVM_Error(const char* fmt, ...) {
     va_list ap;
 
-    memset(lbl_eu_805FF1E0, 0, 256);
+    memset(mwsfSvmErrMsg, 0, 256);
     va_start(ap, fmt);
-    vsprintf(lbl_eu_805FF1E0, fmt, ap);
+    vsprintf(mwsfSvmErrMsg, fmt, ap);
     if (gpMwPlyTraceCb != NULL) {
-        sTraceSvmError.self = (u32)lbl_eu_805FF1E0;
-        gpMwPlyTraceCb->vtable->trace(gpMwPlyTraceCb,
+        sTraceSvmError.self = (u32)mwsfSvmErrMsg;
+        gpMwPlyTraceCb->vtbl->trace(gpMwPlyTraceCb,
             &sTraceSvmError.entry);
     }
-    SVM_CallErr1(lbl_eu_805FF1E0);
+    SVM_CallErr1(mwsfSvmErrMsg);
     if (gpMwPlyTraceCb != NULL) {
-        gpMwPlyTraceCb->vtable->trace(gpMwPlyTraceCb,
+        gpMwPlyTraceCb->vtbl->trace(gpMwPlyTraceCb,
             &sTraceSvmError.exit);
     }
 }
@@ -127,13 +116,13 @@ extern TraceRec sTraceGotoIdleBorder;
 /* Jump the server thread to its idle border, bracketing the transition
  * with enter/exit trace records like MWSFSVM_Error. */
 void MWSFSVM_GotoIdleBorder(void) {
-    TraceCb* cb = gpMwPlyTraceCb;
+    SfdTraceCtx* cb = gpMwPlyTraceCb;
     if (cb != NULL) {
-        cb->vtable->trace(cb, &sTraceGotoIdleBorder.entry);
+        cb->vtbl->trace(cb, &sTraceGotoIdleBorder.entry);
     }
     SVM_GotoSvrBorder(6);
     cb = gpMwPlyTraceCb;
     if (cb != NULL) {
-        cb->vtable->trace(cb, &sTraceGotoIdleBorder.exit);
+        cb->vtbl->trace(cb, &sTraceGotoIdleBorder.exit);
     }
 }

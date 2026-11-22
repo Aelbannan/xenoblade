@@ -5,8 +5,6 @@
 #include <nw4r/g3d.h>
 #include <nw4r/g3d/g3d_anmtexpat.h>
 
-// TexPat play-policy table (shared with the other anm units, small-data).
-extern const nw4r::g3d::PlayPolicyFunc lbl_eu_80663458[2];
 
 namespace nw4r {
 namespace g3d {
@@ -25,10 +23,10 @@ NW4R_G3D_RTTI_DEF(AnmObjTexPatRes);
 // AnmObj::IsDerivedFrom body (retail inlines the base chain into every
 // derived class; the 0x650/0x640 checks come from this helper's boundary).
 static bool anmObjBaseIsDerivedFrom(G3dObj::TypeObj other) {
-    if (other == G3dObj::TypeObj(lbl_eu_8051D650)) {
+    if (other == AnmObj::GetTypeObjStatic()) {
         return true;
     }
-    if (other == G3dObj::TypeObj(lbl_eu_8051D640)) {
+    if (other == G3dObj::GetTypeObjStatic()) {
         return true;
     }
     return false;
@@ -122,7 +120,7 @@ inline AnmObjTexPatRes::AnmObjTexPatRes(MEMAllocator* pAllocator,
     : AnmObjTexPat(pAllocator, pBindingBuf, numBinding),
       FrameCtrl(0.0f,
                 TexPatConvU16ToF(pat.ref().info.numFrame),
-                lbl_eu_80663458[pat.ref().info.policy]),
+                GetAnmPlayPolicy(pat.GetAnmPolicy())),
       mRes(pat), mpResultCache(pCacheBuf) {}
 
 // Layout of the allocation: [object][result cache][binding table]. The cache

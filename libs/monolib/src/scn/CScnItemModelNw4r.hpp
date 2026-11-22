@@ -545,7 +545,6 @@ extern "C" void MdlDyn_Update(void* self, nw4r::math::MTX34* mtxs);
 // Shadow-matrix propagation tail of scnImN4SyncShadow (defined later in this TU).
 extern "C" void scnImN4UpdateShadowMtx(CScnItemModelNw4r* self, nw4r::math::MTX34* worldMtxBase);
 extern "C" void* getScnRootSlot10(void* self);
-extern "C" void* RemoveAnmScn__Q34nw4r3g3d7ScnRootFv(void* self);
 extern "C" void* __dt__804E5DE0(void* self);
 
 // Retail vtable data for CScnItemModelNw4r (.data at 0x8056DE80, 0x608B).
@@ -801,11 +800,6 @@ extern "C" void TexMan_CollectNodeIds(nw4r::g3d::ResNode node,
 // vec, near/far params).
 extern "C" void FogManCopyFogParams(void* self, u32 value, const f32* src, f32 p0,
                               f32 p1, f32 p2, f32 p3);
-
-// nw4r g3d scene-root anm-scene attach (defined in g3d_scnroot.cpp; not
-// declared in the shared g3d_scnroot.h).
-extern "C" bool SetAnmScn__Q34nw4r3g3d7ScnRootFPQ34nw4r3g3d6AnmScn(
-    nw4r::g3d::ScnRoot* self, nw4r::g3d::AnmScn* pAnmScn);
 
 // ScnMdlExpand construction (defined in g3d_scnmdlexpand.cpp; the shared
 // header only declares the class).

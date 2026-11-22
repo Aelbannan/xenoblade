@@ -20,9 +20,8 @@
 #include "kyoshin/cf/CfPadData.hpp"
 #include "kyoshin/code_80135FDC_State.hpp"
 
-// Shared singleton / string pool (retail names; global-scope plain extern
+// Shared .sdata2 constants (retail names; global-scope plain extern
 // keeps the symbols unmangled).
-extern char lbl_eu_80510B44[];         // title/help label string pool
 extern const float lbl_eu_80668DCC;     // idle timer increment (.sdata2)
 extern const float lbl_eu_80668DD0;     // idle timer cap (.sdata2)
 // Game-state flags word (bit 21 = menu blocked; shared with CMenuTutorial).
@@ -79,7 +78,7 @@ void CMenuTutorialList::Init() {
     mBgTex.BgTex_Acquire_3C14();
 
     mTitleAHelp = CTitleAHelp(
-        BdatTouchStringCell(lbl_eu_80510B44, lbl_eu_80510B44 + 0x9, 0x23), 0x73);
+        BdatTouchStringCell("MNU_main", "name", 0x23), 0x73);
     mTitleAHelp.CTitleAHelp_load();
 
     mTutorialList = CTutorialList(mChoice);
@@ -174,7 +173,7 @@ body:
     mTutorial.Tutorial_Move();
 }
 
-void CMenuTutorialList::cbRenderBefore() {
+void CMenuTutorialList::cbRenderBefore(CScn*) {
     CTaskGame::getInstance();
     if (CTaskGame::isFlag01Set()) {
         goto exit;
@@ -328,7 +327,7 @@ void CMenuTutorialList_PhaseOpenSeq(CMenuTutorialList* self) {
     if (self->mTutorial.Tutorial_GetField46Mark() != 0) {
         self->mFlag = 5;
         self->mTitleAHelp.applyPaneTevColorsAlt();
-        self->mTitleAHelp.setNameText(BdatTouchStringCell(lbl_eu_80510B44 + 0xe, lbl_eu_80510B44 + 0x17,
+        self->mTitleAHelp.setNameText(BdatTouchStringCell("MNU_ttrl", "title",
                 self->mTutorialList.TutorialList_GetSelectedEntryId()));
         self->mTutorial.Tutorial_StartIfIdle();
     }
@@ -413,7 +412,7 @@ void CMenuTutorialList_PhaseIntroDone(CMenuTutorialList* self) {
     if (self->mTutorial.Tutorial_GetField47Mark() != 0) {
         self->mFlag = 2;
         self->mTitleAHelp.applyPaneTevColors();
-        self->mTitleAHelp.setNameText(BdatTouchStringCell(lbl_eu_80510B44, lbl_eu_80510B44 + 0x9, 0x23));
+        self->mTitleAHelp.setNameText(BdatTouchStringCell("MNU_main", "name", 0x23));
         self->mTutorial.Tutorial_TeardownTutorial();
         self->mTitleAHelp.func_801C41E8(0x73);
     }

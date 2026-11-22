@@ -2,13 +2,8 @@
 // Auto-scaffolded catalog TU for kyoshin/CArtsInfo
 // Replace stubs with high-level C/C++ during decomp.
 
-// CItem.hpp declares the typed CItem_initItemImplInstances while
-// CfGameManager.hpp's import block repeats it with a void* shape; MWCC forbids
-// overloading an extern "C" function (10197), so hide the import-block copy.
-#define CItem_initItemImplInstances cfImport_CItem_initItemImplInstances
 #include "kyoshin/cf/CfBdat.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
-#undef CItem_initItemImplInstances
 #include "kyoshin/CArtsInfo.hpp"
 #include "kyoshin/code_8025FB10.hpp"
 #include "kyoshin/CTitle.hpp"  // setGXColorS10 (canonical C++ declaration)
@@ -18,6 +13,8 @@
 #include "kyoshin/cf/object/CActorParam.hpp"
 #include "monolib/device/CDeviceFont.hpp"
 #include "monolib/device/CDeviceSC.hpp"
+#include "monolib/util/MemManager.hpp"
+#include "monolib/device/CDeviceFile.hpp"
 
 #include <stdlib.h>
 #include "kyoshin/plugin/ocBdat.hpp"
@@ -126,14 +123,14 @@ CArtsInfo::~CArtsInfo() {}
 // CArtsInfo_LoadFiles - file loading
 // .text:0x10C, size 0x68
 void CArtsInfo_LoadFiles(CArtsInfo* self) {
-    void* handle = getHandleMEM2__Q23mtl10MemManagerFv();
-    self->field_0x14 = (int)readFile__11CDeviceFileFUlPCcP10IWorkEventii(
-        (u32)handle, (const char*)"menu/jp/ArtsInfo.arc", (void*)self, 0, 0);
+    mtl::ALLOC_HANDLE handle = mtl::MemManager::getHandleMEM2();
+    self->field_0x14 = (int)CDeviceFile::readFile(
+        (u32)handle, (const char*)"menu/jp/ArtsInfo.arc", self, 0, 0);
 
     self->field_0x18 =
-        (int)readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii(
+        (int)CDeviceFile::readCommonArchiveFile(
             (u32)KyoshinHeap_GetField44(), (const char*)"common/jp/bdat_menu_arts.bin",
-            (void*)self, 0, 0);
+            self, 0, 0);
 }
 
 // CArtsInfo_UpdateAnims - state machine dispatch
@@ -216,7 +213,7 @@ void CArtsInfo_Cleanup(CArtsInfo* self) {
     self->mCursor.cleanup();
 
     // Cleanup memory region
-    deleteRegion__17UnkClass_8045F564Fv(&self->mMemRegion);
+    self->mMemRegion.deleteRegion();
 }
 
 // CArtsInfo_GetFlag48 - get field_0x48
@@ -2257,14 +2254,14 @@ extern "C" void CArtsInfo_Refresh(CArtsInfo* self) {
 // string table, calls the split1 reset stub, clears field_0x18, returns 1.
 bool CArtsInfo::OnFileEvent(CEventFile* event) {
     if ((u32)field_0x14 == (u32)event->mFileHandle) {
-        mMemRegion.createRegion((int)getHandleMEM2__Q23mtl10MemManagerFv(),
+        mMemRegion.createRegion((int)mtl::MemManager::getHandleMEM2(),
                                 0x18000, (char*)"CArtsInfo", 0);
         Class_8045F858 host(&mMemRegion);
         // NOTE: accessor is re-read from field_0x1C at every use (retail
         // never caches it in a saved register).
         CFileHandle* fh = (CFileHandle*)field_0x14;
         void* arcData = fh->getData();
-        setMemInitFlag__Q23mtl10MemManagerFb(false);
+        mtl::MemManager::setMemInitFlag(false);
         field_0x1C = (int)CLibLayout::createArcResourceAccessor();
         ((nw4r::lyt::ArcResourceAccessor*)field_0x1C)->Attach(arcData, (char*)"arc");
 
@@ -2275,7 +2272,7 @@ bool CArtsInfo::OnFileEvent(CEventFile* event) {
         bindLayoutAnimTransform(mpLayout1, &mpAnimTrans4, (nw4r::lyt::ArcResourceAccessor*)field_0x1C, (char*)"mf15_arts30_set_inf_lvup_in.brlan");
 
         nw4r::lyt::Pane* root1 = mpLayout1->GetRootPane();
-        void* fontObj1 = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, mpLayout1);
+        void* fontObj1 = CDeviceFont::getFontInfo(1, mpLayout1);
         ApplyFontToTxtPanes(root1, (const nw4r::ut::Font*)((u32)((IDeviceFontInfo*)fontObj1)->getFont()));
 
         char* lang = (char*)CUICfManager_getPackedFont9C();
@@ -2337,7 +2334,7 @@ bool CArtsInfo::OnFileEvent(CEventFile* event) {
         bindLayoutAnimTransform(mpLayout2, &mpAnimTrans6, (nw4r::lyt::ArcResourceAccessor*)field_0x1C, (char*)"mf15_arts30_set_inf_lvup.brlan");
 
         nw4r::lyt::Pane* root2 = mpLayout2->GetRootPane();
-        void* fontObj2 = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, mpLayout2);
+        void* fontObj2 = CDeviceFont::getFontInfo(1, mpLayout2);
         ApplyFontToTxtPanes(root2,
                       (const nw4r::ut::Font*)((u32)((IDeviceFontInfo*)fontObj2)->getFont()));
 

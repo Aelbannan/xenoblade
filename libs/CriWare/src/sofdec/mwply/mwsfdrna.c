@@ -2,7 +2,8 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include <harness_catalog.h>
+#include "libs/CriWare/src/sofdec/mwply/mwsfd_types.h"
 
-void MWSFRNA_SetOutVol(void* self, u32 vol) { SFD_SetOutVol(*(void**)((u8*)self + 0x58), vol); }
+void MWSFRNA_SetOutVol(MWSFDPLY* self, s32 vol) { SFD_SetOutVol(self->sfd, vol); }
 
-void MWSFRNA_GetOutVol(void* self) { SFD_GetOutVol(*(void**)((u8*)self + 0x58)); }
+s32 MWSFRNA_GetOutVol(MWSFDPLY* self) { return SFD_GetOutVol(self->sfd); }

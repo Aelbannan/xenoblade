@@ -30,7 +30,7 @@ public:
     virtual void Term();
     virtual void Move();
     virtual void Draw();
-    virtual void cbRenderBefore();
+    virtual void cbRenderBefore(CScn* scene);
     virtual bool OnFileEvent(CEventFile* event);
 
     static CTaskGameEvt* create(CProcess* parent, CScn* scene);

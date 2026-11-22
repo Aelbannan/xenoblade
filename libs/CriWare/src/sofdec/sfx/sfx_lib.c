@@ -10,16 +10,9 @@ extern void* SFXA_Create(void);
 extern void* SFXSUD_Create(void);
 extern void SFXZ_Destroy(void* self);
 extern void SFXA_Destroy(void* self);
-const char lbl_eu_8051D178[] = "\nCRI SFX/WII Ver.2.48 Build:Oct 28 2009 11:38:06\n";
-const unsigned char lbl_eu_8051D1AC[108] = {
-    0x45,0x32,0x30,0x31,0x31,0x39,0x34,0x3A,0x20,0x73,0x66,0x78,0x5F,0x49,0x6E,0x69,
-    0x74,0x48,0x6E,0x3A,0x20,0x77,0x6F,0x72,0x6B,0x20,0x73,0x69,0x7A,0x65,0x20,0x69,
-    0x73,0x20,0x73,0x68,0x6F,0x72,0x74,0x2E,0x00,0x45,0x32,0x30,0x31,0x32,0x38,0x31,
-    0x3A,0x20,0x53,0x66,0x78,0x5A,0x48,0x6E,0x3A,0x20,0x63,0x61,0x6E,0x27,0x74,0x20,
-    0x63,0x72,0x65,0x61,0x74,0x65,0x2E,0x00,0x45,0x32,0x30,0x32,0x30,0x31,0x31,0x3A,
-    0x20,0x53,0x66,0x78,0x41,0x48,0x6E,0x3A,0x20,0x63,0x61,0x6E,0x27,0x74,0x20,0x63,
-    0x72,0x65,0x61,0x74,0x65,0x2E,0x00,0x00,0x00,0x00,0x00,0x00
-};
+// name-guess: retail .rodata 0x8051D178 is the SFX/WII version string that
+// SFX_Init stores in sfxlib_header's default-error-function slot.
+const char sCriSfxVersion[] = "\nCRI SFX/WII Ver.2.48 Build:Oct 28 2009 11:38:06\n";
 void sfx_InitHn(SFXHandleState* hn, u32 width, u32 height);
 
 /* ---- SFX library global state ----
@@ -65,12 +58,9 @@ typedef struct SFXLibHeader {
 } SFXLibHeader;
 SFXLibHeader sfxlib_header;
 SFXLibState sfxlib_state;
-#define lbl_eu_8051D178_str lbl_eu_8051D178
-
-
 void SFX_Init(void) {
     if (sfxlib_header.init_count < 1) {
-        sfxlib_header.default_error_fn = (void (*)(u32, const char*))&lbl_eu_8051D178;
+        sfxlib_header.default_error_fn = (void (*)(u32, const char*))sCriSfxVersion;
         memset(&sfxlib_state, 0, sizeof(SFXLibState));
         sfxlib_state.max_handles = 8;
         sfxlib_state.ccirFx = 1;
@@ -118,77 +108,72 @@ SFXHandleState* SFX_Create(u32 width, s32 height) {
     }
 
     /* The work buffer size must be at least 0x301F bytes. */
-    if ((unsigned long long)(long long)height >= 12319ULL) {
-        sfx_InitHn((SFXHandleState*)hn, width, height);
-
-    zmv = SFXZ_Create();
-        if (zmv == NULL) {
-            sfxlib_state.error_count++;
-            if (sfxlib_state.error_fn) {
-                sfxlib_state.error_fn(sfxlib_state.error_arg,
-                                         (const char*)&lbl_eu_8051D1AC[0x29]);
-            }
-            if (hn != NULL) {
-                void* z = hn->zmv;
-                u32 a = hn->field_0x30;
-                hn->active = 0;
-                SFXZ_Destroy(z);
-                SFXA_Destroy((void*)a);
-                sfxlib_state.init_count--;
-            }
-            return NULL;
-        } else {
-        hn->zmv = zmv;
-
-        alp = SFXA_Create();
-        if (alp != NULL) {
-            hn->field_0x30 = (u32)alp;
-
-            sfxlib_state.init_count++;
-            return (SFXHandleState*)hn;
-        } else {
-            sfxlib_state.error_count++;
-            if (sfxlib_state.error_fn) {
-                sfxlib_state.error_fn(sfxlib_state.error_arg,
-                                         (const char*)&lbl_eu_8051D1AC[0x48]);
-            }
-            if (hn != NULL) {
-                void* z = hn->zmv;
-                u32 a = hn->field_0x30;
-                hn->active = 0;
-                SFXZ_Destroy(z);
-                SFXA_Destroy((void*)a);
-                sfxlib_state.init_count--;
-            }
-            return NULL;
-        }
-        }
-    } else {
+    if ((unsigned long long)(long long)height < 12319ULL) {
         sfxlib_state.error_count++;
         if (sfxlib_state.error_fn) {
             sfxlib_state.error_fn(sfxlib_state.error_arg,
-                                     (const char*)lbl_eu_8051D1AC);
+                                  "E201194: sfx_InitHn: work size is short.");
         }
         return NULL;
     }
+
+    sfx_InitHn((SFXHandleState*)hn, width, height);
+
+    zmv = SFXZ_Create();
+    if (zmv == NULL) {
+        sfxlib_state.error_count++;
+        if (sfxlib_state.error_fn) {
+            sfxlib_state.error_fn(sfxlib_state.error_arg,
+                                  "E201281: SfxZHn: can't create.");
+        }
+        if (hn != NULL) {
+            void* z = hn->zmv;
+            u32 a = hn->field_0x30;
+            hn->active = 0;
+            SFXZ_Destroy(z);
+            SFXA_Destroy((void*)a);
+            sfxlib_state.init_count--;
+        }
+        return NULL;
+    }
+
+    hn->zmv = zmv;
+
+    alp = SFXA_Create();
+    if (alp != NULL) {
+        hn->field_0x30 = (u32)alp;
+        sfxlib_state.init_count++;
+        return (SFXHandleState*)hn;
+    }
+
+    sfxlib_state.error_count++;
+    if (sfxlib_state.error_fn) {
+        sfxlib_state.error_fn(sfxlib_state.error_arg,
+                              "E202011: SfxAHn: can't create.");
+    }
+    if (hn != NULL) {
+        void* z = hn->zmv;
+        u32 a = hn->field_0x30;
+        hn->active = 0;
+        SFXZ_Destroy(z);
+        SFXA_Destroy((void*)a);
+        sfxlib_state.init_count--;
+    }
+    return NULL;
 }
 
 void sfx_InitHn(SFXHandleState* hn, u32 width, u32 height) {
-    u32 alignW;
-
     memset(hn, 0, 0xA0);
-
-    /* Nested assignments: innermost add (bufA) allocates first, outermost
-     * result lands in r3, matching the retail chain r5/r4/r3. */
     hn->field_0x04 = 0;
     hn->field_0x08 = 0;
     hn->field_0x0C = 0;
     hn->field_0x28 = 1;
     hn->field_0x2C = 0;
     hn->field_0x34 = 0;
-    alignW = (width + 0x1F) & ~0x1F;
-    hn->alignW = alignW;
-    hn->bufCSize = (hn->bufBSize = (hn->bufASize = alignW + 0x400) + 0x400) + 0x400;
+    hn->alignW = (width + 0x1F) & ~0x1F;
+    hn->bufASize = hn->alignW + 0x400;
+    hn->bufBSize = hn->bufASize + 0x400;
+    hn->bufCSize = hn->bufBSize + 0x400;
     hn->width = width;
     hn->height = height;
     hn->field_0x58 = (u32)-1;

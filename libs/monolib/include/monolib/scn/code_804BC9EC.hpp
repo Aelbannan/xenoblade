@@ -26,8 +26,9 @@ struct ScnResData {
 
 extern ScnResData lbl_eu_8065F32C;
 
-// Collision query box: max corner and half-extents, followed by the tail word
-// of the retail 0x1C bss block.  Defined in code_804BC9EC.cpp.
+// Collision query box: min corner (lbl_eu_8065F3F0), then max corner and
+// half-extents followed by the tail word of the retail 0x1C bss block.
+// Both defined in code_804BC9EC.cpp.
 struct ColiQueryVec {
     f32 x;
     f32 y;
@@ -40,6 +41,7 @@ struct ColiQueryBounds {
     u32 field_0x18;     // 0x18
 };
 
+extern ColiQueryVec lbl_eu_8065F3F0;
 extern ColiQueryBounds sColiQueryBounds;
 
 // The real class of lbl_eu_8065F32C is CColiMoverState (full 0xC4 layout in

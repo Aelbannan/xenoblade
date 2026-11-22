@@ -6,27 +6,16 @@
 
 extern void *memset(void *, int, unsigned long);
 extern void *memcpy(void *, const void *, unsigned long);
-u8 lbl_eu_80619BD0[0x18]; /* .bss 0x80619BD0 size 0x18 */
 extern char* strcpy(char*, const char*);
 extern unsigned long strlen(const char*);
-const unsigned int lbl_eu_8051CD18[69] = {
-    0x7473742C,0x2068656C,0x705F7469,0x6D655F73,0x65632C20,0x68656C70,0x5F74696D,
-    0x655F6D73,0x65632C20,0x68656C70,0x5F74696D,0x655F3634,0x2C206865,0x6C705F74,
-    0x696D652C,0x206D745F,0x6D61782C,0x206D6173,0x7465725F,0x74696D65,0x2C206F75,
-    0x745F7469,0x6D652C20,0x206D745F,0x6F742C20,0x6D746D61,0x785F6F74,0x2C202064,
-    0x6966665F,0x6C5F6D61,0x782C2064,0x6966665F,0x6C5F6D69,0x6E2C2064,0x6966665F,
-    0x615F6D61,0x782C2074,0x73742D3E,0x64696666,0x5F615F6D,0x696E2C20,0x70617374,
-    0x61742C20,0x61646A6D,0x6F64652C,0x20726573,0x65746869,0x73742C20,0x65786365,
-    0x73736572,0x722C2061,0x646A5F6C,0x696D6974,0x2C206164,0x6A5F6672,0x6F6E742C,
-    0x2061646A,0x5F726561,0x722C2020,0x6D6F7661,0x76655F31,0x73742C20,0x6D6F7661,
-    0x76655F32,0x6E642C20,0x20616478,0x745F7374,0x6174200A,0x0A000000
-};
-const char lbl_eu_8051CE2C[148] = "%p, %ld, %ld, 0x%08lX%08lX, %ld, %ld, %ld, %ld,   %ld, %ld,   %ld, %ld, %ld, %ld,   %ld, %ld,   %ld, %ld, %ld, %ld, %ld,   %ld, %ld,   %ld \n";
 
+u32 sftst_debout_siz;
+char* sftst_debout_buf;
+char* sftst_debout_write;
+char* sftst_debout_round;
+char* sftst_last;
 
 void SFTST_Create(SfdTst* tst) {
-    char local[274];
-
     memset(tst, 0, 0x1D0);
     tst->tstFlg = 1;
     tst->pause = 0;
@@ -55,14 +44,21 @@ void SFTST_Create(SfdTst* tst) {
     tst->baseTime[1] = 0; tst->baseTime[0] = 0;
     tst->speedNum = 1; tst->speedDen = 1;
     memset(tst->field_0x1a0, 0, 0x2C);
-    memcpy(local, lbl_eu_8051CD18, 274);
-    if (*(void**)(lbl_eu_80619BD0 + 4) != NULL) {
-        memset(*(void**)(lbl_eu_80619BD0 + 4), 0, *(u32*)lbl_eu_80619BD0);
-        *(char**)(lbl_eu_80619BD0 + 8) = strcpy((char*)(*(u32*)(lbl_eu_80619BD0 + 4)), local + 4);
-        *(u32*)(lbl_eu_80619BD0 + 8) += strlen(local + 4);
-        *(u32*)(lbl_eu_80619BD0 + 0xC) = *(u32*)(lbl_eu_80619BD0 + 8);
+    {
+        char local[274] = "tst, help_time_sec, help_time_msec, help_time_64, help_time, mt_max, master_time, out_time,  mt_ot, mtmax_ot,  diff_l_max, diff_l_min, diff_a_max, tst->diff_a_min, pastat, adjmode, resethist, excesserr, adj_limit, adj_front, adj_rear,  movave_1st, movave_2nd,  adxt_stat \n\n";
+        u32 siz = sftst_debout_siz;
+
+        if (sftst_debout_buf != NULL) {
+            memset(sftst_debout_buf, 0, siz);
+            sftst_debout_write = sftst_debout_buf;
+            strcpy(sftst_debout_write, local);
+            sftst_debout_write += strlen(local);
+            sftst_debout_round = sftst_debout_write;
+        }
     }
 }
+
+const char lbl_eu_8051CE2C[148] = "%p, %ld, %ld, 0x%08lX%08lX, %ld, %ld, %ld, %ld,   %ld, %ld,   %ld, %ld, %ld, %ld,   %ld, %ld,   %ld, %ld, %ld, %ld, %ld,   %ld, %ld,   %ld \n";
 
 void SFTST_SetTstFlg(SfdTst* tst, u32 val) { tst->tstFlg = val; }
 

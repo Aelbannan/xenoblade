@@ -62,11 +62,6 @@ struct CScnEnvLgtCtrlResList;  // env-controller list owner (CScn::mLgtCtrl)
 
 extern "C" {
     // ---- CTaskLOD task helpers ----
-    void acquireLODResource__8CTaskLODFv(void* task, u32 value);
-    void resetActiveLOD__8CTaskLODFv(void* task);
-    void bindTaskToLOD__8CTaskLODFv(void* task);
-    void setLODFilterFlag__8CTaskLODFv(void* task);
-    void updateLODRange__8CTaskLODFv(u16 value, float amount);
     void syncLODTask__8CTaskLODFv(u32 value);
 
     // ---- embedded UnkClass_8047BB54 subobject (at +0xF0) ----

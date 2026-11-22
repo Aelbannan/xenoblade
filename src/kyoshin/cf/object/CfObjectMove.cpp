@@ -716,7 +716,6 @@ ml::CVec3* cf::CfObjectMove::CfObject_getPosVector() {
 
 // Wave-62: override of CfObject_setRotVec (+0xBC). Free-function FPv form
 // keeps the Unk linker name that hand-built tables / CREvtModel reference.
-extern "C" void CfObject_UnkVirtualFunc27__Q22cf13CfObjectModelFPv(cf::CfObjectModel* self, void* src);
 void cf::CfObjectMove::CfObject_setRotVec(void* src) {
     // Z-only movement (X within epsilon but Z outside it) marks the target
     // with the 0x20 flag so its next update re-aims instead of sliding.
@@ -734,7 +733,7 @@ void cf::CfObjectMove::CfObject_setRotVec(void* src) {
     if (target != 0 && (this->mFlags68 & 0x4) != 0) {
         setTurnAngle(target, vec->y);
     }
-    CfObject_UnkVirtualFunc27__Q22cf13CfObjectModelFPv(this, src);
+    this->CfObjectModel::CfObject_UnkVirtualFunc27(src);
 }
 
 // Retail symbol is Fv but the body consumes f1 (base call, C4-gated
@@ -795,9 +794,9 @@ extern "C" void* CfObjectMove_getSubObj54(CfObjectMove* self) { return &self->mS
 // Retail symbol is Fv but the body consumes f1 (store to self+0x6E4 and to
 // the C4 target) - forced-name form with the hidden float arg (same scheme as
 // CfObjectMove_recordMoveValue).
-extern "C" void CfObject_setMoveValue__Q22cf12CfObjectMoveFf(cf::CfObjectMove* self, float value) {
-    ::CActParamAnim* target = (::CActParamAnim*)self->mTargetC4;
-    self->mField6E4 = value;
+void cf::CfObjectMove::CfObject_setMoveValue(float value) {
+    ::CActParamAnim* target = (::CActParamAnim*)mTargetC4;
+    mField6E4 = value;
     if (target != 0) {
         target->field430 = value;
         target->field43C = target->field438 * value;
@@ -1224,9 +1223,9 @@ void CfObjectMove_releaseSlotById__Q22cf12CfObjectMoveFi(cf::CfObjectMove* self,
             self->mField6F8[index] = 0;
         }
         if (index == 1) {
-            ((cf::CfObjectMoveFlags6C*)self)->field_6C &= ~0x00002000;
+            self->field_0x6C &= ~0x00002000;
         } else {
-            ((cf::CfObjectMoveFlags6C*)self)->field_6C &= ~0x00001000;
+            self->field_0x6C &= ~0x00001000;
         }
     }
 }
@@ -1292,7 +1291,7 @@ int cf::CfObjectMove::CfObject_resetAnimSlots(u32 arg) {
 // and forwards the argument to the +0xB0 sub-object's vtable slot +0x4C.
 int cf::CfObjectMove::CfObject_clearAnimEntry(u32 arg) {
     CfObjectModel_releaseModelList();
-    reinterpret_cast<cf::CfObjectMove90View*>(this)->field_94 = 0;
+    field_0x94 = 0;
     return reinterpret_cast<cf::CfResObjImpl*>(mSubObjB0)->CfResObj_unk4C(arg);
 }
 
@@ -1884,7 +1883,7 @@ extern "C" void CfObjectMove_initAnimTarget(cf::CfObjectMove* self) {
         }
     }
     if (self->mTargetC4 != 0) {
-        u32 w6C = ((cf::CfObjectMoveFlags6C*)self)->field_6C;
+        u32 w6C = self->field_0x6C;
         self->mFlags68 |= 0x4;
         if ((w6C & 0x10000) != 0 && (self->unk64 & 0x2) != 0) {
             // Both model pointers are loaded before the virtual dispatch and
@@ -1925,7 +1924,7 @@ extern "C" void CfObjectMove_initAnimTarget(cf::CfObjectMove* self) {
             ((cf::CfObjectMoveTargetC4*)self->mTargetC4)->field_434 = lbl_eu_80666AD0 * y;
             void* c4b = self->mTargetC4;
             ((cf::CActParamAnimGame*)c4b)->field04 = (u32)self->mSubObj38;
-            ((cf::CActParamAnimGame*)c4b)->field34 = (u32)self->mSubObj38;
+            ((cf::CActParamAnimGame*)c4b)->mData.mField24 = (u32)self->mSubObj38;
             if ((self->unk64 & 0x100) != 0) {
                 ((cf::CActParamAnimGame*)self->mTargetC4)->field504 = lbl_eu_80666AA4;
                 ((cf::CActParamAnimGame*)self->mTargetC4)->field50C = lbl_eu_80666A9C;
@@ -2058,7 +2057,7 @@ void CfObjectMove_ensureAnimTargets(cf::CfObjectMove* self) {
                 void* ta = (&self->mTargetC8)[i];
                 ((cf::CActParamAnimGame*)ta)->field04 = (u32)self->mSubObj38;
                 ta = (&self->mTargetC8)[i];
-                ((cf::CActParamAnimGame*)ta)->field34 = (u32)self->mSubObj38;
+                ((cf::CActParamAnimGame*)ta)->mData.mField24 = (u32)self->mSubObj38;
                 ta = (&self->mTargetC8)[i];
                 ((cf::CActParamAnimGame*)ta)->field4F4 = (cf::CActParamAnimGameLink*)self;
             }
@@ -2164,7 +2163,7 @@ void CfObjectMove_setModelDisplayFlag(cf::CfObjectMove* self, int flag) {
 // the list destructor, then bit 16 is lowered.
 void CfObjectMove_setModelListLock(cf::CfObjectMove* self, int flag) {
     if (flag != 0) {
-        ((cf::CfObjectMoveFlags6C*)self)->field_6C |= 0x10000;
+        self->field_0x6C |= 0x10000;
         reinterpret_cast<cf::CfResObjImpl*>(self->mSubObjB0)->CfResObj_false38();
     } else {
         if (self->mField6D4 != 0) {
@@ -2174,7 +2173,7 @@ void CfObjectMove_setModelListLock(cf::CfObjectMove* self, int flag) {
             Scn_IsAnimActiveOrNull(self->mField6D4);
             self->mField6D4 = 0;
         }
-        ((cf::CfObjectMoveFlags6C*)self)->field_6C &= ~0x10000;
+        self->field_0x6C &= ~0x10000;
     }
 }
 // Forward a position region (self+0x60C) to the region-library manager

@@ -26,9 +26,6 @@ extern "C" void requestCancelChain__Fv();
 // __vt__Q22cf11CChainCombo (retail .data:0x80538994, dtor-only): emitted here
 // by the compiler, next to the out-of-line constructor in CChainCombo.cpp.
 
-// 3-entry table indexed by probability thresholds in payoutChainCombo.
-extern "C" int lbl_eu_80538988[3];
-
 namespace cf {
 
 /* Chain arts combo tracker. Size 0x18. Polymorphic after its members, so the

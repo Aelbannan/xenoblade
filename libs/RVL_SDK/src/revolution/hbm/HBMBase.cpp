@@ -57,13 +57,6 @@ extern MEMAllocator* spAllocator;
 extern void* HBMAllocMem(u32 size);
 extern void HBMFreeMem(void* pBlock);
 
-/* Layout view for free-function private-member access (retail offsets:
-   mSpeakerAlarm at 0x4C8). */
-struct HBMBaseAlarmView {
-    u8 _pad0[0x4C8];
-    OSAlarm mSpeakerAlarm[WPAD_MAX_CONTROLLERS];
-};
-
 /* Retail keeps the Wiimote battery-info array as a static bss object
  * (sWpadInfo__Q22cf9CfPadTask__Q210homebutton10HomeButton, 0x60 bytes) rather
  * than an instance member; calc_battery/update/init_battery all reference this
@@ -1598,14 +1591,7 @@ static void SpeakerCallback(OSAlarm* pAlarm, OSContext* /* pContext */) {
     if (!WPADIsSpeakerEnabled(chan) ||
         !pHBObj->getController(chan)->isPlayReady()) {
 
-        OSSetAlarmUserData(
-            &reinterpret_cast<HBMBaseAlarmView*>(pHBObj)->mSpeakerAlarm[chan],
-            reinterpret_cast<void*>((chan << 16) | (chan + 2)));
-        OSCancelAlarm(
-            &reinterpret_cast<HBMBaseAlarmView*>(pHBObj)->mSpeakerAlarm[chan]);
-        OSSetAlarm(
-            &reinterpret_cast<HBMBaseAlarmView*>(pHBObj)->mSpeakerAlarm[chan],
-            OS_MSEC_TO_TICKS(50), &SpeakerCallback);
+        pHBObj->setSpeakerAlarm(chan, 50);
     } else {
         pHBObj->getController(chan)->playSound(id);
     }

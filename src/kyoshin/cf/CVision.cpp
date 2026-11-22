@@ -108,7 +108,7 @@ extern "C" void* __dt__801A36D0(cf::CVisionSlot* self, int deleting);
 // #undef get__16CfEnumListHolderFv, #undef getObjectAt, #undef __dt__16CfEnumListHolderFv, #undef startEnumObjects.
 // Region line count preserved: MWCC -ipa file codegen in this TU is
 // sensitive to downstream source line numbers (CMenuPTGauge case).
-extern "C" u16 playActorSound__Q22cf10CfSoundManFUlUlUlUlf(u32 a, u32 b, u32 c, u32 d, f32 e);
+#include "kyoshin/cf/object/CfObjectModel.hpp"
 extern "C" void* getObjectAt(void* list, u32 idx);
 extern "C" void startEnumObjects(void* list, u32 type, u32 filter);
 
@@ -628,7 +628,8 @@ extern "C" void* __ct__801A33AC(CVisionSlot* self) {
     memset(&b.unk_84, 0, 0x34);
     b.w_74pair[0] = zero;
     b.w_74pair[1] = zero;
-    initItemWorkState(self->unk47EC);
+    ItemWorkState* state = &self->unk47EC;
+    initItemWorkState(state);
     // Slot tail resets (retail reloads the sdata2 zero after the call and
     // stores f_15E8, h_15EE, h_15EC, ... in that order).
     f32 zeroTail = lbl_eu_80667CD4;
@@ -897,8 +898,8 @@ extern "C" void driveVisionRingFx(CVision* self) {
         CVisionPtmf chk = *(CVisionPtmf*)&visionCallbackPollSlots[0];
         if (__ptmf_cmpr(&self->mPtmf, &chk) == 0) {
             if ((int)self->field_26198 != (int)self->field_26194) {
-                playActorSound__Q22cf10CfSoundManFUlUlUlUlf(0, 0x1c1, 0, 0,
-                                                           lbl_eu_80667CE0);
+                cf::CfSoundMan::playActorSound(0, 0x1c1, 0, 0,
+                                               lbl_eu_80667CE0);
             }
         }
         if (self->field_261A0 != self->field_26194) {
@@ -979,7 +980,7 @@ extern "C" void openVisionPairEngage(CVision* self) {
     }
     if (w3) {
         self->vt_2C(0);
-        playActorSound__Q22cf10CfSoundManFUlUlUlUlf(0, 0x1be, 0, 0, lbl_eu_80667CE0);
+        cf::CfSoundMan::playActorSound(0, 0x1be, 0, 0, lbl_eu_80667CE0);
     }
     int w4;
     if (self->field_26198 - self->field_261A0 <= lbl_eu_80667CE8 &&
@@ -1000,7 +1001,7 @@ extern "C" void openVisionPairEngage(CVision* self) {
                     self->vt_20(1);
                     return;
                 }
-                u32 id = *(u32*)((u8*)obj + 0x74);
+                u32 id = static_cast<cf::CfObjectModel*>(obj)->field_0x74;
                 if (id != sub->field_00 && id != sub->field_04) {
                     ((void (*)(void*, u32))(*(void***)obj)[0x190 / 4])(obj, 1);
                 }
@@ -1139,7 +1140,7 @@ extern "C" void openVisionForPairs(CVision* self) {
     bool atBase = (lbl_eu_80667CD4 == self->field_2619C);
     if (atBase) {
         void* mem = getHandleMEM2__Q23mtl10MemManagerFv();
-        CTaskGame_openVision(1, 0x12f, (u32)mem, 2, 1, lbl_eu_80667CF8);
+        CTaskGame_openVision(1, 0x12f, lbl_eu_80667CF8, (u32)mem, 2, 1);
     }
     // Materialized timer-window checks (retail evaluates each into r0).
     int w1;
@@ -1171,7 +1172,7 @@ extern "C" void openVisionForPairs(CVision* self) {
     }
     if (w3) {
         self->vt_2C(0);
-        playActorSound__Q22cf10CfSoundManFUlUlUlUlf(0, 0x1be, 0, 0, lbl_eu_80667CE0);
+        cf::CfSoundMan::playActorSound(0, 0x1be, 0, 0, lbl_eu_80667CE0);
         lookupEffectForResource__Q22cf13CfGameManagerFv(0, 0, 0);
     }
     int w4;
@@ -1193,7 +1194,7 @@ extern "C" void openVisionForPairs(CVision* self) {
                     self->vt_20(1);
                     return;
                 }
-                u32 id = *(u32*)((u8*)obj + 0x74);
+                u32 id = static_cast<cf::CfObjectModel*>(obj)->field_0x74;
                 if (sub->field_00 != id && sub->field_04 != id) {
                     ((CVisionEnumElem*)obj)->vf190(1);
                 }
@@ -1241,7 +1242,7 @@ extern "C" void runVisionIdleWindows(CVision* self) {
     if (atBase) {
         self->vt_2C(3);
         void* mem = getHandleMEM2__Q23mtl10MemManagerFv();
-        CTaskGame_openVision(1, 0x130, (u32)mem, 2, 1, lbl_eu_80667CF8);
+        CTaskGame_openVision(1, 0x130, lbl_eu_80667CF8, (u32)mem, 2, 1);
     }
     // Materialized timer-window checks (retail evaluates both into r0).
     int w1;
@@ -1293,7 +1294,7 @@ extern "C" void resumeVisionFromFader(CVision* self) {
         if (sub->field_824 & 0x20000) {
             updateBattleEffectState__Q22cf13CfGameManagerFv(0x26, 0);
         }
-        playActorSound__Q22cf10CfSoundManFUlUlUlUlf(0, 0x1bf, 0, 0, lbl_eu_80667CE0);
+        cf::CfSoundMan::playActorSound(0, 0x1bf, 0, 0, lbl_eu_80667CE0);
     }
     // Materialized timer-window check (retail evaluates into r0).
     int w1;
@@ -1505,9 +1506,9 @@ extern "C" void runVisionTierWindows(CVision* self) {
         w1 = 0;
     }
     if (w1) {
-        refreshBattleActors((CBattleManager*)getInstance__Q22cf14CBattleManagerFv(),
+        refreshBattleActors((CBattleManager*)cf::CBattleManager::getInstance(),
                       lbl_eu_80667CF0, 0x10);
-        refreshBattleActors((CBattleManager*)getInstance__Q22cf14CBattleManagerFv(),
+        refreshBattleActors((CBattleManager*)cf::CBattleManager::getInstance(),
                       lbl_eu_80667CF0, 0x24);
     }
     int w2;
@@ -1862,7 +1863,7 @@ extern "C" void runVisionResetWindows(CVision* self) {
     if (w1) {
         self->vt_2C(2);
         CfSoundMan_StopSlotByMode(0, 0x1bf, 0);
-        playActorSound__Q22cf10CfSoundManFUlUlUlUlf(0, 0x1c0, 0, 0, lbl_eu_80667CE0);
+        cf::CfSoundMan::playActorSound(0, 0x1c0, 0, 0, lbl_eu_80667CE0);
     }
     f32 t2 = lbl_eu_80667D04;
     int w2;
@@ -2302,7 +2303,7 @@ extern "C" int tryEngageVisionCutscene(CVision* self, CVisionObjV* obj, CVisionO
     if (obj != (CVisionObjV*)target) {
         f32 total = lbl_eu_80667CD4;
         u32 hits = 0;
-        CBattleManager_preCalcTotalDamage(getInstance__Q22cf14CBattleManagerFv(), obj, &total, &hits);
+        CBattleManager_preCalcTotalDamage(cf::CBattleManager::getInstance(), obj, &total, &hits);
         if (hits != 0 && total > lbl_eu_80667CD4) {
             f32 hpMax = target->vt128();
             if (total >= hpMax) {
@@ -2983,7 +2984,7 @@ extern "C" void manageVisionSlotFx(CVision* self, void* slot, void* dataArg) {
         if (ScMain_DecodeFlagPriority((ScMain*)bs) > 2) {
             return;
         }
-        u32 x = *(u32*)((u8*)slot + 0x3f10);
+        u32 x = static_cast<CAIPartyObj*>(slot)->unk3F10;
         if (bs->w_00 != x && bs->w_04 != x) {
             return;
         }

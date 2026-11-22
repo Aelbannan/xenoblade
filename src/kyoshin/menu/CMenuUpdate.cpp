@@ -6,6 +6,8 @@
 #include <string.h>
 #include <types.h>
 #include "kyoshin/menu/CMenuUpdate.hpp"
+#include "monolib/scn/CScn.hpp"
+#include "kyoshin/CTaskGame.hpp"
 #include "monolib/lib/UnkClass_8045F564.hpp"
 #include "kyoshin/code_80135FDC_State.hpp"
 #include "kyoshin/code_80135FDC_Lyt.hpp"
@@ -19,6 +21,7 @@
 // libs/monolib/src/scn/CScn_8049603C.hpp (owner: monolib CScn).
 extern "C" void* Scn_QueryUnk80State();
 #include "kyoshin/cf/CfGameManager.hpp"
+#include "kyoshin/cf/CHelpManager.hpp"
 #include "kyoshin/cf/IResInfo.hpp"
 #include "monolib/util/FixStr.hpp"
 #include <revolution/gx/GXPixel.h>
@@ -32,7 +35,7 @@ extern "C" void* Scn_QueryUnk80State();
 #include "monolib/util/MemManager.hpp"  // canonical mtl::MemManager::allocate
 #include "monolib/device/CDeviceFont.hpp"
 
-extern u32 lbl_eu_80664198;
+extern CMenuUpdate* lbl_eu_80664198;
 // Out-of-line accessor helpers (defined further down; retail calls them via bl)
 extern "C" u32 getField10(u8* self);
 extern "C" void setField67(u8* self, u8 val);
@@ -78,7 +81,7 @@ CMenuUpdate::~CMenuUpdate() {}
 
 // Init
 void CMenuUpdate::Init() {
-    u32 handle = (u32)getHandleMEM2__Q23mtl10MemManagerFv();
+    u32 handle = (u32)mtl::MemManager::getHandleMEM2();
     mMemRegion.createRegion(handle, 0x4000, "CMenuUpdate", 0);
 
     Class_8045F858 stackObj(&mMemRegion);
@@ -95,7 +98,7 @@ void CMenuUpdate::Init() {
 
     // One-arg call: retail carries &mAnim2 into r4 from the preceding
     // bindLayoutAnimTransform argument setup instead of recomputing it here.
-    CDeviceFontInfo* fontInfo = (CDeviceFontInfo*)getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1);
+    IDeviceFontInfo* fontInfo = (IDeviceFontInfo*)getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1);
     ApplyFontToTxtPanes((nw4r::lyt::Pane*)((void*)::getField10((u8*)mLayout)), fontInfo->getFont());
 
     // Disable the alt animation, enable the main one, then tick the layout.
@@ -104,27 +107,15 @@ void CMenuUpdate::Init() {
     mLayout->Animate(0);
 
     ::setField67((u8*)this, 0);
-    // Render callback sits at the IScnRender subobject (+0x70); keep the
-    // init-then-adjust form so the null test runs on the raw this pointer.
-    u8* renderPtr = (u8*)this;
-    if (renderPtr != NULL) {
-        renderPtr = (u8*)&static_cast<IScnRender&>(*this);
-    }
-    addRenderCB__4CScnFP10IScnRenderUlUl(mScene, renderPtr, 7, 0);
+    mScene->addRenderCB(this, 7, 0);
     mMemRegion.validateHeap();
     // stackObj destructor called automatically
 }
 
 // Term
 void CMenuUpdate::Term() {
-    waitForDrawDone__9CDeviceVIFv();
-    // Render callback sits at the IScnRender subobject (+0x70); keep the
-    // init-then-adjust form so the null test runs on the raw this pointer.
-    u8* renderPtr = (u8*)this;
-    if (renderPtr != NULL) {
-        renderPtr = (u8*)&static_cast<IScnRender&>(*this);
-    }
-    removeRenderCB__4CScnFP10IScnRender(mScene, (IScnRender*)renderPtr);
+    CDeviceVI::waitForDrawDone();
+    mScene->removeRenderCB(this);
     // Polymorphic delete: dispatches the virtual dtor at vtable+0x8 with the
     // deleting flag 1; the delete expansion's own null-check is the dead
     // second beq in retail.
@@ -138,10 +129,10 @@ void CMenuUpdate::Term() {
 
 // Move
 void CMenuUpdate::Move() {
-    void* taskGame = getInstance__9CTaskGameFv();
+    CTaskGame* taskGame = CTaskGame::getInstance();
     // Short-circuit OR gate: first test -> bne exit, res flag -> beq continue /
     // b exit (CMenuShopBuy::Move shape).
-    if (isFlag01Set__9CTaskGameFv(taskGame) || testResInfoFlag(0x200000))
+    if (taskGame->isFlag01Set() || testResInfoFlag(0x200000))
         return;
     if (IsMenuState621F0() == 0) return;
     if (MenuUpdate_CheckBootGates(this)) return;
@@ -157,10 +148,10 @@ void CMenuUpdate::Move() {
 }
 
 // cbRenderBefore
-void CMenuUpdate::cbRenderBefore() {
-    void* taskGame = getInstance__9CTaskGameFv();
+void CMenuUpdate::cbRenderBefore(CScn*) {
+    CTaskGame* taskGame = CTaskGame::getInstance();
     // Short-circuit OR gate (CMenuShopBuy::cbRenderBefore shape).
-    if (isFlag01Set__9CTaskGameFv(taskGame) || testResInfoFlag(0x200000))
+    if (taskGame->isFlag01Set() || testResInfoFlag(0x200000))
         return;
     if (IsMenuState621F0() == 0) return;
     if (MenuUpdate_CheckBootGates(this)) return;
@@ -183,10 +174,10 @@ extern "C" void func_80142C98(u8* self, u8 val) { self[0x64] = val; }
 extern "C" void setField64(u8* self, u8 val) { self[0x64] = val; }
 extern "C" u8 func_80143F4C(u8* self) { return self[0x64]; }
 extern "C" int getField64(u8* self) { return self[0x64]; }
-extern "C" void* getGlobalA10() { return (void*)lbl_eu_80664A10; }
+extern "C" void* getGlobalA10() { return (void*)cf::CHelpManager::sInstance; }
 extern "C" int getGlobal0E0() { return (u32)::cf::CfBdat::spBtlBuffListFileData; }
 extern "C" void MenuUpdate_MarkByte15Ready(void* self) { ((u8*)self)[0x15] = 1; }
-extern "C" void MenuUpdate_SignalGlobalField64() { if (lbl_eu_80664198) { ((void(*)(void*, u8))setField64)((void*)(u32)lbl_eu_80664198, 1); } }
+extern "C" void MenuUpdate_SignalGlobalField64() { if (lbl_eu_80664198) { ((void(*)(void*, u8))setField64)(lbl_eu_80664198, 1); } }
 extern "C" void* noop_80142D5C(void* self) { return self; }
 extern "C" void* setVec2(void* self, f32 a, f32 b) { *(f32*)self = a; *(f32*)((u8*)self + 4) = b; return self; }
 extern "C" void setFieldFloat10(void* self, f32 val) { static_cast<nw4r::lyt::AnimTransform*>(self)->SetFrame(val); }
@@ -223,16 +214,16 @@ extern "C" void* MenuUpdate_SpawnProcessForMode(void* self, u32 pScene, int mode
             CtrlRemote_SetSharedBit(arg1 + 0x3214, 1);
         }
     }
-    if (lbl_eu_80664198 != 0) {
-        ((CMenuUpdate*)(void*)(u32)lbl_eu_80664198)->UpsertEntry(mode, arg1, arg2, arg3);
+    if (lbl_eu_80664198 != NULL) {
+        lbl_eu_80664198->UpsertEntry(mode, arg1, arg2, arg3);
         return 0;
     }
-    void* workMem = getWorkMem__17CWorkThreadSystemFv();
-    CMenuUpdate* obj = new (mtl::MemManager::allocate(0x130, (u32)workMem))
+    mtl::ALLOC_HANDLE workMem = CWorkThreadSystem::getWorkMem();
+    CMenuUpdate* obj = new (mtl::MemManager::allocate(0x130, workMem))
         CMenuUpdate((CScn*)pScene, mode, arg1, arg2, arg3);
-    lbl_eu_80664198 = (u32)obj;
-    Regist__8CProcessFP8CProcessb((void*)(u32)lbl_eu_80664198, self, 0);
-    return (void*)(u32)lbl_eu_80664198;
+    lbl_eu_80664198 = obj;
+    lbl_eu_80664198->Regist(static_cast<CProcess*>(self), 0);
+    return lbl_eu_80664198;
 }
 
 // MenuUpdate_FormatNotifyText - format a texture name into a FixStr<32> buffer and bind it
@@ -682,7 +673,7 @@ extern "C" int MenuUpdate_CheckBootGates(void* self) {
         return 1;
     }
     if (MenuTutorialIsCreated()) obj->mFloat12C = 4.0f;
-    if (isSceneLoading__Q22cf13CfGameManagerFv()) return 1;
+    if (cf::CfGameManager::isSceneLoading()) return 1;
     if (isSceneActive__Q22cf13CfGameManagerFv()) return 1;
     if (!isSceneReadyForInput__Q22cf13CfGameManagerFv()) return 1;
     if (isKizunaTalkActive()) return 1;

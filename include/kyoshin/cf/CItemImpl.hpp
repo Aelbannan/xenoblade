@@ -1,14 +1,19 @@
 #pragma once
 
-// Canonical item-implementation vtable interface, shared by the item owner
-// (kyoshin/cf/CItem.hpp) and its UI callers. Kept in its own header so callers
-// do not have to inherit the owner TU's unrelated C-linkage declarations.
+// cf::ItemImpl (retail RTTI __RTTI__Q22cf8ItemImpl) and its eight concrete
+// item kinds (retail vtables __vt__Q22cf21ItemPurifyKessyouImpl ..
+// __vt__Q22cf13ItemDummyImpl, 0xA0 bytes = RTTI + 0 + 38 virtuals, base lists
+// from the retail hierarchy objects). Shared by the item owner
+// (kyoshin/cf/CItem.hpp) and its UI callers. Slot names are offsets until the
+// per-kind overrides are recovered.
 #include <types.h>
 
 struct CItemData;
 struct CItemRec;
 
-class CItemImpl {
+namespace cf {
+
+class ItemImpl {
 public:
     virtual u32 vf08(CItemData* p);              // 0x08
     virtual void vf0C(CItemData* p, u32 x);      // 0x0C
@@ -20,7 +25,7 @@ public:
     virtual void vf24();                                         // 0x24
     virtual u16 vf28(CItemData* p, const char* col);              // 0x28
     virtual CItemRec* vf2C(CItemData* p, u32 x);                 // 0x2C (returns the 8-byte sub-record)
-    virtual u32 vf30(CItemData* p);                              // 0x30
+    virtual u16 vf30(CItemData* p);                              // 0x30 (slot count; u16 per getItemCountForGroup pass-through)
     virtual void vf34(CItemData* p, u32 x);      // 0x34
     virtual void vf38();                         // 0x38
     virtual void vf3C(CItemData* p, u32 x);      // 0x3C
@@ -46,4 +51,20 @@ public:
     virtual void vf8C(CItemData* p, u32 x);      // 0x8C
     virtual int vf90(CItemData* p);              // 0x90 (value; full-width int)
     virtual u32 vf94(CItemData* p, u32 x);       // 0x94
+    virtual void vf98();                         // 0x98
+    virtual void vf9C();                         // 0x9C
 };
+
+class ItemDummyImpl : public ItemImpl {};
+class ItemConsImpl : public ItemImpl {};
+class ItemEquipImpl : public ItemImpl {};
+class ItemCrystalImpl : public ItemImpl {};
+class ItemDropCrystalImpl : public ItemCrystalImpl {};
+class ItemPurifyCrystalImpl : public ItemCrystalImpl {};
+class ItemKessyouImpl : public ItemImpl {};
+class ItemPurifyKessyouImpl : public ItemKessyouImpl {};
+
+} // namespace cf
+
+// Pre-namespace spelling still used by the item UI callers.
+typedef cf::ItemImpl CItemImpl;

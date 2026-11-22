@@ -6,6 +6,9 @@
 #include <PowerPC_EABI_Support/Runtime/MWCPlusLib.h>
 
 #include "monolib/device/CFileHandle.hpp"
+#include "monolib/device/CDeviceFile.hpp"
+#include "monolib/device/CDeviceVI.hpp"
+#include "monolib/math/MTRand.hpp"
 
 // Owner-class definitions for the recovered virtual calls in this TU.
 // The three hidden free-function names keep this TU's retail-arity
@@ -287,8 +290,6 @@ extern "C" void tickAnimFrame(CActParamAnimView* self);
 
 extern "C" CSchedule* EffRoot_AddSchedReq(const u32* mgr, u8* bdat, u32 global, int r6, int r7, int r8);
 extern "C" void schedAttachChildSlot(CSchedule* effect, CScheduleChild* parent);
-extern "C" s32 getInstance__Q22ml6MTRandFv();
-extern "C" u32 rand31__Q22ml6MTRandFv();
 extern "C" int atoi(const char* str);
 
 extern "C" void* Scn_FindCamItem(void*, int);
@@ -307,11 +308,9 @@ extern "C" void PartyStateWin_InitMemCounters(CModelDispFileCtx* ctx);
 extern "C" u32 PartyStateWin_PickAllocHandle(CModelDispFileCtx* ctx, u32 size);
 extern "C" int getFileSize__11CDeviceFileFPCc(const char* path, int flags);
 extern "C" void* readFile__11CDeviceFileFUlPCcP10IWorkEventii(u32 allocHandle, const char* path, void* workEvent, int, int);
-extern "C" void setHandleFlag1__11CDeviceFileFP11CFileHandle(CFileHandle* fh);
 extern "C" void EffSched_LookupA(void* mgr, void* data);
 extern "C" void EffSched_LookupB(void* arg, void* data); // (manager, buffer): the
 // buffer rides in r4 from the null-check load - keeps the check color r4.
-extern "C" void waitForDrawDone__9CDeviceVIFv();
 
 // ---- Enum-list / actor imports (ModelDispEquip_TeardownHolder / 801FFDC4 / 80200FB0) ----
 extern "C" void startEnumObjects(CModelDispEnumList* list, u32 type, u32 filter);

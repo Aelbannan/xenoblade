@@ -636,7 +636,7 @@ int CfCmd_PickChain(FuncResultRef* self, FuncActorRef* actor, int mode,
     if (probeGate90940(actor, 0x1000) == 0) return 0;
     if (probeGate90940(actor, 0x806) == 0) return 0;
 
-    BmView90940* bm = reinterpret_cast<BmView90940*>(getInstance__Q22cf14CBattleManagerFv());
+    BmView90940* bm = reinterpret_cast<BmView90940*>(cf::CBattleManager::getInstance());
     if (bm->field_0x1aa == 0) return 0;
     if (bm->field_0x20c8 == 0) return 0;
 

@@ -779,7 +779,7 @@ extern "C" CScnFilterListNode* ScnFilterList_getSentinel(CScnFilterList* list) {
     return *(CScnFilterListNode**)ScnFilterNode_store(&node, (u32)list->mStartNodePtr);
 }
 
-void CScnFilterMan::cbRenderBefore() {
+void CScnFilterMan::cbRenderBefore(CScn*) {
     ScnFilterMan_preRender(this);
     CGXCache* cache = (CGXCache*)ScnFilterMan_getGXCache();
     cache->resetGXStateA();
@@ -818,7 +818,7 @@ extern "C" void ScnFilterIterListIter_setNode(CScnFilterListIter* self, u32 val)
 // ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
 namespace FMBlob {
 extern "C" void __dt__13CScnFilterManFv();
-extern "C" void cbRenderBefore__13CScnFilterManFv();
+extern "C" void cbRenderBefore__13CScnFilterManFP4CScn();
 extern "C" void __dt__reslist__reslist_iterator_CScnFilter_CScnFilter_CScnFilter();
 extern "C" void __dt___reslist_base__reslist_iterator_CScnFilter_CScnFilter_CScnFilter();
 extern "C" void __dt__reslist_CScnFilter();

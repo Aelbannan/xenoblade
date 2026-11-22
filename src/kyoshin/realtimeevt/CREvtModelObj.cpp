@@ -22,8 +22,7 @@
 #include "monolib/util/FixStr.hpp"
 #include "monolib/util/MemManager.hpp"
 #include "monolib/work/CEventFile.hpp"
-
-namespace nw4r { namespace db { void Panic(const char* file, int line, const char* fmt, ...); } }
+#include <nw4r/db/db_assert.h>
 
 extern "C" {
 // CTaskREvtSequence.cpp helpers that take the model as `this` (still C-linkage there).
@@ -50,7 +49,6 @@ extern void simCoupleModel(CScnItemModel* model, void* data);
 extern int labs(int);
 
 // Shared strings owned by other units.
-extern char lbl_eu_806623C0[2];      // directory separator
 extern char lbl_eu_8052637C[];   // nw4r assert file
 extern char lbl_eu_80526354[];   // nw4r assert message
 }

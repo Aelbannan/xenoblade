@@ -4,6 +4,6 @@
 
 namespace cf {
 u8 CHelp_Kizuna::isKizunaFlag() {
-    return lbl_eu_80664A10->mField15;
+    return cf::CHelpManager::sInstance->mField15;
 }
 } // namespace cf

@@ -134,7 +134,6 @@ extern "C" void EvtMovie_TogglePlayback_4BA4(CREvtMovie* self);
 // allocator + object ctors (kyoshin/realtimeevt/*.cpp), the name-matching
 // helper (CREvtModel.cpp), CfGameManager gates and the vision-arm pair
 // (CMenuVision.cpp).
-extern "C" void* __nw__Q22cf8CREvtObjFUl(void* size);
 extern "C" CREvtMovie* __ct__Q22cf10CREvtMovieFP16CREvtMovieScript(
     CREvtMovie* self, CREvtMovieScript* scriptData);
 extern "C" bool isVisionPackLoaded__Q22cf13CfGameManagerFv();
@@ -342,13 +341,6 @@ struct UnkStateC4 {
     u32 field_0x4C;   // 0x4C
 };  // size 0x50
 
-// Realtime-event object base (EvtSeqDispatchObjs reads the name-data id word at
-// +0x43C after a camera setup call and stores it into the table entry).
-struct EvtSeqObj43C {
-    u8 gap00[0x43C];
-    u32 field_0x43C;
-};
-
 // Scene view exposing the +0x7C pointer whose target word is OR'd/AND'd by
 // EvtSeqDispatchObjs (driven by bits 0/1 of the entry flag word).
 struct EvtSeqScn7C {
@@ -472,9 +464,11 @@ public:
     u32 field_0x40;            // 0x40: busy flag (tested by EvtSeqIsSameNameType3Busy)
     u8 gap44[0x04];            // 0x44-0x47
     u32 field_0x48;            // 0x48: busy flag (tested by EvtSeqIsSameNameType3Busy)
+    u8 gap4C[0x3F0];           // 0x4C-0x43B
+    u32 field_0x43C;           // 0x43C: name-data id word read by EvtSeqDispatchObjs
     int SeqIsSameNameType3Busy();
     int SeqCheckRunGate();
-};  // size 0x4C
+};  // size 0x440
 
 // Object returned by UnkEvtListEntry::vf_0x14() on success; its vtable slot
 // at absolute offset 0xA8 (user-virtual index 40) yields the final name
@@ -765,7 +759,7 @@ public:
     ~CTaskREvtSequence();
     void Init();
     void Term();
-    void cbRenderBefore();
+    void cbRenderBefore(CScn* scene);
 
     void Draw();
     bool OnFileEvent(CEventFile* ev);
@@ -791,8 +785,6 @@ u32 Env_RegionCode();
 
 // CTaskLOD helpers (code_80135FDC.cpp): task id -> active flag. s16 id so the
 // call site passes the halfword directly (retail emits lha, no u8 conversion).
-extern "C" void deactivateLOD__8CTaskLODFv(s16 taskId);
-extern "C" int getLODData__8CTaskLODFv(s16 taskId);
 
 // Definitions in this TU (retail unmangled names; the extern "C" decls above
 // keep the emitted symbols byte-identical to retail).
@@ -1078,8 +1070,6 @@ extern f64 lbl_eu_80667680;
 // ---- Imports for EvtSeqStopSequence (event-sequence teardown / Term body) ----
 class CFileHandle;
 extern "C" void MapModel_EnablePoints();
-extern "C" void cancel__11CDeviceFileFP11CFileHandle(CFileHandle* handle);
-extern "C" void activateLOD__8CTaskLODFv(s16 taskId);
 extern "C" void CTaskGame_resetStream();
 // Static shutdown for the shared menu-text state (code_8025FB10.cpp).
 extern "C" void __dt__80261B1C();

@@ -15,6 +15,7 @@
 #include <nw4r/math.h>
 #include <monolib/math.hpp>
 #include <monolib/effect/CERand.hpp>
+#include "libs/monolib/src/scn/CScnCameraMan.hpp"
 
 // Rotate `mtx` about the X axis by `angle` (code_804DB938.cpp).
 extern "C" {
@@ -41,7 +42,7 @@ extern const char lbl_eu_80526324[];  // "arithmetic.h"
 
 // Uniform random in [0, 1).
 static inline f32 randF() {
-    return (f32)ml::math::mtRand() / lbl_eu_8066B1F0;
+    return (f32)ml::math::mtRand() / 2147483600.0f;
 }
 
 // nw4r::math::FSqrt inlined, preserving the retail assert location
@@ -81,18 +82,18 @@ void cerandRotateX90Wrapper(Mtx mtx) {
     CERotXMatrix(mtx, 1.5707964f);
 }
 
-// cerandTransposeObjCC: transpose the matrix stored at obj+0xCC into mtx.
-void cerandTransposeObjCC(Mtx mtx, const void* obj) {
-    PSMTXTranspose((const f32(*)[4])((const u8*)obj + 0xCC), mtx);
+// cerandTransposeObjCC: transpose the camera item's view matrix into mtx.
+void cerandTransposeObjCC(Mtx mtx, const CScnCameraItem* obj) {
+    PSMTXTranspose(obj->mMtx, mtx);
 }
 
-// cerandAimMatrix: build an orientation matrix whose Z axis points along
-// (obj[0xEC], 0, obj[0xF4]), then transpose it.
-void cerandAimMatrix(Mtx mtx, const u8* obj) {
+// cerandAimMatrix: build an orientation matrix whose Z axis is the third row
+// of the camera item's view matrix, then transpose it.
+void cerandAimMatrix(Mtx mtx, const CScnCameraItem* obj) {
     *(ml::CMat34*)mtx = ml::CMat34::identity;
-    mtx[2][0] = *(const f32*)(obj + 0xEC);
+    mtx[2][0] = obj->mMtx[2][0];
     mtx[2][1] = 0.0f;
-    mtx[2][2] = *(const f32*)(obj + 0xF4);
+    mtx[2][2] = obj->mMtx[2][2];
     mtx[2][3] = 0.0f;
     PSVECNormalize((Vec*)&mtx[2], (Vec*)&mtx[2]);
     PSVECCrossProduct((Vec*)&mtx[1], (Vec*)&mtx[2], (Vec*)&mtx[0]);

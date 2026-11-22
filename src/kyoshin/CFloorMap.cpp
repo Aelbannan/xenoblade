@@ -1,3 +1,4 @@
+#define IWORK_EVENT_INLINE_DTOR // ~CFloorMap elides the empty base dtor (retail)
 // Auto-scaffolded catalog TU for kyoshin/CFloorMap
 // Replace stubs with high-level C/C++ during decomp.
 
@@ -30,23 +31,6 @@ extern "C" {
 void FloorMap_RefreshFloorRows(void* self);
 void FloorMap_RebuildMarkers(void* self);
 void FloorMap_ReleaseMarkers(void* self);
-void FloorMap_LoadStageLayout(CFloorMap* self);
-void FloorMap_UpdateFrame(void* self);
-void FloorMap_Draw(void* self, void* drawInfo);
-void FloorMap_Teardown(CFloorMapFull* p);
-void FloorMap_UpdateRowPanePos(void* self);
-void FloorMap_CursorNextFloor(void* self);
-void FloorMap_UpdateCursorMove(void* self);
-void FloorMap_UpdateWorldMap(void* self);
-void FloorMap_HandleMapDown(CFloorMapFull* p);
-void FloorMap_NormalizeMapPos(void* self);
-void FloorMap_ScrollDown(void* self);
-void FloorMap_ScrollUp(void* self);
-void FloorMap_ScrollRight(CFloorMapFull* fm);
-void FloorMap_ScrollLeft(CFloorMapFull* fm);
-void FloorMap_OpenRowWindow(void* self);
-void FloorMap_LoadMapFiles(void* self);
-void FloorMap_MoveToCursorRow(void* self);
 }
 
 // Retail-unmangled accessor; the shared owner header uses a different
@@ -90,7 +74,8 @@ void* memset(void*, int, unsigned long);
 
 void* FloorMap_CreateMarkerPicture(void* self, const char* name, f32 x, f32 y, void* arg5, const char* paneName);
 
-extern "C" u8 FloorMap_GetField40Flag(void* self) { return static_cast<CFloorMapFull*>(self)->field_40; }
+// name-guess: CFloorMap::GetField40Flag
+int CFloorMap::GetField40Flag() { return field_40; }
 
 
 // Move the map cursor down one row on the current page, wrapping through
@@ -104,7 +89,7 @@ extern "C" u8 FloorMap_GetField40Flag(void* self) { return static_cast<CFloorMap
 struct FloorMapRowNameView { u8 _00[0x18]; char* name; u8 flag; };
 
 // 0x30C-stride floor-entry slots rooted at the cursor/full object itself:
-// entry i starts at slot[i] (field_09/field_205 index), viewed at the use
+// entry i starts at slot[i] (field_09/mCursor.field_09 index), viewed at the use
 // site as a CFloorMapFloorNameEntry / CFloorMapMarkerBlock / CFloorMapFloorBlock.
 struct FloorMapEntrySlot { u8 bytes[0x30C]; };
 
@@ -182,18 +167,18 @@ void FloorMap_CursorDown(void* self) {
     dst[1] = src[1];
     dst[2] = src[2];
 
-    if (cur->field_3108 != NULL) {
-        ((CFloorMapLayoutHolder*)cur->field_3108)
+    if (cur->mLandCur.mpLayout != NULL) {
+        ((CFloorMapLayoutHolder*)cur->mLandCur.mpLayout)
             ->pane->SetTranslate(*(nw4r::math::VEC3*)&dest);
     }
 
-    reinterpret_cast<CScrollBar*>(cur->field_3134)->PlaceThumb(cur->field_0B);
+    cur->field_3134->PlaceThumb(cur->field_0B);
 }
 
 // Retail keeps this helper's symbol unmangled.
 extern "C" void FloorMap_CursorPageDown(void* self) {
     CFloorMapCursor* cur = (CFloorMapCursor*)self;
-    CFloorMapFloorEntry* entries = reinterpret_cast<CFloorMapFloorEntry*>(cur->_0C);
+    CFloorMapFloorEntry* entries = cur->mEntries;
     u8 count = *(u8*)((u8*)self + cur->field_09 * 0x30C + 0x318);
     if (count >= 5) {
         // Page down by one row; wrap to the next page once the row index
@@ -234,12 +219,12 @@ extern "C" void FloorMap_CursorPageDown(void* self) {
     ((u32*)&dest)[0] = ((u32*)&pos)[0];
     ((u32*)&dest)[1] = ((u32*)&pos)[1];
     ((u32*)&dest)[2] = ((u32*)&pos)[2];
-    if (cur->field_3108) {
-        CFloorMapCursorTarget* target = (CFloorMapCursorTarget*)cur->field_3108;
+    if (cur->mLandCur.mpLayout) {
+        CFloorMapCursorTarget* target = (CFloorMapCursorTarget*)cur->mLandCur.mpLayout;
         target->pane->SetTranslate(dest);
     }
 
-    reinterpret_cast<CScrollBar*>(cur->field_3134)->PlaceThumb((u16)cur->field_0B);
+    cur->field_3134->PlaceThumb((u16)cur->field_0B);
 }
 
 // Select the floor-map row whose map-row id matches val
@@ -303,12 +288,12 @@ void FloorMap_SetCursorState(void* self, u16 val) {
             ((u32*)&dest)[0] = ((u32*)&pos)[0];
             ((u32*)&dest)[1] = ((u32*)&pos)[1];
             ((u32*)&dest)[2] = ((u32*)&pos)[2];
-            if (cur->field_3108) {
-                CFloorMapCursorTarget* target = (CFloorMapCursorTarget*)cur->field_3108;
+            if (cur->mLandCur.mpLayout) {
+                CFloorMapCursorTarget* target = (CFloorMapCursorTarget*)cur->mLandCur.mpLayout;
                 target->pane->SetTranslate(dest);
             }
 
-            reinterpret_cast<CScrollBar*>(cur->field_3134)->PlaceThumb((u16)cur->field_0B);
+            cur->field_3134->PlaceThumb((u16)cur->field_0B);
             break;
         }
         i++;
@@ -401,12 +386,12 @@ void FloorMap_RefreshFloorRows(void* self) {
     nw4r::lyt::Pane* scalePane =
         cur->mData->GetRootPane()->FindPaneByName("nul_proportion", 1);
     pos.x = pos.x * scalePane->GetScale().x;
-    if (cur->field_30D8)
-        CFloorMapSetSlotPos((CFloorMapLayoutHolder*)cur->field_30D8, *(nw4r::math::_VEC3*)&pos);
+    if (cur->mFloorCur.mpLayout)
+        CFloorMapSetSlotPos((CFloorMapLayoutHolder*)cur->mFloorCur.mpLayout, *(nw4r::math::_VEC3*)&pos);
 
     CFloorMapFloorNameEntry* eSel =
         (CFloorMapFloorNameEntry*)((u8*)self + cur->field_09 * 0x30C);
-    LayoutSetTextBoxFmtValue(cur->field_30D8, "txt_flr", *(char**)&eSel->field_14, 0);
+    LayoutSetTextBoxFmtValue(cur->mFloorCur.mpLayout, "txt_flr", *(char**)&eSel->field_14, 0);
     LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)::cf::CfBdat::spFldMapListFileData, "txt_tit",
                   BdatGetPtrDirect((const void*)::cf::CfBdat::spFldMapListFileData, (const char*)"name", sCurrentMapId), 0);
 
@@ -421,12 +406,12 @@ void FloorMap_RefreshFloorRows(void* self) {
         nw4r::lyt::Pane* scalePane2 =
             cur->mData->GetRootPane()->FindPaneByName("nul_proportion", 1);
         pos2.x = pos2.x * scalePane2->GetScale().x;
-        if (cur->field_30F0)
-            CFloorMapSetSlotPos((CFloorMapLayoutHolder*)cur->field_30F0, *(nw4r::math::_VEC3*)&pos2);
+        if (cur->mFloorMarker.mpLayout)
+            CFloorMapSetSlotPos((CFloorMapLayoutHolder*)cur->mFloorMarker.mpLayout, *(nw4r::math::_VEC3*)&pos2);
     }
 
     if (sCurrentMapId != lbl_eu_80664184)
-        cur->field_3101 = 0;
+        cur->mFloorMarker.mVisible = 0;
 
     // Flag the panes when the current map is one of the special tutorial-map
     // ids (0x13-0x15, 0x17-0x18, 0x1B).
@@ -538,8 +523,8 @@ void FloorMap_RebuildMarkers(void* self) {
     ((u32*)&dest)[0] = ((u32*)&pos)[0];
     ((u32*)&dest)[1] = ((u32*)&pos)[1];
     ((u32*)&dest)[2] = ((u32*)&pos)[2];
-    if (cur->field_3108) {
-        CFloorMapCursorTarget* target = (CFloorMapCursorTarget*)cur->field_3108;
+    if (cur->mLandCur.mpLayout) {
+        CFloorMapCursorTarget* target = (CFloorMapCursorTarget*)cur->mLandCur.mpLayout;
         target->pane->SetTranslate(*(nw4r::math::VEC3*)&dest);
     }
 
@@ -547,12 +532,11 @@ void FloorMap_RebuildMarkers(void* self) {
         vec[0] = -120.0f;
         vec[1] = -50.0f;
         vec[2] = 0.0f;
-        reinterpret_cast<CScrollBar*>(cur->field_3134)->InitRootPane(reinterpret_cast<const nw4r::math::VEC3*>(vec));
-        CFloorMapFloorEntry* entries2 = (CFloorMapFloorEntry*)cur->_0C;
-        reinterpret_cast<CScrollBar*>(cur->field_3134)->UpdateThumb(5, reinterpret_cast<CFloorMapFloorEntryView*>(&entries2[cur->field_09])->count);
-        reinterpret_cast<CScrollBar*>(cur->field_3134)->PlaceThumb(0);
+        cur->field_3134->InitRootPane(reinterpret_cast<const nw4r::math::VEC3*>(vec));
+        cur->field_3134->UpdateThumb(5, cur->mEntries[cur->field_09].mRowCount);
+        cur->field_3134->PlaceThumb(0);
     }
-    reinterpret_cast<CScrollBar*>(cur->field_3134)->requestScrollIn();
+    cur->field_3134->requestScrollIn();
 }
 
 // Stub for the floor-map cursor refresh (retail 0x802483B8, not a target).
@@ -573,19 +557,11 @@ extern "C" void* __dt__80244724(void* self, int mode) {
     return self;
 }
 
-extern "C" void* __dt__8024503C(void* self, int mode) {
-    if (self && mode > 0) {
-        operator delete(self);
-    }
-    return self;
-}
+// Retail symbol: unnamed __dt__8024503C.
+CFloorMapCursor::~CFloorMapCursor() {}
 
-void* __dt__802462F0(void* self, int mode) {
-    if (self && mode > 0) {
-        operator delete(self);
-    }
-    return self;
-}
+// Retail symbol: unnamed __dt__802462F0.
+CFloorMapLayoutBlock::~CFloorMapLayoutBlock() {}
 
 // Rebuild the 20-slot layout block at CFloorMap+0x150: load every floor-row
 // layout, then walk the current map file's marker table. Each accepted marker
@@ -624,7 +600,7 @@ void FloorMap_RefreshLayoutBlock(CFloorMapLayoutBlock* self) {
         self->slots[i].posY = 0;
         buildLayout(&self->slots[i].layout, self->accessor, "mf03_map01_area.brlyt");
         nw4r::lyt::Layout* lay = self->slots[i].layout;
-        void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, lay);
+        void* fontObj = CDeviceFont::getFontInfo(1, lay);
         ApplyFontToTxtPanes(lay->GetRootPane(), (const nw4r::ut::Font*)((u32)((IDeviceFontInfo*)fontObj)->getFont()));
     }
 
@@ -2484,217 +2460,43 @@ void* __dt__8024B894(void* self, int mode) {
     return self;
 }
 
-// Staging-image ctor (defined below in this TU; retail keeps the plain name).
-extern "C" void* __ct__80244F50(void* self, int a, int b, u8 c);
 
-// Layout-compatible body view of CSysWin (CFloorMap.hpp's fwd decl keeps
-// CSysWin incomplete here; CSysWin.hpp's dtor decl collides with this TU's).
-struct CSysWinBody {
-    void* mVtbl;
-    UnkClass_8045F564 mMemRegion;
-    void* mFileHandle;
-    void* mTagProcessor;
-    void* mArcAccessor;
-    void* mLayout;
-    void* mAnimTrans;
-    u8 field_28;
-    u8 _29[3];
-    u32 field_2C;
-    u32 field_30;
-    u8 field_34;
-    u8 field_35;
-    u8 field_36;
-    u8 field_37;
-    u8 field_38;
-    u8 field_39;
-};
-
-// Complete-object constructor (retail __ct__CFloorMap). Order: vtable, the
-// two UnkClass_8045F564 memory regions, the scalar/POD block, the four
-// embedded widgets (scrollbar / cursor / 2 syswins), the layout-slot block
-// (zeroed twice - a whole-array memset plus an explicit per-entry pass,
-// both present in retail), the cursor staging ctor at +0x1FC, then three
-// stack temps whose bodies are memberwise-copied over the embedded widgets
-// (skipping each temp's vptr) before being destroyed.
-CFloorMap::CFloorMap() {
-    mVtbl = (void*)lbl_eu_80537028;
-    __ct__17UnkClass_8045F564Fv(reinterpret_cast<UnkClass_8045F564*>(&mMemRegion04[0]));
-    __ct__17UnkClass_8045F564Fv(reinterpret_cast<UnkClass_8045F564*>(&mMemRegion14[0]));
-    field_24 = 0;
-    field_28 = 0;
-    field_2C = 0;
-    field_30 = 0;
-    field_34 = 0;
-    field_38 = 0;
-    allocated_buf_3C = 0;
-    field_40 = 0;
-    field_41 = 0;
-    field_42 = 0;
-    field_43 = 1;
-    pos_x_44 = 0.0f;
-    pos_y_48 = 0.0f;
-    field_4C = 0.0f;
-    field_50 = 0.0f;
-    field_54 = 0.0f;
-    cursor_active_58 = 0;
-    field_5A = 0;
-    cursor_idx_5C = 0;
-    field_5D = 0;
-    __ct__10CScrollBarFUc(&mScrollBar[0], 0);
-    __ct__6CCur18FPQ34nw4r3lyt19ArcResourceAccessor(&mCursorA0, 0);
-    __ct__7CSysWinFUc(reinterpret_cast<CSysWin*>(&mSysWinB8[0]), 0);
-    __ct__7CSysWinFUc(reinterpret_cast<CSysWin*>(&mSysWinF4[0]), 0);
-    layout_130 = 0;
-    field_134 = 0;
-    layout_138 = 0;
-    field_13C = 0;
-    layout_140 = 0;
-    field_144 = 0;
-    field_148 = 0;
-    field_14C = 0;
-    layouts_150[0].mPtr = 0;
-    layouts_150[0].mUnk = 0;
-    {
-        // Retail expands this zero-fill inline (chunked word-store template);
-        // this compiler never expands memset, so spell the fill out.
-        u32* p = &layouts_150[1].mPtr;
-        u32* end = (u32*)(layouts_150 + 0x14);
-        if ((u32)p < (u32)end) {
-            u32* last = end - 16;
-            u32 chunks = (u32)(((u8*)end - 1 - (u8*)p) >> 6);
-            if (p < last) {
-                do {
-                    p[0] = 0; p[1] = 0; p[2] = 0; p[3] = 0;
-                    p[4] = 0; p[5] = 0; p[6] = 0; p[7] = 0;
-                    p[8] = 0; p[9] = 0; p[10] = 0; p[11] = 0;
-                    p[12] = 0; p[13] = 0; p[14] = 0; p[15] = 0;
-                    p += 16;
-                } while (--chunks);
-            }
-            u32 pairs = (u32)(((u8*)end + 7 - (u8*)p) >> 3);
-            if (p < end) {
-                do {
-                    p[0] = 0;
-                    p[1] = 0;
-                    p += 2;
-                } while (--pairs);
-            }
-        }
-    }
-    layout_count_1F0 = 0;
-    field_1F4 = 0;
-    field_1F8 = 0;
-    for (int i = 0; i < 0x14; i++) {
-        layouts_150[i].mPtr = 0;
-        layouts_150[i].mUnk = 0;
-    }
-    // Build the floor-map cursor staging image in place at +0x1FC.
-    __ct__80244F50(&layout_1FC, 0, 0, 0);
-    field_3330 = 0;
+// Complete-object constructor. Order: vtable, the two UnkClass_8045F564
+// memory regions, the scalar/POD block, the four embedded widgets
+// (scrollbar / cursor / 2 syswins), the layout-slot block (zeroed twice - a
+// whole-array memset plus an explicit per-entry pass, both present in
+// retail), the cursor staging ctor at +0x1FC, then three widgets re-assigned
+// from temporaries (implicit operator=, vptr kept) that are then destroyed.
+CFloorMap::CFloorMap()
+    : field_24(0), field_28(0), field_2C(0), field_30(0), field_34(0), field_38(0),
+      allocated_buf_3C(0), field_40(0), field_41(0), field_42(0), field_43(1),
+      pos_x_44(0.0f), pos_y_48(0.0f), field_4C(0.0f), field_50(0.0f), field_54(0.0f),
+      cursor_active_58(0), field_5A(0), cursor_idx_5C(0), field_5D(0),
+      mScrollBar(0), mCursorA0(0), mSysWinB8(0), mSysWinF4(0),
+      layout_130(0), field_134(0), layout_138(0), field_13C(0), layout_140(0),
+      field_144(0), field_148(0), field_14C(0), mCursor(NULL, NULL, 0) {
     layout_3334 = 0;
     field_3338 = 0;
     field_333C = 0;
-    field_3340 = NULL;
-    field_3344 = 1.0f;
+    mBufTimer = CFloorMapBufTimer(NULL, 1.0f);
 
-    // Rebuild the embedded scrollbar from a stack temp (direction 3).
-    {
-        u8 sbStorage[0x40];
-        CScrollBar* sb = reinterpret_cast<CScrollBar*>(sbStorage);
-        __ct__10CScrollBarFUc(sb, 3);
-        CScrollBar* dst = reinterpret_cast<CScrollBar*>(&mScrollBar[0]);
-        dst->mMemRegion = sb->mMemRegion;
-        dst->mFileHandle = sb->mFileHandle;
-        dst->mAccessor = sb->mAccessor;
-        dst->mLayout = sb->mLayout;
-        dst->mAnimTransform = sb->mAnimTransform;
-        dst->mReady = sb->mReady;
-        dst->mVisible = sb->mVisible;
-        dst->mState = sb->mState;
-        dst->mActive = sb->mActive;
-        dst->mAnimOffset = sb->mAnimOffset;
-        dst->mScrollPosY = sb->mScrollPosY;
-        dst->mScrollRatio = sb->mScrollRatio;
-        dst->mThumbHeight = sb->mThumbHeight;
-        dst->mContentHeight = sb->mContentHeight;
-        dst->mDirection = sb->mDirection;
-        sb->CScrollBar::~CScrollBar();
-    }
-
-    // Rebuild the +0xB8 system window from a stack temp (kind 3).
-    {
-        u8 winStorage[0x3C];
-        CSysWinBody* win = reinterpret_cast<CSysWinBody*>(winStorage);
-        __ct__7CSysWinFUc(reinterpret_cast<CSysWin*>(win), 3);
-        CSysWinBody* dst = reinterpret_cast<CSysWinBody*>(&mSysWinB8[0]);
-        dst->mMemRegion = win->mMemRegion;
-        dst->mFileHandle = win->mFileHandle;
-        dst->mTagProcessor = win->mTagProcessor;
-        dst->mArcAccessor = win->mArcAccessor;
-        dst->mLayout = win->mLayout;
-        dst->mAnimTrans = win->mAnimTrans;
-        dst->field_28 = win->field_28;
-        dst->field_2C = win->field_2C;
-        dst->field_30 = win->field_30;
-        dst->field_34 = win->field_34;
-        dst->field_35 = win->field_35;
-        dst->field_36 = win->field_36;
-        dst->field_37 = win->field_37;
-        dst->field_38 = win->field_38;
-        dst->field_39 = win->field_39;
-        win->~CSysWinBody();
-    }
-
-    // Rebuild the +0xF4 system window from a stack temp (kind 0).
-    {
-        u8 winStorage[0x3C];
-        CSysWinBody* win = reinterpret_cast<CSysWinBody*>(winStorage);
-        __ct__7CSysWinFUc(reinterpret_cast<CSysWin*>(win), 0);
-        CSysWinBody* dst = reinterpret_cast<CSysWinBody*>(&mSysWinF4[0]);
-        dst->mMemRegion = win->mMemRegion;
-        dst->mFileHandle = win->mFileHandle;
-        dst->mTagProcessor = win->mTagProcessor;
-        dst->mArcAccessor = win->mArcAccessor;
-        dst->mLayout = win->mLayout;
-        dst->mAnimTrans = win->mAnimTrans;
-        dst->field_28 = win->field_28;
-        dst->field_2C = win->field_2C;
-        dst->field_30 = win->field_30;
-        dst->field_34 = win->field_34;
-        dst->field_35 = win->field_35;
-        dst->field_36 = win->field_36;
-        dst->field_37 = win->field_37;
-        dst->field_38 = win->field_38;
-        dst->field_39 = win->field_39;
-        win->~CSysWinBody();
-    }
+    mScrollBar = CScrollBar(3);
+    mSysWinB8 = CSysWin(3);
+    mSysWinF4 = CSysWin(0);
 }
 
-// Complete-object destructor.  Sub-objects are opaque byte arrays, so their
-// retail destructors are invoked explicitly in reverse construction order
-// (+0xF4, +0xB8, +0xA0, +0x60, +0x14, +0x04); MWCC emits the null-check on
-// this and the flags-conditional operator delete automatically for the member
-// destructor form.
-CFloorMap::~CFloorMap() {
-    __dt__7CSysWinFv(mSysWinF4, -1);
-    __dt__7CSysWinFv(mSysWinB8, -1);
-    __dt__6CCur18Fv(&mCursorA0, -1);
-    __dt__10CScrollBarFv(mScrollBar, -1);
-    __dt__17UnkClass_8045F564Fv(reinterpret_cast<UnkClass_8045F564*>(mMemRegion14), -1);
-    __dt__17UnkClass_8045F564Fv(reinterpret_cast<UnkClass_8045F564*>(mMemRegion04), -1);
-}
+// Complete-object destructor: members are destroyed by the compiler in
+// reverse construction order (+0xF4, +0xB8, +0xA0, +0x60, +0x14, +0x04).
+CFloorMap::~CFloorMap() {}
 
 // Loads the floor-map archive: builds the cursor staging image from the
 // scrollbar sub-object plus the map resource accessor, installs it at
-// this+0x1FC, initialises the embedded widgets (__ct__8024507C), then resolves
+// this+0x1FC, initialises the embedded widgets (CFloorMapCursor::Init), then resolves
 // the language-specific data-file path from the message tables and starts the
 // asynchronous read on the MEM2 device file (result lands in field_2C).
-// Staging-image ctor (defined below) + resident-cursor widget init ctor.
-extern "C" void* __ct__80244F50(void* self, int a, int b, u8 c);
-extern "C" void __ct__8024507C(void* self);
 
-void FloorMap_LoadStageLayout(CFloorMap* self) {
-    CFloorMapStage stage;
+// name-guess: CFloorMap::LoadStageLayout
+void CFloorMap::LoadStageLayout() {
     char path[0x80];
     u32 lang;
     u16 v1;
@@ -2703,28 +2505,13 @@ void FloorMap_LoadStageLayout(CFloorMap* self) {
     u32 sel;
     const char* msgName;
 
-    lang = FloorMap_FindFloorRow(self);
-    __ct__80244F50(&stage, (int)self->mScrollBar, (int)self->field_34, (u8)lang);
-
-    // Install the staged image into the resident cursor at this+0x1FC. The
-    // 5-byte state run is copied byte-wise; its last byte aliases the first
-    // byte of the 0x618 entry-block chunk that follows it.
-    #define FM_DST (((CFloorMapStage*)&self->layout_1FC))
-    FM_DST->mData = stage.mData;
-    FM_DST->accessor = stage.accessor;
-    *(CFloorMapHeadFlags*)&FM_DST->headFlags = *(CFloorMapHeadFlags*)&stage.headFlags;
-    FM_DST->blocks = stage.blocks;
-    FM_DST->floorCount = stage.floorCount;
-    for (int i = 0; i < 4; i++) {
-        FM_DST->slots[i].body = stage.slots[i].body;
-    }
-    FM_DST->scrollBarPtr = stage.scrollBarPtr;
-    __ct__8024507C(FM_DST);
-    #undef FM_DST
+    lang = FloorMap_FindFloorRow(this);
+    mCursor = CFloorMapCursor(&this->mScrollBar, (nw4r::lyt::ArcResourceAccessor*)this->field_34, (u8)lang);
+    mCursor.Init();
 
     // Pick the data file name from the message tables based on the unlocked-
     // region / map flags; falls back to a default name when checks fail.
-    lang = FloorMap_FindFloorRow(self);
+    lang = FloorMap_FindFloorRow(this);
     if ((u8)lang == 0) {
         lang = 1;
     }
@@ -2764,8 +2551,8 @@ void FloorMap_LoadStageLayout(CFloorMap* self) {
     // IWorkEvent callback target.
     sprintf(path, "menu/jp/tpl/%s",
             MakeTplNameSysFile(BdatGetU16Direct((const void*)spFloorDataTable, msgName, lang & 0xFF)));
-    self->field_2C = (u32)readFile__11CDeviceFileFUlPCcP10IWorkEventii(
-        (u32)getHandleMEM2__Q23mtl10MemManagerFv(), path, self, 0, 0);
+    this->field_2C = (u32)readFile__11CDeviceFileFUlPCcP10IWorkEventii(
+        (u32)mtl::MemManager::getHandleMEM2(), path, this, 0, 0);
 }
 
 
@@ -2774,21 +2561,22 @@ void FloorMap_LoadStageLayout(CFloorMap* self) {
 // position toward the target and push it into every map layout's pane; then
 // update the sub-widgets, advance every bound layout animation and drive the
 // per-layout animation state machines.
-void FloorMap_UpdateFrame(void* self) {
-    CFloorMapFull* p = (CFloorMapFull*)self;
+// name-guess: CFloorMap::UpdateFrame
+void CFloorMap::UpdateFrame() {
+    CFloorMap* p = this;
     if (!p->field_40) return;
     if (!p->field_41) return;
 
     // Timer-driven deallocation of the loaded-map buffer: count down once per
     // frame and free the buffer once the timer drops below zero.
-    u8* buf = p->field_3340;
+    u8* buf = p->mBufTimer.mpBuf;
     if (buf != 0) {
-        f32 t = p->field_3344 - 1.0f;
-        p->field_3344 = t;
+        f32 t = p->mBufTimer.mTimer - 1.0f;
+        p->mBufTimer.mTimer = t;
         if (t < 0.0f) {
             if (buf != 0) {
                 mtl::MemManager::deallocate(buf);
-                p->field_3340 = 0;
+                p->mBufTimer.mpBuf = 0;
             }
         }
     }
@@ -2800,12 +2588,12 @@ void FloorMap_UpdateFrame(void* self) {
                                   0.0f };
         p->pos_x_44 = vec.x;
         p->pos_y_48 = vec.y;
-        CFloorMapSetSlotPos((CFloorMapLayoutHolder*)p->mLayout130, vec);
-        CFloorMapSetSlotPos((CFloorMapLayoutHolder*)p->mLayout138, vec);
-        CFloorMapSetSlotPos((CFloorMapLayoutHolder*)p->mLayout140, vec);
-        if (p->mLayouts150[0].mPtr != 0) {
-            for (u8 i = 0; i < p->field_1F0; i++) {
-                CFloorMapSetPanePos(((CFloorMapLayoutHolder*)p->mLayouts150[i].mPtr)->pane, vec);
+        CFloorMapSetSlotPos((CFloorMapLayoutHolder*)p->layout_130, vec);
+        CFloorMapSetSlotPos((CFloorMapLayoutHolder*)p->layout_138, vec);
+        CFloorMapSetSlotPos((CFloorMapLayoutHolder*)p->layout_140, vec);
+        if (p->mLayoutBlock.slots[0].layout != 0) {
+            for (u8 i = 0; i < p->mLayoutBlock.count; i++) {
+                CFloorMapSetPanePos(((CFloorMapLayoutHolder*)p->mLayoutBlock.slots[i].layout)->pane, vec);
             }
         }
 
@@ -2814,263 +2602,265 @@ void FloorMap_UpdateFrame(void* self) {
         if (t <= 0.0f) p->field_41 = 1;
     }
 
-    reinterpret_cast<CScrollBar*>(&p->mScrollBar)->UpdateDispatch();
-    ((CBaseCur*)&p->mCursor)->Update();
-    reinterpret_cast<CSysWin*>(&p->mSysWinB8)->dispatchPhase();
-    reinterpret_cast<CSysWin*>(&p->mSysWinF4)->dispatchPhase();
+    p->mScrollBar.UpdateDispatch();
+    ((CBaseCur*)&p->mCursorA0)->Update();
+    p->mSysWinB8.dispatchPhase();
+    p->mSysWinF4.dispatchPhase();
 
-    if (p->mLayout130 != 0) ((nw4r::lyt::Layout*)p->mLayout130)->Animate(0);
-    if (p->mLayout138 != 0) ((nw4r::lyt::Layout*)p->mLayout138)->Animate(0);
-    if (p->mLayout140 != 0) ((nw4r::lyt::Layout*)p->mLayout140)->Animate(0);
+    if (p->layout_130 != 0) ((nw4r::lyt::Layout*)p->layout_130)->Animate(0);
+    if (p->layout_138 != 0) ((nw4r::lyt::Layout*)p->layout_138)->Animate(0);
+    if (p->layout_140 != 0) ((nw4r::lyt::Layout*)p->layout_140)->Animate(0);
 
     // Flag each 0x150 map layout's pane when the current floor is the first
     // floor whose height is above the layout's stored marker height.
-    if (p->mLayouts150[0].mPtr != 0) {
-        for (u8 i = 0; i < p->field_1F0; i++) {
-            f32 y = (f32)(s16)p->mLayouts150[i].mUnk;
+    if (p->mLayoutBlock.slots[0].layout != 0) {
+        for (u8 i = 0; i < p->mLayoutBlock.count; i++) {
+            f32 y = (f32)(s16)p->mLayoutBlock.slots[i].posY;
 
             u8 count = (u8)Bdat_GetMaxRow_B1EC((void*)spFloorDataTable);
             u8 found = 0;
             for (u8 j = 1; j <= count; j++) {
                 s16 hv = BdatGetS16Direct((const void*)spFloorDataTable, "height", j);
                 if ((f32)(s16)(u32)hv > y) {
-                    if (j == p->field_1F8) found = 1;
+                    if (j == p->mLayoutBlock.curFloor) found = 1;
                     break;
                 }
             }
 
-            CFloorMapPaneFlag* pf = (CFloorMapPaneFlag*)((CFloorMapLayoutHolder*)p->mLayouts150[i].mPtr)->pane;
+            CFloorMapPaneFlag* pf = (CFloorMapPaneFlag*)((CFloorMapLayoutHolder*)p->mLayoutBlock.slots[i].layout)->pane;
             pf->mFlag = (pf->mFlag & 0xFE) | found;
-            ((nw4r::lyt::Layout*)p->mLayouts150[i].mPtr)->Animate(0);
+            ((nw4r::lyt::Layout*)p->mLayoutBlock.slots[i].layout)->Animate(0);
         }
     }
 
     // The remaining layout animation groups only run while the floor-map
     // layout (0x1FC) is built.
-    if (p->mLayout1FC != 0) {
-        ((nw4r::lyt::Layout*)p->mLayout1FC)->Animate(0);
+    if (p->mCursor.mData != 0) {
+        p->mCursor.mData->Animate(0);
 
-        if (p->mLayout32D4 != 0 && p->field_32E5 != 0) {
-            switch (p->field_32E4) {
+        if (p->mCursor.mFloorCur.mpLayout != 0 && p->mCursor.mFloorCur.mVisible != 0) {
+            switch (p->mCursor.mFloorCur.mActive) {
             case 0:
-                advanceAnimTransform((nw4r::lyt::AnimTransform*)p->mLayout32DC, 1.0f);
+                advanceAnimTransform(p->mCursor.mFloorCur.mpAnimTrans0, 1.0f);
                 break;
             case 1:
-                if (advanceAnimTransform((nw4r::lyt::AnimTransform*)p->mLayout32E0, 1.0f)) {
-                    ((nw4r::lyt::Layout*)p->mLayout32D4)->SetAnimationEnable((nw4r::lyt::AnimTransform*)p->mLayout32E0, false);
-                    ((nw4r::lyt::Layout*)p->mLayout32D4)->SetAnimationEnable((nw4r::lyt::AnimTransform*)p->mLayout32DC, true);
-                    ((nw4r::lyt::AnimTransform*)p->mLayout32DC)->SetFrame(0.0f);
-                    p->field_32E4 = 0;
+                if (advanceAnimTransform(p->mCursor.mFloorCur.mpAnimTrans1, 1.0f)) {
+                    p->mCursor.mFloorCur.mpLayout->SetAnimationEnable(p->mCursor.mFloorCur.mpAnimTrans1, false);
+                    p->mCursor.mFloorCur.mpLayout->SetAnimationEnable(p->mCursor.mFloorCur.mpAnimTrans0, true);
+                    p->mCursor.mFloorCur.mpAnimTrans0->SetFrame(0.0f);
+                    p->mCursor.mFloorCur.mActive = 0;
                 }
                 break;
             }
-            ((nw4r::lyt::Layout*)p->mLayout32D4)->Animate(0);
+            p->mCursor.mFloorCur.mpLayout->Animate(0);
         }
 
-        if (p->field_204 != 0 && p->mLayout32EC != 0 && p->field_32FD != 0) {
-            switch (p->field_32FC) {
+        if (p->mCursor.field_08 != 0 && p->mCursor.mFloorMarker.mpLayout != 0 && p->mCursor.mFloorMarker.mVisible != 0) {
+            switch (p->mCursor.mFloorMarker.mActive) {
             case 0:
-                advanceAnimTransform((nw4r::lyt::AnimTransform*)p->mLayout32F4, 1.0f);
+                advanceAnimTransform(p->mCursor.mFloorMarker.mpAnimTrans0, 1.0f);
                 break;
             case 1:
-                if (advanceAnimTransform((nw4r::lyt::AnimTransform*)p->mLayout32F8, 1.0f)) {
-                    ((nw4r::lyt::Layout*)p->mLayout32EC)->SetAnimationEnable((nw4r::lyt::AnimTransform*)p->mLayout32F8, false);
-                    ((nw4r::lyt::Layout*)p->mLayout32EC)->SetAnimationEnable((nw4r::lyt::AnimTransform*)p->mLayout32F4, true);
-                    ((nw4r::lyt::AnimTransform*)p->mLayout32F4)->SetFrame(0.0f);
-                    p->field_32FC = 0;
+                if (advanceAnimTransform(p->mCursor.mFloorMarker.mpAnimTrans1, 1.0f)) {
+                    p->mCursor.mFloorMarker.mpLayout->SetAnimationEnable(p->mCursor.mFloorMarker.mpAnimTrans1, false);
+                    p->mCursor.mFloorMarker.mpLayout->SetAnimationEnable(p->mCursor.mFloorMarker.mpAnimTrans0, true);
+                    p->mCursor.mFloorMarker.mpAnimTrans0->SetFrame(0.0f);
+                    p->mCursor.mFloorMarker.mActive = 0;
                 }
                 break;
             }
-            ((nw4r::lyt::Layout*)p->mLayout32EC)->Animate(0);
+            p->mCursor.mFloorMarker.mpLayout->Animate(0);
         }
 
-        s8 fi = (s8)p->field_205;
+        s8 fi = (s8)p->mCursor.field_09;
         CFloorMapFloorBlock* floor = (CFloorMapFloorBlock*)((u8*)p + fi * 0x30C);
-        if (floor->field_514 != 0 && p->mLayout3304 != 0 && p->field_3315 != 0) {
-            switch (p->field_3314) {
+        if (floor->field_514 != 0 && p->mCursor.mLandCur.mpLayout != 0 && p->mCursor.mLandCur.mVisible != 0) {
+            switch (p->mCursor.mLandCur.mActive) {
             case 0:
-                advanceAnimTransform((nw4r::lyt::AnimTransform*)p->mLayout330C, 1.0f);
+                advanceAnimTransform(p->mCursor.mLandCur.mpAnimTrans0, 1.0f);
                 break;
             case 1:
-                if (advanceAnimTransform((nw4r::lyt::AnimTransform*)p->mLayout3310, 1.0f)) {
-                    ((nw4r::lyt::Layout*)p->mLayout3304)->SetAnimationEnable((nw4r::lyt::AnimTransform*)p->mLayout3310, false);
-                    ((nw4r::lyt::Layout*)p->mLayout3304)->SetAnimationEnable((nw4r::lyt::AnimTransform*)p->mLayout330C, true);
-                    ((nw4r::lyt::AnimTransform*)p->mLayout330C)->SetFrame(0.0f);
-                    p->field_3314 = 0;
+                if (advanceAnimTransform(p->mCursor.mLandCur.mpAnimTrans1, 1.0f)) {
+                    p->mCursor.mLandCur.mpLayout->SetAnimationEnable(p->mCursor.mLandCur.mpAnimTrans1, false);
+                    p->mCursor.mLandCur.mpLayout->SetAnimationEnable(p->mCursor.mLandCur.mpAnimTrans0, true);
+                    p->mCursor.mLandCur.mpAnimTrans0->SetFrame(0.0f);
+                    p->mCursor.mLandCur.mActive = 0;
                 }
                 break;
             }
-            ((nw4r::lyt::Layout*)p->mLayout3304)->Animate(0);
+            p->mCursor.mLandCur.mpLayout->Animate(0);
         }
 
-        if (p->mLayout331C != 0 && p->field_332D != 0) {
-            switch (p->field_332C) {
+        if (p->mCursor.mTargetCur.mpLayout != 0 && p->mCursor.mTargetCur.mVisible != 0) {
+            switch (p->mCursor.mTargetCur.mActive) {
             case 0:
-                advanceAnimTransform((nw4r::lyt::AnimTransform*)p->mLayout3324, 1.0f);
+                advanceAnimTransform(p->mCursor.mTargetCur.mpAnimTrans0, 1.0f);
                 break;
             case 1:
-                if (advanceAnimTransform((nw4r::lyt::AnimTransform*)p->mLayout3328, 1.0f)) {
-                    ((nw4r::lyt::Layout*)p->mLayout331C)->SetAnimationEnable((nw4r::lyt::AnimTransform*)p->mLayout3328, false);
-                    ((nw4r::lyt::Layout*)p->mLayout331C)->SetAnimationEnable((nw4r::lyt::AnimTransform*)p->mLayout3324, true);
-                    ((nw4r::lyt::AnimTransform*)p->mLayout3324)->SetFrame(0.0f);
-                    p->field_332C = 0;
+                if (advanceAnimTransform(p->mCursor.mTargetCur.mpAnimTrans1, 1.0f)) {
+                    p->mCursor.mTargetCur.mpLayout->SetAnimationEnable(p->mCursor.mTargetCur.mpAnimTrans1, false);
+                    p->mCursor.mTargetCur.mpLayout->SetAnimationEnable(p->mCursor.mTargetCur.mpAnimTrans0, true);
+                    p->mCursor.mTargetCur.mpAnimTrans0->SetFrame(0.0f);
+                    p->mCursor.mTargetCur.mActive = 0;
                 }
                 break;
             }
-            ((nw4r::lyt::Layout*)p->mLayout331C)->Animate(0);
+            p->mCursor.mTargetCur.mpLayout->Animate(0);
         }
     }
 
-    if (p->field_333C != 0 && p->mLayout3334 != 0) {
-        ((nw4r::lyt::Layout*)p->mLayout3334)->Animate(0);
+    if (p->field_333C != 0 && p->layout_3334 != 0) {
+        ((nw4r::lyt::Layout*)p->layout_3334)->Animate(0);
     }
 }
 
-void FloorMap_Draw(void* self, void* drawInfo) {
-    CFloorMapFull* p = (CFloorMapFull*)self;
+// name-guess: CFloorMap::Draw
+void CFloorMap::Draw(nw4r::lyt::DrawInfo* drawInfo) {
+    CFloorMap* p = this;
     if (!p->field_40) return;
     if (!p->field_41) return;
-    if (p->mLayout130)
-        drawLayout(reinterpret_cast<nw4r::lyt::Layout*>(p->mLayout130), reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo), 0, 1);
-    if (p->mLayout138)
-        drawLayout(reinterpret_cast<nw4r::lyt::Layout*>(p->mLayout138), reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo), 0, 1);
-    if (p->mLayout140)
-        drawLayout(reinterpret_cast<nw4r::lyt::Layout*>(p->mLayout140), reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo), 0, 1);
-    if (p->mLayouts150[0].mPtr) {
-        for (u8 i = 0; i < p->field_1F0; i++) {
+    if (p->layout_130)
+        drawLayout(reinterpret_cast<nw4r::lyt::Layout*>(p->layout_130), drawInfo, 0, 1);
+    if (p->layout_138)
+        drawLayout(reinterpret_cast<nw4r::lyt::Layout*>(p->layout_138), drawInfo, 0, 1);
+    if (p->layout_140)
+        drawLayout(reinterpret_cast<nw4r::lyt::Layout*>(p->layout_140), drawInfo, 0, 1);
+    if (p->mLayoutBlock.slots[0].layout) {
+        for (u8 i = 0; i < p->mLayoutBlock.count; i++) {
             void* s = *(void**)((u8*)p + i * 8 + 0x150);
-            drawLayout(reinterpret_cast<nw4r::lyt::Layout*>(s), reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo), 0, 1);
+            drawLayout(reinterpret_cast<nw4r::lyt::Layout*>(s), drawInfo, 0, 1);
         }
     }
-    if (!p->field_208) goto draw_331c;
-    if (!p->mLayout1FC) goto after_331c;
+    if (!p->mCursor.field_0C) goto draw_331c;
+    if (!p->mCursor.mData) goto after_331c;
     {
-        drawLayout(reinterpret_cast<nw4r::lyt::Layout*>(p->mLayout1FC), reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo), 0, 1);
-        if (p->mLayout32D4 && p->field_32E5)
-            drawLayout(reinterpret_cast<nw4r::lyt::Layout*>(p->mLayout32D4), reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo), 0, 1);
-        if (p->field_204 && p->mLayout32EC && p->field_32FD)
-            drawLayout(reinterpret_cast<nw4r::lyt::Layout*>(p->mLayout32EC), reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo), 0, 1);
-        if ((s8)p->field_206 >= 0) {
+        drawLayout(p->mCursor.mData, drawInfo, 0, 1);
+        if (p->mCursor.mFloorCur.mpLayout && p->mCursor.mFloorCur.mVisible)
+            drawLayout(p->mCursor.mFloorCur.mpLayout, drawInfo, 0, 1);
+        if (p->mCursor.field_08 && p->mCursor.mFloorMarker.mpLayout && p->mCursor.mFloorMarker.mVisible)
+            drawLayout(p->mCursor.mFloorMarker.mpLayout, drawInfo, 0, 1);
+        if ((s8)p->mCursor.field_0A >= 0) {
             int cond;
-            if (!p->mLayout32D4) {
+            if (!p->mCursor.mFloorCur.mpLayout) {
                 cond = 0;
             } else {
                 nw4r::lyt::Pane* result =
-                    ((nw4r::lyt::Layout*)p->mLayout32D4)->GetRootPane()
+                    p->mCursor.mFloorCur.mpLayout->GetRootPane()
                         ->FindPaneByName("nul_arw00", 1);
                 cond = result->IsVisible() ? 1 : 0;
             }
             if (!cond) {
-                s8 idx = (s8)p->field_205;
+                s8 idx = (s8)p->mCursor.field_09;
                 if (*(u8*)((u8*)p + idx * 0x30C + 0x514)) {
-                    if (p->mLayout3304 && p->field_3315)
-                        drawLayout(reinterpret_cast<nw4r::lyt::Layout*>(p->mLayout3304), reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo), 0, 1);
+                    if (p->mCursor.mLandCur.mpLayout && p->mCursor.mLandCur.mVisible)
+                        drawLayout(p->mCursor.mLandCur.mpLayout, drawInfo, 0, 1);
                 }
             }
         }
     }
 draw_331c:
-    if (p->mLayout331C && p->field_332D)
-        drawLayout(reinterpret_cast<nw4r::lyt::Layout*>(p->mLayout331C), reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo), 0, 1);
+    if (p->mCursor.mTargetCur.mpLayout && p->mCursor.mTargetCur.mVisible)
+        drawLayout(p->mCursor.mTargetCur.mpLayout, drawInfo, 0, 1);
 after_331c:
-    if (p->field_208)
-        reinterpret_cast<CScrollBar*>(&p->mScrollBar)->draw(static_cast<nw4r::lyt::DrawInfo*>(drawInfo));
-    if (p->field_333C && p->mLayout3334)
-        drawLayout(reinterpret_cast<nw4r::lyt::Layout*>(p->mLayout3334), reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo), 0, 1);
-    reinterpret_cast<CSysWin*>((void*)&p->mSysWinB8)->drawLayout(reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo));
-    reinterpret_cast<CSysWin*>((void*)&p->mSysWinF4)->drawLayout(reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo));
-    if ((s8)p->field_5C >= 0)
-        ((CBaseCur*)(&p->mCursor))->DrawLayout((nw4r::lyt::DrawInfo*)drawInfo);
+    if (p->mCursor.field_0C)
+        p->mScrollBar.draw(drawInfo);
+    if (p->field_333C && p->layout_3334)
+        drawLayout(reinterpret_cast<nw4r::lyt::Layout*>(p->layout_3334), drawInfo, 0, 1);
+    p->mSysWinB8.drawLayout(drawInfo);
+    p->mSysWinF4.drawLayout(drawInfo);
+    if ((s8)p->cursor_idx_5C >= 0)
+        ((CBaseCur*)(&p->mCursorA0))->DrawLayout(drawInfo);
 }
 
 // Teardown of the floor-map screen (paired with the ctor-time resource
 // loads). Frees the three file handles; when the draw flag is set it also
 // releases every layout/resource/widget created for the screen and clears
 // each owning pointer.
-void FloorMap_Teardown(CFloorMapFull* p) {
+// name-guess: CFloorMap::Teardown
+void CFloorMap::Teardown() {
     CBdat::getEntry(2);
-    closeFileHandle(reinterpret_cast<CFileHandle**>(&p->field_24));
-    closeFileHandle(reinterpret_cast<CFileHandle**>(&p->field_28));
-    closeFileHandle(reinterpret_cast<CFileHandle**>(&p->field_2C));
+    closeFileHandle(reinterpret_cast<CFileHandle**>(&field_24));
+    closeFileHandle(reinterpret_cast<CFileHandle**>(&field_28));
+    closeFileHandle(reinterpret_cast<CFileHandle**>(&field_2C));
 
-    if (p->field_40) {
-        p->field_40 = 0;
-        p->field_42 = 0;
-        waitForDrawDone__9CDeviceVIFv();
+    if (field_40) {
+        field_40 = 0;
+        field_42 = 0;
+        CDeviceVI::waitForDrawDone();
 
         // Free the marker-name buffer and the layout arc buffer.
-        if (p->field_3340 != NULL) {
-            mtl::MemManager::deallocate(p->field_3340);
-            p->field_3340 = NULL;
+        if (mBufTimer.mpBuf != NULL) {
+            mtl::MemManager::deallocate(mBufTimer.mpBuf);
+            mBufTimer.mpBuf = NULL;
         }
-        if (p->field_3C != 0) {
-            mtl::MemManager::deallocate((void*)p->field_3C);
-            p->field_3C = 0;
+        if (allocated_buf_3C != 0) {
+            mtl::MemManager::deallocate((void*)allocated_buf_3C);
+            allocated_buf_3C = 0;
         }
 
         // Release both arc resource accessors and the two scratch regions.
-        releaseArcResourceAccessor(reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(p->field_34));
-        releaseArcResourceAccessor(reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(p->field_38));
-        reinterpret_cast<UnkClass_8045F564*>((u8*)p + 0x04)->deleteRegion();
-        reinterpret_cast<UnkClass_8045F564*>((u8*)p + 0x14)->deleteRegion();
+        releaseArcResourceAccessor(reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(field_34));
+        releaseArcResourceAccessor(reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(field_38));
+        reinterpret_cast<UnkClass_8045F564*>((u8*)this + 0x04)->deleteRegion();
+        reinterpret_cast<UnkClass_8045F564*>((u8*)this + 0x14)->deleteRegion();
 
-        reinterpret_cast<CScrollBar*>((void*)p->mScrollBar)->Teardown();
-        ((CBaseCur*)&p->mCursor)->cleanup();
-        reinterpret_cast<CSysWin*>((void*)&p->mSysWinB8)->termLayout();
-        reinterpret_cast<CSysWin*>((void*)&p->mSysWinF4)->termLayout();
+        mScrollBar.Teardown();
+        mCursorA0.cleanup();
+        mSysWinB8.termLayout();
+        mSysWinF4.termLayout();
 
         // Destroy each owned layout (double null check is the retail D2-
         // inlined deleting-dtor shape) and clear the slot.
-        if (p->mLayout130 != 0) {
-            delete (nw4r::lyt::Layout*)p->mLayout130;
-            p->mLayout130 = 0;
+        if (layout_130 != 0) {
+            delete (nw4r::lyt::Layout*)layout_130;
+            layout_130 = 0;
         }
-        if (p->mLayout138 != 0) {
-            delete (nw4r::lyt::Layout*)p->mLayout138;
-            p->mLayout138 = 0;
+        if (layout_138 != 0) {
+            delete (nw4r::lyt::Layout*)layout_138;
+            layout_138 = 0;
         }
 
-        FloorMap_ReleaseMarkers(&p->mLayout140);
+        FloorMap_ReleaseMarkers(&layout_140);
 
         for (u32 i = 0; i < 0x14; i++) {
-            u32* slot = &p->mLayouts150[i].mPtr;
+            nw4r::lyt::Layout** slot = &mLayoutBlock.slots[i].layout;
             if (*slot != 0) {
-                delete (nw4r::lyt::Layout*)*slot;
+                delete *slot;
                 *slot = 0;
             }
         }
 
-        if (p->mLayout1FC != 0) {
-            delete (nw4r::lyt::Layout*)p->mLayout1FC;
-            p->mLayout1FC = 0;
+        if (mCursor.mData != 0) {
+            delete mCursor.mData;
+            mCursor.mData = 0;
         }
-        if (p->mLayout32D4 != 0) {
-            delete (nw4r::lyt::Layout*)p->mLayout32D4;
-            p->mLayout32D4 = 0;
+        if (mCursor.mFloorCur.mpLayout != 0) {
+            delete mCursor.mFloorCur.mpLayout;
+            mCursor.mFloorCur.mpLayout = 0;
         }
-        if (p->mLayout32EC != 0) {
-            delete (nw4r::lyt::Layout*)p->mLayout32EC;
-            p->mLayout32EC = 0;
+        if (mCursor.mFloorMarker.mpLayout != 0) {
+            delete mCursor.mFloorMarker.mpLayout;
+            mCursor.mFloorMarker.mpLayout = 0;
         }
-        if (p->mLayout3304 != 0) {
-            delete (nw4r::lyt::Layout*)p->mLayout3304;
-            p->mLayout3304 = 0;
+        if (mCursor.mLandCur.mpLayout != 0) {
+            delete mCursor.mLandCur.mpLayout;
+            mCursor.mLandCur.mpLayout = 0;
         }
-        if (p->mLayout331C != 0) {
-            delete (nw4r::lyt::Layout*)p->mLayout331C;
-            p->mLayout331C = 0;
+        if (mCursor.mTargetCur.mpLayout != 0) {
+            delete mCursor.mTargetCur.mpLayout;
+            mCursor.mTargetCur.mpLayout = 0;
         }
-        if (p->mLayout3334 != 0) {
-            delete (nw4r::lyt::Layout*)p->mLayout3334;
-            p->mLayout3334 = 0;
+        if (layout_3334 != 0) {
+            delete (nw4r::lyt::Layout*)layout_3334;
+            layout_3334 = 0;
         }
     }
 }
 
-extern "C" u8 FloorMap_GetField42Gated(void* self) {
-    CFloorMapFull* fm = static_cast<CFloorMapFull*>(self);
-    if (reinterpret_cast<CScrollBar*>(&fm->mScrollBar)->isVisible()) {
-        return fm->field_42;
+// name-guess: CFloorMap::GetField42Gated
+int CFloorMap::GetField42Gated() {
+    if (mScrollBar.isVisible()) {
+        return field_42;
     }
     return 0;
 }
@@ -3081,52 +2871,53 @@ extern "C" u8 FloorMap_GetField42Gated(void* self) {
 // scrollbar range, then (re)load the floor's map file.
 // NOTE: the per-floor record address is deliberately recomputed at each use
 // (retail never keeps it in a callee-saved register across the calls).
-#define FM_FLOOR(p_) ((CFloorMapFloorBlock*)((u8*)(p_) + (s8)(p_)->field_205 * 0x30C))
-void FloorMap_UpdateRowPanePos(void* self) {
+#define FM_FLOOR(p_) ((CFloorMapFloorBlock*)((u8*)(p_) + (s8)(p_)->mCursor.field_09 * 0x30C))
+// name-guess: CFloorMap::UpdateRowPanePos
+void CFloorMap::UpdateRowPanePos() {
     extern int sprintf(char*, const char*, ...);
-    CFloorMapFull* p = (CFloorMapFull*)self;
+    CFloorMap* p = this;
     nw4r::math::VEC3 pos;
     f32 scl[3];
     char nameBuf[0x20];
     char fname[0x20];
-    if (!p->field_208) return;
-    if (p->field_58) return;
-    if (reinterpret_cast<CSysWin*>(&p->mSysWinB8)->isOpened()) return;
-    if (reinterpret_cast<CSysWin*>(&p->mSysWinF4)->isOpened()) return;
+    if (!p->mCursor.field_0C) return;
+    if (p->cursor_active_58) return;
+    if (p->mSysWinB8.isOpened()) return;
+    if (p->mSysWinF4.isOpened()) return;
 
-    u8 nf = (u8)(p->field_205 - 1);
-    p->field_205 = nf;
+    u8 nf = (u8)(p->mCursor.field_09 - 1);
+    p->mCursor.field_09 = nf;
     if ((s8)nf < 0) {
-        p->field_205 = (u8)(p->field_32CC - 1);
+        p->mCursor.field_09 = (u8)(p->mCursor.field_30D0 - 1);
     }
 
-    p->field_206 = -1;
-    p->field_207 = 0;
-    sprintf(nameBuf, "pic_flr%02d", (s8)p->field_205 + 1);
+    p->mCursor.field_0A = -1;
+    p->mCursor.field_0B = 0;
+    sprintf(nameBuf, "pic_flr%02d", (s8)p->mCursor.field_09 + 1);
 
-    AccumPaneWorldPos(&pos, ((nw4r::lyt::Layout*)p->mLayout1FC)->GetRootPane()->FindPaneByName(nameBuf, 1));
+    AccumPaneWorldPos(&pos, p->mCursor.mData->GetRootPane()->FindPaneByName(nameBuf, 1));
 
-    pos.x *= ((nw4r::lyt::Layout*)p->mLayout1FC)->GetRootPane()->FindPaneByName("nul_proportion", 1)->GetScale().x;
-    if (p->mLayout32D4) {
-        CFloorMapSetPanePos(((nw4r::lyt::Layout*)p->mLayout32D4)->GetRootPane(), pos);
+    pos.x *= p->mCursor.mData->GetRootPane()->FindPaneByName("nul_proportion", 1)->GetScale().x;
+    if (p->mCursor.mFloorCur.mpLayout) {
+        CFloorMapSetPanePos(p->mCursor.mFloorCur.mpLayout->GetRootPane(), pos);
     }
 
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)p->mLayout32D4, "txt_flr", FM_FLOOR(p)->name_210, 0);
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)p->mLayout1FC, "txt_tit", BdatGetPtrDirect((const void*)::cf::CfBdat::spFldMapListFileData, "name", sCurrentMapId), 0);
-    FloorMap_RefreshCursorRows(&p->mLayout1FC);
+    LayoutSetTextBoxFmtValue(p->mCursor.mFloorCur.mpLayout, "txt_flr", FM_FLOOR(p)->name_210, 0);
+    LayoutSetTextBoxFmtValue(p->mCursor.mData, "txt_tit", BdatGetPtrDirect((const void*)::cf::CfBdat::spFldMapListFileData, "name", sCurrentMapId), 0);
+    FloorMap_RefreshCursorRows(&p->mCursor);
 
-    if (p->field_3330) {
+    if (p->mCursor.field_3134) {
         scl[0] = -120.0f;
         scl[1] = -50.0f;
         scl[2] = 0.0f;
-        reinterpret_cast<CScrollBar*>((void*)p->field_3330)->InitRootPane(reinterpret_cast<const nw4r::math::VEC3*>(scl));
-        reinterpret_cast<CScrollBar*>((void*)p->field_3330)->UpdateThumb(5, FM_FLOOR(p)->field_514);
-        reinterpret_cast<CScrollBar*>((void*)p->field_3330)->PlaceThumb(0);
+        p->mCursor.field_3134->InitRootPane(reinterpret_cast<const nw4r::math::VEC3*>(scl));
+        p->mCursor.field_3134->UpdateThumb(5, FM_FLOOR(p)->field_514);
+        p->mCursor.field_3134->PlaceThumb(0);
     }
 
-    ((nw4r::lyt::Layout*)p->mLayout32D4)->SetAnimationEnable((nw4r::lyt::AnimTransform*)p->mLayout32DC, false);
-    ((nw4r::lyt::Layout*)p->mLayout32D4)->SetAnimationEnable((nw4r::lyt::AnimTransform*)p->mLayout32E0, true);
-    p->field_32E4 = 1;
+    p->mCursor.mFloorCur.mpLayout->SetAnimationEnable(p->mCursor.mFloorCur.mpAnimTrans0, false);
+    p->mCursor.mFloorCur.mpLayout->SetAnimationEnable(p->mCursor.mFloorCur.mpAnimTrans1, true);
+    p->mCursor.mFloorCur.mActive = 1;
     closeFileHandle((CFileHandle**)&p->field_2C);
 
     u8 lang = FM_FLOOR(p)->field_20C;
@@ -3165,7 +2956,7 @@ void FloorMap_UpdateRowPanePos(void* self) {
     }
 
     sprintf(fname, "menu/jp/tpl/%s", MakeTplNameSysFile((u16)BdatGetU16Direct((const void*)spFloorDataTable, key, lang)));
-    p->field_2C = (u32)readFile__11CDeviceFileFUlPCcP10IWorkEventii((u32)getHandleMEM2__Q23mtl10MemManagerFv(), fname, p, 0, 0);
+    p->field_2C = (u32)readFile__11CDeviceFileFUlPCcP10IWorkEventii((u32)mtl::MemManager::getHandleMEM2(), fname, p, 0, 0);
     playUISound(0xC);
 }
 #undef FM_FLOOR
@@ -3173,35 +2964,36 @@ void FloorMap_UpdateRowPanePos(void* self) {
 // Move the map cursor to the next floor: increment the floor index (wrapping
 // to the first floor), then refresh the floor name panes / scrollbar and
 // (re)load the floor's map file.
-void FloorMap_CursorNextFloor(void* self) {
-    CFloorMapFull* p = (CFloorMapFull*)self;
-    if (!p->field_208) return;
-    if (p->field_58) return;
-    if (reinterpret_cast<CSysWin*>(&p->mSysWinB8)->isOpened()) return;
-    if (reinterpret_cast<CSysWin*>(&p->mSysWinF4)->isOpened()) return;
+// name-guess: CFloorMap::CursorNextFloor
+void CFloorMap::CursorNextFloor() {
+    CFloorMap* p = this;
+    if (!p->mCursor.field_0C) return;
+    if (p->cursor_active_58) return;
+    if (p->mSysWinB8.isOpened()) return;
+    if (p->mSysWinF4.isOpened()) return;
 
     // Advance the floor index, wrapping back to the first floor.
-    u8 nf = (u8)(p->field_205 + 1);
-    p->field_205 = nf;
-    if ((s32)nf >= (s32)p->field_32CC) {
-        p->field_205 = 0;
+    u8 nf = (u8)(p->mCursor.field_09 + 1);
+    p->mCursor.field_09 = nf;
+    if ((s32)nf >= (s32)p->mCursor.field_30D0) {
+        p->mCursor.field_09 = 0;
     }
 
-    p->field_206 = -1;
-    p->field_207 = 0;
+    p->mCursor.field_0A = -1;
+    p->mCursor.field_0B = 0;
 
-    p->field_206 = -1;
-    p->field_207 = 0;
+    p->mCursor.field_0A = -1;
+    p->mCursor.field_0B = 0;
     char buf[0x20];
-    sprintf(buf, "pic_flr%02d", (s8)p->field_205 + 1);
+    sprintf(buf, "pic_flr%02d", (s8)p->mCursor.field_09 + 1);
 
     nw4r::lyt::Pane* pane =
-        ((nw4r::lyt::Layout*)p->mLayout1FC)->GetRootPane()->FindPaneByName(buf, 1);
+        p->mCursor.mData->GetRootPane()->FindPaneByName(buf, 1);
     nw4r::math::_VEC3 pos;
     AccumPaneWorldPos((nw4r::math::VEC3*)&pos, pane);
 
     nw4r::lyt::Pane* scalePane =
-        ((nw4r::lyt::Layout*)p->mLayout1FC)->GetRootPane()->FindPaneByName("nul_proportion", 1);
+        p->mCursor.mData->GetRootPane()->FindPaneByName("nul_proportion", 1);
     // Word-wise move of y/z into the by-value argument slots so MWCC keeps
     // the retail integer-register copies while x is rescaled.
     u32 py = ((u32*)&pos)[1];
@@ -3209,33 +3001,33 @@ void FloorMap_CursorNextFloor(void* self) {
     pos.x = pos.x * scalePane->GetScale().x;
     nw4r::math::_VEC3 dest;
     ((u32*)&dest)[1] = py;
-    if (p->mLayout32D4) {
+    if (p->mCursor.mFloorCur.mpLayout) {
         ((u32*)&dest)[0] = ((u32*)&pos)[0];
         ((u32*)&dest)[2] = pz;
-        CFloorMapSetPanePos(((nw4r::lyt::Layout*)p->mLayout32D4)->GetRootPane(), dest);
+        CFloorMapSetPanePos(p->mCursor.mFloorCur.mpLayout->GetRootPane(), dest);
     }
 
-    // The floor block is never cached; retail recomputes self + fi*0x30C
+    // The floor block is never cached; retail recomputes this + fi*0x30C
     // for each field access while keeping only the field_20C byte live.
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)p->mLayout32D4, "txt_flr",
-                  ((CFloorMapFloorBlock*)((u8*)p + (s8)p->field_205 * 0x30C))->name_210, 0);
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)p->mLayout1FC, "txt_tit",
+    LayoutSetTextBoxFmtValue(p->mCursor.mFloorCur.mpLayout, "txt_flr",
+                  ((CFloorMapFloorBlock*)((u8*)p + (s8)p->mCursor.field_09 * 0x30C))->name_210, 0);
+    LayoutSetTextBoxFmtValue(p->mCursor.mData, "txt_tit",
                   BdatGetPtrDirect((const void*)::cf::CfBdat::spFldMapListFileData, "name", sCurrentMapId), 0);
-    FloorMap_RefreshCursorRows(&p->mLayout1FC);
+    FloorMap_RefreshCursorRows(&p->mCursor);
 
-    if (p->field_3330) {
+    if (p->mCursor.field_3134) {
         f32 vec[3] = {-120.0f, -50.0f, 0.0f};
-        reinterpret_cast<CScrollBar*>((void*)p->field_3330)->InitRootPane(reinterpret_cast<const nw4r::math::VEC3*>(vec));
-        reinterpret_cast<CScrollBar*>((void*)p->field_3330)->UpdateThumb(5, ((CFloorMapFloorBlock*)((u8*)p + (s8)p->field_205 * 0x30C))->field_514);
-        reinterpret_cast<CScrollBar*>((void*)p->field_3330)->PlaceThumb(0);
+        p->mCursor.field_3134->InitRootPane(reinterpret_cast<const nw4r::math::VEC3*>(vec));
+        p->mCursor.field_3134->UpdateThumb(5, ((CFloorMapFloorBlock*)((u8*)p + (s8)p->mCursor.field_09 * 0x30C))->field_514);
+        p->mCursor.field_3134->PlaceThumb(0);
     }
 
-    ((nw4r::lyt::Layout*)p->mLayout32D4)->SetAnimationEnable((nw4r::lyt::AnimTransform*)p->mLayout32DC, false);
-    ((nw4r::lyt::Layout*)p->mLayout32D4)->SetAnimationEnable((nw4r::lyt::AnimTransform*)p->mLayout32E0, true);
-    p->field_32E4 = 1;
+    p->mCursor.mFloorCur.mpLayout->SetAnimationEnable(p->mCursor.mFloorCur.mpAnimTrans0, false);
+    p->mCursor.mFloorCur.mpLayout->SetAnimationEnable(p->mCursor.mFloorCur.mpAnimTrans1, true);
+    p->mCursor.mFloorCur.mActive = 1;
     closeFileHandle((CFileHandle**)&p->field_2C);
 
-    u8 v26 = ((CFloorMapFloorBlock*)((u8*)p + (s8)p->field_205 * 0x30C))->field_20C;
+    u8 v26 = ((CFloorMapFloorBlock*)((u8*)p + (s8)p->mCursor.field_09 * 0x30C))->field_20C;
     if (v26 == 0) v26 = 1;
 
     u16 v1 = BdatGetU16Direct((const void*)spFloorDataTable, "sflag", v26);
@@ -3268,18 +3060,19 @@ void FloorMap_CursorNextFloor(void* self) {
 
     char fname[0x20];
     sprintf(fname, "menu/jp/tpl/%s", MakeTplNameSysFile((u16)BdatGetU16Direct((const void*)spFloorDataTable, key, v26)));
-    p->field_2C = (u32)readFile__11CDeviceFileFUlPCcP10IWorkEventii((u32)getHandleMEM2__Q23mtl10MemManagerFv(), fname, p, 0, 0);
+    p->field_2C = (u32)readFile__11CDeviceFileFUlPCcP10IWorkEventii((u32)mtl::MemManager::getHandleMEM2(), fname, p, 0, 0);
     playUISound(0xA);
 }
 
 // Per-frame map update: when the syswin cursor is active, step the cursor
 // index (wrapping to 1); otherwise move the map view to the row id under the
 // cursor (same position computation as FloorMap_MoveToCursorRow).
-void FloorMap_UpdateCursorMove(void* self) {
+// name-guess: CFloorMap::UpdateCursorMove
+void CFloorMap::UpdateCursorMove() {
     extern int sprintf(char*, const char*, ...);
-    CFloorMapFull* p = (CFloorMapFull*)self;
+    CFloorMap* p = this;
     // Stack temps mirroring retail's frame layout; pos is declared first
-    // after self so its address colors into r30 like retail.
+    // after this so its address colors into r30 like retail.
     nw4r::math::VEC3 pos;
     nw4r::math::VEC3 out;
     nw4r::math::VEC3 rec;
@@ -3295,34 +3088,34 @@ void FloorMap_UpdateCursorMove(void* self) {
     nw4r::lyt::Pane* gp;
     nw4r::lyt::Pane* ggp;
     if (p->field_2C) return;
-    if (!p->field_208) return;
-    if (reinterpret_cast<CSysWin*>(&p->mSysWinF4)->isOpened()) return;
+    if (!p->mCursor.field_0C) return;
+    if (p->mSysWinF4.isOpened()) return;
 
-    if (p->field_58) {
-        if (!reinterpret_cast<CSysWin*>(&p->mSysWinB8)->isActive()) return;
+    if (p->cursor_active_58) {
+        if (!p->mSysWinB8.isActive()) return;
 
         // Step down, clamping at 1 (never below).
-        u8 nc = (u8)(p->field_5C - 1);
-        p->field_5C = nc;
-        if ((s8)nc < 0) p->field_5C = 1;
+        u8 nc = (u8)(p->cursor_idx_5C - 1);
+        p->cursor_idx_5C = nc;
+        if ((s8)nc < 0) p->cursor_idx_5C = 1;
 
         nw4r::math::VEC3 curOut;
-        CSysWin::getPaneScreenPos(reinterpret_cast<nw4r::math::VEC3*>(&curOut), reinterpret_cast<CSysWin*>(&p->mSysWinB8), p->field_5C);
-        ((CBaseCur*)&p->mCursor)->setRootPaneTranslate(&curOut);
+        CSysWin::getPaneScreenPos(reinterpret_cast<nw4r::math::VEC3*>(&curOut), &p->mSysWinB8, p->cursor_idx_5C);
+        ((CBaseCur*)&p->mCursorA0)->setRootPaneTranslate(&curOut);
         playUISound(1);
         return;
     }
 
-    s8 fi = (s8)p->field_205;
+    s8 fi = (s8)p->mCursor.field_09;
     CFloorMapFloorBlock* floor = (CFloorMapFloorBlock*)((u8*)p + fi * 0x30C);
     if (!floor->field_514) return;
 
-    FloorMap_CursorUp(&p->mLayout1FC);
+    FloorMap_CursorUp(&p->mCursor);
 
     u16 rowId;
-    s8 rowIdx = (s8)p->field_206;
+    s8 rowIdx = (s8)p->mCursor.field_0A;
     if (rowIdx >= 0) {
-        rowId = ((CFloorMapFloorBlock*)((u8*)p + (s8)p->field_205 * 0x30C))->rows[(s8)p->field_207 + rowIdx].field_00;
+        rowId = ((CFloorMapFloorBlock*)((u8*)p + (s8)p->mCursor.field_09 * 0x30C))->rows[(s8)p->mCursor.field_0B + rowIdx].field_00;
     } else {
         rowId = 0;
     }
@@ -3333,7 +3126,7 @@ void FloorMap_UpdateCursorMove(void* self) {
     pos.z = 0.0f;
     // Retail keeps the layout-slot pointer and &pos in nonvolatiles across
     // the sprintf call, so slot is assigned before it.
-    slots = (CFloorMapLayoutSlots*)&p->mLayout140;
+    slots = (CFloorMapLayoutSlots*)&p->layout_140;
     sprintf(buf, "pic_land%d");
 
     root = slots->layout->GetRootPane();
@@ -3415,39 +3208,40 @@ divides:
 // active, step the cursor index (wrapping to 0); otherwise advance the map
 // rows and move the map view to the row under the cursor (same position
 // computation as FloorMap_MoveToCursorRow).
-void FloorMap_UpdateWorldMap(void* self) {
+// name-guess: CFloorMap::UpdateWorldMap
+void CFloorMap::UpdateWorldMap() {
     extern int sprintf(char*, const char*, ...);
-    CFloorMapFull* p = (CFloorMapFull*)self;
+    CFloorMap* p = this;
     char buf[0x20];
     nw4r::math::VEC3 pos;
     nw4r::math::VEC3 cursorOut;
     if (p->field_2C) return;
-    if (!p->field_208) return;
-    if (reinterpret_cast<CSysWin*>(&p->mSysWinF4)->isOpened()) return;
+    if (!p->mCursor.field_0C) return;
+    if (p->mSysWinF4.isOpened()) return;
 
-    if (p->field_58) {
-        if (!reinterpret_cast<CSysWin*>(&p->mSysWinB8)->isActive()) return;
+    if (p->cursor_active_58) {
+        if (!p->mSysWinB8.isActive()) return;
 
         // Wrap the cursor index 0 -> 1 -> 0 (syswin cursor mode); the wrap
         // test reads the freshly stored byte back.
-        p->field_5C = p->field_5C + 1;
-        if ((s8)p->field_5C >= 2) p->field_5C = 0;
+        p->cursor_idx_5C = p->cursor_idx_5C + 1;
+        if ((s8)p->cursor_idx_5C >= 2) p->cursor_idx_5C = 0;
 
-        CSysWin::getPaneScreenPos(reinterpret_cast<nw4r::math::VEC3*>(&cursorOut), reinterpret_cast<CSysWin*>(&p->mSysWinB8), p->field_5C);
-        ((CBaseCur*)&p->mCursor)->setRootPaneTranslate(&cursorOut);
+        CSysWin::getPaneScreenPos(reinterpret_cast<nw4r::math::VEC3*>(&cursorOut), &p->mSysWinB8, p->cursor_idx_5C);
+        ((CBaseCur*)&p->mCursorA0)->setRootPaneTranslate(&cursorOut);
         playUISound(1);
         return;
     }
 
-    CFloorMapFloorBlock* floor = (CFloorMapFloorBlock*)((u8*)p + (s8)p->field_205 * 0x30C);
+    CFloorMapFloorBlock* floor = (CFloorMapFloorBlock*)((u8*)p + (s8)p->mCursor.field_09 * 0x30C);
     if (!floor->field_514) return;
 
-    FloorMap_CursorDown(&p->mLayout1FC);
+    FloorMap_CursorDown(&p->mCursor);
 
     u16 rowId = 0;
-    if ((s8)p->field_206 >= 0) {
-        rowId = ((CFloorMapFloorBlock*)((u8*)p + (s8)p->field_205 * 0x30C))
-                    ->rows[p->field_207 + (s8)p->field_206].field_00;
+    if ((s8)p->mCursor.field_0A >= 0) {
+        rowId = ((CFloorMapFloorBlock*)((u8*)p + (s8)p->mCursor.field_09 * 0x30C))
+                    ->rows[p->mCursor.field_0B + (s8)p->mCursor.field_0A].field_00;
     }
 
     pos.x = 0.0f;
@@ -3455,7 +3249,7 @@ void FloorMap_UpdateWorldMap(void* self) {
     pos.z = 0.0f;
     // Retail keeps this slot pointer and &pos in nonvolatiles across the
     // sprintf call below.
-    CFloorMapLayoutSlots* slots = (CFloorMapLayoutSlots*)&p->mLayout140;
+    CFloorMapLayoutSlots* slots = (CFloorMapLayoutSlots*)&p->layout_140;
     sprintf(buf, "pic_land%d", rowId);
 
     // The layout root is read once and kept in a register for the ancestor
@@ -3535,7 +3329,8 @@ void FloorMap_UpdateWorldMap(void* self) {
 // Per-frame map-down handler: when the cursor is not active, step the row
 // index down by one row (wrapping the page), refresh the cursor pane, move
 // the map view to the row under the cursor, and normalize the new position.
-void FloorMap_HandleMapDown(CFloorMapFull* p) {
+// name-guess: CFloorMap::HandleMapDown
+void CFloorMap::HandleMapDown() {
     // Declared in retail frame-slot order (MWCC assigns first-declared the
     // highest address): buf@0x88, buf2@0x68, vec@0x5C, pos@0x50, dest@0x44,
     // acc@0x38, acc2@0x2C, acc3@0x20, rec@0x14, out@0x08.
@@ -3550,43 +3345,43 @@ void FloorMap_HandleMapDown(CFloorMapFull* p) {
     nw4r::math::VEC3 rec;
     nw4r::math::VEC3 out;
 
-    if (p->field_2C) return;
-    if (!p->field_208) return;
-    if (reinterpret_cast<CSysWin*>(&p->mSysWinF4)->isOpened()) return;
-    if (p->field_58) return;
+    if (field_2C) return;
+    if (!mCursor.field_0C) return;
+    if (mSysWinF4.isOpened()) return;
+    if (cursor_active_58) return;
 
-    s8 fi = (s8)p->field_205;
-    CFloorMapFloorBlock* floor = (CFloorMapFloorBlock*)((u8*)p + fi * 0x30C);
+    s8 fi = (s8)mCursor.field_09;
+    CFloorMapFloorBlock* floor = (CFloorMapFloorBlock*)((u8*)this + fi * 0x30C);
     u8 rowCount = floor->field_514;
     if (!rowCount) return;
 
     // Step the row index down; when it wraps below zero, move to the next
     // page (up to four pages) and clear the row index.
     if (rowCount >= 5) {
-        u8 v = (u8)(p->field_207 - 5);
-        p->field_207 = v;
+        u8 v = (u8)(mCursor.field_0B - 5);
+        mCursor.field_0B = v;
         if ((s8)(u8)v < 0) {
             u8 w = (u8)((u8)v + 4);
-            p->field_206 = (s8)w;
-            p->field_207 = 0;
-            if ((s8)(u8)w < 0) p->field_206 = 0;
+            mCursor.field_0A = (s8)w;
+            mCursor.field_0B = 0;
+            if ((s8)(u8)w < 0) mCursor.field_0A = 0;
         }
     } else {
-        p->field_206 = 0;
-        p->field_207 = 0;
+        mCursor.field_0A = 0;
+        mCursor.field_0B = 0;
     }
 
-    FloorMap_RefreshCursorRows(&p->mLayout1FC);
+    FloorMap_RefreshCursorRows(&mCursor);
 
     // Refresh the cursor position: format the pane name for the current page
     // index, scale its translate by the zoom pane, and move the target pane.
-    sprintf(buf, "txt_land%02d", (s8)p->field_206);
+    sprintf(buf, "txt_land%02d", (s8)mCursor.field_0A);
 
     nw4r::lyt::Pane* pane =
-        ((nw4r::lyt::Layout*)p->mLayout1FC)->GetRootPane()->FindPaneByName(buf, 1);
+        mCursor.mData->GetRootPane()->FindPaneByName(buf, 1);
     AccumPaneWorldPos((nw4r::math::VEC3*)&pos, pane);
     nw4r::lyt::Pane* scalePane =
-        ((nw4r::lyt::Layout*)p->mLayout1FC)->GetRootPane()->FindPaneByName("nul_proportion", 1);
+        mCursor.mData->GetRootPane()->FindPaneByName("nul_proportion", 1);
     pos.x = pos.x * scalePane->GetScale().x;
 
     // Word-wise y/z copy so MWCC keeps the retail integer-register moves;
@@ -3595,17 +3390,17 @@ void FloorMap_HandleMapDown(CFloorMapFull* p) {
     ((u32*)&dest)[2] = ((u32*)&pos)[2];
     dest.x = pos.x;
 
-    if (p->mLayout3304)
-        ((CFloorMapLayoutHolder*)p->mLayout3304)->pane->SetTranslate(
+    if (mCursor.mLandCur.mpLayout)
+        ((CFloorMapLayoutHolder*)mCursor.mLandCur.mpLayout)->pane->SetTranslate(
             *(nw4r::math::VEC3*)&dest);
 
-    reinterpret_cast<CScrollBar*>((void*)p->field_3330)->PlaceThumb((u16)(s8)p->field_207);
+    mCursor.field_3134->PlaceThumb((u16)(s8)mCursor.field_0B);
 
     // Resolve the map-row id under the cursor (0 when the page index wrapped).
     u16 rowId = 0;
-    if ((s8)p->field_206 >= 0) {
-        rowId = ((CFloorMapFloorBlock*)((u8*)p + (s8)p->field_205 * 0x30C))
-                    ->rows[(s8)p->field_207 + (s8)p->field_206].field_00;
+    if ((s8)mCursor.field_0A >= 0) {
+        rowId = ((CFloorMapFloorBlock*)((u8*)this + (s8)mCursor.field_09 * 0x30C))
+                    ->rows[(s8)mCursor.field_0B + (s8)mCursor.field_0A].field_00;
     }
 
     // Move the map view to the row under the cursor: accumulate the row
@@ -3614,7 +3409,7 @@ void FloorMap_HandleMapDown(CFloorMapFull* p) {
     vec.x = 0.0f;
     vec.y = 0.0f;
     vec.z = 0.0f;
-    CFloorMapLayoutSlots* slots = (CFloorMapLayoutSlots*)&p->mLayout140;
+    CFloorMapLayoutSlots* slots = (CFloorMapLayoutSlots*)&layout_140;
     sprintf(buf2, "pic_land%d", rowId);
 
     nw4r::lyt::Pane* pane2 = slots->layout->GetRootPane()->FindPaneByName(buf2, 1);
@@ -3676,10 +3471,10 @@ void FloorMap_HandleMapDown(CFloorMapFull* p) {
         nw4r::math::VEC3Add(&vec, &vec,
                             (nw4r::math::VEC3*)&slots->layout->GetRootPane()->GetTranslate());
     tail:
-    p->field_54 = 10.0f;
-    p->field_41 = 2;
-    p->field_4C = vec.x / 10.0f;
-    p->field_50 = vec.y / 10.0f;
+    field_54 = 10.0f;
+    field_41 = 2;
+    field_4C = vec.x / 10.0f;
+    field_50 = vec.y / 10.0f;
     playUISound(1);
 }
 
@@ -3688,15 +3483,16 @@ void FloorMap_HandleMapDown(CFloorMapFull* p) {
 // translate (scaled by the map zoom pane) and store the normalized position.
 // The tail normalization always runs; when the pane is missing, pos simply
 // stays at the zero it was seeded with before the name lookup.
-void FloorMap_NormalizeMapPos(void* self) {
-    CFloorMapFull* p = (CFloorMapFull*)self;
+// name-guess: CFloorMap::NormalizeMapPos
+void CFloorMap::NormalizeMapPos() {
+    CFloorMap* p = this;
     if (p->field_2C != 0) return;
-    if (p->field_208 == 0) return;
-    if (reinterpret_cast<CSysWin*>(&p->mSysWinF4)->isOpened()) return;
-    if (p->field_58 != 0) return;
+    if (p->mCursor.field_0C == 0) return;
+    if (p->mSysWinF4.isOpened()) return;
+    if (p->cursor_active_58 != 0) return;
 
-    if (*(u8*)((u8*)p + (s8)p->field_205 * 0x30C + 0x514) == 0) return;
-    FloorMap_CursorPageDown(&p->mLayout1FC);
+    if (*(u8*)((u8*)p + (s8)p->mCursor.field_09 * 0x30C + 0x514) == 0) return;
+    FloorMap_CursorPageDown(&p->mCursor);
 
     // Locals in retail frame-slot order (buf@0x50, pos@0x44, acc@0x38,
     // acc2@0x2C, acc3@0x20, rec@0x14, out@0x08).
@@ -3715,10 +3511,10 @@ void FloorMap_NormalizeMapPos(void* self) {
 
     // Row id of the selected marker row; 0 while no row is selected.
     u16 rowId = 0;
-    if ((s8)p->field_206 >= 0)
+    if ((s8)p->mCursor.field_0A >= 0)
         rowId = *(u16*)(
-            (u8*)p + (s8)p->field_205 * 0x30C +
-            ((s8)p->field_207 + (s8)p->field_206) * 0x18 + 0x214);
+            (u8*)p + (s8)p->mCursor.field_09 * 0x30C +
+            ((s8)p->mCursor.field_0B + (s8)p->mCursor.field_0A) * 0x18 + 0x214);
 
     // pos is zeroed before the sprintf: its frame slots back the skipped-path
     // value consumed by the tail below.
@@ -3727,7 +3523,7 @@ void FloorMap_NormalizeMapPos(void* self) {
     pos.z = 0.0f;
     sprintf(buf, "pic_land%d", rowId);
 
-    CFloorMapLayoutSlots* slots = (CFloorMapLayoutSlots*)&p->mLayout140;
+    CFloorMapLayoutSlots* slots = (CFloorMapLayoutSlots*)&p->layout_140;
     nw4r::lyt::Pane* pane = slots->layout->GetRootPane()->FindPaneByName(buf, 1);
     if (pane != NULL) {
         // Accumulate the pane's parent-chain translate (up to the layout
@@ -3787,20 +3583,21 @@ void FloorMap_NormalizeMapPos(void* self) {
             (nw4r::math::VEC3*)&slots->layout->GetRootPane()->GetTranslate());
     }
 
-    ((CFloorMapFull*)self)->field_54 = 10.0f;
-    ((CFloorMapFull*)self)->field_41 = 2;
-    ((CFloorMapFull*)self)->field_4C = pos.x / 10.0f;
-    ((CFloorMapFull*)self)->field_50 = pos.y / 10.0f;
+    this->field_54 = 10.0f;
+    this->field_41 = 2;
+    this->field_4C = pos.x / 10.0f;
+    this->field_50 = pos.y / 10.0f;
     playUISound(1);
 }
 
 // Scroll the map view down: step the cursor position toward the lower bound
 // and push the new position into every map layout's target pane.
-void FloorMap_ScrollDown(void* self) {
-    CFloorMapFull* fm = (CFloorMapFull*)self;
-    if (fm->field_58) return;
-    if (reinterpret_cast<CSysWin*>(&fm->mSysWinB8)->isOpened()) return;
-    if (reinterpret_cast<CSysWin*>(&fm->mSysWinF4)->isOpened()) return;
+// name-guess: CFloorMap::ScrollDown
+void CFloorMap::ScrollDown() {
+    CFloorMap* fm = this;
+    if (fm->cursor_active_58) return;
+    if (fm->mSysWinB8.isOpened()) return;
+    if (fm->mSysWinF4.isOpened()) return;
     f32 min = -784.0f;
     f32 y = fm->pos_y_48 - 7.2f;
     fm->pos_y_48 = y;
@@ -3808,26 +3605,27 @@ void FloorMap_ScrollDown(void* self) {
 
     nw4r::math::_VEC3 vec = { fm->pos_x_44, fm->pos_y_48, 0.0f };
 
-    CFloorMapSetSlotPos((CFloorMapLayoutHolder*)fm->mLayout130, vec);
-    CFloorMapSetSlotPos((CFloorMapLayoutHolder*)fm->mLayout138, vec);
-    CFloorMapSetSlotPos((CFloorMapLayoutHolder*)fm->mLayout140, vec);
-    if (fm->mLayouts150[0].mPtr) {
-        for (u8 i = 0; i < fm->field_1F0; i++) {
-            CFloorMapSetPanePos(((CFloorMapLayoutHolder*)fm->mLayouts150[i].mPtr)->pane, vec);
+    CFloorMapSetSlotPos((CFloorMapLayoutHolder*)fm->layout_130, vec);
+    CFloorMapSetSlotPos((CFloorMapLayoutHolder*)fm->layout_138, vec);
+    CFloorMapSetSlotPos((CFloorMapLayoutHolder*)fm->layout_140, vec);
+    if (fm->mLayoutBlock.slots[0].layout) {
+        for (u8 i = 0; i < fm->mLayoutBlock.count; i++) {
+            CFloorMapSetPanePos(((CFloorMapLayoutHolder*)fm->mLayoutBlock.slots[i].layout)->pane, vec);
         }
     }
 
-    FloorMap_SetCursorState(&fm->mLayout1FC, (u16)FloorMap_PickMarkerRow(&fm->mLayout140));
+    FloorMap_SetCursorState(&fm->mCursor, (u16)FloorMap_PickMarkerRow(&fm->layout_140));
     fm->field_5D = 1;
 }
 
 // Scroll the map view up: step the cursor position toward the upper bound
 // and push the new position into every map layout's target pane.
-void FloorMap_ScrollUp(void* self) {
-    CFloorMapFull* fm = (CFloorMapFull*)self;
-    if (fm->field_58) return;
-    if (reinterpret_cast<CSysWin*>(&fm->mSysWinB8)->isOpened()) return;
-    if (reinterpret_cast<CSysWin*>(&fm->mSysWinF4)->isOpened()) return;
+// name-guess: CFloorMap::ScrollUp
+void CFloorMap::ScrollUp() {
+    CFloorMap* fm = this;
+    if (fm->cursor_active_58) return;
+    if (fm->mSysWinB8.isOpened()) return;
+    if (fm->mSysWinF4.isOpened()) return;
 
     // Scroll up: step y toward the upper bound.
     f32 max = 784.0f;
@@ -3837,25 +3635,26 @@ void FloorMap_ScrollUp(void* self) {
 
     nw4r::math::_VEC3 vec = { fm->pos_x_44, fm->pos_y_48, 0.0f };
 
-    CFloorMapSetSlotPos((CFloorMapLayoutHolder*)fm->mLayout130, vec);
-    CFloorMapSetSlotPos((CFloorMapLayoutHolder*)fm->mLayout138, vec);
-    CFloorMapSetSlotPos((CFloorMapLayoutHolder*)fm->mLayout140, vec);
-    if (fm->mLayouts150[0].mPtr) {
-        for (u8 i = 0; i < fm->field_1F0; i++) {
-            CFloorMapSetPanePos(((CFloorMapLayoutHolder*)fm->mLayouts150[i].mPtr)->pane, vec);
+    CFloorMapSetSlotPos((CFloorMapLayoutHolder*)fm->layout_130, vec);
+    CFloorMapSetSlotPos((CFloorMapLayoutHolder*)fm->layout_138, vec);
+    CFloorMapSetSlotPos((CFloorMapLayoutHolder*)fm->layout_140, vec);
+    if (fm->mLayoutBlock.slots[0].layout) {
+        for (u8 i = 0; i < fm->mLayoutBlock.count; i++) {
+            CFloorMapSetPanePos(((CFloorMapLayoutHolder*)fm->mLayoutBlock.slots[i].layout)->pane, vec);
         }
     }
 
-    FloorMap_SetCursorState(&fm->mLayout1FC, (u16)FloorMap_PickMarkerRow(&fm->mLayout140));
+    FloorMap_SetCursorState(&fm->mCursor, (u16)FloorMap_PickMarkerRow(&fm->layout_140));
     fm->field_5D = 1;
 }
 
 // Scroll the map view right: step the cursor position toward the right edge
 // of the map and push the new position into every map layout's target pane.
-void FloorMap_ScrollRight(CFloorMapFull* fm) {
-    if (fm->field_58) return;
-    if (reinterpret_cast<CSysWin*>(&fm->mSysWinB8)->isOpened()) return;
-    if (reinterpret_cast<CSysWin*>(&fm->mSysWinF4)->isOpened()) return;
+// name-guess: CFloorMap::ScrollRight
+void CFloorMap::ScrollRight() {
+    if (cursor_active_58) return;
+    if (mSysWinB8.isOpened()) return;
+    if (mSysWinF4.isOpened()) return;
 
     // The map pane's scale factor sets the right-edge bound for the step.
     // Retail uses an explicit if/else here (not a ?: ), which MWCC compiles
@@ -3864,8 +3663,8 @@ void FloorMap_ScrollRight(CFloorMapFull* fm) {
     // r3, leaves the then-block empty and emits the branch-over-zero form
     // before the shared pane load.
     CFloorMapLayoutHolder* holder;
-    if (fm->mLayout130 != 0)
-        holder = (CFloorMapLayoutHolder*)fm->mLayout130;
+    if (layout_130 != 0)
+        holder = (CFloorMapLayoutHolder*)layout_130;
     else
         holder = (CFloorMapLayoutHolder*)NULL;
     nw4r::lyt::Pane* mapPane = holder->pane;
@@ -3875,93 +3674,95 @@ void FloorMap_ScrollRight(CFloorMapFull* fm) {
     f32 right = 2048.0f * sx - 640.0f;
     f32 x;
     f32 limit = 0.5f * right;
-    x = fm->pos_x_44 + 7.2f;
-    fm->pos_x_44 = x;
-    if (x >= limit) fm->pos_x_44 = limit;
+    x = pos_x_44 + 7.2f;
+    pos_x_44 = x;
+    if (x >= limit) pos_x_44 = limit;
 
-    f32 py = fm->pos_y_48;
-    nw4r::math::_VEC3 vec = { fm->pos_x_44, py, 0.0f };
+    f32 py = pos_y_48;
+    nw4r::math::_VEC3 vec = { pos_x_44, py, 0.0f };
 
-    CFloorMapSetSlotPos((CFloorMapLayoutHolder*)fm->mLayout130, vec);
-    CFloorMapSetSlotPos((CFloorMapLayoutHolder*)fm->mLayout138, vec);
-    CFloorMapSetSlotPos((CFloorMapLayoutHolder*)fm->mLayout140, vec);
-    if (fm->mLayouts150[0].mPtr) {
-        for (u8 i = 0; i < fm->field_1F0; i++) {
+    CFloorMapSetSlotPos((CFloorMapLayoutHolder*)layout_130, vec);
+    CFloorMapSetSlotPos((CFloorMapLayoutHolder*)layout_138, vec);
+    CFloorMapSetSlotPos((CFloorMapLayoutHolder*)layout_140, vec);
+    if (mLayoutBlock.slots[0].layout) {
+        for (u8 i = 0; i < mLayoutBlock.count; i++) {
             CFloorMapSetPanePos(
-                ((CFloorMapLayoutHolder*)fm->mLayouts150[i].mPtr)->pane, vec);
+                ((CFloorMapLayoutHolder*)mLayoutBlock.slots[i].layout)->pane, vec);
         }
     }
 
-    u32 v = FloorMap_PickMarkerRow(&fm->mLayout140);
-    FloorMap_SetCursorState(&fm->mLayout1FC, (u16)v);
-    fm->field_5D = 1;
+    u32 v = FloorMap_PickMarkerRow(&layout_140);
+    FloorMap_SetCursorState(&mCursor, (u16)v);
+    field_5D = 1;
 }
 
 
 // Scroll the map view left: step the cursor position toward the left edge
 // of the map and push the new position into every map layout's target pane.
 // Mirrors FloorMap_ScrollRight with negated step and an extra B8 scale on the bound.
-void FloorMap_ScrollLeft(CFloorMapFull* fm) {
-    if (fm->field_58) return;
-    if (reinterpret_cast<CSysWin*>(&fm->mSysWinB8)->isOpened()) return;
-    if (reinterpret_cast<CSysWin*>(&fm->mSysWinF4)->isOpened()) return;
+// name-guess: CFloorMap::ScrollLeft
+void CFloorMap::ScrollLeft() {
+    if (cursor_active_58) return;
+    if (mSysWinB8.isOpened()) return;
+    if (mSysWinF4.isOpened()) return;
 
     // The map pane's scale factor sets the left-edge bound for the step.
     nw4r::lyt::Pane* mapPane =
-        (fm->mLayout130 ? (CFloorMapLayoutHolder*)fm->mLayout130 : NULL)->pane;
+        (layout_130 ? (CFloorMapLayoutHolder*)layout_130 : NULL)->pane;
     f32 right =
         mapPane->FindPaneByName("nul_proportion", 1)->GetScale().x *
             2048.0f -
         640.0f;
     f32 mid = 0.5f * right;
-    f32 x = fm->pos_x_44 - 7.2f;
+    f32 x = pos_x_44 - 7.2f;
     f32 limit = -1.0f * mid;
-    fm->pos_x_44 = x;
-    if (x <= limit) fm->pos_x_44 = limit;
+    pos_x_44 = x;
+    if (x <= limit) pos_x_44 = limit;
 
-    nw4r::math::_VEC3 vec = { fm->pos_x_44, fm->pos_y_48, 0.0f };
+    nw4r::math::_VEC3 vec = { pos_x_44, pos_y_48, 0.0f };
 
-    CFloorMapSetSlotPos((CFloorMapLayoutHolder*)fm->mLayout130, vec);
-    CFloorMapSetSlotPos((CFloorMapLayoutHolder*)fm->mLayout138, vec);
-    CFloorMapSetSlotPos((CFloorMapLayoutHolder*)fm->mLayout140, vec);
-    if (fm->mLayouts150[0].mPtr) {
-        for (u8 i = 0; i < fm->field_1F0; i++) {
+    CFloorMapSetSlotPos((CFloorMapLayoutHolder*)layout_130, vec);
+    CFloorMapSetSlotPos((CFloorMapLayoutHolder*)layout_138, vec);
+    CFloorMapSetSlotPos((CFloorMapLayoutHolder*)layout_140, vec);
+    if (mLayoutBlock.slots[0].layout) {
+        for (u8 i = 0; i < mLayoutBlock.count; i++) {
             CFloorMapSetPanePos(
-                ((CFloorMapLayoutHolder*)fm->mLayouts150[i].mPtr)->pane, vec);
+                ((CFloorMapLayoutHolder*)mLayoutBlock.slots[i].layout)->pane, vec);
         }
     }
 
-    u32 v = FloorMap_PickMarkerRow(&fm->mLayout140);
-    FloorMap_SetCursorState(&fm->mLayout1FC, (u16)v);
-    fm->field_5D = 1;
+    u32 v = FloorMap_PickMarkerRow(&layout_140);
+    FloorMap_SetCursorState(&mCursor, (u16)v);
+    field_5D = 1;
 }
 
 // Map input handler: drive the two system windows. While the detail window
 // (0xF4) is up, close it once finished; while the cursor window (0xB8) is
 // closing, refresh the row readout; otherwise open either the row-detail
 // window or the map-cursor window for the selected row.
-void FloorMap_OpenRowWindow(void* self) {
-    CFloorMapFull* p = (CFloorMapFull*)self;
+// name-guess: CFloorMap::OpenRowWindow
+void CFloorMap::OpenRowWindow() {
+    CFloorMap* p = this;
     // Retail recomputes the current-floor block address at every access
     // instead of caching it in a register across the UI calls.
-#define FLOORBLK ((CFloorMapFloorBlock*)((u8*)p + (s8)p->field_205 * 0x30C))
+#define FLOORBLK ((CFloorMapFloorBlock*)((u8*)p + (s8)p->mCursor.field_09 * 0x30C))
     if (!FLOORBLK->field_514) return;
-    if (!reinterpret_cast<CSysWin*>(&p->mSysWinB8)->isActive()) return;
+    if (!p->mSysWinB8.isActive()) return;
 
-    if (reinterpret_cast<CSysWin*>(&p->mSysWinF4)->isOpened()) {
+    if (p->mSysWinF4.isOpened()) {
         // Detail window is up: close it once its own animation finished.
-        if (!reinterpret_cast<CSysWin*>(&p->mSysWinF4)->isActive()) return;
-        reinterpret_cast<CSysWin*>(&p->mSysWinF4)->advancePhase3();
+        if (!p->mSysWinF4.isActive()) return;
+        p->mSysWinF4.advancePhase3();
         return;
     }
 
-    if (p->field_58) {
+    if (p->cursor_active_58) {
         // Cursor window closing animation: refresh the row-id readout only on
         // the first frame (cursor_idx_5C == 0).
-        if ((s8)p->field_5C == 0) {
+        if ((s8)p->cursor_idx_5C == 0) {
             u16 rows;
-            if ((s8)p->field_206 >= 0) {
-                rows = FLOORBLK->rows[(s8)p->field_207 + (s8)p->field_206].field_00;
+            if ((s8)p->mCursor.field_0A >= 0) {
+                rows = FLOORBLK->rows[(s8)p->mCursor.field_0B + (s8)p->mCursor.field_0A].field_00;
             } else {
                 rows = 0;
             }
@@ -3970,24 +3771,24 @@ void FloorMap_OpenRowWindow(void* self) {
         } else {
             playUISound(6);
         }
-        ((CBaseCur*)&p->mCursor)->SetVisible(0);
-        reinterpret_cast<CSysWin*>(&p->mSysWinB8)->advancePhase3();
-        p->field_58 = 0;
+        ((CBaseCur*)&p->mCursorA0)->SetVisible(0);
+        p->mSysWinB8.advancePhase3();
+        p->cursor_active_58 = 0;
         return;
     }
 
     // Resolve the currently selected row id and its visited flag. Retail
     // evaluates the guarded record lookup twice (once for the id, once for
-    // the visited byte), keeping both under the same field_206 sign guard.
+    // the visited byte), keeping both under the same mCursor.field_0A sign guard.
     u16 rowId;
-    if ((s8)p->field_206 >= 0)
-        rowId = FLOORBLK->rows[(s8)p->field_207 + (s8)p->field_206].field_00;
+    if ((s8)p->mCursor.field_0A >= 0)
+        rowId = FLOORBLK->rows[(s8)p->mCursor.field_0B + (s8)p->mCursor.field_0A].field_00;
     else
         rowId = 0;
     if (!rowId) return;
     u8 visited = 0;
-    if ((s8)p->field_206 >= 0)
-        visited = FLOORBLK->rows[(s8)p->field_207 + (s8)p->field_206].field_02;
+    if ((s8)p->mCursor.field_0A >= 0)
+        visited = FLOORBLK->rows[(s8)p->mCursor.field_0B + (s8)p->mCursor.field_0A].field_02;
 
     if (visited != 0) {
         // Visited row: pick the detail-text variant; maps 14/24/25 with a
@@ -4009,9 +3810,9 @@ void FloorMap_OpenRowWindow(void* self) {
 
 
         char* name = BdatTouchStringCell("MNU_sysmes", "name", nameIdx);
-        reinterpret_cast<CSysWin*>(&p->mSysWinF4)->setKindContent(reinterpret_cast<char*>(name), 0);
-        reinterpret_cast<CSysWin*>(&p->mSysWinF4)->applyKind(1);
-        reinterpret_cast<CSysWin*>(&p->mSysWinF4)->openPhase1();
+        p->mSysWinF4.setKindContent(reinterpret_cast<char*>(name), 0);
+        p->mSysWinF4.applyKind(1);
+        p->mSysWinF4.openPhase1();
         playUISound(5);
         return;
     }
@@ -4019,9 +3820,9 @@ void FloorMap_OpenRowWindow(void* self) {
     if (CtrlRemote_TouchBitByArg(0x3212)) {
         // Unvisited but already-seen marker id: show the "no data" text.
         char* name = BdatTouchStringCell("MNU_sysmes", "name", 0x15);
-        reinterpret_cast<CSysWin*>(&p->mSysWinF4)->setKindContent(reinterpret_cast<char*>(name), 0);
-        reinterpret_cast<CSysWin*>(&p->mSysWinF4)->applyKind(1);
-        reinterpret_cast<CSysWin*>(&p->mSysWinF4)->openPhase1();
+        p->mSysWinF4.setKindContent(reinterpret_cast<char*>(name), 0);
+        p->mSysWinF4.applyKind(1);
+        p->mSysWinF4.openPhase1();
         playUISound(5);
         return;
     }
@@ -4032,17 +3833,17 @@ void FloorMap_OpenRowWindow(void* self) {
     char* nCap1 = BdatTouchStringCell("MNU_map", "name", 7);
     char* nCap2 = BdatTouchStringCell("MNU_map", "name", 8);
     char* nCap3 = BdatTouchStringCell("MNU_map", "name", 9);
-    reinterpret_cast<CSysWin*>(&p->mSysWinB8)->setKindContent(reinterpret_cast<char*>(nCap1), reinterpret_cast<char*>(nRow));
-    reinterpret_cast<CSysWin*>(&p->mSysWinB8)->setTwoTextValues(reinterpret_cast<char*>(nCap2), reinterpret_cast<char*>(nCap3));
-    reinterpret_cast<CSysWin*>(&p->mSysWinB8)->applyKind(0);
-    reinterpret_cast<CSysWin*>(&p->mSysWinB8)->openPhase1();
-    p->field_5C = 0;
+    p->mSysWinB8.setKindContent(reinterpret_cast<char*>(nCap1), reinterpret_cast<char*>(nRow));
+    p->mSysWinB8.setTwoTextValues(reinterpret_cast<char*>(nCap2), reinterpret_cast<char*>(nCap3));
+    p->mSysWinB8.applyKind(0);
+    p->mSysWinB8.openPhase1();
+    p->cursor_idx_5C = 0;
     nw4r::math::VEC3 pos;
-    CSysWin::getPaneScreenPos(reinterpret_cast<nw4r::math::VEC3*>(&pos), reinterpret_cast<CSysWin*>(&p->mSysWinB8), 0);
-        ((CBaseCur*)&p->mCursor)->setRootPaneTranslate(&pos);
-    ((CBaseCur*)&p->mCursor)->SetVisible(1);
-    p->field_58 = 1;
-    p->field_208 = 1;
+    CSysWin::getPaneScreenPos(reinterpret_cast<nw4r::math::VEC3*>(&pos), &p->mSysWinB8, 0);
+        ((CBaseCur*)&p->mCursorA0)->setRootPaneTranslate(&pos);
+    ((CBaseCur*)&p->mCursorA0)->SetVisible(1);
+    p->cursor_active_58 = 1;
+    p->mCursor.field_0C = 1;
     playUISound(3);
 }
 
@@ -4091,21 +3892,22 @@ void CFloorMap::SetMapTable(u8 id) {
     }
 }
 
-struct FloorMapByte41View { u8 _00[0x41]; u8 b41; };
-
-extern "C" u32 FloorMap_ClassifyByte41(u8* self) {
-    u8 val = ((FloorMapByte41View*)self)->b41;
+// name-guess: CFloorMap::ClassifyByte41
+u32 CFloorMap::ClassifyByte41() {
+    u8 val = field_41;
     u32 result = __cntlzw(val - 2);
     return result >> 5;
 }
 
-extern "C" u16 FloorMap_GetU16Field5A(u8* self) { return ((CFloorMapFull*)self)->field_5A; }
+// name-guess: CFloorMap::GetU16Field5A
+u16 CFloorMap::GetU16Field5A() { return field_5A; }
 
 u8 CFloorMap::GetActiveFlag58() { return cursor_active_58; }
 
-extern "C" void FloorMap_ConfirmSelect(void* self) {
+// name-guess: CFloorMap::ConfirmSelect
+void CFloorMap::ConfirmSelect() {
     extern void playUISound(unsigned long);
-    u8* p = (u8*)self;
+    u8* p = (u8*)this;
     if (p[0x58] && reinterpret_cast<CSysWin*>(p + 0xB8)->isActive()) {
         ((CBaseCur*)(p + 0xA0))->SetVisible(0);
         reinterpret_cast<CSysWin*>(p + 0xB8)->advancePhase3();
@@ -4121,13 +3923,14 @@ extern "C" int KyoshinHeap_GetField44();
 // rolled mtctr/bdnz + lwzu/stwu form (under -O4,p it unrolls).
 #pragma optimize_for_size on
 #pragma use_lmw_stmw off
-void FloorMap_LoadMapFiles(void* self) {
-    u8* p = (u8*)self;
+// name-guess: CFloorMap::LoadMapFiles
+void CFloorMap::LoadMapFiles() {
+    u8* p = (u8*)this;
     char* namebuf[28];
-    u32 handle = (u32)getHandleMEM2__Q23mtl10MemManagerFv();
-    *(void**)(p + 0x24) = readFile__11CDeviceFileFUlPCcP10IWorkEventii(handle, "menu/jp/FloorMap.arc", self, 0, 0);
+    u32 handle = (u32)mtl::MemManager::getHandleMEM2();
+    *(void**)(p + 0x24) = readFile__11CDeviceFileFUlPCcP10IWorkEventii(handle, "menu/jp/FloorMap.arc", this, 0, 0);
     u32 handle2 = KyoshinHeap_GetField44();
-    *(void**)(p + 0x30) = CDeviceFile::readCommonArchiveFile(handle2, "/common/jp/bdat_menu_map.bin", static_cast<IWorkEvent*>(self), 0, 0);
+    *(void**)(p + 0x30) = CDeviceFile::readCommonArchiveFile(handle2, "/common/jp/bdat_menu_map.bin", reinterpret_cast<IWorkEvent*>(this), 0, 0);
     // Build the local map-file name table from the shared string table
     // (entries 1..28), copied two pointers at a time.
     // Counted mtctr/bdnz copy: temp-first declaration order colors the
@@ -4148,9 +3951,9 @@ void FloorMap_LoadMapFiles(void* self) {
             d += 2;
         }
     }
-    handle = (u32)getHandleMEM2__Q23mtl10MemManagerFv();
+    handle = (u32)mtl::MemManager::getHandleMEM2();
     u8 idx = sCurrentMapId;
-    *(void**)(p + 0x28) = readFile__11CDeviceFileFUlPCcP10IWorkEventii(handle, namebuf[idx - 1], self, 0, 0);
+    *(void**)(p + 0x28) = readFile__11CDeviceFileFUlPCcP10IWorkEventii(handle, namebuf[idx - 1], this, 0, 0);
     reinterpret_cast<CScrollBar*>(p + 0x60)->loadLayoutArc();
     // Invoke loadSystemArc (vtable +0x88) on each embedded sys-win subobject.
     ((CSysWin*)(p + 0xB8))->loadSystemArc();
@@ -4159,59 +3962,66 @@ void FloorMap_LoadMapFiles(void* self) {
 #pragma optimize_for_size off
 
 
-extern "C" void FloorMap_SetPaneFlag(void* self, u32 arg2) {
-    u32 ptr = ((CFloorMapFull*)self)->mLayout32D4;
+// name-guess: CFloorMap::SetPaneFlag
+void CFloorMap::SetPaneFlag(u32 arg2) {
+    nw4r::lyt::Layout* ptr = this->mCursor.mFloorCur.mpLayout;
     if (!ptr) return;
     nw4r::lyt::Pane* result =
-        ((nw4r::lyt::Layout*)ptr)->GetRootPane()->FindPaneByName(
+        ptr->GetRootPane()->FindPaneByName(
         (char*)&lbl_eu_8050BEA8 + 0xEE, 1);
     {
         *(u8*)((u8*)result + 0xBB) = (*(u8*)((u8*)result + 0xBB) & 0xFE) | (u8)arg2;
     }
 }
 
-extern "C" unsigned char FloorMap_GetBdatMaxRow(void) {
+// name-guess: CFloorMap::GetBdatMaxRow
+u8 CFloorMap::GetBdatMaxRow() {
     return (unsigned char)Bdat_GetMaxRow_B1EC((void*)spFloorDataTable);
 }
 
-void FloorMap_Log2Field208(void* self) {
-    CFloorMap* fm = static_cast<CFloorMap*>(self);
+// name-guess: CFloorMap::Log2Field208
+void CFloorMap::Log2Field208() {
+    CFloorMap* fm = (CFloorMap*)this;
     if (fm->cursor_active_58) return;
-    if (reinterpret_cast<CSysWin*>(fm->mSysWinB8)->isOpened()) return;
-    if (reinterpret_cast<CSysWin*>(fm->mSysWinF4)->isOpened()) return;
-    fm->field_208 = !fm->field_208;
+    if (fm->mSysWinB8.isOpened()) return;
+    if (fm->mSysWinF4.isOpened()) return;
+    fm->mCursor.field_0C = !fm->mCursor.field_0C;
 }
 
-extern "C" u8 FloorMap_GetField208Gated(void* self) {
-    CFloorMapFull* full = static_cast<CFloorMapFull*>(self);
-    if (full->field_58) return 0;
-    return full->field_208;
+// name-guess: CFloorMap::GetField208Gated
+u8 CFloorMap::GetField208Gated() {
+    if (cursor_active_58) return 0;
+    return mCursor.field_0C;
 }
 
-extern "C" u8 FloorMap_GetField208Plain(CFloorMapFull* self) { return self->field_208; }
+// name-guess: CFloorMap::GetField208Plain
+u8 CFloorMap::GetField208Plain() { return mCursor.field_0C; }
 
-extern "C" u32 FloorMap_CheckRowVisited(CFloorMapFull* p) {
+// name-guess: CFloorMap::CheckRowVisited
+u32 CFloorMap::CheckRowVisited() {
     // Row id -1 (no selection) reads as "not visited".
     u16 val;
-    if ((s8)p->field_206 < 0) {
+    if ((s8)mCursor.field_0A < 0) {
         val = 0;
     } else {
         CFloorMapFloorBlock* floor =
-            (CFloorMapFloorBlock*)((FloorMapEntrySlot*)p + (s8)p->field_205);
-        val = floor->rows[(s8)p->field_207 + (s8)p->field_206].field_00;
+            (CFloorMapFloorBlock*)((FloorMapEntrySlot*)this + (s8)mCursor.field_09);
+        val = floor->rows[(s8)mCursor.field_0B + (s8)mCursor.field_0A].field_00;
     }
     return val != 0;
 }
 
-void FloorMap_Log2Field333C(void* self) {
-    CFloorMap* fm = static_cast<CFloorMap*>(self);
-    if (reinterpret_cast<CSysWin*>(fm->mSysWinB8)->isOpened()) return;
-    if (reinterpret_cast<CSysWin*>(fm->mSysWinF4)->isOpened()) return;
+// name-guess: CFloorMap::Log2Field333C
+void CFloorMap::Log2Field333C() {
+    CFloorMap* fm = (CFloorMap*)this;
+    if (fm->mSysWinB8.isOpened()) return;
+    if (fm->mSysWinF4.isOpened()) return;
     fm->field_333C = !fm->field_333C;
 }
 
-extern "C" u32 FloorMap_IsSysWinBusy(void* self) {
-    u8* p = (u8*)self;
+// name-guess: CFloorMap::IsSysWinBusy
+u32 CFloorMap::IsSysWinBusy() {
+    u8* p = (u8*)this;
     if (reinterpret_cast<CSysWin*>(p + 0xB8)->isOpened()) return 1;
     return reinterpret_cast<CSysWin*>(p + 0xF4)->isOpened();
 }
@@ -4220,26 +4030,27 @@ extern "C" u32 FloorMap_IsSysWinBusy(void* self) {
 // the row id, accumulate the pane's parent-chain translate up to the layout
 // root, scale by the map zoom pane, add the root offset and store the
 // normalized position back into the map state.
-void FloorMap_MoveToCursorRow(void* self) {
+// name-guess: CFloorMap::MoveToCursorRow
+void CFloorMap::MoveToCursorRow() {
     extern int sprintf(char*, const char*, ...);
-    CFloorMapFull* p = (CFloorMapFull*)self;
+    CFloorMap* p = this;
     if (!p->field_5D) return;
     p->field_5D = 0;
     if (p->field_2C) return;
     if (p->field_41 != 1) return;
-    if (!p->field_208) return;
-    if (reinterpret_cast<CSysWin*>(&p->mSysWinB8)->isOpened()) return;
-    if (reinterpret_cast<CSysWin*>(&p->mSysWinF4)->isOpened()) return;
-    if (p->field_58) return;
+    if (!p->mCursor.field_0C) return;
+    if (p->mSysWinB8.isOpened()) return;
+    if (p->mSysWinF4.isOpened()) return;
+    if (p->cursor_active_58) return;
 
-    s8 fi = (s8)p->field_205;
+    s8 fi = (s8)p->mCursor.field_09;
     CFloorMapFloorBlock* floor = (CFloorMapFloorBlock*)((u8*)p + fi * 0x30C);
     if (!floor->field_514) return;
 
     u16 rowId;
-    s8 rowIdx = (s8)p->field_206;
+    s8 rowIdx = (s8)p->mCursor.field_0A;
     if (rowIdx >= 0) {
-        rowId = floor->rows[(s8)p->field_207 + rowIdx].field_00;
+        rowId = floor->rows[(s8)p->mCursor.field_0B + rowIdx].field_00;
     } else {
         rowId = 0;
     }
@@ -4260,11 +4071,11 @@ void FloorMap_MoveToCursorRow(void* self) {
     pos.z = 0.0f;
     // Retail forms the layout-slot pointer and the pos address before the
     // sprintf call, keeping both in nonvolatile registers across it.
-    slots = (CFloorMapLayoutSlots*)&p->mLayout140;
+    slots = (CFloorMapLayoutSlots*)&p->layout_140;
     sprintf(buf, "pic_land%d");
 
     // Holding the root pane live across the FindPaneByName call mirrors
-    // retail's cross-call register pressure (root + slots + &pos + self).
+    // retail's cross-call register pressure (root + slots + &pos + this).
     nw4r::lyt::Pane* root = slots->layout->GetRootPane();
     pane = root->FindPaneByName(buf, 1);
     // Retail tests the pane pointer in cr1 and branches straight to the final
@@ -4384,7 +4195,7 @@ u32 FloorMap_FindFloorRow(void*) {
 // two build the map layouts and row-marker panes, the third swaps the map
 // buffer and rebuilds the current floor's marker rows, the fourth parses the
 // auxiliary world-map file. Returns 1 when the event was consumed, 0 otherwise.
-u32 CFloorMap::OnFileEvent(CEventFile* event) {
+bool CFloorMap::OnFileEvent(CEventFile* event) {
     // Note: the file handle is re-read from the event at each dispatch (kept
     // in a volatile register by MWCC, like retail) - caching it in a local
     // would force an extra nonvolatile save across every branch body.
@@ -4394,9 +4205,9 @@ u32 CFloorMap::OnFileEvent(CEventFile* event) {
     // cursor, then push the cursor position into every map layout.
     if ((CFileHandle*)this->field_24 == event->mFileHandle) {
         int mem2 = (int)mtl::MemManager::getHandleMEM2();
-        ((UnkClass_8045F564*)&this->mMemRegion04[0])
+        (&this->mMemRegion04)
             ->createRegion(mem2, 0x80000, "CFloorMapLyt", 0);
-        Class_8045F858 guard((UnkClass_8045F564*)&this->mMemRegion04[0]);
+        Class_8045F858 guard(&this->mMemRegion04);
 
         CFileHandle* file = (CFileHandle*)this->field_24;
         void* data = file->getData();
@@ -4482,24 +4293,10 @@ u32 CFloorMap::OnFileEvent(CEventFile* event) {
         child->SetVisible(true);
         ((nw4r::lyt::Pane*)this->field_148)->AppendChild(child);
 
-        // Per-map layout table: zeroed local copied into the member array at
-        // 0x150, with the table count/accessor/floor-id stored at 0x1F0-0x1F8.
-        UnkLayoutEntry layouts[0x14] = {0};
-        u8 count = 0;
-        u32 acc = this->field_34;
-        u8 floorId = 0;
-        for (u8 i = 0; i < 0x14; i++) {
-            layouts[i].mPtr = 0;
-            layouts[i].mUnk = 0;
-        }
-
-        for (u8 i = 0; i < 0x14; i++) {
-            this->layouts_150[i] = layouts[i];
-        }
-        this->layout_count_1F0 = count;
-        this->field_1F4 = acc;
-        this->field_1F8 = floorId;
-        FloorMap_RefreshLayoutBlock((CFloorMapLayoutBlock*)&this->layouts_150[0]);
+        // Per-map layout table: re-seat the block on the map accessor, then
+        // load its layouts.
+        this->mLayoutBlock = CFloorMapLayoutBlock((nw4r::lyt::ArcResourceAccessor*)this->field_34);
+        FloorMap_RefreshLayoutBlock(&this->mLayoutBlock);
 
         // Bind the 0x3334 layout slot and rebuild the embedded cursor from a
         // stack temp (body copied without the vtable pointer).
@@ -4527,19 +4324,19 @@ u32 CFloorMap::OnFileEvent(CEventFile* event) {
             CFloorMapSetSlotPos((CFloorMapLayoutHolder*)this->layout_130, vec);
             CFloorMapSetSlotPos((CFloorMapLayoutHolder*)this->layout_138, vec);
             CFloorMapSetSlotPos((CFloorMapLayoutHolder*)this->layout_140, vec);
-            if (this->layouts_150[0].mPtr != 0) {
-                for (u8 i = 0; i < this->layout_count_1F0; i++) {
-                    CFloorMapSetPanePos(((CFloorMapLayoutHolder*)this->layouts_150[i].mPtr)->pane, vec);
+            if (this->mLayoutBlock.slots[0].layout != 0) {
+                for (u8 i = 0; i < this->mLayoutBlock.count; i++) {
+                    CFloorMapSetPanePos(((CFloorMapLayoutHolder*)this->mLayoutBlock.slots[i].layout)->pane, vec);
                 }
             }
-            FloorMap_SetCursorState(&this->layout_1FC, (u16)FloorMap_PickMarkerRow(&this->layout_140));
+            FloorMap_SetCursorState(&this->mCursor, (u16)FloorMap_PickMarkerRow(&this->layout_140));
             this->field_42 = 1;
             this->field_40 = 1;
             this->field_41 = 1;
         }
 
         this->field_24 = 0;
-        ((UnkClass_8045F564*)&this->mMemRegion04[0])->validateHeap();
+        this->mMemRegion04.validateHeap();
         return 1;
     }
 
@@ -4547,9 +4344,9 @@ u32 CFloorMap::OnFileEvent(CEventFile* event) {
     // for the current map id into the 0x138 slot.
     if ((CFileHandle*)this->field_28 == event->mFileHandle) {
         int mem2 = (int)mtl::MemManager::getHandleMEM2();
-        ((UnkClass_8045F564*)&this->mMemRegion14[0])
+        (&this->mMemRegion14)
             ->createRegion(mem2, 0x14000, "CFloorMapMap", 0);
-        Class_8045F858 guard((UnkClass_8045F564*)&this->mMemRegion14[0]);
+        Class_8045F858 guard(&this->mMemRegion14);
 
         CFileHandle* file = (CFileHandle*)this->field_28;
         void* data = file->getData();
@@ -4586,19 +4383,19 @@ u32 CFloorMap::OnFileEvent(CEventFile* event) {
             CFloorMapSetSlotPos((CFloorMapLayoutHolder*)this->layout_130, vec);
             CFloorMapSetSlotPos((CFloorMapLayoutHolder*)this->layout_138, vec);
             CFloorMapSetSlotPos((CFloorMapLayoutHolder*)this->layout_140, vec);
-            if (this->layouts_150[0].mPtr != 0) {
-                for (u8 i = 0; i < this->layout_count_1F0; i++) {
-                    CFloorMapSetPanePos(((CFloorMapLayoutHolder*)this->layouts_150[i].mPtr)->pane, vec);
+            if (this->mLayoutBlock.slots[0].layout != 0) {
+                for (u8 i = 0; i < this->mLayoutBlock.count; i++) {
+                    CFloorMapSetPanePos(((CFloorMapLayoutHolder*)this->mLayoutBlock.slots[i].layout)->pane, vec);
                 }
             }
-            FloorMap_SetCursorState(&this->layout_1FC, (u16)FloorMap_PickMarkerRow(&this->layout_140));
+            FloorMap_SetCursorState(&this->mCursor, (u16)FloorMap_PickMarkerRow(&this->layout_140));
             this->field_42 = 1;
             this->field_40 = 1;
             this->field_41 = 1;
         }
 
         this->field_28 = 0;
-        ((UnkClass_8045F564*)&this->mMemRegion14[0])->validateHeap();
+        this->mMemRegion14.validateHeap();
         return 1;
     }
 
@@ -4607,29 +4404,29 @@ u32 CFloorMap::OnFileEvent(CEventFile* event) {
     // current floor's marker rows.
     if ((CFileHandle*)this->field_2C == event->mFileHandle) {
         void* oldBuf = (void*)this->allocated_buf_3C;
-        this->field_3340 = (u8*)oldBuf;
-        this->field_3344 = 1.0f;
+        this->mBufTimer.mpBuf = (u8*)oldBuf;
+        this->mBufTimer.mTimer = 1.0f;
         CFileHandle* file = (CFileHandle*)this->field_2C;
         this->allocated_buf_3C = (u32)file->getData();
 
         FloorMap_ReloadMarkerPanes(&this->layout_140,
-                      ((CFloorMapFloorBlock*)((u8*)this + (s8)this->field_205 * 0x30C))->field_20C,
+                      ((CFloorMapFloorBlock*)((u8*)this + (s8)this->mCursor.field_09 * 0x30C))->field_20C,
                       (u32)oldBuf, 1.0f);
 
-        this->field_1F8 = ((CFloorMapFloorBlock*)((u8*)this + (s8)this->field_205 * 0x30C))->field_20C;
-        u8 rowCount = ((CFloorMapFloorBlock*)((u8*)this + (s8)this->field_205 * 0x30C))->field_514;
+        this->mLayoutBlock.curFloor = ((CFloorMapFloorBlock*)((u8*)this + (s8)this->mCursor.field_09 * 0x30C))->field_20C;
+        u8 rowCount = ((CFloorMapFloorBlock*)((u8*)this + (s8)this->mCursor.field_09 * 0x30C))->field_514;
         for (u8 i = 0; i < rowCount; i++) {
-            CFloorMapFloorBlock* fl = (CFloorMapFloorBlock*)((u8*)this + (s8)this->field_205 * 0x30C);
+            CFloorMapFloorBlock* fl = (CFloorMapFloorBlock*)((u8*)this + (s8)this->mCursor.field_09 * 0x30C);
             // The row id comes from the row record at +0x214. When the index
-            // wraps past 0xFF, fall back to row (field_206 + field_207), or
-            // row 0 when field_206 is negative. Retail passes &layout_140
+            // wraps past 0xFF, fall back to row (mCursor.field_0A + mCursor.field_0B), or
+            // row 0 when mCursor.field_0A is negative. Retail passes &layout_140
             // (the layout slot block), not the CFloorMap itself.
             u16 rowId;
             if ((u8)i == 0xFF) {
-                if ((s8)this->field_206 < 0) {
+                if ((s8)this->mCursor.field_0A < 0) {
                     rowId = 0;
                 } else {
-                    rowId = fl->rows[(u8)((s8)this->field_207 + (s8)this->field_206)].field_00;
+                    rowId = fl->rows[(u8)((s8)this->mCursor.field_0B + (s8)this->mCursor.field_0A)].field_00;
                 }
             } else {
                 rowId = fl->rows[(u8)i].field_00;
@@ -4637,11 +4434,11 @@ u32 CFloorMap::OnFileEvent(CEventFile* event) {
             FloorMap_PlaceFloorMarker((CFloorMapFull*)&this->layout_140, rowId);
         }
 
-        FloorMap_SetCursorState(&this->layout_1FC, (u16)FloorMap_PickMarkerRow(&this->layout_140));
+        FloorMap_SetCursorState(&this->mCursor, (u16)FloorMap_PickMarkerRow(&this->layout_140));
 
         FloorMap_SetRowTexPalette((CFloorMapRowList*)&this->layout_138, (void*)this->allocated_buf_3C,
-                      ((CFloorMapFloorBlock*)((u8*)this + (s8)this->field_205 * 0x30C))->field_20C,
-                      this->field_32CC, sCurrentMapId);
+                      ((CFloorMapFloorBlock*)((u8*)this + (s8)this->mCursor.field_09 * 0x30C))->field_20C,
+                      this->mCursor.field_30D0, sCurrentMapId);
         this->field_2C = 0;
         return 1;
     }
@@ -4667,12 +4464,12 @@ u32 CFloorMap::OnFileEvent(CEventFile* event) {
             CFloorMapSetSlotPos((CFloorMapLayoutHolder*)this->layout_130, vec);
             CFloorMapSetSlotPos((CFloorMapLayoutHolder*)this->layout_138, vec);
             CFloorMapSetSlotPos((CFloorMapLayoutHolder*)this->layout_140, vec);
-            if (this->layouts_150[0].mPtr != 0) {
-                for (u8 i = 0; i < this->layout_count_1F0; i++) {
-                    CFloorMapSetPanePos(((CFloorMapLayoutHolder*)this->layouts_150[i].mPtr)->pane, vec);
+            if (this->mLayoutBlock.slots[0].layout != 0) {
+                for (u8 i = 0; i < this->mLayoutBlock.count; i++) {
+                    CFloorMapSetPanePos(((CFloorMapLayoutHolder*)this->mLayoutBlock.slots[i].layout)->pane, vec);
                 }
             }
-            FloorMap_SetCursorState(&this->layout_1FC, (u16)FloorMap_PickMarkerRow(&this->layout_140));
+            FloorMap_SetCursorState(&this->mCursor, (u16)FloorMap_PickMarkerRow(&this->layout_140));
             this->field_42 = 1;
             this->field_40 = 1;
             this->field_41 = 1;
@@ -4683,84 +4480,22 @@ u32 CFloorMap::OnFileEvent(CEventFile* event) {
     return 0;
 }
 
-extern "C" void* __ct__80244F50(void* self, int a, int b, u8 c) {
-    CFloorMapStage* p = (CFloorMapStage*)self;
+// Floor-map cursor ctor (retail symbol: the unnamed __ct__80244F50). The
+// empty CFloorMapFloorEntry array ctor leaves no code here.
+CFloorMapCursor::CFloorMapCursor(CScrollBar* scrollBar, nw4r::lyt::ArcResourceAccessor* acc, u8 floor)
+    : mData(NULL), mArcResAcc(acc), field_08(floor), field_09(0), field_0A(-1), field_0B(0),
+      field_0C(true), field_30D0(0), field_3134(scrollBar) {}
 
-    p->mData = 0;
-    p->accessor = b;
-    p->headFlags[0] = c;
-    p->headFlags[1] = 0;
-    p->headFlags[2] = (s8)-1;
-    p->headFlags[3] = 0;
-    p->blocks.data[0] = 1;
-
-    // Tautological range test over the object's own storage (retail emits
-    // both compare results as separate branches off one cmpl; MWCC keeps
-    // the dead computation and the flag ends up 1 either way).
-    const u8* lo = &p->blocks.data[0x310];
-    const u8* hi = &p->floorCount;
-    u8 flag = 1;
-    if (lo < hi) flag = 0;
-    if (lo <= hi) flag = 1;
-
-    const void* n0 = lbl_eu_80537104;
-    const void* n1 = lbl_eu_805370EC;
-    const void* n2 = lbl_eu_805370D4;
-    const void* n3 = lbl_eu_805370BC;
-
-    // Four consecutive 0x18-byte row records: default name string, five
-    // zero words, a zero byte and the shared flag byte.
-    p->floorCount = 0;
-    p->slots[0].name = (void*)n0;
-    p->slots[0].body.words[0] = 0;
-    p->slots[0].body.words[1] = 0;
-    p->slots[0].body.words[2] = 0;
-    p->slots[0].body.words[3] = 0;
-    p->slots[0].body.flagA = 0;
-    p->slots[0].body.flagB = flag;
-
-    p->slots[1].name = (void*)n1;
-    p->slots[1].body.words[0] = 0;
-    p->slots[1].body.words[1] = 0;
-    p->slots[1].body.words[2] = 0;
-    p->slots[1].body.words[3] = 0;
-    p->slots[1].body.flagA = 0;
-    p->slots[1].body.flagB = flag;
-
-    p->slots[2].name = (void*)n2;
-    p->slots[2].body.words[0] = 0;
-    p->slots[2].body.words[1] = 0;
-    p->slots[2].body.words[2] = 0;
-    p->slots[2].body.words[3] = 0;
-    p->slots[2].body.flagA = 0;
-    p->slots[2].body.flagB = flag;
-
-    p->slots[3].name = (void*)n3;
-    p->slots[3].body.words[0] = 0;
-    p->slots[3].body.words[1] = 0;
-    p->slots[3].body.words[2] = 0;
-    p->slots[3].body.words[3] = 0;
-    p->slots[3].body.flagA = 0;
-    p->slots[3].body.flagB = flag;
-
-    p->scrollBarPtr = (u32)a;
-    return self;
-}
-// Constructor decoded from retail __ct__8024507C (us-80247234): layout load +
-// font bind + holder/s16-table initialization. Implementation in progress.
-extern "C" void __ct__8024507C(void* self) {
-    // Typed view over the cursor object: layout/accessor head plus the four
-    // embedded layout widgets at +0x30D4.
-    CFloorMapCtorView* cv = (CFloorMapCtorView*)self;
-    CFloorMapWidgets* wv = (CFloorMapWidgets*)self;
-
-    // Layout load: buildLayout(&this->layout@+0, accessor=this->[+4], path=&lbl[267])
-    buildLayout(&cv->layout, cv->accessor, "mf03_map01_win.brlyt");
+// Loads the cursor layout, binds its font, fills the row colour tables and
+// re-seats/loads the four row cursors (retail symbol: unnamed __ct__8024507C).
+// name-guess: CFloorMapCursor::Init
+void CFloorMapCursor::Init() {
+    buildLayout(&mData, mArcResAcc, "mf03_map01_win.brlyt");
 
     // Font bind onto the loaded layout's root pane.
-    nw4r::lyt::Layout* layout = cv->layout;
+    nw4r::lyt::Layout* layout = mData;
     nw4r::lyt::Pane* rootPane = layout->GetRootPane();
-    void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, layout);
+    void* fontObj = CDeviceFont::getFontInfo(1, layout);
     u32 fontResult = (u32)((IDeviceFontInfo*)fontObj)->getFont();
     ApplyFontToTxtPanes(rootPane, (const nw4r::ut::Font*)fontResult);
 
@@ -4772,50 +4507,19 @@ extern "C" void __ct__8024507C(void* self) {
     sFoundRowColor0.a = sFloorRowColor0.a;
     sFoundRowColor1.a = sFloorRowColor0.a;
 
-    // Reset each embedded layout widget in turn: clear everything but the
-    // vtable, install the shared arc resource accessor, then call the
-    // widget's virtual init entry with its colour-table / name argument.
-    CFloorMapWidgetArg arg;
-
-    arg.nameOrTable = &sFoundRowColor1;
-    wv->widgets[0].field_04 = NULL;
-    wv->widgets[0].accessor = cv->accessor;
-    wv->widgets[0].field_0C = NULL;
-    wv->widgets[0].field_10 = NULL;
-    wv->widgets[0].field_14 = 0;
-    wv->widgets[0].field_15 = 1;
-    wv->widgets[0].Init(&arg);
-
-    arg.nameOrTable = lbl_eu_805370EC;
-    wv->widgets[1].field_04 = NULL;
-    wv->widgets[1].accessor = cv->accessor;
-    wv->widgets[1].field_0C = NULL;
-    wv->widgets[1].field_10 = NULL;
-    wv->widgets[1].field_14 = 0;
-    wv->widgets[1].field_15 = 1;
-    wv->widgets[1].Init(&arg);
-
-    arg.nameOrTable = lbl_eu_805370D4;
-    wv->widgets[2].field_04 = NULL;
-    wv->widgets[2].accessor = cv->accessor;
-    wv->widgets[2].field_0C = NULL;
-    wv->widgets[2].field_10 = NULL;
-    wv->widgets[2].field_14 = 0;
-    wv->widgets[2].field_15 = 1;
-    wv->widgets[2].Init(&arg);
-
-    arg.nameOrTable = lbl_eu_805370BC;
-    wv->widgets[3].field_04 = NULL;
-    wv->widgets[3].accessor = cv->accessor;
-    wv->widgets[3].field_0C = NULL;
-    wv->widgets[3].field_10 = NULL;
-    wv->widgets[3].field_14 = 0;
-    wv->widgets[3].field_15 = 1;
-    wv->widgets[3].Init(&arg);
+    // Re-seat each row cursor on the shared accessor and load its layout.
+    mFloorCur = CFloorCur(mArcResAcc);
+    mFloorCur.initLayout();
+    mFloorMarker = CFloorMarker(mArcResAcc);
+    mFloorMarker.initLayout();
+    mLandCur = CLandCur(mArcResAcc);
+    mLandCur.initLayout();
+    mTargetCur = CTargetCur(mArcResAcc);
+    mTargetCur.initLayout();
 
     // Rebuild the derived views.
-    FloorMap_RefreshFloorRows(self);
-    FloorMap_RebuildMarkers(self);
+    FloorMap_RefreshFloorRows(this);
+    FloorMap_RebuildMarkers(this);
 }
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
@@ -4846,7 +4550,7 @@ void FloorMap_BuildLayoutBaseArc(CFloorMapLayoutData0* self) {
     buildLayout(&self->layout, self->accessor, &lbl_eu_8050BEA8[0]);
 
     nw4r::lyt::Pane* rootPane = self->layout->GetRootPane();
-    void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, self->layout);
+    void* fontObj = CDeviceFont::getFontInfo(1, self->layout);
     u32 fontResult = (u32)((IDeviceFontInfo*)fontObj)->getFont();
     ApplyFontToTxtPanes(rootPane, (const nw4r::ut::Font*)fontResult);
 
@@ -4874,87 +4578,87 @@ void FloorMap_BuildLayoutBaseArc(CFloorMapLayoutData0* self) {
 
 // Load the map layout + animation transforms, bind the font, hide the four
 // decorative panes, and start the two animation transforms.
-void FloorMap_BuildLayoutNo100Pane(void* self) {
-    CFloorMapLayoutData* obj = (CFloorMapLayoutData*)self;
-    buildLayout(&obj->layout, obj->accessor, &lbl_eu_8050BEA8[0x7E]);
-    bindLayoutAnimTransform(obj->layout, &obj->anim0C, obj->accessor, &lbl_eu_8050BEA8[0x96]);
-    bindLayoutAnimTransform(obj->layout, &obj->anim10, obj->accessor, &lbl_eu_8050BEA8[0xB3]);
+// name-guess: CFloorCur::initLayout (retail-unnamed vtable slot)
+void CFloorCur::initLayout() {
+    buildLayout(&mpLayout, mArcResAcc, &lbl_eu_8050BEA8[0x7E]);
+    bindLayoutAnimTransform(mpLayout, &mpAnimTrans0, mArcResAcc, &lbl_eu_8050BEA8[0x96]);
+    bindLayoutAnimTransform(mpLayout, &mpAnimTrans1, mArcResAcc, &lbl_eu_8050BEA8[0xB3]);
 
-    nw4r::lyt::Pane* rootPane = obj->layout->GetRootPane();
-    void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, obj->layout);
+    nw4r::lyt::Pane* rootPane = mpLayout->GetRootPane();
+    void* fontObj = CDeviceFont::getFontInfo(1, mpLayout);
     u32 fontResult = (u32)((IDeviceFontInfo*)fontObj)->getFont();
     ApplyFontToTxtPanes(rootPane, (const nw4r::ut::Font*)fontResult);
 
-    obj->layout->GetRootPane()->FindPaneByName(&lbl_eu_8050BEA8[0xCE], 1)->SetVisible(false);
-    obj->layout->GetRootPane()->FindPaneByName(&lbl_eu_8050BEA8[0xD9], 1)->SetVisible(false);
-    obj->layout->GetRootPane()->FindPaneByName(&lbl_eu_8050BEA8[0xE4], 1)->SetVisible(false);
-    obj->layout->GetRootPane()->FindPaneByName(&lbl_eu_8050BEA8[0xEE], 1)->SetVisible(false);
+    mpLayout->GetRootPane()->FindPaneByName(&lbl_eu_8050BEA8[0xCE], 1)->SetVisible(false);
+    mpLayout->GetRootPane()->FindPaneByName(&lbl_eu_8050BEA8[0xD9], 1)->SetVisible(false);
+    mpLayout->GetRootPane()->FindPaneByName(&lbl_eu_8050BEA8[0xE4], 1)->SetVisible(false);
+    mpLayout->GetRootPane()->FindPaneByName(&lbl_eu_8050BEA8[0xEE], 1)->SetVisible(false);
 
-    obj->layout->SetAnimationEnable(obj->anim10, false);
-    obj->layout->SetAnimationEnable(obj->anim0C, true);
-    obj->layout->Animate(0);
+    mpLayout->SetAnimationEnable(mpAnimTrans1, false);
+    mpLayout->SetAnimationEnable(mpAnimTrans0, true);
+    mpLayout->Animate(0);
 }
 // Load the map layout + animation transforms, bind the font, hide the three
 // decorative panes (0x100 / 0xCE / 0xD9), and start the two animations.
-void FloorMap_BuildLayoutNoE4Pane(void* self) {
-    CFloorMapLayoutData* obj = (CFloorMapLayoutData*)self;
-    buildLayout(&obj->layout, obj->accessor, &lbl_eu_8050BEA8[0x7E]);
-    bindLayoutAnimTransform(obj->layout, &obj->anim0C, obj->accessor, &lbl_eu_8050BEA8[0x96]);
-    bindLayoutAnimTransform(obj->layout, &obj->anim10, obj->accessor, &lbl_eu_8050BEA8[0xB3]);
+// name-guess: CFloorMarker::initLayout (retail-unnamed vtable slot)
+void CFloorMarker::initLayout() {
+    buildLayout(&mpLayout, mArcResAcc, &lbl_eu_8050BEA8[0x7E]);
+    bindLayoutAnimTransform(mpLayout, &mpAnimTrans0, mArcResAcc, &lbl_eu_8050BEA8[0x96]);
+    bindLayoutAnimTransform(mpLayout, &mpAnimTrans1, mArcResAcc, &lbl_eu_8050BEA8[0xB3]);
 
-    nw4r::lyt::Pane* rootPane = obj->layout->GetRootPane();
-    void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, obj->layout);
+    nw4r::lyt::Pane* rootPane = mpLayout->GetRootPane();
+    void* fontObj = CDeviceFont::getFontInfo(1, mpLayout);
     u32 fontResult = (u32)((IDeviceFontInfo*)fontObj)->getFont();
     ApplyFontToTxtPanes(rootPane, (const nw4r::ut::Font*)fontResult);
 
-    obj->layout->GetRootPane()->FindPaneByName(&lbl_eu_8050BEA8[0x100], 1)->SetVisible(false);
-    obj->layout->GetRootPane()->FindPaneByName(&lbl_eu_8050BEA8[0xCE], 1)->SetVisible(false);
-    obj->layout->GetRootPane()->FindPaneByName(&lbl_eu_8050BEA8[0xD9], 1)->SetVisible(false);
+    mpLayout->GetRootPane()->FindPaneByName(&lbl_eu_8050BEA8[0x100], 1)->SetVisible(false);
+    mpLayout->GetRootPane()->FindPaneByName(&lbl_eu_8050BEA8[0xCE], 1)->SetVisible(false);
+    mpLayout->GetRootPane()->FindPaneByName(&lbl_eu_8050BEA8[0xD9], 1)->SetVisible(false);
 
-    obj->layout->SetAnimationEnable(obj->anim10, false);
-    obj->layout->SetAnimationEnable(obj->anim0C, true);
-    obj->layout->Animate(0);
+    mpLayout->SetAnimationEnable(mpAnimTrans1, false);
+    mpLayout->SetAnimationEnable(mpAnimTrans0, true);
+    mpLayout->Animate(0);
 }
 // Load the map layout + animation transforms, bind the font, hide the three
 // decorative panes, and start the two animation transforms.
-void FloorMap_BuildLayoutNoCEPane(void* self) {
-    CFloorMapLayoutData* obj = (CFloorMapLayoutData*)self;
-    buildLayout(&obj->layout, obj->accessor, &lbl_eu_8050BEA8[0x7E]);
-    bindLayoutAnimTransform(obj->layout, &obj->anim0C, obj->accessor, &lbl_eu_8050BEA8[0x96]);
-    bindLayoutAnimTransform(obj->layout, &obj->anim10, obj->accessor, &lbl_eu_8050BEA8[0xB3]);
+// name-guess: CLandCur::initLayout (retail-unnamed vtable slot)
+void CLandCur::initLayout() {
+    buildLayout(&mpLayout, mArcResAcc, &lbl_eu_8050BEA8[0x7E]);
+    bindLayoutAnimTransform(mpLayout, &mpAnimTrans0, mArcResAcc, &lbl_eu_8050BEA8[0x96]);
+    bindLayoutAnimTransform(mpLayout, &mpAnimTrans1, mArcResAcc, &lbl_eu_8050BEA8[0xB3]);
 
-    nw4r::lyt::Pane* rootPane = obj->layout->GetRootPane();
-    void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, obj->layout);
+    nw4r::lyt::Pane* rootPane = mpLayout->GetRootPane();
+    void* fontObj = CDeviceFont::getFontInfo(1, mpLayout);
     u32 fontResult = (u32)((IDeviceFontInfo*)fontObj)->getFont();
     ApplyFontToTxtPanes(rootPane, (const nw4r::ut::Font*)fontResult);
 
-    obj->layout->GetRootPane()->FindPaneByName(&lbl_eu_8050BEA8[0x100], 1)->SetVisible(false);
-    obj->layout->GetRootPane()->FindPaneByName(&lbl_eu_8050BEA8[0xD9], 1)->SetVisible(false);
-    obj->layout->GetRootPane()->FindPaneByName(&lbl_eu_8050BEA8[0xE4], 1)->SetVisible(false);
+    mpLayout->GetRootPane()->FindPaneByName(&lbl_eu_8050BEA8[0x100], 1)->SetVisible(false);
+    mpLayout->GetRootPane()->FindPaneByName(&lbl_eu_8050BEA8[0xD9], 1)->SetVisible(false);
+    mpLayout->GetRootPane()->FindPaneByName(&lbl_eu_8050BEA8[0xE4], 1)->SetVisible(false);
 
-    obj->layout->SetAnimationEnable(obj->anim10, false);
-    obj->layout->SetAnimationEnable(obj->anim0C, true);
-    obj->layout->Animate(0);
+    mpLayout->SetAnimationEnable(mpAnimTrans1, false);
+    mpLayout->SetAnimationEnable(mpAnimTrans0, true);
+    mpLayout->Animate(0);
 }
 
-void FloorMap_BuildLayoutNoD9Pane(void* self) {
-    CFloorMapLayoutData* obj = (CFloorMapLayoutData*)self;
-    buildLayout(&obj->layout, obj->accessor, &lbl_eu_8050BEA8[0x7E]);
-    bindLayoutAnimTransform(obj->layout, &obj->anim0C, obj->accessor, &lbl_eu_8050BEA8[0x96]);
-    bindLayoutAnimTransform(obj->layout, &obj->anim10, obj->accessor, &lbl_eu_8050BEA8[0xB3]);
+// name-guess: CTargetCur::initLayout (retail-unnamed vtable slot)
+void CTargetCur::initLayout() {
+    buildLayout(&mpLayout, mArcResAcc, &lbl_eu_8050BEA8[0x7E]);
+    bindLayoutAnimTransform(mpLayout, &mpAnimTrans0, mArcResAcc, &lbl_eu_8050BEA8[0x96]);
+    bindLayoutAnimTransform(mpLayout, &mpAnimTrans1, mArcResAcc, &lbl_eu_8050BEA8[0xB3]);
 
-    nw4r::lyt::Pane* rootPane = obj->layout->GetRootPane();
-    void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, obj->layout);
+    nw4r::lyt::Pane* rootPane = mpLayout->GetRootPane();
+    void* fontObj = CDeviceFont::getFontInfo(1, mpLayout);
     u32 fontResult = (u32)((IDeviceFontInfo*)fontObj)->getFont();
     ApplyFontToTxtPanes(rootPane, (const nw4r::ut::Font*)fontResult);
 
-    obj->layout->GetRootPane()->FindPaneByName(&lbl_eu_8050BEA8[0x100], 1)->SetVisible(false);
-    obj->layout->GetRootPane()->FindPaneByName(&lbl_eu_8050BEA8[0xCE], 1)->SetVisible(false);
-    obj->layout->GetRootPane()->FindPaneByName(&lbl_eu_8050BEA8[0xE4], 1)->SetVisible(false);
+    mpLayout->GetRootPane()->FindPaneByName(&lbl_eu_8050BEA8[0x100], 1)->SetVisible(false);
+    mpLayout->GetRootPane()->FindPaneByName(&lbl_eu_8050BEA8[0xCE], 1)->SetVisible(false);
+    mpLayout->GetRootPane()->FindPaneByName(&lbl_eu_8050BEA8[0xE4], 1)->SetVisible(false);
 
-    obj->layout->SetAnimationEnable(obj->anim10, false);
-    obj->layout->SetAnimationEnable(obj->anim0C, true);
-    obj->layout->Animate(0);
+    mpLayout->SetAnimationEnable(mpAnimTrans1, false);
+    mpLayout->SetAnimationEnable(mpAnimTrans0, true);
+    mpLayout->Animate(0);
 }
 
 void FloorMap_CursorUp(void* self) {
@@ -5002,10 +4706,10 @@ void FloorMap_CursorUp(void* self) {
     ((u32*)&dest)[0] = ((u32*)&apos)[0];
     ((u32*)&dest)[1] = ((u32*)&apos)[1];
     ((u32*)&dest)[2] = ((u32*)&apos)[2];
-    if (cur->field_3108) {
-        CFloorMapCursorTarget* target = (CFloorMapCursorTarget*)cur->field_3108;
+    if (cur->mLandCur.mpLayout) {
+        CFloorMapCursorTarget* target = (CFloorMapCursorTarget*)cur->mLandCur.mpLayout;
         target->pane->SetTranslate(dest);
     }
 
-    reinterpret_cast<CScrollBar*>(cur->field_3134)->PlaceThumb((u16)cur->field_0B);
+    cur->field_3134->PlaceThumb((u16)cur->field_0B);
 }

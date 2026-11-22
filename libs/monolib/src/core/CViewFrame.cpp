@@ -47,7 +47,6 @@ extern double lbl_eu_8066A300;
 int hitTestFrame__10CViewFrameFP11CWorkThread(CViewFrame* self, CWorkThread* pThread);
 void drawSplitBorder__10CViewFrameFPv(CViewFrame* self, void* draw);
 void drawBorderEdge__10CViewFrameFPvPv(CViewFrame* self, void* draw, void* pos);
-void drawFrameBorder__10CViewFrameFPvPv(CViewFrame* self, void* draw, void* rect);
 int CView_UnkVirtualFunc9__10CViewFrameFv(CViewFrame* self, CWorkThread* pThread);
 int CView_UnkVirtualFunc1__10CViewFrameFv(CViewFrame* self, CWorkThread* pThread);
 int updateViewFrameRect__10CViewFrameFi(CViewFrame* self, int threadType);
@@ -275,7 +274,7 @@ bool CViewFrame::render() {
                     frameRect.mSize.y = (s16)(frameRect.mSize.y - adj);
                 }
 
-                drawFrameBorder__10CViewFrameFPvPv(this, &draw, &frameRect);
+                drawFrameBorder(&draw, &frameRect);
             }
 
             popScissorRects__9CViewRootFv();
@@ -290,15 +289,13 @@ bool CViewFrame::render() {
 // 1px highlight/outline lines at the darker scaled colour. Each quad builds
 // into its own rect local (matching the retail stack slots), and the border
 // thickness / owner alpha are re-read inline per use.
-extern "C" void drawFrameBorder__10CViewFrameFPvPv(CViewFrame* self, void* draw, void* rect) {
-    ml::CRect16* r = (ml::CRect16*)rect;
-    CDrawGX* d = (CDrawGX*)draw;
-    CView* owner = self->mOwner;
+void CViewFrame::drawFrameBorder(CDrawGX* d, ml::CRect16* r) {
+    CView* owner = mOwner;
     float alpha = owner->mAlpha;
-    s16 border = self->mBorder;
+    s16 border = mBorder;
 
     ml::CCol4 drawCol;
-    ml::CCol4 col = self->mFrameColor;
+    ml::CCol4 col = mFrameColor;
     ml::CCol4 drawCol2;
     ml::CCol4 col2;
 
@@ -347,7 +344,7 @@ extern "C" void drawFrameBorder__10CViewFrameFPvPv(CViewFrame* self, void* draw,
     d->add(qT);
     d->end();
 
-    col2 = self->mFrameColor;
+    col2 = mFrameColor;
     ml::CRect16 qIL;
     ml::CRect16 qIT;
     ml::CRect16 qOB;
@@ -493,7 +490,7 @@ extern "C" void drawSplitBorder__10CViewFrameFPv(CViewFrame* self, void* draw) {
     rect.mPos.y = 0;
     rect.mSize.x = width;
     rect.mSize.y = border * 2 + 0x16;
-    drawFrameBorder__10CViewFrameFPvPv(self, draw, &rect);
+    self->drawFrameBorder(d, &rect);
 }
 
 // Draw one edge of the frame border (outer rect + 1px highlight line) at the

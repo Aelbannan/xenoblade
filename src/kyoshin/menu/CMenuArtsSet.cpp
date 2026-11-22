@@ -86,7 +86,7 @@ void CMenuArtsSet::Move() {
     artsStepState(&mList);
 }
 
-void CMenuArtsSet::cbRenderBefore() {
+void CMenuArtsSet::cbRenderBefore(CScn*) {
     CTaskGame::getInstance();
     if (CTaskGame::isFlag01Set() || (gmPauseFlags & 0x200000))
         return;
@@ -139,7 +139,7 @@ extern "C" void artsMenuInput(CMenuArtsSet* self) {
     if (cf::CfGameManager::isClassicController(-1) != 0) {
         // -- classic-controller chain --
         int special = 0;
-        if (CMenuArtsSet_isBusy((SArts33888*)&self->mList) == 0 &&
+        if (CMenuArtsSet_isBusy(&self->mList) == 0 &&
             code80135FDC_getByte_64077() > 1) {
             special = 1;
         }
@@ -169,7 +169,7 @@ extern "C" void artsMenuInput(CMenuArtsSet* self) {
             goto tail;
         }
         if ((pressed & 0x00400000) != 0) {
-            if (CMenuArtsSet_isBusy((SArts33888*)&self->mList) != 0) {
+            if (CMenuArtsSet_isBusy(&self->mList) != 0) {
                 CMenuArtsSet_advanceIdle(&self->mList);
             } else if (self->mList.CMenuArtsSet_isSlotWindowEmpty() != 0) {
                 CMenuArtsSet_armSysWin(&self->mList);
@@ -227,7 +227,7 @@ extern "C" void artsMenuInput(CMenuArtsSet* self) {
         // -- Wii remote / nunchuk chain --
         self->mList.CMenuArtsSet_setArmedFlag(0);
         if ((pad->mPad.mHeldButtonFlags & 0x00001000) != 0 &&
-            CMenuArtsSet_isBusy((SArts33888*)&self->mList) == 0 &&
+            CMenuArtsSet_isBusy(&self->mList) == 0 &&
             code80135FDC_getByte_64077() > 1) {
             // First C-down press: play a cue when the timer had ramped, then
             // reset it and re-arm the list for pointer-style input.
@@ -260,7 +260,7 @@ extern "C" void artsMenuInput(CMenuArtsSet* self) {
             goto tail;
         }
         if ((pressed & 0x00000020) != 0) {
-            if (CMenuArtsSet_isBusy((SArts33888*)&self->mList) != 0) {
+            if (CMenuArtsSet_isBusy(&self->mList) != 0) {
                 CMenuArtsSet_advanceIdle(&self->mList);
             } else if (self->mList.CMenuArtsSet_isSlotWindowEmpty() != 0) {
                 CMenuArtsSet_armSysWin(&self->mList);

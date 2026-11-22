@@ -15,15 +15,6 @@
 class CScn;
 class IScnRender;
 
-/**
- * OC (object-component) interface embedded at offset 0x6c within
- * CMenuItemExchange. Used for virtual dispatch through the OC vtable;
- * thunks adjust back to the containing object before delegating.
- */
-struct CMenuItemExchangeOC {
-    virtual ~CMenuItemExchangeOC() {}
-};
-
 // IUIWindow region (0x6C): CProcess base (0x00-0x3B) + vtable + Move/Draw
 // Window bases: the canonical IUIWindow (kyoshin/IUIWindow.hpp) plus the
 // monolib IScnRender interface at +0x6C. Both sub-vtables are compiler-emitted
@@ -48,7 +39,7 @@ public:
     virtual void Init();
     virtual void Term();
     virtual void Move();
-    virtual void cbRenderBefore();
+    virtual void cbRenderBefore(CScn* scene);
 
     void Phase0Load();
     void GateFrom1();
@@ -73,34 +64,16 @@ public:
 
 #include "monolib/scn/CScn.hpp"
 
-// cf::CfPadData view: only the flag words the menu input handlers read
-// (+0x00 held, +0x04 pressed, +0x104 turbo/short-press).
-struct CMIExPadData {
-    u32 mHeldFlags;                  // +0x00
-    u32 mPressedFlags;               // +0x04
-    u8 _pad08[0x104 - 0x08];         // 0x08..0x103
-    u32 mTurboFlags;                 // +0x104
-};
-
 // Retail-unmangled callee names (US strips the member manglings for the
 // func_ helpers; isIdle keeps its C++ mangling). int returns keep the caller's
 // `!= 0` as a plain cmpwi (no u8 mask) like retail. These names ARE the
 // retail linker symbols - do not rename or "fix" the mangled forms.
 
-// Widget ctors used by this TU (the widget classes' ctors are still C-ABI).
-extern "C" void __ct__6CBgTexFUc(CBgTex* self, u8 arg);
-extern "C" void __ct__11CTitleAHelpFPcUc(CTitleAHelp* self, char* name, u8 arg);
-extern "C" void __ct__12CItemBoxGridFUcUsUlUc(CItemBoxGrid* self, u32 a, u32 b, u32 c, u32 d);
 extern "C" bool BgTex_Acquire_3C14(CBgTex* self);
 // CTitleAHelp::CTitleAHelp_load() is declared in kyoshin/CTitleAHelp.hpp.
 
 // Load/anim hooks used by the phase gates (retail unmangled names).
 extern "C" int BgTex_IsLoaded_3E34(CBgTex* self);            // bg layout load-done query
-
-// Factory support (retail unmangled symbols; sibling-menu-TU scheme).
-class CProcess;
-extern "C" void* getWorkMem__17CWorkThreadSystemFv();
-extern "C" void Regist__8CProcessFP8CProcessb(void* _this, void* parent, bool insertTop);
 
 // cbRenderBefore gates / draw pipeline (retail verbatim names).
 namespace nw4r { namespace lyt { class DrawInfo; } }
@@ -109,7 +82,6 @@ extern u32 gmPauseFlags;   // cbRenderBefore mode-flag word (.sbss)
 
 // Input-handler callees (retail unmangled names). isClassicController keeps the
 // u32 return declared by CItemBoxGrid.hpp (included above) - do not redeclare.
-extern "C" CMIExPadData* getCfPadData__Q22cf13CfGameManagerFv();
 // setPresentationFlag: canonical setPresentationFlag__Q22cf13CfGameManagerFv(bool).
 extern "C" int MenuTutorialIsCreated();
 

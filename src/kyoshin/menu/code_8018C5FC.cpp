@@ -5,6 +5,7 @@
 #include "kyoshin/cf/CfSoundMan.hpp"
 #include "monolib/scn/CScn.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
+#include "kyoshin/cf/CBattleManager.hpp"
 #include <monolib/device/CDeviceVI.hpp>
 #include <functions.hpp>
 
@@ -20,15 +21,6 @@ extern const f32 lbl_eu_80667A38[2];
 
 namespace cf {
 
-// Party-gauge controller: holds the gauge counter (clamped to [0, 300])
-// plus a frame-time accumulator used to tick it down during play.
-class UnkClass_8018C5FC {
-public:
-    UnkClass_8018C5FC();
-    s32 gaugeValue;   // +0x00: party gauge counter, clamped to [0, 0x12c]
-    f32 tickAccum;    // +0x04: accumulated scaled frame time until next tick
-};
-
 // --- linked-list / battle-object types used by PartyGaugeTickDecay ---
 
 struct CMB_CfObjEnt_8018C5FC; // fwd
@@ -38,12 +30,6 @@ struct CMB_ListNode_8018C5FC {
     CMB_ListNode_8018C5FC* next;    // +0x00
     u32 field_04;                   // +0x04
     CMB_CfObjEnt_8018C5FC* data;    // +0x08
-};
-
-// Battle manager getInstance() result: only +0x08 (a node ptr) is used here.
-struct CMB_Bm_8018C5FC {
-    u8 pad_00[0x8];
-    CMB_ListNode_8018C5FC* listHead; // +0x08
 };
 
 // Party list returned by getListB28__Fv: head node ptr at +0x04.
@@ -98,11 +84,10 @@ void PartyGaugeTickDecay(UnkClass_8018C5FC* _this) {
 
         // Count active battles by walking the battle manager's actor list.
         s32 adjust = 0;
-        CMB_Bm_8018C5FC* bm = (CMB_Bm_8018C5FC*)getInstance__Q22cf14CBattleManagerFv();
-        CMB_ListNode_8018C5FC* head = bm->listHead;
+        _reslist_node<CfObjectActor*>* head = CBattleManager::getInstance()->mActorList1.mStartNodePtr;
         s32 battleCount = 0;
-        for (CMB_ListNode_8018C5FC* node = head->next;
-             node != head; node = node->next)
+        for (_reslist_node<CfObjectActor*>* node = head->mNext;
+             node != head; node = node->mNext)
         {
             battleCount++;
         }

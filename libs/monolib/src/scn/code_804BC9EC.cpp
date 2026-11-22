@@ -556,7 +556,7 @@ void sinit_804BD8A0() {
 // so the align half of this section is currently unreachable from source;
 // cf. kyoshin/cf/CfCam.o, whose retail .bss is likewise align 4.
 ScnResData lbl_eu_8065F32C;
-u8 lbl_eu_8065F3F0[0xC];
+ColiQueryVec lbl_eu_8065F3F0;
 ColiQueryBounds sColiQueryBounds;
 
 // [.sbss] 0x80665968-0x8066597C (0x14, align 8).

@@ -33,6 +33,14 @@ extern "C" u8 lbl_eu_80526448[];
 
 extern "C" mtl::ALLOC_HANDLE func_80496004(void* ptr);
 
+// Empty non-polymorphic base of CTimeLightGrp at +0x0 (retail RTTI
+// hierarchy of CTimeLightGrp = {__RTTI__13CTimeLightObj, +0x0}; the
+// CTimeLightGrp ctor extab DESTROYBASE +0x0 names its empty dtor, us-8005a6a4).
+class CTimeLightObj {
+public:
+    ~CTimeLightObj();
+};
+
 // Time-light group: owns a reslist of virtual light object pointers.
 // Layout: own vptr @0x00, parent @0x04, embedded reslist subobject @0x08
 // (its vptr @0x08, sentinel ptr @0x0C, node array ptr @0x1C).

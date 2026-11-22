@@ -293,12 +293,12 @@ void gap_inq_results_cb(tBTM_INQ_INFO *p_info)
 
     if (gap_cb.trace_level >= BT_TRACE_LEVEL_EVENT) {
         LogMsg_6(TRACE_CTRL_GENERAL | TRACE_LAYER_GAP | TRACE_ORG_STACK | TRACE_TYPE_EVENT,
-                 "GAP Inquiry Results Callback (bdaddr [%02x%02x%02x%02x%02x%02x])\x00",
+                 "GAP Inquiry Results Callback (bdaddr [%02x%02x%02x%02x%02x%02x])",
                  (UINT32)p->remote_bd_addr[0], (UINT32)p->remote_bd_addr[1],
                  (UINT32)p->remote_bd_addr[2], (UINT32)p->remote_bd_addr[3],
                  (UINT32)p->remote_bd_addr[4], (UINT32)p->remote_bd_addr[5]);
         LogMsg_4(TRACE_CTRL_GENERAL | TRACE_LAYER_GAP | TRACE_ORG_STACK | TRACE_TYPE_EVENT,
-                 "                             (COD [%02x%02x%02x], clkoff 0x%04x)\x00",
+                 "                             (COD [%02x%02x%02x], clkoff 0x%04x)",
                  (UINT32)p->dev_class[0], (UINT32)p->dev_class[1],
                  (UINT32)p->dev_class[2], (UINT32)p->clock_offset);
     }

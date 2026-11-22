@@ -5,6 +5,7 @@
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/cf/CfTFile.hpp"
 #include "kyoshin/cf/object/CfObject.hpp"
+#include "kyoshin/cf/object/CfObjectActor.hpp"
 #include "kyoshin/cf/object/CfObjectEff.hpp"  // cf::CfObjectEff definition
 #include "kyoshin/cf/object/CfObjectEffSymbols.hpp"
 #include "kyoshin/cf/CfResReloadImpl.hpp"  // getReloadParam0 (owner)
@@ -470,11 +471,12 @@ void CfMapEffectManager::pushFlash(float first, float second) {
 void CfMapEffectManager::setGlobalFloat(float val) { gMapEffectFlashScale = val; }
 
 extern "C" void* MapFx_ResolveOwner(void* effectObj) {
-    if (effectObj == 0) return 0;
-    int word = *(int*)((char*)effectObj + 0x64);
-    if ((word & 0x2) != 0 || (word & 0x4) != 0) {
-        if (effectObj != 0)
-            return (char*)effectObj - 0x3e9c;
+    cf::CfObjectMove* move = static_cast<cf::CfObjectMove*>(effectObj);
+    if (move != 0) {
+        u32 flags = move->unk64;
+        if ((flags & 0x2) != 0 || (flags & 0x4) != 0) {
+            return static_cast<cf::CfObjectActor*>(move);
+        }
     }
     return 0;
 }

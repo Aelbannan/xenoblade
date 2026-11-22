@@ -20,9 +20,6 @@ struct CErrMesOwner;
 // Its battle-object params use cf::CChainBattleObj (field_3F28 chain type).
 
 // Chain-voice data symbols (.sdata float / .sbss byte).
-extern float lbl_eu_80668A18;
-extern float lbl_eu_80668A1C;
-extern float lbl_eu_80668A40;
 extern float lbl_eu_80668A44;
 extern float lbl_eu_80668A48;
 extern float lbl_eu_80668A50;

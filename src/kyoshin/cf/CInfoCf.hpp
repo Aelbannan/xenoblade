@@ -4,7 +4,7 @@
  * cf::CInfoCf - Information/settings singleton.
  *
  * One global instance is created at boot; the constructor stores the
- * instance pointer in the global lbl_eu_80664250 so any code in this TU
+ * instance pointer in the global gpInfoCfInstance so any code in this TU
  * can reach it without passing ``this`` around.  Used by the menu / info
  * stack to query and toggle UI state flags.
  *
@@ -42,7 +42,7 @@ struct CInfoCf {
 // CInfoCf vtable (retail .data:0x805309B0) and the UI-state singleton pointer
 // (sbss; instance stored by __ct__cf_CInfoCf, cleared by the dtor).
 extern u8 lbl_eu_805309B0[];
-extern cf::CInfoCf* lbl_eu_80664250;
+extern cf::CInfoCf* gpInfoCfInstance;
 
 extern "C" {
 u32 InfoCfGetUiFlags();

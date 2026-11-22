@@ -10,7 +10,14 @@
 #include "kyoshin/CScrollBar.hpp"
 #include "monolib/lib/CLibLayout.hpp"
 #include "kyoshin/CBaseCur.hpp"
-#include "kyoshin/CItemBoxLineImports.hpp"
+#include "kyoshin/CItemBoxLine.hpp"
+#include "kyoshin/CTagProcessor.hpp"
+#include "kyoshin/CTitleAHelp.hpp"
+#include "kyoshin/code_80135FDC_Bdat.hpp"
+#include "kyoshin/CQuestWindow_Pane.hpp"
+#include "kyoshin/CUICfManager_Res.hpp"
+#include "kyoshin/cf/CtrlRemoteApi.hpp"
+#include "monolib/device/CDeviceFile.hpp"
 #include <nw4r/lyt/lyt_layout.h>
 #include <nw4r/lyt/lyt_pane.h>
 #include <nw4r/lyt/lyt_material.h>
@@ -22,9 +29,74 @@
 #include "kyoshin/plugin/ocBdat.hpp"
 #include "kyoshin/code_80135FDC_State.hpp"
 
+/* Tab holder with a trailing FixStr<32> name buffer at +0x94. */
+struct CIBLTabFormat {
+    CIBLTabEntry entries[12]; // +0x00..0x8F
+    u16 count;                // +0x90
+    u8 pad_92[2];             // +0x92..0x93
+    ml::FixStr<32> str94;     // +0x94
+};
+
+/* Full tab-format object used by the init/alloc/format helpers. */
+struct CIBLTabFull {
+    CIBLTabEntry entries[12]; // +0x00..0x8F
+    u16 count;                // +0x90
+    u8 field92;               // +0x92 - selector byte
+    u8 field93;               // +0x93
+    ml::FixStr<32> str94;     // +0x94 (mString[32] + mLength at +0xB4)
+    ml::FixStr<128> strB8;    // +0xB8 (mString[128] + mLength at +0x138)
+};
+
 // Tab entry accessors are declared in kyoshin/CItemBoxLine.hpp.
 extern "C" void ItemBoxLine_CopyTabEntry(CIBLTabEntry* dest, const CIBLTabEntry* src);
 extern "C" CIBLTabEntry* ItemBoxLine_InitTabEntry(CIBLTabEntry* self, u16 item, u32 value, u8 lock, u8 ready);
+
+// Retail data labels owned by this TU / sibling merged units.
+extern const float lbl_eu_80668114;
+extern const float lbl_eu_806680F8;
+extern u32 lbl_eu_80664184;
+
+// Plain C-ABI helpers used by this TU.
+extern "C" void* Bdat_GetTable_AA34();
+extern "C" void CItem_thunkAllocRecord(u32, u32);
+extern "C" void* CItemBlock_getPtr20E8(void);
+extern "C" void CItemBlock_setCount(s32);
+extern "C" int KyoshinHeap_GetField44(void);
+extern "C" u32 CtrlObjectParam_GetArtsDataWord(void*);
+extern "C" void* CtrlObjectParam_GetCharEntry(u32);
+extern "C" u32 CtrlObjectParam_GetCurrentRowKey(void*);
+extern "C" u32 CItemBlock_countEmpty(u8);
+extern "C" u32 CItem_sumFamilyByte6(unsigned int);
+extern "C" u32 ItemBoxLine_CalcCountKey(void*, unsigned int);
+extern "C" u8 ItemBoxLine_ProbePageSlot(void*, unsigned int);
+extern "C" char* getErrMesText16(void);
+extern "C" char* getErrMesText15(void);
+extern "C" void ItemBoxLine_BuildTabEntries(CIBLTab*, unsigned char, unsigned short, unsigned char);
+extern "C" void CopyTabSlotVec(CIBLVec3*, const u16*, u32);
+extern "C" void copyVEC3(void*, const void*);
+extern "C" u16 ArrayGet12(const u16*, u8);
+extern "C" char* ItemBoxLine_FormatDisplayName(CIBLTabFull*, u16);
+extern "C" void SplitU32ToS16s(void*, u32);
+
+// Item-box guard words and the fourteen static colour objects defined at the
+// foot of this TU (retail .sbss 0x806645D8..0x80664640).
+extern u32 gItemBoxLineMnuItemMesATable;
+extern u32 gItemBoxLineMnuItemMesBTable;
+extern u32 gItemBoxLineMnuSkillTable;
+extern GXColorS10 itemBoxLine_tabLabelNeutralTop;
+extern GXColorS10 itemBoxLine_tabLabelNeutralBottom;
+extern GXColorS10 itemBoxLine_tabLabelSelectedTop;
+extern GXColorS10 itemBoxLine_tabLabelSelectedBottom;
+extern GXColorS10 itemBoxLine_tabValueNeutralTop;
+extern GXColorS10 itemBoxLine_tabValueNeutralBottom;
+extern GXColorS10 itemBoxLine_tabValueSelectedTop;
+extern GXColorS10 itemBoxLine_tabValueSelectedBottom;
+extern GXColorS10 itemBoxLine_pageLabelNeutralTop;
+extern GXColorS10 itemBoxLine_pageLabelNeutralBottom;
+extern GXColorS10 itemBoxLine_pageLabelSelectedTop;
+extern GXColorS10 itemBoxLine_pageLabelSelectedBottom;
+extern GXColorS10 itemBoxLine_pageValueSelectedTop;
+extern GXColorS10 itemBoxLine_pageValueSelectedBottom;
 
 int sprintf(char*, const char*, ...);
 
@@ -107,6 +179,10 @@ extern "C" void ItemBoxLine_CopyTabEntry(CIBLTabEntry* dest, const CIBLTabEntry*
     dest->f8 = src->f8;
     dest->f9 = src->f9;
 }
+
+// us-801ed7bc: CIBLTab has an empty out-of-line destructor (CItemBoxLine
+// ctor/dtor extab DESTROYMEMBER +0x3A4).
+CIBLTab::~CIBLTab() {}
 
 // ============================================================================
 // ItemBoxLine_BuildTabEntries: (re)build the tab list. Clears the entries, then either probes
@@ -283,14 +359,6 @@ u8 ItemBoxLine_GetTabEntryReady(const CIBLTab* self, unsigned int index) {
 
 CIBLTabCur::CIBLTabCur(nw4r::lyt::ArcResourceAccessor* arcResAcc) : CBaseCur(arcResAcc) {}
 
-// func_801ED7BC / __dt__801EBBC0 (delete-only dtor)
-extern "C" void* __dt__801EBBC0(CBaseCur* _this, int flags) {
-    if (_this != NULL && flags > 0) {
-        operator delete(_this);
-    }
-    return _this;
-}
-
 CIBLTabCur::~CIBLTabCur() {}
 
 // ============================================================================
@@ -318,7 +386,7 @@ void CItemBoxLine::ResetTabBytes() {
 // ============================================================================
 ml::FixStr<32>* ItemBoxLine_FormatTabEntryName(CIBLTabFormat* self, unsigned int index) {
     if (index < self->count) {
-        self->str94.format(&lbl_eu_805071B0[0x57], BuildItemNameStr(self->entries[index].f0));
+        self->str94.format("%s", BuildItemNameStr(self->entries[index].f0));
         return &self->str94;
     }
     return 0;
@@ -339,7 +407,6 @@ extern "C" char* ItemBoxLine_FormatDisplayName(CIBLTabFull* self, u16 index) {
     if (index >= self->count) return NULL;
     u16 f0 = self->entries[index].f0;
     if (f0 == 0) return NULL;
-    char* pool = lbl_eu_805071B0;
     u8 sel = self->field92;
     if (sel == 3) {
         BdatGetItemType(f0);
@@ -375,19 +442,23 @@ extern "C" char* ItemBoxLine_FormatDisplayName(CIBLTabFull* self, u16 index) {
                     switch (sub) {
                     case 1:
                     case 2:
-                    case 4:
                         sprintf(tmp, "<col=red>%s<col=def2>", partName.mString);
                         break;
                     case 3:
+                    case 4:
                         if (full) {
-                            sprintf(tmp, "<col=red>%d %%<col=def2>", pct);
+                            sprintf(tmp, "<col=red>%s %%<col=def2>", partName.mString);
                         } else {
-                            sprintf(tmp, "<col=red>%d%%<col=def2>", pct);
+                            sprintf(tmp, "<col=red>%s%%<col=def2>", partName.mString);
                         }
                         break;
                     }
                 } else if (d == '2') {
-                    sprintf(tmp, "<col=red>%s<col=def2>", partName.mString);
+                    if (full) {
+                        sprintf(tmp, "<col=red>%d %%<col=def2>", pct);
+                    } else {
+                        sprintf(tmp, "<col=red>%d%%<col=def2>", pct);
+                    }
                 }
                 strcat(out, tmp);
             } else {
@@ -459,11 +530,11 @@ search:
         } else {
             obj = (u32)::cf::CfBdat::spItmEquipListFileData;
         }
-        u8 n = BdatGetU8Direct((const void*)obj, &lbl_eu_805071B0[0x106], (u16)v);
+        u8 n = BdatGetU8Direct((const void*)obj, "jwl_slot", (u16)v);
         if (n == 0) goto ret0;
         char buf[0x20];
         for (u8 i = 0; i < n; i++) {
-            sprintf(buf, &lbl_eu_805071B0[0x10f], (u8)i + 1);
+            sprintf(buf, "jwl_skill%d", (u8)i + 1);
             if ((u16)BdatGetU16Direct((const void*)obj, (const char*)buf, (u16)v) != 0) return 0xfd;
         }
         return 0xfe;
@@ -493,7 +564,6 @@ extern "C" u32 ItemBoxLine_CalcCountKey(void* self, unsigned int itemData) {
     u32 itemId = LookupItemTypeTable(itemData);
     u32 kind = BdatGetItemType(itemData);
     u16 cat = BdatGetItemId(itemData);
-    char* pool = lbl_eu_805071B0;
     u32 result = 0;
     if ((u16)kind == 3) {
         u8 v = BdatGetU8Direct((const void*)::cf::CfBdat::spItmItemListFileData, "rankType", itemData);
@@ -522,10 +592,9 @@ extern "C" u32 ItemBoxLine_CalcCountKey(void* self, unsigned int itemData) {
 // cursor deactivation tail.
 // ============================================================================
 void CIBLTabCur::initLayout() {
-    char* pool = lbl_eu_805071B0;
-    buildLayout(&mpLayout, mArcResAcc, pool + 0x121);
-    bindLayoutAnimTransform(mpLayout, &mpAnimTrans0, mArcResAcc, pool + 0x139);
-    bindLayoutAnimTransform(mpLayout, &mpAnimTrans1, mArcResAcc, pool + 0x156);
+    buildLayout(&mpLayout, mArcResAcc, "mf00_reg00_curs07.brlyt");
+    bindLayoutAnimTransform(mpLayout, &mpAnimTrans0, mArcResAcc, "mf00_reg00_curs07_roop.brlan");
+    bindLayoutAnimTransform(mpLayout, &mpAnimTrans1, mArcResAcc, "mf00_reg00_curs07_on.brlan");
     mpLayout->UnbindAllAnimation();
     ((CBaseCur*)(this))->DeactivateTail();
 }
@@ -578,14 +647,14 @@ CItemBoxLine::~CItemBoxLine() {}
 // and finally dispatch the syswin's last vtable slot (index 32) to finish.
 // ============================================================================
 void CItemBoxLine::LoadFiles() {
-    field24 = (u32)readFile__11CDeviceFileFUlPCcP10IWorkEventii(
-        (u32)getHandleMEM2__Q23mtl10MemManagerFv(), &lbl_eu_805071B0[0x171], this, 0, 0);
-    field28 = (u32)readFile__11CDeviceFileFUlPCcP10IWorkEventii(
-        (u32)getHandleMEM2__Q23mtl10MemManagerFv(), &lbl_eu_805071B0[0x189], this, 0, 0);
-    field2C = (u32)readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii(
-        (u32)KyoshinHeap_GetField44(), &lbl_eu_805071B0[0x1a2], this, 0, 0);
-    field30 = (u32)readFile__11CDeviceFileFUlPCcP10IWorkEventii(
-        (u32)getHandleMEM2__Q23mtl10MemManagerFv(), &lbl_eu_805071B0[0x1bf], this, 0, 0);
+    field24 = (u32)CDeviceFile::readFile(
+        mtl::MemManager::getHandleMEM2(), "menu/jp/ItemBoxLine.arc", this, 0, 0);
+    field28 = (u32)CDeviceFile::readFile(
+        mtl::MemManager::getHandleMEM2(), "menu/jp/tpl/ItemIcon.arc", this, 0, 0);
+    field2C = (u32)CDeviceFile::readCommonArchiveFile(
+        (u32)KyoshinHeap_GetField44(), "common/jp/bdat_menu_item.bin", this, 0, 0);
+    field30 = (u32)CDeviceFile::readFile(
+        mtl::MemManager::getHandleMEM2(), "common/jp/bdat_menu_mes.bin", this, 0, 0);
     mInfo2.LoadFiles();
     mNumSel.LoadFiles();
     mScrollBar.loadLayoutArc();
@@ -1136,7 +1205,6 @@ void CItemBoxLine::ConfirmOverlayOrHint() {
 // dispatch likewise or raise the "unavailable" flag (state 3 beep).
 // ============================================================================
 void CItemBoxLine::ResolveEntry() {
-    char* pool = lbl_eu_805071B0;
     if (reinterpret_cast<CSysWin*>(&mSysWin)->isOpened()) {
         if (reinterpret_cast<CSysWin*>(&mSysWin)->isActive()) {
             reinterpret_cast<CSysWin*>(&mSysWin)->advancePhase3();
@@ -1195,7 +1263,21 @@ void CItemBoxLine::ResolveEntry() {
     // other kinds go through the character-data lookups below.
     if (tabEntries[(s8)field6D] == 0xd) {
         u16 f0d = ItemBoxLine_GetTabEntryItem(tabs, key);
-        ProbeAvailability(f0d);
+        if (ProbeAvailability(f0d) != 0) {
+            char* shopText = BdatTouchStringCell("MNU_shop", "name", 24);
+            char* partyLow = BdatTouchStringCell("MNU_party", "name", 13);
+            char* partyHigh = BdatTouchStringCell("MNU_party", "name", 14);
+            mSysWin.switchKindPane(2);
+            mSysWin.setKindContent(shopText, 0);
+            mSysWin.setTwoTextValues(partyLow, partyHigh);
+            mSysWin.applyKind(0);
+            mSysWin.openPhase1();
+            unk39E = 1;
+            mCur70.SetVisible(0);
+            field50 = 9;
+            playUISound(3);
+            return;
+        }
     }
     int unavailable = 0;
     char* text = NULL;
@@ -1235,7 +1317,256 @@ void CItemBoxLine::ResolveEntry() {
 }
 
 // ============================================================================
-// ItemBoxLine_RefreshTabPanes: refresh the seven tab-slot panes. Build the twelve RGBA
+// ItemBoxLine_ShowDetailWin: item-box line syswin/tab interaction. When the tab cursor is
+// active and the syswin overlay is open, advance the syswin; otherwise open
+// the detail window for the current page slot (name via the slot flag: kind-3
+// slots use the item-name provider, others the shared table). When the tab
+// cursor is idle, scan the page list for the first occupied slot (preferring
+// slot 8), decompose it into page/column (field3A1 = slot/4, field3A2 =
+// slot%4 via a float multiply), prime the cursors and push the slot VEC3.
+// ============================================================================
+void CItemBoxLine::ShowDetailWin() {
+    if (mNumSel.IsOpen() != 0) return;
+    if (field3A0 != 0) {
+        if (mSysWin.isOpened() != 0) {
+            if (mSysWin.isActive() != 0) {
+                mSysWin.advancePhase3();
+            }
+            return;
+        }
+        CItemBoxPage* page = &mInfo2.mPage;
+        u8 idx = (u8)(field3A2 + (s8)field3A1 * 4);
+        u16 v = ArrayGet12(page->mItemIds, idx);
+        if (v != 0) {
+            u8 bt = ItemBoxGetTab(page, idx);
+            char* obj;
+            if (bt == 3) {
+                obj = page->GetItemName(idx);
+            } else {
+                obj = BdatTouchStringCell("MNU_skill", "help", (u16)v);
+            }
+            mSysWin.switchKindPane(0);
+            mSysWin.setKindContent(obj, 0);
+            mSysWin.applyKind(1);
+            mSysWin.openPhase1();
+        }
+        return;
+    }
+    if (mSysWin.isOpened() != 0) return;
+    CItemBoxPage* page2 = &mInfo2.mPage;
+    u8 found = 0;
+    for (u8 i = 0; i < 12; i++) {
+        if (page2->mItemIds[i] != 0) {
+            page2->mSelSlot = i;
+            if (page2->mItemIds[8] != 0) page2->mSelSlot = 8;
+            found = 1;
+            break;
+        }
+    }
+    if (found != 0) {
+        u8 sel = page2->mSelSlot;
+        field3A0 = 1;
+        field3A1 = (u8)((float)sel * 0.25f);
+        field3A2 = (u8)(sel - (s8)field3A1 * 4);
+        mCurA0.SetVisible(0);
+        mCur70.SetVisible(0);
+        mCur88.SetVisible(1);
+        CIBLVec3 vec;
+        CopyTabSlotVec(&vec, page2->mItemIds, sel);
+        mCur88.setRootPaneTranslate((const nw4r::math::VEC3*)(&vec));
+        playUISound(2);
+    } else {
+        playUISound(5);
+    }
+}
+
+// ============================================================================
+// ItemBoxLine_DrawTabRowText:
+// its texture name via the shared table (::cf::CfBdat::spItmItemListFileData), try object A
+// (+0x3C) first and fall back to object B (+0x38) with the default name; with
+// no key id, B is used directly. If a resource was found, format the pane
+// name from arg3 and bind the resource to the active layout.
+// ============================================================================
+void CItemBoxLine::DrawTabRowText(u32 arg2, u32 arg3) {
+    u32 result;
+    if (arg2 != 0) {
+        u32 v = BdatGetU16Direct((const void*)::cf::CfBdat::spItmItemListFileData, "icon_base", arg2);
+        result = (u32)((nw4r::lyt::ArcResourceAccessor*)field3C)->GetResource(0x74696d67, MakeTplNameSysFile((u16)v), 0);
+        if (result == 0) {
+            result = (u32)((nw4r::lyt::ArcResourceAccessor*)field38)->GetResource(0x74696d67, "mf00_com00_dmy.tpl", 0);
+        }
+    } else {
+        result = (u32)((nw4r::lyt::ArcResourceAccessor*)field38)->GetResource(0x74696d67, "mf00_com00_dmy.tpl", 0);
+    }
+    if (result != 0) {
+        char buf[0x20];
+        sprintf(buf, "pic_btnbs%02d", arg3 + 1);
+        PaneSetTexPaletteByName(field40, (const char*)buf, (TPLPalette*)result);
+    }
+}
+
+void CItemBoxLine::DrawTabRowIcon(u32 arg2, u32 arg3) {
+    u32 result;
+    if (arg2 != 0) {
+        u32 v = BdatGetU16Direct((const void*)::cf::CfBdat::spItmItemListFileData, "icon", arg2);
+        result = (u32)((nw4r::lyt::ArcResourceAccessor*)field3C)->GetResource(0x74696d67, MakeTplNameSysFile((u16)v), 0);
+        if (result == 0) {
+            result = (u32)((nw4r::lyt::ArcResourceAccessor*)field38)->GetResource(0x74696d67, "mf00_com00_dmy.tpl", 0);
+        }
+    } else {
+        result = (u32)((nw4r::lyt::ArcResourceAccessor*)field38)->GetResource(0x74696d67, "mf00_com00_dmy.tpl", 0);
+    }
+    if (result != 0) {
+        char buf[0x20];
+        sprintf(buf, "pic_icon%02d", arg3 + 1);
+        PaneSetTexPaletteByName(field40, (const char*)buf, (TPLPalette*)result);
+    }
+}
+
+// ============================================================================
+// ItemBoxLine_FormatName: format the item-slot name into the line. The kind selector
+// (BdatGetItemType) picks the item-name path (kinds 3/9) which resolves the
+// name via the owner table; otherwise a signed hint byte picks one of the
+// fixed strings / name providers.
+// ============================================================================
+void CItemBoxLine::FormatName(u32 arg4, s8 arg5, u32 arg6) {
+    char buf[0x20];
+    sprintf(buf, "txt_num%02d", arg6 + 1);
+    ml::FixStr<32> str;
+    str.clear();
+    u8 sel = (u8)BdatGetItemType(arg4);
+    if (sel == 3 || sel == 9) {
+        u8 v = BdatGetU8Direct((const void*)::cf::CfBdat::spItmItemListFileData, "rankType", arg4);
+        char* name = BdatTouchStringCell("MNU_item", "name", 0x1e - (v - 1));
+        str.format("%s", name);
+        PaneMatSetTevColorsByName(field40, buf, &itemBoxLine_pageLabelNeutralTop, &itemBoxLine_pageLabelNeutralBottom);
+    } else if (arg5 > 0) {
+        str.format("%d");
+        PaneMatSetTevColorsByName(field40, buf, &itemBoxLine_pageLabelNeutralTop, &itemBoxLine_pageLabelNeutralBottom);
+    } else if (arg5 == 0) {
+        const char* s = "";
+        str = s;
+    } else if (arg5 == -2) {
+        str = getErrMesText16();
+        PaneMatSetTevColorsByName(field40, buf, &itemBoxLine_pageLabelSelectedTop, &itemBoxLine_pageLabelSelectedBottom);
+    } else if (arg5 == -3) {
+        str = getErrMesText15();
+        PaneMatSetTevColorsByName(field40, buf, &itemBoxLine_pageValueSelectedTop, &itemBoxLine_pageValueSelectedBottom);
+    } else {
+        const char* s = "";
+        str = s;
+    }
+    LayoutSetTextBoxFmtValue(field40, buf, str.mString, 0);
+}
+
+// ============================================================================
+// ItemBoxLine_BindSlotTexture: bind the per-slot tab texture and nameplate colour. Resolve
+// the texture name by slot kind (kinds 1..12 format a fixed pool string,
+// kind 0 uses the shared "timeg" fallback name directly), fetch the texture
+// through resource object A (falling back to B), bind it to the pane named
+// "%d"-style by index+1, and - unless the slot's occupancy byte is set -
+// push the default nameplate colour through the pane's colour-source virtual.
+// ============================================================================
+void CItemBoxLine::BindSlotTexture(u8 kind, u32 index) {
+    const u32 tag = 0x74696d67;
+    char buf[0x20];
+    u32 tex;
+    if (kind == 0) {
+        tex = (u32)((nw4r::lyt::ArcResourceAccessor*)field38)->GetResource(tag, "mf00_com00_dmy.tpl", 0);
+    } else {
+        switch (kind) {
+        case 2:  sprintf(buf, "mf00_reg20_cat00.tpl"); break;
+        case 3:  sprintf(buf, "mf00_reg20_cat07.tpl"); break;
+        case 4:  sprintf(buf, "mf00_reg20_cat01.tpl"); break;
+        case 5:  sprintf(buf, "mf00_reg20_cat02.tpl"); break;
+        case 6:  sprintf(buf, "mf00_reg20_cat03.tpl"); break;
+        case 7:  sprintf(buf, "mf00_reg20_cat04.tpl"); break;
+        case 8:  sprintf(buf, "mf00_reg20_cat05.tpl"); break;
+        case 9:  sprintf(buf, "mf00_reg20_cat06.tpl"); break;
+        case 10:  sprintf(buf, "mf00_reg20_cat09.tpl"); break;
+        case 11: sprintf(buf, "mf00_reg20_cat10.tpl"); break;
+        case 12: sprintf(buf, "mf00_reg20_cat11.tpl"); break;
+        case 13: sprintf(buf, "mf00_reg20_cat08.tpl"); break;
+        }
+        tex = (u32)((nw4r::lyt::ArcResourceAccessor*)field3C)->GetResource(tag, buf, 0);
+            if (tex == 0) {
+                tex = (u32)((nw4r::lyt::ArcResourceAccessor*)field38)->GetResource(tag, "mf00_com00_dmy.tpl", 0);
+        }
+    }
+    if (tex != 0) {
+        char nameB[0x20];
+        sprintf(nameB, "pic_cat%02d", index + 1);
+        PaneSetTexPaletteByName(field40, (const char*)nameB, (TPLPalette*)tex);
+        if (unk64[index] == 0) {
+            GXColorS10 col;
+            col.b = 0x14;
+            col.g = 0x14;
+            col.r = 0x14;
+            col.a = field396.a;
+            nw4r::lyt::Pane* pane = field40->GetRootPane()->FindPaneByName(nameB, true);
+            if (pane != NULL) {
+                // +0x68 is Pane::GetMaterial; the material's mTevCols[0]
+                // lives at +0x10 (see CIBLColorSrc).
+                nw4r::lyt::Material* mat = pane->GetMaterial();
+                if (mat != NULL) {
+                    mat->SetTevColor(0, col);
+                }
+            }
+        }
+    }
+}
+
+// ============================================================================
+// ItemBoxLine_SetPaneVisible: format the pane name (skipping the leading marker char of the
+// caller's string) into a temp buffer, look the pane up on the layout root,
+// and toggle its visibility from the caller's flag.
+// ============================================================================
+void CItemBoxLine::SetPaneVisible(u32 index, bool visible) {
+    char buf[0x20];
+    sprintf(buf, "pic_off%02d", index + 1);
+    nw4r::lyt::Pane* root = field40->GetRootPane();
+    nw4r::lyt::Pane* pane = root->FindPaneByName(buf, true);
+    setPaneVisible(pane, !visible);
+}
+
+// ============================================================================
+// ItemBoxLine_RebuildTabList: refresh the seven tab-slot panes (same shape as
+// ItemBoxLine_RefreshTabLabels), then, when the slot is unoccupied, bind a texture resource
+// (object A fallback path) onto the slot's pane name; finally dispatch the
+// slot entry through ItemBoxLine_BindSlotTexture. r25 keeps tabEntries[i] across the calls.
+// ============================================================================
+void CItemBoxLine::RebuildTabList() {
+    for (u8 i = 0; i < 7; i++) {
+        char nameA[0x20];
+        char nameB[0x20];
+        sprintf(nameA, "pic_tbbcon%02d", (u8)i + 1);
+        sprintf(nameB, "pic_tbbcof%02d", (u8)i + 1);
+        bool visA = false;
+        bool visB = false;
+        u8 entry = tabEntries[i];
+        if (entry != 0) {
+            if ((u8)i == (s8)field6D) {
+                visA = true;
+                visB = false;
+            } else {
+                visA = false;
+                visB = true;
+            }
+        }
+        setPaneVisible(field40->GetRootPane()->FindPaneByName(nameA, true), visA);
+        setPaneVisible(field40->GetRootPane()->FindPaneByName(nameB, true), visB);
+        if (unk64[i] == 0) {
+            u32 tex = (u32)((nw4r::lyt::ArcResourceAccessor*)field38)->GetResource(0x74696d67, "mf02_box00_tabemp.tpl", 0);
+            if (tex != 0) {
+                PaneSetTexPaletteByName(field40, (const char*)nameB, (TPLPalette*)tex);
+            }
+        }
+        BindSlotTexture(entry, i);
+    }
+}
+
+// ============================================================================
+// ItemBoxLine_RefreshTabPanes: refresh the seven tab-slot panes.
 // palette entries, then for each slot: pick the lit/unlit color pair from the
 // palette by slot occupancy, refresh the pane texture/name/visibility, and for
 // named tabs bind the tab name + per-pane animation colors (alpha from the
@@ -1256,19 +1587,18 @@ void CItemBoxLine::RefreshTabPanes() {
     setGXColorS10(&colors[9], 0, 0, 0, 0);
     setGXColorS10(&colors[10], 0, 0, 0, 0);
     setGXColorS10(&colors[11], 0, 0, 0, 0);
-    char* pool = lbl_eu_805071B0;
     for (u8 i = 0; i < 7; i++) {
         u16 idx = (u16)(unk38E + i);
         if (ItemBoxLine_GetTabEntryLock(tabs, idx) != 0) {
-            __as__11_GXColorS10FRC11_GXColorS10(&colors[8], &colors[4]);
-            __as__11_GXColorS10FRC11_GXColorS10(&colors[9], &colors[5]);
-            __as__11_GXColorS10FRC11_GXColorS10(&colors[10], &colors[6]);
-            __as__11_GXColorS10FRC11_GXColorS10(&colors[11], &colors[7]);
+            colors[8] = colors[4];
+            colors[9] = colors[5];
+            colors[10] = colors[6];
+            colors[11] = colors[7];
         } else {
-            __as__11_GXColorS10FRC11_GXColorS10(&colors[8], &colors[0]);
-            __as__11_GXColorS10FRC11_GXColorS10(&colors[9], &colors[1]);
-            __as__11_GXColorS10FRC11_GXColorS10(&colors[10], &colors[2]);
-            __as__11_GXColorS10FRC11_GXColorS10(&colors[11], &colors[3]);
+            colors[8] = colors[0];
+            colors[9] = colors[1];
+            colors[10] = colors[2];
+            colors[11] = colors[3];
         }
         u16 key = ItemBoxLine_GetTabEntryItem(tabs, idx);
         DrawTabRowText(key, i);
@@ -1354,71 +1684,7 @@ void CItemBoxLine::Info2SelectNext() {
     playUISound(0xa);
 }
 
-// ============================================================================
-// ItemBoxLine_ShowDetailWin: item-box line syswin/tab interaction. When the tab cursor is
-// active and the syswin overlay is open, advance the syswin; otherwise open
-// the detail window for the current page slot (name via the slot flag: kind-3
-// slots use the item-name provider, others the shared table). When the tab
-// cursor is idle, scan the page list for the first occupied slot (preferring
-// slot 8), decompose it into page/column (field3A1 = slot/4, field3A2 =
-// slot%4 via a float multiply), prime the cursors and push the slot VEC3.
-// ============================================================================
-void CItemBoxLine::ShowDetailWin() {
-    if (mNumSel.IsOpen() != 0) return;
-    if (field3A0 != 0) {
-        if (reinterpret_cast<CSysWin*>(&mSysWin)->isOpened() != 0) {
-            if (reinterpret_cast<CSysWin*>(&mSysWin)->isActive() != 0) {
-                reinterpret_cast<CSysWin*>(&mSysWin)->advancePhase3();
-            }
-            return;
-        }
-        CItemBoxPage* page = &mInfo2.mPage;
-        u8 idx = (u8)(field3A2 + (s8)field3A1 * 4);
-        u16 v = ArrayGet12(page->mItemIds, idx);
-        if (v != 0) {
-            u8 bt = ItemBoxGetTab(page, idx);
-            u32 obj;
-            if (bt == 3) {
-                obj = (u32)page->GetItemName(idx);
-            } else {
-                obj = (u32)BdatTouchStringCell("MNU_skill", "help", (u16)v);
-            }
-            reinterpret_cast<CSysWin*>(&mSysWin)->switchKindPane(0);
-            reinterpret_cast<CSysWin*>(&mSysWin)->setKindContent(reinterpret_cast<char*>((u32)obj), 0);
-            reinterpret_cast<CSysWin*>(&mSysWin)->applyKind(1);
-            reinterpret_cast<CSysWin*>(&mSysWin)->openPhase1();
-        }
-        return;
-    }
-    if (reinterpret_cast<CSysWin*>(&mSysWin)->isOpened() != 0) return;
-    CItemBoxPage* page2 = &mInfo2.mPage;
-    u8 found = 0;
-    for (u8 i = 0; i < 12; i++) {
-        if (page2->mItemIds[i] != 0) {
-            page2->mSelSlot = i;
-            if (page2->mItemIds[8] != 0) page2->mSelSlot = 8;
-            found = 1;
-            break;
-        }
-    }
-    if (found != 0) {
-        u8 sel = page2->mSelSlot;
-        field3A0 = 1;
-        field3A1 = (u8)((float)sel * 0.25f);
-        field3A2 = (u8)(sel - (s8)field3A1 * 4);
-        mCurA0.SetVisible(0);
-        mCur70.SetVisible(0);
-        mCur88.SetVisible(1);
-        CIBLVec3 vec;
-        CopyTabSlotVec(&vec, page2->mItemIds, sel);
-        mCur88.setRootPaneTranslate((const nw4r::math::VEC3*)(&vec));
-        playUISound(2);
-    } else {
-        playUISound(5);
-    }
-}
 
-// ============================================================================
 // ItemBoxLine_ResolveFocusId: item-box focus resolver. Returns a cursor/focus id based on
 // the current navigation state and tab position.
 // ============================================================================
@@ -1584,190 +1850,6 @@ void CItemBoxLine::CompactTabList() {
     field58 = 1;
 }
 
-// ============================================================================
-// ItemBoxLine_DrawTabRowText: refresh a tab pane's texture. When a key id is given, resolve
-// its texture name via the shared table (::cf::CfBdat::spItmItemListFileData), try object A
-// (+0x3C) first and fall back to object B (+0x38) with the default name; with
-// no key id, B is used directly. If a resource was found, format the pane
-// name from arg3 and bind the resource to the active layout.
-// ============================================================================
-void CItemBoxLine::DrawTabRowText(u32 arg2, u32 arg3) {
-    u32 result;
-    if (arg2 != 0) {
-        u32 v = BdatGetU16Direct((const void*)::cf::CfBdat::spItmItemListFileData, &lbl_eu_805071B0[0x1ff], arg2);
-        result = (u32)((nw4r::lyt::ArcResourceAccessor*)field3C)->GetResource(0x74696d67, MakeTplNameSysFile((u16)v), 0);
-        if (result == 0) {
-            result = (u32)((nw4r::lyt::ArcResourceAccessor*)field38)->GetResource(0x74696d67, &lbl_eu_805071B0[0x209], 0);
-        }
-    } else {
-        result = (u32)((nw4r::lyt::ArcResourceAccessor*)field38)->GetResource(0x74696d67, &lbl_eu_805071B0[0x209], 0);
-    }
-    if (result != 0) {
-        char buf[0x20];
-        sprintf(buf, &lbl_eu_805071B0[0x21c], arg3 + 1);
-        PaneSetTexPaletteByName(field40, (const char*)buf, (TPLPalette*)result);
-    }
-}
-
-void CItemBoxLine::DrawTabRowIcon(u32 arg2, u32 arg3) {
-    u32 result;
-    if (arg2 != 0) {
-        u32 v = BdatGetU16Direct((const void*)::cf::CfBdat::spItmItemListFileData, &lbl_eu_805071B0[0x22a], arg2);
-        result = (u32)((nw4r::lyt::ArcResourceAccessor*)field3C)->GetResource(0x74696d67, MakeTplNameSysFile((u16)v), 0);
-        if (result == 0) {
-            result = (u32)((nw4r::lyt::ArcResourceAccessor*)field38)->GetResource(0x74696d67, &lbl_eu_805071B0[0x209], 0);
-        }
-    } else {
-        result = (u32)((nw4r::lyt::ArcResourceAccessor*)field38)->GetResource(0x74696d67, &lbl_eu_805071B0[0x209], 0);
-    }
-    if (result != 0) {
-        char buf[0x20];
-        sprintf(buf, &lbl_eu_805071B0[0x22f], arg3 + 1);
-        PaneSetTexPaletteByName(field40, (const char*)buf, (TPLPalette*)result);
-    }
-}
-
-// ============================================================================
-// ItemBoxLine_FormatName: format the item-slot name into the line. The kind selector
-// (BdatGetItemType) picks the item-name path (kinds 3/9) which resolves the
-// name via the owner table; otherwise a signed hint byte picks one of the
-// fixed strings / name providers.
-// ============================================================================
-void CItemBoxLine::FormatName(u32 arg4, s8 arg5, u32 arg6) {
-    char buf[0x20];
-    sprintf(buf, "txt_num%02d", arg6 + 1);
-    ml::FixStr<32> str;
-    str.clear();
-    u8 sel = (u8)BdatGetItemType(arg4);
-    if (sel == 3 || sel == 9) {
-        u8 v = BdatGetU8Direct((const void*)::cf::CfBdat::spItmItemListFileData, "rankType", arg4);
-        char* name = BdatTouchStringCell("MNU_item", "name", 0x1e - (v - 1));
-        str.format("%s", name);
-        PaneMatSetTevColorsByName(field40, buf, &itemBoxLine_pageLabelNeutralTop, &itemBoxLine_pageLabelNeutralBottom);
-    } else if (arg5 > 0) {
-        str.format("%d");
-        PaneMatSetTevColorsByName(field40, buf, &itemBoxLine_pageLabelNeutralTop, &itemBoxLine_pageLabelNeutralBottom);
-    } else if (arg5 == 0) {
-        const char* s = "";
-        str = s;
-    } else if (arg5 == -2) {
-        str = getErrMesText16();
-        PaneMatSetTevColorsByName(field40, buf, &itemBoxLine_pageLabelSelectedTop, &itemBoxLine_pageLabelSelectedBottom);
-    } else if (arg5 == -3) {
-        str = getErrMesText15();
-        PaneMatSetTevColorsByName(field40, buf, &itemBoxLine_pageValueSelectedTop, &itemBoxLine_pageValueSelectedBottom);
-    } else {
-        const char* s = "";
-        str = s;
-    }
-    LayoutSetTextBoxFmtValue(field40, buf, str.mString, 0);
-}
-
-// ============================================================================
-// ItemBoxLine_SetPaneVisible: format the pane name (skipping the leading marker char of the
-// caller's string) into a temp buffer, look the pane up on the layout root,
-// and toggle its visibility from the caller's flag.
-// ============================================================================
-void CItemBoxLine::SetPaneVisible(u32 index, bool visible) {
-    char buf[0x20];
-    sprintf(buf, &lbl_eu_805071B0[0x35d], index + 1);
-    nw4r::lyt::Pane* root = field40->GetRootPane();
-    nw4r::lyt::Pane* pane = root->FindPaneByName(buf, true);
-    setPaneVisible(pane, !visible);
-}
-
-// ============================================================================
-// ItemBoxLine_RebuildTabList: refresh the seven tab-slot panes (same shape as
-// ItemBoxLine_RefreshTabLabels), then, when the slot is unoccupied, bind a texture resource
-// (object A fallback path) onto the slot's pane name; finally dispatch the
-// slot entry through ItemBoxLine_BindSlotTexture. r25 keeps tabEntries[i] across the calls.
-// ============================================================================
-void CItemBoxLine::RebuildTabList() {
-    for (u8 i = 0; i < 7; i++) {
-        char nameA[0x20];
-        char nameB[0x20];
-        sprintf(nameA, &lbl_eu_805071B0[0x369], (u8)i + 1);
-        sprintf(nameB, &lbl_eu_805071B0[0x378], (u8)i + 1);
-        bool visA = false;
-        bool visB = false;
-        u8 entry = tabEntries[i];
-        if (entry != 0) {
-            if ((u8)i == (s8)field6D) {
-                visA = true;
-                visB = false;
-            } else {
-                visA = false;
-                visB = true;
-            }
-        }
-        setPaneVisible(field40->GetRootPane()->FindPaneByName(nameA, true), visA);
-        setPaneVisible(field40->GetRootPane()->FindPaneByName(nameB, true), visB);
-        if (unk64[i] == 0) {
-            u32 tex = (u32)((nw4r::lyt::ArcResourceAccessor*)field38)->GetResource(0x74696d67, &lbl_eu_805071B0[0x387], 0);
-            if (tex != 0) {
-                PaneSetTexPaletteByName(field40, (const char*)nameB, (TPLPalette*)tex);
-            }
-        }
-        BindSlotTexture(entry, i);
-    }
-}
-
-// ============================================================================
-// ItemBoxLine_BindSlotTexture: bind the per-slot tab texture and nameplate colour. Resolve
-// the texture name by slot kind (kinds 1..12 format a fixed pool string,
-// kind 0 uses the shared "timeg" fallback name directly), fetch the texture
-// through resource object A (falling back to B), bind it to the pane named
-// "%d"-style by index+1, and - unless the slot's occupancy byte is set -
-// push the default nameplate colour through the pane's colour-source virtual.
-// ============================================================================
-void CItemBoxLine::BindSlotTexture(u8 kind, u32 index) {
-    const u32 tag = 0x74696d67;
-    char buf[0x20];
-    u32 tex;
-    if (kind == 0) {
-        tex = (u32)((nw4r::lyt::ArcResourceAccessor*)field38)->GetResource(tag, "mf00_com00_dmy.tpl", 0);
-    } else {
-        switch (kind) {
-        case 2:  sprintf(buf, "mf00_reg20_cat00.tpl"); break;
-        case 3:  sprintf(buf, "mf00_reg20_cat07.tpl"); break;
-        case 4:  sprintf(buf, "mf00_reg20_cat01.tpl"); break;
-        case 5:  sprintf(buf, "mf00_reg20_cat02.tpl"); break;
-        case 6:  sprintf(buf, "mf00_reg20_cat03.tpl"); break;
-        case 7:  sprintf(buf, "mf00_reg20_cat04.tpl"); break;
-        case 8:  sprintf(buf, "mf00_reg20_cat05.tpl"); break;
-        case 9:  sprintf(buf, "mf00_reg20_cat06.tpl"); break;
-        case 10:  sprintf(buf, "mf00_reg20_cat09.tpl"); break;
-        case 11: sprintf(buf, "mf00_reg20_cat10.tpl"); break;
-        case 12: sprintf(buf, "mf00_reg20_cat11.tpl"); break;
-        case 13: sprintf(buf, "mf00_reg20_cat08.tpl"); break;
-        }
-        tex = (u32)((nw4r::lyt::ArcResourceAccessor*)field3C)->GetResource(tag, buf, 0);
-            if (tex == 0) {
-                tex = (u32)((nw4r::lyt::ArcResourceAccessor*)field38)->GetResource(tag, "mf00_com00_dmy.tpl", 0);
-        }
-    }
-    if (tex != 0) {
-        char nameB[0x20];
-        sprintf(nameB, "pic_cat%02d", index + 1);
-        PaneSetTexPaletteByName(field40, (const char*)nameB, (TPLPalette*)tex);
-        if (unk64[index] == 0) {
-            GXColorS10 col;
-            col.b = 0x14;
-            col.g = 0x14;
-            col.r = 0x14;
-            col.a = field396.a;
-            nw4r::lyt::Pane* pane = field40->GetRootPane()->FindPaneByName(nameB, true);
-            if (pane != NULL) {
-                // +0x68 is Pane::GetMaterial; the material's mTevCols[0]
-                // lives at +0x10 (see CIBLColorSrc).
-                nw4r::lyt::Material* mat = pane->GetMaterial();
-                if (mat != NULL) {
-                    mat->SetTevColor(0, col);
-                }
-            }
-        }
-    }
-}
 
 // ============================================================================
 // ItemBoxLine_RefreshLineState: refresh the item-box line - push the current tab entry (tab
@@ -1842,8 +1924,8 @@ void CItemBoxLine::RefreshTabLabels(unsigned int) {
     for (u8 i = 0; i < 7; i++) {
         char nameA[0x20];
         char nameB[0x20];
-        sprintf(nameA, &lbl_eu_805071B0[0x369], (u8)i + 1);
-        sprintf(nameB, &lbl_eu_805071B0[0x378], (u8)i + 1);
+        sprintf(nameA, "pic_tbbcon%02d", (u8)i + 1);
+        sprintf(nameB, "pic_tbbcof%02d", (u8)i + 1);
         bool visA = false;
         bool visB = false;
         if (tabEntries[i] != 0) {
@@ -1872,30 +1954,78 @@ void CItemBoxLine::RefreshLineRows() {
     s16 sel = unk38C;
     if (sel == -1) {
         char name[0x20];
-        sprintf(name, &lbl_eu_805071B0[0x351], (s8)field6D + 1);
+        sprintf(name, "pic_cat%02d", (s8)field6D + 1);
         nw4r::lyt::Pane* pane =
             field40->GetRootPane()->FindPaneByName(name, true);
         nw4r::math::VEC3 pos;
         AccumPaneWorldPos(&pos, pane);
         nw4r::lyt::Pane* refPane =
-            field40->GetRootPane()->FindPaneByName(&lbl_eu_805071B0[0x3cc], true);
+            field40->GetRootPane()->FindPaneByName("nul_proportion", true);
         pos.x *= refPane->GetScale().x;
         ((CBaseCur*)&mCurA0)->setRootPaneTranslate((const nw4r::math::VEC3*)(&pos));
         mCurA0.SetVisible(1);
         mCur70.SetVisible(0);
     } else {
         char name[0x20];
-        sprintf(name, &lbl_eu_805071B0[0x3db], sel + 1);
+        sprintf(name, "nulbtn%02d", sel + 1);
         nw4r::lyt::Pane* pane =
             field40->GetRootPane()->FindPaneByName(name, true);
         nw4r::math::VEC3 pos;
         AccumPaneWorldPos(&pos, pane);
         nw4r::lyt::Pane* refPane =
-            field40->GetRootPane()->FindPaneByName(&lbl_eu_805071B0[0x3cc], true);
+            field40->GetRootPane()->FindPaneByName("nul_proportion", true);
         pos.x *= refPane->GetScale().x;
         mCur70.setRootPaneTranslate((const nw4r::math::VEC3*)(&pos));
         mCur70.SetVisible(1);
         mCurA0.SetVisible(0);
+    }
+}
+
+// ============================================================================
+// ItemBoxLine_SetInfo2Item: dispatch on the active tab (tab entry type) and the item pick
+// kind to route to a tab-specific layout refresh / page-navigation helper.
+// ============================================================================
+void CItemBoxLine::SetInfo2Item(u32 itemData) {
+    ResetPageTables(itemData);
+    setLayoutTextBoxNumber(field40, "txt_havenum", CItem_sumFamilyByte6(itemData));
+    switch ((int)tabEntries[(s8)field6D]) {
+    case 2:
+    case 4:
+    case 5:
+    case 6:
+    case 7:
+    case 8:
+    case 0xd:
+        setPaneVisible(field40->GetRootPane()->FindPaneByName("nul_bcln01", true), 1);
+        break;
+    case 3:
+        setPaneVisible(field40->GetRootPane()->FindPaneByName("nul_bcln50", true), 1);
+        break;
+    case 0xa:
+    case 0xb:
+        setPaneVisible(field40->GetRootPane()->FindPaneByName("nul_bcln60", true), 1);
+        break;
+    }
+    switch ((int)(BdatGetItemType(itemData) & 0xff)) {
+    case 2:
+        ShowSlotCounts(itemData);
+        break;
+    case 4:
+    case 5:
+    case 6:
+    case 7:
+    case 8:
+        ShowSlotCounters(itemData);
+        break;
+    case 3:
+        FormatGemName(itemData);
+        break;
+    case 0xa:
+        ShowPageTabs(itemData);
+        break;
+    case 0xd:
+        FormatKindDName(itemData);
+        break;
     }
 }
 
@@ -1911,42 +2041,42 @@ void CItemBoxLine::ResetPageTables(u32 itemData) {
                      (nw4r::math::VEC3*)((float*)&vec), lbl_eu_806680F8, lbl_eu_806680F8, lbl_eu_806680F8)));
     }
     // Hide every line pane (pane names from the shared pool; all hidden).
-    setPaneVisible(field40->GetRootPane()->FindPaneByName(&lbl_eu_805071B0[0x413], true), 0);
-    setPaneVisible(field40->GetRootPane()->FindPaneByName(&lbl_eu_805071B0[0x41f], true), 0);
-    setPaneVisible(field40->GetRootPane()->FindPaneByName(&lbl_eu_805071B0[0x42b], true), 0);
-    setPaneVisible(field40->GetRootPane()->FindPaneByName(&lbl_eu_805071B0[0x437], true), 0);
-    setPaneVisible(field40->GetRootPane()->FindPaneByName(&lbl_eu_805071B0[0x3f2], true), 0);
-    setPaneVisible(field40->GetRootPane()->FindPaneByName(&lbl_eu_805071B0[0x3fd], true), 0);
-    setPaneVisible(field40->GetRootPane()->FindPaneByName(&lbl_eu_805071B0[0x408], true), 0);
-    setPaneVisible(field40->GetRootPane()->FindPaneByName(&lbl_eu_805071B0[0x443], true), 0);
-    setPaneVisible(field40->GetRootPane()->FindPaneByName(&lbl_eu_805071B0[0x44e], true), 0);
-    setPaneVisible(field40->GetRootPane()->FindPaneByName(&lbl_eu_805071B0[0x459], true), 0);
-    setPaneVisible(field40->GetRootPane()->FindPaneByName(&lbl_eu_805071B0[0x464], true), 0);
-    setPaneVisible(field40->GetRootPane()->FindPaneByName(&lbl_eu_805071B0[0x46f], true), 0);
-    setPaneVisible(field40->GetRootPane()->FindPaneByName(&lbl_eu_805071B0[0x47a], true), 0);
-    setPaneVisible(field40->GetRootPane()->FindPaneByName(&lbl_eu_805071B0[0x485], true), 0);
-    setPaneVisible(field40->GetRootPane()->FindPaneByName(&lbl_eu_805071B0[0x490], true), 0);
-    setPaneVisible(field40->GetRootPane()->FindPaneByName(&lbl_eu_805071B0[0x49b], true), 0);
-    setPaneVisible(field40->GetRootPane()->FindPaneByName(&lbl_eu_805071B0[0x4a6], true), 0);
-    setPaneVisible(field40->GetRootPane()->FindPaneByName(&lbl_eu_805071B0[0x4b2], true), 0);
-    setPaneVisible(field40->GetRootPane()->FindPaneByName(&lbl_eu_805071B0[0x4be], true), 0);
-    setPaneVisible(field40->GetRootPane()->FindPaneByName(&lbl_eu_805071B0[0x4ca], true), 0);
-    setPaneVisible(field40->GetRootPane()->FindPaneByName(&lbl_eu_805071B0[0x4d6], true), 0);
-    setPaneVisible(field40->GetRootPane()->FindPaneByName(&lbl_eu_805071B0[0x4e2], true), 0);
-    setPaneVisible(field40->GetRootPane()->FindPaneByName(&lbl_eu_805071B0[0x4ee], true), 0);
-    setPaneVisible(field40->GetRootPane()->FindPaneByName(&lbl_eu_805071B0[0x4fb], true), 0);
-    setPaneVisible(field40->GetRootPane()->FindPaneByName(&lbl_eu_805071B0[0x508], true), 0);
-    setPaneVisible(field40->GetRootPane()->FindPaneByName(&lbl_eu_805071B0[0x515], true), 0);
-    setPaneVisible(field40->GetRootPane()->FindPaneByName(&lbl_eu_805071B0[0x51f], true), 0);
-    setPaneVisible(field40->GetRootPane()->FindPaneByName(&lbl_eu_805071B0[0x529], true), 0);
-    setPaneVisible(field40->GetRootPane()->FindPaneByName(&lbl_eu_805071B0[0x533], true), 0);
-    setPaneVisible(field40->GetRootPane()->FindPaneByName(&lbl_eu_805071B0[0x53e], true), 0);
-    setPaneVisible(field40->GetRootPane()->FindPaneByName(&lbl_eu_805071B0[0x549], true), 0);
-    setPaneVisible(field40->GetRootPane()->FindPaneByName(&lbl_eu_805071B0[0x555], true), 0);
-    setPaneVisible(field40->GetRootPane()->FindPaneByName(&lbl_eu_805071B0[0x561], true), 0);
-    setPaneVisible(field40->GetRootPane()->FindPaneByName(&lbl_eu_805071B0[0x56c], true), 0);
-    setPaneVisible(field40->GetRootPane()->FindPaneByName(&lbl_eu_805071B0[0x577], true), 0);
-    setPaneVisible(field40->GetRootPane()->FindPaneByName(&lbl_eu_805071B0[0x583], true), 0);
+    setPaneVisible(field40->GetRootPane()->FindPaneByName("nul_para_01", true), 0);
+    setPaneVisible(field40->GetRootPane()->FindPaneByName("nul_para_50", true), 0);
+    setPaneVisible(field40->GetRootPane()->FindPaneByName("nul_para_60", true), 0);
+    setPaneVisible(field40->GetRootPane()->FindPaneByName("nul_para_80", true), 0);
+    setPaneVisible(field40->GetRootPane()->FindPaneByName("nul_bcln01", true), 0);
+    setPaneVisible(field40->GetRootPane()->FindPaneByName("nul_bcln50", true), 0);
+    setPaneVisible(field40->GetRootPane()->FindPaneByName("nul_bcln60", true), 0);
+    setPaneVisible(field40->GetRootPane()->FindPaneByName("txt_para01", true), 0);
+    setPaneVisible(field40->GetRootPane()->FindPaneByName("txt_para04", true), 0);
+    setPaneVisible(field40->GetRootPane()->FindPaneByName("txt_para08", true), 0);
+    setPaneVisible(field40->GetRootPane()->FindPaneByName("txt_para10", true), 0);
+    setPaneVisible(field40->GetRootPane()->FindPaneByName("txt_para11", true), 0);
+    setPaneVisible(field40->GetRootPane()->FindPaneByName("txt_para22", true), 0);
+    setPaneVisible(field40->GetRootPane()->FindPaneByName("txt_para23", true), 0);
+    setPaneVisible(field40->GetRootPane()->FindPaneByName("txt_para24", true), 0);
+    setPaneVisible(field40->GetRootPane()->FindPaneByName("txt_para25", true), 0);
+    setPaneVisible(field40->GetRootPane()->FindPaneByName("txt_value02", true), 0);
+    setPaneVisible(field40->GetRootPane()->FindPaneByName("txt_value04", true), 0);
+    setPaneVisible(field40->GetRootPane()->FindPaneByName("txt_value07", true), 0);
+    setPaneVisible(field40->GetRootPane()->FindPaneByName("txt_value08", true), 0);
+    setPaneVisible(field40->GetRootPane()->FindPaneByName("txt_value09", true), 0);
+    setPaneVisible(field40->GetRootPane()->FindPaneByName("txt_value22", true), 0);
+    setPaneVisible(field40->GetRootPane()->FindPaneByName("pic_ethcol01", true), 0);
+    setPaneVisible(field40->GetRootPane()->FindPaneByName("pic_ethcol02", true), 0);
+    setPaneVisible(field40->GetRootPane()->FindPaneByName("pic_ethcol03", true), 0);
+    setPaneVisible(field40->GetRootPane()->FindPaneByName("txt_eth01", true), 0);
+    setPaneVisible(field40->GetRootPane()->FindPaneByName("txt_eth02", true), 0);
+    setPaneVisible(field40->GetRootPane()->FindPaneByName("txt_eth03", true), 0);
+    setPaneVisible(field40->GetRootPane()->FindPaneByName("txt_para50", true), 0);
+    setPaneVisible(field40->GetRootPane()->FindPaneByName("txt_para51", true), 0);
+    setPaneVisible(field40->GetRootPane()->FindPaneByName("txt_value50", true), 0);
+    setPaneVisible(field40->GetRootPane()->FindPaneByName("txt_value51", true), 0);
+    setPaneVisible(field40->GetRootPane()->FindPaneByName("txt_para60", true), 0);
+    setPaneVisible(field40->GetRootPane()->FindPaneByName("txt_para61", true), 0);
+    setPaneVisible(field40->GetRootPane()->FindPaneByName("txt_value60", true), 0);
+    setPaneVisible(field40->GetRootPane()->FindPaneByName("txt_value61", true), 0);
 }
 
 // ============================================================================
@@ -2058,42 +2188,42 @@ void CItemBoxLine::ShowSlotCounts(u32 itemData) {
 // (a compare ladder plus a jump-table switch) and refresh the pane colors.
 // ============================================================================
 void CItemBoxLine::ShowSlotCounters(u32 itemData) {
-    setPaneVisible(field40->GetRootPane()->FindPaneByName(&lbl_eu_805071B0[0x413], true), 1);
-    setPaneVisible(field40->GetRootPane()->FindPaneByName(&lbl_eu_805071B0[0x443], true), 1);
-    setPaneVisible(field40->GetRootPane()->FindPaneByName(&lbl_eu_805071B0[0x44e], true), 1);
-    setPaneVisible(field40->GetRootPane()->FindPaneByName(&lbl_eu_805071B0[0x459], true), 1);
-    setPaneVisible(field40->GetRootPane()->FindPaneByName(&lbl_eu_805071B0[0x464], true), 1);
-    setPaneVisible(field40->GetRootPane()->FindPaneByName(&lbl_eu_805071B0[0x46f], true), 1);
-    setPaneVisible(field40->GetRootPane()->FindPaneByName(&lbl_eu_805071B0[0x47a], true), 1);
-    setPaneVisible(field40->GetRootPane()->FindPaneByName(&lbl_eu_805071B0[0x485], true), 1);
-    setPaneVisible(field40->GetRootPane()->FindPaneByName(&lbl_eu_805071B0[0x490], true), 1);
-    setPaneVisible(field40->GetRootPane()->FindPaneByName(&lbl_eu_805071B0[0x49b], true), 1);
-    setPaneVisible(field40->GetRootPane()->FindPaneByName(&lbl_eu_805071B0[0x4ca], true), 1);
-    setPaneVisible(field40->GetRootPane()->FindPaneByName(&lbl_eu_805071B0[0x4d6], true), 1);
-    setPaneVisible(field40->GetRootPane()->FindPaneByName(&lbl_eu_805071B0[0x4e2], true), 1);
-    setPaneVisible(field40->GetRootPane()->FindPaneByName(&lbl_eu_805071B0[0x4ee], true), 1);
-    setPaneVisible(field40->GetRootPane()->FindPaneByName(&lbl_eu_805071B0[0x4fb], true), 1);
-    setPaneVisible(field40->GetRootPane()->FindPaneByName(&lbl_eu_805071B0[0x508], true), 1);
-    setPaneVisible(field40->GetRootPane()->FindPaneByName(&lbl_eu_805071B0[0x515], true), 1);
-    setPaneVisible(field40->GetRootPane()->FindPaneByName(&lbl_eu_805071B0[0x51f], true), 1);
-    setPaneVisible(field40->GetRootPane()->FindPaneByName(&lbl_eu_805071B0[0x529], true), 1);
+    setPaneVisible(field40->GetRootPane()->FindPaneByName("nul_para_01", true), 1);
+    setPaneVisible(field40->GetRootPane()->FindPaneByName("txt_para01", true), 1);
+    setPaneVisible(field40->GetRootPane()->FindPaneByName("txt_para04", true), 1);
+    setPaneVisible(field40->GetRootPane()->FindPaneByName("txt_para08", true), 1);
+    setPaneVisible(field40->GetRootPane()->FindPaneByName("txt_para10", true), 1);
+    setPaneVisible(field40->GetRootPane()->FindPaneByName("txt_para11", true), 1);
+    setPaneVisible(field40->GetRootPane()->FindPaneByName("txt_para22", true), 1);
+    setPaneVisible(field40->GetRootPane()->FindPaneByName("txt_para23", true), 1);
+    setPaneVisible(field40->GetRootPane()->FindPaneByName("txt_para24", true), 1);
+    setPaneVisible(field40->GetRootPane()->FindPaneByName("txt_para25", true), 1);
+    setPaneVisible(field40->GetRootPane()->FindPaneByName("txt_value08", true), 1);
+    setPaneVisible(field40->GetRootPane()->FindPaneByName("txt_value09", true), 1);
+    setPaneVisible(field40->GetRootPane()->FindPaneByName("txt_value22", true), 1);
+    setPaneVisible(field40->GetRootPane()->FindPaneByName("pic_ethcol01", true), 1);
+    setPaneVisible(field40->GetRootPane()->FindPaneByName("pic_ethcol02", true), 1);
+    setPaneVisible(field40->GetRootPane()->FindPaneByName("pic_ethcol03", true), 1);
+    setPaneVisible(field40->GetRootPane()->FindPaneByName("txt_eth01", true), 1);
+    setPaneVisible(field40->GetRootPane()->FindPaneByName("txt_eth02", true), 1);
+    setPaneVisible(field40->GetRootPane()->FindPaneByName("txt_eth03", true), 1);
 
     // Kind-based counter text into the three slots.
     u32 table = (u32)::cf::CfBdat::spItmEquipListFileData;
     BdatGetItemType(itemData);
     u16 kind = BdatGetItemId(itemData);
-    u8 a = BdatGetU8Direct((const void*)table, &lbl_eu_805071B0[0x59e], kind);
-    u8 b = BdatGetU8Direct((const void*)table, &lbl_eu_805071B0[0x5a6], kind);
-    u8 c = BdatGetU8Direct((const void*)table, &lbl_eu_805071B0[0x5d8], kind);
-    setLayoutTextBoxNumber(field40, &lbl_eu_805071B0[0x4ca], a);
-    setLayoutTextBoxNumber(field40, &lbl_eu_805071B0[0x4d6], b);
-    setLayoutTextBoxNumber(field40, &lbl_eu_805071B0[0x4e2], c);
+    u8 a = BdatGetU8Direct((const void*)table, "arm_phy", kind);
+    u8 b = BdatGetU8Direct((const void*)table, "arm_eth", kind);
+    u8 c = BdatGetU8Direct((const void*)table, "eva_rate", kind);
+    setLayoutTextBoxNumber(field40, "txt_value08", a);
+    setLayoutTextBoxNumber(field40, "txt_value09", b);
+    setLayoutTextBoxNumber(field40, "txt_value22", c);
 
     // Slot-name format ladder (kind selector). The range check and the three
     // equality tests each branch to their case body; the bodies sit after the
     // tests in retail order (0x32, 0x31, 0x30, 0x2e) with the default last.
     u32 selTable = (u32)::cf::CfBdat::spItmEquipListFileData;
-    u8 sel = BdatGetU8Direct((const void*)selTable, &lbl_eu_805071B0[0x26],
+    u8 sel = BdatGetU8Direct((const void*)selTable, "arm_type",
                            BdatGetItemId(itemData));
     char* name;
     if ((u32)(sel - 4) <= 9) goto sel2e;
@@ -2102,121 +2232,49 @@ void CItemBoxLine::ShowSlotCounters(u32 itemData) {
     if ((int)sel == 1) goto sel30;
     goto selElse;
 sel32:
-    name = BdatTouchStringCell(&lbl_eu_805071B0[0x248], &lbl_eu_805071B0[0x6c], 0x32);
+    name = BdatTouchStringCell("MNU_item", "name", 0x32);
     goto selDone;
 sel31:
-    name = BdatTouchStringCell(&lbl_eu_805071B0[0x248], &lbl_eu_805071B0[0x6c], 0x31);
+    name = BdatTouchStringCell("MNU_item", "name", 0x31);
     goto selDone;
 sel30:
-    name = BdatTouchStringCell(&lbl_eu_805071B0[0x248], &lbl_eu_805071B0[0x6c], 0x30);
+    name = BdatTouchStringCell("MNU_item", "name", 0x30);
     goto selDone;
 sel2e:
-    name = BdatTouchStringCell(&lbl_eu_805071B0[0x248], &lbl_eu_805071B0[0x6c], 0x2e);
+    name = BdatTouchStringCell("MNU_item", "name", 0x2e);
     goto selDone;
 selElse:
     name = 0;
 selDone:
-    LayoutSetTextBoxFmtValue(field40, &lbl_eu_805071B0[0x490], name, 0);
+    LayoutSetTextBoxFmtValue(field40, "txt_para24", name, 0);
 
     // Secondary slot-name switch (selectors 4..12 via jump table).
     char* name2 = 0;
     switch (sel) {
-    case 4: name2 = BdatTouchStringCell(&lbl_eu_805071B0[0x5e1], &lbl_eu_805071B0[0x6c], 0x77); break;
-    case 5: name2 = BdatTouchStringCell(&lbl_eu_805071B0[0x5e1], &lbl_eu_805071B0[0x6c], 0x78); break;
-    case 6: name2 = BdatTouchStringCell(&lbl_eu_805071B0[0x5e1], &lbl_eu_805071B0[0x6c], 0x79); break;
-    case 7: name2 = BdatTouchStringCell(&lbl_eu_805071B0[0x5e1], &lbl_eu_805071B0[0x6c], 0x7a); break;
-    case 8: name2 = BdatTouchStringCell(&lbl_eu_805071B0[0x5e1], &lbl_eu_805071B0[0x6c], 0x7b); break;
-    case 9: name2 = BdatTouchStringCell(&lbl_eu_805071B0[0x5e1], &lbl_eu_805071B0[0x6c], 0x7c); break;
-    case 10: name2 = BdatTouchStringCell(&lbl_eu_805071B0[0x5e1], &lbl_eu_805071B0[0x6c], 0x7d); break;
-    case 11: name2 = BdatTouchStringCell(&lbl_eu_805071B0[0x5e1], &lbl_eu_805071B0[0x6c], 0x7e); break;
-    case 12: name2 = BdatTouchStringCell(&lbl_eu_805071B0[0x5e1], &lbl_eu_805071B0[0x6c], 0x7f); break;
+    case 4: name2 = BdatTouchStringCell("pc_arts", "name", 0x77); break;
+    case 5: name2 = BdatTouchStringCell("pc_arts", "name", 0x78); break;
+    case 6: name2 = BdatTouchStringCell("pc_arts", "name", 0x79); break;
+    case 7: name2 = BdatTouchStringCell("pc_arts", "name", 0x7a); break;
+    case 8: name2 = BdatTouchStringCell("pc_arts", "name", 0x7b); break;
+    case 9: name2 = BdatTouchStringCell("pc_arts", "name", 0x7c); break;
+    case 10: name2 = BdatTouchStringCell("pc_arts", "name", 0x7d); break;
+    case 11: name2 = BdatTouchStringCell("pc_arts", "name", 0x7e); break;
+    case 12: name2 = BdatTouchStringCell("pc_arts", "name", 0x7f); break;
     }
-    LayoutSetTextBoxFmtValue(field40, &lbl_eu_805071B0[0x49b], name2, 0);
+    LayoutSetTextBoxFmtValue(field40, "txt_para25", name2, 0);
 
     // Refresh the slot pane colors.
-    PaneMatSetTevColorsByName(field40, &lbl_eu_805071B0[0x443], &itemBoxLine_tabLabelSelectedTop, &itemBoxLine_tabLabelSelectedBottom);
-    PaneMatSetTevColorsByName(field40, &lbl_eu_805071B0[0x464], &itemBoxLine_tabLabelNeutralTop, &itemBoxLine_tabLabelNeutralBottom);
-    PaneMatSetTevColorsByName(field40, &lbl_eu_805071B0[0x46f], &itemBoxLine_tabLabelNeutralTop, &itemBoxLine_tabLabelNeutralBottom);
-    PaneMatSetTevColorsByName(field40, &lbl_eu_805071B0[0x44e], &itemBoxLine_tabLabelSelectedTop, &itemBoxLine_tabLabelSelectedBottom);
-    PaneMatSetTevColorsByName(field40, &lbl_eu_805071B0[0x459], &itemBoxLine_tabLabelSelectedTop, &itemBoxLine_tabLabelSelectedBottom);
-    PaneMatSetTevColorsByName(field40, &lbl_eu_805071B0[0x47a], &itemBoxLine_tabLabelNeutralTop, &itemBoxLine_tabLabelNeutralBottom);
-    PaneMatSetTevColorsByName(field40, &lbl_eu_805071B0[0x485], &itemBoxLine_tabLabelNeutralTop, &itemBoxLine_tabLabelNeutralBottom);
+    PaneMatSetTevColorsByName(field40, "txt_para01", &itemBoxLine_tabLabelSelectedTop, &itemBoxLine_tabLabelSelectedBottom);
+    PaneMatSetTevColorsByName(field40, "txt_para10", &itemBoxLine_tabLabelNeutralTop, &itemBoxLine_tabLabelNeutralBottom);
+    PaneMatSetTevColorsByName(field40, "txt_para11", &itemBoxLine_tabLabelNeutralTop, &itemBoxLine_tabLabelNeutralBottom);
+    PaneMatSetTevColorsByName(field40, "txt_para04", &itemBoxLine_tabLabelSelectedTop, &itemBoxLine_tabLabelSelectedBottom);
+    PaneMatSetTevColorsByName(field40, "txt_para08", &itemBoxLine_tabLabelSelectedTop, &itemBoxLine_tabLabelSelectedBottom);
+    PaneMatSetTevColorsByName(field40, "txt_para22", &itemBoxLine_tabLabelNeutralTop, &itemBoxLine_tabLabelNeutralBottom);
+    PaneMatSetTevColorsByName(field40, "txt_para23", &itemBoxLine_tabLabelNeutralTop, &itemBoxLine_tabLabelNeutralBottom);
     BuildPageData(itemData);
 }
 
 
-// ============================================================================
-// ItemBoxLine_SetInfo2Item: dispatch on the active tab (tab entry type) and the item pick
-// kind to route to a tab-specific layout refresh / page-navigation helper.
-// ============================================================================
-void CItemBoxLine::SetInfo2Item(u32 itemData) {
-    ResetPageTables(itemData);
-    setLayoutTextBoxNumber(field40, &lbl_eu_805071B0[0x3e6], CItem_sumFamilyByte6(itemData));
-    switch ((int)tabEntries[(s8)field6D]) {
-    case 2:
-    case 4:
-    case 5:
-    case 6:
-    case 7:
-    case 8:
-    case 0xd:
-        setPaneVisible(field40->GetRootPane()->FindPaneByName(&lbl_eu_805071B0[0x3f2], true), 1);
-        break;
-    case 3:
-        setPaneVisible(field40->GetRootPane()->FindPaneByName(&lbl_eu_805071B0[0x3fd], true), 1);
-        break;
-    case 0xa:
-    case 0xb:
-        setPaneVisible(field40->GetRootPane()->FindPaneByName(&lbl_eu_805071B0[0x408], true), 1);
-        break;
-    }
-    switch ((int)(BdatGetItemType(itemData) & 0xff)) {
-    case 2:
-        ShowSlotCounts(itemData);
-        break;
-    case 4:
-    case 5:
-    case 6:
-    case 7:
-    case 8:
-        ShowSlotCounters(itemData);
-        break;
-    case 3:
-        FormatGemName(itemData);
-        break;
-    case 0xa:
-        ShowPageTabs(itemData);
-        break;
-    case 0xd:
-        FormatKindDName(itemData);
-        break;
-    }
-}
-
-// ============================================================================
-// ItemBoxLine_ShowPageTabs: show the page tab panes and fill the active item's name /
-// category text into the syswin layout panes.
-// ============================================================================
-void CItemBoxLine::ShowPageTabs(u32 itemData) {
-    setPaneVisible(field40->GetRootPane()->FindPaneByName(&lbl_eu_805071B0[0x42b], true), 1);
-    setPaneVisible(field40->GetRootPane()->FindPaneByName(&lbl_eu_805071B0[0x561], true), 1);
-    setPaneVisible(field40->GetRootPane()->FindPaneByName(&lbl_eu_805071B0[0x56c], true), 1);
-    setPaneVisible(field40->GetRootPane()->FindPaneByName(&lbl_eu_805071B0[0x577], true), 1);
-    setPaneVisible(field40->GetRootPane()->FindPaneByName(&lbl_eu_805071B0[0x583], true), 1);
-    u32 owner = (u32)::cf::CfBdat::spItmCollectListFileData;
-    BdatGetItemType(itemData);
-    u16 cat = BdatGetItemId(itemData);
-    u8 v = BdatGetU8Direct((const void*)owner, &lbl_eu_805071B0[0x5ff], cat);
-    char* name = BdatTouchStringCell(&lbl_eu_805071B0[0x604], &lbl_eu_805071B0[0x6c], v);
-    LayoutSetTextBoxFmtValue(field40, &lbl_eu_805071B0[0x577], name, 0);
-    u8 v2 = BdatGetU8Direct((const void*)owner, &lbl_eu_805071B0[0x610], cat);
-    char* name2;
-    if (0x1a == v2) {        name2 = BdatTouchStringCell(&lbl_eu_805071B0[0x604], &lbl_eu_805071B0[0x6c], 0x14);
-    } else {
-        name2 = BdatGetPtrDirect((const void*)::cf::CfBdat::spFldMapListFileData, &lbl_eu_805071B0[0x6c], v2);
-    }
-    LayoutSetTextBoxFmtValue(field40, &lbl_eu_805071B0[0x583], name2, 0);
-}
 
 // ============================================================================
 // ItemBoxLine_FormatGemName: kind-3 item slot. Shows the five slot panes, resolves the
@@ -2227,7 +2285,6 @@ void CItemBoxLine::ShowPageTabs(u32 itemData) {
 // pane-anchor position into the +0x558 vec.
 // ============================================================================
 void CItemBoxLine::FormatGemName(u32 itemData) {
-    char* pool = lbl_eu_805071B0;
     setPaneVisible(field40->GetRootPane()->FindPaneByName("nul_para_50", true), 1);
     setPaneVisible(field40->GetRootPane()->FindPaneByName("txt_para50", true), 1);
     setPaneVisible(field40->GetRootPane()->FindPaneByName("txt_para51", true), 1);
@@ -2244,7 +2301,6 @@ void CItemBoxLine::FormatGemName(u32 itemData) {
         txt = "";
         LayoutSetTextBoxFmtValue(field40, "txt_value51", txt, 0);
     }
-    char* pool2 = lbl_eu_805071B0;
     char* gemName = BdatGetPtrDirect((const void*)::cf::CfBdat::spBtlSkillListFileData, "name", cat);
     LayoutSetTextBoxFmtValue(field40, "txt_para51", gemName, 0);
     char* lvlName = BdatTouchStringCell(
@@ -2262,6 +2318,32 @@ void CItemBoxLine::FormatGemName(u32 itemData) {
     nw4r::math::VEC3 pos2 = pos;
     copyVEC3((nw4r::math::VEC3*)&mPage.mPos[8], &pos2);
 }
+
+// ============================================================================
+// ItemBoxLine_ShowPageTabs: show the page tab panes and fill the active item's name /
+// category text into the syswin layout panes.
+// ============================================================================
+void CItemBoxLine::ShowPageTabs(u32 itemData) {
+    setPaneVisible(field40->GetRootPane()->FindPaneByName("nul_para_60", true), 1);
+    setPaneVisible(field40->GetRootPane()->FindPaneByName("txt_para60", true), 1);
+    setPaneVisible(field40->GetRootPane()->FindPaneByName("txt_para61", true), 1);
+    setPaneVisible(field40->GetRootPane()->FindPaneByName("txt_value60", true), 1);
+    setPaneVisible(field40->GetRootPane()->FindPaneByName("txt_value61", true), 1);
+    u32 owner = (u32)::cf::CfBdat::spItmCollectListFileData;
+    BdatGetItemType(itemData);
+    u16 cat = BdatGetItemId(itemData);
+    u8 v = BdatGetU8Direct((const void*)owner, "type", cat);
+    char* name = BdatTouchStringCell("MNU_collect", "name", v);
+    LayoutSetTextBoxFmtValue(field40, "txt_value60", name, 0);
+    u8 v2 = BdatGetU8Direct((const void*)owner, "mapID", cat);
+    char* name2;
+    if (0x1a == v2) {        name2 = BdatTouchStringCell("MNU_collect", "name", 0x14);
+    } else {
+        name2 = BdatGetPtrDirect((const void*)::cf::CfBdat::spFldMapListFileData, "name", v2);
+    }
+    LayoutSetTextBoxFmtValue(field40, "txt_value61", name2, 0);
+}
+
 
 
 // ============================================================================
@@ -2402,8 +2484,8 @@ void CItemBoxLine::BuildPageData(u32 itemData) {
 int CItemBoxLine::ProbeAvailability(u32 key) {
     u32 table = (u32)::cf::CfBdat::spItmArtsListFileData;
     BdatGetItemType(key);
-    // No named pool local: retail CSEs the lbl_eu_805071B0 base into a
-    // temp register that is later reused for the BdatGetU8ByTableKey result.
+    // Retail keeps the string-pool base in a temp register that is later
+    // reused for the BdatGetU8ByTableKey result.
     u16 v = BdatGetItemId(key);
     u8 a = BdatGetU8Direct((const void*)table, "memory_type", v);
     u8 b = BdatGetU8Direct((const void*)table, "pc_type", v);
@@ -2461,8 +2543,7 @@ bool CItemBoxLine::OnFileEvent(CEventFile* evt) {
                       (nw4r::lyt::ArcResourceAccessor*)this->field38,
                       "mf02_box01_boxsh_info_in.brlan");
         nw4r::lyt::Pane* root = this->field40->GetRootPane();
-        void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1,
-                                                                          this->field40);
+        void* fontObj = CDeviceFont::getFontInfo(1, this->field40);
         ApplyFontToTxtPanes(root, (const nw4r::ut::Font*)(((IDeviceFontInfo*)fontObj)->getFont()));
 
         // Seed the seven slot-name textboxes with the line text.
@@ -2490,7 +2571,7 @@ bool CItemBoxLine::OnFileEvent(CEventFile* evt) {
             // the material's mTevCols[0].
             nw4r::lyt::Material* mat = namePane->GetMaterial();
             GXColorS10 colorTmp = mat->GetTevColor(0);
-            __as__11_GXColorS10FRC11_GXColorS10(&this->field396, &colorTmp);
+            this->field396 = colorTmp;
         }
 
         // Bind the line text into the sixteen label panes.
@@ -2546,33 +2627,27 @@ bool CItemBoxLine::OnFileEvent(CEventFile* evt) {
         nw4r::lyt::Pane* pane443 = this->field40->GetRootPane()->
                                        FindPaneByName("txt_para01", true);
         GXColorS10 c0 = PaneMatGetS16Quad((nw4r::lyt::Pane*)pane443, 0);
-        __as__11_GXColorS10FRC11_GXColorS10(&itemBoxLine_tabLabelNeutralTop,
-                                            &c0);
+        itemBoxLine_tabLabelNeutralTop = c0;
         GXColorS10 c1 = PaneMatGetS16Quad((nw4r::lyt::Pane*)pane443, 1);
-        __as__11_GXColorS10FRC11_GXColorS10(&itemBoxLine_tabLabelNeutralBottom,
-                                            &c1);
+        itemBoxLine_tabLabelNeutralBottom = c1;
         itemBoxLine_tabLabelSelectedTop.a = itemBoxLine_tabLabelNeutralTop.a;
         itemBoxLine_tabLabelSelectedBottom.a = itemBoxLine_tabLabelNeutralBottom.a;
 
         nw4r::lyt::Pane* pane4A6 = this->field40->GetRootPane()->
                                        FindPaneByName("txt_value02", true);
         GXColorS10 c2 = PaneMatGetS16Quad((nw4r::lyt::Pane*)pane4A6, 0);
-        __as__11_GXColorS10FRC11_GXColorS10(&itemBoxLine_tabValueNeutralTop,
-                                            &c2);
+        itemBoxLine_tabValueNeutralTop = c2;
         GXColorS10 c3 = PaneMatGetS16Quad((nw4r::lyt::Pane*)pane4A6, 1);
-        __as__11_GXColorS10FRC11_GXColorS10(&itemBoxLine_tabValueNeutralBottom,
-                                            &c3);
+        itemBoxLine_tabValueNeutralBottom = c3;
         itemBoxLine_tabValueSelectedTop.a = itemBoxLine_tabValueNeutralTop.a;
         itemBoxLine_tabValueSelectedBottom.a = itemBoxLine_tabValueNeutralBottom.a;
 
         nw4r::lyt::Pane* pane76B = this->field40->GetRootPane()->
                                        FindPaneByName("txt_num01", true);
         GXColorS10 c4 = PaneMatGetS16Quad((nw4r::lyt::Pane*)pane76B, 0);
-        __as__11_GXColorS10FRC11_GXColorS10(&itemBoxLine_pageLabelNeutralTop,
-                                            &c4);
+        itemBoxLine_pageLabelNeutralTop = c4;
         GXColorS10 c5 = PaneMatGetS16Quad((nw4r::lyt::Pane*)pane76B, 1);
-        __as__11_GXColorS10FRC11_GXColorS10(&itemBoxLine_pageLabelNeutralBottom,
-                                            &c5);
+        itemBoxLine_pageLabelNeutralBottom = c5;
         itemBoxLine_pageLabelSelectedTop.a = itemBoxLine_pageLabelNeutralTop.a;
         itemBoxLine_pageValueSelectedTop.a = itemBoxLine_pageLabelNeutralTop.a;
         itemBoxLine_pageLabelSelectedBottom.a = itemBoxLine_pageLabelNeutralBottom.a;
@@ -2739,7 +2814,7 @@ u8 ItemBoxLine_ProbePageSlot(CIBLTabFull* self, u32 index) {
 }
 
 // .sbss UI colour objects owned by this TU (retail 0x806645D8..0x80664640),
-// declared in retail address order in CItemBoxLineImports.hpp.
+// declared in retail address order at the top of this TU.
 GXColorS10 itemBoxLine_tabLabelNeutralTop;
 GXColorS10 itemBoxLine_tabLabelNeutralBottom;
 GXColorS10 itemBoxLine_tabLabelSelectedTop;

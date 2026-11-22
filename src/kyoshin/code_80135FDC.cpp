@@ -1,6 +1,7 @@
 // Auto-scaffolded catalog TU for kyoshin/code_80135FDC
 // Replace stubs with high-level C/C++ during decomp.
 #include "kyoshin/cf/CtrlRemoteApi.hpp"
+#include "monolib/lod/CTaskLOD.hpp"
 #include "kyoshin/cf/CfBdat.hpp"
 #include "libs/monolib/src/scn/CScn_8049603C.hpp" // Scn_QueryUnk80State (single owner decl)
 #include "kyoshin/cf/CtrlObjectParamSymbols.hpp"
@@ -25,6 +26,7 @@
 #include <nw4r/lyt/lyt_material.h>
 #include "monolib/device/CDeviceVI.hpp"
 #include "monolib/device/CDeviceSC.hpp"
+#include "monolib/device/CDeviceFile.hpp"
 #include <revolution/gx/GXTransform.h>
 #include <revolution/gx/GXPixel.h>
 #include <revolution/mtx/mtx44.h>
@@ -1604,10 +1606,9 @@ extern "C" char* MakeIconTplName(u32 row) {
     return &gIconNameBuffer[0];
 }
 
-extern "C" void cancel__11CDeviceFileFP11CFileHandle(void*);
 void closeFileHandle(CFileHandle** handlePtr) {
     if (*handlePtr) {
-        cancel__11CDeviceFileFP11CFileHandle(*handlePtr);
+        CDeviceFile::cancel(*handlePtr);
         *handlePtr = 0;
     }
 }
@@ -1994,7 +1995,7 @@ extern "C" void InitCol6LodTables(const char* arg) {
     if (gm == NULL) return;
 
     for (u8 i = 0; i <= 0x63; i++) {
-        deactivateLOD__8CTaskLODFv(i);
+        CTaskLOD::deactivateLOD(i);
         void* snd = getScnHandle();
         ScnData_FwdB7DD4(snd, i);
         forwardMpfCallC__17UnkClass_8047BB54Fv(&gm->field_0xF0, i);
@@ -2016,7 +2017,7 @@ extern "C" void InitCol6LodTables(const char* arg) {
     for (;;) {
         s8 ch = (s8)chars[j];
         if (ch < 0) break;
-        activateLOD__8CTaskLODFv(ch);
+        CTaskLOD::activateLOD(ch);
         void* snd = getScnHandle();
         ScnData_FwdB7D9C(snd, ch);
         forwardMpfCallB__17UnkClass_8047BB54Fv(&gm->field_0xF0, ch);
@@ -2024,15 +2025,15 @@ extern "C" void InitCol6LodTables(const char* arg) {
     }
 
     if (CtrlRemote_TouchBitByArg(0x7D0) == 1) {
-        activateLOD__8CTaskLODFv(0x50);
+        CTaskLOD::activateLOD(0x50);
         void* snd = getScnHandle();
         ScnData_FwdB7D9C(snd, 0x50);
         forwardMpfCallB__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x50);
-        activateLOD__8CTaskLODFv(0x63);
+        CTaskLOD::activateLOD(0x63);
         snd = getScnHandle();
         ScnData_FwdB7D9C(snd, 0x63);
         forwardMpfCallB__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x63);
-        activateLOD__8CTaskLODFv(0x09);
+        CTaskLOD::activateLOD(0x09);
         snd = getScnHandle();
         ScnData_FwdB7D9C(snd, 0x09);
         forwardMpfCallB__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x09);
@@ -2043,206 +2044,206 @@ extern "C" void InitCol6LodTables(const char* arg) {
         u32 base = (u32)((i + 1) * 10);
         for (u8 k = 1; k <= n; k++) {
             u8 v1 = (u8)(base + k);
-            activateLOD__8CTaskLODFv(v1);
+            CTaskLOD::activateLOD(v1);
             void* snd = getScnHandle();
             ScnData_FwdB7D9C(snd, v1);
             forwardMpfCallB__17UnkClass_8047BB54Fv(&gm->field_0xF0, v1);
 
             u8 v2 = (u8)(k + 0x3C);
-            activateLOD__8CTaskLODFv(v2);
+            CTaskLOD::activateLOD(v2);
             snd = getScnHandle();
             ScnData_FwdB7D9C(snd, v2);
             forwardMpfCallB__17UnkClass_8047BB54Fv(&gm->field_0xF0, v2);
 
             u8 v3 = (u8)(k + 0x46);
-            deactivateLOD__8CTaskLODFv(v3);
+            CTaskLOD::deactivateLOD(v3);
             snd = getScnHandle();
             ScnData_FwdB7DD4(snd, v3);
             forwardMpfCallC__17UnkClass_8047BB54Fv(&gm->field_0xF0, v3);
 
             if (v2 == 0x3D) {
-                activateLOD__8CTaskLODFv(0x55);
+                CTaskLOD::activateLOD(0x55);
                 snd = getScnHandle();
                 ScnData_FwdB7D9C(snd, 0x55);
                 forwardMpfCallB__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x55);
             }
             if (v2 == 0x3E) {
-                activateLOD__8CTaskLODFv(0x56);
+                CTaskLOD::activateLOD(0x56);
                 snd = getScnHandle();
                 ScnData_FwdB7D9C(snd, 0x56);
                 forwardMpfCallB__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x56);
             }
             if (v2 == 0x3D) {
-                activateLOD__8CTaskLODFv(0x57);
+                CTaskLOD::activateLOD(0x57);
                 snd = getScnHandle();
                 ScnData_FwdB7D9C(snd, 0x57);
                 forwardMpfCallB__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x57);
             }
             if (v2 == 0x3D) {
-                activateLOD__8CTaskLODFv(0x58);
+                CTaskLOD::activateLOD(0x58);
                 snd = getScnHandle();
                 ScnData_FwdB7D9C(snd, 0x58);
                 forwardMpfCallB__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x58);
             }
             if (CtrlRemote_TouchBitByArg(0x20) >= 0x16E) {
-                activateLOD__8CTaskLODFv(0x59);
+                CTaskLOD::activateLOD(0x59);
                 snd = getScnHandle();
                 ScnData_FwdB7D9C(snd, 0x59);
                 forwardMpfCallB__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x59);
                 if (v1 == 0x0E) {
-                    activateLOD__8CTaskLODFv(0x5A);
+                    CTaskLOD::activateLOD(0x5A);
                     snd = getScnHandle();
                     ScnData_FwdB7D9C(snd, 0x5A);
                     forwardMpfCallB__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x5A);
                 }
             }
             if (v2 == 0x3D) {
-                activateLOD__8CTaskLODFv(0x5B);
+                CTaskLOD::activateLOD(0x5B);
                 snd = getScnHandle();
                 ScnData_FwdB7D9C(snd, 0x5B);
                 forwardMpfCallB__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x5B);
             }
             if (v2 == 0x3D) {
-                activateLOD__8CTaskLODFv(0x5C);
+                CTaskLOD::activateLOD(0x5C);
                 snd = getScnHandle();
                 ScnData_FwdB7D9C(snd, 0x5C);
                 forwardMpfCallB__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x5C);
             }
             if (v2 == 0x3E) {
-                activateLOD__8CTaskLODFv(0x5D);
+                CTaskLOD::activateLOD(0x5D);
                 snd = getScnHandle();
                 ScnData_FwdB7D9C(snd, 0x5D);
                 forwardMpfCallB__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x5D);
             }
             if (v2 == 0x3F) {
-                activateLOD__8CTaskLODFv(0x5E);
+                CTaskLOD::activateLOD(0x5E);
                 snd = getScnHandle();
                 ScnData_FwdB7D9C(snd, 0x5E);
                 forwardMpfCallB__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x5E);
             }
             if (v2 == 0x40) {
-                activateLOD__8CTaskLODFv(0x5F);
+                CTaskLOD::activateLOD(0x5F);
                 snd = getScnHandle();
                 ScnData_FwdB7D9C(snd, 0x5F);
                 forwardMpfCallB__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x5F);
             }
             if (v2 == 0x40) {
-                activateLOD__8CTaskLODFv(0x60);
+                CTaskLOD::activateLOD(0x60);
                 snd = getScnHandle();
                 ScnData_FwdB7D9C(snd, 0x60);
                 forwardMpfCallB__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x60);
             }
             if (v2 == 0x41) {
-                activateLOD__8CTaskLODFv(0x61);
+                CTaskLOD::activateLOD(0x61);
                 snd = getScnHandle();
                 ScnData_FwdB7D9C(snd, 0x61);
                 forwardMpfCallB__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x61);
             }
             if (v2 == 0x41) {
-                activateLOD__8CTaskLODFv(0x62);
+                CTaskLOD::activateLOD(0x62);
                 snd = getScnHandle();
                 ScnData_FwdB7D9C(snd, 0x62);
                 forwardMpfCallB__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x62);
             }
 
-            if (getLODData__8CTaskLODFv(0x2D)) {
-                deactivateLOD__8CTaskLODFv(0x50);
+            if (CTaskLOD::getLODData(0x2D)) {
+                CTaskLOD::deactivateLOD(0x50);
                 snd = getScnHandle();
                 ScnData_FwdB7DD4(snd, 0x50);
                 forwardMpfCallC__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x50);
             }
-            if (getLODData__8CTaskLODFv(0x0E)) {
-                deactivateLOD__8CTaskLODFv(0x51);
+            if (CTaskLOD::getLODData(0x0E)) {
+                CTaskLOD::deactivateLOD(0x51);
                 snd = getScnHandle();
                 ScnData_FwdB7DD4(snd, 0x51);
                 forwardMpfCallC__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x51);
             }
-            if (getLODData__8CTaskLODFv(0x2A)) {
-                deactivateLOD__8CTaskLODFv(0x52);
+            if (CTaskLOD::getLODData(0x2A)) {
+                CTaskLOD::deactivateLOD(0x52);
                 snd = getScnHandle();
                 ScnData_FwdB7DD4(snd, 0x52);
                 forwardMpfCallC__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x52);
             }
-            if (getLODData__8CTaskLODFv(0x22)) {
-                deactivateLOD__8CTaskLODFv(0x53);
+            if (CTaskLOD::getLODData(0x22)) {
+                CTaskLOD::deactivateLOD(0x53);
                 snd = getScnHandle();
                 ScnData_FwdB7DD4(snd, 0x53);
                 forwardMpfCallC__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x53);
             }
-            if (getLODData__8CTaskLODFv(0x23)) {
-                deactivateLOD__8CTaskLODFv(0x54);
+            if (CTaskLOD::getLODData(0x23)) {
+                CTaskLOD::deactivateLOD(0x54);
                 snd = getScnHandle();
                 ScnData_FwdB7DD4(snd, 0x54);
                 forwardMpfCallC__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x54);
             }
-            if (getLODData__8CTaskLODFv(0x3E)) {
-                deactivateLOD__8CTaskLODFv(0x55);
+            if (CTaskLOD::getLODData(0x3E)) {
+                CTaskLOD::deactivateLOD(0x55);
                 snd = getScnHandle();
                 ScnData_FwdB7DD4(snd, 0x55);
                 forwardMpfCallC__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x55);
             }
-            if (getLODData__8CTaskLODFv(0x2D)) {
-                deactivateLOD__8CTaskLODFv(0x57);
+            if (CTaskLOD::getLODData(0x2D)) {
+                CTaskLOD::deactivateLOD(0x57);
                 snd = getScnHandle();
                 ScnData_FwdB7DD4(snd, 0x57);
                 forwardMpfCallC__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x57);
             }
-            if (getLODData__8CTaskLODFv(0x2D)) {
-                deactivateLOD__8CTaskLODFv(0x58);
+            if (CTaskLOD::getLODData(0x2D)) {
+                CTaskLOD::deactivateLOD(0x58);
                 snd = getScnHandle();
                 ScnData_FwdB7DD4(snd, 0x58);
                 forwardMpfCallC__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x58);
             }
-            if (getLODData__8CTaskLODFv(0x0E)) {
-                deactivateLOD__8CTaskLODFv(0x59);
+            if (CTaskLOD::getLODData(0x0E)) {
+                CTaskLOD::deactivateLOD(0x59);
                 snd = getScnHandle();
                 ScnData_FwdB7DD4(snd, 0x59);
                 forwardMpfCallC__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x59);
             }
-            if (getLODData__8CTaskLODFv(0x0B)) {
-                deactivateLOD__8CTaskLODFv(0x5B);
+            if (CTaskLOD::getLODData(0x0B)) {
+                CTaskLOD::deactivateLOD(0x5B);
                 snd = getScnHandle();
                 ScnData_FwdB7DD4(snd, 0x5B);
                 forwardMpfCallC__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x5B);
             }
-            if (getLODData__8CTaskLODFv(0x15)) {
-                deactivateLOD__8CTaskLODFv(0x5C);
+            if (CTaskLOD::getLODData(0x15)) {
+                CTaskLOD::deactivateLOD(0x5C);
                 snd = getScnHandle();
                 ScnData_FwdB7DD4(snd, 0x5C);
                 forwardMpfCallC__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x5C);
             }
-            if (getLODData__8CTaskLODFv(0x0C)) {
-                deactivateLOD__8CTaskLODFv(0x5D);
+            if (CTaskLOD::getLODData(0x0C)) {
+                CTaskLOD::deactivateLOD(0x5D);
                 snd = getScnHandle();
                 ScnData_FwdB7DD4(snd, 0x5D);
                 forwardMpfCallC__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x5D);
             }
-            if (getLODData__8CTaskLODFv(0x0D)) {
-                deactivateLOD__8CTaskLODFv(0x5E);
+            if (CTaskLOD::getLODData(0x0D)) {
+                CTaskLOD::deactivateLOD(0x5E);
                 snd = getScnHandle();
                 ScnData_FwdB7DD4(snd, 0x5E);
                 forwardMpfCallC__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x5E);
             }
-            if (getLODData__8CTaskLODFv(0x0E)) {
-                deactivateLOD__8CTaskLODFv(0x5F);
+            if (CTaskLOD::getLODData(0x0E)) {
+                CTaskLOD::deactivateLOD(0x5F);
                 snd = getScnHandle();
                 ScnData_FwdB7DD4(snd, 0x5F);
                 forwardMpfCallC__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x5F);
             }
-            if (getLODData__8CTaskLODFv(0x2C)) {
-                deactivateLOD__8CTaskLODFv(0x60);
+            if (CTaskLOD::getLODData(0x2C)) {
+                CTaskLOD::deactivateLOD(0x60);
                 snd = getScnHandle();
                 ScnData_FwdB7DD4(snd, 0x60);
                 forwardMpfCallC__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x60);
             }
-            if (getLODData__8CTaskLODFv(0x0F)) {
-                deactivateLOD__8CTaskLODFv(0x61);
+            if (CTaskLOD::getLODData(0x0F)) {
+                CTaskLOD::deactivateLOD(0x61);
                 snd = getScnHandle();
                 ScnData_FwdB7DD4(snd, 0x61);
                 forwardMpfCallC__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x61);
             }
-            if (getLODData__8CTaskLODFv(0x19)) {
-                deactivateLOD__8CTaskLODFv(0x62);
+            if (CTaskLOD::getLODData(0x19)) {
+                CTaskLOD::deactivateLOD(0x62);
                 snd = getScnHandle();
                 ScnData_FwdB7DD4(snd, 0x62);
                 forwardMpfCallC__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x62);
@@ -2253,7 +2254,7 @@ extern "C" void InitCol6LodTables(const char* arg) {
     u8 n2 = (u8)CtrlRemote_TouchBitByArg(0x802);
     for (u8 k = 1; k <= n2; k++) {
         u8 v = (u8)(k + 0x32);
-        activateLOD__8CTaskLODFv(v);
+        CTaskLOD::activateLOD(v);
         void* snd = getScnHandle();
         ScnData_FwdB7D9C(snd, v);
         forwardMpfCallB__17UnkClass_8047BB54Fv(&gm->field_0xF0, v);

@@ -16,8 +16,6 @@ void operator delete(void* p) throw();
 struct CTexWorkObj;
 extern "C" GXTexObj* TexMan_AllocBuffer_0208(CTexWorkObj* obj, u16 w, u16 h, u32 fmt);
 extern "C" void TexMan_ReleaseArg_02D8(CTexWorkObj* obj, GXTexObj* tex);
-extern "C" void insetRectToView__5CViewFRQ22ml5CRectP5CView(ml::CRect* rect,
-                                                           CView* view);
 extern "C" void setupLightVtxFormat(int fmt, int mode);
 extern "C" void setupLightTevColor(int a, int b, int c);
 extern "C" void setupLightTevAlpha(int a, int b, int c);
@@ -94,7 +92,7 @@ void CScnBlend::drawFilter(CScnFilterHost* param) {
     CScnBlend* ths = this;
     CScnBlendView* view = reinterpret_cast<CScnBlendView*>(param);
     ml::CRect rect;
-    insetRectToView__5CViewFRQ22ml5CRectP5CView(&rect, CView::getCurrentView());
+    CView::insetRectToView(rect, CView::getCurrentView());
 
     if (ths->mRect.h) {
         GXLoadPosMtxImm(ml::CMat34::identity.m, 0);

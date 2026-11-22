@@ -6,6 +6,9 @@
 // this instead of re-declaring it locally.
 
 class CScn;
+namespace ml {
+struct CVec3;
+}
 
 // Shared scene object (@sdata21) and event/presentation flag word (.sbss):
 // canonical declarations for the whole tree; definitions in CfGameManager.cpp.
@@ -19,4 +22,4 @@ extern u32 gmPauseFlags;
 
 // Presentation flag word and aim-point vector owned by this module (.sbss/.bss).
 extern u32 gmPresentationFlag2C;
-extern float gmAimPoint[3];
+extern ml::CVec3 gmAimPoint;

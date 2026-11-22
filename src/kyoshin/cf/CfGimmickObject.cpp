@@ -2,23 +2,12 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+#include "monolib/lod/CTaskLOD.hpp"
 #include "monolib/scn/CScn.hpp"
 #include "kyoshin/cf/object/CfObjectMoveApi.hpp"
 #include "kyoshin/cf/object/CfObject.hpp"
 #include "kyoshin/cf/CfGimmickObject.hpp"
 static float delta = 0.0f;
-// Free-function targets of the PMF tables below (defined later in this TU).
-int GimObjGateOnStateFlags(cf::CfGimmickObject* self);
-int GimObjGateStepAvailability(cf::CfGimmickObject* self);
-int GimObjTickStepGate(cf::CfGimmickObject* self);
-int GimObjDriveSpawnEffects(cf::CfGimmickObject* self);
-int GimObjStepDone();
-int GimObjCheckStepBusy(cf::CfGimmickObject* self);
-int GimObjAdvanceStep(cf::CfGimmickObject* self);
-int GimObjDriveStepActivation(cf::CfGimmickObject* self);
-int GimObjTickCountdownSteps(cf::CfGimmickObject* self);
-int GimObjTickSpawnSteps(cf::CfGimmickObject* self);
-int GimObjRefreshStepState(cf::CfGimmickObject* self);
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 #include "monolib/scn/code_804BC9EC.hpp"
 
@@ -29,22 +18,22 @@ int GimObjRefreshStepState(cf::CfGimmickObject* self);
 // table lands after them at 0xD8, exactly like retail (zeros + section
 // relocs in the .o). Every object sits on an aligned offset.
 __attribute__((used))
-CfGimmickObjectPmfEntry lbl_eu_80534E70[6] = {
-    {{ 0, 0xFFFFFFFFu, (u32)GimObjGateOnStateFlags }},
-    {{ 0, 0xFFFFFFFFu, (u32)GimObjGateStepAvailability }},
-    {{ 0, 0xFFFFFFFFu, (u32)GimObjTickStepGate }},
-    {{ 0, 0xFFFFFFFFu, (u32)GimObjDriveSpawnEffects }},
-    {{ 0, 0xFFFFFFFFu, (u32)GimObjStepDone }},
-    {{ 0, 0xFFFFFFFFu, (u32)GimObjCheckStepBusy }},
+cf::CfGimmickObjectPMF cf::CfGimmickObject::sGateStateHandlers[6] = {
+    &cf::CfGimmickObject::GimObjGateOnStateFlags,
+    &cf::CfGimmickObject::GimObjGateStepAvailability,
+    &cf::CfGimmickObject::GimObjTickStepGate,
+    &cf::CfGimmickObject::GimObjDriveSpawnEffects,
+    &cf::CfGimmickObject::GimObjStepDone,
+    &cf::CfGimmickObject::GimObjCheckStepBusy,
 };
 __attribute__((used))
-CfGimmickObjectPmfEntry lbl_eu_80534EB8[6] = {
-    {{ 0, 0xFFFFFFFFu, (u32)GimObjAdvanceStep }},
-    {{ 0, 0xFFFFFFFFu, (u32)GimObjAdvanceStep }},
-    {{ 0, 0xFFFFFFFFu, (u32)GimObjDriveStepActivation }},
-    {{ 0, 0xFFFFFFFFu, (u32)GimObjTickCountdownSteps }},
-    {{ 0, 0xFFFFFFFFu, (u32)GimObjTickSpawnSteps }},
-    {{ 0, 0xFFFFFFFFu, (u32)GimObjRefreshStepState }},
+cf::CfGimmickObjectPMF cf::CfGimmickObject::sStepStateHandlers[6] = {
+    &cf::CfGimmickObject::GimObjAdvanceStep,
+    &cf::CfGimmickObject::GimObjAdvanceStep,
+    &cf::CfGimmickObject::GimObjDriveStepActivation,
+    &cf::CfGimmickObject::GimObjTickCountdownSteps,
+    &cf::CfGimmickObject::GimObjTickSpawnSteps,
+    &cf::CfGimmickObject::GimObjRefreshStepState,
 };
 __attribute__((used))
 char* gGimObjAreaColumnNames[8] = { // name-guess: eight per-area bdat column-name slots
@@ -65,10 +54,6 @@ using namespace cf;
 
 // getBdatStringColumnValue: canonical decl in plugin/ocBdat.hpp (pulled in
 // by harness_catalog.hpp) with the s32(long) row parameter.
-
-// Same-TU availability checks used by the ctor's initial step seeding.
-int GimObjGateOnStateFlags(cf::CfGimmickObject* self);
-int GimObjGateStepAvailability(cf::CfGimmickObject* self);
 
 // Column fetch helpers mirroring retail's (u16)/(u8) truncation round-trip
 // through the ctor frame (same shape as the matched CfGimmickItem ctor).
@@ -209,13 +194,13 @@ extern "C" cf::CfGimmickObject* __ct__cf_CfGimmickObject(
         if ((*word & bit) != 0)
             continue;
         if ((self->field_161 & 0x2) != 0) {
-            setLODEnable__8CTaskLODFv(lod, 0);
+            CTaskLOD::setLODEnable(lod, 0);
             ScnData_FwdB7DD4(getScnHandle(), lod);
         } else if (self->field_162 != 0 || self->field_163 != 0) {
-            setLODEnable__8CTaskLODFv(lod, 1);
+            CTaskLOD::setLODEnable(lod, 1);
             ScnData_FwdB7D9C(getScnHandle(), lod);
         }
-        attachLODObject__8CTaskLODFv(lod, 0);
+        CTaskLOD::attachLODObject(lod, 0);
         *word |= bit;
     }
 
@@ -248,7 +233,7 @@ extern "C" cf::CfGimmickObject* __ct__cf_CfGimmickObject(
         // Collision-gated: run the availability chain and jump straight to
         // step 3 when the map object and both checks pass.
         if (CfGimmick_CheckStateFlag2CC8((void*)(u32)self->field_64) != 0 &&
-            GimObjGateOnStateFlags(self) != 0 && GimObjGateStepAvailability(self) != 0) {
+            self->GimObjGateOnStateFlags() != 0 && self->GimObjGateStepAvailability() != 0) {
             GimObjActivateStepRange(self, 0, 3);
             self->field_188 = 3;
         }
@@ -318,9 +303,9 @@ cf::CfGimmickObject::~CfGimmickObject() {
 
 // GimObjDriveStepMachine - step-machine driver. While the step index stays below 6,
 // promote the 0x80000 busy flag to 0x40000000, then dispatch through the
-// field_74 0x400 gate: the lbl_eu_80534EB8 pmf table when set, otherwise the
+// field_74 0x400 gate: the sStepStateHandlers PMF table when set, otherwise the
 // GimObjUpdateStepCountdowns helper (which may clear work via CfGimmick_SetGlobalFlag8) or the
-// lbl_eu_80534E70 pmf table. Stop on a 0 return and run the cleanup hook.
+// sGateStateHandlers PMF table. Stop on a 0 return and run the cleanup hook.
 void GimObjDriveStepMachine(cf::CfGimmickObject* self) {
     while (self->field_188 < 6) {
         if ((self->field_74 & 0x80000) != 0)
@@ -328,7 +313,7 @@ void GimObjDriveStepMachine(cf::CfGimmickObject* self) {
             // reuse the branch-test value).
             *(volatile u32*)&self->field_74 |= 0x40000000;
         if ((self->field_74 & 0x400) != 0) {
-            if ((self->*lbl_eu_80534EB8[self->field_188].p)() == 0)
+            if ((self->*cf::CfGimmickObject::sStepStateHandlers[self->field_188])() == 0)
                 break;
         } else {
             if (GimObjUpdateStepCountdowns(self) != 0) {
@@ -336,7 +321,7 @@ void GimObjDriveStepMachine(cf::CfGimmickObject* self) {
                     CfGimmick_SetGlobalFlag8();
                 break;
             }
-            if ((self->*lbl_eu_80534E70[self->field_188].p)() != 0)
+            if ((self->*cf::CfGimmickObject::sGateStateHandlers[self->field_188])() != 0)
                 self->field_74 |= 0x400;
             else
                 break;
@@ -365,7 +350,7 @@ extern "C" void GimObjFinishStep(u8* self) {
 // sound entry, refreshes the linked map object (CfObjectMove_setAnimModeArgs) and the area
 // manager attach, updates the +0x190/+0x192 sound state, and finally applies
 // per-LOD frame updates to both registered LOD tasks.
-__declspec(noinline) void GimObjActivateStepRange(cf::CfGimmickObject* self, int a, int b) {
+void GimObjActivateStepRange(cf::CfGimmickObject* self, int a, int b) {
     if (self->field_15E == 1)
         self->field_188 = 0;
     else
@@ -524,42 +509,42 @@ __declspec(noinline) void GimObjActivateStepRange(cf::CfGimmickObject* self, int
         if (a < b)
             lastId = self->field_A4[b - 1].field_06;
         if (lastId != 0)
-            setLODObject__8CTaskLODFv(lod, lastId);
+            CTaskLOD::setLODObject(lod, lastId);
         // u16 -> f32 via the direct cast: MWCC emits the retail 2^52
         // double-magic idiom (lis 0x4330 stack-slot pair + lfd + fsubs).
         if (frames != 0)
-            updateLODObject__8CTaskLODFv(lod, (f32)frames);
+            CTaskLOD::updateLODObject(lod, (f32)frames);
         if (flags == 0)
             continue;
         if ((flags & 0x8) != 0) {
             if ((flags & 0x4) != 0) {
             } else
-                clearLODEntry__8CTaskLODFv(lod);
-            attachLODObject__8CTaskLODFv(lod, 0);
+                CTaskLOD::clearLODEntry(lod);
+            CTaskLOD::attachLODObject(lod, 0);
         } else if ((flags & 0x1) != 0) {
-            clearLODEntry__8CTaskLODFv(lod);
-            detachLODObject__8CTaskLODFv(lod, 0);
+            CTaskLOD::clearLODEntry(lod);
+            CTaskLOD::detachLODObject(lod, 0);
             if ((flags & 0x10) != 0) {
-                addLODEntry__8CTaskLODFv(lod, 0);
-                attachLODObject__8CTaskLODFv(lod, 0);
+                CTaskLOD::addLODEntry(lod, 0);
+                CTaskLOD::attachLODObject(lod, 0);
             } else {
-                addLODEntry__8CTaskLODFv(lod, 1);
-                attachLODObject__8CTaskLODFv(lod, 1);
+                CTaskLOD::addLODEntry(lod, 1);
+                CTaskLOD::attachLODObject(lod, 1);
             }
         } else {
             if ((flags & 0x4) != 0) {
-                detachLODObject__8CTaskLODFv(lod, 1);
+                CTaskLOD::detachLODObject(lod, 1);
                 if ((flags & 0x10) != 0) {
-                    addLODEntry__8CTaskLODFv(lod, 0);
-                    attachLODObject__8CTaskLODFv(lod, 0);
+                    CTaskLOD::addLODEntry(lod, 0);
+                    CTaskLOD::attachLODObject(lod, 0);
                 } else {
-                    addLODEntry__8CTaskLODFv(lod, 1);
-                    attachLODObject__8CTaskLODFv(lod, 1);
+                    CTaskLOD::addLODEntry(lod, 1);
+                    CTaskLOD::attachLODObject(lod, 1);
                 }
             } else if ((flags & 0x30) != 0) {
                 // Retail issues the rebuild call twice back-to-back.
-                attachLODObject__8CTaskLODFv(lod, 0);
-                attachLODObject__8CTaskLODFv(lod, 0);
+                CTaskLOD::attachLODObject(lod, 0);
+                CTaskLOD::attachLODObject(lod, 0);
             }
         }
     }
@@ -569,7 +554,7 @@ __declspec(noinline) void GimObjActivateStepRange(cf::CfGimmickObject* self, int
 void GimObjRefreshLodTasks(cf::CfGimmickObject* self, int mode) {
     for (int i = 0; i < 2; i++) {
         if (self->field_70[i] != 0) {
-            setLODEnable__8CTaskLODFv(self->field_70[i], mode);
+            CTaskLOD::setLODEnable(self->field_70[i], mode);
             if (mode != 0) {
                 ScnData_FwdB7D9C(getScnHandle(), self->field_70[i]);
             } else {
@@ -606,8 +591,8 @@ refresh:
     if ((self->field_74 & 0x10) != 0)
         return;
     if (mode != 0) {
-        f32 base = getLODDistance__8CTaskLODFv(lod);
-        f32 v = getLODLevel__8CTaskLODFv(lod);
+        f32 base = CTaskLOD::getLODDistance(lod);
+        f32 v = CTaskLOD::getLODLevel(lod);
         u32 w = self->field_74;
         self->field_178 = v - base;
         // volatile read so MWCC re-loads field_74 here instead of reusing w
@@ -615,7 +600,7 @@ refresh:
         if ((w & 0x20000000) != 0)
             *(volatile u32*)&self->field_74 |= 0x40000000;
     } else {
-        self->field_178 = getLODDistance__8CTaskLODFv(lod);
+        self->field_178 = CTaskLOD::getLODDistance(lod);
     }
     self->field_74 |= 0x10;
 }
@@ -642,13 +627,13 @@ int GimObjUpdateStepCountdowns(cf::CfGimmickObject* self) {
                     GimObjRefreshLodTasks(self, 0);
                     for (int i = 0; i < 2; i++) {
                         if (self->field_70[i] != 0)
-                            refreshLOD__8CTaskLODFv(self->field_70[i],
+                            CTaskLOD::refreshLOD(self->field_70[i],
                     }
                 } else {
                     f32 fade = v / (f32)self->field_18A;
                     for (int i = 0; i < 2; i++) {
                         if (self->field_70[i] != 0)
-                            refreshLOD__8CTaskLODFv(self->field_70[i], fade);
+                            CTaskLOD::refreshLOD(self->field_70[i], fade);
                     }
                 }
             } else {
@@ -666,12 +651,12 @@ int GimObjUpdateStepCountdowns(cf::CfGimmickObject* self) {
             } else {
                 for (int i = 0; i < 2; i++) {
                     if (self->field_70[i] != 0) {
-                        f32 cur = getLODDistance__8CTaskLODFv(self->field_70[i]);
-                        f32 tgt = getLODLevel__8CTaskLODFv(self->field_70[i]);
+                        f32 cur = CTaskLOD::getLODDistance(self->field_70[i]);
+                        f32 tgt = CTaskLOD::getLODLevel(self->field_70[i]);
                         f32 s = cur + step;
                         if (tgt <= s)
                             s -= tgt;
-                        removeLODEntry__8CTaskLODFv(self->field_70[i], s);
+                        CTaskLOD::removeLODEntry(self->field_70[i], s);
                     }
                 }
                 result = 1;
@@ -688,8 +673,8 @@ int GimObjUpdateStepCountdowns(cf::CfGimmickObject* self) {
                 if ((flags & 0x40000000) != 0) {
                     for (int i = 0; i < 2; i++) {
                         if (self->field_70[i] != 0) {
-                            removeLODEntry__8CTaskLODFv(self->field_70[i],
-                            attachLODObject__8CTaskLODFv(self->field_70[i], 0);
+                            CTaskLOD::removeLODEntry(self->field_70[i],
+                            CTaskLOD::attachLODObject(self->field_70[i], 0);
                         }
                     }
                     self->field_74 &= ~0x40000000;
@@ -737,24 +722,24 @@ void GimObjApplyLodFrame(cf::CfGimmickObject* self, u8 lod,
     if (frame->field_0C != 0)
         // u16 -> f32 via the direct cast: MWCC emits the retail 2^52
         // double-magic idiom (lis 0x4330 stack-slot pair + lfd + fsubs).
-        updateLODObject__8CTaskLODFv(lod, (f32)frame->field_0C);
+        CTaskLOD::updateLODObject(lod, (f32)frame->field_0C);
     if ((frame->field_05 & ~0x40) != 0) {
         u8 flags = frame->field_05;
         if ((flags & 0x4) != 0) {
             if ((flags & 0x2) != 0) {}
                 else
-                clearLODEntry__8CTaskLODFv(lod);
-            attachLODObject__8CTaskLODFv(lod, 0);
+                CTaskLOD::clearLODEntry(lod);
+            CTaskLOD::attachLODObject(lod, 0);
         } else if ((flags & 0x1) != 0) {
-            detachLODObject__8CTaskLODFv(lod, 0);
-            attachLODObject__8CTaskLODFv(lod, 1);
+            CTaskLOD::detachLODObject(lod, 0);
+            CTaskLOD::attachLODObject(lod, 1);
             GimObjRefreshLodTimer(self, lod, 1);
         } else if ((flags & 0x2) != 0) {
-            detachLODObject__8CTaskLODFv(lod, 1);
-            attachLODObject__8CTaskLODFv(lod, 1);
+            CTaskLOD::detachLODObject(lod, 1);
+            CTaskLOD::attachLODObject(lod, 1);
             GimObjRefreshLodTimer(self, lod, 0);
         } else if ((flags & 0x30) != 0) {
-            attachLODObject__8CTaskLODFv(lod, 0);
+            CTaskLOD::attachLODObject(lod, 0);
             if ((flags & 0x20) != 0) {
                 // Rebuild the LOD2 range across both registered LOD tasks.
                 self->field_74 |= 0x8;
@@ -763,24 +748,24 @@ void GimObjApplyLodFrame(cf::CfGimmickObject* self, u8 lod,
                 for (i = 0; i < 2; i++) {
                     slot = &self->field_70[i];
                     if (*slot != 0) {
-                        a = getLODDistance__8CTaskLODFv(*slot);
-                        f32 b = getLODLevel__8CTaskLODFv(*slot);
+                        a = CTaskLOD::getLODDistance(*slot);
+                        f32 b = CTaskLOD::getLODLevel(*slot);
                         f32 c = a + constv;
                         if (b <= c)
                             c -= b;
-                        removeLODEntry__8CTaskLODFv(*slot, c);
+                        CTaskLOD::removeLODEntry(*slot, c);
                     }
                 }
             }
         }
         if ((flags & 0x8) != 0)
-            addLODEntry__8CTaskLODFv(lod, 0);
+            CTaskLOD::addLODEntry(lod, 0);
         else
-            addLODEntry__8CTaskLODFv(lod, 1);
+            CTaskLOD::addLODEntry(lod, 1);
     }
     if (self->field_194 != frame->field_06) {
         self->field_194 = frame->field_06;
-        setLODObject__8CTaskLODFv(lod, frame->field_06);
+        CTaskLOD::setLODObject(lod, frame->field_06);
     }
 }
 
@@ -813,7 +798,7 @@ int GimObjProbePartySlots(cf::CfGimmickObject* self) {
 // per-state re-init: cases 1..3 arm a +0x16C countdown (flag 0x2) and heal
 // the linked map object, cases 4..6 arm the peer-gated countdown (flag 0x4),
 // and cases 7/8 refresh the LOD registrations. Uses a jump table.
-__declspec(noinline) void GimObjDispatchStateRefresh(cf::CfGimmickObject* self, u8 arg) {
+void GimObjDispatchStateRefresh(cf::CfGimmickObject* self, u8 arg) {
     // Retail emits an explicit equality test before the switch bounds check,
     // so state 0 must be guarded here instead of folded in as a case label.
     if (arg == 0)
@@ -1081,7 +1066,7 @@ int GimObjTickStepCountdown(cf::CfGimmickObject* self) {
 void GimObjCleanupStepMachine(cf::CfGimmickObject* self) {
     return;
 }
-int GimObjGateOnStateFlags(cf::CfGimmickObject* self) {
+int cf::CfGimmickObject::GimObjGateOnStateFlags() {
     return 0;
 }
 
@@ -1090,7 +1075,7 @@ int GimObjGateOnStateFlags(cf::CfGimmickObject* self) {
 // the scenario/sequence windows, and finally the +0x74 party flags: while
 // the 0x8000/0x10000 bits are raised and the global 0x4 bit is clear, the
 // step machine is (re)initialized via GimObjActivateStepRange.
-int GimObjGateStepAvailability(cf::CfGimmickObject* self) {
+int cf::CfGimmickObject::GimObjGateStepAvailability() {
     return 0;
 }
 
@@ -1100,7 +1085,7 @@ int GimObjGateStepAvailability(cf::CfGimmickObject* self) {
 // current scenario sequence. The +0x66 flags then drive the spawn/effect
 // gate (CfGimmick_QueryTrigger) and, on the fail path, the +0x6A area registration
 // retry (CfGimmick_IsMessageSystemBusy / CfGimmick_CheckPartyIdLoaded).
-int GimObjTickStepGate(cf::CfGimmickObject* self) {
+int cf::CfGimmickObject::GimObjTickStepGate() {
     return 0;
 }
 
@@ -1110,24 +1095,24 @@ int GimObjTickStepGate(cf::CfGimmickObject* self) {
 // reference point, the object list (getReslistB48 / getReslistB68) or the
 // players (slot 0xAC spot). The +0x74 flag 0x800 tail then drives the
 // field_164 state machine (availability table / id-table effects).
-int GimObjDriveSpawnEffects(cf::CfGimmickObject* self) {
+int cf::CfGimmickObject::GimObjDriveSpawnEffects() {
     return 0;
 }
 
-int GimObjStepDone() {
+int cf::CfGimmickObject::GimObjStepDone() {
     return 1;
 }
 
 // Busy-gate: an object flagged busy in field_74 (bit 12) with the global
 // busy bit (gmPauseFlags bit 5) set, or whose +0x14A table fails
 // GimObjScanIdTable, is NOT available (returns 0).
-int GimObjCheckStepBusy(cf::CfGimmickObject* self) {
+int cf::CfGimmickObject::GimObjCheckStepBusy() {
     return 0;
 }
 
 // Advance the +0x188 step counter (down while flagged busy, up otherwise,
 // clamped to 0..6), clearing the working bits on the way out.
-int GimObjAdvanceStep(cf::CfGimmickObject* self) {
+int cf::CfGimmickObject::GimObjAdvanceStep() {
     return 0;
 }
 
@@ -1136,7 +1121,7 @@ int GimObjAdvanceStep(cf::CfGimmickObject* self) {
 // it expires, re-seeds the +0x17C timer from +0x15A, refreshes the area
 // checks (GimObjDispatchStateRefresh / GimObjUpdateStep), sets the busy bits and advances
 // the +0x188 step counter (down while busy, up otherwise, clamped 0..6).
-int GimObjDriveStepActivation(cf::CfGimmickObject* self) {
+int cf::CfGimmickObject::GimObjDriveStepActivation() {
     return 0;
 }
 
@@ -1149,7 +1134,7 @@ int GimObjDriveStepActivation(cf::CfGimmickObject* self) {
 // +0x188 counter advances like GimObjTickSpawnSteps's (down while the 0x08000000
 // busy flag is set, up otherwise, clamped 0..6); the 0x200/0x400/0x80/
 // 0x2000000 work flags are cleared on the way out.
-int GimObjTickCountdownSteps(cf::CfGimmickObject* self) {
+int cf::CfGimmickObject::GimObjTickCountdownSteps() {
     return 0;
 }
 
@@ -1160,7 +1145,7 @@ int GimObjTickCountdownSteps(cf::CfGimmickObject* self) {
 // the +0x188 step counter advances (down while the 0x08000000 busy flag is
 // set, up otherwise, clamped 0..6). The 0x200/0x400/0x8000/0x10000 work
 // flags are cleared on the way out.
-int GimObjTickSpawnSteps(cf::CfGimmickObject* self) {
+int cf::CfGimmickObject::GimObjTickSpawnSteps() {
     return 0;
 }
 
@@ -1186,7 +1171,7 @@ static inline void fireTable144(cf::CfGimmickObject* o) {
             CPartsChange_FireIdEffect(id);
     }
 }
-int GimObjRefreshStepState(cf::CfGimmickObject* self) {
+int cf::CfGimmickObject::GimObjRefreshStepState() {
     return 0;
 }
 

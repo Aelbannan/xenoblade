@@ -680,7 +680,7 @@ void CfMapItemManager::tryPickupMapItem() {
 
     // Battle-state gate: the singleton's instance ring is walked once; a
     // non-zero walk result skips the category probes and aborts the pick-up.
-    void* bm = getInstance__Q22cf14CBattleManagerFv();
+    void* bm = cf::CBattleManager::getInstance();
     if (bm != 0) {
         CBmNode* sentinel = (CBmNode*)((CBmSingletonView*)bm)->field_8;
         CBmNode* cur = *(CBmNode**)sentinel;
@@ -712,7 +712,7 @@ void CfMapItemManager::tryPickupMapItem() {
     void* helpRow = CItem_thunkAllocRecord(kind);
     if (helpRow == 0) return;
     if (((*(u32*)helpRow >> 12) & 0xF) == 0xa) {
-        *((u8*)lbl_eu_80664A10 + 0x14) = 1;
+        cf::CHelpManager::sInstance->mField14 = 1;
     }
     if (rec->handle != 0) {
         hikariInitRecordTimers(rec->handle);
@@ -754,19 +754,10 @@ int CfValueItemManager::isEventActive() { return 1; }
 
 // Init: zero the +0/+2 pair, memset the +4..+9 region, and load the two
 // +0xC/+0x10 floats from the constants.
-struct ItemWorkState {
-    u16 field_00;              // 0x00
-    u16 field_02;              // 0x02
-    u8 field_04[5];            // 0x04: memset region (5 bytes)
-    u8 pad_09[3];
-    f32 field_0C;              // 0x0C
-    f32 field_10;              // 0x10
-};
-
 void* initItemWorkState(ItemWorkState* self) {
     self->field_00 = 0;
     self->field_02 = 2;
-    memset(self->field_04, 0, 5);
+    memset(&self->field_04, 0, 5);
     // E4 is held in a temp across the mr r3,r31 self copy; E8 is consumed
     // directly. This is the closest shape to retail: loads land E4->f1 then
     // E8->f0, but MWCC's scheduler insists on emitting the f0 store first

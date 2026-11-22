@@ -30,7 +30,7 @@ public:
     virtual void Init();
     virtual void Term();
     virtual void Move();
-    void cbRenderBefore();
+    void cbRenderBefore(CScn* scene);
 
     static CMenuItem* create(CProcess* parent, CScn* scene, u8 flag5, u8 flag6);
 

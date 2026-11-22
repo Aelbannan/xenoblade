@@ -14,25 +14,21 @@ using namespace ml;
 // in this TU (vtables, RTTI records, base lists and type-name strings) is
 // emitted by MWCC from the real CDevice / CDeviceException hierarchy.
 
-// Inline copy of CWorkThread::isRunning() visible only in this TU so the
-// retail inline shape (no bl) reproduces in isInitialized/isAllReady.
-// CWorkRoot.cpp keeps the strong out-of-line definition.
-inline bool CWorkThread::isRunning() const {
-    bool exception;
-    if (mFlags & THREAD_FLAG_EXCEPTION) {
-        exception = true;
-    } else {
-        exception = (mMsgQueue.find(EVT_EXCEPTION) >= 0);
-    }
-
-    bool result = false;
-    if (!exception) {
-        bool stateOK = (mState == THREAD_STATE_LOGIN || mState == THREAD_STATE_RUN);
-        if (stateOK) {
-            result = true;
+// Retail inlines CMsgParam<8>::find (and through it CWorkThread::isException /
+// isRunning) into this TU, while CWorkRoot.cpp keeps the strong out-of-line
+// find (same TU-local inline specialization as CLibHbm.cpp).
+template <>
+inline int CMsgParam<8>::find(u32 msg) const {
+    for (int i = 0; i < mRing.mSize; i++) {
+        if (mRing.mArrayPtr[(mRing.mFront + i) % mRing.mCapacity].command == msg) {
+            return i;
         }
     }
-    return result;
+    return -1;
+}
+
+inline bool CWorkThread::isRunning() const {
+    return !isException() && (mState == THREAD_STATE_LOGIN || mState == THREAD_STATE_RUN);
 }
 
 
@@ -70,32 +66,13 @@ namespace {
         // static CDeviceException* spInstance; -> extern "C" lbl_eu_80665654 below
     };
 }
-// Read-only mirror of the private CMsgParam<8> tail inside CWorkThread
-// (queue internals at 0x1A4-0x1B0): lets isInitialized run the retail's fully
-// inlined EVT_EXCEPTION ring scan without an out-of-line find() call
-// (CLibG3d / CDeviceSC pattern).
-struct CDeviceMsgQueueData {
-    u8 pad[0x48];                // vtable + thread header
-    int mState;                  //0x48 (CWorkThread::mState, signed compare)
-    u8 pad2[0x5C - 0x4C];        //0x4C
-    reslist<CWorkThread*> mChildren; //0x5C (CWorkThread::mChildren)
-    u32 mThreadFlags;            //0x7C (CWorkThread::mFlags)
-    u8 pad3[0x1A4 - 0x80];       //0x80..0x1A4 (queue vtable + entries)
-    CMsgParamEntry* mArrayPtr;   // 0x1A4 (mMsgQueue.mArrayPtr)
-    u32 mFront;                  // 0x1A8 (mMsgQueue.mFront)
-    u32 mSize;                   // 0x1AC (mMsgQueue.mSize)
-    u32 mCapacity;               // 0x1B0 (mMsgQueue.mCapacity)
-    u8 pad4[0x1C4 - 0x1B4];      //0x1B4
-    u32 unk1C4;                  // 0x1C4 (CDeviceBase::mFlags)
-};
-
 // Retail .sbss run, in address order: CDevice::spInstance,
-// the exception singleton and the 8-byte device-clock slot.
+// the exception singleton and CDeviceClock::spInstance.
 CDevice* CDevice::spInstance;
 // Defined at file scope with C linkage (was anon-namespace -> MWCC mangled the
 // symbol as lbl_eu_80665654__21@unnamed@CDevice_cpp@, drifting the reloc name).
 extern "C" CDeviceException* lbl_eu_80665654 = nullptr;
-extern "C" { u64 lbl_eu_80665658; }
+CDeviceClock* CDeviceClock::spInstance;
 
 // The region-name pointers are owned by another TU; keep them imported.
 extern "C" const char* lbl_eu_80663670;  // CDevice::devSys1String
@@ -125,209 +102,48 @@ int CDevice::getDevSys2Handle(){
     return lbl_eu_8066367C;   // sDeviceRegion2Handle
 }
 
-// Intrusive child-list shapes used by the fully-inlined isReady scans below.
-// mChildren is a circular std::list-style list: the sentinel node pointer sits
-// at CWorkThread+0x60, nodes are {next, prev, value}.
-struct CDeviceChildNode {
-    CDeviceChildNode* next;     //0x0
-    void* prev;                 //0x4
-    CWorkThread* thread;        //0x8
-};
-struct CDeviceChildList {
-    u8 pad[0x60];
-    CDeviceChildNode* sentinel; //0x60
-};
-
 bool CDevice::isAllReady(){
-    // Retail inlines isRunning() here and re-reads the instance from SDA in
-    // the loop condition (the child pointer reuses the cached register).
-    // Retail caches the ring-scan counter in its own reg ahead of the SDA
-    // singleton load.
-    int i;
-    int foundIndex;
-    const CDeviceMsgQueueData* q = reinterpret_cast<const CDeviceMsgQueueData*>(spInstance);
+    if(!spInstance->isRunning()) return false;
 
-    // Inlined exception check + ring scan (same shape as isInitialized).
-    bool busy;
-    if(q->mThreadFlags & THREAD_FLAG_EXCEPTION){
-        busy = true;
-    } else {
-        for(i = 0; i < q->mSize; i++){
-            if(q->mArrayPtr[(q->mFront + i) % q->mCapacity].command == EVT_EXCEPTION){
-                foundIndex = i;
-                goto done;
-            }
-        }
-        foundIndex = -1;
-    done:
-        busy = foundIndex >= 0;
-    }
-
-    // isRunning() tail: not waiting on an exception and logged in / running.
-    bool running = !busy &&
-        (q->mState == THREAD_STATE_LOGIN || q->mState == THREAD_STATE_RUN);
-    if(!running) return false;
-
-    // Declaration order drives callee-saved coloring (first declared -> r31):
-    // retail holds the node pointer in r31 and the accumulator in r30.
-    CDeviceChildNode* node;
-    bool result;
-    result = true;
-
-    // begin() folds the sentinel load into a scratch reg; the end sentinel is
-    // re-read through the SDA singleton every iteration (the name copy may
-    // alias-mutate the list, so MWCC cannot cache it).
-    node = reinterpret_cast<const CDeviceChildList*>(q)->sentinel->next;
-    for(;
-        node != reinterpret_cast<const CDeviceChildList*>(spInstance)->sentinel;
-        node = node->next)
-    {
-        CWorkThread* thread = node->thread;
-        const CDeviceMsgQueueData* tq = reinterpret_cast<const CDeviceMsgQueueData*>(thread);
-
-        // Inlined exception check + ring scan.
-        bool tBusy;
-        if(tq->mThreadFlags & THREAD_FLAG_EXCEPTION){
-            tBusy = true;
-        } else {
-            for(i = 0; i < tq->mSize; i++){
-                if(tq->mArrayPtr[(tq->mFront + i) % tq->mCapacity].command == EVT_EXCEPTION){
-                    foundIndex = i;
-                    goto tdone;
-                }
-            }
-            foundIndex = -1;
-        tdone:
-            tBusy = foundIndex >= 0;
-        }
-
-        // isRunning() tail: not waiting on an exception and logged in / running.
-        bool tRunning = !tBusy &&
-            (tq->mState == THREAD_STATE_LOGIN || tq->mState == THREAD_STATE_RUN);
-
+    bool result = true;
+    for(reslist<CWorkThread*>::iterator it = spInstance->mChildren.begin(); it != spInstance->mChildren.end(); it++){
+        CWorkThread* thread = *it;
+        bool running = thread->isRunning();
         //If a device that isn't running is found, save its name
-        if(!tRunning){
+        if(!running){
             spNotRunningDeviceName = thread->mName.c_str();
         }
-
-        result = result & tRunning;
+        result = result & running;
     }
 
     return result;
 }
 
 bool CDevice::isColdStartReady(){
-    // Same fully-inlined shape as isAllReady: exception ring scan + state test
-    // on the singleton first, then a walk of the child list.
-    int i;
-    int foundIndex;
-    const CDeviceMsgQueueData* q = reinterpret_cast<const CDeviceMsgQueueData*>(spInstance);
+    if(!spInstance->isRunning()) return false;
 
-    // Inlined exception check + ring scan.
-    bool busy;
-    if(q->mThreadFlags & THREAD_FLAG_EXCEPTION){
-        busy = true;
-    } else {
-        for(i = 0; i < q->mSize; i++){
-            if(q->mArrayPtr[(q->mFront + i) % q->mCapacity].command == EVT_EXCEPTION){
-                foundIndex = i;
-                goto done;
-            }
-        }
-        foundIndex = -1;
-    done:
-        busy = foundIndex >= 0;
-    }
-
-    // isRunning() tail: not waiting on an exception and logged in / running.
-    bool running = !busy &&
-        (q->mState == THREAD_STATE_LOGIN || q->mState == THREAD_STATE_RUN);
-    if(!running) return false;
-
-    // Node pointer walks the list; the end sentinel is re-read through the SDA
-    // singleton every iteration (the name copy may alias-mutate the list).
-    // Node pointer walks the list; the end sentinel is re-read through the SDA
-    // singleton every iteration (the name copy may alias-mutate the list).
-    CDeviceChildNode* node;
-    bool result;
-    result = true;
-
-    node = reinterpret_cast<const CDeviceChildList*>(q)->sentinel->next;
-    for(;
-        node != reinterpret_cast<const CDeviceChildList*>(spInstance)->sentinel;
-        node = node->next)
-    {
+    bool result = true;
+    for(reslist<CWorkThread*>::iterator it = spInstance->mChildren.begin(); it != spInstance->mChildren.end(); it++){
         //BUG: no check that cast is valid - skip devices that were never created.
-        //BUG: no check that cast is valid - skip devices that were never created.
-        if(!static_cast<CDeviceBase*>(node->thread)->CDeviceBase_inline2()) continue;
-        CWorkThread* thread = node->thread;
-        const CDeviceMsgQueueData* tq = reinterpret_cast<const CDeviceMsgQueueData*>(thread);
-        if(!(static_cast<CDeviceBase*>(thread)->CDeviceBase_inline2())) continue;
-
-        // Inlined exception check + ring scan.
-        bool tBusy;
-        if(tq->mThreadFlags & THREAD_FLAG_EXCEPTION){
-            tBusy = true;
-        } else {
-            for(i = 0; i < tq->mSize; i++){
-                if(tq->mArrayPtr[(tq->mFront + i) % tq->mCapacity].command == EVT_EXCEPTION){
-                    foundIndex = i;
-                    goto tdone;
-                }
-            }
-            foundIndex = -1;
-        tdone:
-            tBusy = foundIndex >= 0;
-        }
-
-        // isRunning() tail: not waiting on an exception and logged in / running.
-        bool tRunning = !tBusy &&
-            (tq->mState == THREAD_STATE_LOGIN || tq->mState == THREAD_STATE_RUN);
-
+        if(!static_cast<CDeviceBase*>(*it)->CDeviceBase_inline2()) continue;
+        CWorkThread* thread = *it;
+        if(!static_cast<CDeviceBase*>(thread)->CDeviceBase_inline2()) continue;
+        bool running = thread->isRunning();
         //If a cold-start device isn't running yet, save its name.
-        if(!tRunning){
+        if(!running){
             spColdStartNotRunningDeviceName = thread->mName.c_str();
         }
-
-        result = result & tRunning;
+        result = result & running;
     }
 
     return result;
 }
 
 bool CDevice::isInitialized(){
-    // Retail caches the SDA singleton load in a callee-saved reg for the whole
-    // frameless body; the ring-scan counter takes the other one.
-    int i;
-    int foundIndex;
-    // Retail caches the SDA singleton load in a callee-saved reg for the whole
-    // frameless body; the ring-scan counter takes the other one.
-    const CDeviceMsgQueueData* q = reinterpret_cast<const CDeviceMsgQueueData*>(spInstance);
-
-    // Inlined exception check + ring scan.
-    bool busy;
-    if(q->mThreadFlags & THREAD_FLAG_EXCEPTION){
-        busy = true;
-    } else {
-        for(i = 0; i < q->mSize; i++){
-            if(q->mArrayPtr[(q->mFront + i) % q->mCapacity].command == EVT_EXCEPTION){
-                foundIndex = i;
-                goto done;
-            }
-        }
-        foundIndex = -1;
-    done:
-        busy = foundIndex >= 0;
-    }
-
-    // isRunning() tail: not waiting on an exception and logged in / running.
-    bool running = !busy &&
-        (q->mState == THREAD_STATE_LOGIN || q->mState == THREAD_STATE_RUN);
-    if(!running) return false;
+    if(!spInstance->isRunning()) return false;
 
     bool result = true;
-
-    for(reslist<CWorkThread*>::iterator it = q->mChildren.begin(); it != q->mChildren.end(); it++){
+    for(reslist<CWorkThread*>::iterator it = spInstance->mChildren.begin(); it != spInstance->mChildren.end(); it++){
         CDeviceBase* deviceBase = static_cast<CDeviceBase*>(*it);
         if(!(deviceBase->mFlags & CDeviceBase::FLAG_CREATED)) result = false;
     }

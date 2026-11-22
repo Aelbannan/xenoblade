@@ -234,10 +234,7 @@ extern "C" void CTaskGame_freeObjSlot(void* obj);
 // Enum-list message-fill helper (flat retail name; defined in CUICfManager.cpp).
 extern "C" void startEnumObjects(void*, u32, u32);
 
-// Error-window factory ctor (retail stripped name; defined in CUIErrMesWin.cpp
-// with the same C-ABI shape). extern "C": the call-site reloc must carry the
-// verbatim retail name (a C++ declaration would mangle an __FP... suffix).
-extern "C" void* __ct__802B4DF4(CProcess* parent, u32 a, u16 b, u8 c);
+// Error-window singleton creator: ErrWin_Create, declared by CUIErrMesWin.hpp.
 
 // Polymorphic view of the CfObjEnumList / reslist base for the virtual
 // deleting-dtor dispatch in __dt__80043E88. MWCC lays vtables out as
@@ -356,7 +353,7 @@ extern "C" void EffCtl_StoreFlagAndParams(int a, int b);
 // isSceneLoading and forwards the boolean to the CRI active-setter.
 // Vision resource-copy helper (flat retail name; defined in this TU). Retail
 // CTaskGame_updateStream passes the unk18C struct fields and branches on the result.
-extern "C" int CTaskGame_openVision(u32 a, u32 b, u32 c, u32 d, u32 e, f32 f);
+extern "C" int CTaskGame_openVision(u32 a, u32 b, f32 f, u32 c, u32 d, u32 e);
 // Vision streaming-open helper (flat retail name; defined in this TU). Retail
 // CTaskGame_moveTitleTick / CTaskGame_openVision call it out of line with the path/handle set.
 extern "C" void CTaskGame_openStream(u32 a1, const char* path, u32 a3, u32 a4, u32 a5, u32 a6, float volume);
@@ -401,11 +398,11 @@ extern "C" char* CTaskGame_strAppend(ml::FixStr<32>* str, const char* s);
 extern "C" char* CTaskGame_strAppend2(ml::FixStr<32>* str, const char* s);
 
 // --- cbRenderBefore (IScnRender render-callback slot) imports ---
-// The retail symbol cbRenderBefore__9CTaskGameFv is entered with r3 = this and
+// The retail symbol cbRenderBefore__9CTaskGameFP4CScn is entered with r3 = this and
 // r4 = scene (the CScn::Draw vt+0xC dispatch passes (cb, scn) and the retail
-// vtable thunk subi r3,-0x58 / b cbRenderBefore__9CTaskGameFv preserves r4), so
+// vtable thunk subi r3,-0x58 / b cbRenderBefore__9CTaskGameFP4CScn preserves r4), so
 // declare the caller's shape under extern "C" to keep the verbatim symbol.
-extern "C" void cbRenderBefore__9CTaskGameFv(CTaskGame* self, CScn* scene);
+extern "C" void cbRenderBefore__9CTaskGameFP4CScn(CTaskGame* self, CScn* scene);
 
 // Camera/view object returned by Scn_QueryUnk80State (f32 at +0/+4/+8/+C).
 struct CTaskGameCamView {
@@ -440,8 +437,7 @@ extern "C" CLoad* __ct__CLoad(CLoad* self, u8 arg);
 // Scene render-callback removal + teardown helpers called by Term
 // (retail verbatim symbols).
 extern "C" void removeRenderCB__4CScnFP10IScnRender(CScn* scn, IScnRender* cb);
-extern "C" void __dt__8009D72C();
-extern "C" void __dt__8047BFFC();
+void CtrlObjectParam_DestroyWork(); // CtrlObjectParam.cpp
 extern "C" void releasePoolMemory__17UnkClass_8047CD0CFv();
 
 // --- CTaskGame::Init factory imports (flat retail names; defined in the
@@ -458,8 +454,6 @@ extern "C" u32 CfRes_setD80Flag(u32 val);
 extern "C" void __ct__8009D604();
 // Effect-task factory (defined in CTaskGameEff.cpp with the flat name).
 extern "C" void createGameEffTask(CProcess* parent, CScn* scene);
-extern "C" void* create__8CTaskLODFv(void* parent, void* p1, void* p2, u32 handle,
-                                     u32 size);
 extern "C" void* create__16CTaskColiManagerFv(CProcess* parent, void* scene,
                                                void* view);
 extern "C" void __dt__8047BFA8();

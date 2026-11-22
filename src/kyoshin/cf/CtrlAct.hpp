@@ -684,11 +684,6 @@ extern "C" CtrlActorObj* func_800BBC0C(void* param);
 // sdata2 float constants (const so MWCC references the retail pool slots).
 extern const f32 lbl_eu_80666CF8;   // 0.0f
 
-// 2-float blocks (base + f2 offset pairs for the facing-state table).
-// Non-const: sinit_800D79B4 writes these at static-init time.
-extern f32 lbl_eu_80663EF8[2];   // sda2 (sda21 addressing)
-extern f32 lbl_eu_80573A20[4];   // .data (declared >8B to force lis/addi)
-
 // 3-word enum-list filter table (.rodata) fed to startEnumObjects (target 5).
 extern const u32 lbl_eu_804FC810[3];
 

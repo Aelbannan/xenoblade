@@ -70,38 +70,32 @@ extern "C" void printFormatted__10CFontLayerFv(
     dispatchLayerBB4__11CDeviceFontFv((CDeviceFont*)self, a, b, buffer);
 }
 
-extern "C" void resetCursor__10CFontLayerFv(CFontLayer* self) {
-    // Pure tail call to CDeviceFont (same this).
-    getLayerStatus__11CDeviceFontFv((CDeviceFont*)self);
+void CFontLayer::resetCursor() {
+    getLayerStatus__11CDeviceFontFv((CDeviceFont*)this);
 }
 
-extern "C" void clearBuffer__10CFontLayerFv(CFontLayer* self) {
-    dispatchLayer3FF0__11CDeviceFontFv((CDeviceFont*)self);
+void CFontLayer::clearBuffer() {
+    dispatchLayer3FF0__11CDeviceFontFv((CDeviceFont*)this);
 }
 
-extern "C" void updateLayout__10CFontLayerFv(CFontLayer* self) {
-    dispatchLayer41F8__11CDeviceFontFv((CDeviceFont*)self);
+void CFontLayer::updateLayout() {
+    dispatchLayer41F8__11CDeviceFontFv((CDeviceFont*)this);
 }
 
-extern "C" void drawText__10CFontLayerFv(CFontLayer* self) {
-    dispatchLayer438C__11CDeviceFontFv((CDeviceFont*)self);
+void CFontLayer::drawText() {
+    dispatchLayer438C__11CDeviceFontFv((CDeviceFont*)this);
 }
 
-extern "C" void flushBuffer__10CFontLayerFv(CFontLayer* self) {
-    dispatchLayer4508__11CDeviceFontFv((CDeviceFont*)self);
+void CFontLayer::flushBuffer() {
+    dispatchLayer4508__11CDeviceFontFv((CDeviceFont*)this);
 }
 
-// FULL_MATCH: Pure tail call to CDeviceFont::dispatchLayer4B70 (same this).
-// The 'channel' parameter is accepted but unused in this forwarding path.
 void CFontLayer::fontFlush(int channel) {
-    // Decomp note: reinterpret_cast is used because CFontLayer and
-    // CDeviceFont are unrelated types -- the tail call relies on the
-    // containing object's layout placing both at the same address.
     reinterpret_cast<CDeviceFont*>(this)->dispatchLayer4B70();
 }
 
-extern "C" void setupDraw__10CFontLayerFv(CFontLayer* self) {
-    getLayerData__11CDeviceFontFv((CDeviceFont*)self);
+void CFontLayer::setupDraw() {
+    getLayerData__11CDeviceFontFv((CDeviceFont*)this);
 }
 
 // ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====

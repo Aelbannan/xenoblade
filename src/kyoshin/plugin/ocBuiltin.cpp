@@ -3,8 +3,6 @@
 
 extern "C" {
 void vmBuiltinOCRegist(OCData* pOC);
-// Built-in OC data block registered by ocBuiltinRegist (0x80524BF8, size 0x10)
-extern OCData lbl_eu_80524BF8;
 }
 
 int isExistProperty(VMThread* pThread, int handle, OCData* pOC) {
@@ -36,6 +34,21 @@ int getOCName(VMThread* pThread, int handle, OCData* pOC) {
     return 1;
 }
 
+// name-guess: script-visible selectors of the "builtin" OC plugin; retail
+// .data object 0x80524BC8 (three entries plus the retail null terminator).
+OCSelector sBuiltinSelectors[4] = {
+    { "isExistProperty", (OCSelectorFunc)isExistProperty, 0 },
+    { "isExistSelector", (OCSelectorFunc)isExistSelector, 0 },
+    { "getOCName", (OCSelectorFunc)getOCName, 0 },
+    { 0, 0, 0 },
+};
+
+// name-guess: root OCData registered by ocBuiltinRegist; retail .data object
+// 0x80524BF8.
+OCData sBuiltinData[1] = {
+    { "builtin", 0, 0, sBuiltinSelectors },
+};
+
 extern "C" void ocBuiltinRegist() {
-    vmBuiltinOCRegist(&lbl_eu_80524BF8);
+    vmBuiltinOCRegist(sBuiltinData);
 }

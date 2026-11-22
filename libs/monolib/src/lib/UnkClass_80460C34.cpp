@@ -4,7 +4,7 @@
 // ---------------------------------------------------------------------------
 // inflateReset  (retail resetState__17UnkClass_80460C34Fv, 0x80)
 // ---------------------------------------------------------------------------
-extern "C" int resetState__17UnkClass_80460C34Fv(z_stream* strm) {
+extern "C" int inflateReset(z_stream* strm) { // name-guess: zlib 1.2.3
     z_inflate_state* state;
 
     if (strm == 0 || strm->state == 0) return Z_STREAM_ERROR;
@@ -56,7 +56,7 @@ extern "C" int ZlibInflateInit2(
     }
     state->wbits = (z_uint)windowBits;
     state->window = 0;
-    return resetState__17UnkClass_80460C34Fv(strm);
+    return inflateReset(strm);
 }
 
 // ---------------------------------------------------------------------------
@@ -70,7 +70,7 @@ extern "C" int isStateReady__17UnkClass_80460C34Fv(
 // ---------------------------------------------------------------------------
 // updatewindow  (retail local updateState__17UnkClass_80460C34Fv, 0x17C)
 // ---------------------------------------------------------------------------
-extern "C" int updateState__17UnkClass_80460C34Fv(z_stream* strm, z_uint out) {
+extern "C" int updatewindow(z_stream* strm, z_uint out) { // name-guess: zlib 1.2.3
     z_inflate_state* state;
     z_uint copy, dist;
 
@@ -139,7 +139,7 @@ extern const z_ushort dext[32];
 
 typedef enum { Z_CODES, Z_LENS, Z_DISTS } z_codetype;
 
-extern "C" int inflate_table__17UnkClass_80460C34Fv(
+extern "C" int inflate_table( // name-guess: zlib 1.2.3
         z_codetype type, z_ushort* lens, z_uint codes,
         z_code** table, z_uint* bits, z_ushort* work) {
     z_ushort count[Z_MAXBITS + 1];
@@ -526,7 +526,7 @@ extern "C" int inflate__17UnkClass_80460C34Fv(
             state->next = state->codes;
             state->lencode = state->next;
             state->lenbits = 7;
-            ret = inflate_table__17UnkClass_80460C34Fv(
+            ret = inflate_table(
                 Z_CODES, state->lens, 19, &state->next,
                 &state->lenbits, state->work);
             if (ret) {
@@ -589,7 +589,7 @@ extern "C" int inflate__17UnkClass_80460C34Fv(
             state->next = state->codes;
             state->lencode = state->next;
             state->lenbits = 9;
-            ret = inflate_table__17UnkClass_80460C34Fv(
+            ret = inflate_table(
                 Z_LENS, state->lens, state->nlen, &state->next,
                 &state->lenbits, state->work);
             if (ret) {
@@ -599,7 +599,7 @@ extern "C" int inflate__17UnkClass_80460C34Fv(
             }
             state->distcode = state->next;
             state->distbits = 6;
-            ret = inflate_table__17UnkClass_80460C34Fv(
+            ret = inflate_table(
                 Z_DISTS, state->lens + state->nlen, state->ndist,
                 &state->next, &state->distbits, state->work);
             if (ret) {
@@ -767,7 +767,7 @@ extern "C" int inflate__17UnkClass_80460C34Fv(
 inflate_leave:
     ZI_RESTORE();
     if (state->wsize || (state->mode < CHECK && out != strm->avail_out)) {
-        if (updateState__17UnkClass_80460C34Fv(strm, out)) {
+        if (updatewindow(strm, out)) {
             state->mode = MEM;
             return Z_MEM_ERROR;
         }

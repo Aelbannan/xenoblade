@@ -35,8 +35,8 @@ public:
     void* mObj10;                   // 0x10: callback interface object (vt+0x1C/0x80/0xC4)
     float mFloat14;                 // 0x14
     void* mPtr18;                   // 0x18: optional entry pointer (float getters)
-    u32 mField1C;                   // 0x1C
-    u32 mField20;                   // 0x20
+    s32 mField1C;                   // 0x1C: anim slot (-1 = none; CActParamAnim switchSubAnim)
+    s32 mField20;                   // 0x20: anim slot (-1 = none; CActParamAnim dispatchAnimSlot)
     u32 mField24;                   // 0x24
     u32 mField28;                   // 0x28
     u32 mField2C;                   // 0x2C
@@ -50,7 +50,7 @@ public:
     u8 _pad217;
     u16 mShorts218[32];             // 0x218-0x257: reset to 0xFFFF by resetParamShorts
     u32 mField258;                  // 0x258
-    u32 mField25C;                  // 0x25C
+    u8* mField25C;                  // 0x25C: eff request record (NULL = none)
     // Sub-object A at 0x260 (0x80 bytes to 0x2DF)
     u32 mA260;
     u32 mA264;
@@ -729,12 +729,3 @@ struct ActParamT1Host {
 extern "C" void* initParamBlock(ActParamT1Host* host, ActParamT1Dst* dst, ActParamT1Src* src);
 extern "C" void unlinkParamRecs(CActParamLinkTable* table, int flag, CActParamRecStream* stream);
 void pushParamNode(ActParamStack* self, ActParamStackNode* a, ActParamStackNode* b);
-// Retail no-op stubs (blr only)
-extern "C" void actParamNop0();
-extern "C" void actParamNop1();
-extern "C" void actParamNop2();
-extern "C" void actParamNop3();
-extern "C" void actParamNop4();
-extern "C" void actParamNop5();
-extern "C" void actParamNop6();
-extern "C" void actParamNop7();

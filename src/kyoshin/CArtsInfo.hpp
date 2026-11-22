@@ -139,13 +139,7 @@ union CArtsSlotFlags {
 // SjisDotToCommaEU is defined in code_80135FDC.cpp (C linkage);
 // CArtsInfo_DotToCommaDE is a same-unit retail symbol (unmangled, C linkage).
 extern "C" void CArtsInfo_DotToCommaDE(CArtsInfo*, u32, char*);
-extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv();
-extern "C" void* readFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, const char*, void*, int, int);
 extern "C" u32 KyoshinHeap_GetField44();
-extern "C" void* readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, const char*, void*, int, int);
-extern "C" void deleteRegion__17UnkClass_8045F564Fv(void*);
-extern "C" UnkClass_8045F564* __ct__17UnkClass_8045F564Fv(UnkClass_8045F564*);
-extern "C" void __dt__17UnkClass_8045F564Fv(void*, int);
 // KEEP (blockers-A 2026-10-23): retail CArtsInfo_CalcDmg52/53 use the 32-bit
 // result without the clrlwi a u16 return forces, so this TU keeps its u32 view
 // instead of the canonical u16 form in kyoshin/code_80135FDC_Bdat.hpp.
@@ -228,9 +222,6 @@ extern u16 lbl_eu_8066868C;
 // void* (not u32): shared with kyoshin/cf/CItem.hpp (MWCC 10197).
 
 // --- CArtsInfo::OnFileEvent imports (retail C-linkage names) ---
-extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv(); // already above? keep single decl
-extern "C" void setMemInitFlag__Q23mtl10MemManagerFb(bool);
-extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
 extern "C" void* Bdat_GetTable_AA34();
 extern "C" void CArtsInfo_Refresh(CArtsInfo* self);
 

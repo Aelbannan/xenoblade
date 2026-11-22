@@ -30,7 +30,7 @@ public:
     virtual void Init();
     virtual void Term();
     virtual void Move();
-    virtual void cbRenderBefore();
+    virtual void cbRenderBefore(CScn* scene);
 
     CProcess* mScene;         // 0x5C: owning scene/parent process
     CBgTex mBgTex;            // 0x60-0x7F: background layout widget

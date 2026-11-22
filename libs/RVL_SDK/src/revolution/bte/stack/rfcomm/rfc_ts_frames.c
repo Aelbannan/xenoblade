@@ -14,34 +14,8 @@
 
 #include <harness_catalog.h>
 
-#include "revolution/bte/stack/include/rfcdefs.h"
-
-/* ------------------------------------------------------------------ */
-/*  Constants not present in the in-repo SDK headers                   */
-/* ------------------------------------------------------------------ */
-#define L2CAP_MIN_OFFSET            9
-#define RFCOMM_CMD_POOL_ID          2
-
-#define RFCOMM_MIN_MTU              23
-#define RFCOMM_MAX_MTU              32767
-
-#define PORT_FC_CREDIT              2
-
-#define MODEM_SIGNAL_DTRDSR         0x01
-#define MODEM_SIGNAL_RTSCTS         0x02
-#define MODEM_SIGNAL_RI             0x04
-#define MODEM_SIGNAL_DCD            0x08
-
-#define BT_TRACE_LEVEL_ERROR        1
-#define TRACE_LAYER_RFCOMM          0x00090000
-
-/* RFCOMM multiplexer events returned by rfc_parse_data */
-#define RFC_EVENT_SABME             0
-#define RFC_EVENT_UA                1
-#define RFC_EVENT_DM                2
-#define RFC_EVENT_DISC              3
-#define RFC_EVENT_UIH               4
-#define RFC_EVENT_BAD_FRAME         50
+#include "revolution/BTE/stack/rfcomm/rfc_int.h"
+#include "revolution/BTE/include/bt_trace.h"
 
 /* FCS helpers (defined in rfc_utils.c) */
 #define RFCOMM_SABME_FCS(p, cr, dlci)   rfc_calc_fcs(3, (p))
@@ -49,149 +23,6 @@
 #define RFCOMM_DM_FCS(p, cr, dlci)      rfc_calc_fcs(3, (p))
 #define RFCOMM_DISC_FCS(p, cr, dlci)    rfc_calc_fcs(3, (p))
 #define RFCOMM_UIH_FCS(p, dlci)         rfc_calc_fcs(2, (p))
-
-/* ------------------------------------------------------------------ */
-/*  Types                                                              */
-/* ------------------------------------------------------------------ */
-typedef struct {
-    u16 event;
-    u16 len;
-    u16 offset;
-    u16 layer_specific;
-} BT_HDR;
-
-/* Received TS 07.10 frame (retail layout, 0x14 bytes). */
-typedef struct {
-    u8 dlci;                    /* 0x00 */
-    u8 type;                    /* 0x01 */
-    u8 cr;                      /* 0x02 */
-    u8 ea;                      /* 0x03 */
-    u8 pf;                      /* 0x04 */
-    u8 credit;                  /* 0x05 */
-    u8 pad_06[2];
-    union {
-        struct {
-            u8 dlci;            /* 0x08 */
-            u8 frame_type;      /* 0x09 */
-            u8 conv_layer;      /* 0x0A */
-            u8 priority;        /* 0x0B */
-            u8 t1;              /* 0x0C */
-            u8 pad_0d;
-            u16 mtu;            /* 0x0E */
-            u8 n2;              /* 0x10 */
-            u8 k;               /* 0x11 */
-        } pn;
-        struct {
-            u8 ea;              /* 0x08 */
-            u8 cr;              /* 0x09 */
-            u8 type;            /* 0x0A */
-        } nsc;
-        struct {
-            u8 dlci;            /* 0x08 */
-            u8 signals;         /* 0x09 */
-            u8 break_present;   /* 0x0A */
-            u8 break_duration;  /* 0x0B */
-        } msc;
-        struct {
-            u8 dlci;            /* 0x08 */
-            u8 is_request;      /* 0x09 */
-            u8 baud_rate;       /* 0x0A */
-            u8 byte_size;       /* 0x0B */
-            u8 stop_bits;       /* 0x0C */
-            u8 parity;          /* 0x0D */
-            u8 parity_type;     /* 0x0E */
-            u8 fc_type;         /* 0x0F */
-            u8 xon_char;        /* 0x10 */
-            u8 xoff_char;       /* 0x11 */
-            u16 param_mask;     /* 0x12 */
-        } rpn;
-        struct {
-            u8 *p_data;         /* 0x08 */
-            u16 data_len;       /* 0x0C */
-        } test;
-        struct {
-            u8 dlci;            /* 0x08 */
-            u8 line_status;     /* 0x09 */
-        } rls;
-    } u;
-} MX_FRAME;
-
-/* Multiplexer control block (only fields touched by this TU). */
-typedef struct {
-    u8 pad_00[0x68];
-    u16 lcid;                   /* 0x68 */
-    u8 pad_6a[3];
-    u8 is_initiator;            /* 0x6D */
-    u8 pad_6e[4];
-    u8 flow;                    /* 0x72 */
-} tRFC_MCB;
-
-/* RFCOMM control block: rx_frame first, trace level at 0x414. */
-typedef struct {
-    MX_FRAME rx_frame;          /* 0x000 */
-    u8 pad_014[0x400];
-    u8 trace_level;             /* 0x414 */
-} tRFC_CB;
-
-/* Modem Status command parameters (rfc_send_msc). */
-typedef struct {
-    u8 modem_signal;            /* 0x00 */
-    u8 break_signal;            /* 0x01 */
-    u8 pad_02[2];
-    u8 fc;                      /* 0x04 */
-} tPORT_CTRL;
-
-/* Remote Port Negotiation parameters (rfc_send_rpn). */
-typedef struct {
-    u8 baud_rate;               /* 0x00 */
-    u8 byte_size;               /* 0x01 */
-    u8 stop_bits;               /* 0x02 */
-    u8 parity;                  /* 0x03 */
-    u8 parity_type;             /* 0x04 */
-    u8 fc_type;                 /* 0x05 */
-    u8 pad_06;
-    u8 xon_char;                /* 0x07 */
-    u8 xoff_char;               /* 0x08 */
-} tPORT_STATE;
-
-/* ------------------------------------------------------------------ */
-/*  Externals                                                          */
-/* ------------------------------------------------------------------ */
-extern tRFC_CB rfc_cb;
-
-extern void *GKI_getpoolbuf(u8 pool_id);
-extern void GKI_freebuf(void *p_buf);
-extern u16 L2CA_DataWrite(u16 cid, BT_HDR *p_buf);
-
-
-extern void LogMsg_0(u32 level, const char *msg);
-extern void LogMsg_1(u32 level, const char *msg, u32 p1);
-extern void LogMsg_2(u32 level, const char *msg, u32 p1, u32 p2);
-
-extern u8 rfc_calc_fcs(u16 len, u8 *p);
-extern u8 rfc_check_fcs(u16 len, u8 *p, u8 received_fcs);
-extern void rfc_check_send_cmd(tRFC_MCB *p_mcb, BT_HDR *p_buf);
-
-extern void rfc_process_pn(tRFC_MCB *p_mcb, u8 is_command, MX_FRAME *p_frame);
-extern void rfc_process_test_rsp(tRFC_MCB *p_mcb, BT_HDR *p_buf);
-extern void rfc_process_fcon(tRFC_MCB *p_mcb, u8 is_command);
-extern void rfc_process_fcoff(tRFC_MCB *p_mcb, u8 is_command);
-extern void rfc_process_msc(tRFC_MCB *p_mcb, u8 is_command, MX_FRAME *p_frame);
-extern void rfc_process_nsc(tRFC_MCB *p_mcb, MX_FRAME *p_frame);
-extern void rfc_process_rpn(tRFC_MCB *p_mcb, u8 is_command, u8 is_request, MX_FRAME *p_frame);
-extern void rfc_process_rls(tRFC_MCB *p_mcb, u8 is_command, MX_FRAME *p_frame);
-
-/* Forward declarations (functions defined later in this back-to-front file). */
-void rfc_send_buf_uih(tRFC_MCB *p_mcb, u8 dlci, BT_HDR *p_buf);
-void rfc_send_test(tRFC_MCB *p_mcb, u8 is_command, BT_HDR *p_buf);
-
-#define RFCOMM_TRACE_ERROR0(m) \
-    { if (rfc_cb.trace_level >= BT_TRACE_LEVEL_ERROR) LogMsg_0(TRACE_LAYER_RFCOMM, (m)); }
-#define RFCOMM_TRACE_ERROR1(m, p1) \
-    { if (rfc_cb.trace_level >= BT_TRACE_LEVEL_ERROR) LogMsg_1(TRACE_LAYER_RFCOMM, (m), (p1)); }
-#define RFCOMM_TRACE_ERROR2(m, p1, p2) \
-    { if (rfc_cb.trace_level >= BT_TRACE_LEVEL_ERROR) LogMsg_2(TRACE_LAYER_RFCOMM, (m), (p1), (p2)); }
-
 
 /*******************************************************************************
 **
@@ -204,7 +35,7 @@ void rfc_send_test(tRFC_MCB *p_mcb, u8 is_command, BT_HDR *p_buf);
 void rfc_process_mx_message(tRFC_MCB *p_mcb, BT_HDR *p_buf)
 {
     u8 *p_data = (u8 *)(p_buf + 1) + p_buf->offset;
-    MX_FRAME *p_rx_frame = &rfc_cb.rx_frame;
+    MX_FRAME *p_rx_frame = &rfc_cb.rfc.rx_frame;
     u16 length = p_buf->len;
     u8 ea, cr, mx_len;
     u8 is_command;
@@ -424,9 +255,9 @@ void rfc_process_mx_message(tRFC_MCB *p_mcb, BT_HDR *p_buf)
             *p_nsc_data++ = RFCOMM_EA | RFCOMM_I_CR(FALSE) | RFCOMM_MX_NSC;
             *p_nsc_data++ = RFCOMM_EA | (RFCOMM_MX_NSC_LEN << 1);
 
-            *p_nsc_data = rfc_cb.rx_frame.ea |
-                          (rfc_cb.rx_frame.cr << RFCOMM_SHIFT_CR) |
-                          rfc_cb.rx_frame.type;
+            *p_nsc_data = rfc_cb.rfc.rx_frame.ea |
+                          (rfc_cb.rfc.rx_frame.cr << RFCOMM_SHIFT_CR) |
+                          rfc_cb.rfc.rx_frame.type;
 
             /* Total length is size of NSC data + mx header 2 */
             p_nsc->len = RFCOMM_MX_NSC_LEN + 2;
@@ -850,7 +681,7 @@ void rfc_send_pn(tRFC_MCB *p_mcb, u8 dlci, u8 is_command, u16 mtu, u8 cl, u8 k)
     if (is_command)
         *p_data++ = RFCOMM_PN_PRIORITY_0;
     else
-        *p_data++ = rfc_cb.rx_frame.u.pn.priority;
+        *p_data++ = rfc_cb.rfc.rx_frame.u.pn.priority;
 
     *p_data++ = RFCOMM_T1_DSEC;
     *p_data++ = mtu & 0xFF;

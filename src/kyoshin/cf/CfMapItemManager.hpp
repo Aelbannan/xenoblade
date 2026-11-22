@@ -4,7 +4,24 @@
 
 class CfMapItemLoader;
 
-// Real C++ entry points defined in this TU (retail-mangled names).
+// 0x14-byte sub-object initialized by initItemWorkState and embedded in
+// CVisionSlot at +0x47EC.
+struct ItemWorkState {
+    u16 field_00;              // 0x00
+    u16 field_02;              // 0x02
+    u32 field_04;              // 0x04
+    u8 field_08;               // 0x08
+    u8 pad_09[3];              // 0x09
+    f32 field_0C;              // 0x0C
+    f32 field_10;              // 0x10
+};
+
+// Owner declaration: the definition in CfMapItemManager.cpp has this exact
+// typed signature. Callers include this header instead of keeping local
+// void* / byte-array copies.
+extern "C" void* initItemWorkState(ItemWorkState* state);
+
+// Real C++ entry points defined in this TU
 void MapItemStoreBytes567(void* self, u8 a, u8 b, u8 c);
 void requestItemLoad(CfMapItemLoader* self, u32 id);
 

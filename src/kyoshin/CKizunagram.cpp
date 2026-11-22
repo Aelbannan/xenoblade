@@ -9,6 +9,7 @@
 #include "kyoshin/code_80135FDC.hpp"  // layout/anim/font helpers (extern "C" pre-mangled names)
 
 #include "monolib/device/CFileHandle.hpp"
+#include "monolib/device/CDeviceFont.hpp"
 #include "monolib/work/CEventFile.hpp"
 #include "monolib/util/MemManager.hpp"
 #include <revolution/TPL.h>
@@ -204,10 +205,9 @@ extern "C" void buildKizLineLayout(UnkKizunaLineBuild* self) {
     // Bind the device font to the layout's root pane.
     nw4r::lyt::Pane* rootPane =
         (nw4r::lyt::Pane*)((UnkKizunaMid59344*)self->layout)->field10;
-    void* font = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
-        1, (nw4r::lyt::Layout*)self->layout);
-    u32 bound = ((UnkKizunaFontView*)font)->vf7();
-    ApplyFontToTxtPanes(rootPane, (const nw4r::ut::Font*)bound);
+    const nw4r::ut::Font* font = static_cast<IDeviceFontInfo*>(
+        CDeviceFont::getFontInfo(1, (nw4r::lyt::Layout*)self->layout))->getFont();
+    ApplyFontToTxtPanes(rootPane, font);
 
     self->layout->slot11((u32)self->anim, 1);
     self->layout->slot14(0);
@@ -329,8 +329,8 @@ extern "C" void buildKizLineLayout(UnkKizunaLineBuild* self) {
                 picPos.x = (f32)px;
                 picPos.y = (f32)py;
                 picPos.z = lbl_eu_80668828;
-                copyVEC3((f32*)&((KizunaPaneTranslateView*)pic)->translate,
-                         (f32*)&picPos);
+                nw4r::math::VEC3& dst = const_cast<nw4r::math::VEC3&>(pic->GetTranslate());
+                copyVEC3(&dst, &picPos.x);
 
                 setPaneVisible(pic, 1);
                 nw4r::lyt::Pane* picParent =
@@ -675,8 +675,7 @@ bool kizAnimAtEnd(UnkKizunaSelf592D8* self) {
 // 2-word struct built from the result's +0x44 / +0x48 words.
 extern "C" UnkKizunaPair getLinePanePair(UnkKizunaSelf59344* self) {
     UnkKizunaRes59344* res = self->field0C->field10->target((int)(lbl_eu_8050CB20 + 0x8b), 1);
-    UnkKizunaPair out = *(UnkKizunaPair*)((u8*)res + 0x44);
-    return out;
+    return res->pair44;
 }
 
 // us-8025b6d8: walk the current kizuna line's tag-context list. For each item
@@ -726,7 +725,7 @@ extern "C" int tickKizMarker(UnkKizunaSelf5949C* self) {
                 reinterpret_cast<const UnkKizunaCtxItem*>(TagCtxGetNodeHeader(&cur));
             CMenuArtsSet_setPaneScale((UnkKizunaFunc31848Obj*)it2,
                           reinterpret_cast<const UnkKizunaPair*>(&snapA[0]));
-            kizScaleVec3(&scaled.x, &work.x, lbl_eu_80668830);
+            kizScaleVec3(&scaled.x, &work.x, -1.0f);
             copyVEC3(&self->field18.x, &scaled.x);
             // threshold recomputed from the constant at the use site
             // (retail does not cache it across the loop)
@@ -765,11 +764,11 @@ extern "C" int tickKizMarker(UnkKizunaSelf5949C* self) {
         (int)("pic_pcbs"), 1);
     f32 sz[2];
     TagCopyVec2f(sz, reg2->scale);
-    f32 rad = lbl_eu_8066884C * (sz[0] - lbl_eu_80668858);
+    f32 rad = 0.5f * (sz[0] - lbl_eu_80668858);
     f32 distSq2 = -eased.y * -eased.y + -eased.x * -eased.x;
     if (distSq2 <= (rad + rad) * (rad + rad)) {
         UnkKizunaVec3 scaled;
-        kizScaleVec3(&scaled.x, &eased.x, lbl_eu_80668830);
+        kizScaleVec3(&scaled.x, &eased.x, -1.0f);
         copyVEC3(&self->field18.x, &scaled.x);
         u8 played = self->field3C;
         self->field24 = 1;
@@ -1013,7 +1012,8 @@ extern "C" bool buildKizEntryPanes(UnkKizunaSelf59DE8* self) {
                 v.x = (f32)px;
                 v.y = (f32)py;
                 v.z = posZ;
-                copyVEC3((f32*)&((KizunaPaneTranslateView*)pic)->translate, &v.x);
+                nw4r::math::VEC3& dst = const_cast<nw4r::math::VEC3&>(pic->GetTranslate());
+                copyVEC3(&dst, &v.x);
                 setPaneVisible(reinterpret_cast<nw4r::lyt::Pane*>(pic), 1);
                 nw4r::lyt::Pane* parent = reinterpret_cast<nw4r::lyt::Pane*>(
                     self->field0C->field10->target((int)("face_icon"), 1));
@@ -1115,10 +1115,10 @@ extern "C" void lineTickSelOut(UnkKizunaSelfAB* self) {
     }
 }
 
-void CKizunagram_resetFields(u8* self){
-    *(u8*)(self + 0x34) = 0;
-    *(u16*)(self + 0x36) = 0;
-    *(float*)(self + 0x38) = lbl_eu_80668828;
+void CKizunagram_resetFields(CKizunaLine* self){
+    self->field34 = 0;
+    self->field36 = 0;
+    self->field38 = lbl_eu_80668828;
 }
 
 // us-8025ce58 (0x8025AC1C): rewrite the kizuna entry pane text for every BDAT
@@ -1289,10 +1289,10 @@ extern "C" void buildInfoLayout(UnkKizunaSelfB670* self) {
     buildLayout(&self->field8, self->field4, lbl_eu_8050CB20 + 0xb19);
     bindLayoutAnimTransform(self->field8, &self->field0C, self->field4, lbl_eu_8050CB20 + 0xb2c);
     bindLayoutAnimTransform(self->field8, &self->field10, self->field4, lbl_eu_8050CB20 + 0xb42);
-    nw4r::lyt::Pane* rootPane = ((UnkKizunaLayoutView*)self->field8)->field10;
-    void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, self->field8);
-    u32 fontResult = static_cast<UnkKizunaFontView*>(fontObj)->vf7();
-    ApplyFontToTxtPanes(rootPane, (const nw4r::ut::Font*)fontResult);
+    nw4r::lyt::Pane* rootPane = self->field8->GetRootPane();
+    const nw4r::ut::Font* font =
+        static_cast<IDeviceFontInfo*>(CDeviceFont::getFontInfo(1, self->field8))->getFont();
+    ApplyFontToTxtPanes(rootPane, font);
     u32 val = (u32)CUICfManager_getPackedFont9C();
     setLayoutTextBoxFont(self->field8, lbl_eu_8050CB20 + 0xb5d, val);
     setLayoutTextBoxFont(self->field8, lbl_eu_8050CB20 + 0xb6b, val);
@@ -1864,7 +1864,7 @@ extern "C" void kizToggleHelp(CKizunagram* self) {
 extern "C" void tryKizMode2(UnkKizunaSelfC580* self) {
     if (self->sub4C.field16 != 0) {
         self->field39 = 2;
-        lineEnterMode1((UnkKizunaSelf59228*)((char*)self + 0x68));
+        lineEnterMode1(&self->sub68);
     }
 }
 
@@ -1873,14 +1873,14 @@ extern "C" void tryKizMode2(UnkKizunaSelfC580* self) {
 extern "C" void tryKizMode3(UnkKizunaSelfC580* self) {
     if (self->sub4C.field15 == 0)
         return;
-    if (*(u8*)((u8*)self + 0x7D) == 0)
+    if (self->sub68.field15 == 0)
         return;
     self->field39 = 3;
-    *((u8*)self + 0x3C) = 1;
-    if (*(u8*)((u8*)self + 0x8C) != 0)
-        setCurPanePhase((UnkKizunaSelf57D90*)((u8*)self + 0xAC), 1);
+    self->field3C = 1;
+    if (self->sub68.field24 != 0)
+        setCurPanePhase((UnkKizunaSelf57D90*)&self->subAC, 1);
     else
-        setCurPanePhase((UnkKizunaSelf57D90*)((u8*)self + 0xAC), 0);
+        setCurPanePhase((UnkKizunaSelf57D90*)&self->subAC, 0);
 }
 
 void tryKizMode5(u8* ptr) {

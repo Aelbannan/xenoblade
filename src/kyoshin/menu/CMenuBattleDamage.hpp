@@ -102,10 +102,10 @@ public:
     void Init();
     void Term();
     void Move();
-    void cbRenderBefore();
+    void cbRenderBefore(CScn* scene);
 
     void thunk_IWorkEvent_dtor();
-    void thunk_IScnRender_cbRenderBefore();
+    void thunk_IScnRender_cbRenderBefore(CScn* scene);
     void thunk_IScnRender_dtor();
 
     u8 mProcess[0x10];            // 0x00 CProcess storage head (CDoubleListNode)

@@ -426,16 +426,15 @@ void MenuSnd_StopAllSlots_89C88() {
 
 
 extern "C" void MenuSnd_ClearSlot_88584(SoundSlot* slot) {
-    u8* start = (u8*)slot + 0xB8;
-    u8* end = (u8*)slot + 0x398;
+    SoundSlot* start = slot + 1;
+    SoundSlot* end = slot + 5;
     // Slot 0's live-name fields are cleared up front.
     slot->name[0] = '\0';
     slot->nameLen = 0;
     slot->backupName[0] = '\0';
     slot->backupNameLen = 0;
-    // Slots 1..4 via a byte-stride loop (MWCC: divwu trip count + bdnz).
-    for (u8* cur = start; cur < end; cur += 0xB8) {
-        SoundSlot* q = (SoundSlot*)cur;
+    // Slots 1..4 via a typed slot loop over the real SoundSlot array.
+    for (SoundSlot* q = start; q < end; q++) {
         q->name[0] = '\0';
         q->nameLen = 0;
         q->backupName[0] = '\0';

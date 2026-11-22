@@ -286,7 +286,7 @@ extern "C" void trackGroundAt(cf::CActParamAnimGame* selfV) {
         goto shared;
     }
 
-    if (self->field270 & 0x20) {
+    if (self->mData.mA260 & 0x20) {
         // Ground contact already tracked: probe straight down, then commit.
         ml::CVec3 vecA(lbl_eu_80666040, 2.0f, lbl_eu_80666040);
         ml::CVec3 vec220 = self->vec3A8() + vecA;
@@ -566,7 +566,7 @@ shared:
                     self->field4EC &= ~0x800000;
                 }
                 if (ScnRes_EntryFlagThunk_E5A4(0x400, selIdx)) {
-                    if ((self->field0C & 2) != 0 && (self->field270 & 0x20) == 0) {
+                    if ((self->field0C & 2) != 0 && (self->mData.mA260 & 0x20) == 0) {
                         ml::CVec3 vec1a8;
                         ScnRes_CopyEntryMid(&vec1a8, selIdx);
                         ml::CVec3 vec19c = self->vec3F0();
@@ -633,7 +633,7 @@ shared:
                     self->field4EC |= 0x8000000;
                 }
                 if (self->field530 & 0x400) {
-                    if (self->field270 & 0x20) {
+                    if (self->mData.mA260 & 0x20) {
                         ml::CVec3 diff = self->vec3A8() - self->vec3B4();
                         f32 len2 = diff.x * diff.x + diff.y * diff.y + diff.z * diff.z;
                         if (len2 <= 64.0f) {
@@ -928,7 +928,7 @@ ground:
                 pos.z = v2.z - 0.08f * nz;
             }
         }
-        if (self->field270 & 0x100) {
+        if (self->mData.mA260 & 0x100) {
             accel *= 0.2f;
             ml::CVec3 v2;
             ScnRes_CopyEntryHead(&v2, 0);
@@ -1017,10 +1017,10 @@ void cf::CActParamAnimGame::dispatchState() {
     v->field530 &= 0xFFFE;
 
     // Child-data timers: keep the current value only when it is non-negative.
-    f32 timerA = ((CActParamData*)v->mChildData10)->getParamFloat0C();
+    f32 timerA = v->mData.getParamFloat0C();
     if (timerA >= lbl_eu_80666040) v->field500 = timerA;
     if (v->field504 >= lbl_eu_80666040) v->field500 = v->field504;
-    f32 timerB = ((CActParamData*)v->mChildData10)->getParamFloat08();
+    f32 timerB = v->mData.getParamFloat08();
     if (timerB >= lbl_eu_80666040) v->field508 = timerB;
     if (v->field50C >= lbl_eu_80666040) v->field508 = v->field50C;
 
@@ -1289,7 +1289,7 @@ bool cf::CActParamAnimGame::tryGroundStep(u32 type, u32 state) {
 // (probeWallPair), raises the 0x100 flag, zeroes the move vec, resets the
 // move-vec accumulator, requests mode 2, then notifies the region.
 bool cf::CActParamAnimGame::dashStartGate(u32 type) {
-    if (!(field270 & 0x40)) return false;
+    if (!(mData.mA260 & 0x40)) return false;
     if (probeWallPair(this) == false) return false;
     field530 |= 0x100;
     vec3F0() = zero__Q22ml5CVec3;
@@ -1340,13 +1340,7 @@ bool cf::CActParamAnimGame::scanActorList(u32 type) {
     return false;
 }
 
-// TU-local view of the damage-scale float at +0x17F4 read by
-// CActorParam_getDamageScale (exact layout; no named member exists yet).
-struct CActorParamDamageScaleView {
-    u8 _pad[0x17F4];        // 0x00-0x17F3
-    float damageScale17F4;  // 0x17F4-0x17F7
-};
-float cf::CActorParam::CActorParam_getDamageScale() { return ((CActorParamDamageScaleView*)this)->damageScale17F4; }
+float cf::CActorParam::CActorParam_getDamageScale() { return unk17E4.field_10; }
 
 // Returns true (and notifies the linked region) when the +0x4F4 link is
 // active; otherwise falls back to the +0x4E8 link when +0x4F4 is null.
@@ -1975,7 +1969,7 @@ int cf::CActParamAnimGame::steerForObsts(ml::CVec3* pos, ml::CVec3* move) {
         goto l60418;
     }
 
-    if (field270 & 0x20) {
+    if (mData.mA260 & 0x20) {
         f32 f31v = pos->y + moveV.y;
         f32 f29v;
         if (field3DC <= 0.9f) {
@@ -2255,10 +2249,10 @@ void cf::CActParamAnimGame::syncYawToLink() {
     region->CfObject_setMoveHeadAngle(value);
 }
 
-extern "C" bool pushYawToLink(void* obj) {
-    int v0 = *(int*)((char*)obj + 0x270);
+extern "C" bool pushYawToLink(::CActParamData* data) {
+    int v0 = data->mA270;
     bool f = false;
-    if (((v0 & 0x800000) != 0) || ((*(int*)((char*)obj + 0x2f0) & 0x800000) != 0))
+    if (((v0 & 0x800000) != 0) || ((data->mField2F0 & 0x800000) != 0))
         f = true;
     return f;
 }

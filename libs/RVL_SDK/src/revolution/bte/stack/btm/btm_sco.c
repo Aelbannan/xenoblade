@@ -14,17 +14,12 @@
    entries are reached through it; the few other touched fields are read at
    their verified retail byte offsets. */
 
-/* btm_int.h declares btm_sco_chk_pend_unpark with 2 params, but the retail
-   function takes 3 (status, handle, mode); rename the header declaration out
-   of the way so the 3-param definition below is the only one in this TU. */
-#define btm_sco_chk_pend_unpark btm_sco_chk_pend_unpark_hdr
 /* btm_int.h also declares `extern tBTM_CB btm_cb;` with the wrong layout;
    rename it out of the way and declare our own retail-layout extern below
    (same per-TU overlay pattern as btm_pm.c / btm_dev.c). */
 #define btm_cb btm_cb_sdk
 #include "revolution/BTE/stack/btm/btm_int.h"
 #undef btm_cb
-#undef btm_sco_chk_pend_unpark
 
 extern void LogMsg_0(UINT32 trace_set_mask, const char *fmt_str);
 extern void LogMsg_1(UINT32 trace_set_mask, const char *fmt_str, UINT32 p1);

@@ -3,6 +3,7 @@
 #include <types.h>
 #include <revolution/GX.h>
 #include <revolution/gx/GXVert.h>
+#include "monolib/math/CMat34.hpp"
 
 // Foreign .sdata/.sdata2 float constants referenced by this TU.
 extern float lbl_eu_80663964;
@@ -42,7 +43,7 @@ struct ShadowCtx {
     nw4r::g3d::ResMdl resMdl; // 0x146c
     void* field_0x147C;       // -> render-record array (elems + 0xec)
     u8 _pad4[0x2C];
-    void* field_0x14AC;
+    ml::CMat34* field_0x14AC;
 };
 
 class CScnMaruShadowNw4r;

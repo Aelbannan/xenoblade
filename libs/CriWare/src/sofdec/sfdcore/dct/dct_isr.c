@@ -14,9 +14,12 @@ __declspec(section ".rodata") __attribute__((aligned(8))) const unsigned char lb
     0x41,0x40,0x00,0x00,0x00,0x00,0x00,0x00,0x43,0x30,0x00,0x00,0x80,0x00,0x00,0x00,
     0x41,0x50,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
 };
-__attribute__((aligned(8))) u32 lbl_eu_80604AC0[130];
-__attribute__((aligned(8))) s16 lbl_eu_80604CC8[128];
-__attribute__((aligned(8))) s16 lbl_eu_80604DC8[4096];
+
+int dctisr_version_dummy;
+double sfsd_scale_tbl_f[64];
+s16 sfsd_scale_tbl[64];
+s16 sfsd_scale_tbl2[64];
+s16 PreIDCT[0x1000];
 
 #include <math.h>
 
@@ -34,13 +37,13 @@ void DCT_IsrInit(void) {
     double s2 = cos_tbl[12];
     int i, j;
 
-    lbl_eu_80604AC0[0] = (u32)DCT_GetVerStr();
+    dctisr_version_dummy = (u32)DCT_GetVerStr();
 
     for (i = 0; i < 8; i++) {
         double row = cos_tbl[i];
-        double *pd = (double *)&lbl_eu_80604AC0[2] + i * 8;
-        s16 *ps1 = (s16 *)&lbl_eu_80604AC0[0x82] + i * 8;
-        s16 *ps2 = (s16 *)&lbl_eu_80604AC0[0xA2] + i * 8;
+        double *pd = sfsd_scale_tbl_f + i * 8;
+        s16 *ps1 = sfsd_scale_tbl + i * 8;
+        s16 *ps2 = sfsd_scale_tbl2 + i * 8;
         double *pc = cos_tbl;
         for (j = 0; j < 8; j++) {
             double p = row * *pc++;
@@ -56,7 +59,7 @@ void DCT_IsrInit(void) {
 
 void* memcpy(void* dst, const void* src, size_t n);
 void DCT_IsrInitScaleTbl(void* dst) {
-    memcpy(dst, lbl_eu_80604CC8, 0x80);
+    memcpy(dst, sfsd_scale_tbl, 0x80);
 }
 
 void MSID_JRevDctDense();
@@ -70,7 +73,7 @@ void DCT_IsrTrans(void* self, s32 val) {
 }
 
 void initSparseTbl() {
-    memset(lbl_eu_80604DC8, 0, 0x2000);
+    memset(PreIDCT, 0, 0x2000);
     DCT_AcInit();
 
     double *cos = (double*)lbl_eu_8051C3B0;
@@ -80,12 +83,12 @@ void initSparseTbl() {
 
     for (int i = 0; i < 0x40; i++) {
         double tmp[64];
-        s16 *row = lbl_eu_80604DC8 + i * 64;
+        s16 *row = PreIDCT + i * 64;
         int col;
 
         for (col = 0; col < 0x40; col++) {
             if (col == i)
-                tmp[col] = scale / (double)lbl_eu_80604CC8[i];
+                tmp[col] = scale / (double)sfsd_scale_tbl[i];
             else
                 tmp[col] = zero;
         }

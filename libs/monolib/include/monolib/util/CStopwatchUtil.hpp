@@ -28,4 +28,5 @@ private:
     static inline StopwatchEntry* findEmptyEntry();
 
     static const int MAX_ENTRIES = 16;
+    static StopwatchEntry sEntries[MAX_ENTRIES];
 };

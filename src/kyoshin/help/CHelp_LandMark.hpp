@@ -2,32 +2,27 @@
 
 #include <types.h>
 #include "kyoshin/help/CHelp.hpp"
+#include "kyoshin/cf/IFlagEvent.hpp"
+#include "kyoshin/cf/CtrlRemoteApi.hpp" // unified with CChain.hpp/CSuddenCommu.hpp/CPassiveSkill.hpp
 
 namespace cf {
 
-class __declspec(novtable) CHelp_LandMark : public CHelp {
+// Retail layout: CHelp at +0x00 (vptr at +0x08), private IFlagEvent base at
+// +0x0C (absent from the RTTI base list, so not public), then the payload.
+// MWCC emits __vt__Q22cf14CHelp_LandMark (CHelp slots, then the dtor and the
+// FlagEvent1 entry) and the two @12@ adjustor thunks of the IFlagEvent table.
+class CHelp_LandMark : public CHelp, IFlagEvent {
 public:
-    CHelp_LandMark();
-    ~CHelp_LandMark();
+    CHelp_LandMark(u32 owner, u32 param, s32 landmarkId);
+    virtual ~CHelp_LandMark();
 
-    void resetState();
-    void tryActivate(u32 param1, u32 param2);
-    u32 tickUpdate();
-    void tryActivateThunk(u32 param1, u32 param2);
-    void destroyThunk();
+    virtual void CHelp_UnkVirtualFunc1();
+    virtual UNKWORD f10();
+    virtual void FlagEvent1(int eventId, int arg2, int arg3);
 
-    // CHelp at +0x00..+0x0B (mOwner, mParam, mVtbl)
-    // Second base-class subobject (invisible in single-inheritance C++)
-    // Stores a vtable pointer for the second base at +0x0C
-    void* mSecondBase; // +0x0C
-    u32 field_10;         // +0x10
-    s32 mTimer;           // +0x14
-    u32 mSavedFlags;      // +0x18
+    s32 mLandmarkId; // +0x10 name-guess: offset of the landmark flag event id from 0x20C8
+    s32 mTimer;      // +0x14
+    u32 mSavedFlags; // +0x18
 };
 
 } // namespace cf
-
-// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
-#include "kyoshin/cf/CtrlRemoteApi.hpp" // unified with CChain.hpp/CSuddenCommu.hpp/CPassiveSkill.hpp
-// CHelp base constructor with Fv symbol (retail name)
-extern "C" void __ct__Q22cf5CHelpFUlUl(cf::CHelp* self, void* owner, u32 param);

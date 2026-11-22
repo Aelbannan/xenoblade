@@ -425,7 +425,7 @@ int ChainTmr_Start_DE44(cf::CChainState* self, cf::CChainBattleObj* p1,
         // per-unit version split; switching this TU regresses its 5
         // Wii/1.1 FULL_MATCHes.
         // Retail calls the singleton getter once per gate (reload into r3).
-        u8 v = ((cf::CBattleManagerChainGate*)getInstance__Q22cf14CBattleManagerFv())
+        u8 v = ((cf::CBattleManagerChainGate*)cf::CBattleManager::getInstance())
                    ->mChainPhase;
         // Battle-phase gate: phases 1..0x18 block chain starts.
         // NOTE (wall class 13): retail keeps two standalone cmplwi compares;
@@ -440,7 +440,7 @@ int ChainTmr_Start_DE44(cf::CChainState* self, cf::CChainBattleObj* p1,
             ok = 0;
         } else {
             int commu = SuddenCommuIsStateActive(
-                &((cf::CBattleManagerChainGate*)getInstance__Q22cf14CBattleManagerFv())
+                &((cf::CBattleManagerChainGate*)cf::CBattleManager::getInstance())
                      ->mSuddenCommu);
             ok = (commu == 0);
         }

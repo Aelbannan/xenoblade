@@ -17,43 +17,14 @@
 __declspec(section ".rodata") __attribute__((used)) char lbl_eu_804FBC28[0x0C] = "str_lv99";
 __declspec(section ".rodata") __attribute__((used)) char lbl_eu_804FBC34[0x0C] = "agi_lv99";
 __declspec(section ".rodata") __attribute__((used)) char lbl_eu_804FBC40[0x0C] = "eth_lv99";
-__declspec(section ".rodata") __attribute__((used)) u32 sCtrlObjectParamPermTableA[8] = {3,4,2,5,1,6,0,7};
-__declspec(section ".rodata") __attribute__((used)) u32 sCtrlObjectParamPermTableB[8] = {0,1,2,3,4,5,6,7};
-__declspec(section ".rodata") __attribute__((used)) CtrlObjectParamOffsetTable sCtrlObjectParamOffsetTable = {{3,4,2,5,1,6,0,7}};
+const u32 sCtrlObjectParamPermTableA[8] = {3,4,2,5,1,6,0,7};
+const u32 sCtrlObjectParamPermTableB[8] = {0,1,2,3,4,5,6,7};
+const CtrlObjectParamOffsetTable sCtrlObjectParamOffsetTable = {{3,4,2,5,1,6,0,7}};
 __declspec(section ".rodata") __attribute__((used)) char lbl_eu_804FBCB0[0x2A8] = "flag\0hit_range_near\0hit_range_far\0dmg_low\0dmg_hi\0att_lev\0speed\0grd_rate\0arm_phy\0arm_eth\0wpn_type\0elem\0arm_type\0eva_rate\0BTL_pclist\0lv\0name\0chest_height\0icon_type\0tp_atk\0tp_arts\0tp_atkdmg\0tp_artsdmg\0ts_high\0ts_nrm\0ts_low\0guest\0hp\0str\0agi\0eth\0dbl_atk\0cnt_atk\0pc_arts\0idx\0cast\0recast\0tp\0dex\0rate1\0rate2\0arts_type\0atk_type\0chain_type\0dmg_type\0dmg_time\0hate\0kb_type\0kb_lv\0tgt\0range_type\0range\0range_val\0help\0st_type\0st_val\0st_val2\0st_time\0st_itv\0sp_cnd\0sp_proc\0sp_val1\0sp_val2\0grow_powl\0grow_powh\0grow_st_time\0grow_st_val\0glow_recast\0icon\0icon_base\0act_idx\0atk1\0atk2\0atk3\0pc_atk\0rate\0get_type\0get_lv\0pc\0en_exp\0en_ap\0level_exp\0point_PP\0rvs_status\0atr_type\0max\0val_type\0accum\0attach";
 __declspec(section ".rodata") __attribute__((used)) char lbl_eu_804FBF58[0x08] = "KEY:%d";
-// Minimal CItemImpl definition for the 5 slots used by this TU (real vtable layout).
-// Full definition lives in kyoshin/cf/CItem.hpp, but including it would redeclare lbl_eu symbols.
-struct CItemData;
-class CItemImpl {
-public:
-    virtual u32 vf08(CItemData* p);
-    virtual void vf0C(CItemData* p, u32 x);
-    virtual void vf10(CItemData* p);
-    virtual void vf14();
-    virtual void vf18();
-    virtual u32 vf1C(CItemData* p);
-    virtual void vf20();
-    virtual void vf24();
-    virtual u16 vf28(CItemData* p, const char* col);
-    virtual void* vf2C(CItemData* p, u32 x);
-    virtual u32 vf30(CItemData* p);
-    virtual void vf34(CItemData* p, u32 x);
-    virtual void vf38();
-    virtual void vf3C(CItemData* p, u32 x);
-    virtual u32 vf40(CItemData* p, u32 x);
-    virtual void vf44(CItemData* p, u32 x, u32 y);
-    virtual void vf48(CItemData* p);
-    virtual u32 vf4C(CItemData* p, u32 x);
-    virtual u32 vf50(CItemData* p, u32 x, u16 y);
-    virtual void vf54();
-};
-// CfGameManager.hpp declares the void* form of this import; the typed form
-// (same unmangled symbol) lives in a namespace so both prototypes coexist.
-namespace itemimplshim {
-extern "C" CItemImpl* CItem_initItemImplInstances(CItemData* self);
-}
-#define CItem_initItemImplInstances(item) itemimplshim::CItem_initItemImplInstances(item)
+// Real item-impl vtable interface (CItem_initItemImplInstances itself is
+// declared by kyoshin/cf/CfGameManager.hpp).
+#include "kyoshin/cf/CItemImpl.hpp"
 // findObjB28ById (actor lookup): declared locally - CAIAction.hpp conflicts
 // with CfGameManager.hpp's getInstance__Q22cf14CBattleManagerFv return type.
 extern "C" void* findObjB28ById(s32);
@@ -80,7 +51,7 @@ extern "C" void CtrlObjectParam_RampArtsStatStep(u8* selfV, u16 value);
     extern "C" void CtrlObjectParam_InitArtsSlotSet(cf::CtrlObjectParamEntry* self);
 extern "C" void __ct__8009F8B8(cf::CtrlObjectParamArtsSlotOwner* self);
 
-// Entry init helper (defined below) -- called by __ct__8009ED08.
+// Entry init helper (defined below) -- called by CtrlObjectParam_CopyCharRow.
 extern "C" void CtrlObjectParam_RampEntryArtsLevel(void* self, u16 val);
 
 // Arts-list walker defined later in this TU; CtrlObjectParam_AllocArtsListNode aborts its row
@@ -176,8 +147,9 @@ void __ct__8009D604() {
     CtrlObjectParam_ResetWorkBuffer(reinterpret_cast<cf::CtrlObjectParamWork*>(spCtrlObjectParamWork));
 }
 
-extern "C" void __dt__8009D72C() {
-    // Global destructor for the work-buffer pointer. The retail emits two
+// name-guess: releases the shared work buffer built by __ct__8009D604.
+void CtrlObjectParam_DestroyWork() {
+    // Free the shared work-buffer pointer. The retail emits two
     // beq's on the same test (cmpwi r3,0; beq epi; beq epi) -- the dead
     // second branch. Only the &&-form on a LOCAL keeps both beq (the same
     // duplicate disjunct on the global folds to one); MWCC CSEs the local
@@ -873,9 +845,7 @@ extern "C" int CtrlObjectParam_GetStateBitFlag(unsigned int idx) {
     return (bitmap[idx >> 3] >> (idx & 7)) & 1;
 }
 
-// Matches the declaration in kyoshin/code_800B06A4.hpp (u32 vs u16 would be
-// an illegal overload there).
-extern "C" void* CtrlObjectParam_GetCharEntry(unsigned long idx) {
+extern "C" void* CtrlObjectParam_GetCharEntry(u32 idx) {
     return &reinterpret_cast<cf::CtrlObjectParamWork*>(spCtrlObjectParamWork)->entries[idx];
 }
 
@@ -909,13 +879,15 @@ extern "C" void CtrlObjectParam_SetWorkField50(unsigned short value) {
     *reinterpret_cast<unsigned short*>(spCtrlObjectParamWork + 0x50) = value;
 }
 
-// -- __ct__8009ED08 (us-8009f6e0) -----------------------------------------
+// -- CtrlObjectParam_CopyCharRow (us-8009f6e0) ------------------------------
+// name-guess: CtrlObjectParam_CopyCharRow (retail symbol is an unmangled
+// placeholder; not a constructor - CBattleState's real ctor is separate).
 // Character-row copy: resolve the row entries for the two u16 row indices
 // (work + idx*0x3DD4), init entryA via CtrlObjectParam_RampEntryArtsLevel, snapshot entryB's
 // param sub-region (blocks at +0x188/+0x16AC/+0x1730) to stack locals, copy
 // entryB's CActorParam into entryA's via CActorParam_copyAll, then restore the
 // snapshots. The dead __vt__Q22cf12CBattleState address store is kept by retail.
-void __ct__8009ED08(u32 rowA, u32 rowB) {
+extern "C" void CtrlObjectParam_CopyCharRow(u32 rowA, u32 rowB) {
     const char* strBase = lbl_eu_804FBCB0;   // materialized early (retail lis/addi)
     void* fp = getFP(&strBase[0x78]);
     u32 v = getBdatStringColumnValue(fp, &strBase[0x83], rowB);
@@ -1595,8 +1567,8 @@ extern "C" u8 CtrlObjectParam_LearnArtsSlots(cf::CtrlObjectParamEntry* self) {
     u8 rowIdx = *(const u8*)&colv;   // memory round-trip (retail stw/lbz)
     // Snapshot the two slot offset tables through walking bases (retail
     // lwzu + fixed-offset loads): first words stay live, rest spill.
-    u32* srcA = &sCtrlObjectParamPermTableB[0];
-    u32* srcB = &sCtrlObjectParamPermTableA[0];
+    const u32* srcA = &sCtrlObjectParamPermTableB[0];
+    const u32* srcB = &sCtrlObjectParamPermTableA[0];
     const u32 tblA0 = *srcA++;
     const u32 tblB0 = *srcB++;
     const u32 tblA1 = srcA[0];
@@ -1685,7 +1657,7 @@ extern "C" u8 CtrlObjectParam_LearnArtsSlots(cf::CtrlObjectParamEntry* self) {
                     break;
                 }
             }
-            reinterpret_cast<cf::CHelpManager*>(lbl_eu_80664A10)->mLearnArtsFlag = 1;
+            cf::CHelpManager::sInstance->mLearnArtsFlag = 1;
         }
     }
     if (actor1 != 0) {
@@ -1768,7 +1740,7 @@ extern "C" void CtrlObjectParam_ClaimArtsSlotRow(cf::CtrlObjectParamArtsSlotOwne
         }
         reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_rearmArtsList();
     }
-    reinterpret_cast<cf::CHelpManager*>(lbl_eu_80664A10)->mLearnArtsFlag = 1;
+    cf::CHelpManager::sInstance->mLearnArtsFlag = 1;
 }
 
 // CtrlObjectParam_AdjustPartyArtsLevel (char arts/level helper) is defined below; CtrlObjectParam_ApplyArtsRankUp
@@ -2884,7 +2856,7 @@ extern "C" void CtrlObjectParam_SetEquipSlot5(void* a, void* c) {
 
 // absorb: split1 retail data sections
 // (typed .rodata/.sdata2 live at the top of this file)
-__declspec(section ".data") const void* lbl_eu_805280D8[4] = {
+const void* lbl_eu_805280D8[4] = {
     (void*)"hp_lv99",
     (void*)lbl_eu_804FBC28,
     (void*)lbl_eu_804FBC34,

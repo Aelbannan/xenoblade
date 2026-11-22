@@ -49,8 +49,8 @@ struct ArtsGaugeBox {
 struct ArtsModeIds {
     u16 id[8];
 };
-extern const ArtsModeIds lbl_eu_804FD138;
-extern const ArtsModeIds lbl_eu_804FD148;
+extern const ArtsModeIds artsSelectNameIds;
+extern const ArtsModeIds artsSelectGaugeIds;
 
 namespace cf { class CfObjectModel; }
 
@@ -59,7 +59,7 @@ public:
     void Init();
     void Term();
     void Move();
-    void cbRenderBefore();
+    void cbRenderBefore(CScn* scene);
 
     void func_80104454();
     void updatePageMode();
@@ -170,7 +170,7 @@ extern "C" bool CMenuArtsSelect_isCreated();
 extern "C" int CMenuArtsSelect_isInteractable();
 extern "C" CMenuArtsSelect* CMenuArtsSelect_getSelectState();
 extern "C" int CMenuArtsSelect_isNotReady();
-extern "C" void CMenuArtsSelect_workEventDraw(void* self);
+extern "C" void CMenuArtsSelect_workEventDraw(void* self, CScn* scene);
 extern "C" void CMenuArtsSelect_workEventDtor(void* p);
 extern "C" void CMenuArtsSelect_scnRenderRelease(void* ptr);
 extern "C" void CMenuArtsSelect_scnRenderDtor(CMenuArtsSelect* self);

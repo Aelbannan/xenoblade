@@ -7,6 +7,9 @@
 #include "kyoshin/cf/object/CfObjectMove.hpp"
 #include "kyoshin/cf/CtrlNpcApi.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"
+
+struct CfMoveC4Obj;  // real +0x4EC owner (kyoshin/cfsys/CfObjectImplMove.hpp)
+
 namespace cf {
 
 // Word-triple input for CtrlNpcStoreTargetActivate (raw word copy into field_C8..field_D0);
@@ -28,14 +31,6 @@ public:
     u32 field_7A4;   // flags word (bit 0x00010000 tested by CtrlNpcUpdateAction)
 };
 
-// Object referenced by CCtrlNpcChar::field_C4 (the NPC's C4 status object;
-// retail null-tests the pointer and dereferences the +0x4EC flags word off
-// it). Only the word this TU reads is declared.
-struct CCtrlNpcC4Object {
-    u8 _pad00[0x4EC];
-    u32 field_4EC;   // flags word (bit 0x02000000 tested)
-};
-
 // Character-model object reached through CtrlNpc::field_28 (CfObjectMove
 // family, cf-chain vtable). Real virtuals are on CfObject/CfObjectModel/
 // CfObjectMove/CObjectState/CObjectParam - this struct is now a plain data
@@ -52,7 +47,7 @@ struct CCtrlNpcChar {
     u8 _pad8E[0x98 - 0x8E];       // 0x8E..0x97
     CCtrlNpcSearch* field_98;     // 0x98 name-index search helper
     u8 _pad9C[0xC4 - 0x9C];       // 0x9C..0xC3
-    CCtrlNpcC4Object* field_C4;   // 0xC4 C4 status object (null-tested)
+    ::CfMoveC4Obj* field_C4;      // 0xC4 C4 status object (null-tested)
     u8 _padC8[0x6C4 - 0xC8];      // 0xC8..0x6C3
     u32 field_6C4;                // 0x6C4 state word (0x21..0x2A = active states)
 };
@@ -142,8 +137,8 @@ namespace cf { class CfObject; }
 namespace cf { class CCtrlMoveNpc; }
 
 // Closest-point-on-segment projection helper (retail VecMath_IsNearSegXZ, defined
-// in code_800A3B24.cpp); signature must match the definition's mangling.
-bool VecMath_IsNearSegXZ(const nw4r::math::VEC3& a, const nw4r::math::VEC3& b,
+// in code_800A3B24.cpp); the retail symbol is an unmangled C name.
+extern "C" bool VecMath_IsNearSegXZ(const nw4r::math::VEC3& a, const nw4r::math::VEC3& b,
                    const nw4r::math::VEC3& c, float r2);
 // FSqrt-style sqrt with nw4r assert (retail VecMath_SafeSqrtF).
 
@@ -155,8 +150,6 @@ extern "C" int VecMath_GroundProbeDual(const ml::CVec3* self, ml::CVec3* out, s3
 // Position-region copy helper (retail ColiSetAxisBlockInverse). Same ABI as
 // CfObjectMove.hpp / CfGimmickLock.hpp (void*, const float*).
 extern "C" void ColiSetAxisBlockInverse(void* region, const float* vec);
-// CfGameManager play-frame helper (see CfObjectImplWalker.hpp).
-extern "C" u32 getControllerWordA37C__Q22cf13CfGameManagerFv();
 // Battle-status position getter (retail CfObjectMove_getSubObj54): returns a Vec*
 // (the character object's +0x54 sub-object) fed straight into PSVECMag.
 extern "C" void* CfObjectMove_getSubObj54(void* self);
@@ -177,7 +170,6 @@ extern "C" int UIWin_PackHiLo(unsigned int arg0, int arg1);
 extern "C" void* Bdat_GetTable_AA34();
 extern "C" void UIWin_CreateTalkWin(void* self, char* text, int flag);
 extern "C" void UIWin_ShowTalkWindow(void* self);
-extern "C" u32 getControllerWordA33C__Q22cf13CfGameManagerFv();
 // C++-linkage decl: MWCC mangles the call to findObjectById__Fi (actor id ->
 // action source object; the result has a position getter at vtable +0xac).
 void* findObjectById(int id);
@@ -229,9 +221,6 @@ extern "C" int CtrlNpcApproachTarget(cf::CtrlNpc* self);
 // so C linkage emits the literal retail names at the call sites.
 extern "C" void getControllerValues__Q22cf13CfGameManagerFv(u16* first, u16* second);
 extern "C" u32 clearControllerState__Q22cf13CfGameManagerFv();
-// Play-frame helper returning a u32 (CfGameManager.cpp defines it as a plain
-// extern "C" free function returning gCfTEventFrameCounter).
-extern "C" u32 getFieldD90Value__Q22cf13CfGameManagerFv();
 // Movement-timer helper defined in this TU (retail name unmangled); C linkage
 // keeps the call reloc from CtrlNpcRestartTimerGated matching retail.
 extern "C" void CtrlNpcRestartMoveTimer(cf::CtrlNpc* self);
@@ -261,9 +250,6 @@ extern const void* gNpcActionState1Handlers[];   // actions 1..2 handlers
 extern const void* gNpcAnimMode16Handlers[];   // action 4 handlers
 extern const void* gNpcAnimModeHandlers[];   // action 5 handlers
 extern const void* gNpcActionState2Handlers[];   // action 3 handlers
-
-// CfGameManager singleton + presentation-flag probe (isGlobalCamFlagSet__Fi).
-extern "C" void* getInstance__Q22cf13CfGameManagerFv();
 
 // Search-helper helpers reached with CCtrlNpcChar::field_98.
 namespace cf { struct CfObjectModelSub98; }

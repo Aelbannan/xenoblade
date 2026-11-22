@@ -1,158 +1,51 @@
 #include <types.h>
-#include "monolib/work/CTTask.hpp"
+#include "monolib/lod/CTaskLOD.hpp"
 #include "monolib/work/CWorkThreadSystem.hpp"
 #include "monolib/util/MemManager.hpp"
+#include "monolib/scn/CScn.hpp"
 #include "libs/monolib/src/scn/CScnEnvLgtCtrl.hpp"
 
-class CTaskLOD;
-
-#include "monolib/lod/UnkClass_8046D144.hpp"
-
-// Pointee of CTaskLOD::mParam1 (offset 0x54): an opaque manager object whose
-// +0x7C slot holds the scene-light control list head handed to scnLgtCallLightV26
-// by the activateLOD/deactivateLOD/setLODEnable wrappers.
-struct LODParam1Obj {
-    u8 _00[0x7C];
-    CScnEnvLgtCtrlResList* field_0x7C;  // +0x7C light-control list head
-};
-
-// CTaskLOD wraps a LODMemMan and manages its lifecycle.
-// Inherits from CTTask<CTaskLOD> (0x54: CDoubleListNode + vtable + CProcess +
-// Move/Draw member-pointer slots).
-// Layout (0x1D44 total):
-//   0x00-0x53 : CTTask<CTaskLOD> base
-//   0x54 ..    : unknown state fields (not used by the matched delegates)
-//   0x1D40    : mpActiveLOD (points to the LODMemMan to delegate to)
-class CTaskLOD : public CTTask<CTaskLOD> {
-public:
-    CTaskLOD(LODParam1Obj* p1, void* p2, u32 handle, u32 size);
-    virtual ~CTaskLOD();
-    virtual void Init();
-    virtual void Term();
-    virtual void Move();
-    void resetActiveLOD();
-    void enableLOD();
-    void disableLOD();
-    void restorePrimaryLOD();
-    void bindTaskToLOD();
-    static void notifyLODTick(float scale);
-    static void updateLODFrame(float scale);
-    float getLODScale();
-    void setLODFilterFlag();
-    void updateLODRange();
-    void syncLODTask();
-    void activateLOD();
-    void deactivateLOD();
-    void* getLODData();
-    void refreshLOD();
-    void removeLODEntry();
-    void clearLODEntry();
-    float getLODDistance();
-    void* getLODObject();
-    void updateLODObject();
-    float getLODLevel();
-    CTaskLOD* getLODOrSelf();
-
-    LODParam1Obj* mParam1;              // 0x54
-    void* mParam2;                      // 0x58
-    LOD::UnkClass_8046D144 mLODMemMan;          // 0x5C (local class size 0x70)
-    LOD::UnkClass_8046D144* mpSecondaryLOD;     // 0x1D3C
-    LOD::UnkClass_8046D144* mpActiveLOD;        // 0x1D40
-};
-
-// Global instance pointer referenced by the delegate wrappers.  Retail owns a
-// single 8-byte, 8-aligned .sbss slot here (the pointer plus a 4-byte
-// anonymous tail); define it as a 2-element array so the object reproduces
-// the retail size and alignment.  All accesses go through element 0 (MWCC
-// emits byte-identical code for arr[0] and the scalar form).
-// (plain definition: global data names are never mangled by MWCC, and an
-// `extern "C"` qualified declaration would be taken as extern storage class,
-// emitting no storage)
-__attribute__((aligned(8))) CTaskLOD* spTaskLODInstance[2];
-
-// Shared float pool owned by CTaskLOD's sibling split (values verified from
-// the retail object: 8066A5B8 = 1.0f, 8066A5BC = 0.0f). Referencing the
-// retail names keeps the SDA21 relocs right and leaves no TU-local .sdata2
-// pool (retail .sdata2 is empty); literals would pool anonymously here.
-
-// LODMemMan delegate entry points used by the wrappers below.  The retail
-// symbol map labels them `.Fv` (no-arg) even though the retail bodies take
-// real arguments (r4/r5/...).  A C++ declaration cannot express that shape
-// (any arg list mangles the name away from the retail symbol), so they are
-// declared with C linkage: MWCC emits the identifier verbatim, making both
-// the wrapper symbols and the tail-call relocs carry the exact retail names
-// (no reloc drift).  Same pattern as the accepted LODMemMan.cpp TU.
-// setElementVisibility is a real LOD::UnkClass_8046D144 member (int task, int flag).
-// updateElementVisibility is a real LOD::UnkClass_8046D144 member (int task, int flag).
-// setElementFlag80 is a real LOD::UnkClass_8046D144 member (int task, int flag).
-// linkTaskElements is a real LOD::UnkClass_8046D144 member (int task, int value).
-// setTimeParams is a real LOD::UnkClass_8046D144 member (u16 a, u16 b, u16 c).
-// clearElementFlag is a real LOD::UnkClass_8046D144 member (int task).
-// setElementFlag is a real LOD::UnkClass_8046D144 member (int task).
-// toggleElementFlag is a real LOD::UnkClass_8046D144 member (int task, int flag).
-// setPauseFlag is a real LOD::UnkClass_8046D144 member (int param).
-// attachSceneObjects is a real LOD::UnkClass_8046D144 member (u32 param).
-// isElementFlagClear is a real LOD::UnkClass_8046D144 member (int task) -> bool.
-extern "C" void configureFadeMode__Q23LOD17UnkClass_8046D144FiUsf(LOD::UnkClass_8046D144* self, int a, int b);
+// DEBT(mangled): updateSubObject (and its callee UnkClass_8046A530::updateLodPositions)
+// really take the r4 value syncLODTask receives; until that chain gets real
+// signatures the call keeps the retail-named C-linkage declaration.
 extern "C" void updateSubObject__Q23LOD17UnkClass_8046D144Fv(LOD::UnkClass_8046D144* self, CTaskLOD* task);
-extern "C" void setElementLodLevel__Q23LOD17UnkClass_8046D144Fif(LOD::UnkClass_8046D144* self, CTaskLOD* task);
-extern "C" void setElementScale__Q23LOD17UnkClass_8046D144Fif(LOD::UnkClass_8046D144* self, CTaskLOD* task);
-// refreshElementScale is a real LOD::UnkClass_8046D144 member (int task).
-// getElementScale is a real LOD::UnkClass_8046D144 member (int task) -> f32.
-// getElementState is a real LOD::UnkClass_8046D144 member (int task) -> u8.
-extern "C" void setElementCachedValue__Q23LOD17UnkClass_8046D144Fif(LOD::UnkClass_8046D144* self, CTaskLOD* task);
-// getElementCachedValue is a real LOD::UnkClass_8046D144 member (int task) -> f32.
-// updateSingleElement is a real LOD::UnkClass_8046D144 member (int id) -> u8.
-// freePersistentBuffer is a static LOD::LODMemMan member (LODMemMan.hpp).
 
-
-// (memberized: scnLgtCallLightV26 -> CScnEnvLgtCtrlResList::CallLightV26; declaration moved into struct CScnEnvLgtCtrlResList)
-// teardownG3dObjects is a real LOD::UnkClass_8046D144 member (int param).
-extern "C" void configureShrinkTargets__Q23LOD17UnkClass_8046D144Ffsi(LOD::UnkClass_8046D144* self, CTaskLOD* task, int a);
-// (memberized: scnLgtCallLightV27 -> CScnEnvLgtCtrlResList::CallLightV27; declaration moved into struct CScnEnvLgtCtrlResList)
+// The one live CTaskLOD instance (published by create).
+CTaskLOD* CTaskLOD::spInstance;
 
 // --- FULL_MATCH functions ---
 
-// Delegate wrappers.  Each checks the singleton instance pointer
-// `spTaskLODInstance` and, if non-null, forwards to its active LODMemMan
-// (mpActiveLOD at 0x1D40).  The forwarding call is tail-call optimised by
-// MWCC into a `b` branch.
-//
-// notifyLODTick / updateLODFrame forward their float argument untouched.
-// func_8046E594 and func_8046E5BC take a real argument in retail (passed via
-// r4: `1`/`0`/`this`), but the shared symbol map labels them `.Fv` (no-arg),
-// so those bodies are byte-identical with a branch-reloc NAME drift
-// (`.Fi`/`.FP8CTaskLOD` vs retail `.Fv`).
+// Static entry points.  Each checks the singleton `spInstance` and, if set,
+// forwards its arguments to the active manager (mpActiveLOD at 0x1D40); MWCC
+// tail-calls the forwarding call (`b`).
 
 void CTaskLOD::notifyLODTick(float scale) {
-    if (spTaskLODInstance[0]) {
-        spTaskLODInstance[0]->mpActiveLOD->setLodScaleAndRefresh(scale);
+    if (spInstance) {
+        spInstance->mpActiveLOD->setLodScaleAndRefresh(scale);
     }
 }
 
 void CTaskLOD::updateLODFrame(float scale) {
-    if (spTaskLODInstance[0]) {
-        spTaskLODInstance[0]->mpActiveLOD->setBaseScale(scale);
+    if (spInstance) {
+        spInstance->mpActiveLOD->setBaseScale(scale);
     }
 }
 
 void CTaskLOD::enableLOD() {
-    if (spTaskLODInstance[0]) {
-        // Retail symbol is .Fv though r4 carries the arg; route through the
-        // extern "C" retail-named wrapper so the reloc name matches.
-        spTaskLODInstance[0]->mpActiveLOD->setPauseFlag(1);
+    if (spInstance) {
+        spInstance->mpActiveLOD->setPauseFlag(1);
     }
 }
 
 void CTaskLOD::disableLOD() {
-    if (spTaskLODInstance[0]) {
-        spTaskLODInstance[0]->mpActiveLOD->setPauseFlag(0);
+    if (spInstance) {
+        spInstance->mpActiveLOD->setPauseFlag(0);
     }
 }
 
-void CTaskLOD::bindTaskToLOD() {
-    if (spTaskLODInstance[0]) {
-        spTaskLODInstance[0]->mpActiveLOD->attachSceneObjects((u32)this);
+void CTaskLOD::bindTaskToLOD(void* scene) {
+    if (spInstance) {
+        spInstance->mpActiveLOD->attachSceneObjects((u32)scene);
     }
 }
 
@@ -195,29 +88,27 @@ void CTaskLOD::Move() { mpActiveLOD->updateLodTick(); }
 // defining the empty override would add a 4-byte function retail lacks.
 // (declaration stays in the class; the virtual is never odr-used)
 
-inline CTaskLOD::CTaskLOD(LODParam1Obj* p1, void* p2, u32 handle, u32 size)
-    : mParam1(p1), mParam2(p2), mpSecondaryLOD(0), mpActiveLOD(&mLODMemMan) {
+inline CTaskLOD::CTaskLOD(CScn* scn, CView* view, u32 handle, u32 size)
+    : mScn(scn), mView(view), mpSecondaryLOD(0), mpActiveLOD(&mLODMemMan) {
     if (size) {
         LOD::LODMemMan::allocPersistentBuffer(handle, size);
     }
     mpActiveLOD->initElementBuffers(handle, size);
 }
 
-// Factory (the retail symbol is mislabeled `.Fv` but the body reads r4-r7).
-extern "C" CTaskLOD* create__8CTaskLODFv(CTaskLOD* parent, LODParam1Obj* p1,
-                                          void* p2, u32 handle, u32 size) {
-    CTaskLOD* t = new (CWorkThreadSystem::getWorkMem()) CTaskLOD(p1, p2, handle, size);
+CTaskLOD* CTaskLOD::create(CProcess* parent, CScn* scn, CView* view, u32 handle, u32 size) {
+    CTaskLOD* t = new (CWorkThreadSystem::getWorkMem()) CTaskLOD(scn, view, handle, size);
     t->Regist(parent, false);
-    spTaskLODInstance[0] = t;
+    spInstance = t;
     return t;
 }
 
 // Allocate/replace the secondary LODMemMan when `enable` is set, then return
 // the active LODMemMan's resetAndReload result (0 when there is no singleton).
-extern "C" bool acquireLODResource__8CTaskLODFv(CTaskLOD* self, bool enable) {
-    if (spTaskLODInstance[0]) {
+bool CTaskLOD::acquireLODResource(void* data, bool enable) {
+    if (spInstance) {
         if (enable) {
-            CTaskLOD* t = spTaskLODInstance[0];
+            CTaskLOD* t = spInstance;
             if (t->mpSecondaryLOD) {
                 if (t->mpSecondaryLOD) {
                     delete t->mpSecondaryLOD;
@@ -235,8 +126,8 @@ extern "C" bool acquireLODResource__8CTaskLODFv(CTaskLOD* self, bool enable) {
             t->mpActiveLOD = lod;
             t->mLODMemMan.setPauseFlag(0);
         }
-        return spTaskLODInstance[0]->mpActiveLOD->resetAndReload(
-            (u32)self, (u8*)spTaskLODInstance[0]->mParam1);
+        return spInstance->mpActiveLOD->resetAndReload(
+            (u32)data, (u8*)spInstance->mScn);
     }
     return 0;
 }
@@ -244,11 +135,11 @@ extern "C" bool acquireLODResource__8CTaskLODFv(CTaskLOD* self, bool enable) {
 // Teardown + re-bind: release the active LODMemMan's g3d objects, destroy the
 // secondary LOD instance, then point mpActiveLOD back at the embedded
 // mLODMemMan and enable the LOD system.  The whole body works on the global
-// instance (retail never touches `this` except via the delegate call).
-void CTaskLOD::resetActiveLOD() {
-    if (spTaskLODInstance[0]) {
-        spTaskLODInstance[0]->mpActiveLOD->teardownG3dObjects((int)this);
-        CTaskLOD* t = spTaskLODInstance[0];
+// instance; `data` is only forwarded to teardownG3dObjects.
+void CTaskLOD::resetActiveLOD(void* data) {
+    if (spInstance) {
+        spInstance->mpActiveLOD->teardownG3dObjects((int)data);
+        CTaskLOD* t = spInstance;
         if (t->mpSecondaryLOD) {
             if (t->mpSecondaryLOD) {
                 delete t->mpSecondaryLOD;
@@ -262,10 +153,10 @@ void CTaskLOD::resetActiveLOD() {
 
 // (Re)bind the singleton's active LOD: destroy the secondary instance, point
 // mpActiveLOD at the embedded mLODMemMan, and enable the LOD system.  The
-// whole body works on the global instance (retail never touches `this`).
+// whole body works on the global instance.
 void CTaskLOD::restorePrimaryLOD() {
-    if (spTaskLODInstance[0]) {
-        CTaskLOD* t = spTaskLODInstance[0];
+    if (spInstance) {
+        CTaskLOD* t = spInstance;
         if (t->mpSecondaryLOD) {
             if (t->mpSecondaryLOD) {
                 delete t->mpSecondaryLOD;
@@ -281,18 +172,18 @@ void CTaskLOD::restorePrimaryLOD() {
 // then unconditionally returns the constant 1.0f (retail loads the 1.0f pool
 // entry at 0x8066A5B8 after the call).
 float CTaskLOD::getLODScale() {
-    if (spTaskLODInstance[0]) {
-        spTaskLODInstance[0]->mpActiveLOD->getBaseScale();
+    if (spInstance) {
+        spInstance->mpActiveLOD->getBaseScale();
     }
     return 1.0f;
 }
 
 // Toggle the 0x40 flag bit on the active LODMemMan at offset 0x6c: set when
-// `this` is non-null, clear when null.
-void CTaskLOD::setLODFilterFlag() {
-    if (spTaskLODInstance[0]) {
-        LOD::UnkClass_8046D144* lod = spTaskLODInstance[0]->mpActiveLOD;
-        if (this) {
+// `enable` is non-null, clear when null.
+void CTaskLOD::setLODFilterFlag(void* enable) {
+    if (spInstance) {
+        LOD::UnkClass_8046D144* lod = spInstance->mpActiveLOD;
+        if (enable) {
             lod->field_0x6C |= 0x40;
         } else {
             lod->field_0x6C &= ~0x40;
@@ -300,158 +191,149 @@ void CTaskLOD::setLODFilterFlag() {
     }
 }
 
-// Forwards the tail call to the active LODMemMan's func_8046F024 with args
-// (1, this - 1) when `this` is non-null, otherwise (0, 0).
-void CTaskLOD::updateLODRange() {
-    if (spTaskLODInstance[0]) {
-        if (this) {
-            configureFadeMode__Q23LOD17UnkClass_8046D144FiUsf(spTaskLODInstance[0]->mpActiveLOD, 1, (int)this - 1);
+// Forwards (1, value - 1, amount) to configureFadeMode when `value` is
+// non-zero, otherwise (0, 0, amount).
+void CTaskLOD::updateLODRange(u16 value, float amount) {
+    if (spInstance) {
+        if (value) {
+            spInstance->mpActiveLOD->configureFadeMode(1, value - 1, amount);
         } else {
-            configureFadeMode__Q23LOD17UnkClass_8046D144FiUsf(spTaskLODInstance[0]->mpActiveLOD, 0, 0);
+            spInstance->mpActiveLOD->configureFadeMode(0, 0, amount);
         }
     }
 }
 
 void CTaskLOD::syncLODTask() {
-    if (spTaskLODInstance[0]) {
-        updateSubObject__Q23LOD17UnkClass_8046D144Fv(spTaskLODInstance[0]->mpActiveLOD, this);
+    if (spInstance) {
+        updateSubObject__Q23LOD17UnkClass_8046D144Fv(spInstance->mpActiveLOD, this);
     }
 }
 
-// Fetches the active LODMemMan and forwards task + args (a, b) to it
-// (retail `mr r8,r3; mr r0,r4; mr r6,r5` sets up this/a/b for the delegate).
-// c is unused (dropped).  Defined as a global function carrying the retail
-// `.Fv` symbol name (see note above).
-extern "C" void dispatchLODArgs__8CTaskLODFv(CTaskLOD* self, void* a, void* b, void* c) {
-    if (spTaskLODInstance[0]) {
-        spTaskLODInstance[0]->mpActiveLOD->setTimeParams((u32)(int)self, (u32)(int)a, (u32)(int)b);
+// Forwards the three time parameters to the active manager.
+void CTaskLOD::dispatchLODArgs(u16 a, u16 b, u16 c) {
+    if (spInstance) {
+        spInstance->mpActiveLOD->setTimeParams(a, b, c);
     }
 }
 
-// LOD activation wrappers: enable/disable LOD for `this` task on the active
+// LOD activation wrappers: enable/disable element `id` on the active
 // manager, then dispatch the same task + flag through the singleton's
 // scene-light control list (scnLgtCallLightV26 ring walk).
-void CTaskLOD::activateLOD() {
-    if (spTaskLODInstance[0]) {
-        spTaskLODInstance[0]->mpActiveLOD->clearElementFlag((int)this);
-        (spTaskLODInstance[0]->mParam1->field_0x7C)->CallLightV26(this, (void*)1);
+void CTaskLOD::activateLOD(int id) {
+    if (spInstance) {
+        spInstance->mpActiveLOD->clearElementFlag(id);
+        (spInstance->mScn->mLgtCtrl)->CallLightV26((void*)id, (void*)1);
     }
 }
 
-void CTaskLOD::deactivateLOD() {
-    if (spTaskLODInstance[0]) {
-        spTaskLODInstance[0]->mpActiveLOD->setElementFlag((int)this);
-        (spTaskLODInstance[0]->mParam1->field_0x7C)->CallLightV26(this, (void*)0);
+void CTaskLOD::deactivateLOD(int id) {
+    if (spInstance) {
+        spInstance->mpActiveLOD->setElementFlag(id);
+        (spInstance->mScn->mLgtCtrl)->CallLightV26((void*)id, (void*)0);
     }
 }
 
 // Setter-style wrapper: forwards the task + flag pair through the active
-// manager and the scene-light ring.  Defined as a global carrying the retail
-// `.Fv` symbol name because the body reads a real r4 argument (see the note
-// on the dispatchLODArgs family above).
-extern "C" void setLODEnable__8CTaskLODFv(CTaskLOD* self, int flag) {
-    if (spTaskLODInstance[0]) {
-        spTaskLODInstance[0]->mpActiveLOD->toggleElementFlag((int)self, flag);
-        (spTaskLODInstance[0]->mParam1->field_0x7C)->CallLightV26(self, (void*)flag);
+// manager and the scene-light ring.
+void CTaskLOD::setLODEnable(int id, int flag) {
+    if (spInstance) {
+        spInstance->mpActiveLOD->toggleElementFlag(id, flag);
+        (spInstance->mScn->mLgtCtrl)->CallLightV26((void*)id, (void*)flag);
     }
 }
-// Value-delegates.  Like the void wrappers above, each forwards to the
-// active LODMemMan when the singleton `spTaskLODInstance` is set, passing
-// `this` as the trailing CTaskLOD* argument (retail `mr r4, r3`).  The
-// pointer/float returns come straight back from the delegate.
-void* CTaskLOD::getLODData() {
-    if (spTaskLODInstance[0]) {
-        return (void*)spTaskLODInstance[0]->mpActiveLOD->isElementFlagClear((int)this);
+// Value-delegates.  Like the void wrappers above, each forwards element `id`
+// (retail `mr r4, r3`) to the active manager; the result comes straight back
+// from the delegate.
+bool CTaskLOD::getLODData(int id) {
+    if (spInstance) {
+        return spInstance->mpActiveLOD->isElementFlagClear(id);
     }
     return 0;
 }
 
-void CTaskLOD::refreshLOD() {
-    if (spTaskLODInstance[0]) {
-        setElementLodLevel__Q23LOD17UnkClass_8046D144Fif(spTaskLODInstance[0]->mpActiveLOD, this);
+void CTaskLOD::refreshLOD(int id, f32 value) {
+    if (spInstance) {
+        spInstance->mpActiveLOD->setElementLodLevel(id, value);
     }
 }
 
-// Forward the task + arg pair to the active LODMemMan (func_8046E988), then
-// walk the singleton's scene-light control ring (scnLgtCallLightV27) with the same
-// task/arg and the float value.  `b` is unused in retail.
-extern "C" void setLODParam__8CTaskLODFv(CTaskLOD* self, float val, int a, int b) {
-    if (spTaskLODInstance[0]) {
-        configureShrinkTargets__Q23LOD17UnkClass_8046D144Ffsi(spTaskLODInstance[0]->mpActiveLOD, self, a);
-        (spTaskLODInstance[0]->mParam1->field_0x7C)->CallLightV27(self, (void*)a, val);
+// Forward (value, id, flag) to configureShrinkTargets, then walk the
+// singleton's scene-light control ring (CallLightV27) with the same id/flag
+// and the float value.
+void CTaskLOD::setLODParam(u32 id, u32 flag, f32 value) {
+    if (spInstance) {
+        spInstance->mpActiveLOD->configureShrinkTargets(value, id, flag);
+        (spInstance->mScn->mLgtCtrl)->CallLightV27((void*)id, (void*)flag, value);
     }
 }
 
-// Same delegate-shape as dispatchLODArgs: forwards `self` + first arg `a` to the
-// active LODMemMan (tail-call `b`).  `b` is unused in retail.
-extern "C" void addLODEntry__8CTaskLODFv(CTaskLOD* self, int a, int b) {
-    if (spTaskLODInstance[0]) {
-        spTaskLODInstance[0]->mpActiveLOD->setElementVisibility((int)self, a);
+// Element id + flag forwarders (tail-call `b`).
+void CTaskLOD::addLODEntry(int id, int a) {
+    if (spInstance) {
+        spInstance->mpActiveLOD->setElementVisibility(id, a);
     }
 }
 
-void CTaskLOD::removeLODEntry() {
-    if (spTaskLODInstance[0]) {
-        setElementScale__Q23LOD17UnkClass_8046D144Fif(spTaskLODInstance[0]->mpActiveLOD, this);
+void CTaskLOD::removeLODEntry(int id, f32 value) {
+    if (spInstance) {
+        spInstance->mpActiveLOD->setElementScale(id, value);
     }
 }
 
-void CTaskLOD::clearLODEntry() {
-    if (spTaskLODInstance[0]) {
-        spTaskLODInstance[0]->mpActiveLOD->refreshElementScale((int)this);
+void CTaskLOD::clearLODEntry(int id) {
+    if (spInstance) {
+        spInstance->mpActiveLOD->refreshElementScale(id);
     }
 }
 
-float CTaskLOD::getLODDistance() {
-    if (spTaskLODInstance[0]) {
-        return spTaskLODInstance[0]->mpActiveLOD->getElementScale((int)this);
+f32 CTaskLOD::getLODDistance(int id) {
+    if (spInstance) {
+        return spInstance->mpActiveLOD->getElementScale(id);
     }
     return 0.0f;
 }
-extern "C" void attachLODObject__8CTaskLODFv(CTaskLOD* self, int a, int b) {
-    if (spTaskLODInstance[0]) {
-        spTaskLODInstance[0]->mpActiveLOD->updateElementVisibility((int)self, a);
+void CTaskLOD::attachLODObject(int id, int a) {
+    if (spInstance) {
+        spInstance->mpActiveLOD->updateElementVisibility(id, a);
     }
 }
 
-extern "C" void detachLODObject__8CTaskLODFv(CTaskLOD* self, int a, int b) {
-    if (spTaskLODInstance[0]) {
-        spTaskLODInstance[0]->mpActiveLOD->setElementFlag80((int)self, a);
+void CTaskLOD::detachLODObject(int id, int a) {
+    if (spInstance) {
+        spInstance->mpActiveLOD->setElementFlag80(id, a);
     }
 }
 
-extern "C" void setLODObject__8CTaskLODFv(CTaskLOD* self, int a, int b) {
-    if (spTaskLODInstance[0]) {
-        spTaskLODInstance[0]->mpActiveLOD->linkTaskElements((int)self, a);
+void CTaskLOD::setLODObject(int id, u16 a) {
+    if (spInstance) {
+        spInstance->mpActiveLOD->linkTaskElements(id, a);
     }
 }
-void* CTaskLOD::getLODObject() {
-    if (spTaskLODInstance[0]) {
-        return (void*)spTaskLODInstance[0]->mpActiveLOD->getElementState((int)this);
+u8 CTaskLOD::getLODObject(int id) {
+    if (spInstance) {
+        return spInstance->mpActiveLOD->getElementState(id);
     }
     return 0;
 }
 
-void CTaskLOD::updateLODObject() {
-    if (spTaskLODInstance[0]) {
-        setElementCachedValue__Q23LOD17UnkClass_8046D144Fif(spTaskLODInstance[0]->mpActiveLOD, this);
+void CTaskLOD::updateLODObject(int id, f32 value) {
+    if (spInstance) {
+        spInstance->mpActiveLOD->setElementCachedValue(id, value);
     }
 }
 
-float CTaskLOD::getLODLevel() {
-    if (spTaskLODInstance[0]) {
-        return spTaskLODInstance[0]->mpActiveLOD->getElementCachedValue((int)this);
+f32 CTaskLOD::getLODLevel(int id) {
+    if (spInstance) {
+        return spInstance->mpActiveLOD->getElementCachedValue(id);
     }
     return 0.0f;
 }
 
-// func_8046EF7C returns a pointer; when there is no active LOD the retail
-// body returns `this` unchanged (beqlr with r3 still holding `this`).
-CTaskLOD* CTaskLOD::getLODOrSelf() {
-    if (spTaskLODInstance[0]) {
-        return (CTaskLOD*)(u32)spTaskLODInstance[0]->mpActiveLOD->updateSingleElement((int)this);
+// Forwards element `id` to updateSingleElement (no result).
+void CTaskLOD::getLODOrSelf(int id) {
+    if (spInstance) {
+        spInstance->mpActiveLOD->updateSingleElement(id);
     }
-    return this;
 }
 
 // Out-of-line specialisations of the CTTask<CTaskLOD> Move/Draw slots.  These

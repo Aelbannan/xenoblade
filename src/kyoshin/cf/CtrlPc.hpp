@@ -284,6 +284,11 @@ CtrlPlayerObj* getCfObjectPc(cf::CfObjectMove* objMove);
 // Global-scope data arrays (MWCC does not mangle global variable names).
 extern u32 lbl_eu_80527E98[];
 extern u32 lbl_eu_80527F10[];
+// Retail .sdata2 0.0f slot (0x80666720). It sits after an unlabelled word and before
+// 10.0f (0x80666724, used only by the undecompiled CtrlPc_FindSyncSource), so a
+// 0.0f literal lands 4 bytes low until those producers are matched
+// (OPUS-T-CTRLPC-REGAIN); it stays a retail-label extern until then.
+extern const f32 lbl_eu_80666720;
 // Retail CtrlPc vtable data (.data at 0x80527DB0). Stored manually because
 // the class is __declspec(novtable).
 extern u8 lbl_eu_80527DB0[];
@@ -731,4 +736,4 @@ extern "C" void __ct__800D10DC(void* obj, void* posObj, void* arg5);
 // Pad-config writer used by the __ct__cf_CtrlPad loop (retail 0x800995A8).
 extern "C" void setPadConfigEntry(int index, u32 value);
 
-extern "C" void* getArtsParamRC2(void* artsSet, int row, int col);
+extern "C" void* getArtsParamRC2(const void* artsSet, int row, int col);

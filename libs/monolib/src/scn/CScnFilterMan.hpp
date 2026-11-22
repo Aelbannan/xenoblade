@@ -93,7 +93,7 @@ class CScnFilterMan {
 public:
     virtual ~CScnFilterMan();
     void update();
-    virtual void cbRenderBefore();
+    virtual void cbRenderBefore(CScn* scene);
 
     CScn* mScene;                        // 0x04 scene back-pointer
     CScnFilterReslist field_08;          // 0x08 reslist<CScnFilter*> member

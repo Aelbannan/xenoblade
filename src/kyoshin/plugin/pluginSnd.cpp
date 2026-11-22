@@ -12,8 +12,6 @@
 // TUs, e.g. pluginHelp.cpp).
 // ---------------------------------------------------------------------------
 extern "C" {
-    extern char lbl_eu_80504148[];  // voice file-name format string
-
     extern s32 MenuSnd_QuerySlotLive_89A04(s32 index);                        // sound-slot busy check
     extern s32 MenuSnd_TryPlayGated_97A0(const char* name, float vol, s32 flag);  // play archive voice
     extern void MenuSnd_SilenceByName_8986C(const char* name, float fadeTime); // stop voice by name
@@ -238,7 +236,7 @@ int playVoice(VMThread* pThread) {
         char name[128];
         strncpy(name, str, 10);
         name[10] = 0;
-        buf.format(lbl_eu_80504148, name, str);
+        buf.format("snd/ahx/ev/%s/%s.ahx", name, str);
     } else {
         buf.clear();
     }
@@ -262,7 +260,7 @@ int stopVoice(VMThread* pThread) {
             char shortName[128];
             strncpy(shortName, name, 10);
             shortName[10] = 0;
-            buf.format(lbl_eu_80504148, shortName, name);
+            buf.format("snd/ahx/ev/%s/%s.ahx", shortName, name);
         } else {
             buf.clear();
         }
@@ -447,7 +445,7 @@ int seCamPos(VMThread* pThread) {
     return 0;
 }
 
-int clearCamPos() {
+int clearCamPos(VMThread* pThread) {
     extern unsigned char gSoundSystemInitFlag;
     extern void func_801AAD08();
     func_801AAD08();
@@ -455,10 +453,32 @@ int clearCamPos() {
     return 0;
 }
 
+// name-guess: retail .data:0x805333F8 is an anonymous PluginFuncData table of
+// command names and entry points; no name exists for it in any region's
+// symbols.txt.
+static PluginFuncData sSndPluginFuncs[] = {
+    { "playBgm", playBgm },
+    { "stopBgm", stopBgm },
+    { "setFieldBgm", setFieldBgm },
+    { "setTownBgm", setTownBgm },
+    { "stopFieldBgm", stopFieldBgm },
+    { "stopTownBgm", stopTownBgm },
+    { "forceFieldBgm", forceFieldBgm },
+    { "setVolBgm", setVolBgm },
+    { "playVoice", playVoice },
+    { "stopVoice", stopVoice },
+    { "waitVoice", waitVoice },
+    { "playSeCommon", playSeCommon },
+    { "playSeMap", playSeMap },
+    { "volSeMap", volSeMap },
+    { "stopSeCommon", stopSeCommon },
+    { "stopSeMap", stopSeMap },
+    { "setCamPos", seCamPos },
+    { "clearCamPos", clearCamPos },
+    { 0, 0 },
+};
+
 void pluginSndRegist() {
-    extern void vmPluginRegist(void*, void*);
-    extern char lbl_eu_80504148[];
-    extern char lbl_eu_805333F8[];
-    vmPluginRegist((void*)((char*)lbl_eu_80504148 + 0x15), (void*)lbl_eu_805333F8);
+    vmPluginRegist("snd", sSndPluginFuncs);
 }
 } // extern "C"

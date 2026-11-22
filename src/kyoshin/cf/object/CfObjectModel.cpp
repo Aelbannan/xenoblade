@@ -9,6 +9,7 @@
 #include "monolib/math/CAttrTransform.hpp"
 #include "kyoshin/action/CActParamAnim.hpp"
 #include <nw4r/g3d/res/g3d_resmdl.h>
+#include <nw4r/g3d/g3d_scnmdlsmpl.h>
 #include <nw4r/db/db_assert.h>
 #include "kyoshin/cf/CfResTboxImpl.hpp"  // complete type for delete below
 #include "kyoshin/code_801862C0.hpp"
@@ -227,21 +228,20 @@ void cf::CfObjectModel::CfObjectModel_teardownModel() {
     }
     CfObjectModel_releaseModelList();  // vtable +0x17C
     CfObjectModel_releaseModelSub();  // vtable +0x178
-    // The +0x70/+0x90/+0x94 words are exposed as opaque byte arrays by the
-    // header, so the zero stores go through a local overlay.
-    struct Model7090 {
-        u8 _pad00[0x70];
-        u32 field_70;   // 0x70
-        u8 _pad74[0x90 - 0x74];
-        u32 field_90;   // 0x90
-        u32 field_94;   // 0x94
+    // The +0x90 word is the first four bytes of field_0x90; MWCC emits the
+    // retail word store when the four bytes are zeroed through a typed word
+    // member of that array's real owner.
+    struct Model90 {
+        u8 _pad00[0x90];
+        u32 field_90;  // 0x90
+        u32 field_94;  // 0x94
     };
-    Model7090* data = reinterpret_cast<Model7090*>(this);
+    Model90* data = reinterpret_cast<Model90*>(this);
     u32 flags = mFlags68;
     data->field_90 = 0;
     flags &= 0x40100000;
     data->field_94 = 0;
-    data->field_70 = 0;
+    this->mTarget70 = 0;
     mFlags68 = flags;
 }
 
@@ -260,8 +260,6 @@ void CfObjectModel_releaseModelList__Q22cf13CfObjectModelFv() {}
 void CfModel_ReleaseAll(cf::CfObjectModel* self) {
     self->CfObjectModel_releaseModelList();  // vtable +0x17C
     self->CfObjectModel_releaseModelSub();  // vtable +0x178
-    // Zero the two words at +0x90/+0x94 (the header exposes them as the
-    // opaque byte array field_0x90, so write through a local overlay).
     struct Model90 {
         u8 _pad00[0x90];
         u32 field_90;  // 0x90
@@ -511,7 +509,7 @@ ml::CVec3* cf::CfObjectModel::CfObject_getPosVector() {
     return reinterpret_cast<ml::CVec3*>(reinterpret_cast<uintptr_t>(this) + 0x3C);
 }
 
-void* cf::CfObjectModel::CfObject_getPosTriple() { void* p = this->mSubObj98; if (p != 0) { return (u8*)p + 0x310; } return &this->mPos3C; }
+void* cf::CfObjectModel::CfObject_getPosTriple() { cf::CfObjectModelSub98* p = this->mSubObj98; if (p != 0) { return &p->mPos310; } return &this->mPos3C; }
 
 // Copies the vector into the sub-object transform's rotation and refreshes
 // it, then mirrors the vector into this object's +0x48 position (retail
@@ -576,11 +574,11 @@ float cf::CfObjectModel::CfObject_getScaledAngle() {
 }
 
 void cf::CfObjectModel::CfObject_setObjScale(float f) {
-    void* p = this->mSubObj98;
+    cf::CfObjectModelSub98* p = this->mSubObj98;
     if (p != 0) {
-        *(float*)((u8*)p + 0x304) = f;
-        *(float*)((u8*)p + 0x308) = f;
-        *(float*)((u8*)p + 0x30c) = f;
+        p->mScale304.x = f;
+        p->mScale304.y = f;
+        p->mScale304.z = f;
     }
     this->mFloat60 = f;
 }
@@ -614,8 +612,8 @@ float cf::CfObjectModel::CfObject_getHeightDiff() const {
 }
 
 // Looks up a named node in the model resource and returns the matching
-// per-node matrix slot (mtx id * 0x30 into the table base at
-// sub->field_147C->field_EC). Retail symbol is Fv but the body reads the
+// per-node matrix slot (nw4r::g3d::ScnMdlSimple::GetWldMtxArray indexed by
+// the node mtx id). Retail symbol is Fv but the body reads the
 // node name from r4 - forced-name form.
 void* cf::CfObjectModel::CfObject_findNodeMatrix(const char* name) const {
     cf::CfObjectModelSub98* sub = this->mSubObj98;
@@ -623,7 +621,7 @@ void* cf::CfObjectModel::CfObject_findNodeMatrix(const char* name) const {
         return 0;
     }
     nw4r::g3d::ResMdl resMdl(sub->field_146C);
-    cf::CfObjectModelActTable* table = sub->field_147C;
+    nw4r::g3d::ScnMdlSimple* table = sub->field_147C;
     nw4r::g3d::ResNode node = resMdl.GetResNode(name);
     if (node.ptr() == 0) {
         return 0;
@@ -633,7 +631,7 @@ void* cf::CfObjectModel::CfObject_findNodeMatrix(const char* name) const {
     if (!node.IsValid()) {
         nw4r::db::Panic(lbl_eu_80529678, 0x53, lbl_eu_80529658);
     }
-    return table->field_EC + node.GetMtxID() * 0x30;
+    return table->GetWldMtxArray()[node.GetMtxID()];
 }
 
 // Same node-matrix lookup as CfObject_findNodeMatrix but by node index
@@ -644,7 +642,7 @@ void* cf::CfObjectModel::CfObject_getIndexedNodeMatrix(u32 idx) const {
         return 0;
     }
     nw4r::g3d::ResMdl resMdl(sub->field_146C);
-    cf::CfObjectModelActTable* table = sub->field_147C;
+    nw4r::g3d::ScnMdlSimple* table = sub->field_147C;
     nw4r::g3d::ResNode node = resMdl.GetResNode(idx);
     if (node.ptr() == 0) {
         return 0;
@@ -652,7 +650,7 @@ void* cf::CfObjectModel::CfObject_getIndexedNodeMatrix(u32 idx) const {
     if (!node.IsValid()) {
         nw4r::db::Panic(lbl_eu_80529678, 0x53, lbl_eu_80529658);
     }
-    return table->field_EC + node.GetMtxID() * 0x30;
+    return table->GetWldMtxArray()[node.GetMtxID()];
 }
 
 // Return the sub-object's +0x14AC word when a sub-object exists and its
@@ -759,20 +757,11 @@ void cf::CfObjectModel::CfObject_syncModelRate(float value) {
     reinterpret_cast<CScnItemModel*>(sub)->setModelFloatRate(value);
 }
 
-// Typed view of the +0xA4..+0xAF float triple (exact layout): the three
-// Fv float-slot setters below write fA4/fA8/fAC through it.
-struct ModelFloatA4 {
-    u8 _pad00[0xA4];
-    float fA4;  // 0xA4
-    float fA8;  // 0xA8
-    float fAC;  // 0xAC
-};
+void cf::CfObjectModel::CfObject_setProgressHigh(float val) { mMoveRates.x = val; }
 
-void cf::CfObjectModel::CfObject_setProgressHigh(float val) { reinterpret_cast<ModelFloatA4*>(this)->fA4 = val; }
+void cf::CfObjectModel::CfObjectModel_setModelFloatA8(float val) { mMoveRates.y = val; }
 
-void cf::CfObjectModel::CfObjectModel_setModelFloatA8(float val) { reinterpret_cast<ModelFloatA4*>(this)->fA8 = val; }
-
-void cf::CfObjectModel::CfObjectModel_setModelRate(float val) { reinterpret_cast<ModelFloatA4*>(this)->fAC = val; }
+void cf::CfObjectModel::CfObjectModel_setModelRate(float val) { mMoveRates.z = val; }
 
 // Retail symbol is Fv (no params) but the body reads r4 and forwards it to
 // the sub-object's vtable slot +0x6C; written with the verbatim mangled

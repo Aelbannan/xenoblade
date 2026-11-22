@@ -5,6 +5,9 @@
 
 #include "monolib/work/IWorkEvent.hpp"
 #include "kyoshin/CBaseCur.hpp"
+#include "kyoshin/CScrollBar.hpp"
+#include "kyoshin/CSysWin.hpp"
+#include "monolib/lib/UnkClass_8045F564.hpp"
 
 // Forward declarations for types used in CFloorMap
 class CScrollBar;
@@ -12,16 +15,7 @@ class CSysWin;
 class CFileHandle;
 class CEventFile;
 class UnkClass_8045F564;
-struct CFloorMapLayoutBlock;
 
-// CFloorMap vtable (retail .data, split unit; stored manually by the ctor).
-extern void* lbl_eu_80537028[];
-
-// Sub-object ctor imports (retail emits the short unmangled names at the
-// call sites - the typed member ctors would mangle differently).
-extern "C" void __ct__10CScrollBarFUc(void* self, int direction);
-extern "C" void __ct__7CSysWinFUc(void*, int);
-extern "C" UnkClass_8045F564* __ct__17UnkClass_8045F564Fv(UnkClass_8045F564* self);
 
 // 8-byte entry in the layout pointer array at 0x150
 struct UnkLayoutEntry {
@@ -122,23 +116,152 @@ struct CFloorMapFull {
     f32 field_3344;          // 0x3344 - buffer free countdown timer
 };
 
+// 0x18-byte map-marker record shared by the local entry table (built by
+// FloorMap_RebuildMarkers) and the per-floor marker lists the entries are merged into.
+struct CFloorMapMarkerEntry {
+    CFloorMapMarkerEntry() {}
+    u16 id;      // +0x00 row/map id
+    u8 type;     // +0x02 marker type
+    u8 _03;      // +0x03
+    f32 x;       // +0x04
+    f32 y;       // +0x08
+    f32 z;       // +0x0C
+    u32 unk;     // +0x10
+    u8 flag;     // +0x14
+    u8 _15[0x18 - 0x15];
+};
+
+// 0x30C-byte floor entry of the floor-map cursor (16 of them at cursor
+// +0x10): floor id, floor-name id/height, floor-name string, up to 32 row
+// markers and the row count. The row records' empty ctor is what leaves
+// retail's collapsed array-ctor range test in the cursor ctor.
+// name-guess: CFloorMapFloorEntry (no retail name for this record)
+struct CFloorMapFloorEntry {
+    u8 mFloorId;                       // +0x000
+    u16 mNameId;                       // +0x002
+    char* mName;                       // +0x004
+    CFloorMapMarkerEntry mRows[32];    // +0x008
+    u8 mRowCount;                      // +0x308
+};
+
+// Floor-map row cursors. Class names, vtables (__vt__9CFloorCur,
+// __vt__12CFloorMarker, __vt__8CLandCur, __vt__10CTargetCur) and RTTI are
+// retail (JP symbols); the single virtual slot is the layout loader.
+// name-guess: initLayout and the member names (retail only names the classes).
+class CFloorCur {
+public:
+    CFloorCur(nw4r::lyt::ArcResourceAccessor* acc = NULL)
+        : mpLayout(NULL), mArcResAcc(acc), mpAnimTrans0(NULL), mpAnimTrans1(NULL),
+          mActive(0), mVisible(1) {}
+    virtual void initLayout();
+
+    nw4r::lyt::Layout* mpLayout;                 // +0x04
+    nw4r::lyt::ArcResourceAccessor* mArcResAcc;  // +0x08
+    nw4r::lyt::AnimTransform* mpAnimTrans0;      // +0x0C
+    nw4r::lyt::AnimTransform* mpAnimTrans1;      // +0x10
+    u8 mActive;                                  // +0x14
+    u8 mVisible;                                 // +0x15
+};
+
+class CFloorMarker : public CFloorCur {
+public:
+    CFloorMarker(nw4r::lyt::ArcResourceAccessor* acc = NULL) : CFloorCur(acc) {}
+    virtual void initLayout();
+};
+
+class CLandCur : public CFloorCur {
+public:
+    CLandCur(nw4r::lyt::ArcResourceAccessor* acc = NULL) : CFloorCur(acc) {}
+    virtual void initLayout();
+};
+
+class CTargetCur : public CFloorCur {
+public:
+    CTargetCur(nw4r::lyt::ArcResourceAccessor* acc = NULL) : CFloorCur(acc) {}
+    virtual void initLayout();
+};
+
+// Floor-map cursor (CFloorMap+0x1FC, 0x3138 bytes): floor list layout,
+// current floor/page/row, 16 floor entries and the four row cursors.
+// name-guess: CFloorMapCursor / Init (retail keeps no name for the class;
+// its ctor is the unnamed __ct__80244F50).
+class CScrollBar;
+class CFloorMapCursor {
+public:
+    CFloorMapCursor(CScrollBar* scrollBar, nw4r::lyt::ArcResourceAccessor* acc, u8 floor);
+    ~CFloorMapCursor();
+    void Init();
+
+    nw4r::lyt::Layout* mData;                    // +0x0000
+    nw4r::lyt::ArcResourceAccessor* mArcResAcc;  // +0x0004
+    u8 field_08;                                 // +0x0008 - current-floor flag
+    s8 field_09;                                 // +0x0009 - floor index
+    s8 field_0A;                                 // +0x000A - page index
+    s8 field_0B;                                 // +0x000B - row index
+    bool field_0C;                               // +0x000C
+    CFloorMapFloorEntry mEntries[16];            // +0x0010
+    u8 field_30D0;                               // +0x30D0 - floor count
+    CFloorCur mFloorCur;                         // +0x30D4
+    CFloorMarker mFloorMarker;                   // +0x30EC
+    CLandCur mLandCur;                           // +0x3104
+    CTargetCur mTargetCur;                       // +0x311C
+    CScrollBar* field_3134;                      // +0x3134 - scrollbar widget
+};
+
+// One 8-byte slot of the 20-entry layout array at CFloorMap+0x150: the
+// loaded layout plus the truncated world-y of the row marker written by
+// FloorMap_RefreshLayoutBlock.
+// name-guess: CFloorMapLayoutSlot / CFloorMapLayoutBlock
+struct CFloorMapLayoutSlot {
+    CFloorMapLayoutSlot() : layout(NULL), posY(0) {}
+    nw4r::lyt::Layout* layout; // +0x00
+    s32 posY;                  // +0x04
+};
+
+// Layout block at CFloorMap+0x150 (the object FloorMap_RefreshLayoutBlock
+// works on): 20 layout slots, the populated-slot count, the shared arc
+// resource accessor and the current-floor id.
+class CFloorMapLayoutBlock {
+public:
+    CFloorMapLayoutBlock(nw4r::lyt::ArcResourceAccessor* acc = NULL)
+        : count(0), accessor(acc), curFloor(0) {
+        for (int i = 0; i < 0x14; i++) {
+            slots[i].layout = NULL;
+            slots[i].posY = 0;
+        }
+    }
+    ~CFloorMapLayoutBlock();
+    CFloorMapLayoutSlot slots[20];            // +0x00..0x9F
+    u8 count;                                 // +0xA0
+    nw4r::lyt::ArcResourceAccessor* accessor; // +0xA4
+    u8 curFloor;                              // +0xA8 - current-floor id
+};
+
+// Loaded map-image buffer plus its free countdown (CFloorMap+0x3340); the
+// pair is assigned and copied as one 8-byte object.
+// name-guess: CFloorMapBufTimer
+struct CFloorMapBufTimer {
+    CFloorMapBufTimer() {}
+    CFloorMapBufTimer(u8* buf, f32 timer) : mpBuf(buf), mTimer(timer) {}
+    u8* mpBuf;   // +0x00
+    f32 mTimer;  // +0x04
+};
+
 // Full CFloorMap layout based on retail analysis.
-// Total size: 0x3348 bytes.
-// The vtable pointer is at offset 0x00. Like CSysWin, retail stores it
-// manually from the constructor (no MWCC-emitted __vt__9CFloorMap), so the
-// class declares no virtuals and the fields start right after the vtable ptr.
-class CFloorMap {
+// Total size: 0x3348 bytes. IWorkEvent-derived: the compiler-emitted
+// __vt__9CFloorMap (.data 0x88: RTTI + 32 IWorkEvent slots) and the weak
+// __RTTI__9CFloorMap (.sdata) come from this declaration.
+class CFloorMap : public IWorkEvent {
 public:
     CFloorMap();
-    ~CFloorMap();
-    u32 OnFileEvent(CEventFile* event);
+    virtual ~CFloorMap();
+    virtual bool OnFileEvent(CEventFile* event);
     u8 GetActiveFlag58();
 
     // Fields from CFloorMapFull (adjusted for vtable ptr at +0x00)
     // CFloorMapFull has _00[0x24] at 0x00 which includes the vtable ptr.
-    void* mVtbl;                           // +0x00 - IWorkEvent vtable (set by ctor)
-    u8 mMemRegion04[0x10];                 // 0x04-0x13 - UnkClass_8045F564
-    u8 mMemRegion14[0x10];                   // 0x14-0x23 - UnkClass_8045F564
+    UnkClass_8045F564 mMemRegion04;          // 0x04-0x13
+    UnkClass_8045F564 mMemRegion14;          // 0x14-0x23
     u32 field_24;                            // 0x24
     u32 field_28;                            // 0x28
     u32 field_2C;                            // 0x2C
@@ -156,15 +279,13 @@ public:
     f32 field_50;                            // 0x50
     f32 field_54;                            // 0x54
     u8 cursor_active_58;                     // 0x58
-    u8 _59[0x5A - 0x59];                     // 0x59
     u16 field_5A;                            // 0x5A-0x5B
     s8 cursor_idx_5C;                        // 0x5C
     u8 field_5D;                             // 0x5D
-    u8 _5E[0x60 - 0x5E];                     // 0x5E-0x5F
-    u8 mScrollBar[0x40];                     // 0x60-0x9F - CScrollBar
+    CScrollBar mScrollBar;                   // 0x60-0x9F
     CCur18 mCursorA0;                        // 0xA0-0xB7
-    u8 mSysWinB8[0x3C];                      // 0xB8-0xF3 - CSysWin
-    u8 mSysWinF4[0x3C];                      // 0xF4-0x12F - CSysWin
+    CSysWin mSysWinB8;                       // 0xB8-0xF3
+    CSysWin mSysWinF4;                       // 0xF4-0x12F
     u32 layout_130;                          // 0x130
     u32 field_134;                           // 0x134 - ArcResourceAccessor for layout_130
     u32 layout_138;                          // 0x138
@@ -173,63 +294,48 @@ public:
     u32 field_144;                           // 0x144 - ArcResourceAccessor for layout_140
     u32 field_148;                           // 0x148 - base row-marker pane (build temp)
     u8 field_14C;                            // 0x14C
-    u8 _14D[0x150 - 0x14D];                  // 0x14D-0x14F
-    UnkLayoutEntry layouts_150[0x14];        // 0x150-0x1EF
-    u8 layout_count_1F0;                     // 0x1F0
-    u8 _1F1[0x1F4 - 0x1F1];                  // 0x1F1-0x1F3
-    u32 field_1F4;                           // 0x1F4-0x1F7
-    u8 field_1F8;                            // 0x1F8 - current-floor id
-    u8 _1F9[0x1FC - 0x1F9];                  // 0x1F9-0x1FB
-    u32 layout_1FC;                          // 0x1FC
-    u8 _200[0x204 - 0x200];                  // 0x200-0x203
-    u8 field_204;                            // 0x204
-    s8 field_205;                            // 0x205
-    s8 field_206;                            // 0x206
-    u8 field_207;                            // 0x207
-    bool field_208;                          // 0x208
-    u8 _209[0x32CC - 0x209];                 // 0x209-0x32CB
-    u8 field_32CC;                           // 0x32CC
-    u8 _32CD[0x32D4 - 0x32CD];               // 0x32CD-0x32D3
-    u32 layout_32D4;                         // 0x32D4
-    u32 layout_32D8;                         // 0x32D8
-    u32 layout_32DC;                         // 0x32DC
-    u32 layout_32E0;                         // 0x32E0
-    u8 field_32E4;                           // 0x32E4
-    u8 field_32E5;                           // 0x32E5
-    u8 _32E6[0x32EC - 0x32E6];               // 0x32E6-0x32EB
-    u32 layout_32EC;                         // 0x32EC
-    u32 layout_32F0;                         // 0x32F0
-    u32 layout_32F4;                         // 0x32F4
-    u32 layout_32F8;                         // 0x32F8
-    u8 field_32FC;                           // 0x32FC
-    u8 field_32FD;                           // 0x32FD
-    u8 _32FE[0x3304 - 0x32FE];               // 0x32FE-0x3303
-    u32 layout_3304;                         // 0x3304
-    u32 layout_3308;                         // 0x3308
-    u32 layout_330C;                         // 0x330C
-    u32 layout_3310;                         // 0x3310
-    u8 field_3314;                           // 0x3314
-    u8 field_3315;                           // 0x3315
-    u8 _3316[0x331C - 0x3316];               // 0x3316-0x331B
-    u32 layout_331C;                         // 0x331C
-    u32 layout_3320;                         // 0x3320
-    u32 layout_3324;                         // 0x3324
-    u32 layout_3328;                         // 0x3328
-    u8 field_332C;                           // 0x332C
-    u8 field_332D;                           // 0x332D
-    u8 _332E[0x3330 - 0x332E];               // 0x332E-0x332F
-    u32 field_3330;                          // 0x3330
+    CFloorMapLayoutBlock mLayoutBlock;       // 0x150-0x1FB
+    CFloorMapCursor mCursor;                 // 0x1FC-0x3333
     u32 layout_3334;                         // 0x3334
     u32 field_3338;                          // 0x3338 - ArcResourceAccessor for layout_3334
     bool field_333C;                         // 0x333C
-    u8* field_3340;                          // 0x3340
-    f32 field_3344;                          // 0x3344
+    CFloorMapBufTimer mBufTimer;             // 0x3340
     void SetMapTable(u8 id);
-};
 
-// Free functions defined in this TU (real C++ linkage, retail-mangled names).
-void FloorMap_Log2Field208(void* self);
-void FloorMap_Log2Field333C(void* self);
+    // name-guess: retail EU/US carry no names for these CFloorMap methods
+    // (JP names only the ctor/dtor/OnFileEvent); called on the embedded
+    // mFloorMap member by CMenuMapSelect / CMenuMapSelectSC.
+    void LoadStageLayout();
+    void LoadMapFiles();
+    void UpdateFrame();
+    void Draw(nw4r::lyt::DrawInfo* drawInfo);
+    void Teardown();
+    int GetField42Gated();
+    int GetField40Flag();
+    void UpdateRowPanePos();
+    void CursorNextFloor();
+    void UpdateCursorMove();
+    void UpdateWorldMap();
+    void HandleMapDown();
+    void NormalizeMapPos();
+    void ScrollDown();
+    void ScrollUp();
+    void ScrollRight();
+    void ScrollLeft();
+    void OpenRowWindow();
+    u32 ClassifyByte41();
+    u16 GetU16Field5A();
+    void ConfirmSelect();
+    void SetPaneFlag(u32 arg2);
+    u8 GetBdatMaxRow();
+    void Log2Field208();
+    u8 GetField208Gated();
+    u8 GetField208Plain();
+    u32 CheckRowVisited();
+    void Log2Field333C();
+    u32 IsSysWinBusy();
+    void MoveToCursorRow();
+};
 
 // ---- imports folded from the former CFloorMapImports.hpp ----
 // Unit-private import declarations split out of CFloorMap.hpp so the class header
@@ -245,65 +351,9 @@ void FloorMap_Log2Field333C(void* self);
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" char lbl_eu_8050BEA8[];
 
-// Argument block (0x18 bytes, passed by reference) for the embedded layout
-// widgets' virtual init entry (vtable+8) called by the cursor ctor.
-struct CFloorMapWidgetArg {
-    const void* nameOrTable; // +0x00 - colour table or pane-name string
-    u32 _04;                 // +0x04 - zeroed
-    u32 _08;
-    u32 _0C;
-    u32 _10;
-    u8 field_14;             // +0x14 - zeroed
-    u8 field_15;             // +0x15 - always 1
-};
-
-// 0x18-byte embedded layout widget reset by the cursor ctor (four of them at
-// cursor +0x30D4/+0x30EC/+0x3104/+0x311C). The ctor clears everything except
-// the vtable, installs the shared arc resource accessor at +0x08 and calls
-// the virtual init entry. Retail invokes only the first virtual (Init at
-// +0x08) with the colour-table / name argument. novtable: the table lives in
-// the data blob and member ctors store it manually.
-class __declspec(novtable) CFloorMapWidget {
-public:
-    virtual void Init(CFloorMapWidgetArg* arg); // +0x08
-    void* field_04;                             // +0x04
-    nw4r::lyt::ArcResourceAccessor* accessor;   // +0x08
-    void* field_0C;                             // +0x0C
-    void* field_10;                             // +0x10
-    u8 field_14;                                // +0x14
-    u8 field_15;                                // +0x15
-};
-
-// View of the cursor object covering the four embedded widgets.
-struct CFloorMapWidgets {
-    u8 _00[0x30D4];
-    CFloorMapWidget widgets[4]; // 0x30D4, 0x30EC, 0x3104, 0x311C
-};
-
 // (Embedded sys-win sub-objects dispatch through CSysWin::loadSystemArc
 // at +0x88; see kyoshin/CSysWin.hpp.)
 
-// Ctor view of the cursor object: layout/accessor head plus the widgets.
-struct CFloorMapCtorView {
-    nw4r::lyt::Layout* layout;                // +0x00
-    nw4r::lyt::ArcResourceAccessor* accessor; // +0x04
-    u8 _08[0x30D4 - 0x08];
-    CFloorMapWidget widgets[4]; // 0x30D4, 0x30EC, 0x3104, 0x311C
-};
-
-// Colour/name query used by the cursor ctor: returns a pointer to four s16
-// colour entries for the named layout group.
-extern const char lbl_eu_805370EC[];
-extern const char lbl_eu_805370D4[];
-extern const char lbl_eu_805370BC[];
-extern const char lbl_eu_80537104[];
-
-// C-linkage sub-object destructor imports used by ~CFloorMap (retail emits the
-// unmangled names at the call sites).
-extern "C" void __dt__7CSysWinFv(void*, int);
-extern "C" void __dt__10CScrollBarFv(void*, int);
-extern "C" void __dt__17UnkClass_8045F564Fv(void*, int);
-// Shared UI accessor import.
 
 // Same-TU helper definitions used by CFloorMap::OnFileEvent (retail flat
 // names; the extern "C" declaration fixes the definition linkage).
@@ -325,16 +375,6 @@ extern const u32 lbl_eu_8050BAB0[];
 // Sub-object layouts (from retail field analysis)
 // ============================================================================
 
-// Layout-init wrapper used by FloorMap_BuildLayoutNoCEPane/FloorMap_BuildLayoutNoD9Pane: a layout slot, its
-// arc resource accessor and the two animation transforms bound to it.
-struct CFloorMapLayoutData {
-    u8 _00[0x04];
-    nw4r::lyt::Layout* layout;                // +0x04
-    nw4r::lyt::ArcResourceAccessor* accessor; // +0x08
-    nw4r::lyt::AnimTransform* anim0C;         // +0x0C
-    nw4r::lyt::AnimTransform* anim10;         // +0x10
-};
-
 // Layout-init view for FloorMap_BuildLayoutBaseArc: layout pointer at +0x00 with the arc
 // resource accessor right behind it at +0x04 (buildLayout takes
 // &layout/accessor pair, then GetRootPane reads layout+0x10).
@@ -343,86 +383,11 @@ struct CFloorMapLayoutData0 {
     nw4r::lyt::ArcResourceAccessor* accessor; // +0x04
 };
 
-// 0x30C-byte floor-entry block. The row/page count byte sits at +0x30C of
-// each block (viewed via CFloorMapFloorEntryView); the blocks start at
-// CFloorMapCursor+0x0C, so entry i's count is at cursor + i*0x30C + 0x318.
-struct CFloorMapFloorEntry {
-    u8 _00[0x30C];
-};
-
-// Count-byte view over a CFloorMapFloorEntry block (kept separate so the
-// entry array stride stays 0x30C, matching retail's mulli 0x30C).
-struct CFloorMapFloorEntryView {
-    u8 _00[0x30C];
-    u8 count; // +0x30C
-};
-
-// Two consecutive 0x30C floor-entry blocks, copied as one 0x618-byte chunk
-// from the staging image into the resident cursor.
-struct CFloorMapEntryBlocks {
-    u8 data[0x618];
-};
-
-// 5-byte cursor-state run (flag/floor/page/row/entry0-count) copied byte-wise;
-// its last byte aliases the first byte of the entry-blocks chunk.
-struct CFloorMapHeadFlags {
-    u8 b[5];
-};
-
-// One 0x1C-byte widget-init record staged by __ct__80244F50: a default name
-// pointer followed by the live widget body (four words + two flag bytes).
-struct CFloorMapRecSlot {
-    void* name;               // +0x00
-    struct {
-        u32 words[4];         // +0x04
-        u8 flagA;             // +0x14
-        u8 flagB;             // +0x15
-    } body;
-};
-
-// Full 0x3138-byte staging image built by __ct__80244F50 on the stack and
-// copied member-wise into the resident cursor at CFloorMap+0x1FC.
-struct CFloorMapStage {
-    void* mData;              // +0x000
-    u32 accessor;             // +0x004
-    u8 headFlags[4];          // +0x008 (flag / floor / page / row)
-    CFloorMapEntryBlocks blocks; // +0x00C
-    u8 _624[0x30D0 - 0x624];
-    u8 floorCount;               // +0x30D0
-    u8 _30D1[0x30D4 - 0x30D1];
-    CFloorMapRecSlot slots[4];   // +0x30D4
-    u32 scrollBarPtr;            // +0x3134
-};
-
-// Floor-map cursor sub-object (lives at CFloorMap+0x1FC): current floor/page/
-// row indices plus the position-target holder and scrollbar widget pointers.
-struct CFloorMapCursor {
-    nw4r::lyt::Layout* mData; // +0x00
-    u8 _04[0x08 - 0x04];
-    u8 field_08;              // +0x08 - current-floor flag
-    s8 field_09;              // +0x09 - floor index
-    s8 field_0A;              // +0x0A - page index
-    s8 field_0B;              // +0x0B - row index
-    u8 _0C[0x30C];            // +0x0C..0x317 - first floor-entry body
-    u8 entry0Count;           // +0x318 (first entry's count)
-    u8 _319[0x30D0 - 0x319];
-    u8 field_30D0;            // +0x30D0 - floor count
-    u8 _30D1[0x30D8 - 0x30D1];
-    nw4r::lyt::Layout* field_30D8; // +0x30D8 - map layout holder
-    u8 _30DC[0x30F0 - 0x30DC];
-    nw4r::lyt::Layout* field_30F0; // +0x30F0 - second map layout holder
-    u8 _30F4[0x3101 - 0x30F4];
-    u8 field_3101;            // +0x3101 - map-id mismatch flag
-    u8 _3102[0x3108 - 0x3102];
-    void* field_3108;         // +0x3108 - holder for the pane to position
-    u8 _310C[0x3134 - 0x310C];
-    void* field_3134;         // +0x3134 - scrollbar widget pointer
-};
-
 // 0x30C-stride floor-name entry written by FloorMap_RefreshFloorRows (base at
 // cursor + fi*0x30C): the floor-id/name fields sit at +0x10..+0x17 (the
 // marker-block header at base+0x10) and the row-count byte at +0x318 (the
 // marker block's count at +0x308).
+// 0x30C-stride floor-name entry written by
 struct CFloorMapFloorNameEntry {
     u8 _00[0x10];
     u8 field_10;              // +0x10 - floor id (1-based)
@@ -433,19 +398,6 @@ struct CFloorMapFloorNameEntry {
     u8 field_318;             // +0x318 - row/entry count
 };
 
-// 0x18-byte map-marker record shared by the local entry table (built by
-// FloorMap_RebuildMarkers) and the per-floor marker lists the entries are merged into.
-struct CFloorMapMarkerEntry {
-    u16 id;      // +0x00 row/map id
-    u8 type;     // +0x02 marker type
-    u8 _03;      // +0x03
-    f32 x;       // +0x04
-    f32 y;       // +0x08
-    f32 z;       // +0x0C
-    u32 unk;     // +0x10
-    u8 flag;     // +0x14
-    u8 _15[0x18 - 0x15];
-};
 
 // View of one floor block's marker list at CFloorMapCursor + fi*0x30C + 0x10:
 // a floor-height field at +0x02, the 0x18-byte marker records at +0x08 and
@@ -525,24 +477,6 @@ struct CFloorMapGroupAnchor {
     CFloorMapChildList kids; // +0x04
 };
 
-// One 8-byte slot of the 20-entry layout array at CFloorMap+0x150: the
-// loaded layout plus the truncated world-y of the row marker written by
-// FloorMap_RefreshLayoutBlock.
-struct CFloorMapLayoutSlot {
-    nw4r::lyt::Layout* layout; // +0x00
-    s32 posY;                  // +0x04
-};
-
-// Block addressed by FloorMap_RefreshLayoutBlock (the address of CFloorMap::mLayouts150):
-// 20 layout slots, the populated-slot count byte, and the shared arc resource
-// accessor used to load them.
-struct CFloorMapLayoutBlock {
-    CFloorMapLayoutSlot slots[20];            // +0x00..0x9F
-    u8 count;                                 // +0xA0
-    u8 _A1[0xA4 - 0xA1];
-    nw4r::lyt::ArcResourceAccessor* accessor; // +0xA4
-};
-
 // Translate view of an nw4r::lyt::Pane used by FloorMap_RefreshLayoutBlock's marker
 // placement (writes +0x2C/+0x30/+0x34 directly).
 struct CFloorMapPaneTransXYZ {
@@ -573,7 +507,6 @@ struct CFloorMapRowList {
 
 // Per-frame widget updates (retail-unmangled C-linkage names; declared in
 // COption.hpp / CItemBoxGrid.hpp / CMapSel.hpp under the same extern "C").
-extern "C" void waitForDrawDone__9CDeviceVIFv();   // CDeviceVIF::waitForDrawDone
 // C++-mangled imports from code_80135FDC.cpp (unmangled identifiers mangle to
 // the retail symbols, same scheme as CItemBoxInfo.hpp).
 
@@ -650,7 +583,6 @@ extern "C" void bdatGetPosXYZ(float*, int = 0);
 // a pane name from a format string, a base string and an index (JP retail
 // symbol BdatTouchStringCell__FPcPcUl = (char*, char*, u32); fixed args so MWCC
 // does not emit the varargs CR1 clear); LayoutSetTextBoxFmtValue updates a pane.
-extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
 // C linkage so the same-TU definition emits the retail symbol
 // FloorMap_RefreshCursorRows instead of the mangled C++ name at every call site.
 extern "C" void FloorMap_RefreshCursorRows(void*);
@@ -727,7 +659,6 @@ extern u32 spFloorDataTable;
 extern u8 sCurrentMapId;
 
 // MEM2 + device-file imports (retail mangled names, declared verbatim).
-extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv();
 extern "C" void* readFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, const char*, void*, int, int);
 
 // Layout-slot holder reached from the layout pointer fields (0x130/0x138/

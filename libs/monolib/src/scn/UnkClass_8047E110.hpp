@@ -38,13 +38,6 @@ struct ScnWalkNode {
     s16 z;
 };
 
-// Header block referenced by the manager's first word: its +0x10 word sizes
-// the pooled visited bitmap and splits the shared cursor buffer in half.
-struct ScnWalkHeader {
-    u8 pad[0x10];
-    u32 field_0x10;
-};
-
 // Walk graph header stored at the manager base.
 struct ScnWalkGraph {
     u32 reserved;

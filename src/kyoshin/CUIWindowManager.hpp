@@ -22,6 +22,7 @@ class CScn;
 class CSimpleEveTalkWin;
 class CMenuKizunaTalk;
 class CSysWinScenarioLog;
+class CSysWinSave;
 
 // Item-availability query row (0x2A bytes), indexed by arg1 in UIWin_QueryItemAvail.
 struct CItemQueryRow {
@@ -85,7 +86,8 @@ struct CItemQuery {
 // drift at the reloc gate.
 extern "C" IUIWindow* col6HintAlloc(CProcess* pParent, CScn* pScene);
 extern "C" IUIWindow* col6SysCreate(CProcess* pParent, CScn* pScene);
-extern "C" IUIWindow* __ct__802944D8(CProcess* pParent, CScn* pScene);
+// Defined in CSysWinSave.cpp with C++ linkage (name-guess, see CSysWinSave.hpp).
+CSysWinSave* SysWinSave_Create(CProcess* pParent, CScn* pScene);
 extern "C" IUIWindow* ItemEx_Create(CProcess* pParent, CScn* pScene, u32 id);
 // Defined in CMenuKizunaTalk.cpp with C++ linkage.
 CMenuKizunaTalk* createKizunaTalkSingleton(CProcess* pParent, CScn* pScene, u32 charId);

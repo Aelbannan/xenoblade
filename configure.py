@@ -263,8 +263,11 @@ elif args.warn == "error":
     cflags_base.append("-W error")
 
 # Game/Monolithlib Flags
+# Game code (kyoshin, monolib) is built with asserts enabled: retail game TUs
+# carry the inlined NW4R header asserts, while the nw4r/SDK/CriWare/MSL
+# libraries are release (NDEBUG) builds.
 cflags_game = [
-    *cflags_base,
+    *[flag for flag in cflags_base if flag != "-DNDEBUG=1"],
     "-ipa file",
     "-inline auto",
     "-use_lmw_stmw on",
@@ -469,7 +472,7 @@ config.libs = [
             Object(Matching, "kyoshin/cf/CTaskGameEffAfter.cpp"),
             Object(Matching, "kyoshin/plugin/pluginPad.cpp"),
             Object(NonMatching, "kyoshin/cf/CfRes.cpp", extra_cflags=["-inline noauto", "-func_align 4"]),
-            Object(NonMatching, "kyoshin/cf/IResInfo.cpp"),
+            Object(NonMatching, "kyoshin/cf/IResInfo.cpp", extra_cflags=["-inline noauto"]),
             Object(Matching, "kyoshin/cf/CfScript.cpp", extra_cflags=["-inline noauto"]),
             Object(Matching, "kyoshin/cf/CfTaskMain.cpp"),
             Object(NonMatching, "kyoshin/cf/CfTFile.cpp"),
@@ -647,7 +650,7 @@ config.libs = [
                    extra_cflags=["-O4,s", "-func_align 4"]),
             Object(NonMatching, "kyoshin/CItemBoxInfo.cpp", extra_cflags=["-O4,s", "-func_align 4"]),  # retail TU is -O4,s (size): no auto-inline, so the same-TU helpers stay out of line without noinline/pragma scaffolding
             # Demoted 2026-10-23: per-function bytes match but raw .text symbol order differs from retail.
-            Object(NonMatching, "kyoshin/CNumSelect.cpp"),
+            Object(NonMatching, "kyoshin/CNumSelect.cpp", extra_cflags=["-inline noauto"]),
             Object(NonMatching, "kyoshin/CItemBoxLine.cpp", extra_cflags=["-O4,s", "-func_align 4"]),
             # Demoted 2026-10-23: per-function bytes match but raw .text symbol order differs from retail.
             Object(NonMatching, "kyoshin/CScrollBar.cpp", extra_cflags=["-O4,s", "-func_align 4"]),
@@ -1940,7 +1943,6 @@ config.libs = [
             Object(Matching, "monolib/src/lib/CLibHbm.cpp"),
             Object(NonMatching, "monolib/src/lib/CLibHbmControl.cpp"),
             Object(Matching, "monolib/src/lib/CLibLayout.cpp"),
-            Object(NonMatching, "monolib/src/lib/UnkClass_8045F564.cpp"),
             Object(Matching, "monolib/src/lib/Class_8045F858.cpp"),
             Object(Matching, "monolib/src/lib/CLibStaticData.cpp"),
             Object(Matching, "monolib/src/lib/CLibVM.cpp"),
@@ -1966,7 +1968,7 @@ config.libs = [
             Object(Matching, "monolib/src/scn/UnkClass_8047CD0C.cpp", extra_cflags=["-ipa off"]),  # re-verified after the concurrent retail reloc refresh: -ipa off 16/16, default 10/16; keep the flag
             Object(NonMatching, "monolib/src/scn/code_8047D2AC.cpp"),
             Object(NonMatching, "monolib/src/scn/UnkClass_8047E110.cpp"),
-            Object(NonMatching, "monolib/src/scn/CScnItemCameraNw4r.cpp", extra_cflags=["-RTTI off"]),
+            Object(NonMatching, "monolib/src/scn/CScnItemCameraNw4r.cpp"),
             Object(NonMatching, "monolib/src/scn/CScnItemId.cpp"),
             Object(NonMatching, "monolib/src/scn/CScnItemLight.cpp", extra_cflags=["-ipa off"]),  # wave-i forced A/B: -ipa off 7/7, default 6/7
             Object(Matching, "monolib/src/scn/CScnItemLightNw4r.cpp"),

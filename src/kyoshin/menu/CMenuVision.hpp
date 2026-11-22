@@ -40,7 +40,7 @@ public:
     virtual void Init();
     virtual void Term();
     virtual void Move();
-    virtual void cbRenderBefore();
+    virtual void cbRenderBefore(CScn* scene);
 
     CScn* mScn;                                   // 0x60
     UnkClass_8045F564 mLayoutMem;                 // 0x64

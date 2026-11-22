@@ -5,6 +5,7 @@
 // CfGameManager.hpp carries no local copy.
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/action/CActParamData.hpp"
+#include "kyoshin/cf/IActParamEvent.hpp"
 #include "kyoshin/action/CActParamAnim.hpp"
 
 #include "libs/monolib/src/scn/CScnItemAnim.hpp"
@@ -45,16 +46,14 @@ CActParamData::CActParamData() {
 // ============================================================
 CActParamData::~CActParamData() {}
 
-// Real owner is CActParamAnim (vt at lbl_eu_805261C8). Former fake If/ThunkIf pads
-// have been folded onto that class. Keep a forward decl so wrappers can call
-// the real virtuals without a TU-local pad.
-struct CActParamAnimView;
+// Real owner is CActParamAnim (compiler-emitted __vt__13CActParamAnim). These
+// wrappers dispatch through its real virtuals.
 
 extern "C" void actAnimVt40(void* self, u32 a);
 extern "C" void actAnimVt38(void* self, u32 a);
 extern "C" void actAnimVt3C(void* self, u32 a);
 extern "C" void actAnimVt44(void* self, u32 a);
-extern "C" void actAnimVt48(void* self);
+extern "C" void actAnimVt48(void* self, u32 a);
 extern "C" void actAnimVt4C(void* self, u32 a);
 extern "C" void actAnimVt50(void* self, u32 a);
 extern "C" void actAnimVt58(void* self, u32 a);
@@ -111,73 +110,12 @@ extern "C" void callAnimRot1(void* self, u32 a);
 extern "C" void callAnimUpdate0(void* self, u32 a);
 extern "C" void callAnimUpdate1(void* self, u32 a);
 
-// Real forwarder implementations - dispatch through CActParamAnim vt (lbl_eu_805261C8)
-// Minimal view of CActParamAnim vt (lbl_eu_805261C8) to avoid header overload conflicts.
-// Only the slots used by the former fake thunks are named; gaps use pad* names
-// that do not trigger the _vNNN pad detector.
-struct CActParamAnimView {
-    virtual void __dtor(); // 0x08
-    virtual void getAttachedAnimTime(); // 0x0C
-    virtual void getAttachedAnimScale(); // 0x10
-    virtual void getAttachedAnimRate(); // 0x14
-    virtual void clearAnimState(); // 0x18
-    virtual void dispatchAnimSlot(); // 0x1C
-    virtual void startFlag2000Anim(); // 0x20
-    virtual void startFlag0800Anim(); // 0x24
-    virtual void startFlag0400Anim(); // 0x28
-    virtual void startFlag1000Anim(); // 0x2C
-    virtual void fireSpeedGate(); // 0x30
-    virtual void fireBlendGate(); // 0x34
-    virtual void startUnfinishedAnim(); // 0x38
-    virtual void startFinishedAnim(); // 0x3C
-    virtual void fireSpeedOkGt(); // 0x40
-    virtual void fireAnimParam(); // 0x44
-    virtual void __vt_48(); // 0x48 gap
-    virtual void startOwnerFlag8Anim(); // 0x4C
-    virtual void startOwnerFlag2Anim(); // 0x50
-    virtual void func_8004E9EC(); // 0x54
-    virtual void stepAnimState(); // 0x58
-    virtual void fireCountGate(); // 0x5C
-    virtual void fireWord378Gt(); // 0x60
-    virtual void func_8004F884(); // 0x64
-    virtual void fireBlendDflt(); // 0x68
-    virtual void fireParamGate(); // 0x6C
-    virtual void fireBlendCust(); // 0x70
-    virtual void startIfActive(); // 0x74
-    virtual void __vt_78(); // 0x78 gap
-    virtual int fireTimerGate(u32 a, u32 b); // 0x7C
-    virtual int calcAnimBlendWeight(u32 a); // 0x80 variant, but real is calcAnimBlendWeight(u32)
-    virtual int startRandAnim(u32 a, u32 b); // 0x84
-    virtual void fireAngleGate(); // 0x88
-    virtual void fireAngleLoGt(); // 0x8C
-    virtual void fireAngleBand(); // 0x90
-    virtual void fireAngleHiGt(); // 0x94
-    virtual void fireOpenGate1(); // 0x98
-    virtual void fireTwinCount(); // 0x9C
-    virtual int fireOwnerIdGt(u32 a, u32 b); // 0xA0
-    virtual bool isAnimFrameActive(); // 0xA4
-    virtual bool isAnimTransActive(); // 0xA8
-    virtual bool isAnimUpdateActive(u32 a, u32 b); // 0xAC
-    virtual bool isAnimScaleActive(u32 a, u32 b); // 0xB0
-    virtual bool isAnimRotateActive(u32 a, u32 b); // 0xB4
-    virtual bool isAnimEffectActive(); // 0xB8
-    virtual void fireOpenGate3(); // 0xBC
-    virtual void fireOpenGate2(); // 0xC0
-    virtual void func_8004DAE0(); // 0xC4
-    virtual void fireFlag4D4Gt(); // 0xC8
-    virtual void fire4D4ZeroGt(); // 0xCC
-    virtual bool isAnimChainActive(); // 0xD0
-    virtual bool isAnimLoopActive(); // 0xD4
-    virtual bool isAnimMotionActive(); // 0xD8
-    virtual bool isAnimBlendActive(); // 0xDC
-};
-// alias removed - CActParamAnimView is the view type
 
 extern "C" void actAnimVt40(void* self, u32 a) { ((CActParamAnim*)self)->fireSpeedOkGt(a); }
 extern "C" void actAnimVt38(void* self, u32 a) { ((CActParamAnim*)self)->startUnfinishedAnim(a); }
 extern "C" void actAnimVt3C(void* self, u32 a) { ((CActParamAnim*)self)->startFinishedAnim(a); }
 extern "C" void actAnimVt44(void* self, u32 a) { ((CActParamAnim*)self)->fireAnimParam(a); }
-extern "C" void actAnimVt48(void* self) { ((CActParamAnim*)self)->__vt_48(); }
+extern "C" void actAnimVt48(void* self, u32 a) { ((CActParamAnim*)self)->isActionReady(a); }
 extern "C" void actAnimVt4C(void* self, u32 a) { ((CActParamAnim*)self)->startOwnerFlag8Anim(a); }
 extern "C" void actAnimVt50(void* self, u32 a) { ((CActParamAnim*)self)->startOwnerFlag2Anim(a); }
 extern "C" void actAnimVt58(void* self, u32 a) { ((CActParamAnim*)self)->stepAnimState(a); }
@@ -192,7 +130,7 @@ extern "C" void actAnimVt68(void* self, u32 a) { ((CActParamAnim*)self)->fireBle
 extern "C" void actAnimVt6C(void* self, u32 a) { ((CActParamAnim*)self)->fireParamGate(a); }
 extern "C" void actAnimVt70(void* self, u32 a) { ((CActParamAnim*)self)->fireBlendCust(a); }
 extern "C" void actAnimVt74(void* self, u32 a) { ((CActParamAnim*)self)->startIfActive(a); }
-extern "C" void actAnimVt78(void* self) { ((CActParamAnim*)self)->__vt_78(); }
+extern "C" void actAnimVt78(void* self) { ((CActParamAnim*)self)->clearFlag80000(); }
 extern "C" void actAnimVt9C(void* self, u32 a, s32 b) { ((CActParamAnim*)self)->fireTwinCount(a, b); }
 extern "C" void callAnimFrame(void* self) { (void)((CActParamAnim*)self)->isAnimFrameActive(); }
 extern "C" void callAnimTrans(void* self) { (void)((CActParamAnim*)self)->isAnimTransActive(); }
@@ -228,14 +166,14 @@ extern "C" void callAnimMode1(void* self, u32 a) { ((CActParamAnim*)self)->fireO
 extern "C" void callAnimMode2(void* self, u32 a) { ((CActParamAnim*)self)->fireOwnerIdGt(a, 2); }
 // Boolean getters; retail still materializes a selector in r5 before the
 // virtual call (vt+0xB0 scale / 0xB4 rotate / 0xAC update).
-extern "C" void callAnimScale0(void* self, u32 a) { ((CActParamAnimView*)self)->isAnimScaleActive(a, 0); }
-extern "C" void callAnimScale1(void* self, u32 a) { ((CActParamAnimView*)self)->isAnimScaleActive(a, 1); }
-extern "C" void callAnimScale2(void* self, u32 a) { ((CActParamAnimView*)self)->isAnimScaleActive(a, 2); }
-extern "C" void callAnimScale3(void* self, u32 a) { ((CActParamAnimView*)self)->isAnimScaleActive(a, 3); }
-extern "C" void callAnimRot0(void* self, u32 a) { ((CActParamAnimView*)self)->isAnimRotateActive(a, 0); }
-extern "C" void callAnimRot1(void* self, u32 a) { ((CActParamAnimView*)self)->isAnimRotateActive(a, 1); }
-extern "C" void callAnimUpdate0(void* self, u32 a) { ((CActParamAnimView*)self)->isAnimUpdateActive(a, 0); }
-extern "C" void callAnimUpdate1(void* self, u32 a) { ((CActParamAnimView*)self)->isAnimUpdateActive(a, 1); }
+extern "C" void callAnimScale0(void* self, u32 a) { ((CActParamAnim*)self)->isAnimScaleActive(a, 0); }
+extern "C" void callAnimScale1(void* self, u32 a) { ((CActParamAnim*)self)->isAnimScaleActive(a, 1); }
+extern "C" void callAnimScale2(void* self, u32 a) { ((CActParamAnim*)self)->isAnimScaleActive(a, 2); }
+extern "C" void callAnimScale3(void* self, u32 a) { ((CActParamAnim*)self)->isAnimScaleActive(a, 3); }
+extern "C" void callAnimRot0(void* self, u32 a) { ((CActParamAnim*)self)->isAnimRotateActive(a, 0); }
+extern "C" void callAnimRot1(void* self, u32 a) { ((CActParamAnim*)self)->isAnimRotateActive(a, 1); }
+extern "C" void callAnimUpdate0(void* self, u32 a) { ((CActParamAnim*)self)->isAnimUpdateActive(a, 0); }
+extern "C" void callAnimUpdate1(void* self, u32 a) { ((CActParamAnim*)self)->isAnimUpdateActive(a, 1); }
 
 extern "C" void actAnimVt90(void* self, u32 a) { ((CActParamAnim*)self)->fireAngleBand(a); }
 extern "C" void actAnimVt94(void* self, u32 a) { ((CActParamAnim*)self)->fireAngleHiGt(a); }
@@ -319,7 +257,7 @@ void setupWithFlagAlt(){}
 void copyParamBlock(){}
 void iterLinkedList(){}
 
-void actParamNop0() {}
+void IActParamEvent::actParamNop0(CModelDispParent*, int, int) {}
 
 extern "C" int getParamByteSel(CActParamData* self, u32 sel) {
     if (sel != 0) {
@@ -340,16 +278,16 @@ void validateBlockData(){}
 void processBlockCore(void* self);
 void callBlockAt2E0(void* self) { processBlockCore((u8*)static_cast<CActParamData*>(self)->getResetBlock2E0()); }
 
-void actParamNop1() {}
-void actParamNop2() {}
-void actParamNop3() {}
-void actParamNop4() {}
+void IActParamEvent::actParamNop1() {}
+void IActParamEvent::actParamNop2() {}
+void IActParamEvent::actParamNop3() {}
+void IActParamEvent::actParamNop4() {}
 
 void processWithFlag24(){}
 
-void actParamNop5() {}
-void actParamNop6() {}
-void actParamNop7() {}
+void IActParamEvent::actParamNop5() {}
+void IActParamEvent::actParamNop6(CModelDispParent*, void*) {}
+void IActParamEvent::actParamNop7() {}
 
 void checkBlockBitFlag(){}
 void checkType3Data(){}
@@ -412,7 +350,6 @@ void actParamThunk_1(){}
 void actParamThunk_2(){}
 
 // Former former pad pad removed - wrappers now forward to CActParamAnim.
-struct CActParamAnimView;
 extern "C" void actAnimVt90(void* self, u32 a);
 extern "C" void actAnimVt94(void* self, u32 a);
 extern "C" void actAnimVt30(void* self, u32 a);
@@ -727,7 +664,7 @@ extern "C" u32 evalParamBySlot(CActParamData* data, u32* out, u32 paramIdx, u8 i
         res = 0;
     foundB:
         data->mField314 = res;
-        evalParamChain(reinterpret_cast<u8*>(data), out, reinterpret_cast<u32>(rec), data->mByte216, gate);
+        evalParamChain(data, out, reinterpret_cast<u32>(rec), data->mByte216, gate);
         data->mFloat330 = lbl_eu_80665F80;
         data->mFloat334 = lbl_eu_80665F80;
         data->mField338 = 0;
@@ -762,7 +699,7 @@ extern "C" u32 evalParamBySlot(CActParamData* data, u32* out, u32 paramIdx, u8 i
     res = 0;
 foundA:
     data->mA294 = res;
-    evalParamChain(reinterpret_cast<u8*>(data), out, reinterpret_cast<u32>(rec), data->mByte216, gate);
+    evalParamChain(data, out, reinterpret_cast<u32>(rec), data->mByte216, gate);
     data->mA2B0 = lbl_eu_80665F80;
     data->mFloat2B4 = lbl_eu_80665F80;
     data->mA2B8 = 0;
@@ -875,8 +812,8 @@ extern "C" void walkParamRecords(CActParamData* self, ActParamD3CMember* member)
 // - Confirmed semantics: active==0 (NOT !=0) gates the bit10 sub-select;
 //   retail fail blocks are DUPLICATED per guard (two separate early-return
 //   guards, not one shared tail); sub uses li0/tests/li1 form, not ternary.
-extern "C" u32 evalParamChain(u8* dataRaw, u32* out, u32 recRaw, u32 initFlag, u32 gate) {
-    CActParamData* data = reinterpret_cast<CActParamData*>(dataRaw);
+extern "C" u32 evalParamChain(void* dataRaw, u32* out, u32 recRaw, u32 initFlag, u32 gate) {
+    CActParamData* data = static_cast<CActParamData*>(dataRaw);
     ActParamT1Src* rec = reinterpret_cast<ActParamT1Src*>(recRaw);
     if (data->mByte216 == 0) {
         data->mByte216 = initFlag;
@@ -2040,7 +1977,7 @@ int findParamWide(ActParamCallView* self, void* unused, u32 index) {
     if (spActParamGlobalTable->mCount60 < index) {
         return 0;
     }
-    return ((ActParamCallView*)self)->findEntryByIndexWide(unused, (u16)index);
+    return self->findEntryByIndexWide(unused, (u16)index);
 }
 
 // Flag-gated copies: when bit 2 of `flags` is set, copy src field into dst;
@@ -2080,7 +2017,7 @@ int findParamEntry(ActParamCallView* self, void* unused, u32 index) {
     if (spActParamGlobalTable->mCount5C < index) {
         return 0;
     }
-    return ((ActParamCallView*)self)->findEntryByIndex(unused, (u16)index);
+    return self->findEntryByIndex(unused, (u16)index);
 }
 // Flag-gated s16 copy: sign-extended load from src+0x08 stored as a halfword
 // at dst+0x7C; always return 0.

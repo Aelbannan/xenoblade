@@ -17,6 +17,7 @@ extern "C" void simSetFlag2OnTree(void* model, int flag);
 #include <nw4r/g3d/res/g3d_resfile.h>
 #include <nw4r/g3d/res/g3d_resanmchr.h>
 #include <nw4r/g3d/res/g3d_resdict.h>
+#include <nw4r/g3d/res/g3d_resuserdata.h>
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 #include "kyoshin/cf/CTaskREvtSequence.hpp"
 namespace nw4r { namespace db { void Panic(const char* file, int line, const char* fmt, ...); } }
@@ -180,7 +181,7 @@ simBindChrAnim(model, newData, 0, 0, 0, 1, -1);
     setupShadow(model);
     model->vfunc84(0);
     simSetValue7E8(model, 1);
-    reinterpret_cast<CREvtItemModelView*>(model)->mFlags7A4 |= 0x20000000;
+    model->flags7A4 |= 0x20000000;
     mField2C = 0;
     mField30 = 0;
     { int tmp = 0; EvtSeqResolveAnmChr((u8*)newData, "Monochrome", (s32*)&tmp); mField2C = tmp; }
@@ -229,10 +230,11 @@ void CREvtModel::setupShadow(CScnItemModel* pModel) {
 }
 
 void CREvtModel::applyHideParts(void* pAnim, CScnItemModel* pModel, int flag) {
-    nw4r::g3d::ResFile resFile((void*)((char*)pAnim + 0xC));
+    void* resData = static_cast<CScnItemAnimResFile*>(pAnim)->resFile.ptr();
+    nw4r::g3d::ResFile resFile(resData);
     int numAnmChr = resFile.GetResAnmChrNumEntries();
     for (int i = 0; i < numAnmChr; i++) {
-        void* anmChrData = GetResAnmChr__Q34nw4r3g3d7ResFileCFi((char*)pAnim + 0xC, i);
+        void* anmChrData = resFile.GetResAnmChr(i).ptr();
         nw4r::g3d::ResAnmChr anmChr(anmChrData);
         void* userData = GetResUserData__Q34nw4r3g3d9ResAnmChrFv(&anmChr);
         if (userData == 0) continue;
@@ -241,9 +243,10 @@ void CREvtModel::applyHideParts(void* pAnim, CScnItemModel* pModel, int flag) {
         void* result = __vc__Q34nw4r3g3d6ResDicCFPCc(dic, "HidePT");
         if ((u32)result & 3) { nw4r::db::Panic(lbl_eu_80530D54, 0x26, lbl_eu_80530D2C); }
         if (result == 0) continue;
-        if (*(u32*)((char*)result + 0xC) != 2) { nw4r::db::Panic(lbl_eu_80530ECC, 0x44, lbl_eu_80530E88); }
+        ResUserDataItem* item = static_cast<ResUserDataItem*>(result);
+        if (item->valueType != 2) { nw4r::db::Panic(lbl_eu_80530ECC, 0x44, lbl_eu_80530E88); }
         void* dataPtr = 0;
-        if (*(u32*)((char*)result + 4) != 0) { dataPtr = (char*)result + *(u32*)((char*)result + 4); }
+        if (item->dataOffset != 0) { dataPtr = static_cast<char*>(result) + item->dataOffset; }
         if (dataPtr != 0) {
             pModel->vfunc28((u32)dataPtr, flag);
         }
@@ -262,7 +265,8 @@ CREvtModel* CREvtModel::create(void* pData) {
     if (type == 1) {
         return new CREvtModelMap(pData);
     } else if (type == 2) {
-        if (*((s8*)pData + 0x16) != 0x30 || *((s8*)pData + 0x17) != 0x30) {
+        if (static_cast<EvtSeqType3Entry*>(pData)->mName[6] != '0' ||
+            static_cast<EvtSeqType3Entry*>(pData)->mName[7] != '0') {
             return new CREvtModelPc(pData);
         }
     }

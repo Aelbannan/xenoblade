@@ -148,10 +148,6 @@ extern "C" void* CtrlObjectParam_GetCharEntry(u32 idx);
 extern "C" int CtrlObjectParam_GetItemBitFlag(u32 idx);
 
 extern "C" void CItemBlock_setFlag120EC(u8, u32);
-
-extern "C" void activateLOD__8CTaskLODFv(s8);
-extern "C" void deactivateLOD__8CTaskLODFv(u8);
-extern "C" int getLODData__8CTaskLODFv(u8);
 extern "C" void ScnData_FwdB7D9C(void*, s8);
 extern "C" void ScnData_FwdB7DD4(void*, u8);
 extern "C" void forwardMpfCallB__17UnkClass_8047BB54Fv(void*, s8);

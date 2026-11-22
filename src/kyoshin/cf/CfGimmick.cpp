@@ -21,7 +21,7 @@
 struct CfGimmickColliderView {
     u32* vtable;            // 0x00
     f32 basis04[3];         // 0x04 rotation basis
-    CfGimmickVec3 point10;  // 0x10 rotation point
+    ml::CVec3 point10;  // 0x10 rotation point
     cf::CfGimmick mtx1c;    // 0x1C target matrix sub-object
 };
 
@@ -36,7 +36,7 @@ __attribute__((used)) float gGimmickMoveRateScale = 1.0f;
 // typed .bss/.sbss zero-fill (replaces old nobits blobs): sizes must total
 // retail .bss 0xB8 / .sbss 0xC; nobits compare sizes only.
 extern "C" {
-CfGimmickVec3 gGimmickAnchorPoint;
+ml::CVec3 gGimmickAnchorPoint;
 int gGimmickPartySlotState[10];
 char gGimmickMessageBuffer[128];
 f32 gGimmickFixedRotationAngle;
@@ -48,15 +48,13 @@ u32 gGimmickSelectedRow;
 // CfObject view at the CfGimmick_PushRefreshValue definition below.)
 
 
-struct CfGimmickVec3;
-
 
 // which is also the retail .rodata/.sdata2 order (short names in .sdata2).
-extern "C" int CfGimmick_CheckerKind0Always(cf::CfGimmick*, const CfGimmickVec3*, const CfGimmickVec3*);
-extern "C" int CfGimmick_CheckerCylinderXZ(cf::CfGimmick*, const CfGimmickVec3*, const CfGimmickVec3*);
-extern "C" int CfGimmick_CheckerCylinderLocal(cf::CfGimmick*, const CfGimmickVec3*, const CfGimmickVec3*);
-extern "C" int CfGimmick_CheckerBoxExtent(cf::CfGimmick*, const CfGimmickVec3*, const CfGimmickVec3*);
-extern "C" int CfGimmick_CheckerBoxLocal(cf::CfGimmick*, const CfGimmickVec3*, const CfGimmickVec3*);
+extern "C" int CfGimmick_CheckerKind0Always(cf::CfGimmick*, const ml::CVec3*, const ml::CVec3*);
+extern "C" int CfGimmick_CheckerCylinderXZ(cf::CfGimmick*, const ml::CVec3*, const ml::CVec3*);
+extern "C" int CfGimmick_CheckerCylinderLocal(cf::CfGimmick*, const ml::CVec3*, const ml::CVec3*);
+extern "C" int CfGimmick_CheckerBoxExtent(cf::CfGimmick*, const ml::CVec3*, const ml::CVec3*);
+extern "C" int CfGimmick_CheckerBoxLocal(cf::CfGimmick*, const ml::CVec3*, const ml::CVec3*);
 extern "C" {
 __attribute__((used, aligned(8)))
 const void* gGimmickBdatColumns[18] = {
@@ -71,7 +69,7 @@ const void* gGimmickBdatColumns[18] = {
 __attribute__((used)) const void* gGimmickFallbackName[2] = { "MESS ERR", nullptr };
 }
 // Builds/inverts the gimmick collider placement matrix (see definition below).
-extern "C" void CfGimmick_BuildColliderMtx(cf::CfGimmick* self, const f32* basis, const CfGimmickVec3* point);
+extern "C" void CfGimmick_BuildColliderMtx(cf::CfGimmick* self, const f32* basis, const ml::CVec3* point);
 
 using namespace cf;
 
@@ -113,7 +111,7 @@ int CfGimmick::CfGimmick_CheckerKind0Always() { return 1; }
 // invert it in place.  field_44 records which placement shape was selected.
 // Retail never CSEs the float-pool constants: every test reloads 0.0f
 // via lfs, so the source references the globals directly (no zero/one locals).
-extern "C" void CfGimmick_BuildColliderMtx(CfGimmick* self, const f32* basis, const CfGimmickVec3* point) {
+extern "C" void CfGimmick_BuildColliderMtx(CfGimmick* self, const f32* basis, const ml::CVec3* point) {
     f32* m = ((nw4r::math::MTX34*)self)->m[0];
 
     if (self->field_38 > 0.0f)
@@ -128,7 +126,7 @@ extern "C" void CfGimmick_BuildColliderMtx(CfGimmick* self, const f32* basis, co
     if (self->field_3C != 0.0f) {
         // With depth: full placement.  Extent/clamp/squared-length run before
         // the direction test.
-        CfGimmickVec3 v;
+        ml::CVec3 v;
         v.x = self->field_30;
         v.y = self->field_34;
         v.z = self->field_3C;
@@ -155,7 +153,7 @@ extern "C" void CfGimmick_BuildColliderMtx(CfGimmick* self, const f32* basis, co
         // No depth: horizontal-only placement.  Direction test comes first;
         // the extent/squared-length math only runs on the rotated path.
         if (point->x != 0.0f || point->z != 0.0f) {
-            CfGimmickVec3 v;
+            ml::CVec3 v;
             v.x = self->field_30;
             v.y = self->field_34;
             v.z = self->field_3C;
@@ -183,12 +181,12 @@ extern "C" void CfGimmick_BuildColliderMtx(CfGimmick* self, const f32* basis, co
 
 // Sound-id helpers: first arg is a u16/u32 effect id (Elv val1B6 / Item field_8E),
 // second is a position pointer passed through as an integer to CfSoundMan_PlayLinkedParam.
-extern "C" void CfGimmick_PlaySoundAtPos(u32 id, const CfGimmickVec3* pos) {
+extern "C" void CfGimmick_PlaySoundAtPos(u32 id, const ml::CVec3* pos) {
     CfSoundMan_PlayLinkedParam(1, id, (u32)pos,
                   1.0f, 30.0f);
 }
 
-extern "C" void CfGimmick_PlaySoundAtPosScaled(u32 id, const CfGimmickVec3* pos, float second) {
+extern "C" void CfGimmick_PlaySoundAtPosScaled(u32 id, const ml::CVec3* pos, float second) {
     CfSoundMan_PlayLinkedParam(1, id, (u32)pos,
                   1.0f, second);
 }
@@ -229,10 +227,10 @@ extern "C" void CfGimmick_UpdatePartyAnchorState(u32 partyId, s32 flagA, s32 fla
     // Ground-height gate: while the stage base height is above zero, record
     // the downward drop value and flag it (bit 0x8).  The scene-camera height
     // query is re-run inside the block (retail calls Scn_QueryUnk80State twice).
-    f32 rem = 1.0f - ((CTaskGameCamView*)Scn_QueryUnk80State(gmScene))->field_C;
+    f32 rem = 1.0f - Scn_QueryUnk80State(gmScene)->field_0C;
     if (rem < 1.0f) {
         gGimmickPartyFlags |= 0x8;
-        lbl_eu_80662780 = 1.0f - ((CTaskGameCamView*)Scn_QueryUnk80State(gmScene))->field_C;
+        lbl_eu_80662780 = 1.0f - Scn_QueryUnk80State(gmScene)->field_0C;
     }
 
     if (cf::CfGameManager::getPlayer(0) != 0) {
@@ -423,7 +421,7 @@ extern "C" void CfGimmick_TriggerSound2CC8(u32 id, u32 value) { CtrlRemote_SetSh
 // then is the per-gimmick jumptable checker invoked (mirrors CfGimmick_QueryTrigger's
 // guarded section).  The scaled angle is recomputed per Sin/Cos call (no
 // local) to match retail's caller-saved FPR budget (f29-f31 only).
-extern "C" int CfGimmick_CheckTriggerGated(u32 mask, CfGimmick* gimmick, const CfGimmickVec3* point,
+extern "C" int CfGimmick_CheckTriggerGated(u32 mask, CfGimmick* gimmick, const ml::CVec3* point,
                   const f32* ang, u32 partyId) {
     // Party-scoped guard.  Retail keeps the (bc&1)==0 return-0 inline (block
     // A) but shares ONE return-0 block for the b4==0 / id-mismatch fails;
@@ -480,7 +478,7 @@ rotation:
 // scan, 0x00800000 enable player scan after it, 0x01000000 player 0 only
 // (otherwise all players minus the 0x10<<i presence bits).  When neither the
 // fight-list nor the bc&4 enemy-list path runs, players are scanned alone.
-extern "C" int CfGimmick_QueryTrigger(u32 mask, CfGimmick* gimmick, const CfGimmickVec3* point,
+extern "C" int CfGimmick_QueryTrigger(u32 mask, CfGimmick* gimmick, const ml::CVec3* point,
                   const f32* ang, u32 partyId) {
     int partyValid = 0;
     if (mask & 0x21) {
@@ -541,7 +539,7 @@ extern "C" int CfGimmick_QueryTrigger(u32 mask, CfGimmick* gimmick, const CfGimm
         CfGimmickList* list = getReslistB48();
         CfGimmickListNode* n = list->head->next;
         while (n != list->head) {
-            CfGimmickVec3* target = (CfGimmickVec3*)((cf::CfObject*)n->object)->CfObject_getPosVector();
+            ml::CVec3* target = ((cf::CfObject*)n->object)->CfObject_getPosVector();
             if (jumptable_eu_80535830[gimmick->field_44](gimmick, target, point))
                 return 1;
             n = n->next;
@@ -563,7 +561,7 @@ extern "C" int CfGimmick_QueryTrigger(u32 mask, CfGimmick* gimmick, const CfGimm
                     ok = 0;
                 if (ok == 0)
                     return 0;
-                CfGimmickVec3* target = (CfGimmickVec3*)((cf::CfObject*)&base->spot)->CfObject_getPosVector();
+                ml::CVec3* target = ((cf::CfObject*)&base->spot)->CfObject_getPosVector();
                 if (jumptable_eu_80535830[gimmick->field_44](gimmick, target, point))
                     return 1;
             } else {
@@ -589,7 +587,7 @@ extern "C" int CfGimmick_QueryTrigger(u32 mask, CfGimmick* gimmick, const CfGimm
                         ok = 0;
                     if (ok == 0)
                         continue;
-                    CfGimmickVec3* target = (CfGimmickVec3*)((cf::CfObject*)&base->spot)->CfObject_getPosVector();
+                    ml::CVec3* target = ((cf::CfObject*)&base->spot)->CfObject_getPosVector();
                     if (jumptable_eu_80535830[gimmick->field_44](gimmick, target, point))
                         return 1;
                 }
@@ -603,7 +601,7 @@ extern "C" int CfGimmick_QueryTrigger(u32 mask, CfGimmick* gimmick, const CfGimm
         CfGimmickList* list = getReslistB68();
         CfGimmickListNode* n = list->head->next;
         while (n != list->head) {
-            CfGimmickVec3* target = (CfGimmickVec3*)((cf::CfObject*)n->object)->CfObject_getPosVector();
+            ml::CVec3* target = ((cf::CfObject*)n->object)->CfObject_getPosVector();
             if (jumptable_eu_80535830[gimmick->field_44](gimmick, target, point))
                 return 1;
             n = n->next;
@@ -626,7 +624,7 @@ extern "C" int CfGimmick_QueryTrigger(u32 mask, CfGimmick* gimmick, const CfGimm
             ok = 0;
         if (ok == 0)
             return 0;
-        CfGimmickVec3* target = (CfGimmickVec3*)((cf::CfObject*)&base->spot)->CfObject_getPosVector();
+        ml::CVec3* target = ((cf::CfObject*)&base->spot)->CfObject_getPosVector();
         if (jumptable_eu_80535830[gimmick->field_44](gimmick, target, point))
             return 1;
         return 0;
@@ -650,7 +648,7 @@ extern "C" int CfGimmick_QueryTrigger(u32 mask, CfGimmick* gimmick, const CfGimm
             ok = 0;
         if (ok == 0)
             continue;
-        CfGimmickVec3* target = (CfGimmickVec3*)((cf::CfObject*)&base->spot)->CfObject_getPosVector();
+        ml::CVec3* target = ((cf::CfObject*)&base->spot)->CfObject_getPosVector();
         if (jumptable_eu_80535830[gimmick->field_44](gimmick, target, point))
             return 1;
     }
@@ -774,8 +772,8 @@ extern "C" int CfGimmick_CheckFightListPlayerAlive(u32 playerId) {
 // Spawn a gimmick object, name it (truncating over-long names into a fixed
 // 0x20 buffer), activate it, reposition it above the given point, and return
 // it.  Returns 0 if allocation fails.
-extern "C" CfGimmickObject* CfGimmick_SpawnNamedObject(const char* name, int other, const CfGimmickVec3* point) {
-    CfGimmickVec3 pos;
+extern "C" CfGimmickObject* CfGimmick_SpawnNamedObject(const char* name, int other, const ml::CVec3* point) {
+    ml::CVec3 pos;
     char buf[0x40];
     CfGimmickObject* obj = spawnMaskedObject(getInstance(), 0x4000, 0, 0);
     if (obj != 0) {
@@ -890,7 +888,7 @@ extern "C" void* CfGimmick_LookupBdatGimmickName(int index, int mod) {
     return (void*)gGimmickFallbackName[0];
 }
 
-extern "C" void CfGimmick_UpdateProximity(CfGimmickReg* self, const CfGimmickVec3* point, f32 radius,
+extern "C" void CfGimmick_UpdateProximity(CfGimmickReg* self, const ml::CVec3* point, f32 radius,
                    s32 index, s32 mod, s32 arg7) {
     // Distance from the fixed reference point to the requested position.
     // VEC3Sub's paired-single kernel reproduces retail's psq_l/ps_sub/psq_st
@@ -963,7 +961,7 @@ resolvedName:;
             // Activate, then reposition the object above the requested point.
             // FPR temp order mirrors matched CfGimmick_SpawnNamedObject's tail exactly.
             obj->activate(1);
-            CfGimmickVec3 pos;
+            ml::CVec3 pos;
             f32 x, y, z;
             z = point->z;
             y = 1.5f + point->y;
@@ -991,7 +989,7 @@ extern "C" int CfGimmick_CheckPartyIdLoaded(CfGimmick* self, u32 arg) {
     return 0;
 }
 
-int CfGimmick_CheckerCylinderXZ(CfGimmick* self, const CfGimmickVec3* point, const CfGimmickVec3* center) {
+int CfGimmick_CheckerCylinderXZ(CfGimmick* self, const ml::CVec3* point, const ml::CVec3* center) {
     float dz = center->z - point->z;
     float dx = center->x - point->x;
     // MWCC evaluates the right addend first: keep the dz diff declared first
@@ -1010,7 +1008,7 @@ int CfGimmick_CheckerCylinderXZ(CfGimmick* self, const CfGimmickVec3* point, con
 // the reference vector, and after transforming it into the gimmick's local
 // space it must lie inside the horizontal radius (field_30) and vertical
 // band [field_38, field_34].
-int CfGimmick_CheckerCylinderLocal(CfGimmick* self, const CfGimmickVec3* point, const CfGimmickVec3* center) {
+int CfGimmick_CheckerCylinderLocal(CfGimmick* self, const ml::CVec3* point, const ml::CVec3* center) {
     // The SDK operator- inline kernel reproduces the retail paired-single
     // subtraction and length-square sequence.
     nw4r::math::VEC3 diff = *(const nw4r::math::VEC3*)center - *(const nw4r::math::VEC3*)point;
@@ -1026,7 +1024,7 @@ int CfGimmick_CheckerCylinderLocal(CfGimmick* self, const CfGimmickVec3* point, 
     return 0;
 }
 
-int CfGimmick_CheckerBoxExtent(CfGimmick* self, const CfGimmickVec3* point, const CfGimmickVec3* center) {
+int CfGimmick_CheckerBoxExtent(CfGimmick* self, const ml::CVec3* point, const ml::CVec3* center) {
     if (center->x + self->field_30 >= point->x &&
         center->x - self->field_30 <= point->x &&
         center->z + self->field_3C >= point->z &&
@@ -1044,7 +1042,7 @@ int CfGimmick_CheckerBoxExtent(CfGimmick* self, const CfGimmickVec3* point, cons
 // distance math goes through the nw4r VEC3Sub/VEC3LenSq helpers, whose
 // inlined paired-single kernels reproduce retail's psq_l/ps_sub/ps_mul/
 // ps_madd/ps_sum0 sequence.
-int CfGimmick_CheckerBoxLocal(CfGimmick* self, const CfGimmickVec3* point, const CfGimmickVec3* center) {
+int CfGimmick_CheckerBoxLocal(CfGimmick* self, const ml::CVec3* point, const ml::CVec3* center) {
     nw4r::math::VEC3 diff = *(const nw4r::math::VEC3*)center - *(const nw4r::math::VEC3*)point;
     // Success path nested inside the radius test keeps one shared fail-exit
     // like retail (.L_8020C9BC).
@@ -1060,9 +1058,6 @@ int CfGimmick_CheckerBoxLocal(CfGimmick* self, const CfGimmickVec3* point, const
     }
     return 0;
 }
-
-// --- hard-symbol stubs (scaffold_hard_symbols) ---
-extern "C" void sinit_8020AB7C() {}
 
 // Retail free function taking (gimmick, float): the 801F3BE0 callers set f1
 // from lbl_eu_80668158/60 before bl CfGimmick_PushRefreshValue, and the body tail-forwards
@@ -1085,7 +1080,7 @@ extern "C" void CfGimmick_PushRefreshValue(cf::CfGimmick* self, float value) {
 // CfGimmick::CfGimmick_CheckerKind0Always method above is its C++-linkage twin kept for
 // header compat; this C-linkage twin owns the retail jumptable slot
 // (retail .data jumptable_eu_80535830[0] = CfGimmick_CheckerKind0Always).
-extern "C" int CfGimmick_CheckerKind0Always(cf::CfGimmick* self, const CfGimmickVec3* point, const CfGimmickVec3* center) {
+extern "C" int CfGimmick_CheckerKind0Always(cf::CfGimmick* self, const ml::CVec3* point, const ml::CVec3* center) {
     (void)self; (void)point; (void)center;
     return 1;
 }

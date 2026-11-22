@@ -124,7 +124,7 @@ bool CfObjectEff::initEffState_() {
     CfObject_notifyEventDone();
     return true;
 }
-extern "C" u32 hasChildEffs___Q22cf11CfObjectEffFv(cf::CfObjectEff* self) { return *(u32*)&self->mChildEff != 0; }
+u32 CfObjectEff::hasChildEffs_() { return mChildEff != nullptr; }
 void CfObjectEff::detachChildEf() {
     if (mChildEff != nullptr) {
         // Parent for the effect detach is this+0x90; retail null-guards the
@@ -241,20 +241,18 @@ void setChildScl__(cf::CfObject* self, float first, float second) {
         return schedSetStepIntervals(eff->mChildEff, first, second);
 }
 
-// TU-local typed views over raw offsets (exact layout, explicit pads).
-struct EffChildF50View { u8 _pad[0x50]; float f50; };
+// TU-local typed view over the remaining raw base-tail offsets.
 struct EffRotTailView { u8 _pad[0x48]; u32 w0; u32 w1; u32 w2; };
 namespace cf {
 extern "C" void setChildF50____Q22cf11CfObjectEffFv(cf::CfObjectEff* self, float v) {
-    EffChildF50View* o = reinterpret_cast<EffChildF50View*>(self->mChildEff);
-    if (o) o->f50 = v;
+    cf::CfObjectEffChild* child = self->mChildEff;
+    if (child != nullptr) child->field_50 = v;
 }
 } // namespace cf
 
 extern "C" void setChildF50G_(void* self, float v) {
-    EffChildF50View* o
-        = reinterpret_cast<EffChildF50View*>(static_cast<cf::CfObjectEff*>(self)->mChildEff);
-    if (o) o->f50 = v;
+    cf::CfObjectEffChild* child = static_cast<cf::CfObjectEff*>(self)->mChildEff;
+    if (child != nullptr) child->field_50 = v;
 }
 
 void setChildV40__(void* obj, const void* src) {
@@ -287,14 +285,10 @@ extern "C" void setEffPosVec___Q22cf11CfObjectEffFv(cf::CfObjectEff* self, const
 
 // snapEffTarget is Eff's UVF25 override: forward to the base implementation with the
 // same (pos, scale) ABI, then copy into the child.
-extern "C" void CfObject_snapMoveTarget__Q22cf8CfObjectFPQ22ml5CVec3f(cf::CfObject* self,
-                                                           ml::CVec3* pos,
-                                                           float scale);
 void snapEffTarget__Q22cf11CfObjectEffFv(cf::CfObjectEff* self,
                                          cf::CfObjectEffU32Vec3* src,
                                          float scale) {
-    CfObject_snapMoveTarget__Q22cf8CfObjectFPQ22ml5CVec3f(
-        self, reinterpret_cast<ml::CVec3*>(src), scale);
+    self->CfObject::CfObject_snapMoveTarget(reinterpret_cast<ml::CVec3*>(src), scale);
     // x's zero-init is dead (overwritten below) but fixes its slot as the
     // first-created local; the visible loads all stay inside the copy block.
     u32 x = 0;

@@ -4,12 +4,8 @@
 #include <harness_catalog.h>
 #include "libs/CriWare/src/sofdec/sfx/sfx_types.h"
 
-/* Shared Sofdec SDK tag table (.rodata 0x8051CF28 0x10) */
-__declspec(section ".rodata") __attribute__((aligned(8))) const unsigned char lbl_eu_8051CF28[16] = {
-    0x53,0x46,0x58,0x5A,0x00,0x53,0x46,0x58,0x49,0x4E,0x46,0x45,0x00,0x00,0x00,0x00
-};
 /* SJ tag scanner (libs/CriWare/src/adx/sj/sj_utl.c) */
-extern int SJ_SearchTag(u32*, const u8*, const u8*, u32*);
+extern int SJ_SearchTag(u32*, const char*, const char*, u32*);
 
 void SFX_SetCompoMode(SFXSetState* self, u32 val) {
     self->compoMode = val;
@@ -33,7 +29,7 @@ void SFX_SetTagInf(SFXHandleState* self, u32 val1, u32 val2) {
     self->tagVal2 = val2;
     input[0] = val1;
     input[1] = val2;
-    s32 ret = SJ_SearchTag(input, lbl_eu_8051CF28, lbl_eu_8051CF28 + 5, output);
+    s32 ret = SJ_SearchTag(input, "SFXZ", "SFXINFE", output);
     if (ret == 0) {
         SFXZ_SetTagInf(zmv, 0, 0);
     } else {

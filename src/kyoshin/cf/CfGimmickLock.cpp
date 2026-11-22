@@ -7,12 +7,11 @@
 #include "kyoshin/cf/CfGimmickLock.hpp"
 #include <nw4r/math.h>
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
+#include "kyoshin/cf/CfGameManager.hpp"  // real static manager accessors
+#include "kyoshin/cf/object/CfObjectMove.hpp"  // real battle-actor object type
 
 namespace cf {}
 using namespace cf;
-
-// name-guess: BDAT column-name string read for the lock config flags (retail lbl_eu_805086EC)
-extern const char sGimmickLockConfigColumn[0x0C];
 
 __attribute__((used)) const void* sGimmickLockIdColumns[2] = { "popID1", nullptr };
 
@@ -57,7 +56,7 @@ extern "C" void* __ct__cf_CfGimmickLock(cf::CfGimmickLock* self, u16 row) {
         *(u16*)((u8*)self + (u32)i * 2 + 0x84) = (u8)(*(u16*)&v);
     }
 
-    u32 vCfg = getBdatStringColumnValue(holder, sGimmickLockConfigColumn, row);
+    u32 vCfg = getBdatStringColumnValue(holder, "rockTYPE", row);
     self->configFlags = *(u8*)&vCfg;
 
     // Derived vtable init hook (slot 0x20).
@@ -118,7 +117,7 @@ extern "C" void CfGimmickLock_Update(cf::CfGimmickLock* self) {
     if ((gGimmickPartyFlags & 0x4) != 0 && (gmGameFlags & 0x10000000) == 0) {
         flag = 0;
     } else if (self->maxVal != 0) {
-        u32 count = getQueuedFileEventCount__Q22cf13CfGameManagerFv();
+        u32 count = cf::CfGameManager::getQueuedFileEventCount();
         if (self->minVal > count || count > self->maxVal) {
             flag = 0;
         } else {
@@ -367,7 +366,7 @@ extern "C" void CfGimmickLock_Refresh(cf::CfGimmickLock* self) {
     // region if it was registered.
     void* scene = Scn_HasCamItem(gmScene, gmCurrentView);
     int hit = jumptable_eu_80535830[self->stateIndex](
-        (cf::CfGimmick*)&self->scale, (const CfGimmickVec3*)((u8*)scene + 0x10c), &self->position);
+        (cf::CfGimmick*)&self->scale, (const ml::CVec3*)((u8*)scene + 0x10c), &self->position);
     if (hit != 0) {
         self->flags |= 0x800;
         if ((self->flags & 0x1000) != 0) {
@@ -427,9 +426,9 @@ extern "C" void CfGimmickLock_Refresh(cf::CfGimmickLock* self) {
 extern "C" void CfGimmickLock_Activate(cf::CfGimmickLock* self) {
     if ((self->flags & 2) == 0) {
         if (self->stateIndex - 3 <= 1) {
-            self->field_78 = createBattleActor__Q22cf13CfGameManagerFv(0x4d, 0);
+            self->field_78 = static_cast<cf::CfObjectMove*>(createBattleActor__Q22cf13CfGameManagerFv(0x4d, 0));
         } else if (self->stateIndex - 1 <= 1) {
-            self->field_78 = createBattleActor__Q22cf13CfGameManagerFv(0x4c, 0);
+            self->field_78 = static_cast<cf::CfObjectMove*>(createBattleActor__Q22cf13CfGameManagerFv(0x4c, 0));
         } else {
             return;
         }
@@ -437,26 +436,26 @@ extern "C" void CfGimmickLock_Activate(cf::CfGimmickLock* self) {
         // field_78 is re-read around every opaque call so MWCC keeps the
         // retail reload sequence instead of caching the pointer.
         if (self->field_78 != 0) {
-            ((cf::CfGimmickLockObj*)self->field_78)->owner = self;
-            ((cf::CfGimmickLockObj*)self->field_78)->setY(self->rotation.y);
+            self->field_78->mSubObjB0 = self;
+            self->field_78->CfObject_setMoveHeadAngle(self->rotation.y);
             if (self->stateIndex - 3 <= 1) {
                 f32 diff = self->extent1 - self->extent2;
-                f32 vec[3];
-                vec[2] = self->extent3 / 30.0f;
-                vec[1] = diff * 0.5f / 30.0f;
-                vec[0] = self->extent0 / 30.0f;
-                ((cf::CfGimmickLockObj*)self->field_78)->setPos(vec);
-                setChild34Sc_(self->field_78, vec);
+                ml::CVec3 vec;
+                vec.z = self->extent3 / 30.0f;
+                vec.y = diff * 0.5f / 30.0f;
+                vec.x = self->extent0 / 30.0f;
+                self->field_78->CfObject_setMoveTargetVec(&vec);
+                setChild34Sc_(self->field_78, &vec);
             } else {
-                ((cf::CfGimmickLockObj*)self->field_78)->setPos(&self->position.x);
-                ((cf::CfGimmickLockObj*)self->field_78)->setScale(self->extent0 / 30.0f);
+                self->field_78->CfObject_setMoveTargetVec(&self->position);
+                self->field_78->CfObject_setObjScale(self->extent0 / 30.0f);
             }
             // Touch the target of every fight-list entry.
             CfGimmickList* list = getReslistB48();
             CfGimmickListNode* node = list->head->next;
             while (node != list->head) {
-                CfGimmickLockObj* entry = (CfGimmickLockObj*)node->object;
-                void* target = entry->getTarget();
+                cf::CfObjectMove* entry = static_cast<cf::CfObjectMove*>(node->object);
+                void* target = entry->CfObject_getCurrentTarget();
                 if (target != 0) {
                     CtrlMoveEne_MarkActiveSteady((u8*)target + 0x84);
                 }
@@ -464,7 +463,7 @@ extern "C" void CfGimmickLock_Activate(cf::CfGimmickLock* self) {
             }
         }
     } else {
-        void* mgr = self->field_78;
+        cf::CfObjectMove* mgr = self->field_78;
         if (mgr != 0) {
             if (self->stateIndex - 3 <= 1) {
                 f32 diff = self->extent1 - self->extent2;
@@ -474,7 +473,7 @@ extern "C" void CfGimmickLock_Activate(cf::CfGimmickLock* self) {
                 vec[0] = self->extent0 / 30.0f;
                 setChild34Sc_(mgr, vec);
             } else if (self->stateIndex - 1 <= 1) {
-                ((cf::CfGimmickLockObj*)mgr)->setScale(self->extent0 / 30.0f);
+                mgr->CfObject_setObjScale(self->extent0 / 30.0f);
             } else {
                 // Out-of-range placement: skip the tail update entirely.
                 return;
@@ -531,7 +530,7 @@ extern "C" void CfGimmickLock_MarkSlots(cf::CfGimmickLock* self, int flag) {
 // passing the scale matrix, the caller's target and the position vector.
 int gimmickLockDispatchState(cf::CfGimmickLock* self, void* target) {
     if (self->flags & 2) {
-        return jumptable_eu_80535830[self->stateIndex]((cf::CfGimmick*)&self->scale, (const CfGimmickVec3*)target, &self->position);
+        return jumptable_eu_80535830[self->stateIndex]((cf::CfGimmick*)&self->scale, (const ml::CVec3*)target, &self->position);
     }
     return 0;
 }
@@ -543,6 +542,5 @@ extern char lbl_eu_80508668[];
 extern char lbl_eu_805358EC[];
 }
 __attribute__((used)) const char lbl_eu_805086D8[0x14] = "cf::CfGimmickLock";
-__attribute__((used)) const char sGimmickLockConfigColumn[0x0C] = "rockTYPE";
 
-__declspec(section ".sdata") __attribute__((used)) const void* __RTTI__Q22cf12CfGimmickElv[2] = { lbl_eu_80508668, lbl_eu_805358EC };
+__attribute__((used)) const void* __RTTI__Q22cf12CfGimmickElv[2] = { lbl_eu_80508668, lbl_eu_805358EC };

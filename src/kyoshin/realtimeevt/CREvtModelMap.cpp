@@ -3,6 +3,7 @@
 // High-level C++ reconstruction.
 
 #include <string.h>
+#include "monolib/lod/CTaskLOD.hpp"
 #include "kyoshin/code_800AA008_Tok.hpp"
 #include "kyoshin/cf/CfMapEffectManager.hpp"
 #include "kyoshin/harness_catalog.hpp"
@@ -77,16 +78,12 @@ u32 EvtSeqGetStateBit5();
 u32 REvtCam_IsField98Set();
 s32 REvtCam_IsMode2B0Eq1();
 s32 REvtCam_IsMode2B0Eq2();
-void enableLOD__8CTaskLODFv();
-void restorePrimaryLOD__8CTaskLODFv();
-void disableLOD__8CTaskLODFv();
-void acquireLODResource__8CTaskLODFv(void* task, u32 value);
 bool Scn_IsAnimActiveOrNull(void* pEmote);
 void* Scn_SetupAnim(void* a, void* b, int c, int d);
 void simSetFlag2OnTree(void* pEmote, int flag);
 void simSetLeafDist7B0(void* pEmote, float scale);
 void simRefreshFlag8(void* pEmote, float time);
-void scnLgtRemoveLgtItem(CScnEnvLgtCtrlResList* pData);
+void scnLgtRemoveLgtItem(CScnEnvLgtCtrlResList* pData, void* resource);
 void* scnLgtCreateEnvController(CScnEnvLgtCtrlResList* pData, void* pFile, int flags);
 mtl::ALLOC_HANDLE getScnCounter__Fv();
 extern void* getMapEffectManager__Q22cf13CfGameManagerFv();
@@ -115,7 +112,7 @@ CREvtModelMap::CREvtModelMap(void* pData)
 {
     memset(mCreatureState, 0, sizeof(mCreatureState));
     u32 out0, out1, out2, out3;
-    Tok_Unpack(*(u32*)((char*)mPtr1C + 0x20), &out0, &out1, &out2, &out3);
+    Tok_Unpack(static_cast<CREvtModelMapNameInfo*>(mPtr1C)->field_0x20, &out0, &out1, &out2, &out3);
     if (out0 == 1) {
         mIsGuest = 1;
         mCallback = static_cast<void (CREvtObj::*)()>(&CREvtModelMap::loadFiles);
@@ -124,7 +121,7 @@ CREvtModelMap::CREvtModelMap(void* pData)
     } else {
         mCallback = static_cast<void (CREvtObj::*)()>(&CREvtModelMap::probeSlot);
         insertRtEvent();
-        if (*(s32*)((char*)mPtr1C + 0x30) != 0) {
+        if (static_cast<CREvtModelMapNameInfo*>(mPtr1C)->field_0x30 != 0) {
             mFlags |= 0x30;
         }
     }
@@ -137,7 +134,7 @@ CREvtModelMap::~CREvtModelMap()
         if (cf::CfGameManager::getGameSubManager()) {
             reinterpret_cast<cf::CfObject*>(cf::CfGameManager::getGameSubManager())->setPointEnabled(1);
         }
-        enableLOD__8CTaskLODFv();
+        CTaskLOD::enableLOD();
         if (mCreatureCount > 0) {
             CCreatureNode* it;
             s32 i = 0;
@@ -154,7 +151,7 @@ CREvtModelMap::~CREvtModelMap()
         }
     }
     reset();
-    restorePrimaryLOD__8CTaskLODFv();
+    CTaskLOD::restorePrimaryLOD();
 }
 
 int CREvtModelMap::isMapModel() {
@@ -178,7 +175,7 @@ int CREvtModelMap::reset()
         mEmoteModel = nullptr;
     }
     if (mLoadedModelData) {
-        scnLgtRemoveLgtItem(gmScene->mLgtCtrl);
+        scnLgtRemoveLgtItem(gmScene->mLgtCtrl, mLoadedModelData);
         mLoadedModelData = nullptr;
     }
     void* p1 = mFileData1;
@@ -225,7 +222,7 @@ void CREvtModelMap::disablePoints()
     if (cf::CfGameManager::getGameSubManager()) {
         cf::CfGameManager* mgr = (cf::CfGameManager*)cf::CfGameManager::getGameSubManager();
         reinterpret_cast<cf::CfObject*>(mgr)->setPointEnabled(0);
-        disableLOD__8CTaskLODFv();
+        CTaskLOD::disableLOD();
     }
 }
 
@@ -236,7 +233,7 @@ void CREvtModelMap::enablePoints()
     }
     cf::CfGameManager* mgr = (cf::CfGameManager*)cf::CfGameManager::getGameSubManager();
     reinterpret_cast<cf::CfObject*>(mgr)->setPointEnabled(1);
-    enableLOD__8CTaskLODFv();
+    CTaskLOD::enableLOD();
 }
 
 void CREvtModelMap::probeSlot()
@@ -393,11 +390,11 @@ void CREvtModelMap::onEvent(u32 visible)
             reinterpret_cast<cf::CfObject*>(mgr)->setPointEnabled(visible);
         }
         if (visible) {
-            restorePrimaryLOD__8CTaskLODFv();
+            CTaskLOD::restorePrimaryLOD();
             sVisibleModel = this;
         } else {
             if (sVisibleModel == this) {
-                disableLOD__8CTaskLODFv();
+                CTaskLOD::disableLOD();
                 sVisibleModel = 0;
             }
         }
@@ -428,7 +425,7 @@ void CREvtModelMap::onEvent(u32 visible)
     if (mEmoteModel) {
         if (visible) {
             if (mFileData2) {
-                acquireLODResource__8CTaskLODFv(mFileData2, 1);
+                CTaskLOD::acquireLODResource(mFileData2, 1);
             }
             if (mFileData3) {
                 mLoadedModelData = scnLgtCreateEnvController(gmScene->mLgtCtrl, mFileData3, 7);
@@ -441,11 +438,11 @@ void CREvtModelMap::onEvent(u32 visible)
             sVisibleModel = this;
         } else {
             if (sVisibleModel == this) {
-                disableLOD__8CTaskLODFv();
+                CTaskLOD::disableLOD();
                 sVisibleModel = 0;
             }
             if (mLoadedModelData) {
-                scnLgtRemoveLgtItem(gmScene->mLgtCtrl);
+                scnLgtRemoveLgtItem(gmScene->mLgtCtrl, mLoadedModelData);
                 mLoadedModelData = 0;
                 cf::CfGameManager* m2 = (cf::CfGameManager*)cf::CfGameManager::getGameSubManager();
                 if (m2 && *(void**)((u8*)m2 + 0x2F3C)) {
@@ -480,7 +477,7 @@ void CREvtModelMap::setVisible(int visible)
         if (getGlobalSda()) {
             *(u8*)((u8*)getGlobalSda() + 0xA8) = visible;
         }
-        u8* taskState = (u8*)(*(void**)((u8*)gmScene + 0x78));
+        u8* taskState = static_cast<u8*>(gmScene->unk78);
         taskState[0x28] = visible;
     } else if (mEmoteModel) {
         mEmoteModel->vfuncB4(REvtCam_IsField98Set());

@@ -9,9 +9,6 @@
 // ---------------------------------------------------------------------------
 // C-linkage imports
 // ---------------------------------------------------------------------------
-extern "C" const nw4r::g3d::G3dObj::ResNameDataT<sizeof("AnmObj")> lbl_eu_8051D650;
-extern "C" const nw4r::g3d::G3dObj::ResNameDataT<sizeof("G3dObj")> lbl_eu_8051D640;
-extern "C" const char lbl_eu_8051D530[];
 
 namespace nw4r {
 namespace g3d {

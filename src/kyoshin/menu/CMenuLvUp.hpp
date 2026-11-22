@@ -34,7 +34,7 @@ public:
     virtual void Init();
     virtual void Term();
     virtual void Move();
-    virtual void cbRenderBefore();
+    virtual void cbRenderBefore(CScn* scene);
 
     static CMenuLvUp* create(CProcess* parent, CScn* scene);
 

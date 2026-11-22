@@ -154,7 +154,7 @@ class CPartyStateWin {
 public:
     CPartyStateWin(u32 arg1, u32 arg2);
     ~CPartyStateWin();
-    void cbRenderBefore();
+    void cbRenderBefore(CScn* scene);
 
     u32 mVtbl0;                            // 0x00 composite vtable (lbl_eu_805352DC)
     u32 mVtbl4;                            // 0x04 secondary vtable (lbl_eu_805352DC + 0x88)
@@ -187,6 +187,8 @@ void PartyStateWin_ThunkDtor(void* self);
 // does not pull these flat declarations into unrelated units).
 
 #include "monolib/util/MemManager.hpp"
+#include "monolib/lib/UnkClass_8045F564.hpp"
+#include "kyoshin/CItemBoxInfo.hpp"
 #include "kyoshin/CSysWin.hpp"
 #include "kyoshin/code_80135FDC_Bdat.hpp"
 namespace cf { class CfObjectMove; }
@@ -455,7 +457,7 @@ struct CPartyStateWinCursor {
 #pragma pack(push, 1)
 struct CPartyStateWinBlob58 {
     u32 field_0x0;              // 0x00 (not copied)
-    u32 field_0x4[4];           // 0x04..0x14 (copied by __as__17UnkClass_8045F564FRC17UnkClass_8045F564)
+    UnkClass_8045F564 field_0x4; // 0x04..0x14 (UnkClass_8045F564::operator=)
     u32 field_0x14;             // 0x14
     u32 field_0x18;             // 0x18
     u32 field_0x1C;             // 0x1C
@@ -522,18 +524,17 @@ struct CPartyStateWinBlob10C0 {
     u32 field_0x10bc;             // 0x10BC
 };
 
-// 4-word mem-region copy helper (retail unmangled; also declared in
-// CSkipTimer.hpp / CQstLogList.hpp / COption.hpp). PartyStateWin_CopyStateBlob58 uses it to
-// copy the +0x04 region of its blob.
-extern "C" void __as__17UnkClass_8045F564FRC17UnkClass_8045F564(void* dest, void* src);
+// The 4-word regions at +0x04 of the copied blobs are UnkClass_8045F564
+// members; their assignment is the canonical inline UnkClass_8045F564::operator=
+// from monolib/lib/UnkClass_8045F564.hpp.
 
-// Cursor sub-object copy helper (retail unmangled; also declared in
+// Cursor sub-object copy helper
 // COption.hpp / CItemBoxGrid.hpp). Copies the +0x4..+0x15 region of a
 // 0x18-byte cursor object; PartyStateWin_CopyStateBlob58 passes its +0x34 sub-object.
 
-// Copy helpers used by PartyStateWin_CopyEquipChange / PartyStateWin_OpenWindow (retail unmangled names;
-// owning TU headers cannot be included here).
-extern "C" void __as__12CItemBoxPageFRC12CItemBoxPage(u8* dst, const u8* src); // weak CItemBoxPage::operator=
+// The CItemBoxPage regions copied by PartyStateWin_CopyEquipChange are real
+// CItemBoxPage members (CItemBoxInfo::mPage / CEquipItemBox::mPage).
+// Their assignment is the compiler-generated CItemBoxPage::operator=.
 
 // Byte-offset view of the embedded CEquipChange sub-object (retail size
 // 0x2A58) as copied by PartyStateWin_CopyEquipChange. Regions handled by copy helpers are
@@ -542,8 +543,8 @@ extern "C" void __as__12CItemBoxPageFRC12CItemBoxPage(u8* dst, const u8* src); /
 // wd[1]/wd[2] pointer-walk form, so their base pointers sit 4 bytes before
 // each copied run.
 struct CEquipChangeCopyView {
-    u8 f04[0x10];        // 0x004 (__as__17UnkClass_8045F564FRC17UnkClass_8045F564)
-    u8 f14[0x10];        // 0x014 (__as__17UnkClass_8045F564FRC17UnkClass_8045F564)
+    UnkClass_8045F564 f04; // 0x004 (UnkClass_8045F564::operator=)
+    UnkClass_8045F564 f14; // 0x014 (UnkClass_8045F564::operator=)
     u32 f24[8];          // 0x024..0x044
     u8 f44;              // 0x044
     u8 _pad45[3];
@@ -559,8 +560,8 @@ struct CEquipChangeCopyView {
     u32 f9a;             // 0x09a
     u32 f9e;             // 0x09e
     u8 _pada2[6];
-    u8 fa8[0x10];        // 0x0a8 (__as__17UnkClass_8045F564FRC17UnkClass_8045F564)
-    u8 fb8[0x10];        // 0x0b8 (__as__17UnkClass_8045F564FRC17UnkClass_8045F564)
+    UnkClass_8045F564 fa8; // 0x0a8 (UnkClass_8045F564::operator=)
+    UnkClass_8045F564 fb8; // 0x0b8 (UnkClass_8045F564::operator=)
     u32 fc8[27];         // 0x0c8..0x134
     u8 f134;             // 0x134
     u8 _pad135[3];
@@ -576,19 +577,20 @@ struct CEquipChangeCopyView {
     u16 f150;            // 0x150
     u8 f152;             // 0x152
     u8 _pad153;
-    u8 f154[0x160];      // 0x154..0x2b4 (ShopBuy_CopyData)
-    u8 f2b4[0x10];       // 0x2b4 (__as__17UnkClass_8045F564FRC17UnkClass_8045F564)
-    u8 f2c4[0x10];       // 0x2c4 (__as__17UnkClass_8045F564FRC17UnkClass_8045F564)
+    CItemBoxPage f154;   // 0x154..0x2ad (CItemBoxInfo::mPage)
+    u8 _pad2B0[4];       // 0x2b0..0x2b4 (CItemBoxInfo tail padding)
+    UnkClass_8045F564 f2b4; // 0x2b4 (UnkClass_8045F564::operator=)
+    UnkClass_8045F564 f2c4; // 0x2c4 (UnkClass_8045F564::operator=)
     u32 f2d4[7];         // 0x2d4..0x2f0
     u8 f2f0[4];          // 0x2f0..0x2f4
     u8 f2f4[0x18];       // 0x2f4 (PartyStateWin_CopySlotRec)
     u8 f30c[0x18];       // 0x30c (PartyStateWin_CopySlotRec)
     u8 f324[0x1c];       // 0x324 (MenuShopSellCopyCursor)
-    u8 f340[0x10];       // 0x340 (__as__17UnkClass_8045F564FRC17UnkClass_8045F564)
+    UnkClass_8045F564 f340; // 0x340 (UnkClass_8045F564::operator=)
     u32 f350[5];         // 0x350..0x364
     u8 f364[4];          // 0x364..0x368
     u8 _pad368[4];
-    u8 f36c[0x10];       // 0x36c (__as__17UnkClass_8045F564FRC17UnkClass_8045F564)
+    UnkClass_8045F564 f36c; // 0x36c (UnkClass_8045F564::operator=)
     u32 f37c[4];         // 0x37c..0x38c
     u8 f38c[4];          // 0x38c..0x390
     f32 f390[5];         // 0x390..0x3a4
@@ -610,7 +612,7 @@ struct CEquipChangeCopyView {
     u32 f4b4;            // 0x4b4
     u32 f4b8;            // 0x4b8
     u32 f4bc;            // 0x4bc
-    u8 f4c0[0x15c];      // 0x4c0..0x61c (ShopBuy_CopyData)
+    CItemBoxPage f4c0;   // 0x4c0..0x61c (CEquipItemBox::mPage)
     u32 f61c;            // 0x61c
     u16 f620;            // 0x620
     u8 f622[0xe];        // 0x622..0x630 (&f622[8] is the loop base at 0x62a)

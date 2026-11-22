@@ -2,7 +2,7 @@
 #include "libs/CriWare/src/sofdec/sfdcore/sfd/sfd_types.h"
 __declspec(section ".rodata") __attribute__((aligned(8))) double lbl_eu_8051B190 = 0.8;
 __declspec(section ".rodata") __attribute__((aligned(8))) double lbl_eu_8051B198 = 4503601774854144.0;
-__declspec(section ".rodata") __attribute__((aligned(8))) char lbl_eu_8051B1A0[0x610] = {
+__attribute__((aligned(8))) const char lbl_eu_8051B1A0[0x610] = {
     0x45,0x32,0x30,0x30,0x31,0x30,0x37,0x30,0x33,0x46,0x20,0x6D,
     0x77,0x50,0x6C,0x79,0x53,0x66,0x64,0x53,0x74,0x61,0x6E,0x64,
     0x62,0x79,0x00,0x45,0x32,0x30,0x30,0x31,0x30,0x37,0x30,0x33,
@@ -193,7 +193,7 @@ typedef struct MWSFDPLY {
     s32  field_0x518;       /* 0x518 */
     s32  field_0x51c;       /* 0x51c */
     s32  field_0x520;       /* 0x520 */
-    void*    field_0x524;   /* 0x524 callback object */
+    SfdSjObj* field_0x524; /* 0x524 SJUNI callback object */
     u8   field_0x528[0x8];  /* 0x528..0x52f */
     s32  field_0x530;       /* 0x530 */
     s32  field_0x534;       /* 0x534 */
@@ -239,16 +239,6 @@ typedef struct SfdTraceRec {
     u32 exit;           /* 0x6c */
 } SfdTraceRec;
 
-/* Callback object stored at +0x524; vtable method at +0x14. */
-typedef struct SfdCbVtable {
-    u8  pad_0x00[0x14];
-    void (*method)(void* self);
-} SfdCbVtable;
-typedef struct SfdCbObj {
-    const SfdCbVtable* vtable;
-} SfdCbObj;
-
-/* --- Cross-TU helpers referenced by the targets below --- */
 extern SfdTraceCtx* gpMwPlyTraceCb;
 extern SfdTraceRec sTraceRequestStop;
 extern SfdTraceRec sTraceStop;
@@ -451,13 +441,13 @@ void mwSfdStopDec(MWSFDPLY* self) {
         LSC_Stop(self->field_0x64);
     }
     {
-        void* cb = self->field_0x524;
+        SfdSjObj* cb = self->field_0x524;
         self->field_0x538 = 0;
         self->field_0x530 = 0;
         self->field_0x534 = 0;
         self->field_0x53c = 0;
         if (cb) {
-            ((void (*)(void*))*(void**)((char*)*(void**)cb + 0x14))(cb);
+            cb->vtbl->reset(cb);
         }
     }
     if (self->field_0x644 == 0) {

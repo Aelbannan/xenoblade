@@ -21,33 +21,6 @@ extern "C" int CFade_IsVisible(CFade* self);
 extern "C" void CFade_FadeOut(CFade* self);
 extern "C" void CFade_StartLoad(CFade* self);
 extern "C" void CFade_Update(CFade* self);
-extern "C" void FloorMap_Teardown(CFloorMap* self);
-extern "C" u16 FloorMap_GetU16Field5A(CFloorMap* self);
-extern "C" int FloorMap_GetField42Gated(CFloorMap* self);
-extern "C" void FloorMap_LoadStageLayout(CFloorMap* self);
-extern "C" void FloorMap_UpdateFrame(CFloorMap* self);
-extern "C" int FloorMap_ClassifyByte41(CFloorMap* self);
-extern "C" int FloorMap_CheckRowVisited(CFloorMap* self);
-extern "C" u8 FloorMap_GetBdatMaxRow(CFloorMap* self);
-extern "C" u8 FloorMap_GetField208Plain(CFloorMap* self);
-extern "C" void FloorMap_SetPaneFlag(CFloorMap* self, u32 arg);
-extern "C" u8 FloorMap_GetField208Gated(CFloorMap* self);
-extern "C" int FloorMap_IsSysWinBusy(CFloorMap* self);
-extern "C" void FloorMap_UpdateRowPanePos(CFloorMap* self);
-extern "C" void FloorMap_CursorNextFloor(CFloorMap* self);
-extern "C" void FloorMap_OpenRowWindow(CFloorMap* self);
-extern "C" void FloorMap_ConfirmSelect(CFloorMap* self);
-extern "C" void FloorMap_UpdateCursorMove(CFloorMap* self);
-extern "C" void FloorMap_UpdateWorldMap(CFloorMap* self);
-extern "C" void FloorMap_HandleMapDown(CFloorMap* self);
-extern "C" void FloorMap_NormalizeMapPos(CFloorMap* self);
-void FloorMap_Log2Field208(void* self);
-void FloorMap_Log2Field333C(void* self);
-extern "C" void FloorMap_ScrollDown(CFloorMap* self);
-extern "C" void FloorMap_ScrollUp(CFloorMap* self);
-extern "C" void FloorMap_ScrollRight(CFloorMap* self);
-extern "C" void FloorMap_ScrollLeft(CFloorMap* self);
-extern "C" void FloorMap_MoveToCursorRow(CFloorMap* self);
 
 // func_8008413C is declared in CfGameManager.hpp with its retail (u16,u32) form.
 
@@ -70,8 +43,6 @@ extern "C" void MapSelectSCHandleInput(CMenuMapSelectSC* self);
 extern "C" int Scn_SetPauseFlag(CScn* scn, int flag);
 // CFloorMap helpers (retail unmangles these member helpers).
 // (memberized: FloorMap_SetMapTable -> CFloorMap::SetMapTable; declaration moved into class CFloorMap)
-extern "C" void FloorMap_LoadMapFiles(CFloorMap* self);
-extern "C" void FloorMap_Draw(CFloorMap* self, nw4r::lyt::DrawInfo* drawInfo);
 // CTitleAHelp / CFade draw + reset helpers.
 extern "C" void CFade_Draw(CFade* self, nw4r::lyt::DrawInfo* drawInfo);
 // (memberized: CFade_Unload -> CFade::Unload; declaration moved into class CFade)
@@ -80,7 +51,6 @@ extern "C" void UIWin_ControlWindowLists(u32 a, u32 b);
 // setPresentationFlag: canonical setPresentationFlag__Q22cf13CfGameManagerFv(bool).
 // Ctor/re-init helpers for the embedded widgets (retail-unmangled).
 extern "C" void __ct__11CTitleAHelpFPcUc(CTitleAHelp* self, char* name, u8 arg);
-extern "C" void __ct__CFloorMap(CFloorMap* self);
 extern "C" void __as__17UnkClass_8045F564FRC17UnkClass_8045F564(void* dest, void* src);
 // CTitleAHelp::CTitleAHelp_load() is declared in kyoshin/CTitleAHelp.hpp.
 extern "C" void __dt__11CTitleAHelpFv(CTitleAHelp* _this, int flags);
@@ -100,18 +70,6 @@ extern u32 __ptmf_null[3];    // null pointer-to-member-function constant
 #include <revolution/gx/GXPixel.h>
 #include "kyoshin/CTitleAHelp.hpp"
 #include "kyoshin/CTitleAHelpImports.hpp"
-
-struct S {
-    int dummy;
-    int a;
-    int b;
-    int c;
-    int d;
-    unsigned char e;
-    unsigned char f;
-};
-
-extern "C" void MapSelectSCCopyWidgetState(S* dst, const S* src);
 
 // Out-of-line constructor (retail keeps it as its own function; the member
 // initialisers run in declaration order: parent ref, CTitleAHelp, CFade,
@@ -165,126 +123,10 @@ void CMenuMapSelectSC::Init() {
     CFade_StartLoad(&mFade);
 
     // --- Re-initialise the embedded CFloorMap via a temporary ---
-    u8 tempFloor[0x3348];
-    __ct__CFloorMap(reinterpret_cast<CFloorMap*>(tempFloor));
-
-    __as__17UnkClass_8045F564FRC17UnkClass_8045F564(mFloorMap.mMemRegion04, reinterpret_cast<CFloorMap*>(tempFloor)->mMemRegion04);
-    __as__17UnkClass_8045F564FRC17UnkClass_8045F564(mFloorMap.mMemRegion14, reinterpret_cast<CFloorMap*>(tempFloor)->mMemRegion14);
-
-    // File handles / buffers / visibility flags (member 0x24-0x5D).
-    mFloorMap.field_24 = reinterpret_cast<CFloorMap*>(tempFloor)->field_24;
-    mFloorMap.field_28 = reinterpret_cast<CFloorMap*>(tempFloor)->field_28;
-    mFloorMap.field_2C = reinterpret_cast<CFloorMap*>(tempFloor)->field_2C;
-    mFloorMap.field_30 = reinterpret_cast<CFloorMap*>(tempFloor)->field_30;
-    mFloorMap.field_34 = reinterpret_cast<CFloorMap*>(tempFloor)->field_34;
-    mFloorMap.field_38 = reinterpret_cast<CFloorMap*>(tempFloor)->field_38;
-    mFloorMap.allocated_buf_3C = reinterpret_cast<CFloorMap*>(tempFloor)->allocated_buf_3C;
-    mFloorMap.field_40 = reinterpret_cast<CFloorMap*>(tempFloor)->field_40;
-    mFloorMap.field_41 = reinterpret_cast<CFloorMap*>(tempFloor)->field_41;
-    mFloorMap.field_42 = reinterpret_cast<CFloorMap*>(tempFloor)->field_42;
-    mFloorMap.field_43 = reinterpret_cast<CFloorMap*>(tempFloor)->field_43;
-    mFloorMap.pos_x_44 = reinterpret_cast<CFloorMap*>(tempFloor)->pos_x_44;
-    mFloorMap.pos_y_48 = reinterpret_cast<CFloorMap*>(tempFloor)->pos_y_48;
-    mFloorMap.field_4C = reinterpret_cast<CFloorMap*>(tempFloor)->field_4C;
-    mFloorMap.field_50 = reinterpret_cast<CFloorMap*>(tempFloor)->field_50;
-    mFloorMap.field_54 = reinterpret_cast<CFloorMap*>(tempFloor)->field_54;
-    mFloorMap.cursor_active_58 = reinterpret_cast<CFloorMap*>(tempFloor)->cursor_active_58;
-    mFloorMap.field_5A = reinterpret_cast<CFloorMap*>(tempFloor)->field_5A;
-    mFloorMap.cursor_idx_5C = reinterpret_cast<CFloorMap*>(tempFloor)->cursor_idx_5C;
-    mFloorMap.field_5D = reinterpret_cast<CFloorMap*>(tempFloor)->field_5D;
-
-    __as__17UnkClass_8045F564FRC17UnkClass_8045F564(mFloorMap.mScrollBar + 4, reinterpret_cast<CFloorMap*>(tempFloor)->mScrollBar + 4);
-
-    // Cursor / scroll state (member 0x74-0xB5).
-    reinterpret_cast<CScrollBar*>(&mFloorMap.mScrollBar)->mFileHandle = reinterpret_cast<CScrollBar*>(&reinterpret_cast<CFloorMap*>(tempFloor)->mScrollBar)->mFileHandle;
-    reinterpret_cast<CScrollBar*>(&mFloorMap.mScrollBar)->mAccessor = reinterpret_cast<CScrollBar*>(&reinterpret_cast<CFloorMap*>(tempFloor)->mScrollBar)->mAccessor;
-    reinterpret_cast<CScrollBar*>(&mFloorMap.mScrollBar)->mLayout = reinterpret_cast<CScrollBar*>(&reinterpret_cast<CFloorMap*>(tempFloor)->mScrollBar)->mLayout;
-    reinterpret_cast<CScrollBar*>(&mFloorMap.mScrollBar)->mAnimTransform = reinterpret_cast<CScrollBar*>(&reinterpret_cast<CFloorMap*>(tempFloor)->mScrollBar)->mAnimTransform;
-    reinterpret_cast<CScrollBar*>(&mFloorMap.mScrollBar)->mReady = reinterpret_cast<CScrollBar*>(&reinterpret_cast<CFloorMap*>(tempFloor)->mScrollBar)->mReady;
-    reinterpret_cast<CScrollBar*>(&mFloorMap.mScrollBar)->mVisible = reinterpret_cast<CScrollBar*>(&reinterpret_cast<CFloorMap*>(tempFloor)->mScrollBar)->mVisible;
-    reinterpret_cast<CScrollBar*>(&mFloorMap.mScrollBar)->mState = reinterpret_cast<CScrollBar*>(&reinterpret_cast<CFloorMap*>(tempFloor)->mScrollBar)->mState;
-    reinterpret_cast<CScrollBar*>(&mFloorMap.mScrollBar)->mActive = reinterpret_cast<CScrollBar*>(&reinterpret_cast<CFloorMap*>(tempFloor)->mScrollBar)->mActive;
-    reinterpret_cast<CScrollBar*>(&mFloorMap.mScrollBar)->mAnimOffset = reinterpret_cast<CScrollBar*>(&reinterpret_cast<CFloorMap*>(tempFloor)->mScrollBar)->mAnimOffset;
-    reinterpret_cast<CScrollBar*>(&mFloorMap.mScrollBar)->mScrollPosY = reinterpret_cast<CScrollBar*>(&reinterpret_cast<CFloorMap*>(tempFloor)->mScrollBar)->mScrollPosY;
-    reinterpret_cast<CScrollBar*>(&mFloorMap.mScrollBar)->mScrollRatio = reinterpret_cast<CScrollBar*>(&reinterpret_cast<CFloorMap*>(tempFloor)->mScrollBar)->mScrollRatio;
-    reinterpret_cast<CScrollBar*>(&mFloorMap.mScrollBar)->mThumbHeight = reinterpret_cast<CScrollBar*>(&reinterpret_cast<CFloorMap*>(tempFloor)->mScrollBar)->mThumbHeight;
-    reinterpret_cast<CScrollBar*>(&mFloorMap.mScrollBar)->mContentHeight = reinterpret_cast<CScrollBar*>(&reinterpret_cast<CFloorMap*>(tempFloor)->mScrollBar)->mContentHeight;
-    reinterpret_cast<CScrollBar*>(&mFloorMap.mScrollBar)->mDirection = reinterpret_cast<CScrollBar*>(&reinterpret_cast<CFloorMap*>(tempFloor)->mScrollBar)->mDirection;
-    (&mFloorMap.mCursorA0)->mArcResAcc = (&reinterpret_cast<CFloorMap*>(tempFloor)->mCursorA0)->mArcResAcc;
-    (&mFloorMap.mCursorA0)->mpLayout = (&reinterpret_cast<CFloorMap*>(tempFloor)->mCursorA0)->mpLayout;
-    (&mFloorMap.mCursorA0)->mpAnimTrans0 = (&reinterpret_cast<CFloorMap*>(tempFloor)->mCursorA0)->mpAnimTrans0;
-    (&mFloorMap.mCursorA0)->mpAnimTrans1 = (&reinterpret_cast<CFloorMap*>(tempFloor)->mCursorA0)->mpAnimTrans1;
-    (&mFloorMap.mCursorA0)->mActive = (&reinterpret_cast<CFloorMap*>(tempFloor)->mCursorA0)->mActive;
-    (&mFloorMap.mCursorA0)->mVisible = (&reinterpret_cast<CFloorMap*>(tempFloor)->mCursorA0)->mVisible;
-
-    *reinterpret_cast<CSysWin*>(mFloorMap.mSysWinB8) = *reinterpret_cast<const CSysWin*>(tempFloor + 0xb8);
-    *reinterpret_cast<CSysWin*>(mFloorMap.mSysWinF4) = *reinterpret_cast<const CSysWin*>(tempFloor + 0xf4);
-
-    // Layout pointer array (member 0x130-0x14C) + 20 8-byte entries.
-    mFloorMap.layout_130 = reinterpret_cast<CFloorMap*>(tempFloor)->layout_130;
-    mFloorMap.field_134 = reinterpret_cast<CFloorMap*>(tempFloor)->field_134;
-    mFloorMap.layout_138 = reinterpret_cast<CFloorMap*>(tempFloor)->layout_138;
-    mFloorMap.field_13C = reinterpret_cast<CFloorMap*>(tempFloor)->field_13C;
-    mFloorMap.layout_140 = reinterpret_cast<CFloorMap*>(tempFloor)->layout_140;
-    mFloorMap.field_144 = reinterpret_cast<CFloorMap*>(tempFloor)->field_144;
-    mFloorMap.field_148 = reinterpret_cast<CFloorMap*>(tempFloor)->field_148;
-    mFloorMap.field_14C = reinterpret_cast<CFloorMap*>(tempFloor)->field_14C;
-    // 20 8-byte entries, copied as a mtctr/bdnz loop in retail.
-    for (int i = 0; i < 0x14; i++) {
-        mFloorMap.layouts_150[i].mPtr = reinterpret_cast<CFloorMap*>(tempFloor)->layouts_150[i].mPtr;
-        mFloorMap.layouts_150[i].mUnk = reinterpret_cast<CFloorMap*>(tempFloor)->layouts_150[i].mUnk;
-    }
-
-    // Entry count / draw flags (member 0x1F0-0x208).
-    mFloorMap.layout_count_1F0 = reinterpret_cast<CFloorMap*>(tempFloor)->layout_count_1F0;
-    mFloorMap.field_1F4 = reinterpret_cast<CFloorMap*>(tempFloor)->field_1F4;
-    mFloorMap.field_1F8 = reinterpret_cast<CFloorMap*>(tempFloor)->field_1F8;
-    mFloorMap.layout_1FC = reinterpret_cast<CFloorMap*>(tempFloor)->layout_1FC;
-    *(u32*)&mFloorMap._200 = *(u32*)&reinterpret_cast<CFloorMap*>(tempFloor)->_200;
-    mFloorMap.field_204 = reinterpret_cast<CFloorMap*>(tempFloor)->field_204;
-    mFloorMap.field_205 = reinterpret_cast<CFloorMap*>(tempFloor)->field_205;
-    mFloorMap.field_206 = reinterpret_cast<CFloorMap*>(tempFloor)->field_206;
-    mFloorMap.field_207 = reinterpret_cast<CFloorMap*>(tempFloor)->field_207;
-    mFloorMap.field_208 = reinterpret_cast<CFloorMap*>(tempFloor)->field_208;
-
-    // Map-data blob (member 0x20C, 0x30C0 bytes): 0x618 8-byte entries.
-    for (int j = 0; j < 0x618; j++) {
-        *(u32*)((u8*)this + 0x2cc + j * 8) = *(u32*)(tempFloor + 0x20c + j * 8);
-        *(u32*)((u8*)this + 0x2d0 + j * 8) = *(u32*)(tempFloor + 0x210 + j * 8);
-    }
-
-    mFloorMap.field_32CC = reinterpret_cast<CFloorMap*>(tempFloor)->field_32CC;
-
-    // Four 0x18-byte sub-object copies.
-    MapSelectSCCopyWidgetState((S*)((u8*)this + 0x3390), (const S*)(tempFloor + 0x3338));
-    MapSelectSCCopyWidgetState((S*)((u8*)this + 0x33a8), (const S*)(tempFloor + 0x3350));
-    MapSelectSCCopyWidgetState((S*)((u8*)this + 0x33c0), (const S*)(tempFloor + 0x3368));
-    MapSelectSCCopyWidgetState((S*)((u8*)this + 0x33d8), (const S*)(tempFloor + 0x3380));
-
-    // Tail fields (member 0x3330-0x344).
-    mFloorMap.field_3330 = reinterpret_cast<CFloorMap*>(tempFloor)->field_3330;
-    mFloorMap.layout_3334 = reinterpret_cast<CFloorMap*>(tempFloor)->layout_3334;
-    mFloorMap.field_3338 = reinterpret_cast<CFloorMap*>(tempFloor)->field_3338;
-    mFloorMap.field_333C = reinterpret_cast<CFloorMap*>(tempFloor)->field_333C;
-    mFloorMap.field_3340 = reinterpret_cast<CFloorMap*>(tempFloor)->field_3340;
-    mFloorMap.field_3344 = reinterpret_cast<CFloorMap*>(tempFloor)->field_3344;
-
-    reinterpret_cast<CFloorMap*>(tempFloor)->~CFloorMap();
+    mFloorMap = CFloorMap();
 
     // Register the widget as an IScnRender render callback on its parent scene.
     reinterpret_cast<CScn*>(mParentRef)->addRenderCB(this, 0xd, 1);
-}
-
-extern "C" void MapSelectSCCopyWidgetState(S* dst, const S* src) {
-    // Retail copies only +4..+15 (four words) and +20/+21 (two bytes).
-    // The leading dummy word is padding so field offsets match; it is
-    // never stored. No extra guard: that emitted a 2-insn sdata preamble.
-    dst->a = src->a;
-    dst->b = src->b;
-    dst->c = src->c;
-    dst->d = src->d;
-    dst->e = src->e;
-    dst->f = src->f;
 }
 
 void CMenuMapSelectSC::Term() {
@@ -295,7 +137,7 @@ void CMenuMapSelectSC::Term() {
 
     mTitleAHelp.teardown();
     (&mFade)->Unload();
-    FloorMap_Teardown(&mFloorMap);
+    mFloorMap.Teardown();
 
     sInstance = 0;
     setPresentationFlag__Q22cf13CfGameManagerFv(0);
@@ -342,10 +184,10 @@ body:
     }
     mTitleAHelp.updateHelp();
     CFade_Update(&mFade);
-    FloorMap_UpdateFrame(&mFloorMap);
+    mFloorMap.UpdateFrame();
 }
 
-void CMenuMapSelectSC::cbRenderBefore() {
+void CMenuMapSelectSC::cbRenderBefore(CScn*) {
     CTaskGame::getInstance();
     // Gate: skip when the task is busy or the global mode bit (0x200000) is
     // set. The combined `A == 0 && B == 0 -> goto body` chain with the exit
@@ -365,7 +207,7 @@ body:
     GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
     nw4r::lyt::DrawInfo drawInfo;
     SetWideLocAdjust(&drawInfo);
-    FloorMap_Draw(&mFloorMap, &drawInfo);
+    mFloorMap.Draw(&drawInfo);
     mTitleAHelp.drawHelp(&drawInfo);
     CFade_Draw(&mFade, &drawInfo);
 }
@@ -408,7 +250,7 @@ extern "C" void MapSelectSCPrepFloorMap(CMenuMapSelectSC* self) {
     if (CFade_IsVisible(&self->mFade) != 0) {
         Scn_SetPauseFlag(reinterpret_cast<CScn*>(self->mParentRef), 0);
         (&self->mFloorMap)->SetMapTable((u8)lbl_eu_80664184);
-        FloorMap_LoadMapFiles(&self->mFloorMap);
+        self->mFloorMap.LoadMapFiles();
         self->mState = 2;
         UIWin_ControlWindowLists(1, 0);
     }
@@ -417,7 +259,7 @@ extern "C" void MapSelectSCPrepFloorMap(CMenuMapSelectSC* self) {
 // World-map phase 2: once the scrollbar is visible, populate the title/help
 // bar text for the current map, start its animation and advance to phase 3.
 extern "C" void MapSelectSCShowMapText(CMenuMapSelectSC* self) {
-    if (FloorMap_GetField42Gated(&self->mFloorMap) != 0) {
+    if (self->mFloorMap.GetField42Gated() != 0) {
         self->mTitleAHelp.func_801C4654(0);
         char* name = BdatTouchStringCell("MNU_map", "name", 3);
         self->mTitleAHelp.setInfoText(name);
@@ -426,7 +268,7 @@ extern "C" void MapSelectSCShowMapText(CMenuMapSelectSC* self) {
         }
         self->mTitleAHelp.func_801C41E8(0);
         self->mTitleAHelp.func_801C412C();
-        FloorMap_LoadStageLayout(&self->mFloorMap);
+        self->mFloorMap.LoadStageLayout();
         playUISound(0x6d);
         CFade_FadeOut(&self->mFade);
         self->mState = 3;
@@ -438,7 +280,7 @@ extern "C" void MapSelectSCShowMapText(CMenuMapSelectSC* self) {
 // pad layout differs between Classic (bits 21-23/25-26) and Wiimote/Nunchuk
 // (bits 4-5/10/12) controllers.
 extern "C" void MapSelectSCHandleInput(CMenuMapSelectSC* self) {
-    if (FloorMap_ClassifyByte41(&self->mFloorMap) != 0) {
+    if (self->mFloorMap.ClassifyByte41() != 0) {
         return;
     }
 
@@ -455,185 +297,185 @@ extern "C" void MapSelectSCHandleInput(CMenuMapSelectSC* self) {
 
     if (cf::CfGameManager::isClassicController(-1) != 0) {
         // Classic controller layout.
-        if (FloorMap_CheckRowVisited(&self->mFloorMap) != 0) {
-            if (FloorMap_GetBdatMaxRow(&self->mFloorMap) > 1 && FloorMap_GetField208Plain(&self->mFloorMap) != 0) {
+        if (self->mFloorMap.CheckRowVisited() != 0) {
+            if (self->mFloorMap.GetBdatMaxRow() > 1 && self->mFloorMap.GetField208Plain() != 0) {
                 self->mTitleAHelp.func_801C41E8(0x4b);
             } else {
                 self->mTitleAHelp.func_801C41E8(0x4c);
             }
         } else {
-            if (FloorMap_GetBdatMaxRow(&self->mFloorMap) > 1 && FloorMap_GetField208Plain(&self->mFloorMap) != 0) {
+            if (self->mFloorMap.GetBdatMaxRow() > 1 && self->mFloorMap.GetField208Plain() != 0) {
                 self->mTitleAHelp.func_801C41E8(0x4d);
             } else {
                 self->mTitleAHelp.func_801C41E8(0x4e);
             }
         }
-        FloorMap_SetPaneFlag(&self->mFloorMap, 0);
+        self->mFloorMap.SetPaneFlag(0);
 
         CPad* pad = cf::CfGameManager::getCurrentPad();
         if ((pad->mTurboPressButtonFlags & 0x02000000) != 0 &&
-            FloorMap_GetBdatMaxRow(&self->mFloorMap) > 1 &&
-            FloorMap_GetField208Gated(&self->mFloorMap) != 0 &&
-            FloorMap_IsSysWinBusy(&self->mFloorMap) == 0) {
-            FloorMap_UpdateRowPanePos(&self->mFloorMap);
+            self->mFloorMap.GetBdatMaxRow() > 1 &&
+            self->mFloorMap.GetField208Gated() != 0 &&
+            self->mFloorMap.IsSysWinBusy() == 0) {
+            self->mFloorMap.UpdateRowPanePos();
             return;
         }
         if ((pad->mTurboPressButtonFlags & 0x04000000) != 0 &&
-            FloorMap_GetBdatMaxRow(&self->mFloorMap) > 1 &&
-            FloorMap_GetField208Gated(&self->mFloorMap) != 0 &&
-            FloorMap_IsSysWinBusy(&self->mFloorMap) == 0) {
-            FloorMap_CursorNextFloor(&self->mFloorMap);
+            self->mFloorMap.GetBdatMaxRow() > 1 &&
+            self->mFloorMap.GetField208Gated() != 0 &&
+            self->mFloorMap.IsSysWinBusy() == 0) {
+            self->mFloorMap.CursorNextFloor();
             return;
         }
 
         u32 pressed = pad->mPressedButtonFlags;
         if ((pressed & 0x00200000) != 0) {
-            FloorMap_OpenRowWindow(&self->mFloorMap);
-            if (FloorMap_GetU16Field5A(&self->mFloorMap) != 0) {
+            self->mFloorMap.OpenRowWindow();
+            if (self->mFloorMap.GetU16Field5A() != 0) {
                 (&self->mFade)->In();
                 self->mState = 6;
             }
         } else if ((pressed & 0x00400000) != 0) {
             if (self->mFloorMap.GetActiveFlag58() != 0) {
-                FloorMap_ConfirmSelect(&self->mFloorMap);
-            } else if (FloorMap_IsSysWinBusy(&self->mFloorMap) == 0) {
+                self->mFloorMap.ConfirmSelect();
+            } else if (self->mFloorMap.IsSysWinBusy() == 0) {
                 (&self->mFade)->In();
                 self->mState = 5;
                 playUISound(6);
             } else {
-                FloorMap_OpenRowWindow(&self->mFloorMap);
+                self->mFloorMap.OpenRowWindow();
             }
         } else if ((pressed & 0x00800000) != 0) {
-            if (FloorMap_IsSysWinBusy(&self->mFloorMap) == 0) {
+            if (self->mFloorMap.IsSysWinBusy() == 0) {
                 (&self->mFade)->In();
                 self->mState = 5;
                 playUISound(6);
             }
         } else if ((pad->mTurboPressButtonFlags & 0x4) != 0) {
-            FloorMap_UpdateCursorMove(&self->mFloorMap);
+            self->mFloorMap.UpdateCursorMove();
         } else if ((pad->mTurboPressButtonFlags & 0x8) != 0) {
-            FloorMap_UpdateWorldMap(&self->mFloorMap);
+            self->mFloorMap.UpdateWorldMap();
         } else if ((pad->mTurboPressButtonFlags & 0x80000000) != 0) {
-            FloorMap_HandleMapDown(&self->mFloorMap);
+            self->mFloorMap.HandleMapDown();
         } else if ((pad->mTurboPressButtonFlags & 0x2) != 0) {
-            FloorMap_NormalizeMapPos(&self->mFloorMap);
+            self->mFloorMap.NormalizeMapPos();
         } else if ((pressed & 0x01000000) != 0) {
-            FloorMap_Log2Field208(reinterpret_cast<void*>(&self->mFloorMap));
+            self->mFloorMap.Log2Field208();
         } else if ((pressed & 0x200) != 0) {
-            FloorMap_Log2Field333C(reinterpret_cast<void*>(&self->mFloorMap));
+            self->mFloorMap.Log2Field333C();
         } else {
             // D-pad held: each direction moves the cursor once per press
             // transition; when no direction is held, confirm the selection.
             u32 flag = 1;
             if ((pad->mHeldButtonFlags & 0x8000) != 0) {
-                FloorMap_ScrollDown(&self->mFloorMap);
+                self->mFloorMap.ScrollDown();
                 flag = 0;
             }
             if ((pad->mHeldButtonFlags & 0x10000) != 0) {
-                FloorMap_ScrollUp(&self->mFloorMap);
+                self->mFloorMap.ScrollUp();
                 flag = 0;
             }
             if ((pad->mHeldButtonFlags & 0x2000) != 0) {
-                FloorMap_ScrollRight(&self->mFloorMap);
+                self->mFloorMap.ScrollRight();
                 flag = 0;
             }
             if ((pad->mHeldButtonFlags & 0x4000) != 0) {
-                FloorMap_ScrollLeft(&self->mFloorMap);
+                self->mFloorMap.ScrollLeft();
                 flag = 0;
             }
             if (flag != 0) {
-                FloorMap_MoveToCursorRow(&self->mFloorMap);
+                self->mFloorMap.MoveToCursorRow();
             }
         }
     } else {
         // Wiimote/Nunchuk layout.
-        if (FloorMap_CheckRowVisited(&self->mFloorMap) != 0) {
-            if (FloorMap_GetBdatMaxRow(&self->mFloorMap) > 1 && FloorMap_GetField208Plain(&self->mFloorMap) != 0) {
+        if (self->mFloorMap.CheckRowVisited() != 0) {
+            if (self->mFloorMap.GetBdatMaxRow() > 1 && self->mFloorMap.GetField208Plain() != 0) {
                 self->mTitleAHelp.func_801C41E8(0x4b);
             } else {
                 self->mTitleAHelp.func_801C41E8(0x4c);
             }
         } else {
-            if (FloorMap_GetBdatMaxRow(&self->mFloorMap) > 1 && FloorMap_GetField208Plain(&self->mFloorMap) != 0) {
+            if (self->mFloorMap.GetBdatMaxRow() > 1 && self->mFloorMap.GetField208Plain() != 0) {
                 self->mTitleAHelp.func_801C41E8(0x4d);
             } else {
                 self->mTitleAHelp.func_801C41E8(0x4e);
             }
         }
-        FloorMap_SetPaneFlag(&self->mFloorMap, 0);
+        self->mFloorMap.SetPaneFlag(0);
 
         CPad* pad = cf::CfGameManager::getCurrentPad();
         if ((pad->mHeldButtonFlags & 0x1000) != 0 &&
-            FloorMap_GetBdatMaxRow(&self->mFloorMap) > 1 &&
-            FloorMap_GetField208Gated(&self->mFloorMap) != 0 &&
-            FloorMap_IsSysWinBusy(&self->mFloorMap) == 0) {
+            self->mFloorMap.GetBdatMaxRow() > 1 &&
+            self->mFloorMap.GetField208Gated() != 0 &&
+            self->mFloorMap.IsSysWinBusy() == 0) {
             self->mTitleAHelp.func_801C41E8(0x4f);
             if (self->mTimer > 1.0f) {
                 playUISound(2);
             }
             self->mTimer = 0.0f;
-            FloorMap_SetPaneFlag(&self->mFloorMap, 1);
+            self->mFloorMap.SetPaneFlag(1);
             if ((pad->mTurboPressButtonFlags & 0x4) != 0) {
-                FloorMap_UpdateRowPanePos(&self->mFloorMap);
+                self->mFloorMap.UpdateRowPanePos();
             } else if ((pad->mTurboPressButtonFlags & 0x8) != 0) {
-                FloorMap_CursorNextFloor(&self->mFloorMap);
+                self->mFloorMap.CursorNextFloor();
             }
         } else {
             u32 pressed = pad->mPressedButtonFlags;
             if ((pressed & 0x10) != 0) {
-                FloorMap_OpenRowWindow(&self->mFloorMap);
-                if (FloorMap_GetU16Field5A(&self->mFloorMap) != 0) {
+                self->mFloorMap.OpenRowWindow();
+                if (self->mFloorMap.GetU16Field5A() != 0) {
                     (&self->mFade)->In();
                     self->mState = 6;
                 }
             } else if ((pressed & 0x20) != 0) {
                 if (self->mFloorMap.GetActiveFlag58() != 0) {
-                    FloorMap_ConfirmSelect(&self->mFloorMap);
-                } else if (FloorMap_IsSysWinBusy(&self->mFloorMap) == 0) {
+                    self->mFloorMap.ConfirmSelect();
+                } else if (self->mFloorMap.IsSysWinBusy() == 0) {
                     (&self->mFade)->In();
                     self->mState = 5;
                     playUISound(6);
                 } else {
-                    FloorMap_OpenRowWindow(&self->mFloorMap);
+                    self->mFloorMap.OpenRowWindow();
                 }
             } else if ((pressed & 0x400) != 0) {
-                if (FloorMap_IsSysWinBusy(&self->mFloorMap) == 0) {
+                if (self->mFloorMap.IsSysWinBusy() == 0) {
                     (&self->mFade)->In();
                     self->mState = 5;
                     playUISound(6);
                 }
             } else if ((pad->mTurboPressButtonFlags & 0x4) != 0) {
-                FloorMap_UpdateCursorMove(&self->mFloorMap);
+                self->mFloorMap.UpdateCursorMove();
             } else if ((pad->mTurboPressButtonFlags & 0x8) != 0) {
-                FloorMap_UpdateWorldMap(&self->mFloorMap);
+                self->mFloorMap.UpdateWorldMap();
             } else if ((pad->mTurboPressButtonFlags & 0x80000000) != 0) {
-                FloorMap_HandleMapDown(&self->mFloorMap);
+                self->mFloorMap.HandleMapDown();
             } else if ((pad->mTurboPressButtonFlags & 0x2) != 0) {
-                FloorMap_NormalizeMapPos(&self->mFloorMap);
+                self->mFloorMap.NormalizeMapPos();
             } else if ((pressed & 0x800) != 0) {
-                FloorMap_Log2Field208(reinterpret_cast<void*>(&self->mFloorMap));
+                self->mFloorMap.Log2Field208();
             } else if ((pressed & 0x200) != 0) {
-                FloorMap_Log2Field333C(reinterpret_cast<void*>(&self->mFloorMap));
+                self->mFloorMap.Log2Field333C();
             } else {
                 u32 flag = 1;
                 if ((pad->mHeldButtonFlags & 0x8000) != 0) {
-                    FloorMap_ScrollDown(&self->mFloorMap);
+                    self->mFloorMap.ScrollDown();
                     flag = 0;
                 }
                 if ((pad->mHeldButtonFlags & 0x10000) != 0) {
-                    FloorMap_ScrollUp(&self->mFloorMap);
+                    self->mFloorMap.ScrollUp();
                     flag = 0;
                 }
                 if ((pad->mHeldButtonFlags & 0x2000) != 0) {
-                    FloorMap_ScrollRight(&self->mFloorMap);
+                    self->mFloorMap.ScrollRight();
                     flag = 0;
                 }
                 if ((pad->mHeldButtonFlags & 0x4000) != 0) {
-                    FloorMap_ScrollLeft(&self->mFloorMap);
+                    self->mFloorMap.ScrollLeft();
                     flag = 0;
                 }
                 if (flag != 0) {
-                    FloorMap_MoveToCursorRow(&self->mFloorMap);
+                    self->mFloorMap.MoveToCursorRow();
                 }
             }
         }
@@ -644,7 +486,7 @@ extern "C" void MapSelectSCHandleInput(CMenuMapSelectSC* self) {
 // floor map and move to phase 7 (idle).
 extern "C" void MapSelectSCResetFloorMapIdle(CMenuMapSelectSC* self) {
     if (CFade_IsVisible(&self->mFade)) {
-        FloorMap_Teardown(&self->mFloorMap);
+        self->mFloorMap.Teardown();
         self->mState = 7;
     }
 }
@@ -653,7 +495,7 @@ extern "C" void MapSelectSCResetFloorMapIdle(CMenuMapSelectSC* self) {
 // floor-map cursor index to the game manager and move to phase 7 (idle).
 extern "C" void MapSelectSCCommitCursorIdle(CMenuMapSelectSC* self) {
     if (CFade_IsVisible(&self->mFade)) {
-        cf::CfGameManager::func_8008413C(FloorMap_GetU16Field5A(&self->mFloorMap), 0);
+        cf::CfGameManager::func_8008413C(self->mFloorMap.GetU16Field5A(), 0);
         self->mState = 7;
     }
 }

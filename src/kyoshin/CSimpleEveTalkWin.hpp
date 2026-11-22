@@ -21,7 +21,7 @@ class CScn;
  *
  * PROBLEM: retail 0x801A29B4/B/C/C4 are 8B thunks
  *   subi r3,r3,-0x6c   ; b __dt__17CSimpleEveTalkWinFv
- *   subi r3,r3,-0x70   ; b cbRenderBefore__17CSimpleEveTalkWinFv
+ *   subi r3,r3,-0x70   ; b cbRenderBefore__17CSimpleEveTalkWinFP4CScn
  *   subi r3,r3,-0x70   ; b __dt__17CSimpleEveTalkWinFv
  * next to the vtable. They are not hand-written `self-0x6c` wrappers   
  * they are MWCC `this`-adjustment thunks for the IWorkEvent@0x6C and
@@ -111,7 +111,7 @@ struct CSimpleEveTalkWin {
     void Init();
     void Term();
     void Move();
-    void cbRenderBefore();
+    void cbRenderBefore(CScn* scene);
 };
 
 // --- Local opaque views used by Init / Move / eveTalkWinAdvancePage / eveTalkWinSetReuseText.
@@ -222,6 +222,4 @@ extern CSimpleEveTalkWin* spEveTalkWinInstance;  // singleton instance (.sbss)
 extern u8 sEveTalkWinTerminated;                  // Term flag (.sbss)
 extern u32 gmPauseFlags;                 // cbRenderBefore flag (.sbss)
 extern u32 __ptmf_null[3];                  // null pointer-to-member-function
-extern char lbl_eu_8052D238[];              // temp base vtable
-extern char lbl_eu_80532EE0[];              // composite vtable
-// (defined as struct members in the .cpp, Elv recipe; decls kept for docs)
+extern char lbl_eu_8052D238[];              // temp base vtable (DEBT-CSIMPLEEVETALK-TEMPVT: hand store, needs real IUIWindow base ctor)

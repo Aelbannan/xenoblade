@@ -407,37 +407,18 @@ void sfhds_AnlyVideo(void* self, u32 a, s32* out) {
     out[12] = v;
 }
 
-typedef struct {
-    unsigned char pad0[0x88];
-    int field_0x88;
-    int field_0x8c;
-    int field_0x90;
-} SfdHdsStruct;
-
-int SFHDS_GetMuxVerNum(SfdHdsStruct* this) {
-    if (this->field_0x88 == 0) {
-        return 0;
+int SFHDS_GetMuxVerNum(SfdHandle* self) {
+    if (self->fhd.info.active != 0) {
+        return self->fhd.info.toolVerMajor * 100 + self->fhd.info.toolVerMinor;
     }
-    return this->field_0x8c * 100 + this->field_0x90;
+    return 0;
 }
 
-int SFHDS_GetColType(void* obj) {
-    struct SubStruct {
-        unsigned char pad[0x14];
-        int field_14;
-        int field_18;
-    };
-    struct MainStruct {
-        unsigned char pad0[0x88];
-        int flag;
-        unsigned char pad1[0x58];
-        struct SubStruct sub;
-    };
-    struct MainStruct* p = (struct MainStruct*)obj;
-    if (p->flag == 0) return -1;
-    struct SubStruct* s = &p->sub;
-    if (s->field_14 == 0) return -1;
-    return s->field_18;
+int SFHDS_GetColType(SfdHandle* self) {
+    s32* video = self->fhd.info.video;
+    if (self->fhd.info.active == 0) return -1;
+    if (video[5] == 0) return -1;
+    return video[6];
 }
 
 extern char sSfdGlob[];

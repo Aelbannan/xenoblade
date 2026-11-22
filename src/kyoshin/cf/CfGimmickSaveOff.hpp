@@ -5,7 +5,6 @@
 #include "kyoshin/cf/CfGimmick.hpp"
 
 class UnkClass_8003AA34;
-namespace cf { class CfGameManager; }
 
 // ---------------------------------------------------------------------------
 // C-linkage imports (unmangled retail symbols defined in other TUs).
@@ -23,9 +22,6 @@ extern "C" void CfGimmick_SetGlobalFlag8();
 
 // Poke the object registered at result+0x84 (save-point activation).
 extern "C" void CtrlMoveEne_MarkActiveSteady(u8* target);
-
-// Scenario/sequence counter from the game manager.
-extern "C" u32 getQueuedFileEventCount__Q22cf13CfGameManagerFv();
 
 // ---------------------------------------------------------------------------
 // External data (retail linker symbols; global-scope variables keep their

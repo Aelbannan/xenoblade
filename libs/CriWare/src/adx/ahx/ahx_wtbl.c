@@ -1,8 +1,8 @@
 #include "adx/ahx/ahx_wtbl.h"
 
-extern u32 lbl_eu_80562120[];
-void* lbl_eu_805629A0 = lbl_eu_80562120;
-u32 lbl_eu_805629A4 = 0x880;
+extern float ahxtbl_wtbl[];
+float* ahxtbl_wtbl_ptr = ahxtbl_wtbl;
+s32 ahxtbl_wtbl_size = 0x880;
 
 u32 lbl_eu_805629A8[0xC00] = {
     0x00000000, 0x00000004, 0x00000000, 0x00000000,
@@ -796,9 +796,9 @@ u32 lbl_eu_805659A8[0x40] = {
 
 void AHXTBL_GetWtblInfo(float** array_ptr, s32* size_ptr){
     if(array_ptr != NULL){
-        *array_ptr = (float*)lbl_eu_805629A0;
+        *array_ptr = ahxtbl_wtbl_ptr;
     }
     if(size_ptr != NULL){
-        *size_ptr = lbl_eu_805629A4;
+        *size_ptr = ahxtbl_wtbl_size;
     }
 }

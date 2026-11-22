@@ -273,7 +273,7 @@ void EffCtl_EmptyStub84(void* scene);
 u32 SchedFx_CountTotal(void);
 void SchedRes_AllocElemTables(void);
 u32 lytBindCanResolveTarget(void* link);
-void func_804D401C(void* a, float f);
+void func_804D401C(EffectNode* a, f32 f);
 // (memberized: EffFxInitNodeHead -> EffectInit::EffFxInitNodeHead; declaration moved into class EffectInit)
 void DbgPushPerspective(void* mtx);
 void DbgPushOrtho(void* mtx);
@@ -339,12 +339,6 @@ struct EffMtx;
 void EffObj_EmitUpdate(EffObject* obj, EffSceneRef* scene, const Mtx* m1,
                    const Mtx* m2, const EffMtx* m3, const EffMtx* m4);
 
-// Effect-node view used by EffObj_EmitUpdate: a float at +0x10.
-struct EffNode10 {
-    u8 pad_0x00[0x10];
-    f32 field_0x10;          // 0x10
-};
-
 // Scene handle view used by EffObj_EmitUpdate: an s16 index at +0x04.
 struct EffSceneRef {
     u8 pad_0x00[0x04];
@@ -376,7 +370,9 @@ static __declspec(align(8)) const char sEffectHeapName[0x20] = "CEffectHeap";
 
 // EffSys_AdvanceChain: advance the per-effect node chain head (0x24) using the
 // accumulated frame fraction at 0x14.
-extern "C" void EffSys_AdvanceChain(void* self) { func_804D401C((u8*)self + 0x24, *(float*)((u8*)self + 0x14)); }
+extern "C" void EffSys_AdvanceChain(CEffectObj* self) {
+    func_804D401C(&self->mNodeHead, self->mFrameDelta);
+}
 
 // EffSys_InitRoot: effect-manager constructor. Zero the tail state block
 // (0xdc..0x11c), set the per-effect defaults (float at 0x18 from sdata2,
@@ -980,16 +976,6 @@ inline f32 u16ToF_b0b8(u16 v) {
 }
 
 static inline double s32ToF64_b0b0(s32 v);
-// Node-chain view used by EffObj_Update: type at 0x00, flags at 0x06 and a
-// float time at 0x10; per-node timer slots are addressed as node + (0x22<<2).
-struct EffNodeUpd {
-    s16 field_0x00;
-    u8 pad_0x02[0x06 - 0x02];
-    u16 field_0x06;
-    u8 pad_0x08[0x10 - 0x08];
-    f32 field_0x10;
-};
-
 // Depth-range table bound at field_0xdc[0]: three u16 entries driving the
 // spawn-rate interpolation.
 struct DepthTable {
@@ -1201,10 +1187,10 @@ extern "C" void EffObj_Update(EffObject* obj, f32 delta) {
             goto end;
         }
         CEffectObj* parent = SchedFx_FetchByHandle(obj->field_0x20);
-        EffNodeUpd* node = (EffNodeUpd*)((EffectNode*)((u8*)parent + 0x24))->EffFxFetchHeadNode();
+        EffectNode* node = parent->mNodeHead.EffFxFetchHeadNode();
         while (node != 0) {
             s16 idx = obj->field_0x10;
-            f32 nt = node->field_0x10;
+            f32 nt = node->mTime;
             int go = 1;
             if (idx == -1) {
                 go = ((node->field_0x06 >> 6) & 1);
@@ -1286,7 +1272,7 @@ extern "C" void EffObj_Update(EffObject* obj, f32 delta) {
                     *((f32*)((u8*)node + ((u32)obj->field_0x22 << 2))) = (f32)u16ToF_b0b8(ft->field_0x188);
                 }
             }
-            node = (EffNodeUpd*)((EffectNode*)((u8*)parent + 0x24))->EffFxStepNextNode();
+            node = parent->mNodeHead.EffFxStepNextNode();
         }
     }
 end:;
@@ -1493,7 +1479,7 @@ void EffObj_EmitUpdate(EffObject* obj, EffSceneRef* scene, const Mtx* m1,
     if (scene->field_0x04 >= 0) {
         EffectNode* node = SchedNode_FetchByIndex(scene->field_0x04);
         if (node == 0) return;
-        f31 = ((const EffNode10*)node)->field_0x10;
+        f31 = node->mTime;
         obj->sub_0x11c[0] = f31 - 1.0f;
         SchedAnim_AdvanceVec28(obj->sub_0x11c, (const void*)obj->field_0xdc[2], 0.0f, (const void*)obj->field_0x08);
         obj->sub_0x14c[0] = f31 - 1.0f;

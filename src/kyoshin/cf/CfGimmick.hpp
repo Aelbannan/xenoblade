@@ -10,13 +10,6 @@
 class UnkClass_805764CC;
 namespace cf { class CfObjectMove; }
 
-// Minimal 3-component vector used by the CfGimmick collision helpers.
-struct CfGimmickVec3 {
-    f32 x;  // 0x00
-    f32 y;  // 0x04
-    f32 z;  // 0x08
-};
-
 // Container whose first member (0x00) is a registered-object pointer used by
 // CfGimmick_UnregisterSpawnedObject to unregister from the global resource manager.
 struct CfGimmickObject;  // defined below
@@ -40,8 +33,8 @@ public:
     virtual void CfGimmick_UpdateColliderMatrix();               // +0x20
 
     // vptr at 0x00 (compiler-managed)
-    /* 0x04 */ CfGimmickVec3 field_04;  // bdat area position (CfGimmick_LoadBdatAreaPos)
-    /* 0x10 */ CfGimmickVec3 field_10;  // bdat area rotation (CfGimmick_LoadBdatAreaRotation)
+    /* 0x04 */ ml::CVec3 field_04;  // bdat area position (CfGimmick_LoadBdatAreaPos)
+    /* 0x10 */ ml::CVec3 field_10;  // bdat area rotation (CfGimmick_LoadBdatAreaRotation)
     // 0x1C: collider sub-object (CfGimmick-typed view: matrix at +0x00,
     // extents at +0x30.., placement kind at +0x44 = absolute 0x60).
     /* 0x1C */ u8 field_1C[0x30 - 0x1C];
@@ -107,7 +100,7 @@ struct CfGimmickObject : public cf::CfObject {
     void CfObject_setMoveTargetVec(const ml::CVec3* vec) override { (void)vec; }
     // Slot 0x158 (base setPointEnabled): records the spawned/active flag.
     void setPointEnabled(int flag) override { field_90 = (u8)flag; }
-    void setPos(const CfGimmickVec3* pos) { CfObject_setMoveTargetVec((const ml::CVec3*)pos); }
+    void setPos(const ml::CVec3* pos) { CfObject_setMoveTargetVec(pos); }
     // Retail CfGimmick_SpawnNamedObject/8020A6B0 reach slot 0x158 through a virtual
     // dispatch (lwz 0x158 + bctrl); spelling that here as setPointEnabled()
     // grows this TU by +0x14 per spawner and blows the +0x24 split budget,
@@ -181,7 +174,7 @@ extern "C" u16 gGimmickInitFlags;
 extern "C" int gGimmickPartySlotState[10];
 
 // Reference point the gimmick range checks are measured from.
-extern "C" CfGimmickVec3 gGimmickAnchorPoint;
+extern "C" ml::CVec3 gGimmickAnchorPoint;
 
 // Downward drop offset recorded by CfGimmick_UpdatePartyAnchorState when the stage ground is
 // above zero (.sdata).
@@ -208,7 +201,7 @@ extern "C" void CfObjectMove_setMoveSpeed(cf::CfObjectMove* player, float value)
 extern "C" void CfGimmick_TriggerSound2CC8(u32 id, u32 value);
 
 // Checker functions dispatched by gimmick->field_44 (jumptable_eu_80535830).
-typedef int (*CfGimmickChecker)(cf::CfGimmick*, const CfGimmickVec3*, const CfGimmickVec3*);
+typedef int (*CfGimmickChecker)(cf::CfGimmick*, const ml::CVec3*, const ml::CVec3*);
 extern "C" CfGimmickChecker jumptable_eu_80535830[];
 extern "C" CfGimmickList* getReslistB48();
 extern "C" CfGimmickList* getReslistB68();

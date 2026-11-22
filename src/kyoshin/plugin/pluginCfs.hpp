@@ -130,20 +130,6 @@ public:
 
 } // namespace cf
 
-// Item implementation singleton returned by CItem_initItemImplInstances(item).
-// Dispatch-only shim: fillers keep the real virtuals at their retail vtable
-// slots (RTTI consumes emitted slots 0,4; declared slot n lands at offset
-// 8+4n) -- 0x10 = item-id getter, 0x30 = weapon-slot getter, 0x34 =
-// weapon-slot setter, matching how the plugin functions call them.
-class CItemImplInstance {
-public:
-    virtual void vf_00() = 0; virtual void vf_04() = 0;
-    virtual int getItemId(void* slot);         // vtable slot 0x10
-    virtual void vf_14() = 0; virtual void vf_18() = 0;
-    virtual void vf_1C() = 0; virtual void vf_20() = 0;
-    virtual void vf_24() = 0; virtual void vf_28() = 0;
-    virtual void vf_2C() = 0;
-    virtual int getWeaponSlot(void* slot);     // vtable slot 0x30
-    virtual void setWeaponSlot(void* slot, int id); // vtable slot 0x34
-};
+// Item-impl virtual interface returned by CItem_initItemImplInstances (owner).
+#include "kyoshin/cf/CItemImpl.hpp"
 

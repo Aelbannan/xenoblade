@@ -938,7 +938,7 @@ extern void btm_pm_proc_mode_change (UINT8 hci_status, UINT16 hci_handle, UINT8 
                                      UINT16 interval);
 extern void btm_pm_proc_ssr_evt (UINT8 *p, UINT16 evt_len);
 #if BTM_SCO_INCLUDED == TRUE
-extern void btm_sco_chk_pend_unpark (UINT8 hci_status, UINT16 hci_handle);
+extern void btm_sco_chk_pend_unpark (UINT8 hci_status, UINT16 hci_handle, UINT8 mode);
 #else
 #define btm_sco_chk_pend_unpark(hci_status, hci_handle)
 #endif /* BTM_SCO_INCLUDED */

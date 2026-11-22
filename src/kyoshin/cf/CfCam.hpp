@@ -357,7 +357,7 @@ struct CamDefaultsBlock {
 // only references it, so declare extern (a tentative here would wrongly
 // emit 0x200 into this TU's .bss).
 extern CamDefaultsBlock sCameraDefaults;
-extern const void* cfCamJointNamePtrTable[7];               // .data joint-name table (retail 0x80527244)
+extern const char* cfCamJointNamePtrTable[7];               // .data joint-name table (retail 0x80527244)
 float cfCamDebugVecA[3];                            // .bss vec3 (retail 0x80570A74)
 float cfCamDebugVecB[3];                            // .bss vec3 (retail 0x80570A80)
 extern const char lbl_eu_804FB4F0[];                       // .rodata message string (retail 0x804FB4F0)
@@ -445,7 +445,6 @@ int cfCam_artsGateClr(void* obj); // in-TU def (follow-cam arts gate)
 int testResInfoFlag(unsigned int mask);
 int cfCam_getInt90E4(int obj);
 int findObjectById__Fi(int arg);
-int CActorParam_UnkVirtualFunc22__Q22cf11CActorParamFv(void* actor);
 int cfCam_getBit27_64(void* obj);
 float dotVec3f(const f32* a, const f32* b); // vec dot product
 float cfCam_mulSda2Const(float x);

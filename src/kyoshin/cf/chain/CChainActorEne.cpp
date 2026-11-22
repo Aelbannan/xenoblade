@@ -7,6 +7,7 @@
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/cf/chain/CChainActorEne.hpp"
 #include "kyoshin/cf/chain/CChainActorPc.hpp"
+#include "kyoshin/cf/chain/CChainTimer.hpp"
 #include "kyoshin/cf/chain/CChainApi.hpp"
 #include "kyoshin/cf/object/CObjectState.hpp"
 #include "kyoshin/cf/chain/CChainEffect.hpp"
@@ -114,9 +115,10 @@ extern "C" void* ChainEne_MakeEffectBa_1460(cf::CChainActorEne* self) {
 // True if this actor's timeline object is the one currently wired into the
 // battle parts system, or if it carries the special 0x96b enemy-chain type.
 extern "C" int ChainEne_IsWired_146C(const cf::CChainActorEne* self) {
-    u32 addr = self->unk0;
-    if (addr != 0) addr += 0x3e9c;
-    EneChainObj* obj = (EneChainObj*)getEffOwner__((void*)addr);
+    cf::CChainBattleObj* obj0 = self->unk0;
+    void* addr = obj0;
+    if (addr != 0) addr = &obj0->mSub;
+    EneChainObj* obj = (EneChainObj*)getEffOwner__(addr);
     if (obj != 0) {
         if (obj == (EneChainObj*)CPartsChange_FindActorByObj(CPartsChange_GetActorTable(), (void*)obj)) return 1;
         if (obj->type == 0x96b) return 1;
@@ -129,9 +131,10 @@ extern "C" int ChainEne_IsWired_146C(const cf::CChainActorEne* self) {
 // second object.
 extern "C" int ChainEne_MatchOwner_14E4(cf::CChainActorEne* self, void* arg2) {
     if (((EneChainObj*)arg2)->flag & 4) {
-        u32 a1 = self->unk0;
-        if (a1 != 0) a1 += 0x3e9c;
-        EneChainObj* e1 = (EneChainObj*)getEffOwner__((void*)a1);
+        cf::CChainBattleObj* obj1 = self->unk0;
+        void* a1 = obj1;
+        if (a1 != 0) a1 = &obj1->mSub;
+        EneChainObj* e1 = (EneChainObj*)getEffOwner__(a1);
         u32 a2 = (u32)arg2;
         if (a2 != 0) a2 += 0x3e9c;
         EneChainObj* e2 = (EneChainObj*)getEffOwner__((void*)a2);
@@ -178,15 +181,17 @@ inline BattleActor* cf::CChainActorEne::findChainEneActor(EneChainObj* obj) {
 }
 
 extern "C" int ChainEne_GetReworkFlag_15B8(cf::CChainActorEne* self) {
-    u32 a0 = self->unk0;
-    if (a0 != 0) a0 += 0x3e9c;
-    if (cf::CChainActorEne::isChainEneSpecial((EneChainObj*)getEffOwner__((void*)a0))) {
+    cf::CChainBattleObj* obj0 = self->unk0;
+    void* a0 = obj0;
+    if (a0 != 0) a0 = &obj0->mSub;
+    if (cf::CChainActorEne::isChainEneSpecial((EneChainObj*)getEffOwner__(a0))) {
         BattleActor* act = cf::CChainActorEne::findChainEneActor(cf::CChainActorEne::findChainEneTimeline());
         if (act != 0) return (act->flagA0 >> 1) & 1;
     }
-    u32 a2 = self->unk0;
-    if (a2 != 0) a2 += 0x3e9c;
-    EneChainObj* o2 = (EneChainObj*)getEffOwner__((void*)a2);
+    cf::CChainBattleObj* obj2 = self->unk0;
+    void* a2 = obj2;
+    if (a2 != 0) a2 = &obj2->mSub;
+    EneChainObj* o2 = (EneChainObj*)getEffOwner__(a2);
     if (o2 != 0) {
         BattleActor* act = (BattleActor*)CPartsChange_FindActorById(CPartsChange_GetActorTable(), o2->id);
         if (act != 0) return (act->flagA0 >> 1) & 1;
@@ -198,15 +203,17 @@ extern "C" int ChainEne_GetReworkFlag_15B8(cf::CChainActorEne* self) {
 // through the timeline object of this chain actor, for both the special
 // enemy chain case and the plain self case.
 extern "C" void ChainEne_ClearReworkFlag_16FC(cf::CChainActorEne* self) {
-    u32 a1 = self->unk0;
-    if (a1 != 0) a1 += 0x3e9c;
-    if (cf::CChainActorEne::isChainEneSpecial((EneChainObj*)getEffOwner__((void*)a1))) {
+    cf::CChainBattleObj* obj1 = self->unk0;
+    void* a1 = obj1;
+    if (a1 != 0) a1 = &obj1->mSub;
+    if (cf::CChainActorEne::isChainEneSpecial((EneChainObj*)getEffOwner__(a1))) {
         BattleActor* act = cf::CChainActorEne::findChainEneActor(cf::CChainActorEne::findChainEneTimeline());
         if (act != 0) act->flagA0 &= ~2;
     }
-    u32 a2 = self->unk0;
-    if (a2 != 0) a2 += 0x3e9c;
-    EneChainObj* obj2 = (EneChainObj*)getEffOwner__((void*)a2);
+    cf::CChainBattleObj* battleObj2 = self->unk0;
+    void* a2 = battleObj2;
+    if (a2 != 0) a2 = &battleObj2->mSub;
+    EneChainObj* obj2 = (EneChainObj*)getEffOwner__(a2);
     if (obj2 != 0) {
         BattleActor* act2 = (BattleActor*)CPartsChange_FindActorById(CPartsChange_GetActorTable(), obj2->id);
         if (act2 != 0) act2->flagA0 &= ~2;
@@ -216,9 +223,10 @@ extern "C" void ChainEne_ClearReworkFlag_16FC(cf::CChainActorEne* self) {
 // Classifies the actor's timeline object: 0x96b -> 0, 0x96c -> 1, missing -> 4,
 // otherwise 3 minus (vtable state hook result truth).
 extern "C" int ChainEne_CheckChainType_183C(cf::CChainActorEne* self) {
-    u32 addr = self->unk0;
-    if (addr != 0) addr += 0x3e9c;
-    EneChainObj* obj = (EneChainObj*)getEffOwner__((void*)addr);
+    cf::CChainBattleObj* obj0 = self->unk0;
+    void* addr = obj0;
+    if (addr != 0) addr = &obj0->mSub;
+    EneChainObj* obj = (EneChainObj*)getEffOwner__(addr);
     if (obj != 0) {
         if (obj->type == 0x96b) return 0;
         if (obj->type == 0x96c) return 1;

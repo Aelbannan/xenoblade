@@ -1,6 +1,15 @@
 #include <harness_catalog.h>
 
-__declspec(section ".data") __attribute__((aligned(8))) const unsigned char ahx_dcd_data[0x78] = {0x00,0x00,0x56,0x22,0x00,0x00,0x5D,0xC0,0x00,0x00,0x3E,0x80,0x00,0x00,0x00,0x00,0x00,0x00,0xAC,0x44,0x00,0x00,0xBB,0x80,0x00,0x00,0x7D,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x04,0x00,0x00,0x00,0x08,0x00,0x00,0x00,0x0C,0x00,0x00,0x00,0x10,0x00,0x00,0x00,0x04,0x00,0x00,0x00,0x08,0x00,0x00,0x00,0x0C,0x00,0x00,0x00,0x10,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x04,0x00,0x00,0x00,0x08,0x00,0x00,0x00,0x10,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x01,0x00,0x00,0x00,0x03,0x00,0x00,0x00,0x07,0x00,0x00,0x00,0x0F,0x00,0x00,0x00,0x1F,0x00,0x00,0x00,0x3F,0x00,0x00,0x00,0x7F,0x00,0x00,0x00,0xFF,0x00,0x00,0x00,0x00};
+u32 ahxdcd_sfreq_tbl[2][4] = {
+    { 22050, 24000, 16000, 0 },
+    { 44100, 48000, 32000, 0 },
+};
+
+u32 ahxdc_jsb_table[3][4] = {
+    { 0x04, 0x08, 0x0C, 0x10 },
+    { 0x04, 0x08, 0x0C, 0x10 },
+    { 0x00, 0x04, 0x08, 0x10 },
+};
 /* .bss objects, in retail address order (0x805E64D0); defined after the last
  * function so every function addresses each one through its own @ha/@l symbol,
  * like retail (see the note above the definitions at the end of the file). */
@@ -331,8 +340,6 @@ void AHXDCD_SetExtPrm(void* self, void* prm) {
 
 
 extern u32 AHXCMN_SetAlcInfTbl(s32 a, void* b);
-extern u8 lbl_eu_80565AD8[];
-extern u8 lbl_eu_80565AB8[];
 
 void AHXDCD_BhdrToDinf(void* self, s32* out) {
     AHXDcdBhdr* hdr = (AHXDcdBhdr*)self;
@@ -349,12 +356,12 @@ void AHXDCD_BhdrToDinf(void* self, s32* out) {
         out[4] = 32;
     }
     if (hdr->config == 1) {
-        out[5] = *(u32*)(lbl_eu_80565AD8 + (hdr->field_0x04 << 4) + (hdr->field_0x20 << 2));
+        out[5] = ahxdc_jsb_table[hdr->field_0x04][hdr->field_0x20];
     } else {
         out[5] = out[4];
     }
     if (out[0] == 0) {
-        out[2] = *(u32*)(lbl_eu_80565AB8 + (hdr->field_0x00 << 4) + (hdr->field_0x10 << 2));
+        out[2] = ahxdcd_sfreq_tbl[hdr->field_0x00][hdr->field_0x10];
     }
 }
 
@@ -504,7 +511,6 @@ void AHXDCD_DecodeScale2(void* bsr, AHXDcdInf* inf, s32 (*bitalloc)[32], s32 (*s
     }
 }
 
-extern u32 lbl_eu_80565B08[];   /* (1 << levels) - 1 mask table */
 extern const double ahxdcd_two52;  /* 2^52 + 2^31 conversion bias */
 extern const f32 ahxdcd_zero_f32;     /* 0.0f constant-pool entry */
 
@@ -525,6 +531,10 @@ static inline double ahx_s32_to_double(s32 v) {
 void AHXDCD_GetSample_Dequantize_Denormalize(void* bsf, AHXDcdInf* inf, s32 (*bitalloc)[32],
                                              s32 (*scale2)[32], s32 chOfs, f32* pcm,
                                              f32* coefTbl) {
+    static u32 mskptn[10] = {
+        0x00, 0x01, 0x03, 0x07, 0x0F,
+        0x1F, 0x3F, 0x7F, 0xFF, 0x00,
+    };
     const f32 zero = ahxdcd_zero_f32;
     s32 chCount = inf->chCount;
     s32 maxLev = inf->maxLev;
@@ -548,7 +558,7 @@ void AHXDCD_GetSample_Dequantize_Denormalize(void* bsf, AHXDcdInf* inf, s32 (*bi
                     if (levels <= 8) {
                         /* three levels packed into levels*3 bits */
                         s32 v = AHXBSR_GetBitStm(bsf, levels * 3);
-                        u32 mask = lbl_eu_80565B08[levels];
+                        u32 mask = mskptn[levels];
                         s32 dA = v & mask;
                         s32 dB = (v >> levels) & mask;
                         s32 dC = (v >> levels >> levels) & mask;

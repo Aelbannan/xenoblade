@@ -21,7 +21,6 @@ extern "C" int Counter_TestBit(void*, u32);
 
 // Unit-local imports (kept out of the class header so includers only see the classes).
 extern "C" void LayoutSetTextBoxFmtValue(nw4r::lyt::Layout*, const char*, const char*, u32);
-extern "C" void* CtrlObjectParam_GetCharEntry(u32);
 extern "C" void SplitU32ToS16s(void*, u32);
 
 extern "C" void __as__11_GXColorS10FRC11_GXColorS10(void* dst, const void* src);
@@ -87,20 +86,16 @@ static const char* const itemBoxLabelStrings[7] = { // name-guess: retail lbl_eu
 // .sbss 0xC0: palette globals in retail order (NOBITS: size+align gated).
 // 4-byte entries are u32, 8-byte entries GXColorS10; first carries aligned(8)
 // for the section align, the rest pack without pads.
-__attribute__((aligned(8))) __attribute__((used)) u32 itemBoxInfo_labelNeutralTop;
-__attribute__((used)) u32 itemBoxInfo_labelNeutralTopPad;
-__attribute__((used)) u32 itemBoxInfo_labelNeutralBottom;
-__attribute__((used)) u32 itemBoxInfo_labelNeutralBottomPad;
+__attribute__((aligned(8))) __attribute__((used)) GXColorS10 itemBoxInfo_labelNeutralTop;
+__attribute__((used)) GXColorS10 itemBoxInfo_labelNeutralBottom;
 __attribute__((used)) GXColorS10 itemBoxInfo_labelUpTop;
 __attribute__((used)) GXColorS10 itemBoxInfo_labelUpBottom;
 __attribute__((used)) GXColorS10 itemBoxInfo_labelDownTop;
 __attribute__((used)) GXColorS10 itemBoxInfo_labelDownBottom;
 __attribute__((used)) GXColorS10 itemBoxInfo_labelSpecialTop;
 __attribute__((used)) GXColorS10 itemBoxInfo_labelSpecialBottom;
-__attribute__((used)) u32 itemBoxInfo_valueNeutralTop;
-__attribute__((used)) u32 itemBoxInfo_valueNeutralTopPad;
-__attribute__((used)) u32 itemBoxInfo_valueNeutralBottom;
-__attribute__((used)) u32 itemBoxInfo_valueNeutralBottomPad;
+__attribute__((used)) GXColorS10 itemBoxInfo_valueNeutralTop;
+__attribute__((used)) GXColorS10 itemBoxInfo_valueNeutralBottom;
 __attribute__((used)) GXColorS10 itemBoxInfo_valueUpTop;
 __attribute__((used)) GXColorS10 itemBoxInfo_valueUpBottom;
 __attribute__((used)) GXColorS10 itemBoxInfo_valueDownTop;
@@ -109,16 +104,12 @@ __attribute__((used)) GXColorS10 itemBoxInfo_valueSpecialTop;
 __attribute__((used)) GXColorS10 itemBoxInfo_valueSpecialBottom;
 __attribute__((used)) GXColorS10 itemBoxInfo_slotLabelTop;
 __attribute__((used)) GXColorS10 itemBoxInfo_slotLabelBottom;
-__attribute__((used)) u32 itemBoxInfo_slotValueTop;
-__attribute__((used)) u32 itemBoxInfo_slotValueTopPad;
-__attribute__((used)) u32 itemBoxInfo_slotValueBottom;
-__attribute__((used)) u32 itemBoxInfo_slotValueBottomPad;
+__attribute__((used)) GXColorS10 itemBoxInfo_slotValueTop;
+__attribute__((used)) GXColorS10 itemBoxInfo_slotValueBottom;
 __attribute__((used)) GXColorS10 itemBoxInfo_nameLabelTop;
 __attribute__((used)) GXColorS10 itemBoxInfo_nameLabelBottom;
-__attribute__((used)) u32 itemBoxInfo_nameValueTop;
-__attribute__((used)) u32 itemBoxInfo_nameValueTopPad;
-__attribute__((used)) u32 itemBoxInfo_nameValueBottom;
-__attribute__((used)) u32 itemBoxInfo_nameValueBottomPad;
+__attribute__((used)) GXColorS10 itemBoxInfo_nameValueTop;
+__attribute__((used)) GXColorS10 itemBoxInfo_nameValueBottom;
 
 
 
@@ -141,6 +132,7 @@ __attribute__((used)) u32 itemBoxInfo_nameValueBottomPad;
 #include "monolib/lib/CLibLayout.hpp"  // CLibLayout::createArcResourceAccessor
 #include <nw4r/db/db_assert.h>
 #include "kyoshin/cf/object/CActorParam.hpp"  // CActorParam slots (+0xA4/+0x108/...) for char-data stats
+#include "kyoshin/cf/CtrlObjectParamSymbols.hpp"  // CtrlObjectParam_GetCharEntry/GetArtsStatsRow/GetSlotTableBase (owner)
 #include <new>
 
 // Retail is 2-arg (category index + s16 item id); the real declaration now
@@ -160,10 +152,8 @@ struct LayoutRootPaneView {
     nw4r::lyt::Pane* rootPane10;
 };
 extern "C" u32 CtrlObjectParam_GetArtsDataWord(void*);
-extern "C" void* CtrlObjectParam_GetSlotTableBase();
 extern "C" void* findObjB28ById(u32);
 extern "C" void CtrlObjectParam_SyncParamFromActorEx(void*, u32);
-extern "C" void CtrlObjectParam_GetArtsStatsRow(void*, u32);
 extern "C" s32 RoundHalfAway0(float);
 extern void* CItemBlock_getPtr20E8();
 // 6-byte item-box slot tables (pair of u32+u16 .sdata2 constants).
@@ -1003,8 +993,8 @@ void CItemBoxInfo::RenderKind2(u16 arg2, void* arg3, u32 arg4) {
     PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, "txt_para11", &itemBoxInfo_slotLabelTop, &itemBoxInfo_slotLabelBottom);
     PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, "txt_para04", &itemBoxInfo_slotLabelTop, &itemBoxInfo_slotLabelBottom);
     PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, "txt_para08", &itemBoxInfo_slotLabelTop, &itemBoxInfo_slotLabelBottom);
-    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, "txt_para22", (const GXColorS10*)&itemBoxInfo_slotValueTop, (const GXColorS10*)&itemBoxInfo_slotValueBottom);
-    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, "txt_para23", (const GXColorS10*)&itemBoxInfo_slotValueTop, (const GXColorS10*)&itemBoxInfo_slotValueBottom);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, "txt_para22", &itemBoxInfo_slotValueTop, &itemBoxInfo_slotValueBottom);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, "txt_para23", &itemBoxInfo_slotValueTop, &itemBoxInfo_slotValueBottom);
     u32 playerIdx = (arg4 >> 16) & 0xFF;
     // Hoisted halves: MWCC materializes these once (lis) and rebuilds each
     // constant at its use site with a single addi.
@@ -1168,11 +1158,11 @@ void CItemBoxInfo::RenderDetail(u32 itemId, void* record, u32 arg4) {
         case 12: s2 = BdatTouchStringCell("pc_arts", "name", 0x7f); break;
     }
     LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_para25", s2, 0);
-    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, "txt_para01", (const GXColorS10*)&itemBoxInfo_slotValueTop, (const GXColorS10*)&itemBoxInfo_slotValueBottom);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, "txt_para01", &itemBoxInfo_slotValueTop, &itemBoxInfo_slotValueBottom);
     PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, "txt_para10", &itemBoxInfo_slotLabelTop, &itemBoxInfo_slotLabelBottom);
     PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, "txt_para11", &itemBoxInfo_slotLabelTop, &itemBoxInfo_slotLabelBottom);
-    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, "txt_para04", (const GXColorS10*)&itemBoxInfo_slotValueTop, (const GXColorS10*)&itemBoxInfo_slotValueBottom);
-    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, "txt_para08", (const GXColorS10*)&itemBoxInfo_slotValueTop, (const GXColorS10*)&itemBoxInfo_slotValueBottom);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, "txt_para04", &itemBoxInfo_slotValueTop, &itemBoxInfo_slotValueBottom);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, "txt_para08", &itemBoxInfo_slotValueTop, &itemBoxInfo_slotValueBottom);
     PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, "txt_para22", &itemBoxInfo_slotLabelTop, &itemBoxInfo_slotLabelBottom);
     PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, "txt_para23", &itemBoxInfo_slotLabelTop, &itemBoxInfo_slotLabelBottom);
     u32 cur = (arg4 >> 16) & 0xFF;
@@ -1726,13 +1716,13 @@ void CItemBoxInfo::SetupSlotPanes() {
     LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_value22", "", 0);
     LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_para24", "", 0);
     LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_para25", "", 0);
-    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, "txt_para01", (const GXColorS10*)&itemBoxInfo_slotValueTop, (const GXColorS10*)&itemBoxInfo_slotValueBottom);
-    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, "txt_para10", (const GXColorS10*)&itemBoxInfo_slotValueTop, (const GXColorS10*)&itemBoxInfo_slotValueBottom);
-    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, "txt_para11", (const GXColorS10*)&itemBoxInfo_slotValueTop, (const GXColorS10*)&itemBoxInfo_slotValueBottom);
-    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, "txt_para04", (const GXColorS10*)&itemBoxInfo_slotValueTop, (const GXColorS10*)&itemBoxInfo_slotValueBottom);
-    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, "txt_para08", (const GXColorS10*)&itemBoxInfo_slotValueTop, (const GXColorS10*)&itemBoxInfo_slotValueBottom);
-    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, "txt_para22", (const GXColorS10*)&itemBoxInfo_slotValueTop, (const GXColorS10*)&itemBoxInfo_slotValueBottom);
-    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, "txt_para23", (const GXColorS10*)&itemBoxInfo_slotValueTop, (const GXColorS10*)&itemBoxInfo_slotValueBottom);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, "txt_para01", &itemBoxInfo_slotValueTop, &itemBoxInfo_slotValueBottom);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, "txt_para10", &itemBoxInfo_slotValueTop, &itemBoxInfo_slotValueBottom);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, "txt_para11", &itemBoxInfo_slotValueTop, &itemBoxInfo_slotValueBottom);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, "txt_para04", &itemBoxInfo_slotValueTop, &itemBoxInfo_slotValueBottom);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, "txt_para08", &itemBoxInfo_slotValueTop, &itemBoxInfo_slotValueBottom);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, "txt_para22", &itemBoxInfo_slotValueTop, &itemBoxInfo_slotValueBottom);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, "txt_para23", &itemBoxInfo_slotValueTop, &itemBoxInfo_slotValueBottom);
     for (i = 0; (u8)i < (u8)code80135FDC_getByte_64077(); i++) {
         u32 idx = (u8)i + 1;
         sprintf(buf, "pic_pc%02d", idx);
@@ -1784,13 +1774,13 @@ void CItemBoxInfo::ResetRowPanes() {
     LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_value22", "", 0);
     LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_para24", "", 0);
     LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_para25", "", 0);
-    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, "txt_para01", (const GXColorS10*)&itemBoxInfo_slotValueTop, (const GXColorS10*)&itemBoxInfo_slotValueBottom);
-    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, "txt_para10", (const GXColorS10*)&itemBoxInfo_slotValueTop, (const GXColorS10*)&itemBoxInfo_slotValueBottom);
-    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, "txt_para11", (const GXColorS10*)&itemBoxInfo_slotValueTop, (const GXColorS10*)&itemBoxInfo_slotValueBottom);
-    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, "txt_para04", (const GXColorS10*)&itemBoxInfo_slotValueTop, (const GXColorS10*)&itemBoxInfo_slotValueBottom);
-    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, "txt_para08", (const GXColorS10*)&itemBoxInfo_slotValueTop, (const GXColorS10*)&itemBoxInfo_slotValueBottom);
-    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, "txt_para22", (const GXColorS10*)&itemBoxInfo_slotValueTop, (const GXColorS10*)&itemBoxInfo_slotValueBottom);
-    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, "txt_para23", (const GXColorS10*)&itemBoxInfo_slotValueTop, (const GXColorS10*)&itemBoxInfo_slotValueBottom);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, "txt_para01", &itemBoxInfo_slotValueTop, &itemBoxInfo_slotValueBottom);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, "txt_para10", &itemBoxInfo_slotValueTop, &itemBoxInfo_slotValueBottom);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, "txt_para11", &itemBoxInfo_slotValueTop, &itemBoxInfo_slotValueBottom);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, "txt_para04", &itemBoxInfo_slotValueTop, &itemBoxInfo_slotValueBottom);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, "txt_para08", &itemBoxInfo_slotValueTop, &itemBoxInfo_slotValueBottom);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, "txt_para22", &itemBoxInfo_slotValueTop, &itemBoxInfo_slotValueBottom);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, "txt_para23", &itemBoxInfo_slotValueTop, &itemBoxInfo_slotValueBottom);
     char buf[0x20];
     tag = 0x74696D67u;
     white = 0x777777FFu;
@@ -5480,12 +5470,12 @@ void CItemBoxInfo2::SetupSlotPanes() {
     LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_value04", "", 0);
     LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_value07", "", 0);
     LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_value22", "", 0);
-    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, "txt_para01", (const GXColorS10*)&itemBoxInfo_slotValueTop, (const GXColorS10*)&itemBoxInfo_slotValueBottom);
-    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, "txt_para10", (const GXColorS10*)&itemBoxInfo_slotValueTop, (const GXColorS10*)&itemBoxInfo_slotValueBottom);
-    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, "txt_para11", (const GXColorS10*)&itemBoxInfo_slotValueTop, (const GXColorS10*)&itemBoxInfo_slotValueBottom);
-    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, "txt_para04", (const GXColorS10*)&itemBoxInfo_slotValueTop, (const GXColorS10*)&itemBoxInfo_slotValueBottom);
-    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, "txt_para08", (const GXColorS10*)&itemBoxInfo_slotValueTop, (const GXColorS10*)&itemBoxInfo_slotValueBottom);
-    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, "txt_para22", (const GXColorS10*)&itemBoxInfo_slotValueTop, (const GXColorS10*)&itemBoxInfo_slotValueBottom);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, "txt_para01", &itemBoxInfo_slotValueTop, &itemBoxInfo_slotValueBottom);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, "txt_para10", &itemBoxInfo_slotValueTop, &itemBoxInfo_slotValueBottom);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, "txt_para11", &itemBoxInfo_slotValueTop, &itemBoxInfo_slotValueBottom);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, "txt_para04", &itemBoxInfo_slotValueTop, &itemBoxInfo_slotValueBottom);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, "txt_para08", &itemBoxInfo_slotValueTop, &itemBoxInfo_slotValueBottom);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, "txt_para22", &itemBoxInfo_slotValueTop, &itemBoxInfo_slotValueBottom);
     for (i = 0; (u8)i < (u8)code80135FDC_getByte_64077(); i++) {
         idx = (u8)i + 1;
         sprintf(buf, "pic_pc%02d", idx);
@@ -5531,12 +5521,12 @@ void CItemBoxInfo2::ResetRowPanes() {
     LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_value08", "", 0);
     LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_value09", "", 0);
     LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_value22", "", 0);
-    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, "txt_para01", (const GXColorS10*)&itemBoxInfo_slotValueTop, (const GXColorS10*)&itemBoxInfo_slotValueBottom);
-    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, "txt_para10", (const GXColorS10*)&itemBoxInfo_slotValueTop, (const GXColorS10*)&itemBoxInfo_slotValueBottom);
-    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, "txt_para11", (const GXColorS10*)&itemBoxInfo_slotValueTop, (const GXColorS10*)&itemBoxInfo_slotValueBottom);
-    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, "txt_para04", (const GXColorS10*)&itemBoxInfo_slotValueTop, (const GXColorS10*)&itemBoxInfo_slotValueBottom);
-    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, "txt_para08", (const GXColorS10*)&itemBoxInfo_slotValueTop, (const GXColorS10*)&itemBoxInfo_slotValueBottom);
-    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, "txt_para22", (const GXColorS10*)&itemBoxInfo_slotValueTop, (const GXColorS10*)&itemBoxInfo_slotValueBottom);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, "txt_para01", &itemBoxInfo_slotValueTop, &itemBoxInfo_slotValueBottom);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, "txt_para10", &itemBoxInfo_slotValueTop, &itemBoxInfo_slotValueBottom);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, "txt_para11", &itemBoxInfo_slotValueTop, &itemBoxInfo_slotValueBottom);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, "txt_para04", &itemBoxInfo_slotValueTop, &itemBoxInfo_slotValueBottom);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, "txt_para08", &itemBoxInfo_slotValueTop, &itemBoxInfo_slotValueBottom);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, "txt_para22", &itemBoxInfo_slotValueTop, &itemBoxInfo_slotValueBottom);
     // Zero lives outside the loop: retail materializes it once in the
     // preheader (a loop-invariant CSE), not per-iteration.
     s16 shade = 0;
@@ -5907,10 +5897,10 @@ setLayoutTextBoxNumber(mpLayout, "txt_value702", (u8)stats->CActorParam_getTotal
             SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane18, fmtBuf3.c_str(), 0);
 
             // ---- 20x color application ----
-            GXColorS10 q1 = *(GXColorS10*)&itemBoxInfo_labelNeutralTop;
-            GXColorS10 q2 = *(GXColorS10*)&itemBoxInfo_labelNeutralBottom;
-            GXColorS10 q3 = *(GXColorS10*)&itemBoxInfo_valueNeutralTop;
-            GXColorS10 q4 = *(GXColorS10*)&itemBoxInfo_valueNeutralBottom;
+            GXColorS10 q1 = itemBoxInfo_labelNeutralTop;
+            GXColorS10 q2 = itemBoxInfo_labelNeutralBottom;
+            GXColorS10 q3 = itemBoxInfo_valueNeutralTop;
+            GXColorS10 q4 = itemBoxInfo_valueNeutralBottom;
             PaneMatSetTevColors(mSlotPane0, &q3, &q4);
             PaneMatSetTevColors(mSlotPane2, &q3, &q4);
             PaneMatSetTevColors(mSlotPane3, &q3, &q4);
@@ -5948,10 +5938,10 @@ setLayoutTextBoxNumber(mpLayout, "txt_value702", (u8)stats->CActorParam_getTotal
             s16 nb = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s10 + (f32)e2) * (f32)(stA->s20 + GetEffect(member, 0x21, arg3))));
             s16 d = (s16)(nb - pb);
             LayoutSetTextBoxInt((nw4r::lyt::Layout*)mSlotPane8, nb);
-            GXColorS10 q1 = *(GXColorS10*)&itemBoxInfo_labelNeutralTop;
-            GXColorS10 q2 = *(GXColorS10*)&itemBoxInfo_labelNeutralBottom;
-            GXColorS10 q3 = *(GXColorS10*)&itemBoxInfo_valueNeutralTop;
-            GXColorS10 q4 = *(GXColorS10*)&itemBoxInfo_valueNeutralBottom;
+            GXColorS10 q1 = itemBoxInfo_labelNeutralTop;
+            GXColorS10 q2 = itemBoxInfo_labelNeutralBottom;
+            GXColorS10 q3 = itemBoxInfo_valueNeutralTop;
+            GXColorS10 q4 = itemBoxInfo_valueNeutralBottom;
             if (d < 0) {
                 __as__11_GXColorS10FRC11_GXColorS10(&q1, &itemBoxInfo_labelDownTop);
                 __as__11_GXColorS10FRC11_GXColorS10(&q2, &itemBoxInfo_labelDownBottom);
@@ -5973,10 +5963,10 @@ setLayoutTextBoxNumber(mpLayout, "txt_value702", (u8)stats->CActorParam_getTotal
             s16 nb = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0C + (f32)e2) * (f32)(stA->s1C + GetEffect(member, 0x1, arg3))));
             dB = (s16)(nb - pb);
             LayoutSetTextBoxInt((nw4r::lyt::Layout*)mSlotPane4, nb);
-            GXColorS10 q1 = *(GXColorS10*)&itemBoxInfo_labelNeutralTop;
-            GXColorS10 q2 = *(GXColorS10*)&itemBoxInfo_labelNeutralBottom;
-            GXColorS10 q3 = *(GXColorS10*)&itemBoxInfo_valueNeutralTop;
-            GXColorS10 q4 = *(GXColorS10*)&itemBoxInfo_valueNeutralBottom;
+            GXColorS10 q1 = itemBoxInfo_labelNeutralTop;
+            GXColorS10 q2 = itemBoxInfo_labelNeutralBottom;
+            GXColorS10 q3 = itemBoxInfo_valueNeutralTop;
+            GXColorS10 q4 = itemBoxInfo_valueNeutralBottom;
             if (dB < 0) {
                 __as__11_GXColorS10FRC11_GXColorS10(&q1, &itemBoxInfo_labelDownTop);
                 __as__11_GXColorS10FRC11_GXColorS10(&q2, &itemBoxInfo_labelDownBottom);
@@ -5998,10 +5988,10 @@ setLayoutTextBoxNumber(mpLayout, "txt_value702", (u8)stats->CActorParam_getTotal
             s16 nb = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0E + (f32)e2) * (f32)(dB + GetEffect(member, 0x41, arg3))));
             s16 dC = (s16)(nb - pb);
             LayoutSetTextBoxInt((nw4r::lyt::Layout*)mSlotPane6, nb);
-            GXColorS10 q1 = *(GXColorS10*)&itemBoxInfo_labelNeutralTop;
-            GXColorS10 q2 = *(GXColorS10*)&itemBoxInfo_labelNeutralBottom;
-            GXColorS10 q3 = *(GXColorS10*)&itemBoxInfo_valueNeutralTop;
-            GXColorS10 q4 = *(GXColorS10*)&itemBoxInfo_valueNeutralBottom;
+            GXColorS10 q1 = itemBoxInfo_labelNeutralTop;
+            GXColorS10 q2 = itemBoxInfo_labelNeutralBottom;
+            GXColorS10 q3 = itemBoxInfo_valueNeutralTop;
+            GXColorS10 q4 = itemBoxInfo_valueNeutralBottom;
             if (dC < 0) {
                 __as__11_GXColorS10FRC11_GXColorS10(&q1, &itemBoxInfo_labelDownTop);
                 __as__11_GXColorS10FRC11_GXColorS10(&q2, &itemBoxInfo_labelDownBottom);
@@ -6028,10 +6018,10 @@ setLayoutTextBoxNumber(mpLayout, "txt_value702", (u8)stats->CActorParam_getTotal
                 LayoutSetTextBoxInt((nw4r::lyt::Layout*)mSlotPane0, nb);
             }
             LayoutSetTextBoxInt((nw4r::lyt::Layout*)mSlotPane2, nb);
-            GXColorS10 q1 = *(GXColorS10*)&itemBoxInfo_labelNeutralTop;
-            GXColorS10 q2 = *(GXColorS10*)&itemBoxInfo_labelNeutralBottom;
-            GXColorS10 q3 = *(GXColorS10*)&itemBoxInfo_valueNeutralTop;
-            GXColorS10 q4 = *(GXColorS10*)&itemBoxInfo_valueNeutralBottom;
+            GXColorS10 q1 = itemBoxInfo_labelNeutralTop;
+            GXColorS10 q2 = itemBoxInfo_labelNeutralBottom;
+            GXColorS10 q3 = itemBoxInfo_valueNeutralTop;
+            GXColorS10 q4 = itemBoxInfo_valueNeutralBottom;
             if (dD < 0) {
                 __as__11_GXColorS10FRC11_GXColorS10(&q1, &itemBoxInfo_labelDownTop);
                 __as__11_GXColorS10FRC11_GXColorS10(&q2, &itemBoxInfo_labelDownBottom);
@@ -6125,10 +6115,10 @@ setLayoutTextBoxNumber(mpLayout, "txt_value702", (u8)stats->CActorParam_getTotal
             SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane18, fmtBuf3.c_str(), 0);
             // delta colors (5 rows)
             {
-                GXColorS10 q1 = *(GXColorS10*)&itemBoxInfo_labelNeutralTop;
-                GXColorS10 q2 = *(GXColorS10*)&itemBoxInfo_labelNeutralBottom;
-                GXColorS10 q3 = *(GXColorS10*)&itemBoxInfo_valueNeutralTop;
-                GXColorS10 q4 = *(GXColorS10*)&itemBoxInfo_valueNeutralBottom;
+                GXColorS10 q1 = itemBoxInfo_labelNeutralTop;
+                GXColorS10 q2 = itemBoxInfo_labelNeutralBottom;
+                GXColorS10 q3 = itemBoxInfo_valueNeutralTop;
+                GXColorS10 q4 = itemBoxInfo_valueNeutralBottom;
                 if (dW < 0) {
                     __as__11_GXColorS10FRC11_GXColorS10(&q1, &itemBoxInfo_labelDownTop);
                     __as__11_GXColorS10FRC11_GXColorS10(&q2, &itemBoxInfo_labelDownBottom);
@@ -6144,10 +6134,10 @@ setLayoutTextBoxNumber(mpLayout, "txt_value702", (u8)stats->CActorParam_getTotal
                 PaneMatSetTevColors(mSlotPane11, &q1, &q2);
             }
             {
-                GXColorS10 q1 = *(GXColorS10*)&itemBoxInfo_labelNeutralTop;
-                GXColorS10 q2 = *(GXColorS10*)&itemBoxInfo_labelNeutralBottom;
-                GXColorS10 q3 = *(GXColorS10*)&itemBoxInfo_valueNeutralTop;
-                GXColorS10 q4 = *(GXColorS10*)&itemBoxInfo_valueNeutralBottom;
+                GXColorS10 q1 = itemBoxInfo_labelNeutralTop;
+                GXColorS10 q2 = itemBoxInfo_labelNeutralBottom;
+                GXColorS10 q3 = itemBoxInfo_valueNeutralTop;
+                GXColorS10 q4 = itemBoxInfo_valueNeutralBottom;
                 if (d1 < 0) {
                     __as__11_GXColorS10FRC11_GXColorS10(&q1, &itemBoxInfo_labelDownTop);
                     __as__11_GXColorS10FRC11_GXColorS10(&q2, &itemBoxInfo_labelDownBottom);
@@ -6163,10 +6153,10 @@ setLayoutTextBoxNumber(mpLayout, "txt_value702", (u8)stats->CActorParam_getTotal
                 PaneMatSetTevColors(mSlotPane13, &q1, &q2);
             }
             {
-                GXColorS10 q1 = *(GXColorS10*)&itemBoxInfo_labelNeutralTop;
-                GXColorS10 q2 = *(GXColorS10*)&itemBoxInfo_labelNeutralBottom;
-                GXColorS10 q3 = *(GXColorS10*)&itemBoxInfo_valueNeutralTop;
-                GXColorS10 q4 = *(GXColorS10*)&itemBoxInfo_valueNeutralBottom;
+                GXColorS10 q1 = itemBoxInfo_labelNeutralTop;
+                GXColorS10 q2 = itemBoxInfo_labelNeutralBottom;
+                GXColorS10 q3 = itemBoxInfo_valueNeutralTop;
+                GXColorS10 q4 = itemBoxInfo_valueNeutralBottom;
                 if (d2 < 0) {
                     __as__11_GXColorS10FRC11_GXColorS10(&q1, &itemBoxInfo_labelDownTop);
                     __as__11_GXColorS10FRC11_GXColorS10(&q2, &itemBoxInfo_labelDownBottom);
@@ -6182,10 +6172,10 @@ setLayoutTextBoxNumber(mpLayout, "txt_value702", (u8)stats->CActorParam_getTotal
                 PaneMatSetTevColors(mSlotPane15, &q1, &q2);
             }
             {
-                GXColorS10 q1 = *(GXColorS10*)&itemBoxInfo_labelNeutralTop;
-                GXColorS10 q2 = *(GXColorS10*)&itemBoxInfo_labelNeutralBottom;
-                GXColorS10 q3 = *(GXColorS10*)&itemBoxInfo_valueNeutralTop;
-                GXColorS10 q4 = *(GXColorS10*)&itemBoxInfo_valueNeutralBottom;
+                GXColorS10 q1 = itemBoxInfo_labelNeutralTop;
+                GXColorS10 q2 = itemBoxInfo_labelNeutralBottom;
+                GXColorS10 q3 = itemBoxInfo_valueNeutralTop;
+                GXColorS10 q4 = itemBoxInfo_valueNeutralBottom;
                 if (d4 < 0) {
                     __as__11_GXColorS10FRC11_GXColorS10(&q1, &itemBoxInfo_labelDownTop);
                     __as__11_GXColorS10FRC11_GXColorS10(&q2, &itemBoxInfo_labelDownBottom);
@@ -6201,10 +6191,10 @@ setLayoutTextBoxNumber(mpLayout, "txt_value702", (u8)stats->CActorParam_getTotal
                 PaneMatSetTevColors(mSlotPane17, &q1, &q2);
             }
             {
-                GXColorS10 q1 = *(GXColorS10*)&itemBoxInfo_labelNeutralTop;
-                GXColorS10 q2 = *(GXColorS10*)&itemBoxInfo_labelNeutralBottom;
-                GXColorS10 q3 = *(GXColorS10*)&itemBoxInfo_valueNeutralTop;
-                GXColorS10 q4 = *(GXColorS10*)&itemBoxInfo_valueNeutralBottom;
+                GXColorS10 q1 = itemBoxInfo_labelNeutralTop;
+                GXColorS10 q2 = itemBoxInfo_labelNeutralBottom;
+                GXColorS10 q3 = itemBoxInfo_valueNeutralTop;
+                GXColorS10 q4 = itemBoxInfo_valueNeutralBottom;
                 if (d3 < 0) {
                     __as__11_GXColorS10FRC11_GXColorS10(&q1, &itemBoxInfo_labelDownTop);
                     __as__11_GXColorS10FRC11_GXColorS10(&q2, &itemBoxInfo_labelDownBottom);
@@ -6342,10 +6332,10 @@ setLayoutTextBoxNumber(mpLayout, "txt_value702", (u8)stats->CActorParam_getTotal
             LayoutSetTextBoxInt((nw4r::lyt::Layout*)mSlotPane6, (s16)b14);
             // delta colors (4 rows)
             {
-                GXColorS10 q1 = *(GXColorS10*)&itemBoxInfo_labelNeutralTop;
-                GXColorS10 q2 = *(GXColorS10*)&itemBoxInfo_labelNeutralBottom;
-                GXColorS10 q3 = *(GXColorS10*)&itemBoxInfo_valueNeutralTop;
-                GXColorS10 q4 = *(GXColorS10*)&itemBoxInfo_valueNeutralBottom;
+                GXColorS10 q1 = itemBoxInfo_labelNeutralTop;
+                GXColorS10 q2 = itemBoxInfo_labelNeutralBottom;
+                GXColorS10 q3 = itemBoxInfo_valueNeutralTop;
+                GXColorS10 q4 = itemBoxInfo_valueNeutralBottom;
                 if (dW < 0) {
                     __as__11_GXColorS10FRC11_GXColorS10(&q1, &itemBoxInfo_labelDownTop);
                     __as__11_GXColorS10FRC11_GXColorS10(&q2, &itemBoxInfo_labelDownBottom);
@@ -6361,10 +6351,10 @@ setLayoutTextBoxNumber(mpLayout, "txt_value702", (u8)stats->CActorParam_getTotal
                 PaneMatSetTevColors(mSlotPane11, &q1, &q2);
             }
             {
-                GXColorS10 q1 = *(GXColorS10*)&itemBoxInfo_labelNeutralTop;
-                GXColorS10 q2 = *(GXColorS10*)&itemBoxInfo_labelNeutralBottom;
-                GXColorS10 q3 = *(GXColorS10*)&itemBoxInfo_valueNeutralTop;
-                GXColorS10 q4 = *(GXColorS10*)&itemBoxInfo_valueNeutralBottom;
+                GXColorS10 q1 = itemBoxInfo_labelNeutralTop;
+                GXColorS10 q2 = itemBoxInfo_labelNeutralBottom;
+                GXColorS10 q3 = itemBoxInfo_valueNeutralTop;
+                GXColorS10 q4 = itemBoxInfo_valueNeutralBottom;
                 if (d2 < 0) {
                     __as__11_GXColorS10FRC11_GXColorS10(&q1, &itemBoxInfo_labelDownTop);
                     __as__11_GXColorS10FRC11_GXColorS10(&q2, &itemBoxInfo_labelDownBottom);
@@ -6380,10 +6370,10 @@ setLayoutTextBoxNumber(mpLayout, "txt_value702", (u8)stats->CActorParam_getTotal
                 PaneMatSetTevColors(mSlotPane13, &q1, &q2);
             }
             {
-                GXColorS10 q1 = *(GXColorS10*)&itemBoxInfo_labelNeutralTop;
-                GXColorS10 q2 = *(GXColorS10*)&itemBoxInfo_labelNeutralBottom;
-                GXColorS10 q3 = *(GXColorS10*)&itemBoxInfo_valueNeutralTop;
-                GXColorS10 q4 = *(GXColorS10*)&itemBoxInfo_valueNeutralBottom;
+                GXColorS10 q1 = itemBoxInfo_labelNeutralTop;
+                GXColorS10 q2 = itemBoxInfo_labelNeutralBottom;
+                GXColorS10 q3 = itemBoxInfo_valueNeutralTop;
+                GXColorS10 q4 = itemBoxInfo_valueNeutralBottom;
                 if (d1 < 0) {
                     __as__11_GXColorS10FRC11_GXColorS10(&q1, &itemBoxInfo_labelDownTop);
                     __as__11_GXColorS10FRC11_GXColorS10(&q2, &itemBoxInfo_labelDownBottom);
@@ -6399,10 +6389,10 @@ setLayoutTextBoxNumber(mpLayout, "txt_value702", (u8)stats->CActorParam_getTotal
                 PaneMatSetTevColors(mSlotPane15, &q1, &q2);
             }
             {
-                GXColorS10 q1 = *(GXColorS10*)&itemBoxInfo_labelNeutralTop;
-                GXColorS10 q2 = *(GXColorS10*)&itemBoxInfo_labelNeutralBottom;
-                GXColorS10 q3 = *(GXColorS10*)&itemBoxInfo_valueNeutralTop;
-                GXColorS10 q4 = *(GXColorS10*)&itemBoxInfo_valueNeutralBottom;
+                GXColorS10 q1 = itemBoxInfo_labelNeutralTop;
+                GXColorS10 q2 = itemBoxInfo_labelNeutralBottom;
+                GXColorS10 q3 = itemBoxInfo_valueNeutralTop;
+                GXColorS10 q4 = itemBoxInfo_valueNeutralBottom;
                 if (dW < 0) {
                     __as__11_GXColorS10FRC11_GXColorS10(&q1, &itemBoxInfo_labelDownTop);
                     __as__11_GXColorS10FRC11_GXColorS10(&q2, &itemBoxInfo_labelDownBottom);
@@ -6561,10 +6551,10 @@ setLayoutTextBoxNumber(mpLayout, "txt_value702", (u8)stats->CActorParam_getTotal
             LayoutSetTextBoxInt((nw4r::lyt::Layout*)mSlotPane14, (s16)c_new.w14);
             LayoutSetTextBoxInt((nw4r::lyt::Layout*)mSlotPane6, (s16)b14);
             // 20x color application (selected palette A8/B0/C8/D0)
-            GXColorS10 q1 = *(GXColorS10*)&itemBoxInfo_slotValueTop;
-            GXColorS10 q2 = *(GXColorS10*)&itemBoxInfo_slotValueBottom;
-            GXColorS10 q3 = *(GXColorS10*)&itemBoxInfo_nameValueTop;
-            GXColorS10 q4 = *(GXColorS10*)&itemBoxInfo_nameValueBottom;
+            GXColorS10 q1 = itemBoxInfo_slotValueTop;
+            GXColorS10 q2 = itemBoxInfo_slotValueBottom;
+            GXColorS10 q3 = itemBoxInfo_nameValueTop;
+            GXColorS10 q4 = itemBoxInfo_nameValueBottom;
             PaneMatSetTevColors(mSlotPane0, &q3, &q4);
             PaneMatSetTevColors(mSlotPane2, &q3, &q4);
             PaneMatSetTevColors(mSlotPane3, &q3, &q4);
@@ -6588,10 +6578,10 @@ setLayoutTextBoxNumber(mpLayout, "txt_value702", (u8)stats->CActorParam_getTotal
 
         }
         // ---- simple path ----
-        GXColorS10 q1 = *(GXColorS10*)&itemBoxInfo_slotValueTop;
-        GXColorS10 q2 = *(GXColorS10*)&itemBoxInfo_slotValueBottom;
-        GXColorS10 q3 = *(GXColorS10*)&itemBoxInfo_nameValueTop;
-        GXColorS10 q4 = *(GXColorS10*)&itemBoxInfo_nameValueBottom;
+        GXColorS10 q1 = itemBoxInfo_slotValueTop;
+        GXColorS10 q2 = itemBoxInfo_slotValueBottom;
+        GXColorS10 q3 = itemBoxInfo_nameValueTop;
+        GXColorS10 q4 = itemBoxInfo_nameValueBottom;
         SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane0, "", 0);
         SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane2, "", 0);
         SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane3, "", 0);
@@ -6951,10 +6941,10 @@ setLayoutTextBoxNumber(mpLayout, "txt_value702", (u8)stats->CActorParam_getTotal
             if (arg5 == 0) {
                 LayoutSetTextBoxFmtValue(mpLayout, buf2, "", 0);
             }
-            GXColorS10 q1 = *(GXColorS10*)&itemBoxInfo_labelNeutralTop;
-            GXColorS10 q2 = *(GXColorS10*)&itemBoxInfo_labelNeutralBottom;
-            GXColorS10 q3 = *(GXColorS10*)&itemBoxInfo_valueNeutralTop;
-            GXColorS10 q4 = *(GXColorS10*)&itemBoxInfo_valueNeutralBottom;
+            GXColorS10 q1 = itemBoxInfo_labelNeutralTop;
+            GXColorS10 q2 = itemBoxInfo_labelNeutralBottom;
+            GXColorS10 q3 = itemBoxInfo_valueNeutralTop;
+            GXColorS10 q4 = itemBoxInfo_valueNeutralBottom;
             u32 cap = BdatGetU16Direct(::cf::CfBdat::spBtlSkillListFileData, "max", id);
             if ((u32)val >= cap) {
                 __as__11_GXColorS10FRC11_GXColorS10(&q1, &itemBoxInfo_labelSpecialTop);
@@ -7495,10 +7485,10 @@ void sinit_801EABC4() {
     setGXColorS10(&itemBoxInfo_valueSpecialBottom, 0x1f, 0xa6, 0x1a, 0);
     SplitU32ToS16s(&itemBoxInfo_slotLabelTop, 0);
     SplitU32ToS16s(&itemBoxInfo_slotLabelBottom, 0);
-    setGXColorS10((GXColorS10*)&itemBoxInfo_slotValueTop, 0x80, 0x80, 0x80, 0);
-    setGXColorS10((GXColorS10*)&itemBoxInfo_slotValueBottom, 0x80, 0x80, 0x80, 0);
+    setGXColorS10(&itemBoxInfo_slotValueTop, 0x80, 0x80, 0x80, 0);
+    setGXColorS10(&itemBoxInfo_slotValueBottom, 0x80, 0x80, 0x80, 0);
     SplitU32ToS16s(&itemBoxInfo_nameLabelTop, 0);
     SplitU32ToS16s(&itemBoxInfo_nameLabelBottom, 0);
-    setGXColorS10((GXColorS10*)&itemBoxInfo_nameValueTop, 0xff, 0xff, 0xfa, 0);
-    setGXColorS10((GXColorS10*)&itemBoxInfo_nameValueBottom, 0x80, 0x80, 0x80, 0);
+    setGXColorS10(&itemBoxInfo_nameValueTop, 0xff, 0xff, 0xfa, 0);
+    setGXColorS10(&itemBoxInfo_nameValueBottom, 0x80, 0x80, 0x80, 0);
 }

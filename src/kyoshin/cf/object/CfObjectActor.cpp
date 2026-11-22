@@ -42,62 +42,58 @@ namespace cf {
 
 void CfObjectActor::CActorParam_addHate(void* arg, float a, float b, float c) {
     if (arg == 0) return;
-    u32 selfId = reinterpret_cast<cf::CfActorField3F10*>(this)->field_0x3F10;
-    if (selfId == reinterpret_cast<cf::CfActorField3F10*>(arg)->field_0x3F10) return;
+    u32 selfId = field_0x74;
+    if (selfId == static_cast<cf::CfObjectActor*>(arg)->field_0x74) return;
     // Non-virtual call of the CActorParam base (retail: tail-branch).
     this->cf::CActorParam::CActorParam_addHate(arg, a, b, c);
 }
 
 void CfObjectActor::CBattleState_notifyEntryUpdated(CBattleStateEntry* arg) {
     CActorParam::CBattleState_notifyEntryUpdated(arg);
-    switch (reinterpret_cast<cf::CfActorParamArg*>(arg)->field_0xC) {
+    switch (arg->unk0C) {
     case 0xE5:
         CfObject_syncModelRate(lbl_eu_8066773C);
         break;
     case 0x10: {
-        cf::CfActorParamFields* f = reinterpret_cast<cf::CfActorParamFields*>(this);
-        if ((f->field_0x3374 & 0x40000) != 0 && f->field_0x1634 != 0) {
-            cf::CfActor179Buf buf;
+        if ((unk3374 & 0x40000) != 0 && unk1634 != 0) {
+            cf::CBattleStateEntry buf;
             std::memset(&buf, 0, 0x34);
-            buf.field_0x00 = reinterpret_cast<cf::CfActorField3F10*>(this)->field_0x3F10;
-            buf.field_0x04 = 0;
-            buf.field_0x0C = (u16)f->field_0x1634;
-            buf.field_0x10 = f->field_0x163C;
-            buf.field_0x14 = (u16)f->field_0x1638;
-            buf.field_0x16 = (u16)f->field_0x1640;
-            buf.field_0x18 = (u16)f->field_0x1644;
-            buf.field_0x20 = 0.0f;
-            buf.field_0x30 = 0x10001;
-            CBattleState_enterStatusEntry((cf::CBattleStateEntry*)&buf);
+            buf.unk00 = field_0x74;
+            buf.unk04 = 0;
+            buf.unk0C = (u16)unk1634;
+            buf.unk10 = unk163C;
+            buf.unk14 = (u16)unk1638;
+            buf.unk16 = (u16)unk1640;
+            buf.unk18 = (u16)unk1644;
+            buf.unk20 = 0.0f;
+            buf.unk30 = 0x10001;
+            CBattleState_enterStatusEntry(&buf);
         }
         break;
     }
     default:
         break;
     }
-    u8* obj3ED4 = reinterpret_cast<cf::CfActorField3ED4*>(this)->field_0x3ED4;
-    reinterpret_cast<cf::CfObjectSub38*>(obj3ED4)->forwardActorEvent(arg);
+    static_cast<cf::CfObjectSub38*>(mSubObj38)->forwardActorEvent(arg);
 }
 
 void CfObjectActor::CBattleState_getLinkedActorId(CBattleStateEntry* arg) {
     CActorParam::CBattleState_getLinkedActorId(arg);
-    int v = reinterpret_cast<cf::CfActorParamArg*>(arg)->field_0xC;
+    int v = arg->unk0C;
     switch (v) {
     case 0xE5:
         CfObject_syncModelRate(0.0f);
         break;
     case 0x10: {
-        cf::CfActorParamFields* f = reinterpret_cast<cf::CfActorParamFields*>(this);
-        if ((f->field_0x3374 & 0x40000) != 0 && f->field_0x1634 != 0) {
-            CBattleState_clearStatusId((int)f->field_0x1634);
+        if ((unk3374 & 0x40000) != 0 && unk1634 != 0) {
+            CBattleState_clearStatusId((int)unk1634);
         }
         break;
     }
     default:
         break;
     }
-    u8* obj3ED4 = reinterpret_cast<cf::CfActorField3ED4*>(this)->field_0x3ED4;
-    reinterpret_cast<cf::CfObjectSub38*>(obj3ED4)->forwardActorEventEnd(arg);
+    static_cast<cf::CfObjectSub38*>(mSubObj38)->forwardActorEventEnd(arg);
 }
 
 void CfObjectActor::CfObjectActor_clearStatusPair() {
@@ -126,12 +122,12 @@ void CfObjectActor::CActorParam_setHp(float val) {
     float f = (float)(int)val;
     if ((gmGameFlags & 0x10000000) == 0 && (gmPauseFlags & 0x800) == 0) {
         if (f < 1.0f) {
-            void* bm = getInstance__Q22cf14CBattleManagerFv();
+            void* bm = cf::CBattleManager::getInstance();
             if (CChain_ProbeActorReady((cf::CChain*)((u8*)bm + 0x1A8), (CChainBattleObjTail*)this) != 0) {
                 f = 1.0f;
             }
         }
-        reinterpret_cast<cf::CfActorParamFields*>(this)->field_0x17E8 = f;
+        unk17E4.field_04 = f;
         releaseVisionSlot(this, 0);
     }
 }
@@ -147,7 +143,7 @@ void CfObjectActor::CActorParam_applyDamage(float value, int a, int b, int c) {
         ptmf.field_0 = sVisionPairEngagePtmf[0];
         ptmf.field_4 = sVisionPairEngagePtmf[1];
         ptmf.field_8 = sVisionPairEngagePtmf[2];
-        if (__ptmf_cmpr((u8*)getInstance__Q22cf14CBattleManagerFv() + 0x28354, &ptmf) == 0) {
+        if (__ptmf_cmpr((u8*)cf::CBattleManager::getInstance() + 0x28354, &ptmf) == 0) {
             v27 = 1;
         }
     }
@@ -181,7 +177,7 @@ void CfObjectActor::CActorParam_applyDamage(float value, int a, int b, int c) {
             ep = (cf::CfStatusEntry*)findBattleStatusEntry((u8*)this + 8, 0x33);
             if (ep != 0) {
                 if ((c & (0x80000000 | 0x8000)) != 0) {
-                    BtlDmg_FilterNotifyDamage((void*)reinterpret_cast<cf::CfActorField3F10*>(this)->field_0x3F10, 3, 0x10);
+                    BtlDmg_FilterNotifyDamage((void*)field_0x74, 3, 0x10);
                     if (f > 0.0f) {
                         ep->field_0x14 = (s16)(s32)f;
                         releaseVisionSlot(this, 0);
@@ -192,7 +188,7 @@ void CfObjectActor::CActorParam_applyDamage(float value, int a, int b, int c) {
                 } else {
                     if (f <= 0.0f) {
                         ep->field_0x14 = (s16)((float)(s16)ep->field_0x14 + f);
-                        BtlDmg_FilterNotifyDamage((void*)reinterpret_cast<cf::CfActorField3F10*>(this)->field_0x3F10, 3, 0x10);
+                        BtlDmg_FilterNotifyDamage((void*)field_0x74, 3, 0x10);
                         if ((s16)ep->field_0x14 > 0) {
                             releaseVisionSlot(this, 0);
                             return;
@@ -207,8 +203,8 @@ void CfObjectActor::CActorParam_applyDamage(float value, int a, int b, int c) {
     }
     if (f > 0.0f && isBattleStatusActive((u8*)this + 8, 0x120) != 0) return;
     // Round the gauge to the nearest int (half away from zero), then clamp.
-    float v = reinterpret_cast<cf::CfActorParamFields*>(this)->field_0x17E8 + f;
-    reinterpret_cast<cf::CfActorParamFields*>(this)->field_0x17E8 = v;
+    float v = unk17E4.field_04 + f;
+    unk17E4.field_04 = v;
     double round;
     if (v > 0.0f) {
         round = 0.5;
@@ -216,23 +212,23 @@ void CfObjectActor::CActorParam_applyDamage(float value, int a, int b, int c) {
         round = -0.5;
     }
     v = (float)(s32)((double)v + round);
-    reinterpret_cast<cf::CfActorParamFields*>(this)->field_0x17E8 = v;
+    unk17E4.field_04 = v;
     if (v < 1.0f) {
-        reinterpret_cast<cf::CfActorParamFields*>(this)->field_0x17E8 = 0.0f;
+        unk17E4.field_04 = 0.0f;
     }
-    v = reinterpret_cast<cf::CfActorParamFields*>(this)->field_0x17E8;
+    v = unk17E4.field_04;
     if (v < 0.0f) {
-        reinterpret_cast<cf::CfActorParamFields*>(this)->field_0x17E8 = 0.0f;
-    } else if (v > reinterpret_cast<cf::CfActorParamFields*>(this)->field_0x17F4) {
-        reinterpret_cast<cf::CfActorParamFields*>(this)->field_0x17E8 = reinterpret_cast<cf::CfActorParamFields*>(this)->field_0x17F4;
+        unk17E4.field_04 = 0.0f;
+    } else if (v > unk17E4.field_10) {
+        unk17E4.field_04 = unk17E4.field_10;
     }
     BtlDmg_SetDamageType((u8)a);
     BtlDmg_SetDamageDir((u8)b);
     if (f <= 0.0f) {
-        BtlDmg_NotifyDamage((void*)reinterpret_cast<cf::CfActorField3F10*>(this)->field_0x3F10, (u32)(s32)-f);
-        CChain_AccumGaugeDelta((cf::CChain*)((u8*)getInstance__Q22cf14CBattleManagerFv() + 0x1A8), (cf::CChainFlag*)this, -f);
+        BtlDmg_NotifyDamage((void*)field_0x74, (u32)(s32)-f);
+        CChain_AccumGaugeDelta((cf::CChain*)((u8*)cf::CBattleManager::getInstance() + 0x1A8), (cf::CChainFlag*)this, -f);
     } else {
-        BtlDmg_NotifyDamage((void*)reinterpret_cast<cf::CfActorField3F10*>(this)->field_0x3F10, (u32)(s32)f);
+        BtlDmg_NotifyDamage((void*)field_0x74, (u32)(s32)f);
     }
     if (f <= 0.0f) {
         // Status 0xC3: scale a ratio from the entry value.
@@ -251,7 +247,7 @@ void CfObjectActor::CActorParam_applyDamage(float value, int a, int b, int c) {
         }
         // Status 0x92: party-list length gated proc.
         if (isBattleStatusActive((u8*)this + 8, 0x92) != 0) {
-            void* bm = getInstance__Q22cf14CBattleManagerFv();
+            void* bm = cf::CBattleManager::getInstance();
             u8* base = *(u8**)((u8*)bm + 8);
             u8* node = *(u8**)base;
             int count = 0;
@@ -285,11 +281,11 @@ void CfObjectActor::CActorParam_applyDamage(float value, int a, int b, int c) {
                 if (this->CActorParam_getHp() < 1.0f) {
                     float g = this->CActorParam_getDamageScale();
                     f = lbl_eu_80667764 * ((float)(s32)ep->field_0x10 * g);
-                    getInstance__Q22cf14CBattleManagerFv();
+                    cf::CBattleManager::getInstance();
                     f *= calcBattleDamage(0, this, 0);
                     this->CActorParam_addHp(f);
                     CBattleState_clearStatusId(0xFC);
-                    cf::PartyGaugeAddClamped(reinterpret_cast<cf::UnkClass_8018C5FC*>((u8*)getInstance__Q22cf14CBattleManagerFv() + 0x194), 0x32);
+                    cf::PartyGaugeAddClamped(reinterpret_cast<cf::UnkClass_8018C5FC*>((u8*)cf::CBattleManager::getInstance() + 0x194), 0x32);
                 }
             }
         }
@@ -300,18 +296,18 @@ void CfObjectActor::CActorParam_applyDamage(float value, int a, int b, int c) {
                 if (this->CActorParam_getHp() < 1.0f) {
                     float g = this->CActorParam_getDamageScale();
                     f = lbl_eu_80667764 * ((float)(s32)ep->field_0x10 * g);
-                    getInstance__Q22cf14CBattleManagerFv();
+                    cf::CBattleManager::getInstance();
                     f *= calcBattleDamage(0, this, 0);
                     this->CActorParam_addHp(f);
                     CBattleState_clearStatusId(0x100);
                     this->CActorParam_addArtsGauge(50.0f);
-                    CBattleMan_ClearEventNotify(getInstance__Q22cf14CBattleManagerFv(), (u32)this, (u16)0x93);
+                    CBattleMan_ClearEventNotify(cf::CBattleManager::getInstance(), (u32)this, (u16)0x93);
                 }
             }
         }
     }
     if (this->CActorParam_getHp() < 1.0f) {
-        if (CChain_ProbeActorReady((cf::CChain*)((u8*)getInstance__Q22cf14CBattleManagerFv() + 0x1A8), (CChainBattleObjTail*)this) != 0) {
+        if (CChain_ProbeActorReady((cf::CChain*)((u8*)cf::CBattleManager::getInstance() + 0x1A8), (CChainBattleObjTail*)this) != 0) {
             this->CActorParam_setHp(1.0f);
         }
     }
@@ -335,17 +331,16 @@ void CfObjectActor::CfObjectActor_takeDamageValue(float value, int arg) {
 }
 
 void CfObjectActor::CActorParam_addGauge(int delta) {
-    cf::CfActorParamFields* f = reinterpret_cast<cf::CfActorParamFields*>(this);
-    s16 cur = f->field_0x160C;
-    s16 max = f->field_0x160E;
+    s16 cur = unk160C;
+    s16 max = unk160E;
     // Explicit (s16) truncation of the int param -> retail's extsh r0, r4
     // (an s16-typed param lets MWCC fold the sign-extension into the add).
     int sum = cur + (s16)delta;
-    f->field_0x160C = (u16)sum;
+    unk160C = (u16)sum;
     if ((s16)sum < 0) {
-        f->field_0x160C = 0;
+        unk160C = 0;
     } else if ((s16)sum > max) {
-        f->field_0x160C = (u16)max;
+        unk160C = (u16)max;
     }
     u32* idPtr = reinterpret_cast<u32*>(
         reinterpret_cast<cf::CObjectState*>(
@@ -362,17 +357,16 @@ void CfObjectActor::CActorParam_addGauge(int delta) {
 }
 
 void CfObjectActor::CActorParam_addSecondGauge(int delta) {
-    cf::CfActorParamFields* f = reinterpret_cast<cf::CfActorParamFields*>(this);
-    s16 cur = f->field_0x1614;
-    s16 max = f->field_0x1616;
+    s16 cur = unk1614;
+    s16 max = unk1616;
     // Explicit (s16) truncation of the int param -> retail's extsh r0, r4
     // (an s16-typed param lets MWCC fold the sign-extension into the add).
     int sum = cur + (s16)delta;
-    f->field_0x1614 = (u16)sum;
+    unk1614 = (u16)sum;
     if ((s16)sum < 0) {
-        f->field_0x1614 = 0;
+        unk1614 = 0;
     } else if ((s16)sum > max) {
-        f->field_0x1614 = (u16)max;
+        unk1614 = (u16)max;
     }
     u32* idPtr = reinterpret_cast<u32*>(
         reinterpret_cast<cf::CObjectState*>(
@@ -380,14 +374,14 @@ void CfObjectActor::CActorParam_addSecondGauge(int delta) {
             ->getStateData());
     u32 id = *idPtr;
     if (testActorStatus(this, (int*)&id, 0x802) != 0) {
-        s16 cur2 = f->field_0x1614;
-        s16 max2 = f->field_0x1616;
+        s16 cur2 = unk1614;
+        s16 max2 = unk1616;
         int sum2 = cur2 + (s16)delta;
-        f->field_0x1614 = (u16)sum2;
+        unk1614 = (u16)sum2;
         if ((s16)sum2 < 0) {
-            f->field_0x1614 = 0;
+            unk1614 = 0;
         } else if ((s16)sum2 > max2) {
-            f->field_0x1614 = (u16)max2;
+            unk1614 = (u16)max2;
         }
         // MWCC evaluates == right-to-left: retail calls 0x190 first, 0x18C second.
         if (this->CActorParam_getSecondGauge() == this->CActorParam_getSecondGaugeMax()) {
@@ -426,12 +420,12 @@ float CfObjectActor::CfObjectActor_getAdjustedFacing() {
     // Base height at 0x3EE8; if the move target (0x3F60) is set, add the
     // signed short value the CActParamData helper returns (s16 -> float via
     // MWCC's 2^52 double-trick, which emits the retail fsubs sequence).
-    u8* p = reinterpret_cast<cf::CfActorField3F60*>(this)->field_0x3F60;
+    u8* p = static_cast<u8*>(mTargetC4);
     if (p != 0) {
-        float base = reinterpret_cast<cf::CfActorField3EE8*>(this)->field_0x3EE8;
+        float base = mField4C;
         return base + (float)(s16)getParamSelS16(p + 16, 0);
     }
-    return reinterpret_cast<cf::CfActorField3EE8*>(this)->field_0x3EE8;
+    return mField4C;
 }
 
 float CfObjectActor::CfObjectActor_readActionScale() {
@@ -445,9 +439,9 @@ float CfObjectActor::CfObjectActor_readActionScale() {
 int CfObjectActor::CfObjectActor_sharesMoveFlags(cf::CfObjectActor* arg) {
     if (arg == 0) return 0;
     if (arg == this) return 0;
-    u32 selfFlags = reinterpret_cast<cf::CfActorField3F00*>(this)->field_0x3F00;
-    if ((selfFlags & 2) != 0 && (reinterpret_cast<cf::CfActorField3F00*>(arg)->field_0x3F00 & 2) != 0) return 1;
-    if ((selfFlags & 4) != 0 && (reinterpret_cast<cf::CfActorField3F00*>(arg)->field_0x3F00 & 4) != 0) return 1;
+    u32 selfFlags = unk64;
+    if ((selfFlags & 2) != 0 && (arg->unk64 & 2) != 0) return 1;
+    if ((selfFlags & 4) != 0 && (arg->unk64 & 4) != 0) return 1;
     return 0;
 }
 
@@ -455,21 +449,20 @@ void* CfObjectActor::CfObject_pushRefreshValue(float value) {
     // Forward to the CfObjectMove base, then re-dispatch on the actor behind
     // the action-source handle when its +0x64 flags select it.
     CfObjectMove::CfObject_pushRefreshValue(value);
-    u8* p = reinterpret_cast<cf::CfActorField45B8*>(this)->field_0x45B8;
+    u32 p = mActionSrcHandle;
     if (p != 0) {
-        cf::CfObjectMove* src = static_cast<cf::CfObjectMove*>(findObjectById(reinterpret_cast<int>(p)));
+        cf::CfObjectMove* src = static_cast<cf::CfObjectMove*>(findObjectById(p));
         // Merged condition: both false paths share one zeroing block. The
-        // true arm re-tests src (retail re-checks it before the guarded
-        // subi) and does an explicit -0x3E9C downcast (the C++ layout puts
-        // CfObjectMove later, so static_cast would emit subi 16080). The
-        // re-dispatch is VIRTUAL through slot +0x5C4 (retail bcctrl with
+        // true arm is the null-guarded static_cast downcast (retail re-checks
+        // src before the guarded subi 16028; CfObjectMove sits at +0x3E9C).
+        // The re-dispatch is VIRTUAL through slot +0x5C4 (retail bcctrl with
         // f1 carried through); a direct call lets MWCC auto-inline and
         // duplicate the body.
         cf::CfObjectActor* actor;
         if (src != 0 &&
-            ((reinterpret_cast<cf::CfMoveFlags64*>(src)->field_0x64 & 2) != 0 ||
-             (reinterpret_cast<cf::CfMoveFlags64*>(src)->field_0x64 & 4) != 0)) {
-            actor = src != 0 ? (cf::CfObjectActor*)((u8*)src - 0x3E9C) : 0;
+            ((src->unk64 & 2) != 0 ||
+             (src->unk64 & 4) != 0)) {
+            actor = static_cast<cf::CfObjectActor*>(src);
         } else {
             actor = 0;
         }

@@ -1603,27 +1603,10 @@ struct MiniMapB05CMat {
     u32 field_3C;                    // 0x3C - flags (bits 4-7, bit 28)
 };
 
-// Linked list walked by the pane-sweep loops (next at +0, translate at +0x34).
-struct MiniMapB05CNode {
-    MiniMapB05CNode* next;           // 0x00
-    u8 pad_04[0x34 - 0x04];          // 0x04..0x34
-    ml::CVec3 ofs;                   // 0x34 - per-node translate offset
-};
-
 // View of the v01C() result (battle target pos): y at +0x4.
 struct MiniMapB05CVec4 {
     u8 pad_00[0x4];                  // 0x00
     f32 field_4;                     // 0x04
-};
-
-// Pane data view: intrusive child-list head at +0x14 and the translate
-// triple at +0x38.
-struct MiniMapB05CPaneView {
-    void* vtable;                    // 0x00
-    u8 pad_04[0x14 - 0x04];
-    void* first;                     // 0x14 - child list head (next ptr)
-    u8 pad_18[0x38 - 0x18];
-    ml::CVec3 tr;                    // 0x38 - pane translate
 };
 
 
@@ -1703,26 +1686,27 @@ extern "C" void MiniMapUpdateMapView(MiniMapSelf* self) {
     // child lists (either the idle layout or the battle-target tracking one).
     nw4r::lyt::Pane* group =
         ((nw4r::lyt::Pane*)self->m0C->m10)->FindPaneByName("pic_pc", true);
-    ml::CVec3 gv(0.0f, 0.0f, scale);
+    nw4r::math::VEC3 gv(0.0f, 0.0f, scale);
 
     if (GetSysStateFlag11() == 0) {
         gv.z = scale + 180.0f;
-        ((MiniMapB05CPaneView*)group)->tr = gv;
-        ((MiniMapB05CPaneView*)pane)->tr = ml::CVec3(
-            0.0f, 0.0f, 0.0f);
+        group->SetRotate(gv);
+        pane->SetRotate(nw4r::math::VEC3(
+            0.0f, 0.0f, 0.0f));
         for (u8 i = 0; sMiniMapClockPaneNames[i] != 0; i++) {
             nw4r::lyt::Pane* p =
                 pane->FindPaneByName(sMiniMapClockPaneNames[i], true);
             if (p == NULL) continue;
-            MiniMapB05CPaneView* pv = (MiniMapB05CPaneView*)p;
-            for (MiniMapB05CNode* n = (MiniMapB05CNode*)pv->first;
-                 n != (MiniMapB05CNode*)&pv->first; n = n->next) {
-                ml::CVec3 tmp(0.0f, 0.0f,
-                              0.0f);
-                if (n == NULL) {
+            nw4r::lyt::PaneList& children = p->GetChildList();
+            for (nw4r::lyt::PaneList::Iterator it = children.GetBeginIter();
+                 it != children.GetEndIter(); ++it) {
+                nw4r::lyt::Pane* child = it.operator->();
+                nw4r::math::VEC3 tmp(0.0f, 0.0f,
+                                     0.0f);
+                if (child == NULL) {
                     nw4r::db::Panic((const char*)lbl_eu_8052CB40, 0x23D, (const char*)lbl_eu_8052CB1C);
                 }
-                n->ofs = tmp;
+                child->SetRotate(tmp);
             }
         }
     } else if (cf::CfGameManager::getInstance()->getCameraDataBlock() != NULL) {
@@ -1733,25 +1717,21 @@ extern "C" void MiniMapUpdateMapView(MiniMapSelf* self) {
             (MiniMapObj*)tgt)->v01C())->field_4;
         f64 t = 180.0f * ty / ml::pi;
         f32 zz = 180.0f + (scale - t);
-        ((MiniMapB05CPaneView*)group)->tr =
-            ml::CVec3(0.0f, 0.0f, zz);
-        ((MiniMapB05CPaneView*)pane)->tr.x = gv.x;
-        ((MiniMapB05CPaneView*)pane)->tr.y = gv.y;
-        ((MiniMapB05CPaneView*)pane)->tr.z = -(f32)t;
+        group->SetRotate(nw4r::math::VEC3(0.0f, 0.0f, zz));
+        pane->SetRotate(nw4r::math::VEC3(gv.x, gv.y, -(f32)t));
         gv.z = (f32)(-t) * -1.0f;
         for (u8 i = 0; sMiniMapClockPaneNames[i] != 0; i++) {
             nw4r::lyt::Pane* p =
                 pane->FindPaneByName(sMiniMapClockPaneNames[i], true);
             if (p == NULL) continue;
-            MiniMapB05CPaneView* pv = (MiniMapB05CPaneView*)p;
-            for (MiniMapB05CNode* n = (MiniMapB05CNode*)pv->first;
-                 n != (MiniMapB05CNode*)&pv->first; n = n->next) {
-                if (n == NULL) {
+            nw4r::lyt::PaneList& children = p->GetChildList();
+            for (nw4r::lyt::PaneList::Iterator it = children.GetBeginIter();
+                 it != children.GetEndIter(); ++it) {
+                nw4r::lyt::Pane* child = it.operator->();
+                if (child == NULL) {
                     nw4r::db::Panic((const char*)lbl_eu_8052CB40, 0x23D, (const char*)lbl_eu_8052CB1C);
                 }
-                n->ofs.x = gv.x;
-                n->ofs.y = gv.y;
-                n->ofs.z = gv.z;
+                child->SetRotate(gv);
             }
         }
     }
@@ -1766,8 +1746,7 @@ extern "C" void MiniMapUpdateMapView(MiniMapSelf* self) {
             f32 ty = ((MiniMapB05CVec4*)(
                 (MiniMapObj*)tgt)->v01C())->field_4;
             f32 t = 180.0f * ty / ml::pi;
-            ((MiniMapB05CPaneView*)pic)->tr =
-                ml::CVec3(0.0f, 0.0f, t);
+            pic->SetRotate(nw4r::math::VEC3(0.0f, 0.0f, t));
         }
     }
     self->m1B = (self->m38 != 0) ? 1 : 0;
@@ -2183,7 +2162,7 @@ void CMenuMiniMap2::Move() {
 
 // cbRenderBefore: draw the clock layout and the minimap's sub-layout under a
 // fresh DrawInfo when the game is in a renderable state.
-void CMenuMiniMap2::cbRenderBefore() {
+void CMenuMiniMap2::cbRenderBefore(CScn*) {
     // Single OR so MWCC emits the short-circuit branches: A -> bne exit,
     // B -> beq continue / b exit (same shape as CSystemWindow::Move).
     if (CTaskGame::getInstance()->isFlag01Set() || (gmPauseFlags & 0x200000))
@@ -2209,8 +2188,8 @@ void CMenuMiniMap2::cbRenderBefore() {
 // MWCC; only the scene pointer and trailing flag byte are body assignments.
 CMenuMiniMap2::CMenuMiniMap2(CScn* scn) : mScn(scn), mField8D4(0) {}
 
-// Singleton factory for the minimap process (retail unmangled symbol).
-CMenuMiniMap2* __ct__8011C1B8(CProcess* parent, CScn* scene) {
+// Singleton factory for the minimap process.
+CMenuMiniMap2* CMenuMiniMap2::create(CProcess* parent, CScn* scene) {
     if (spMiniMap2 != 0) {
         return 0;
     }

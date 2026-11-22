@@ -1,9 +1,7 @@
 #include "monolib/device.hpp"
 #include <revolution/SC.h>
 
-// Retail sbss singleton slot lbl_eu_80665640 (declared in CDeviceSC.hpp;
-// 8 bytes, word 0 in use) - blob monolibdata1d dissolve.
-CDeviceSC* lbl_eu_80665640[2];
+CDeviceSC* CDeviceSC::spInstance;
 
 
 // novtable: member init-list stores are scheduled BEFORE any body statement,
@@ -21,32 +19,32 @@ CDeviceBase(pName, pParent, MAX_CHILD){
     // Zero the 0x1CD tail byte (reserved field; its name lives in the shared
     // CDeviceSC.hpp header).
     (&mSoundMode)[1] = 0;
-    lbl_eu_80665640[0] = this;
+    spInstance = this;
     SCInit();
 }
 
 
 
 CDeviceSC::~CDeviceSC(){
-    lbl_eu_80665640[0] = nullptr;
+    spInstance = nullptr;
 }
 
 
 
 CDeviceSC* CDeviceSC::getInstance(){
-    return lbl_eu_80665640[0];
+    return spInstance;
 }
 
 
 
 bool CDeviceSC::isWideAspectRatio(){
-    return lbl_eu_80665640[0]->mAspectRatio == SC_ASPECT_WIDE;
+    return spInstance->mAspectRatio == SC_ASPECT_WIDE;
 }
 
 
 
 bool CDeviceSC::isSoundModeMono(){
-    return lbl_eu_80665640[0]->mSoundMode == SC_SND_MONO;
+    return spInstance->mSoundMode == SC_SND_MONO;
 }
 
 
@@ -75,10 +73,10 @@ public:
 
 
 u8 CDeviceSC::getLanguage(){
-    if(lbl_eu_80665640[0] == nullptr){
+    if(spInstance == nullptr){
         return SCGetLanguage();
     }
-    return lbl_eu_80665640[0]->mLanguage;
+    return spInstance->mLanguage;
 }
 
 
@@ -89,7 +87,7 @@ u8 CDeviceSC::getLanguage(){
 // inlined -- see CDeviceFileCri KB case). The thread flag short-circuits,
 // otherwise CMsgParam<8>::find (divwu modulo loop) scans for EVT_EXCEPTION.
 bool CDeviceSC::isInitialized(){
-    const CDeviceSCFields* self = (const CDeviceSCFields*)lbl_eu_80665640[0];
+    const CDeviceSCFields* self = (const CDeviceSCFields*)spInstance;
     bool busy;
     if (self->mThreadFlags & CWorkThread::THREAD_FLAG_EXCEPTION) {
         busy = true;

@@ -39,14 +39,58 @@
 
 #define BTA_DM_NUM_CONN_SRVCS 5
 
-/* Peer device entry: 0xB bytes, list at bta_dm_cb+0x0, count at +0x4D. */
+/* RVL BTE device-manager layout (bta_dm_int.h field names).  Field order here
+   follows the retail offsets used by bta_dm_pm.o; implicit C alignment supplies
+   the compiler's own tail/alignment bytes, so no source-level offset overlays
+   are needed. */
+
 typedef struct
 {
-    BD_ADDR peer_bdaddr;      /* 0x00 */
-    UINT8 _pad[3];            /* 0x06 */
-    UINT8 pm_mode_attempted;  /* 0x09 */
-    UINT8 pm_mode_failed;     /* 0x0A */
-} tBTA_DM_PEER_DEVICE;
+    BD_ADDR peer_bdaddr;       /* 0x00 */
+    UINT8 policy;              /* 0x06 */
+    UINT8 in_use;              /* 0x07 */
+    UINT8 conn_state;          /* 0x08 */
+    UINT8 pm_mode_attempted;   /* 0x09 */
+    UINT8 pm_mode_failed;      /* 0x0A */
+} tBTA_DM_PEER_DEVICE;         /* 0x0B */
+
+typedef struct
+{
+    tBTA_DM_PEER_DEVICE peer_device[7]; /* 0x00 */
+    UINT8 count;                        /* 0x4D */
+} tBTA_DM_ACTIVE_LINK;                  /* 0x4E */
+
+typedef struct
+{
+    TIMER_LIST_ENT timer;      /* 0x00 */
+    BD_ADDR peer_bdaddr;       /* 0x18 */
+    UINT8 in_use;              /* 0x1E */
+} tBTA_PM_TIMER;               /* 0x20 */
+
+typedef struct
+{
+    tBTA_DM_ACTIVE_LINK device_list;      /* 0x00 */
+    void (*p_sec_cback)(int, void *);     /* 0x50 */
+    TIMER_LIST_ENT signal_strength_timer; /* 0x54 */
+    UINT8 signal_strength_mask;           /* 0x6C */
+    UINT8 state;                          /* 0x6D */
+    UINT8 disabling;                      /* 0x6E */
+    UINT16 signal_strength_period;        /* 0x70 */
+    TIMER_LIST_ENT disable_timer;         /* 0x74 */
+    UINT32 wbt_sdp_handle;                /* 0x8C */
+    UINT8 wbt_scn;                        /* 0x90 */
+    UINT8 num_master_only;                /* 0x91 */
+    UINT8 cur_av_count;                   /* 0x92 */
+    UINT8 disable_pair_mode;              /* 0x93 */
+    UINT8 conn_paired_only;               /* 0x94 */
+    UINT8 pm_id;                          /* 0x95 */
+    tBTA_PM_TIMER pm_timer[3];            /* 0x98 */
+    BD_ADDR pin_bd_addr;                  /* 0xF8 */
+    DEV_CLASS pin_dev_class;              /* 0xFE */
+    UINT8 pin_evt;                        /* 0x101 */
+} tBTA_DM_CB;                             /* 0x104 */
+
+extern tBTA_DM_CB bta_dm_cb;
 
 /* Connected services table: byte 0 = count, 9-byte entries starting at +1,
    service id at +7. Retail bss owner of this symbol is bta_dm_pm
@@ -89,42 +133,6 @@ typedef struct
     UINT8 pad;
     tBTA_DM_PM_ACTN actn_tbl[9][2];
 } tBTA_DM_PM_SPEC;
-
-/* Minimal timer list entry matching the GKI TIMER_LIST_ENT layout (0x18 bytes) */
-typedef struct
-{
-    void *p_prev;              /* 0x00 */
-    void *p_next;              /* 0x04 */
-    void *p_cback;             /* 0x08 */
-    int ticks;                 /* 0x0C */
-    int start_time;            /* 0x10 */
-    unsigned short type;       /* 0x14 */
-    unsigned char in_use;      /* 0x16 */
-    unsigned char pad;         /* 0x17 */
-} tBTA_DM_TIMER;
-
-/* PM timer entry: 0x20 bytes, in_use at +0x1E */
-typedef struct
-{
-    tBTA_DM_TIMER timer;       /* 0x00 */
-    BD_ADDR bd_addr;           /* 0x18 */
-    unsigned char in_use;      /* 0x1E */
-    unsigned char pad;         /* 0x1F */
-} tBTA_DM_PM_TIMER;
-
-/* bta_dm_cb view used by this file (device_list at 0x0, count at 0x4D,
-   pm_id at 0x95, pm_timer at 0x98) */
-struct bta_dm_cb_pm_t
-{
-    tBTA_DM_PEER_DEVICE device_list[7]; /* 0x00 (0x0B each) */
-    unsigned char device_list_count;    /* 0x4D */
-    unsigned char _pad[0x95 - 0x4E];    /* 0x4E-0x94 */
-    unsigned char pm_id;                /* 0x95 */
-    unsigned char _pad2[2];             /* 0x96-0x97 */
-    tBTA_DM_PM_TIMER pm_timer[3];       /* 0x98 (0x20 each) */
-};
-
-extern struct bta_dm_cb_pm_t bta_dm_cb;
 
 /* bta_dm_cfg (bta_dm_cfg.c): link_policy at +0x04, retail symbol bta_dm_cfg */
 struct bta_dm_cfg_pm_t
@@ -172,8 +180,8 @@ void bta_dm_pm_btm_status(struct bta_dm_msg *p_data)
     /* stop the PM timer for this device if one is running */
     for (i = 0; i < BTA_DM_NUM_PM_TIMER; i++) {
         if (bta_dm_cb.pm_timer[i].in_use &&
-            !bdcmp(bta_dm_cb.pm_timer[i].bd_addr, p_data->pm_btm_status.bd_addr)) {
-            bta_sys_stop_timer((TIMER_LIST_ENT *)&bta_dm_cb.pm_timer[i].timer);
+            !bdcmp(bta_dm_cb.pm_timer[i].peer_bdaddr, p_data->pm_btm_status.bd_addr)) {
+            bta_sys_stop_timer(&bta_dm_cb.pm_timer[i].timer);
             bta_dm_cb.pm_timer[i].in_use = FALSE;
             break;
         }
@@ -182,10 +190,10 @@ void bta_dm_pm_btm_status(struct bta_dm_msg *p_data)
     switch (p_data->pm_btm_status.status) {
     case BTM_PM_STS_ACTIVE:
         if (p_data->pm_btm_status.mode != 0) {
-            for (i = 0; i < bta_dm_cb.device_list_count; i++) {
-                if (!bdcmp(bta_dm_cb.device_list[i].peer_bdaddr,
+            for (i = 0; i < bta_dm_cb.device_list.count; i++) {
+                if (!bdcmp(bta_dm_cb.device_list.peer_device[i].peer_bdaddr,
                            p_data->pm_btm_status.bd_addr)) {
-                    p_dev = &bta_dm_cb.device_list[i];
+                    p_dev = &bta_dm_cb.device_list.peer_device[i];
                     if (p_dev->pm_mode_attempted &
                         (BTA_DM_PM_PARK | BTA_DM_PM_SNIFF)) {
                         p_dev->pm_mode_failed |=
@@ -208,7 +216,7 @@ void bta_dm_pm_btm_status(struct bta_dm_msg *p_data)
 void bta_dm_pm_timer_cback(void *p_tle) {
     struct bta_dm_pm_msg *p_msg;
     unsigned char timer_id = BTA_DM_PM_MODE_TIMER_ID_0;
-    struct bta_dm_cb_pm_t *p_cb = &bta_dm_cb;
+    tBTA_DM_CB *p_cb = &bta_dm_cb;
 
     if (p_cb->pm_timer[BTA_DM_PM_MODE_TIMER_ID_0].in_use &&
         (void *)&p_cb->pm_timer[BTA_DM_PM_MODE_TIMER_ID_0] == p_tle) {
@@ -232,7 +240,7 @@ void bta_dm_pm_timer_cback(void *p_tle) {
     if (timer_id != BTA_DM_PM_MODE_TIMER_ID_MAX) {
         if ((p_msg = (struct bta_dm_pm_msg *)GKI_getbuf(sizeof(struct bta_dm_pm_msg))) != NULL) {
             p_msg->hdr.event = BTA_DM_PM_TIMER_EVT;
-            bdcpy(p_msg->bd_addr, bta_dm_cb.pm_timer[timer_id].bd_addr);
+            bdcpy(p_msg->bd_addr, bta_dm_cb.pm_timer[timer_id].peer_bdaddr);
             bta_sys_sendmsg(p_msg);
         }
     }
@@ -266,14 +274,14 @@ void bta_dm_pm_set_mode(BD_ADDR bd_addr, BOOLEAN timed_out)
     tBTA_DM_PM_CFG *p_pm_cfg;
     tBTA_DM_PM_SPEC *p_pm_spec;
 
-    if (!bta_dm_cb.device_list_count) {
+    if (!bta_dm_cb.device_list.count) {
         return;
     }
 
     /* find the peer device */
-    for (i = 0; i < bta_dm_cb.device_list_count; i++) {
-        if (!bdcmp(bta_dm_cb.device_list[i].peer_bdaddr, bd_addr)) {
-            p_peer_device = &bta_dm_cb.device_list[i];
+    for (i = 0; i < bta_dm_cb.device_list.count; i++) {
+        if (!bdcmp(bta_dm_cb.device_list.peer_device[i].peer_bdaddr, bd_addr)) {
+            p_peer_device = &bta_dm_cb.device_list.peer_device[i];
             failed_pm = p_peer_device->pm_mode_failed;
             break;
         }
@@ -362,9 +370,9 @@ void bta_dm_pm_set_mode(BD_ADDR bd_addr, BOOLEAN timed_out)
         for (i = 0; i < BTA_DM_NUM_PM_TIMER; i++) {
             if (!bta_dm_cb.pm_timer[i].in_use) {
                 bta_dm_cb.pm_timer[i].in_use = TRUE;
-                bdcpy(bta_dm_cb.pm_timer[i].bd_addr, bd_addr);
+                bdcpy(bta_dm_cb.pm_timer[i].peer_bdaddr, bd_addr);
                 bta_dm_cb.pm_timer[i].timer.p_cback = bta_dm_pm_timer_cback;
-                bta_sys_start_timer((TIMER_LIST_ENT *)&bta_dm_cb.pm_timer[i].timer, 0, timeout);
+                bta_sys_start_timer(&bta_dm_cb.pm_timer[i].timer, 0, timeout);
                 return;
             }
         }
@@ -440,8 +448,8 @@ void bta_dm_pm_cback(tBTA_SYS_CONN_STATUS status, UINT8 id, UINT8 app_id,
     /* stop the PM timer for this device */
     for (j = 0; j < BTA_DM_NUM_PM_TIMER; j++) {
         if (bta_dm_cb.pm_timer[j].in_use != 0 &&
-            !bdcmp(bta_dm_cb.pm_timer[j].bd_addr, bd_addr)) {
-            bta_sys_stop_timer((TIMER_LIST_ENT *)&bta_dm_cb.pm_timer[j].timer);
+            !bdcmp(bta_dm_cb.pm_timer[j].peer_bdaddr, bd_addr)) {
+            bta_sys_stop_timer(&bta_dm_cb.pm_timer[j].timer);
             bta_dm_cb.pm_timer[j].in_use = 0;
             break;
         }
@@ -490,10 +498,10 @@ void bta_dm_pm_cback(tBTA_SYS_CONN_STATUS status, UINT8 id, UINT8 app_id,
     }
 
     /* clear the failed/attempted power-mode flags for this device */
-    for (k = 0; k < bta_dm_cb.device_list_count; k++) {
-        if (!bdcmp(bta_dm_cb.device_list[k].peer_bdaddr, bd_addr)) {
-            bta_dm_cb.device_list[k].pm_mode_attempted = 0;
-            bta_dm_cb.device_list[k].pm_mode_failed = 0;
+    for (k = 0; k < bta_dm_cb.device_list.count; k++) {
+        if (!bdcmp(bta_dm_cb.device_list.peer_device[k].peer_bdaddr, bd_addr)) {
+            bta_dm_cb.device_list.peer_device[k].pm_mode_attempted = 0;
+            bta_dm_cb.device_list.peer_device[k].pm_mode_failed = 0;
             break;
         }
     }

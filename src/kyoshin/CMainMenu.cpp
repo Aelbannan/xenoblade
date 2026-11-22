@@ -12,6 +12,8 @@
 #include "kyoshin/code_80135FDC_State.hpp"
 #include "kyoshin/CUIWindowManagerApi.hpp"
 #include "kyoshin/makecrystal/CMenuMakeCrystal.hpp"
+#include "monolib/device/CDeviceFont.hpp"
+#include "monolib/core/CPadManager.hpp"
 
 // Minimal layout-identical view of CArtsInfo (only field_0x54 is used here).
 // Full definition in kyoshin/CArtsInfo.hpp, which cannot be included from
@@ -21,20 +23,6 @@ public:
     u8 _00[0x54];
     u8 field_0x54;
 };
-
-// Mirror of the font object returned by CDeviceFont::getFontInfo; vtable
-// slot 9 (offset 0x24) yields the pane bound by ApplyFontToTxtPanes.
-struct CMainMenuFontView {
-    virtual void sf2() = 0;
-    virtual void sf3() = 0;
-    virtual void sf4() = 0;
-    virtual void sf5() = 0;
-    virtual void sf6() = 0;
-    virtual void sf7() = 0;
-    virtual void sf8() = 0;
-    virtual u32 sf9() = 0; // vtable offset 0x24
-};
-
 
 // Gameplay-input gate for the menu-frame dispatch (defined in this TU).
 // Takes the owner like retail (the caller emits mr r3,r31 before the call).
@@ -49,7 +37,6 @@ extern "C" void CMainMenu_AdvanceIdle(CMainMenu* self);
 extern "C" void CMainMenu_DispatchMenuState(CMainMenu* self);
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
-extern "C" char lbl_eu_804FCEBC[];              // rodata: menu resource names
 
 // Menu singleton/state guards (defined in their owning menu TUs)
 // Defined in CMenuItem.cpp with C++ linkage.
@@ -68,14 +55,7 @@ extern "C" u32 menuPTStateIsActive();   // party-state screen active (CMenuPTSta
 extern "C" u32 CMenuArtsSet_isCreated();   // arts-set menu active (CMenuArtsSet.cpp)
 
 // Gameplay-input gate helpers (cf::CfGameManager / cf::CBattleManager)
-extern "C" int isSceneLoading__Q22cf13CfGameManagerFv();
 extern "C" int isAnyFieldFlagSet__Q22cf13CfGameManagerFv();
-
-// split1 .sdata2 float constants (int->float magic f64 at 0x80666F10,
-// then two 0.0f)
-extern f64 lbl_eu_80666F10;   // 0x80666F10 - s32->f32 conversion constant (0x4330000080000000)
-extern f32 lbl_eu_80666F18;   // 0x80666F18 - anim frame time (0.0f)
-extern f32 lbl_eu_80666F1C;   // 0x80666F1C - HP death threshold (0.0f)
 
 // Presentation/mode bitfield (sibling of gmGameFlags; split1 .sbss).
 extern u32 gmPauseFlags;
@@ -90,7 +70,6 @@ extern u32 gmPauseFlags;
 
 // Cursor constructors (defined in kyoshin/CCur.cpp)
 // Font binding imports (CDeviceFont / CLibLayout)
-extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
 
 // Menu pane-position/color helper (defined in code_80135FDC.cpp).
 // Menu open/close gate (defined in code_80135FDC.cpp).
@@ -107,13 +86,6 @@ extern "C" CSysWinBuff* getInstance__11CSysWinBuffFv();
 // setPresentationFlag: canonical setPresentationFlag__Q22cf13CfGameManagerFv(bool).
 #include "kyoshin/cf/CfGameManager.hpp"
 
-// cf::CPad view: only the three flag words this unit reads.
-struct CMainMenuPad {
-    u32 mHeldButtonFlags;       // 0x00
-    u32 mPressedButtonFlags;    // 0x04
-    u32 mTurboPressButtonFlags; // 0x08
-};
-extern "C" CMainMenuPad* getCurrentPad__Q22cf13CfGameManagerFv();
 
 // Cursor activate helper (defined in CCur.cpp).
 // Cursor draw helper (defined in CCur.cpp; retail symbol is unmangled C linkage).
@@ -122,14 +94,12 @@ extern "C" CMainMenuPad* getCurrentPad__Q22cf13CfGameManagerFv();
 // Cursor per-frame update helper (defined in CCur.cpp).
 // Pane-config finish gate (defined in CUICfManager.cpp).
 
-// Sub-menu pane-name table (14 words) and cursor->angle s16 table.
+// Sub-menu pane-name table (14 words).
 struct CMainMenuNameTable {
     const char* name[14];
 };
 extern u32 lbl_eu_804FCE50[];
-extern s16 lbl_eu_804FCD60[];
 // CBaseCur runtime vtable (stored over the stack temp after construction).
-
 // Constructor data symbols (see __ct__CMainMenu in CMainMenu.cpp).
 // CProcess base constructor (abstract class, out-of-line in retail).
 
@@ -489,11 +459,9 @@ bool CMainMenu::OnFileEvent(CEventFile* pEventFile) {
             // Bind the device font: ask the font object for its pane (vtable+0x24)
             // and push it onto the layout root.
             nw4r::lyt::Pane* rootPane = self->field_0x7C->GetRootPane();
-            ApplyFontToTxtPanes(
-                rootPane,
-                (const nw4r::ut::Font*)(reinterpret_cast<CMainMenuFontView*>(
-                    getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, self->field_0x7C))
-                    ->sf9()));
+            IDeviceFontInfo* fontInfo =
+                static_cast<IDeviceFontInfo*>(CDeviceFont::getFontInfo(1, self->field_0x7C));
+            ApplyFontToTxtPanes(rootPane, fontInfo->getFont());
 
             LayoutSetTextBoxFmtValue(self->field_0x7C, "txt_suject", "", 0);
             LayoutSetTextBoxFmtValue(self->field_0x7C, "txt_helpmess", "", 0);
@@ -531,7 +499,7 @@ bool CMainMenu::OnFileEvent(CEventFile* pEventFile) {
 // Render callback: draws the menu layout and its two embedded cursors.
 // Gated on task-busy state, the global mode bitfield (bit 10), the
 // system-window-active gate, and the presentation flag word.
-void CMainMenu::cbRenderBefore() {
+void CMainMenu::cbRenderBefore(CScn*) {
     // Single OR so MWCC emits the short-circuit branches: A -> bne exit,
     // B -> beq continue / b exit (same shape as CMiniMap::cbRenderBefore).
     if (CTaskGame::getInstance()->isFlag01Set() || (gmPauseFlags & 0x200000))
@@ -650,7 +618,7 @@ void CMainMenu_DispatchState(CMainMenu* self) {
     if (MenuTutorialIsCreated() != 0) {
         return;
     }
-    CMainMenuPad* pad = getCurrentPad__Q22cf13CfGameManagerFv();
+    CPad* pad = cf::CfGameManager::getCurrentPad();
     // Held-button early-outs per input style.
     if (cf::CfGameManager::isClassicController(-1) != 0) {
         if (pad->mHeldButtonFlags & 0x08000000) {
@@ -999,7 +967,7 @@ extern "C" void CMainMenu_HandleSubInput(CMainMenu* self) {
         return;
     }
 
-    CMainMenuPad* pad = getCurrentPad__Q22cf13CfGameManagerFv();
+    CPad* pad = cf::CfGameManager::getCurrentPad();
     // First mode query: held-button early-outs per input style.
     if (cf::CfGameManager::isClassicController(-1) != 0) {
         if (pad->mHeldButtonFlags & 0x08000000) {
@@ -1261,7 +1229,7 @@ extern "C" int CMainMenu_IsInputBlocked(CMainMenu* self) {
         CMainMenuPlayerSub* sub = player->spot.field_0xC4;
         if (sub != 0) {
             int cond = (sub->field_4EC >> 15) & 1;
-            if (isSceneLoading__Q22cf13CfGameManagerFv() != 0) cond = 1;
+            if ((int)cf::CfGameManager::isSceneLoading() != 0) cond = 1;
             // Retail shares one return-1 tail (L1C) for the flag/action/arts
             // gates; goto anchors that shared block at its retail position.
             if (cond == 0 && (sub->field_4EC & 2) == 0) goto ret1;
@@ -1275,7 +1243,7 @@ battle:
     // Active battle objects (non-empty manager list). Declaration order
     // mirrors the matched SysWinLog_PollBattleStart loop so MWCC colors node r3 /
     // sentinel r5 like retail.
-    CMainMenuBattleMgr* bm = (CMainMenuBattleMgr*)getInstance__Q22cf14CBattleManagerFv();
+    CMainMenuBattleMgr* bm = (CMainMenuBattleMgr*)cf::CBattleManager::getInstance();
     CMainMenuBattleNode* node;
     int count;
     CMainMenuBattleNode* sentinel = bm->list;

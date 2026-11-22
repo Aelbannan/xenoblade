@@ -3,25 +3,19 @@
 #include <revolution/OS.h>
 #include <cstring>
 
-// Absorbed from monolibdata1e: retail .bss 0x80657238-0x806574B8
-// (0x280 = 16 StopwatchEntry). MWCC treats bare
-// `extern "C" T name[N];` as a declaration (UNDEF); the braced
-// linkage-specification form emits the .bss definition.
-extern "C" {
-CStopwatchUtil::StopwatchEntry lbl_eu_80657238[16];
-}
+CStopwatchUtil::StopwatchEntry CStopwatchUtil::sEntries[CStopwatchUtil::MAX_ENTRIES];
 
 void CStopwatchUtil::initialize(){
     //Mark each entry as empty
     for(int i = 0; i < MAX_ENTRIES; i++){
-        lbl_eu_80657238[i].mFlags = 0;
+        sEntries[i].mFlags = 0;
     }
 }
 
 CStopwatchUtil::StopwatchEntry* CStopwatchUtil::findEntry(const char* pStr){
     for(int i = 0; i < MAX_ENTRIES; i++){
-        if(((lbl_eu_80657238[i].mFlags & StopwatchEntry::FLAGS_OCCUPIED) != 0) && std::strcmp(pStr, lbl_eu_80657238[i].mString) == 0){
-            return &lbl_eu_80657238[i];
+        if(((sEntries[i].mFlags & StopwatchEntry::FLAGS_OCCUPIED) != 0) && std::strcmp(pStr, sEntries[i].mString) == 0){
+            return &sEntries[i];
         }
     }
 
@@ -30,8 +24,8 @@ CStopwatchUtil::StopwatchEntry* CStopwatchUtil::findEntry(const char* pStr){
 
 CStopwatchUtil::StopwatchEntry* CStopwatchUtil::findEmptyEntry(){
     for(int i = 0; i < MAX_ENTRIES; i++){
-        if((lbl_eu_80657238[i].mFlags & StopwatchEntry::FLAGS_OCCUPIED) == 0){
-            return &lbl_eu_80657238[i];
+        if((sEntries[i].mFlags & StopwatchEntry::FLAGS_OCCUPIED) == 0){
+            return &sEntries[i];
         }
     }
 

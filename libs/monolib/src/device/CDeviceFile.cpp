@@ -34,7 +34,8 @@ class CDeviceFile;
 class IWorkEvent;
 
 // Language-substitution helper (defined below in this TU).
-extern "C" void DevFile_SubstLangPath(char* pPath);
+// Canonical C++ declaration: libs/monolib/include/monolib/device/CDeviceFileCri.hpp.
+void DevFile_SubstLangPath(char* pPath);
 
 // Pack-archive queries shared with CWorkSystemPack.
 // Defined in monolib/src/work/CWorkSystemPack.cpp with C++ linkage.
@@ -110,6 +111,7 @@ public:
     static CDeviceFile* getInstance();
     static void cancelJobsForPath(const char* pPath);
     static void cancel(CFileHandle* pHandle);
+    static int getFileSize(const char* pPath, int param);
 };
 
 class CDeviceFileDvd {
@@ -475,10 +477,9 @@ extern "C" bool isDeviceFileJobName(const char* name) {
            name == "CDeviceFileJobValidFileCri";
 }
 
-// File-size dispatch: device-specific getters are old-MWCC-mangled imports
-// that take an extra (mangle-invisible) trailing arg forwarded from r4.
+// File-size dispatch: the DVD getter is an old-MWCC-mangled import that
+// takes an extra (mangle-invisible) trailing arg forwarded from r4.
 extern "C" int getFileSize__14CDeviceFileDvdFPCc(const char* pPath, int param);
-extern "C" int getFileSize__14CDeviceFileCriFPCci(const char* pPath, int param);
 
 // CDeviceFile::getFileSize(const char*). Returns -1 when the path is not a
 // plain relative path (absolute prefix, drive colon, or backslash root).
@@ -505,7 +506,7 @@ extern "C" int getFileSize__11CDeviceFileFPCc(const char* path, int param) {
     }
     if (!absolute) {
         if (sStandbyReadyFlag) {
-            result = getFileSize__14CDeviceFileCriFPCci(path, param);
+            result = CDeviceFileCri::getFileSize(path, param);
         } else {
             result = getFileSize__14CDeviceFileDvdFPCc(path, param);
         }

@@ -46,7 +46,7 @@ public:
     virtual ~CMainMenu();
     virtual void Init();
     virtual void Term();
-    virtual void cbRenderBefore();
+    virtual void cbRenderBefore(CScn* scene);
     virtual bool OnFileEvent(CEventFile* pEventFile);
 
     static CMainMenu* create(CProcess* parent, CScn* scene);

@@ -17,6 +17,12 @@
 extern "C" __declspec(align(4)) const char camSetCmdFormat[0x1E] =
     "camset %d %v3 %v3 %f %f %f %f";
 
+// name-guess: retail .sdata 0x80663A08 holds the camera-select command key.
+const char* sCamSetCmdKey = camSetCmdFormat;
+
+// name-guess: retail .sdata 0x80663A0C holds the no-view sentinel.
+u32 sNoViewId = 0xFFFFFFFF;
+
 // Stores the camera parameter block, fills every view slot with the "no view"
 // sentinel, then creates the ten default cameras (0..9) in the scene pool.
 CScnCameraMan::CScnCameraMan(CScnCameraParam* param) {
@@ -34,7 +40,7 @@ CScnCameraMan::CScnCameraMan(CScnCameraParam* param) {
     unsigned short n = 0;
     for (; n < 10; n++) {
         mCount = n;
-        mViews[mCount] = lbl_eu_80663A0C;
+        mViews[mCount] = sNoViewId;
     }
     mCount = 10;
     for (int i = 0; i < 10; i++) {
@@ -335,7 +341,7 @@ bool CScnCameraMan::WorkEvent3(UNKTYPE* event) {
 //   definitions adopt their plain retail symbol names.
 bool CScnCameraMan::WorkEvent1(UNKTYPE* payload, const char* cmd) {
     CEvent1* ev = (CEvent1*)payload;
-    if (cmd != (const char*)lbl_eu_80663A08) {
+    if (cmd != sCamSetCmdKey) {
         return false;
     }
 
@@ -394,12 +400,11 @@ bool CScnCameraMan::WorkEvent1(UNKTYPE* payload, const char* cmd) {
     return true;
 }
 
-extern u32 lbl_eu_80663A08;
-extern "C" void registerCmd__11CScriptCodeFv(void* a, void* b);
-extern "C" void CamMan_EvalScript0_B3FC() { registerCmd__11CScriptCodeFv((void*)lbl_eu_80663A08, 0); }
+extern "C" void registerCmd__11CScriptCodeFv(const char* a, void* b);
+extern "C" void CamMan_EvalScript0_B3FC() { registerCmd__11CScriptCodeFv(sCamSetCmdKey, 0); }
 
-extern "C" void unregisterCmd__11CScriptCodeFv(void* self);
-extern "C" void CamMan_EvalScript_B408() { unregisterCmd__11CScriptCodeFv((void*)lbl_eu_80663A08); }
+extern "C" void unregisterCmd__11CScriptCodeFv(const char* self);
+extern "C" void CamMan_EvalScript_B408() { unregisterCmd__11CScriptCodeFv(sCamSetCmdKey); }
 
 
 // `pos` into camera space (view matrix at +0xCC), rejects points behind the

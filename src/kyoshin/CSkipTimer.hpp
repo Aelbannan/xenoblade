@@ -21,14 +21,6 @@
   controller (0x28 bytes at +0x70). Total size 0x98 bytes.
 */
 
-// Layout-compatible access to the color-alpha byte at +0xB8 of an
-// nw4r::lyt::Pane (returned by FindPaneByName). Used to mirror the pane
-// alpha between the two slot panes in CSkipTimer2OnFwdDone / CSkipTimer2OnRewindDone.
-struct PaneAlphaB8 {
-    u8 pad[0xB8];   /* 0x000 */
-    u8 field_0xB8;  /* 0x0B8 color-alpha byte */
-};
-
 // Abstract class matching vtable slot 2 (offset 0x8) of the object that
 // CSkipTimer2::mField18 points to. Pure virtual so MWCC emits no vtable.
 class UnkObjField18 {

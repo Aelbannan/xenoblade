@@ -7,39 +7,9 @@
 const char lbl_eu_80522848[40] = {0x54,0x43,0x68,0x69,0x6C,0x64,0x4C,0x69,0x73,0x74,0x48,0x65,0x61,0x64,0x65,0x72,0x3C,0x43,0x43,0x68,0x69,0x6C,0x64,0x4C,0x69,0x73,0x74,0x4E,0x6F,0x64,0x65,0x3E,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00};  /* "TChildListHeader<CChildListNode>" pad to 0x80522848-70 */
 // sdata 0x806635E0 (0x8): RTTI typeinfo { class-name, cast-table=0 }.
 u32 lbl_eu_806635E0[2] = { (u32)&lbl_eu_80522848, 0 };
-// data 0x8056BBA0 (0x10): CChildListNode vtable {&__RTTI__14CChildListNode, 0,
-// &__dt__14CChildListNodeFv, &Reset__14CChildListNodeFv} (the ctor below
-// stores this label at +0x10).
-void* lbl_eu_8056BBA0[4] = {
-    (void*)&__RTTI__14CChildListNode, 0, (void*)&__dt__14CChildListNodeFv,
-    (void*)&Reset__14CChildListNodeFv,
-};
-/* UNRESOLVED: lbl_eu_8056BBB0 (0x10, TChildListHeader<CChildListNode> vtable
- * {&lbl_eu_806635E0, 0, &__dt__34TChildListHeader<14CChildListNode>Fv, 0}) --
- * the dtor reloc name cannot be written in C++ source (MWCC rejects '<' in
- * extern "C" ids and &T::~T). MWCC emits the equivalent weak
- * __vt__34TChildListHeader<14CChildListNode> (0xC, .data @+0x10: {0, 0,
- * &__dt__...Fv}) in this TU; coordinator must rename it to lbl_eu_8056BBB0,
- * insert the [0] reloc -> lbl_eu_806635E0 and pad to 0x10. Not faked. */
-
-// Novtable vptr slots have no C++ members: raw view of the retail layout
-// (CChildListNode vtable at +0x10, TChildListHeader vtable at +0x34).
-struct CChildListNodeVptrs {
-    u8 _00[0x10];
-    void* vptr10;   // 0x10
-    u8 _14[0x20];   // 0x14..0x34
-    void* vptr34;   // 0x34
-};
 
 CChildListNode::CChildListNode()
     : mParent(NULL) {
-
-    // vptr slots (novtable): CChildListNode vtable at +0x10 (overrides the
-    // base CDoubleListNode vptr), TChildListHeader vtable at +0x34 (mChildren).
-    // Retail store order: mParent, vptr@0x10, vptr@0x34, mChildren.Reset().
-    CChildListNodeVptrs* slots = (CChildListNodeVptrs*)this;
-    slots->vptr10 = (void*)lbl_eu_8056BBA0;
-    slots->vptr34 = (void*)lbl_eu_8056BBB0;
     mChildren.Reset();
 }
 

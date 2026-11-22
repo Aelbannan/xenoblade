@@ -263,7 +263,7 @@ tick:
 
 // noinline: retail keeps the virtual dispatch as a real call (the thunks
 // tail-branch to this symbol; an inline would fold the thunks to empty).
-__declspec(noinline) void CMenuPassiveSkill::cbRenderBefore() {
+__declspec(noinline) void CMenuPassiveSkill::cbRenderBefore(CScn*) {
     // Draw only while the game task is idle and the realtime-event busy bit
     // (bit 21 of the shared mode word) is clear.
     CTaskGame::getInstance();
@@ -373,7 +373,7 @@ extern "C" __declspec(noinline) void dispatchPassiveSkillInput(CMenuPassiveSkill
         self->field_2B0 = cap;
     }
 
-    CMenuPassivePadView* pad = getCfPadData__Q22cf13CfGameManagerFv();
+    cf::CfPadData* pad = cf::CfGameManager::getCfPadData();
     int isClassic = cf::CfGameManager::isClassicController(-1);
 
     if (isClassic != 0) {
@@ -389,7 +389,7 @@ extern "C" __declspec(noinline) void dispatchPassiveSkillInput(CMenuPassiveSkill
         } else if ((turbo & 0x04000000) != 0 && special != 0) {
             UI_CPassiveSkill_thunk28_67BA0(self->mPassiveSkill);
         } else {
-            u32 held = pad->field_4;
+            u32 held = pad->mPad.mPressedButtonFlags;
             if ((held & 0x00200000) != 0) {
                 UI_CPassiveSkill_thunk28_68594(self->mPassiveSkill);
             } else if ((held & 0x00400000) != 0) {
@@ -413,7 +413,7 @@ extern "C" __declspec(noinline) void dispatchPassiveSkillInput(CMenuPassiveSkill
     } else {
         // -- Wii chain --
         UI_CPassiveSkill_setByte180(self->mPassiveSkill, 0);
-        u32 first = pad->field_0;
+        u32 first = pad->mPad.mHeldButtonFlags;
         if ((first & 0x00001000) != 0 && code80135FDC_getByte_64077() > 1 &&
             CPassiveSkill_isSyswinOrLearned((UI_CPassiveSkill*)self->mPassiveSkill) == 0) {
             // Reset the idle timer (sound op 2 when it had run past the F4
@@ -430,7 +430,7 @@ extern "C" __declspec(noinline) void dispatchPassiveSkillInput(CMenuPassiveSkill
                 UI_CPassiveSkill_thunk28_67BA0(self->mPassiveSkill);
             }
         } else {
-            u32 held = pad->field_4;
+            u32 held = pad->mPad.mPressedButtonFlags;
             if ((held & 0x00000010) != 0) {
                 UI_CPassiveSkill_thunk28_68594(self->mPassiveSkill);
             } else if ((held & 0x00000020) != 0) {

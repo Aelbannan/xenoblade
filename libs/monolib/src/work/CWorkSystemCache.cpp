@@ -7,7 +7,7 @@
 #include "monolib/util/MemManager.hpp"
 
 #include "monolib/work/CWorkSystemCache.hpp"
-
+CWorkSystemCache* sCacheInstance; // name-guess: singleton at retail 0x806659C8; no recovered name in symbols.txt
 extern "C" {
 
 // _reslist_base<CCacheItem>::clearList() - walk nodes clearing only mNext.
@@ -26,7 +26,7 @@ u32 SysCacheCountListNodes(void) {
     CacheListNode* curNode;
     CacheListNode* endNode;
     u32 length = 0;
-    endNode = lbl_eu_806659C8->mCache.mStartNodePtr;
+    endNode = sCacheInstance->mCache.mStartNodePtr;
     curNode = endNode->mNext;
     while (curNode != endNode) {
         length++;
@@ -38,7 +38,7 @@ u32 SysCacheCountListNodes(void) {
 // Look up the index-th node's item in the singleton cache list and write out
 // its fields; returns true on a hit.
 bool SysCacheFetchIndexedEntry(int index, u32* outField3C, u8** outField4Addr, u32* outField40) {
-    CacheListNode* end = lbl_eu_806659C8->mCache.mStartNodePtr;
+    CacheListNode* end = sCacheInstance->mCache.mStartNodePtr;
     CacheListNode* node = end->mNext;
     int i = 0;
     while (node != end) {
@@ -98,15 +98,15 @@ bool CWorkSystemCache::wkStandbyLogin() {
 
 #pragma optimize_for_size on
 CWorkSystemCache::~CWorkSystemCache() {
-    lbl_eu_806659C8 = NULL;
+    sCacheInstance = NULL;
 }
 
 void CWorkSystemCache::wkUpdate() {
     // Walk the singleton's resource list; logged-in items get released and
     // unlinked. The unlink helper takes &node and advances past the removed
     // entry, so the caller just resumes from the saved 'next' pointer.
-    CacheListNode* node = lbl_eu_806659C8->mCache.mStartNodePtr->mNext;
-    while (node != lbl_eu_806659C8->mCache.mStartNodePtr) {
+    CacheListNode* node = sCacheInstance->mCache.mStartNodePtr->mNext;
+    while (node != sCacheInstance->mCache.mStartNodePtr) {
         CacheListNode* next = node->mNext;
         SysCacheDecLoginRef(node->mItem);
         if (SysCacheItemWaitReady(node->mItem)) {
@@ -114,7 +114,7 @@ void CWorkSystemCache::wkUpdate() {
                 delete node->mItem;
                 node->mItem = NULL;
             }
-            SysCacheUnlinkFront(&lbl_eu_806659C8->mCache, CacheListIter(node));
+            SysCacheUnlinkFront(&sCacheInstance->mCache, CacheListIter(node));
         }
         node = next;
     }
@@ -141,7 +141,7 @@ bool CWorkSystemCache::wkStandbyLogout() {
 
 CWorkSystemCache::CWorkSystemCache(const char* pName, CWorkThread* pParent)
     : CWorkThread(pName, pParent, 0) {
-    lbl_eu_806659C8 = this;
+    sCacheInstance = this;
     mType = THREAD_CWORKSYSTEMCACHE;
     mCache.mList = (CacheListNode*)mtl::MemManager::allocate_array(
         0x180, CWorkThreadSystem::getWorkMem());
@@ -161,5 +161,4 @@ extern "C" void SysCacheDecLoginRef(CCacheItem* ths) {
 // _reslist_base<CCacheItem*>.
 
 // [.sbss] 0x806659C8-0x806659D0 (8B): singleton cache pointer + pad word.
-CWorkSystemCache* lbl_eu_806659C8;
 u32 lbl_eu_806659CC;

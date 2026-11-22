@@ -86,12 +86,7 @@ extern "C" void Bdat_WriteVmArg_B800(VMArg* out, void* data, u32 type);
 extern "C" int getVal(VMThread* t, void* bdat);
 extern "C" int getArrayVal(VMThread* t, void* bdat);
 extern "C" {
-extern s8 lbl_eu_80663D10;
-extern u32 lbl_eu_80663D14;
-extern void* lbl_eu_805705D0[8];
-
 BOOL vmOCRegist(OCData* pOC);
-extern OCData lbl_eu_80524E40;
 
 u32 Bdat_DecodeValue_B6A0(void* base, void* data, u32 type);
 

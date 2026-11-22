@@ -17,6 +17,7 @@
 // kyoshin/cf/CBattleManager.hpp; no rename guard is needed anymore.
 #include "kyoshin/cf/CBattleManager.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
+#include "kyoshin/cf/CItemImpl.hpp"   // real item-impl vtable interface
 #include "kyoshin/cf/CfPadData.hpp"
 #include "monolib/device/CDeviceFile.hpp"
 #include "monolib/device/CDeviceVI.hpp"
@@ -55,17 +56,6 @@ u32 gItemMultiClosePaneWord;
 u32 gpItemMultiInstance;
 u32 gpItemMultiSkillBdat;
 
-// CfGameManagerUnityHelpers.hpp (via the include chain) declares the unified
-// pointer-arg extern "C" CItem_initItemImplInstances(void*); this TU needs a
-// typed view (CMenuGetItemImpl* taking CMenuGetItemMultiEntry*), which still
-// conflicts at global scope, so keep it in a namespace and shim the call
-// sites through the macro (same pattern as CItemBoxInfo.hpp).
-namespace getMenuMultiItemImplShim {
-extern "C" CMenuGetItemImpl* CItem_initItemImplInstances(CMenuGetItemMultiEntry*);
-}
-using getMenuMultiItemImplShim::CItem_initItemImplInstances;
-#define CItem_initItemImplInstances(entry) \
-    getMenuMultiItemImplShim::CItem_initItemImplInstances(entry)
 
 
 struct CMenuGetItemPaneWord {
@@ -98,34 +88,6 @@ public:
     virtual CMenuGetItemPaneWord getPaneWord(u32) = 0;
 };
 
-// Wide (u16-returning) view of the item impl's +0x30 slot: GetItemMulti_FillRankSlots
-// gates its three rank slots on this count kept as a full halfword (retail
-// clrlwi 16), while the byte-returning view used by Init masks to 8 bits.
-class CMenuGetItemImplCount {
-public:
-    virtual u16 getCount(CMenuGetItemMultiEntry*) = 0;      // +0x08
-    virtual void v0C() = 0;
-    virtual void v10() = 0;
-    virtual void v14() = 0;
-    virtual void v18() = 0;
-    virtual void v1C() = 0;
-    virtual char* getName(CMenuGetItemMultiEntry*) = 0;     // +0x20
-    virtual void v24() = 0;
-    virtual void v28() = 0;
-    virtual void* getSlot(CMenuGetItemMultiEntry*, u8) = 0; // +0x2C
-    virtual u16 getCount30(CMenuGetItemMultiEntry*) = 0;    // +0x30
-};
-
-// Init assigns getRankCount (+0x08) into a u16 that must stay live across the
-// following getName virtual call (retail clrlwi into the callee-saved). The
-// header's u16-returning view lets MWCC emit a plain mr; this u32 view forces
-// the assignment truncate.
-class CMenuGetItemImplRankWide {
-public:
-    virtual u32 getRankCount(CMenuGetItemMultiEntry*) = 0; // +0x08
-};
-
-class CMenuGetItemImpl;
 
 struct CMenuGetItemTextureHeader {
     u16 height;
@@ -143,12 +105,6 @@ struct CMenuGetItemTextureResource {
 
 extern "C" {
 
-// Ctor-only imports (see __ct__CMenuGetItemMulti below).
-extern char lbl_eu_8052D238[]; // interim composite vtable
-extern char lbl_eu_805338BC[]; // final composite vtable base
-extern u32 __ptmf_null[3];     // null pointer-to-member-function constant
-void __ct__8CProcessFv(CProcess*);
-
 // Match CItem.cpp defs: bare cmpi on r3 in Init special2 (u8 view inserts clrlwi).
 s32 CItemBlock_countEmpty(u32);
 // Slot-sum call sites want a raw mr of r3; u32 return matches the def and
@@ -165,27 +121,25 @@ CSysWin* __dt__7CSysWinFv(CSysWin*, int);
 void __ct__14Class_8045F858FP17UnkClass_8045F564(Class_8045F858*, UnkClass_8045F564*);
 void __dt__14Class_8045F858Fv(Class_8045F858*, int);
 void GetItemMulti_ClearRanks(CMenuGetItemMulti*);
-void GetItemMulti_ShowDetail(CMenuGetItemMulti*, int, CMenuGetItemMultiEntry*);
-void GetItemMulti_ShowEquipped(CMenuGetItemMulti*, int, CMenuGetItemMultiEntry*);
-void GetItemMulti_ShowEntryDetailPanes(CMenuGetItemMulti*, int, CMenuGetItemMultiEntry*);
-void GetItemMulti_ShowItemRank(CMenuGetItemMulti*, int, CMenuGetItemMultiEntry*);
-void GetItemMulti_FillEntryRankPane(CMenuGetItemMulti*, CMenuGetItemMultiEntry*);
+void GetItemMulti_ShowDetail(CMenuGetItemMulti*, int, CItemExt*);
+void GetItemMulti_ShowEquipped(CMenuGetItemMulti*, int, CItemExt*);
+void GetItemMulti_ShowEntryDetailPanes(CMenuGetItemMulti*, int, CItemExt*);
+void GetItemMulti_ShowItemRank(CMenuGetItemMulti*, int, CItemExt*);
+void GetItemMulti_FillEntryRankPane(CMenuGetItemMulti*, CItemExt*);
 void GetItemMulti_ShowIdCategoryPanes(CMenuGetItemMulti*, int);
 void GetItemMulti_ShowCat13(CMenuGetItemMulti*, int);
 void GetItemMulti_RefreshList(CMenuGetItemMulti*);
-void GetItemMulti_FillRankSlots(CMenuGetItemMulti*, int, CMenuGetItemMultiEntry*);
+void GetItemMulti_FillRankSlots(CMenuGetItemMulti*, int, CItemExt*);
 void GetItemMulti_HandlePad(CMenuGetItemMulti*);
 void GetItemMulti_PruneEntries(CMenuGetItemMulti*);
 void GetItemMulti_HandleWindowPadOnce(CMenuGetItemMulti*);
 void GetItemMulti_HandleWindowPadAuto(CMenuGetItemMulti*);
 void GetItemMulti_FitPanes(CMenuGetItemMulti*);
-void __dt__8CProcessFv(CProcess*, int);
-u8* __ct__801B2794(u8*, u32, u32);
 }
 
 // setPresentationFlag: canonical setPresentationFlag__Q22cf13CfGameManagerFv(bool).
 extern "C" void __dt__17CMenuGetItemMultiFv(void*, int);
-extern "C" void cbRenderBefore__17CMenuGetItemMultiFv(void*);
+extern "C" void cbRenderBefore__17CMenuGetItemMultiFP4CScn(void*);
 
 // Constructor (retail unmangled global `__ct__CMenuGetItemMulti`, written as a
 // C-ABI free function like CTaskGameEvt/CMenuMakeCrystal so no class-length
@@ -197,7 +151,8 @@ extern "C" void cbRenderBefore__17CMenuGetItemMultiFv(void*);
 // entry array and cursor/system-window sub-objects, and arms the state bytes.
 CMenuGetItemMulti::CMenuGetItemMulti(CScn* scn, u32 item0, u32 item1,
                                      u32 item2, u32 item3, u32 argF6,
-                                     u32 arg201, u8 argSpecial) {
+                                     u32 arg201, u8 argSpecial)
+    : mSystemWindow(0) {
     // Zero constant declared up front: its live range then starts at entry
     // (like MWCC's implicit member-init sequence) and wins the lowest
     // callee-saved register, matching retail r22.
@@ -215,9 +170,8 @@ CMenuGetItemMulti::CMenuGetItemMulti(CScn* scn, u32 item0, u32 item1,
     this->mInitialItems[3] = item3;
     this->mVisibleItemCount = zero;
 
-    this->mEntryCount = zero;
+    this->mItems.mCount = zero;
 
-    __ct__7CSysWinFUc(reinterpret_cast<CSysWin*>(&this->mSystemWindow[0]), 0);
 
     // Second zero constant for the tail clear (retail reuses the freed scn
     // register slot as a fresh zero, r24).
@@ -239,44 +193,59 @@ CMenuGetItemMulti::CMenuGetItemMulti(CScn* scn, u32 item0, u32 item1,
     this->field_20F = argSpecial;
     // Retail fully unrolls this clear (interleaved stb/stw/sth per slot).
     this->mPaneVisible[0] = (u8)tailZero;
-    this->mVisibleEntries[0] = reinterpret_cast<CMenuGetItemMultiEntry*>(tailZero);
+    this->mVisibleEntries[0] = reinterpret_cast<CItemExt*>(tailZero);
     this->mVisibleItemIds[0] = (u16)tailZero;
     this->mPaneVisible[1] = (u8)tailZero;
-    this->mVisibleEntries[1] = reinterpret_cast<CMenuGetItemMultiEntry*>(tailZero);
+    this->mVisibleEntries[1] = reinterpret_cast<CItemExt*>(tailZero);
     this->mVisibleItemIds[1] = (u16)tailZero;
     this->mPaneVisible[2] = (u8)tailZero;
-    this->mVisibleEntries[2] = reinterpret_cast<CMenuGetItemMultiEntry*>(tailZero);
+    this->mVisibleEntries[2] = reinterpret_cast<CItemExt*>(tailZero);
     this->mVisibleItemIds[2] = (u16)tailZero;
     this->mPaneVisible[3] = (u8)tailZero;
-    this->mVisibleEntries[3] = reinterpret_cast<CMenuGetItemMultiEntry*>(tailZero);
+    this->mVisibleEntries[3] = reinterpret_cast<CItemExt*>(tailZero);
     this->mVisibleItemIds[3] = (u16)tailZero;
     this->mPaneVisible[4] = (u8)tailZero;
-    this->mVisibleEntries[4] = reinterpret_cast<CMenuGetItemMultiEntry*>(tailZero);
+    this->mVisibleEntries[4] = reinterpret_cast<CItemExt*>(tailZero);
     this->mVisibleItemIds[4] = (u16)tailZero;
     this->mPaneVisible[5] = (u8)tailZero;
-    this->mVisibleEntries[5] = reinterpret_cast<CMenuGetItemMultiEntry*>(tailZero);
+    this->mVisibleEntries[5] = reinterpret_cast<CItemExt*>(tailZero);
     this->mVisibleItemIds[5] = (u16)tailZero;
-    this->mEntryCount = tailZero;
-    this->mEntryCount = 0;
+    this->mItems.mCount = tailZero;
+    this->mItems.mCount = 0;
 }
 
-// Retail __dt__801B2754: deleting destructor of the 0x36c get-item-multi
-// task object (empty body - the ctor __ct__801B2794 owns all state init).
-u8* __dt__801B2754(u8* _this, int flags) {
-    if (_this != 0 && flags > 0) {
-        operator delete(_this);
+// Second constructor (retail __ct__801B2794): seeds the item list from a
+// prepared CItemFour (copied record-by-record) instead of four item ids.
+CMenuGetItemMulti::CMenuGetItemMulti(CScn* scn, const CItemFour& items)
+    : mScn(scn), mAnim(0), mInitialItems(), mVisibleItemCount(0),
+      mItems(items), mCursor(NULL), mSystemWindow(0) {
+    mMaxVisibleItems = 4;
+    mHasSpecialItem = 0;
+    field_1F4 = 1;
+    field_1F5 = 0;
+    field_1F6 = 0;
+    field_1F8 = 0;
+    field_1FC = 0;
+    field_200 = 0;
+    field_201 = 1;
+    mFileHandle = 0;
+    field_208 = 0;
+    field_20C = 0;
+    field_20D = 0;
+    field_20E = 0;
+    field_20F = 0;
+    for (int i = 0; i < 6; i++) {
+        mPaneVisible[i] = 0;
+        mVisibleEntries[i] = 0;
+        mVisibleItemIds[i] = 0;
     }
-    return _this;
 }
-
-void __ct__801B2794(){}
 
 CMenuGetItemMulti::~CMenuGetItemMulti() {
     // CSysWin is raw storage, so its dtor is explicit here; the real CCur18
     // and UnkClass_8045F564 members are destroyed implicitly in reverse
     // declaration order, followed by the IUIWindow/CProcess base dtor that
     // MWCC emits with the retail double null-check.
-    __dt__7CSysWinFv(reinterpret_cast<CSysWin*>(&mSystemWindow[0]), -1);
 }
 
 extern "C" void GetItemMulti_ClearDoneLatch() { gpItemMultiSkillBdat = 0; }
@@ -301,7 +270,7 @@ void CMenuGetItemMulti::Init() {
     char fullPaneName[32];
     u32 initialItems[4];
 
-    if (mEntryCount != 0 || field_1F6 != 0) {
+    if (mItems.mCount != 0 || field_1F6 != 0) {
         setPresentationFlag__Q22cf13CfGameManagerFv(1);
         code80135FDC_postIncByte_64080();
     }
@@ -461,26 +430,25 @@ void CMenuGetItemMulti::Init() {
     gItemMultiPaneColor06.a = gItemMultiPaneColor04.a;
     gItemMultiPaneColor07.a = gItemMultiPaneColor05.a;
 
-    if (mEntryCount != 0) {
-        CMenuGetItemMultiEntry* entry = &mFirstEntry;
-        while (entry != &mFirstEntry + mEntryCount) {
+    if (mItems.mCount != 0) {
+        CItemExt* entry = &mItems.mItems[0];
+        while (entry != &mItems.mItems[0] + mItems.mCount) {
             if (entry != NULL) {
                 sprintf(itemPaneName, "txt_item%02d", mVisibleItemCount + 1);
                 char* itemName;
-                if (((entry->packed >> 16) & 0xf) == 3) {
+                if (((entry->field_00 >> 16) & 0xf) == 3) {
                     ml::FixStr<32> rankText(false);
                     rankText.mString[0] = 0;
                     rankText.mLength = 0;
-                    u16 rankCount = (u16)reinterpret_cast<CMenuGetItemImplRankWide*>(
-                        CItem_initItemImplInstances(entry))->getRankCount(entry);
-                    itemName = CItem_initItemImplInstances(entry)->getName(entry);
+                    u16 rankCount = (u16)CItem_initItemImplInstances((CItemData*)entry)->vf08((CItemData*)entry);
+                    itemName = (char*)CItem_initItemImplInstances((CItemData*)entry)->vf20((CItemData*)entry);
                     char* rankName = BdatTouchStringCell("MNU_item",
                                                    "name",
                                                    30 - (rankCount - 1));
                     rankText.format("%s%s", itemName, rankName);
                     LayoutSetTextBoxFmtValue(mLayout, itemPaneName, rankText.mString, 0);
                 } else {
-                    itemName = CItem_initItemImplInstances(entry)->getName(entry);
+                    itemName = (char*)CItem_initItemImplInstances((CItemData*)entry)->vf20((CItemData*)entry);
                     LayoutSetTextBoxFmtValue(mLayout, itemPaneName, itemName, 0);
                 }
 
@@ -492,7 +460,7 @@ void CMenuGetItemMulti::Init() {
                 }
 
                 char* textureName = "mf00_com00_dmy.tpl";
-                switch ((entry->packed >> 16) & 0xf) {
+                switch ((entry->field_00 >> 16) & 0xf) {
                 case 2: textureName = "mf00_reg20_cat00.tpl"; break;
                 case 3: textureName = "mf00_reg20_cat07.tpl"; break;
                 case 4: textureName = "mf00_reg20_cat01.tpl"; break;
@@ -508,7 +476,7 @@ void CMenuGetItemMulti::Init() {
                     // neg/or/rlwinm bool-normalize (not rlwinm.+beq on a u8 local).
                     u32 fontHit = (u8)BdatGetU8Direct(
                         (const void*)fontCheck, "rare",
-                        BdatGetItemId((u16)(entry->packed >> 20)));
+                        BdatGetItemId((u16)(entry->field_00 >> 20)));
                     textureName = "mf00_reg20_cat12.tpl";
                     if (((u32)(-(s32)fontHit | fontHit) >> 31) == 0) {
                         textureName = "mf00_reg20_cat10.tpl";
@@ -539,7 +507,7 @@ void CMenuGetItemMulti::Init() {
                     // Commuted high bound blocks subi/cmpli fusion
                     // (CVS_THREAD_BATTLE_MAIN). Negating it yields retail's
                     // cmpi/ble; body order is slots then rank (retail layout).
-                    s32 cat = (s32)((entry->packed >> 16) & 0xf);
+                    s32 cat = (s32)((entry->field_00 >> 16) & 0xf);
                     if (cat < 4) {
                         goto check_cat_eq2;
                     }
@@ -561,15 +529,15 @@ void CMenuGetItemMulti::Init() {
                     {
                         // u32 + (u8) cast: retail clrlwi into the live slotCount
                         // reg (r19); a u8 local truncates to r0 then mr.
-                        u32 slotCount = (u8)CItem_initItemImplInstances(entry)->hasSlot(entry);
+                        u32 slotCount = (u8)CItem_initItemImplInstances((CItemData*)entry)->vf30((CItemData*)entry);
                         if (slotCount != 0) {
                             LayoutSetTextBoxFmtValue(mLayout, itemPaneName, getErrMesText16(), 0);
                             PaneMatSetTevColorsByName(mLayout, itemPaneName, &gItemMultiPaneColor0A,
                                          &gItemMultiPaneColor0B);
                             for (u8 slot = 0; slot < slotCount; ++slot) {
-                                if (CItem_initItemImplInstances(entry)->getSlotId(entry, slot) == -1) {
+                                if ((s16)CItem_initItemImplInstances((CItemData*)entry)->vf40((CItemData*)entry, slot) == -1) {
                                     u16* slotData = reinterpret_cast<u16*>(
-                                        CItem_initItemImplInstances(entry)->getSlot(entry, slot));
+                                        CItem_initItemImplInstances((CItemData*)entry)->vf2C((CItemData*)entry, slot));
                                     if (slotData != NULL && (slotData[2] & 1) != 0) {
                                         LayoutSetTextBoxFmtValue(mLayout, itemPaneName, getErrMesText15(), 0);
                                         PaneMatSetTevColorsByName(mLayout, itemPaneName, &gItemMultiPaneColor0C,
@@ -583,8 +551,7 @@ void CMenuGetItemMulti::Init() {
                     goto after_cat_dispatch;
                 do_rank:
                     {
-                        u16 rankCount = (u16)reinterpret_cast<CMenuGetItemImplRankWide*>(
-                            CItem_initItemImplInstances(entry))->getRankCount(entry);
+                        u16 rankCount = (u16)CItem_initItemImplInstances((CItemData*)entry)->vf08((CItemData*)entry);
                         LayoutSetTextBoxFmtValue(mLayout, itemPaneName,
                                        BdatTouchStringCell("MNU_item",
                                                     "name",
@@ -600,11 +567,11 @@ void CMenuGetItemMulti::Init() {
                 // selects cmpli (retail); s32 would emit cmpi.
                 {
                     u32 special = 0;
-                    u32 catN = (entry->packed >> 16) & 0xf;
+                    u32 catN = (entry->field_00 >> 16) & 0xf;
                     if (catN != 3 && catN != 9) {
                         u32 hit = (u8)BdatGetU8Direct(
                             (const void*)::cf::CfBdat::spItmItemListFileData, "item_keep",
-                            (u16)(entry->packed >> 20));
+                            (u16)(entry->field_00 >> 20));
                         special = (u32)(-(s32)hit | hit) >> 31;
                     }
                     if (catN == 12 || special != 0) {
@@ -612,7 +579,7 @@ void CMenuGetItemMulti::Init() {
                     }
                 }
                 {
-                    u32 packed = entry->packed;
+                    u32 packed = entry->field_00;
                     u32 tmp = (packed >> 16) & 0xf;
                     u16 itemKey = (u16)(packed >> 20);
                     if (tmp != 0) {
@@ -867,44 +834,44 @@ void CMenuGetItemMulti::Init() {
 
     u8 systemWindowStorage[sizeof(CSysWin)];
     __ct__7CSysWinFUc(reinterpret_cast<CSysWin*>(&systemWindowStorage[0]), 2);
-    reinterpret_cast<CSysWin*>(&mSystemWindow[0])->mMemRegion.unk0 =
+    mSystemWindow.mMemRegion.unk0 =
         reinterpret_cast<CSysWin*>(&systemWindowStorage[0])->mMemRegion.unk0;
-    reinterpret_cast<CSysWin*>(&mSystemWindow[0])->mMemRegion.unk4 =
+    mSystemWindow.mMemRegion.unk4 =
         reinterpret_cast<CSysWin*>(&systemWindowStorage[0])->mMemRegion.unk4;
-    reinterpret_cast<CSysWin*>(&mSystemWindow[0])->mMemRegion.unk8 =
+    mSystemWindow.mMemRegion.unk8 =
         reinterpret_cast<CSysWin*>(&systemWindowStorage[0])->mMemRegion.unk8;
-    reinterpret_cast<CSysWin*>(&mSystemWindow[0])->mMemRegion.unkC =
+    mSystemWindow.mMemRegion.unkC =
         reinterpret_cast<CSysWin*>(&systemWindowStorage[0])->mMemRegion.unkC;
-    reinterpret_cast<CSysWin*>(&mSystemWindow[0])->mFileHandle =
+    mSystemWindow.mFileHandle =
         reinterpret_cast<CSysWin*>(&systemWindowStorage[0])->mFileHandle;
-    reinterpret_cast<CSysWin*>(&mSystemWindow[0])->mTagProcessor =
+    mSystemWindow.mTagProcessor =
         reinterpret_cast<CSysWin*>(&systemWindowStorage[0])->mTagProcessor;
-    reinterpret_cast<CSysWin*>(&mSystemWindow[0])->mArcAccessor =
+    mSystemWindow.mArcAccessor =
         reinterpret_cast<CSysWin*>(&systemWindowStorage[0])->mArcAccessor;
-    reinterpret_cast<CSysWin*>(&mSystemWindow[0])->mLayout =
+    mSystemWindow.mLayout =
         reinterpret_cast<CSysWin*>(&systemWindowStorage[0])->mLayout;
-    reinterpret_cast<CSysWin*>(&mSystemWindow[0])->mAnimTrans =
+    mSystemWindow.mAnimTrans =
         reinterpret_cast<CSysWin*>(&systemWindowStorage[0])->mAnimTrans;
-    reinterpret_cast<CSysWin*>(&mSystemWindow[0])->field_28 =
+    mSystemWindow.field_28 =
         reinterpret_cast<CSysWin*>(&systemWindowStorage[0])->field_28;
-    reinterpret_cast<CSysWin*>(&mSystemWindow[0])->field_2C =
+    mSystemWindow.field_2C =
         reinterpret_cast<CSysWin*>(&systemWindowStorage[0])->field_2C;
-    reinterpret_cast<CSysWin*>(&mSystemWindow[0])->field_30 =
+    mSystemWindow.field_30 =
         reinterpret_cast<CSysWin*>(&systemWindowStorage[0])->field_30;
-    reinterpret_cast<CSysWin*>(&mSystemWindow[0])->field_34 =
+    mSystemWindow.field_34 =
         reinterpret_cast<CSysWin*>(&systemWindowStorage[0])->field_34;
-    reinterpret_cast<CSysWin*>(&mSystemWindow[0])->field_35 =
+    mSystemWindow.field_35 =
         reinterpret_cast<CSysWin*>(&systemWindowStorage[0])->field_35;
-    reinterpret_cast<CSysWin*>(&mSystemWindow[0])->field_36 =
+    mSystemWindow.field_36 =
         reinterpret_cast<CSysWin*>(&systemWindowStorage[0])->field_36;
-    reinterpret_cast<CSysWin*>(&mSystemWindow[0])->field_37 =
+    mSystemWindow.field_37 =
         reinterpret_cast<CSysWin*>(&systemWindowStorage[0])->field_37;
-    reinterpret_cast<CSysWin*>(&mSystemWindow[0])->field_38 =
+    mSystemWindow.field_38 =
         reinterpret_cast<CSysWin*>(&systemWindowStorage[0])->field_38;
-    reinterpret_cast<CSysWin*>(&mSystemWindow[0])->field_39 =
+    mSystemWindow.field_39 =
         reinterpret_cast<CSysWin*>(&systemWindowStorage[0])->field_39;
     __dt__7CSysWinFv(reinterpret_cast<CSysWin*>(&systemWindowStorage[0]), -1);
-    reinterpret_cast<CSysWin*>(&mSystemWindow[0])->loadSystemArc();
+    mSystemWindow.loadSystemArc();
 
     if ((*reinterpret_cast<u32*>(cf::CfGameManager::getCurrentPad()) & 0x0001e000) != 0) {
         field_200 = 1;
@@ -932,7 +899,7 @@ void CMenuGetItemMulti::Term() {
         field_208 = 0;
     }
     mCursor.cleanup();
-    reinterpret_cast<CSysWin*>(&mSystemWindow[0])->termLayout();
+    mSystemWindow.termLayout();
     if (mLayout != 0) {
         delete mLayout;
         mLayout = 0;
@@ -940,14 +907,14 @@ void CMenuGetItemMulti::Term() {
     mRegion.deleteRegion();
     gpItemMultiInstance = 0;
     gpItemMultiSkillBdat = 0;
-    if (mEntryCount != 0 || field_1F6 != 0) {
+    if (mItems.mCount != 0 || field_1F6 != 0) {
         DecMenuCounter64080();
         if (code80135FDC_getByte_64080() == 0) {
             setPresentationFlag__Q22cf13CfGameManagerFv(0);
         }
         // Nested: when both outer conditions fail MWCC jumps the
         // field_1F6 test straight to the epilogue (retail beq .L_801B5980).
-        if (mEntryCount != 0) {
+        if (mItems.mCount != 0) {
             gmGameFlags &= ~0x200000u;
             CfGameManagerTermFields* mgrView = reinterpret_cast<CfGameManagerTermFields*>(
                 cf::CfGameManager::getInstance());
@@ -981,7 +948,7 @@ body:
     // out to the common per-frame update tail below.
     switch (field_1F8) {
     case 0:  // window ready: show the item-select cursor
-        if (reinterpret_cast<CSysWin*>(&mSystemWindow[0])->isReady() == 0) break;
+        if (mSystemWindow.isReady() == 0) break;
         if (gpItemMultiSkillBdat == 0) break;
         field_1F8 = 1;
         playUISound(0x2d);
@@ -1019,11 +986,11 @@ body:
         GetItemMulti_PruneEntries(this);
         break;
     case 5:  // window active: cursor follows the slot selection
-        if (reinterpret_cast<CSysWin*>(&mSystemWindow[0])->isActive() == 0) break;
+        if (mSystemWindow.isActive() == 0) break;
         mCursor.SetVisible(1);
         {
             nw4r::math::VEC3 pos;
-            CSysWin::getPaneScreenPos(reinterpret_cast<nw4r::math::VEC3*>(&pos), reinterpret_cast<CSysWin*>(&mSystemWindow[0]), field_1F4);
+            CSysWin::getPaneScreenPos(reinterpret_cast<nw4r::math::VEC3*>(&pos), &mSystemWindow, field_1F4);
             mCursor.setRootPaneTranslate(&pos);
         }
         field_1F8 = 6;
@@ -1032,11 +999,11 @@ body:
         GetItemMulti_HandleWindowPadOnce(this);
         break;
     case 7:  // confirm selection: open the item menu for the active item
-        if (reinterpret_cast<CSysWin*>(&mSystemWindow[0])->isActive() == 0) break;
+        if (mSystemWindow.isActive() == 0) break;
         if (field_1F5 != 0) {
             u32 cat;
-            if (mEntryCount != 0) {
-                cat = (mVisibleEntries[(s8)mMaxVisibleItems]->packed >> 16) & 0xF;
+            if (mItems.mCount != 0) {
+                cat = (mVisibleEntries[(s8)mMaxVisibleItems]->field_00 >> 16) & 0xF;
             } else {
                 cat = BdatGetItemType(mVisibleItemIds[(s8)mMaxVisibleItems]) & 0xff;
             }
@@ -1049,11 +1016,11 @@ body:
         }
         break;
     case 8:  // window active (alt): cursor follows the slot selection
-        if (reinterpret_cast<CSysWin*>(&mSystemWindow[0])->isActive() == 0) break;
+        if (mSystemWindow.isActive() == 0) break;
         mCursor.SetVisible(1);
         {
             nw4r::math::VEC3 pos;
-            CSysWin::getPaneScreenPos(reinterpret_cast<nw4r::math::VEC3*>(&pos), reinterpret_cast<CSysWin*>(&mSystemWindow[0]), field_1F4);
+            CSysWin::getPaneScreenPos(reinterpret_cast<nw4r::math::VEC3*>(&pos), &mSystemWindow, field_1F4);
             mCursor.setRootPaneTranslate(&pos);
         }
         field_1F8 = 9;
@@ -1062,7 +1029,7 @@ body:
         GetItemMulti_HandleWindowPadAuto(this);
         break;
     case 10: // confirm from slot state: reopen or confirm
-        if (reinterpret_cast<CSysWin*>(&mSystemWindow[0])->isActive() == 0) break;
+        if (mSystemWindow.isActive() == 0) break;
         if ((s8)field_1F4 == 0) {
             field_1F8 = 3;
             playUISound(0x89);
@@ -1099,7 +1066,7 @@ body:
     // Per-frame update tail (all states fall through to here).
     mLayout->Animate(0);
     mCursor.Update();
-    reinterpret_cast<CSysWin*>(&mSystemWindow[0])->dispatchPhase();
+    mSystemWindow.dispatchPhase();
 }
 
 // File-event completion handler: OnFileEvent routes the CEventFile through
@@ -1173,7 +1140,7 @@ extern "C" void GetItemMulti_FitPanes(CMenuGetItemMulti* self) {
 // `bl __dt__Q34nw4r3lyt8DrawInfoFv(drawInfo, -1)`; an explicit
 // `drawInfo.~DrawInfo()` would make MWCC ALSO emit a virtual-dispatched
 // scope-exit dtor, so none is written here.
-void CMenuGetItemMulti::cbRenderBefore() {
+void CMenuGetItemMulti::cbRenderBefore(CScn*) {
     CTaskGame::getInstance();
     if (CTaskGame::isFlag01Set() != 0) goto exit;
     if (gmPauseFlags & (1u << 21)) goto exit;
@@ -1190,7 +1157,7 @@ body:
         nw4r::lyt::DrawInfo drawInfo;
         SetWideLocAdjust(&drawInfo);
         drawLayout(mLayout, &drawInfo, 0, 1);
-        reinterpret_cast<CSysWin*>(&mSystemWindow[0])->drawLayout(reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfo));
+        mSystemWindow.drawLayout(reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfo));
         mCursor.DrawLayout(&drawInfo);
     }
 }
@@ -1218,13 +1185,10 @@ u8* GetItemMulti_CreateSimple(CProcess* parent, u32 arg2, u32 arg3) {
     if (gpItemMultiInstance != 0) {
         return 0;
     }
-    u8* obj = (u8*)mtl::MemManager::allocate(0x36c, CWorkThreadSystem::getWorkMem());
-    if (obj != 0) {
-        // ctor returns `this`, re-establishing obj in r3 across the call
-        // (keeps the object in a volatile register, matching retail).
-        obj = __ct__801B2794(obj, arg2, arg3);
-    }
-    gpItemMultiInstance = (u32)obj;
+    CMenuGetItemMulti* obj = new (CWorkThreadSystem::getWorkMem())
+        CMenuGetItemMulti(reinterpret_cast<CScn*>(arg2),
+                          *reinterpret_cast<const CItemFour*>(arg3));
+    gpItemMultiInstance = reinterpret_cast<u32>(obj);
     reinterpret_cast<CProcess*>(obj)->Regist(parent, false);
     return (u8*)gpItemMultiInstance;
 }
@@ -1252,9 +1216,9 @@ void GetItemMulti_RefreshList(CMenuGetItemMulti* self) {
         self->mPaneVisible[i] = 0;
     }
 
-    if (self->mEntryCount != 0) {
+    if (self->mItems.mCount != 0) {
         // Compact the non-null visible entries into the front of the list.
-        CMenuGetItemMultiEntry* tmp[4] = {0, 0, 0, 0};
+        CItemExt* tmp[4] = {0, 0, 0, 0};
         u8 n = 0;
         for (u8 i = 0; i < self->mVisibleItemCount; ++i) {
             if (self->mVisibleEntries[i] != 0) {
@@ -1268,7 +1232,7 @@ void GetItemMulti_RefreshList(CMenuGetItemMulti* self) {
         self->mVisibleItemCount = n;
 
         for (u8 i = 0; i < self->mVisibleItemCount; ++i) {
-            CMenuGetItemMultiEntry* entry = self->mVisibleEntries[i];
+            CItemExt* entry = self->mVisibleEntries[i];
             if (entry == 0) {
                 self->mPaneVisible[i] = 0;
                 continue;
@@ -1278,24 +1242,24 @@ void GetItemMulti_RefreshList(CMenuGetItemMulti* self) {
                                   // texture-pane sprintf (sp+0xD0 vs sp+0xF0)
             sprintf(paneName, "txt_item%02d", i + 1);
             char* itemName;
-            if (((entry->packed >> 12) & 0xF) == 3) {
+            if (((entry->field_00 >> 12) & 0xF) == 3) {
                 ml::FixStr<32> rankText(false);
                 rankText.mString[0] = 0;
                 rankText.mLength = 0;
-                u16 rankCount = CItem_initItemImplInstances(entry)->getRankCount(entry);
-                itemName = CItem_initItemImplInstances(entry)->getName(entry);
+                u16 rankCount = (u16)CItem_initItemImplInstances((CItemData*)entry)->vf08((CItemData*)entry);
+                itemName = (char*)CItem_initItemImplInstances((CItemData*)entry)->vf20((CItemData*)entry);
                 char* rankName = BdatTouchStringCell("MNU_item",
                                                "name",
                                                30 - (rankCount - 1));
                 rankText.format("%s%s", itemName, rankName);
                 LayoutSetTextBoxFmtValue(self->mLayout, paneName, rankText.mString, 0);
             } else {
-                itemName = CItem_initItemImplInstances(entry)->getName(entry);
+                itemName = (char*)CItem_initItemImplInstances((CItemData*)entry)->vf20((CItemData*)entry);
                 LayoutSetTextBoxFmtValue(self->mLayout, paneName, itemName, 0);
             }
 
-            u32 id = entry->packed >> 20;
-            u16 cat = (entry->packed >> 12) & 0xF;
+            u32 id = entry->field_00 >> 20;
+            u16 cat = (entry->field_00 >> 12) & 0xF;
             if (cat == 0) {
                 cat = (u16)BdatGetItemType(id);
             }
@@ -1321,7 +1285,7 @@ void GetItemMulti_RefreshList(CMenuGetItemMulti* self) {
                 self->mPaneVisible[i] = 0;
             }
 
-            u32 raw = entry->packed;
+            u32 raw = entry->field_00;
             u32 cat2 = (raw >> 12) & 0xF;
             int special2 = 0;
             if (cat2 != 3 && cat2 != 9) {
@@ -1339,7 +1303,7 @@ void GetItemMulti_RefreshList(CMenuGetItemMulti* self) {
             }
 
             char* textureName = "mf00_com00_dmy.tpl";
-            switch ((entry->packed >> 12) & 0xF) {
+            switch ((entry->field_00 >> 12) & 0xF) {
             case 2: textureName = "mf00_reg20_cat00.tpl"; break;
             case 3: textureName = "mf00_reg20_cat07.tpl"; break;
             case 4: textureName = "mf00_reg20_cat01.tpl"; break;
@@ -1353,7 +1317,7 @@ void GetItemMulti_RefreshList(CMenuGetItemMulti* self) {
                 u32 fontCheck = (u32)::cf::CfBdat::spItmMaterialListFileData;
                 textureName = "mf00_reg20_cat10.tpl";
                 if (BdatGetU8Direct((const void*)fontCheck, "rare",
-                                 BdatGetItemId((u16)(entry->packed >> 20)))) {
+                                 BdatGetItemId((u16)(entry->field_00 >> 20)))) {
                     textureName = "mf00_reg20_cat12.tpl";
                 }
                 break;
@@ -1379,17 +1343,17 @@ void GetItemMulti_RefreshList(CMenuGetItemMulti* self) {
             PaneMatSetTevColorsByName(self->mLayout, paneName, &gItemMultiPaneColor08,
                          &gItemMultiPaneColor09);
 
-            u32 cat3 = (entry->packed >> 12) & 0xF;
+            u32 cat3 = (entry->field_00 >> 12) & 0xF;
             if ((cat3 >= 4 && cat3 <= 8) || cat3 == 2) {
-                u8 slotCount = CItem_initItemImplInstances(entry)->hasSlot(entry);
+                u8 slotCount = (u8)CItem_initItemImplInstances((CItemData*)entry)->vf30((CItemData*)entry);
                 if (slotCount != 0) {
                     LayoutSetTextBoxFmtValue(self->mLayout, paneName, getErrMesText16(), 0);
                     PaneMatSetTevColorsByName(self->mLayout, paneName, &gItemMultiPaneColor0A,
                                  &gItemMultiPaneColor0B);
                     for (u8 slot = 0; slot < slotCount; ++slot) {
-                        if (CItem_initItemImplInstances(entry)->getSlotId(entry, slot) == -1) {
+                        if ((s16)CItem_initItemImplInstances((CItemData*)entry)->vf40((CItemData*)entry, slot) == -1) {
                             u16* slotData = reinterpret_cast<u16*>(
-                                CItem_initItemImplInstances(entry)->getSlot(entry, slot));
+                                CItem_initItemImplInstances((CItemData*)entry)->vf2C((CItemData*)entry, slot));
                             if (slotData != NULL && (slotData[2] & 1) != 0) {
                                 LayoutSetTextBoxFmtValue(self->mLayout, paneName, getErrMesText15(), 0);
                                 PaneMatSetTevColorsByName(self->mLayout, paneName, &gItemMultiPaneColor0C,
@@ -1400,7 +1364,7 @@ void GetItemMulti_RefreshList(CMenuGetItemMulti* self) {
                     }
                 }
             } else if (cat3 == 3 || cat3 == 9) {
-                u16 rankCount = CItem_initItemImplInstances(entry)->getRankCount(entry);
+                u16 rankCount = (u16)CItem_initItemImplInstances((CItemData*)entry)->vf08((CItemData*)entry);
                 LayoutSetTextBoxFmtValue(self->mLayout, paneName,
                                BdatTouchStringCell("MNU_item",
                                             "name",
@@ -1576,10 +1540,10 @@ void GetItemMulti_RefreshList(CMenuGetItemMulti* self) {
         self->mCursor.setRootPaneTranslate(&pos);
     }
 
-    if (self->mEntryCount != 0) {
-        CMenuGetItemMultiEntry* entry = self->mVisibleEntries[(s8)self->mMaxVisibleItems];
+    if (self->mItems.mCount != 0) {
+        CItemExt* entry = self->mVisibleEntries[(s8)self->mMaxVisibleItems];
         if (entry != 0) {
-            GetItemMulti_ShowDetail(self, entry->packed >> 20, entry);
+            GetItemMulti_ShowDetail(self, entry->field_00 >> 20, entry);
         } else {
             GetItemMulti_ShowDetail(self, 0, 0);
         }
@@ -1598,7 +1562,7 @@ void GetItemMulti_RefreshList(CMenuGetItemMulti* self) {
 // supplies the id and category instead of arg2). Category dispatch:
 //   2 -> equipped items, 3 -> rank item, 4-8 -> slotted items,
 //   9 -> key item, 10 -> art/talent, 13 -> quest item.
-void GetItemMulti_ShowDetail(CMenuGetItemMulti* self, int arg2, CMenuGetItemMultiEntry* arg3) {
+void GetItemMulti_ShowDetail(CMenuGetItemMulti* self, int arg2, CItemExt* arg3) {
     GetItemMulti_ClearRanks(self);
     nw4r::lyt::Pane* pane = self->mLayout->GetRootPane()->FindPaneByName(
         "nul_inf", true);
@@ -1610,11 +1574,11 @@ void GetItemMulti_ShowDetail(CMenuGetItemMulti* self, int arg2, CMenuGetItemMult
     if (arg2 != 0) {
         // Inline ternary: branches compute into the arg register (r3), the
         // u16 assignment masks once at the join (retail clrlwi r3, r3, 16).
-        u16 id = (arg3 != 0) ? (arg3->packed >> 20) : (u32)arg2;
+        u16 id = (arg3 != 0) ? (arg3->field_00 >> 20) : (u32)arg2;
         setLayoutTextBoxNumber(self->mLayout, "txt_havenum", CItem_sumFamilyByte6(id));
         // Arms kept uncast: with the u8-typed helper return the ternary is
         // signed-typed, which keeps MWCC's clrlwi+cmpwi dispatch chain.
-        u8 cat = (arg3 != 0) ? ((arg3->packed >> 16) & 0xf)
+        u8 cat = (arg3 != 0) ? ((arg3->field_00 >> 16) & 0xf)
                              : BdatGetItemType(arg2);
         // Goto-chain dispatch: MWCC emits the comparison chain first, then the
         // bodies in this order (2, 4-8, 3, 9, 10, 13) - the retail layout.
@@ -1654,16 +1618,16 @@ void GetItemMulti_ClearRanks(CMenuGetItemMulti* self) {
     f32 zero = 0.0f;
     // Clear the 12 rank slots in two unrolled halves (ids + positions).
     for (int i = 0; i < 6; i++) {
-        self->mRankSlotIds[i] = 0;
-        self->mRankSlotPos[i].x = zero;
-        self->mRankSlotPos[i].y = zero;
-        self->mRankSlotPos[i].z = zero;
+        self->mPage.mItemIds[i] = 0;
+        self->mPage.mPos[i].x = zero;
+        self->mPage.mPos[i].y = zero;
+        self->mPage.mPos[i].z = zero;
     }
     for (int i = 6; i < 12; i++) {
-        self->mRankSlotIds[i] = 0;
-        self->mRankSlotPos[i].x = zero;
-        self->mRankSlotPos[i].y = zero;
-        self->mRankSlotPos[i].z = zero;
+        self->mPage.mItemIds[i] = 0;
+        self->mPage.mPos[i].x = zero;
+        self->mPage.mPos[i].y = zero;
+        self->mPage.mPos[i].z = zero;
     }
 
     // Hide every rank/slot pane; the two name panes are also blanked.
@@ -1757,7 +1721,7 @@ void GetItemMulti_ClearRanks(CMenuGetItemMulti* self) {
 // refresh the slot colours. arg3 is the packed entry (unused here beyond
 // forwarding to GetItemMulti_FillRankSlots).
 void GetItemMulti_ShowEquipped(CMenuGetItemMulti* self, int arg2,
-                                        CMenuGetItemMultiEntry* arg3) {
+                                        CItemExt* arg3) {
     nw4r::lyt::Pane* pane;
     pane = self->mLayout->GetRootPane()->FindPaneByName("nul_para_01", true);
     pane->SetVisible(true);
@@ -1898,7 +1862,7 @@ void GetItemMulti_ShowEquipped(CMenuGetItemMulti* self, int arg2,
 // push the per-slot values into the item-text panes, then refresh the
 // rank-window slots via GetItemMulti_FillRankSlots. arg3 is the packed entry; with no
 // entry the id comes from arg2.
-void GetItemMulti_ShowEntryDetailPanes(CMenuGetItemMulti* self, int arg2, CMenuGetItemMultiEntry* arg3) {
+void GetItemMulti_ShowEntryDetailPanes(CMenuGetItemMulti* self, int arg2, CItemExt* arg3) {
     nw4r::lyt::Pane* pane;
     pane = self->mLayout->GetRootPane()->FindPaneByName("nul_para_01", true);
     pane->SetVisible(true);
@@ -2036,7 +2000,7 @@ rankDone:
 // the item-name/rank-text panes, and record the slot position for the cursor.
 // arg3 is the packed entry (its id wins over arg2); with no entry the id
 // comes from arg2.
-void GetItemMulti_ShowItemRank(CMenuGetItemMulti* self, int arg2, CMenuGetItemMultiEntry* arg3) {
+void GetItemMulti_ShowItemRank(CMenuGetItemMulti* self, int arg2, CItemExt* arg3) {
     nw4r::lyt::Pane* pane = self->mLayout->GetRootPane()->FindPaneByName(
         "nul_para_50", true);
     pane->SetVisible(true);
@@ -2051,7 +2015,7 @@ void GetItemMulti_ShowItemRank(CMenuGetItemMulti* self, int arg2, CMenuGetItemMu
 
     u32 itemId = (u32)arg2;
     if (arg3 != 0) {
-        itemId = arg3->packed >> 20;
+        itemId = arg3->field_00 >> 20;
     }
 
     // No-entry path validates the id through the item table (result unused).
@@ -2061,7 +2025,7 @@ void GetItemMulti_ShowItemRank(CMenuGetItemMulti* self, int arg2, CMenuGetItemMu
 
     u32 itemId2;
     if (arg3 != 0) {
-        itemId2 = CItem_initItemImplInstances(arg3)->vf54(arg3);
+        itemId2 = CItem_initItemImplInstances((CItemData*)arg3)->vf54((CItemData*)arg3);
     } else {
         itemId2 = BdatGetItemId((u16)itemId);
     }
@@ -2072,7 +2036,7 @@ void GetItemMulti_ShowItemRank(CMenuGetItemMulti* self, int arg2, CMenuGetItemMu
     char* rankName = BdatTouchStringCell(
         "MNU_item", "name",
         30 - ((u8)((arg3 != 0)
-                       ? (u16)CItem_initItemImplInstances(arg3)->getRankCount(arg3)
+                       ? (u16)CItem_initItemImplInstances((CItemData*)arg3)->vf08((CItemData*)arg3)
                        : (u16)BdatGetU8Direct((const void*)::cf::CfBdat::spItmItemListFileData, "rankType",
                                             (u16)itemId)) -
               1));
@@ -2082,7 +2046,7 @@ void GetItemMulti_ShowItemRank(CMenuGetItemMulti* self, int arg2, CMenuGetItemMu
     char* rankText = BdatTouchStringCell("MNU_shop", "name", 0xf);
     if (arg3 != 0) {
         setLayoutTextBoxNumber(self->mLayout, "txt_value51",
-                      CItem_initItemImplInstances(arg3)->vf90(arg3));
+                      CItem_initItemImplInstances((CItemData*)arg3)->vf90((CItemData*)arg3));
     } else {
         LayoutSetTextBoxFmtValue(self->mLayout, "txt_value51",
                       (v == 1) ? "" : rankText, 0);
@@ -2103,12 +2067,14 @@ void GetItemMulti_ShowItemRank(CMenuGetItemMulti* self, int arg2, CMenuGetItemMu
     nw4r::math::VEC3 pos;
     ScalePaneWorldPos(&pos, slotPane, refPane, self->mLayout->GetRootPane());
 
-    self->mRankSlotIds[8] = (u16)itemId2;
-    self->mRankSlotFlag[8] = 0;
+    self->mPage.mItemIds[8] = (u16)itemId2;
+    self->mPage.mBytesA8[8] = 0;
     // Materialize a copy of the position for the array write (retail keeps
     // the copy in a scratch VEC3 slot).
     nw4r::math::VEC3 posCopy = pos;
-    self->mRankSlotPos[8] = posCopy;
+    self->mPage.mPos[8].x = posCopy.x;
+    self->mPage.mPos[8].y = posCopy.y;
+    self->mPage.mPos[8].z = posCopy.z;
 }
 
 void GetItemMulti_ShowIdCategoryPanes(CMenuGetItemMulti* self, int arg2) {
@@ -2154,7 +2120,7 @@ void GetItemMulti_ShowIdCategoryPanes(CMenuGetItemMulti* self, int arg2) {
 // Category-9 (rank item) display update: show the rank pane, render the rank
 // name, and populate the per-slot id/position/flag arrays for the four slots.
 // Guarded by arg3 != 0 (dispatch from GetItemMulti_ShowDetail).
-void GetItemMulti_FillEntryRankPane(CMenuGetItemMulti* self, CMenuGetItemMultiEntry* arg3) {
+void GetItemMulti_FillEntryRankPane(CMenuGetItemMulti* self, CItemExt* arg3) {
     if (arg3 == 0) {
         return;
     }
@@ -2163,7 +2129,7 @@ void GetItemMulti_FillEntryRankPane(CMenuGetItemMulti* self, CMenuGetItemMultiEn
         "nul_para_30", true);
     pane->SetVisible(true);
 
-    u16 rankCount = (u16)CItem_initItemImplInstances(arg3)->getRankCount(arg3);
+    u16 rankCount = (u16)CItem_initItemImplInstances((CItemData*)arg3)->vf08((CItemData*)arg3);
     char* rankName = BdatTouchStringCell("MNU_item",
                                    "name",
                                    30 - ((u8)rankCount - 1));
@@ -2175,7 +2141,7 @@ void GetItemMulti_FillEntryRankPane(CMenuGetItemMulti* self, CMenuGetItemMultiEn
     for (u8 i = 0; i < 4; ++i) {
         // Signed id: MWCC records the truncation (clrlwi.) and emits the
         // signed `ble` skip (retail shape); a u16 here collapses to `beq`.
-        s32 itemId = (u16)CItem_initItemImplInstances(arg3)->vf4C(arg3, i);
+        s32 itemId = (u16)CItem_initItemImplInstances((CItemData*)arg3)->vf4C((CItemData*)arg3, i);
         if (itemId <= 0) {
             continue;
         }
@@ -2193,21 +2159,23 @@ void GetItemMulti_FillEntryRankPane(CMenuGetItemMulti* self, CMenuGetItemMultiEn
 
         u8 idx = (u8)(i + 8);
         if (idx < 0xc) {
-            self->mRankSlotIds[idx] = itemId;
+            self->mPage.mItemIds[idx] = itemId;
         }
         if (idx < 0xc) {
-            self->mRankSlotFlag[idx] = 9;
+            self->mPage.mBytesA8[idx] = 9;
         }
         // Materialize a copy of the position before the conditional array
         // write (retail keeps the copy in a scratch VEC3 slot).
         nw4r::math::VEC3 posCopy = pos;
         if (idx < 0xc) {
-            self->mRankSlotPos[idx] = posCopy;
+            self->mPage.mPos[idx].x = posCopy.x;
+            self->mPage.mPos[idx].y = posCopy.y;
+            self->mPage.mPos[idx].z = posCopy.z;
         }
 
         ml::FixStr<32> str;
         sprintf(paneName, "txt_value%02d", paneNo + 0x1f);
-        u32 slotId = CItem_initItemImplInstances(arg3)->vf64(arg3, i);
+        u32 slotId = CItem_initItemImplInstances((CItemData*)arg3)->vf64((CItemData*)arg3, i);
         str.format("%d%s", (u16)slotId,
                    BdatTouchStringCell("MNU_item", "name", 0x21));
         LayoutSetTextBoxFmtValue(self->mLayout, paneName, str.mString, 0);
@@ -2273,9 +2241,9 @@ void GetItemMulti_ShowCat13(CMenuGetItemMulti* self, int arg2) {
 // Rank-window slot filler (slots 8-10) shared by the equipped/slotted-item
 // handlers: for each of the three rank slots, look up the item's per-rank
 // record and fill the slot's name/rank text panes, then record the id,
-// position and rank data in the mRankSlot* arrays. With no packed entry the
+// position and rank data in the mPage (CItemBoxPage) arrays. With no packed entry the
 // ids come from arg2 through the item table instead of the impl vtable.
-void GetItemMulti_FillRankSlots(CMenuGetItemMulti* self, int arg2, CMenuGetItemMultiEntry* arg3) {
+void GetItemMulti_FillRankSlots(CMenuGetItemMulti* self, int arg2, CItemExt* arg3) {
     // Shared pane-name buffer and formatted-string slot (retail keeps both at
     // fixed frame offsets across both paths; the ctor-less FixStr(false) is
     // inert and only mString[0] is cleared up front).
@@ -2283,9 +2251,8 @@ void GetItemMulti_FillRankSlots(CMenuGetItemMulti* self, int arg2, CMenuGetItemM
     str.mString[0] = 0;
     str.mLength = 0;
     char buf[32];
-    if (arg3 != NULL && arg3->packed != 0) {
-        u16 count = reinterpret_cast<CMenuGetItemImplCount*>(
-            CItem_initItemImplInstances(arg3))->getCount30(arg3);
+    if (arg3 != NULL && arg3->field_00 != 0) {
+        u16 count = (u16)CItem_initItemImplInstances((CItemData*)arg3)->vf30((CItemData*)arg3);
         nw4r::math::VEC3 pos;
         nw4r::math::VEC3 posCopy;
         for (u8 i = 0; i < 3; ++i) {
@@ -2300,7 +2267,7 @@ void GetItemMulti_FillRankSlots(CMenuGetItemMulti* self, int arg2, CMenuGetItemM
                 void* texture = 0;
                 pane->SetVisible(true);
                 CMenuGetItemRankSlot* slot = reinterpret_cast<CMenuGetItemRankSlot*>(
-                    CItem_initItemImplInstances(arg3)->getSlot(arg3, i));
+                    CItem_initItemImplInstances((CItemData*)arg3)->vf2C((CItemData*)arg3, i));
                 if (slot != 0 && (slot->bits04 & 1) != 0) {
                     slotItemId = (slot->bits04 >> 4) & 0xFFF;
                     void* fontTbl = ::cf::CfBdat::spBtlSkillListFileData;
@@ -2376,20 +2343,22 @@ void GetItemMulti_FillRankSlots(CMenuGetItemMulti* self, int arg2, CMenuGetItemM
             ScalePaneWorldPos(&pos, pane, refPane, self->mLayout->GetRootPane());
             u8 idx = (u8)(i + 8);
             if (idx < 0xc) {
-                self->mRankSlotIds[idx] = slotItemId;
+                self->mPage.mItemIds[idx] = slotItemId;
             }
             if (idx < 0xc) {
-                self->mRankSlotFlag[idx] = 3;
+                self->mPage.mBytesA8[idx] = 3;
             }
             if (idx < 0xc) {
-                self->mRankSlotFlag2[idx] = slotRank;
+                self->mPage.mBytesB4[idx] = slotRank;
             }
             if (idx < 0xc) {
-                self->mRankSlotIds2[idx] = slotVal;
+                self->mPage.mValues[idx] = slotVal;
             }
             nw4r::math::VEC3 posCopy = pos;
             if (idx < 0xc) {
-                self->mRankSlotPos[idx] = posCopy;
+                self->mPage.mPos[idx].x = posCopy.x;
+                self->mPage.mPos[idx].y = posCopy.y;
+                self->mPage.mPos[idx].z = posCopy.z;
             }
         }
     } else {
@@ -2483,20 +2452,22 @@ void GetItemMulti_FillRankSlots(CMenuGetItemMulti* self, int arg2, CMenuGetItemM
             ScalePaneWorldPos(&pos, pane, refPane, self->mLayout->GetRootPane());
             u8 idx = (u8)(j + 8);
             if (idx < 0xc) {
-                self->mRankSlotIds[idx] = slotId;
+                self->mPage.mItemIds[idx] = slotId;
             }
             if (idx < 0xc) {
-                self->mRankSlotFlag[idx] = 3;
+                self->mPage.mBytesA8[idx] = 3;
             }
             if (idx < 0xc) {
-                self->mRankSlotFlag2[idx] = rankCnt;
+                self->mPage.mBytesB4[idx] = rankCnt;
             }
             if (idx < 0xc) {
-                self->mRankSlotIds2[idx] = altFlag;
+                self->mPage.mValues[idx] = altFlag;
             }
             nw4r::math::VEC3 posCopy = pos;
             if (idx < 0xc) {
-                self->mRankSlotPos[idx] = posCopy;
+                self->mPage.mPos[idx].x = posCopy.x;
+                self->mPage.mPos[idx].y = posCopy.y;
+                self->mPage.mPos[idx].z = posCopy.z;
             }
         }
     }
@@ -2542,11 +2513,11 @@ void GetItemMulti_HandlePad(CMenuGetItemMulti* self) {
         // Up over the close pane: a live system window wins; otherwise open
         // the rank-up window for the selected rank item (or refuse with a
         // buzz when the pane list is not in the rank state).
-        if (reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->isOpened() != 0) {
-            if (reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->isActive() == 0) {
+        if (self->mSystemWindow.isOpened() != 0) {
+            if (self->mSystemWindow.isActive() == 0) {
                 return;
             }
-            reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->advancePhase3();
+            self->mSystemWindow.advancePhase3();
             self->mCursor.SetVisible(1);
             return;
         }
@@ -2564,11 +2535,11 @@ void GetItemMulti_HandlePad(CMenuGetItemMulti* self) {
             char* n1 = BdatTouchStringCell("MNU_sysmes", "name", 0x1c);
             char* n2 = BdatTouchStringCell("MNU_sysmes", "name", 0x1d);
             char* n3 = BdatTouchStringCell("MNU_sysmes", "name", 0x1e);
-            reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->switchKindPane(2);
-            reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->setKindContent(reinterpret_cast<char*>(n1), 0);
-            reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->setTwoTextValues(reinterpret_cast<char*>(n2), reinterpret_cast<char*>(n3));
-            reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->applyKind(0);
-            reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->openPhase1();
+            self->mSystemWindow.switchKindPane(2);
+            self->mSystemWindow.setKindContent(reinterpret_cast<char*>(n1), 0);
+            self->mSystemWindow.setTwoTextValues(reinterpret_cast<char*>(n2), reinterpret_cast<char*>(n3));
+            self->mSystemWindow.applyKind(0);
+            self->mSystemWindow.openPhase1();
             self->mCursor.SetVisible(0);
             self->field_1F4 = 1;
             return;
@@ -2584,11 +2555,11 @@ void GetItemMulti_HandlePad(CMenuGetItemMulti* self) {
         if (self->field_20C == 0) {
             return;
         }
-        if (reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->isOpened() != 0) {
-            if (reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->isActive() == 0) {
+        if (self->mSystemWindow.isOpened() != 0) {
+            if (self->mSystemWindow.isActive() == 0) {
                 return;
             }
-            reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->advancePhase3();
+            self->mSystemWindow.advancePhase3();
             self->mCursor.SetVisible(1);
             return;
         }
@@ -2619,7 +2590,7 @@ void GetItemMulti_HandlePad(CMenuGetItemMulti* self) {
         // Left/right held in the slot window: scan the slot group backwards
         // for the previous filled slot; on the pane list, wrap the selection
         // backwards and re-centre the cursor.
-        if (reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->isOpened() != 0) {
+        if (self->mSystemWindow.isOpened() != 0) {
             return;
         }
         if (self->field_20C != 0) {
@@ -2630,7 +2601,7 @@ void GetItemMulti_HandlePad(CMenuGetItemMulti* self) {
                     cand = 3;
                 }
                 u8 idx = (u8)((s8)self->field_20D * 4 + cand);
-                u16 slotId = (idx < 0xc) ? self->mRankSlotIds[idx] : 0;
+                u16 slotId = (idx < 0xc) ? self->mPage.mItemIds[idx] : 0;
                 if (slotId != 0) {
                     self->field_20E = (u8)cand;
                     break;
@@ -2640,7 +2611,9 @@ void GetItemMulti_HandlePad(CMenuGetItemMulti* self) {
             u8 posIdx = (u8)((s8)self->field_20D * 4 + self->field_20E);
             nw4r::math::VEC3 pos;
             if (posIdx < 0xc) {
-                pos = self->mRankSlotPos[posIdx];
+                pos.x = self->mPage.mPos[posIdx].x;
+                pos.y = self->mPage.mPos[posIdx].y;
+                pos.z = self->mPage.mPos[posIdx].z;
             }
             self->mCursor.setRootPaneTranslate(&pos);
             return;
@@ -2654,10 +2627,10 @@ void GetItemMulti_HandlePad(CMenuGetItemMulti* self) {
                 self->mMaxVisibleItems = 5;
             }
         }
-        if (self->mEntryCount != 0) {
-            CMenuGetItemMultiEntry* entry = self->mVisibleEntries[(s8)self->mMaxVisibleItems];
+        if (self->mItems.mCount != 0) {
+            CItemExt* entry = self->mVisibleEntries[(s8)self->mMaxVisibleItems];
             if (entry != 0) {
-                GetItemMulti_ShowDetail(self, entry->packed >> 20, entry);
+                GetItemMulti_ShowDetail(self, entry->field_00 >> 20, entry);
             } else {
                 GetItemMulti_ShowDetail(self, 0, 0);
             }
@@ -2693,7 +2666,7 @@ void GetItemMulti_HandlePad(CMenuGetItemMulti* self) {
     if (curHeld) {
         // Right held: scan the slot group forwards; on the pane list, wrap
         // the selection forwards.
-        if (reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->isOpened() != 0) {
+        if (self->mSystemWindow.isOpened() != 0) {
             return;
         }
         if (self->field_20C != 0) {
@@ -2704,7 +2677,7 @@ void GetItemMulti_HandlePad(CMenuGetItemMulti* self) {
                     cand = 0;
                 }
                 u8 idx = (u8)((s8)self->field_20D * 4 + cand);
-                u16 slotId = (idx < 0xc) ? self->mRankSlotIds[idx] : 0;
+                u16 slotId = (idx < 0xc) ? self->mPage.mItemIds[idx] : 0;
                 if (slotId != 0) {
                     self->field_20E = (u8)cand;
                     break;
@@ -2714,7 +2687,9 @@ void GetItemMulti_HandlePad(CMenuGetItemMulti* self) {
             u8 posIdx = (u8)((s8)self->field_20D * 4 + self->field_20E);
             nw4r::math::VEC3 pos;
             if (posIdx < 0xc) {
-                pos = self->mRankSlotPos[posIdx];
+                pos.x = self->mPage.mPos[posIdx].x;
+                pos.y = self->mPage.mPos[posIdx].y;
+                pos.z = self->mPage.mPos[posIdx].z;
             }
             self->mCursor.setRootPaneTranslate(&pos);
             return;
@@ -2729,10 +2704,10 @@ void GetItemMulti_HandlePad(CMenuGetItemMulti* self) {
                 self->mMaxVisibleItems = 4;
             }
         }
-        if (self->mEntryCount != 0) {
-            CMenuGetItemMultiEntry* entry = self->mVisibleEntries[(s8)self->mMaxVisibleItems];
+        if (self->mItems.mCount != 0) {
+            CItemExt* entry = self->mVisibleEntries[(s8)self->mMaxVisibleItems];
             if (entry != 0) {
-                GetItemMulti_ShowDetail(self, entry->packed >> 20, entry);
+                GetItemMulti_ShowDetail(self, entry->field_00 >> 20, entry);
             } else {
                 GetItemMulti_ShowDetail(self, 0, 0);
             }
@@ -2773,48 +2748,48 @@ void GetItemMulti_HandlePad(CMenuGetItemMulti* self) {
             "nul_inf", true);
         if (pane->IsVisible()) {
             if (self->field_20C != 0) {
-                if (reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->isOpened() != 0) {
-                    if (reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->isActive() == 0) {
+                if (self->mSystemWindow.isOpened() != 0) {
+                    if (self->mSystemWindow.isActive() == 0) {
                         return;
                     }
-                    reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->advancePhase3();
+                    self->mSystemWindow.advancePhase3();
                     self->mCursor.SetVisible(1);
                     return;
                 }
                 u8 idx = (u8)((s8)self->field_20D * 4 + self->field_20E);
-                u16 slotId = (idx < 0xc) ? self->mRankSlotIds[idx] : 0;
+                u16 slotId = (idx < 0xc) ? self->mPage.mItemIds[idx] : 0;
                 if (slotId == 0) {
                     return;
                 }
-                u8 flag = (idx < 0xc) ? self->mRankSlotFlag[idx] : 0;
+                u8 flag = (idx < 0xc) ? self->mPage.mBytesA8[idx] : 0;
                 char* text;
                 if (flag == 3) {
-                    text = reinterpret_cast<CItemBoxPage*>(self->mRankSlotIds)->GetItemName(idx);
+                    text = self->mPage.GetItemName(idx);
                 } else {
                     text = BdatGetPtrDirect(reinterpret_cast<const void*>(gpItemMultiSkillBdat),
                                          "help", slotId);
                 }
-                reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->switchKindPane(0);
-                reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->setKindContent(reinterpret_cast<char*>(text), 0);
-                reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->applyKind(1);
-                reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->openPhase1();
+                self->mSystemWindow.switchKindPane(0);
+                self->mSystemWindow.setKindContent(reinterpret_cast<char*>(text), 0);
+                self->mSystemWindow.applyKind(1);
+                self->mSystemWindow.openPhase1();
                 self->mCursor.SetVisible(0);
                 return;
             }
 
             // No slot window open: pick the first filled rank slot.
-            if (reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->isOpened() != 0) {
+            if (self->mSystemWindow.isOpened() != 0) {
                 return;
             }
             u8 sel = 0;
             u32 found = 0;
             for (u8 i = 0; i < 12; ++i) {
-                if (self->mRankSlotIds[i] != 0) {
+                if (self->mPage.mItemIds[i] != 0) {
                     sel = i;
-                    self->field_2E8 = i;
-                    if (self->mRankSlotIds[8] != 0) {
+                    self->mPage.mSelSlot = i;
+                    if (self->mPage.mItemIds[8] != 0) {
                         sel = 8;
-                        self->field_2E8 = 8;
+                        self->mPage.mSelSlot = 8;
                     }
                     found = 1;
                     break;
@@ -2827,19 +2802,21 @@ void GetItemMulti_HandlePad(CMenuGetItemMulti* self) {
             self->field_20C = 1;
             // Retail converts the selected slot via the unsigned int->double
             // magic and multiplies in single precision.
-            u8 sel2 = self->field_2E8;
+            u8 sel2 = self->mPage.mSelSlot;
             f64 selF = (f64)(u32)sel2;
             self->field_20D = (u8)(s32)(0.25f * (f32)selF);
             self->field_20E = (u8)(sel2 - (s8)self->field_20D * 4);
             nw4r::math::VEC3 pos;
             if (sel2 < 0xc) {
-                pos = self->mRankSlotPos[sel2];
+                pos.x = self->mPage.mPos[sel2].x;
+                pos.y = self->mPage.mPos[sel2].y;
+                pos.z = self->mPage.mPos[sel2].z;
             }
             self->mCursor.setRootPaneTranslate(&pos);
             playUISound(2);
             return;
         }
-        if (reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->isOpened() == 0) {
+        if (self->mSystemWindow.isOpened() == 0) {
             playUISound(5);
         }
     }
@@ -2855,16 +2832,16 @@ void GetItemMulti_PruneEntries(CMenuGetItemMulti* self) {
     if ((s8)self->mMaxVisibleItems == 4) {
         // All four panes visible: sweep every visible item, drop the ones
         // whose grade requirement is now satisfied.
-        if (self->mEntryCount != 0) {
+        if (self->mItems.mCount != 0) {
             for (u8 i = 0; i < self->mVisibleItemCount; ++i) {
-                CMenuGetItemMultiEntry* entry = self->mVisibleEntries[i];
+                CItemExt* entry = self->mVisibleEntries[i];
                 if (entry == 0) {
                     continue;
                 }
                 if (self->mPaneVisible[i] != 0) {
                     continue;
                 }
-                u32 packed = entry->packed;
+                u32 packed = entry->field_00;
                 u32 id = packed >> 20;
                 // Category nibble falls back to the table lookup when 0;
                 // retail masks the merged value to 16 bits before use.
@@ -2892,7 +2869,7 @@ void GetItemMulti_PruneEntries(CMenuGetItemMulti* self) {
                 if (special != 0) {
                     CItemData_lookupOrAlloc(entry, 0);
                     self->mVisibleEntries[i] = 0;
-                    UIWin_BuildFlagBuf(2, entry->packed >> 20, 0);
+                    UIWin_BuildFlagBuf(2, entry->field_00 >> 20, 0);
                 }
             }
         } else {
@@ -2961,15 +2938,15 @@ void GetItemMulti_PruneEntries(CMenuGetItemMulti* self) {
     // Single-item path: the selected index is the sign-extended max-visible
     // count (re-read from the field; no calls intervene before these uses so
     // MWCC keeps it in a volatile register).
-    if (self->mEntryCount != 0) {
-        CMenuGetItemMultiEntry* entry = self->mVisibleEntries[(s8)self->mMaxVisibleItems];
+    if (self->mItems.mCount != 0) {
+        CItemExt* entry = self->mVisibleEntries[(s8)self->mMaxVisibleItems];
         if (entry == 0) {
             return;
         }
         if (self->mPaneVisible[(s8)self->mMaxVisibleItems] == 0) {
             CItemData_lookupOrAlloc(entry, 0);
             self->mVisibleEntries[(s8)self->mMaxVisibleItems] = 0;
-            UIWin_BuildFlagBuf(2, entry->packed >> 20, 0);
+            UIWin_BuildFlagBuf(2, entry->field_00 >> 20, 0);
             GetItemMulti_RefreshList(self);
             {
                 char buf[32];
@@ -3001,17 +2978,17 @@ void GetItemMulti_PruneEntries(CMenuGetItemMulti* self) {
         // (10-13) below level 99 open the 5-window grade setup; at 99+ they
         // switch to the 3-window rank-max form. Other categories open the
         // same 5-window setup.
-        u32 packedSel = entry->packed;
+        u32 packedSel = entry->field_00;
         u32 cat = (packedSel >> 12) & 0xF;
         if ((u8)(cat - 10) <= 3u) {
             if (CItem_sumFamilyByte6(packedSel >> 20) >= 0x63) {
                 self->field_1F8 = 2;
                 char* name = BdatTouchStringCell("MNU_sysmes",
                                            "name", 3);
-                reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->switchKindPane(0);
-                reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->setKindContent(reinterpret_cast<char*>(name), 0);
-                reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->applyKind(1);
-                reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->openPhase1();
+                self->mSystemWindow.switchKindPane(0);
+                self->mSystemWindow.setKindContent(reinterpret_cast<char*>(name), 0);
+                self->mSystemWindow.applyKind(1);
+                self->mSystemWindow.openPhase1();
                 self->mCursor.SetVisible(0);
             } else {
                 self->field_1F8 = 5;
@@ -3021,11 +2998,11 @@ void GetItemMulti_PruneEntries(CMenuGetItemMulti* self) {
                                          "name", 4);
                 char* n5 = BdatTouchStringCell("MNU_sysmes",
                                          "name", 5);
-                reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->switchKindPane(2);
-                reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->setKindContent(reinterpret_cast<char*>(n2), 0);
-                reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->setTwoTextValues(reinterpret_cast<char*>(n4), reinterpret_cast<char*>(n5));
-                reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->applyKind(0);
-                reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->openPhase1();
+                self->mSystemWindow.switchKindPane(2);
+                self->mSystemWindow.setKindContent(reinterpret_cast<char*>(n2), 0);
+                self->mSystemWindow.setTwoTextValues(reinterpret_cast<char*>(n4), reinterpret_cast<char*>(n5));
+                self->mSystemWindow.applyKind(0);
+                self->mSystemWindow.openPhase1();
                 self->mCursor.SetVisible(0);
                 self->field_1F4 = 1;
             }
@@ -3037,11 +3014,11 @@ void GetItemMulti_PruneEntries(CMenuGetItemMulti* self) {
                                      "name", 4);
             char* n5 = BdatTouchStringCell("MNU_sysmes",
                                      "name", 5);
-            reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->switchKindPane(2);
-            reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->setKindContent(reinterpret_cast<char*>(n2), 0);
-            reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->setTwoTextValues(reinterpret_cast<char*>(n4), reinterpret_cast<char*>(n5));
-            reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->applyKind(0);
-            reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->openPhase1();
+            self->mSystemWindow.switchKindPane(2);
+            self->mSystemWindow.setKindContent(reinterpret_cast<char*>(n2), 0);
+            self->mSystemWindow.setTwoTextValues(reinterpret_cast<char*>(n4), reinterpret_cast<char*>(n5));
+            self->mSystemWindow.applyKind(0);
+            self->mSystemWindow.openPhase1();
             self->mCursor.SetVisible(0);
             self->field_1F4 = 1;
         }
@@ -3089,10 +3066,10 @@ void GetItemMulti_PruneEntries(CMenuGetItemMulti* self) {
             self->field_1F8 = 2;
             char* name = BdatTouchStringCell("MNU_sysmes",
                                        "name", 3);
-            reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->switchKindPane(0);
-            reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->setKindContent(reinterpret_cast<char*>(name), 0);
-            reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->applyKind(1);
-            reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->openPhase1();
+            self->mSystemWindow.switchKindPane(0);
+            self->mSystemWindow.setKindContent(reinterpret_cast<char*>(name), 0);
+            self->mSystemWindow.applyKind(1);
+            self->mSystemWindow.openPhase1();
             self->mCursor.SetVisible(0);
         } else {
             self->field_1F8 = 5;
@@ -3102,11 +3079,11 @@ void GetItemMulti_PruneEntries(CMenuGetItemMulti* self) {
                                      "name", 4);
             char* n5 = BdatTouchStringCell("MNU_sysmes",
                                      "name", 5);
-            reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->switchKindPane(2);
-            reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->setKindContent(reinterpret_cast<char*>(n2), 0);
-            reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->setTwoTextValues(reinterpret_cast<char*>(n4), reinterpret_cast<char*>(n5));
-            reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->applyKind(0);
-            reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->openPhase1();
+            self->mSystemWindow.switchKindPane(2);
+            self->mSystemWindow.setKindContent(reinterpret_cast<char*>(n2), 0);
+            self->mSystemWindow.setTwoTextValues(reinterpret_cast<char*>(n4), reinterpret_cast<char*>(n5));
+            self->mSystemWindow.applyKind(0);
+            self->mSystemWindow.openPhase1();
             self->mCursor.SetVisible(0);
             self->field_1F4 = 1;
         }
@@ -3118,11 +3095,11 @@ void GetItemMulti_PruneEntries(CMenuGetItemMulti* self) {
                                  "name", 4);
         char* n5 = BdatTouchStringCell("MNU_sysmes",
                                  "name", 5);
-        reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->switchKindPane(2);
-        reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->setKindContent(reinterpret_cast<char*>(n2), 0);
-        reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->setTwoTextValues(reinterpret_cast<char*>(n4), reinterpret_cast<char*>(n5));
-        reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->applyKind(0);
-        reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->openPhase1();
+        self->mSystemWindow.switchKindPane(2);
+        self->mSystemWindow.setKindContent(reinterpret_cast<char*>(n2), 0);
+        self->mSystemWindow.setTwoTextValues(reinterpret_cast<char*>(n4), reinterpret_cast<char*>(n5));
+        self->mSystemWindow.applyKind(0);
+        self->mSystemWindow.openPhase1();
         self->mCursor.SetVisible(0);
         self->field_1F4 = 1;
     }
@@ -3152,7 +3129,7 @@ void GetItemMulti_HandleWindowPadAuto(CMenuGetItemMulti* self) {
 
     if (up) {
         self->field_1F8 = 0xa;
-        reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->advancePhase3();
+        self->mSystemWindow.advancePhase3();
         self->mCursor.SetVisible(0);
         char buf[32];
         s8 n = (s8)self->mMaxVisibleItems;
@@ -3172,7 +3149,7 @@ void GetItemMulti_HandleWindowPadAuto(CMenuGetItemMulti* self) {
         playUISound(3);
     } else if (down) {
         self->field_1F8 = 0xa;
-        reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->advancePhase3();
+        self->mSystemWindow.advancePhase3();
         self->mCursor.SetVisible(0);
         char buf[32];
         s8 n = (s8)self->mMaxVisibleItems;
@@ -3197,7 +3174,7 @@ void GetItemMulti_HandleWindowPadAuto(CMenuGetItemMulti* self) {
             self->field_1F4 = 1;
         }
         nw4r::math::VEC3 out;
-        CSysWin::getPaneScreenPos(reinterpret_cast<nw4r::math::VEC3*>(&out), reinterpret_cast<CSysWin*>(&self->mSystemWindow[0]), self->field_1F4);
+        CSysWin::getPaneScreenPos(reinterpret_cast<nw4r::math::VEC3*>(&out), &self->mSystemWindow, self->field_1F4);
         self->mCursor.setRootPaneTranslate(&out);
         playUISound(1);
     } else if (curHeld) {
@@ -3206,7 +3183,7 @@ void GetItemMulti_HandleWindowPadAuto(CMenuGetItemMulti* self) {
             self->field_1F4 = 0;
         }
         nw4r::math::VEC3 out;
-        CSysWin::getPaneScreenPos(reinterpret_cast<nw4r::math::VEC3*>(&out), reinterpret_cast<CSysWin*>(&self->mSystemWindow[0]), self->field_1F4);
+        CSysWin::getPaneScreenPos(reinterpret_cast<nw4r::math::VEC3*>(&out), &self->mSystemWindow, self->field_1F4);
         self->mCursor.setRootPaneTranslate(&out);
         playUISound(1);
     }
@@ -3238,7 +3215,7 @@ void GetItemMulti_HandleWindowPadOnce(CMenuGetItemMulti* self) {
             self->field_1F5 = 1;
         }
         self->field_1F8 = 0x7;
-        reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->advancePhase3();
+        self->mSystemWindow.advancePhase3();
         self->mCursor.SetVisible(0);
         char buf[32];
         s8 n = (s8)self->mMaxVisibleItems;
@@ -3258,7 +3235,7 @@ void GetItemMulti_HandleWindowPadOnce(CMenuGetItemMulti* self) {
         playUISound(3);
     } else if (down) {
         self->field_1F8 = 0x7;
-        reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->advancePhase3();
+        self->mSystemWindow.advancePhase3();
         self->mCursor.SetVisible(0);
         char buf[32];
         s8 n = (s8)self->mMaxVisibleItems;
@@ -3282,7 +3259,7 @@ void GetItemMulti_HandleWindowPadOnce(CMenuGetItemMulti* self) {
             self->field_1F4 = 1;
         }
         nw4r::math::VEC3 out;
-        CSysWin::getPaneScreenPos(reinterpret_cast<nw4r::math::VEC3*>(&out), reinterpret_cast<CSysWin*>(&self->mSystemWindow[0]), self->field_1F4);
+        CSysWin::getPaneScreenPos(reinterpret_cast<nw4r::math::VEC3*>(&out), &self->mSystemWindow, self->field_1F4);
         self->mCursor.setRootPaneTranslate(&out);
         playUISound(1);
     } else if (curHeld) {
@@ -3291,7 +3268,7 @@ void GetItemMulti_HandleWindowPadOnce(CMenuGetItemMulti* self) {
             self->field_1F4 = 0;
         }
         nw4r::math::VEC3 out;
-        CSysWin::getPaneScreenPos(reinterpret_cast<nw4r::math::VEC3*>(&out), reinterpret_cast<CSysWin*>(&self->mSystemWindow[0]), self->field_1F4);
+        CSysWin::getPaneScreenPos(reinterpret_cast<nw4r::math::VEC3*>(&out), &self->mSystemWindow, self->field_1F4);
         self->mCursor.setRootPaneTranslate(&out);
         playUISound(1);
     }
@@ -3300,7 +3277,7 @@ void GetItemMulti_HandleWindowPadOnce(CMenuGetItemMulti* self) {
 
 void GetItemMulti_ThunkDtor6C(void* self) { ((void(*)(void*))__dt__17CMenuGetItemMultiFv)((char*)self - 0x6c); }
 
-void GetItemMulti_ThunkRender70(void* self) { ((void(*)(void*))cbRenderBefore__17CMenuGetItemMultiFv)((char*)self - 0x70); }
+void GetItemMulti_ThunkRender70(void* self) { ((void(*)(void*))cbRenderBefore__17CMenuGetItemMultiFP4CScn)((char*)self - 0x70); }
 
 void GetItemMulti_ThunkDtor70(void* self) { ((void(*)(void*))__dt__17CMenuGetItemMultiFv)((char*)self - 0x70); }
 

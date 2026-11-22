@@ -14,16 +14,10 @@ struct RsrcNameOverlay {
     u32 nameLen;      // 0x2C8
 };
 
-// reslist<CWorkThread*> at CWorkThread::mChildren (0x5C); head ptr at +0x60.
-struct WorkChildrenHead {
-    u8 pad_00[0x60];
-    _reslist_node<CWorkThread*>* head; // 0x60
-};
-
 extern "C" {
 // Data definitions moved into this TU (blob monolibdata1d dissolve):
-// .sbss lbl_eu_806655A8 (s16, 2 bytes) and .bss sRsrcPointerList (0x40).
-s16 lbl_eu_806655A8;
+// .sbss sRsrcCount (s16, 2 bytes) and .bss sRsrcPointerList (0x40).
+s16 sRsrcCount;  // name-guess: loop bound for sRsrcPointerList__5CRsrc
 s16 g_CRsrcSbssPad1;  /* pad to 0x806655A8-B0 */
 s16 g_CRsrcSbssPad2;
 s16 g_CRsrcSbssPad3;
@@ -58,7 +52,7 @@ extern "C" bool releaseCacheLocal__5CRsrcFPCv(CWorkThread* parent, const void* d
     _reslist_node<CWorkThread*>* node;
 
     // Retail: seed next from head->mNext, bottom-tested with per-iter lwz 0x60(parent).
-    node = ((WorkChildrenHead*)parent)->head->mNext;
+    node = parent->mChildren.mStartNodePtr->mNext;
     goto check;
 loop:
     if (releaseCache__9CRsrcDataFPCv(convertToRsrcData__5CRsrcFP11CWorkThread(node->mItem),
@@ -67,7 +61,7 @@ loop:
     }
     node = node->mNext;
 check:
-    if (node != ((WorkChildrenHead*)parent)->head) {
+    if (node != parent->mChildren.mStartNodePtr) {
         goto loop;
     }
 
@@ -124,7 +118,7 @@ bool hasChild(CWorkThread* pThread) {
     u32 diff;
     u32 diff2;
 
-    head = ((WorkChildrenHead*)pThread)->head;
+    head = pThread->mChildren.mStartNodePtr;
     first = head->mNext;
     diff = (u32)head - (u32)first;
     diff2 = (u32)first - (u32)head;
@@ -148,7 +142,7 @@ loop:
     }
     index++;
 check:
-    if (index < lbl_eu_806655A8) {
+    if (index < sRsrcCount) {
         goto loop;
     }
 
@@ -169,7 +163,7 @@ loop:
     }
     index++;
 check:
-    if (index < lbl_eu_806655A8) {
+    if (index < sRsrcCount) {
         goto loop;
     }
 
@@ -189,7 +183,7 @@ loop:
     }
     index++;
 check:
-    if (index < lbl_eu_806655A8) {
+    if (index < sRsrcCount) {
         goto loop;
     }
 
@@ -223,7 +217,7 @@ loop:
     }
     node = node->mNext;
 check:
-    if (node != ((WorkChildrenHead*)parent)->head) {
+    if (node != parent->mChildren.mStartNodePtr) {
         goto loop;
     }
 

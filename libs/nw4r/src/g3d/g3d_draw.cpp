@@ -8,13 +8,12 @@
 // instantiated the MSL implementation in this TU (sort<...> and the
 // __sort132 median-of-3 helper), so define the templates here to get the
 // same instantiated symbols (sort<PQ54...MdlZ, ...> and __sort132<...>).
-// Absorbed retail sdata (lbl_eu_80663478/4C, -4)
-extern "C" {
-__declspec(section ".sdata") __attribute__((aligned(8))) int lbl_eu_80663478 = -4;
-__declspec(section ".sdata") __attribute__((aligned(4))) int lbl_eu_8066347C = -4;
-}
 
 namespace std {
+
+static const int SHUFFLE_MIN = -4;
+static const int SHUFFLE_MAX = 5;
+static const int SELECTION_SORT_MIN = 20;
 
 template <typename T>
 inline void swap(T& a, T& b) {
@@ -60,7 +59,7 @@ void sort(_RI _F, _RI _L, _Pr _P) {
             return;
         }
 
-        if (count <= 20) {
+        if (count <= SELECTION_SORT_MIN) {
             if (_F != _L) {
                 // Selection sort: for each position, find the smallest
                 // remaining element and swap it into place.
@@ -86,18 +85,15 @@ void sort(_RI _F, _RI _L, _Pr _P) {
         // rotating counter avoids repeated sorts of similar data hitting
         // the same pivot).
         {
-            int c = lbl_eu_8066347C;
-            _RI p1 = _F + (count / 4 + c % 5);
-            int c1 = c + 1;
-            if (c1 >= 5) {
-                c1 = -4;
+            static int shuffle = SHUFFLE_MIN;
+            int c = shuffle;
+            _RI p1 = _F + (count / 4 + c % SHUFFLE_MAX);
+            if (++shuffle >= SHUFFLE_MAX) {
+                shuffle = SHUFFLE_MIN;
             }
-            int s = c1 + 1;
-            lbl_eu_8066347C = s;
-            _RI p2 = _F + (count * 3 / 4 + c1 % 5);
-            if (s >= 5) {
-                // Only reachable when c == 4 (s == 5), so this stores -4.
-                lbl_eu_8066347C = s - 9;
+            _RI p2 = _F + (count * 3 / 4 + shuffle % SHUFFLE_MAX);
+            if (++shuffle >= SHUFFLE_MAX) {
+                shuffle = SHUFFLE_MIN;
             }
 
             // Force the reference comparator instantiation (as retail does).

@@ -33,21 +33,6 @@ extern "C" void Pause_HandleExitInput(CMenuPause* p);
 // name).
 
 
-// Mirror of the font object returned by CDeviceFont::getFontInfo.
-// vtable slot 9 (offset 0x24) yields the u32 bound into the layout's font
-// pane. Never instantiated, so no vtable is emitted; a genuine virtual call
-// makes MWCC emit the retail r12 dispatch sequence.
-struct CMenuPauseFontView {
-    virtual void sf2() = 0;
-    virtual void sf3() = 0;
-    virtual void sf4() = 0;
-    virtual void sf5() = 0;
-    virtual void sf6() = 0;
-    virtual void sf7() = 0;
-    virtual void sf8() = 0;
-    virtual u32 sf9() = 0; // vtable slot 9 (offset 0x24)
-};
-
 // Texture object returned by ArcResourceAccessor::GetResource for the 'timg'
 // tag. mChain (+0x08) -> mDims (+0x00) carries the 2D dimension header.
 struct CMenuPauseTexDims {
@@ -99,9 +84,9 @@ void CMenuPause::Init() {
 
     // Bind the font and hand the loaded font object over to the root pane.
     nw4r::lyt::Pane* rootPane = mLayout->GetRootPane();
-    void* fontObj = CDeviceFont::getFontInfo(1, mLayout);
-    u32 fontResult = ((CMenuPauseFontView*)fontObj)->sf9();
-    ApplyFontToTxtPanes(rootPane, (const nw4r::ut::Font*)fontResult);
+    IDeviceFontInfo* fontInfo =
+        static_cast<IDeviceFontInfo*>(CDeviceFont::getFontInfo(1, mLayout));
+    ApplyFontToTxtPanes(rootPane, fontInfo->getFont());
 
     mLayout->SetAnimationEnable(
         mAnim, true);
@@ -242,7 +227,7 @@ body:
     mLayout->Animate(0);
 }
 
-void CMenuPause::cbRenderBefore() {
+void CMenuPause::cbRenderBefore(CScn*) {
     CTaskGame::getInstance();
     if (CTaskGame::isFlag01Set()) goto done;
     // Branch-over-branch guard, same trick as Move(): keeps MWCC from folding

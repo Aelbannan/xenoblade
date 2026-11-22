@@ -3,6 +3,7 @@
 
 #include "kyoshin/menu/CMenuGameClear.hpp"
 #include "kyoshin/cf/CtrlObjectParam.hpp"
+#include "kyoshin/cf/CfPadData.hpp"
 
 #include "kyoshin/CBaseCur.hpp"
 #include "kyoshin/CTaskGame.hpp"
@@ -24,14 +25,6 @@
 // touches UnkClass_8045F564 storage through the void* free functions.
 #include "kyoshin/CSysWin.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
-
-// cf pad data view used by the input handlers (fields at +0x04/+0x104).
-struct CfPadDataView {
-    u8 _00[4];
-    u32 field_04;               // direction-flag word
-    u8 _08[0x104 - 0x08];
-    u32 field_104;              // button word
-};
 
 // DrawInfo helper (retail mangled name SetWideLocAdjust__FPQ34nw4r3lyt8DrawInfo).
 
@@ -116,7 +109,7 @@ void CMenuGameClear::Move() {}
  * branches reproduce the retail `bne`/`beq + b` gate shape (task busy bit,
  * then the global flag word, then the scene-active check).
  */
-void CMenuGameClear::cbRenderBefore() {
+void CMenuGameClear::cbRenderBefore(CScn*) {
     CTaskGame::getInstance();
     // Gate: skip when the task is busy or the global mode bit (0x200000) is
     // set. The `if (A && B) goto body; goto end; end: return; body:` chain
@@ -150,19 +143,19 @@ extern "C" unsigned long ClearMenu_IsPresent() {
 // bit21/bit27 of +0x04 (port-dependent) is the confirm stroke, 0x8004 moves
 // the cursor up, bits 15/28 move it down.
 extern "C" void ClearMenu_ConfirmInput(CMenuGameClear* self) {
-    CfPadDataView* pad = (CfPadDataView*)cf::CfGameManager::getCfPadData();
+    cf::CfPadData* pad = cf::CfGameManager::getCfPadData();
     u32 buttons;
     int dirBit;
     int down;
     int up;
     if (cf::CfGameManager::isClassicController(-1) != 0) {
-        buttons = pad->field_104;
-        dirBit = (pad->field_04 >> 21) & 1;
+        buttons = pad->mTurboPressButtonFlags;
+        dirBit = (pad->mPad.mPressedButtonFlags >> 21) & 1;
         down = (buttons & 0x8004) != 0;
         up = (buttons & 0x1010000) != 0;
     } else {
-        buttons = pad->field_104;
-        dirBit = (pad->field_04 >> 4) & 1;
+        buttons = pad->mTurboPressButtonFlags;
+        dirBit = (pad->mPad.mPressedButtonFlags >> 4) & 1;
         down = (buttons & 0x8004) != 0;
         up = (buttons & 0x1010000) != 0;
     }
@@ -192,19 +185,19 @@ extern "C" void ClearMenu_ConfirmInput(CMenuGameClear* self) {
 }
 
 extern "C" void ClearMenu_CancelInput(CMenuGameClear* self) {
-    CfPadDataView* pad = (CfPadDataView*)cf::CfGameManager::getCfPadData();
+    cf::CfPadData* pad = cf::CfGameManager::getCfPadData();
     u32 buttons;
     int dirBit;
     int down;
     int up;
     if (cf::CfGameManager::isClassicController(-1) != 0) {
-        buttons = pad->field_104;
-        dirBit = (pad->field_04 >> 21) & 1;
+        buttons = pad->mTurboPressButtonFlags;
+        dirBit = (pad->mPad.mPressedButtonFlags >> 21) & 1;
         down = (buttons & 0x8004) != 0;
         up = (buttons & 0x1010000) != 0;
     } else {
-        buttons = pad->field_104;
-        dirBit = (pad->field_04 >> 4) & 1;
+        buttons = pad->mTurboPressButtonFlags;
+        dirBit = (pad->mPad.mPressedButtonFlags >> 4) & 1;
         down = (buttons & 0x8004) != 0;
         up = (buttons & 0x1010000) != 0;
     }

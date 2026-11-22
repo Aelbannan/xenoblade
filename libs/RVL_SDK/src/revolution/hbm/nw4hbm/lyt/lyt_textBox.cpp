@@ -683,6 +683,10 @@ inline f32 TextBox::GetTextMagV() const {
     return mag;
 }
 
+const ut::detail::RuntimeTypeInfo* TextBox::GetRuntimeTypeInfo() const {
+    return &typeInfo;
+}
+
 inline u32 TextBox::MakeDrawFlag() const {
     u32 flag = 0;
 
@@ -707,8 +711,3 @@ inline u32 TextBox::MakeDrawFlag() const {
 
 } // namespace lyt
 } // namespace nw4hbm
-
-extern "C" void* GetRuntimeTypeInfo__Q36nw4hbm3lyt7TextBoxCFv(void) {
-    extern const char typeInfo__Q36nw4hbm3lyt7TextBox[];
-    return (void*)typeInfo__Q36nw4hbm3lyt7TextBox;
-}

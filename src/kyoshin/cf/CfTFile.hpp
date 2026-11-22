@@ -1,6 +1,7 @@
 #pragma once
 
 #include <types.h>
+#include "monolib/work/IWorkEvent.hpp"
 #include "monolib/work/CEventFile.hpp"
 #include "monolib/device/CDeviceFile.hpp"
 #include "monolib/util/FixStr.hpp"
@@ -31,16 +32,13 @@ struct CfTFileData {
     u8 mPad[0x628 - 0x622];        // 0x622
 };  // size 0x628
 
-} // namespace cf
-
-// Retail emits the member mangling of a GLOBAL-scope class (cf.
-// OnFileEvent__7CfTFileFP10CEventFile), so CfTFile itself lives at global
-// scope; the entry/data structs stay in namespace cf.
-class CfTFile {
+// The retail RTTI (__RTTI__Q22cf7CfTFile) and deleting destructor
+// (__dt__Q22cf7CfTFileFv) put the class itself in namespace cf.
+class CfTFile : public IWorkEvent {
 public:
     CfTFile();
     virtual ~CfTFile();
-    virtual int OnFileEvent(CEventFile* pEventFile);
+    virtual bool OnFileEvent(CEventFile* pEventFile);
 
     // 0x000: vtable (retail lbl_eu_80526F98, stored by __ct__cf_CfTFile)
     u8 mPad004[0x824 - 0x004];  // 0x004
@@ -51,10 +49,10 @@ public:
     cf::CfTFileData mData;      // 0x834
 };
 
-namespace cf {
-// Alias so existing `cf::CfTFile` references keep resolving to the same type.
-using ::CfTFile;
 } // namespace cf
+
+// Global alias keeps legacy unqualified references resolving to cf::CfTFile.
+using cf::CfTFile;
 
 // C-ABI helper imports referenced by this TU. CfT_SelectDisplayMode is defined in
 // CfTFile.cpp; CmText_ParseWithStaticProc is defined in the code_800C17DC TU (its C++
@@ -86,10 +84,7 @@ u32 getGlobalWord64184Dup__Q22cf13CfGameManagerFv();
 u32 getGlobalPtr640A8__Q22cf13CfGameManagerFv();
 }
 
-// CfTFile vtable (retail .data:0x80526F98).
-extern u8 lbl_eu_80526F98[];
 
-// --- File-event / timer state globals (retail sbss symbols) ---
 
 // File event frame timer (sbss, packed layout):
 //   bits 0-5:   60 Hz sub-second counter (0-59)
@@ -127,15 +122,9 @@ extern char lbl_eu_804FB40C[];
 extern u16 gCfTFallbackHourTable[6];
 extern u16 gCfTFallbackMinuteTable[6];
 
-// Float/double pool constants (retail .sdata2 entries used by the helpers).
-extern const double lbl_eu_80666230; // fmod divisor for the discarded frame-mod call
-extern const float lbl_eu_80666238;
-extern const float lbl_eu_8066623C;
-extern const double lbl_eu_80666240;
-extern const float lbl_eu_80666248;
-extern const double lbl_eu_80666250;
-extern const float lbl_eu_80666258;
-extern const double lbl_eu_80666260;
+// Seconds-per-frame scale (retail .sdata2 global defined in CfTFile.cpp).
+// name-guess: gCfTFrameRate
+extern const float gCfTFrameRate;
 
 // File-event / play-clock helpers defined in CfTFile.cpp. Retail mangles these
 // as C++ free functions; callers include this header instead of repeating a

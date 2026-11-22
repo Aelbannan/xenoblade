@@ -78,12 +78,11 @@ namespace cf {
         return *(u16*)(p + 0x4);
     }
 
-    // The CArtsSet init virtual's body, defined under the retail mangled name
-    // (see the _sArtsSet_UnkVirtualFunc1 note above).
-    extern "C" void CArtsSet_UnkVirtualFunc1__Q22cf8CArtsSetFv(CArtsSet* self) {
+    // The CArtsSet init virtual's body is also a real member override.
+    void CArtsSet::CArtsSet_UnkVirtualFunc1() {
         // Public _sArtsSet base: same typed clears as _sArtsSet_UnkVirtualFunc1.
-        self->unk0 = 0;
-        std::memset(self->unk4, 0, 0x30);
+        unk0 = 0;
+        std::memset(unk4, 0, 0x30);
 
         // Function-scope rowBase/p/row declaration order drives the Chaitin
         // homes to r31/r30/r29, matching the retail init loop.
@@ -91,7 +90,7 @@ namespace cf {
         CArtsParam* p;
         int row;
 
-        rowBase = &self->mArtsParams[0];
+        rowBase = &mArtsParams[0];
         for (row = 0; row < 3; row++) {
             p = rowBase;
             for (int col = 0; col < 8; col++) {

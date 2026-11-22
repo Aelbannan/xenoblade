@@ -114,29 +114,10 @@ struct CActorParamUnk1928Block {
     // vtable slots, the reload child pointer and the tail fields through raw
     // views pinning the retail offsets.
 
-    // Table-pointer slots rewritten by the CfObjectEne ctor/dtor (retail
-    // stores lbl_eu_80528A18 + 0x0/0xC/0x36C/0x37C at these positions).
-    struct CfEneTablePtrs {
-        u32 vt0;             // +0x00 primary vtable (lbl_eu_80528A18)
-        u8 _pad4[0x8 - 0x4];
-        u32 vt8;             // +0x08 secondary vtable (+0xC)
-        u8 _padC[0x3380 - 0xC];
-        u32 vt3380;          // +0x3380 CAIAction subobject vtable (+0x36C)
-        u8 _pad3384[0x3E9C - 0x3384];
-        u32 vt3E9C;          // +0x3E9C CfObjectMove subobject vtable (+0x37C)
-    };
-
-
     // Offset base for the thin-MI real-owner views below (no virtuals,
     // no slots - just the byte offset so this+0x3E9C dispatch folds).
     struct CfEneMoveOff {
         u8 _pad[0x3E9C];
-    };
-
-    // CfResReloadImpl child pointer stored by the ctor at +0x3F4C.
-    struct CfEneReloadSlot {
-        u8 _pad[0x3F4C];
-        void* field_0x3F4C; // 0x3F4C
     };
 
     // Tail fields zeroed by the ctor (u16s at 0x45C0/0x45C6/0x45C8/0x45CA,
@@ -192,16 +173,6 @@ struct CActorParamUnk1928Block {
     // shared CBattleState aliases (setBattleParam/enterStatusEntry/...),
     // which forward to the same slots (see CBattleState.hpp).
     struct CBattleStateAt8 : CfEneB8Off, cf::CBattleState {};
-    // Flags/pointer fields touched by updateEnemyBattleState: the +0x3F34 target
-    // pointer and the +0x7A4 flag word behind it.
-    struct CfEneField3F34 {
-        u8 _pad[0x3F34];
-        u8* field_0x3F34; // 0x3F34
-    };
-    struct CfEneField7A4 {
-        u8 _pad[0x7A4];
-        u32 field_0x7A4; // 0x7A4
-    };
 
     // Object behind CfObjectActor's +0x3F60 pointer (applyEnemyReward): the
     // model-id word at +0x4B0 and the +0x4EC flag word (bit 8 gates).
@@ -607,17 +578,11 @@ extern "C" u32 getGlobalPtr6409C__Q22cf13CfGameManagerFv();
 // CActorParam_UnkVirtualFunc88 forwards (obj, obj->field_0x89C, arg) to it.
 extern "C" void func_802617B8(u8* obj, u32 value, int flag);
 
-// Pre-mangled member dtor of the CfObjectMove subobject (defined in
-// CfObjectMove.cpp). The CfObjectActor dtor calls it directly with a
-// non-deleting flag 0 (explicit member-dtor syntax makes MWCC pass -1);
-// declared here so the call reloc names the retail symbol.
-
-// Verbatim `__`-named free base ctor / vf2 and the CfResReloadImpl ctor
-// (defined in CfObjectActor.cpp / CfObjectModel.cpp / CfResReloadImpl.cpp as
-// plain global functions). extern "C" keeps the call-site relocs at the
-// retail names (a plain C++ declaration makes MWCC append a __F<params>
-// mangling; same convention as CfCam.hpp / CTaskGame.hpp).
-extern "C" int CfObject_UnkVirtualFunc2__Q22cf13CfObjectModelFv(cf::CfObjectModel* self);
+// Verbatim `__`-named free base ctor and the CfResReloadImpl ctor
+// (defined in CfObjectActor.cpp / CfResReloadImpl.cpp as plain global
+// functions). extern "C" keeps the call-site relocs at the retail names
+// (a plain C++ declaration makes MWCC append a __F<params> mangling; same
+// convention as CfCam.hpp / CTaskGame.hpp).
 extern "C" cf::CfResReloadImpl* __ct__cf_CfResReloadImpl(cf::CfResReloadImpl* self,
                                                           cf::CfResReloadParent* parent);
 
@@ -649,9 +614,6 @@ extern "C" unsigned long func_801BA2C8(void* self);
 // CfObjectActor.hpp) - keep
 // the shared declarations (C-linkage overloads with different pointer types
 // are illegal in MWCC).
-// CfObjectMove subobject member (defined in CfObjectMove.cpp): updateEnemyBattleState
-// calls it on the +0x3E9C subobject (retail addi r3, r30, 0x3e9c + bl).
-extern "C" void CfObject_UnkVirtualFunc4__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self);
 
 // Verbatim-name free function (defined in CfObjectEne.cpp; updateEnemyBattleState
 // tail-dispatches the bdat-match path through it). extern "C" keeps the

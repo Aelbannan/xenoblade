@@ -12,6 +12,7 @@
 #include "kyoshin/cf/CPartsChange.hpp"
 #include "kyoshin/cf/object/CActorParam.hpp"  // real CActorParam virtuals at primary-vtable slots
 #include "kyoshin/cf/object/CfObjectActor.hpp"  // real actor hierarchy (CfObjectMove at +0x3E9C)
+#include "kyoshin/cf/object/CfObjectTbox.hpp"  // real Tbox object (field_73C)
 #include "monolib/util/reslist.hpp"  // real _reslist_base layout for the manager list
 #include "monolib/util/CPathUtil.hpp"
 #include <string.h>
@@ -686,19 +687,20 @@ u16 CfActorAccessors::GetField9E() { return reinterpret_cast<cf::CActorParam*>(t
 // Each item contributes through two virtual slots: 0xE0 (a float) and 0xAC (a
 // pointer) which, with the incoming float and the caller's vector, feed
 // VecMath_PushApartCircles into a scratch vector that is accumulated on success.
-extern "C" u8* getReslistB48();
+// The gimmick list returned by getReslistB48 is a real reslist of
+// cf::CfObject pointers (the CfObjectMove sub-object base).
+extern "C" reslist<cf::CfObject*>* getReslistB48();
 extern "C" int VecMath_PushApartCircles(void* a, void* b, f32 c, f32 d, void* out);
 
 extern "C" int CPartsChange_AverageGimmickOffsets(ml::CVec3* out, u8* arg2, f32 f1) {
     *out = ml::CVec3::zero;
     ml::CVec3 tmp;
     s32 count = 0;
-    u8* list = getReslistB48();
-    u8* sentinel = *(u8**)(list + 4);
-    for (u8* node = *(u8**)sentinel; node != sentinel; node = *(u8**)node) {
-        u8* item = *(u8**)(node + 8);
-        f32 a = ((cf::CPartsChangeDevView*)item)->mAtE0();
-        void* p = ((cf::CPartsChangeDevView*)item)->mAtAC();
+    _reslist_node<cf::CfObject*>* sentinel = getReslistB48()->mStartNodePtr;
+    for (_reslist_node<cf::CfObject*>* node = sentinel->mNext; node != sentinel; node = node->mNext) {
+        cf::CfObject* item = node->mItem;
+        f32 a = item->CfObject_getObjScale();
+        ml::CVec3* p = item->CfObject_getPosVector();
         if (VecMath_PushApartCircles(arg2, p, f1, a, &tmp) != 0) {
             out->x += tmp.x;
             out->y += tmp.y;
@@ -1097,7 +1099,7 @@ struct CfDropList {
 extern "C" CfDropList* getReslistC08();
 extern "C" s32 CItem_rollBoxContents(u32 row, u32 flag);
 extern "C" void evictTboxOverflow();
-extern "C" void* spawnVoiceActor(void* tag, void* argB, void* argC, f32 val);
+extern "C" cf::CfObjectTbox* spawnVoiceActor(void* tag, void* argB, void* argC, f32 val);
 extern "C" void copyTboxFromObj(void* arg);
 extern const u16 sPartsChangeDropSoundIds[4];  // name-guess: 0/0x1CC/0x1CD/0x1CE sound IDs indexed by the box roll result; only xref is CPartsChange_SpawnItemDrop
 
@@ -1123,15 +1125,15 @@ extern "C" void CPartsChange_SpawnItemDrop(u32 id, u8* obj, f32* pos, u8* arg4, 
     *(u8*)sPartsChangeEntryActive = 0;
     if (n == 0) return;
     evictTboxOverflow();
-    u8* actor = (u8*)spawnVoiceActor((void*)(size_t)n, obj, pos, ang);
-    f32 vec[3];
-    vec[0] = pos[0];
-    vec[1] = pos[1] + 0.1f;
-    vec[2] = pos[2];
-    ((cf::CPartsChangeDevView*)actor)->mAt9C(vec);
-    ((cf::CPartsChangeDevView*)actor)->mAtC4(ang);
+    cf::CfObjectTbox* actor = spawnVoiceActor((void*)(size_t)n, obj, pos, ang);
+    ml::CVec3 vec;
+    vec.x = pos[0];
+    vec.y = pos[1] + 0.1f;
+    vec.z = pos[2];
+    actor->CfObject_setMoveTargetVec(&vec);
+    actor->CfObject_setMoveHeadAngle(ang);
     reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_setStatScale(1.5f);
-    *(u32*)(actor + 0x73C) = id;
+    actor->field_73C = id;
     copyTboxFromObj(actor);
     cf::CfSoundMan::playActorSound(0, sPartsChangeDropSoundIds[n], 0, 0, lbl_eu_80667AD0);
 }
@@ -1576,7 +1578,7 @@ extern "C" void CPartsChange_ComputeSpawnPoseFull(SpawnPose* src, SpawnPose* dst
 
 
 // absorb tails - generated to match retail ET_REL bytes
-__declspec(section ".data") __attribute__((aligned(8))) __attribute__((used)) unsigned char __tail_kyoshin_cf_CPartsChange_data[0xB8] = {
+__attribute__((aligned(8))) __attribute__((used)) unsigned char __tail_kyoshin_cf_CPartsChange_data[0xB8] = {
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x3F, 0x80, 0x00, 0x00, 0x3F, 0x40, 0x00, 0x00,
     0x3F, 0x00, 0x00, 0x00, 0x3E, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -1595,7 +1597,7 @@ __declspec(section ".data") __attribute__((aligned(8))) __attribute__((used)) un
     0x00, 0x00, 0x00, 0x00
 };
 
-__declspec(section ".rodata") __attribute__((aligned(8))) __attribute__((used)) const unsigned char __tail_kyoshin_cf_CPartsChange_rodata[0x128] = {
+__attribute__((aligned(8))) __attribute__((used)) const unsigned char __tail_kyoshin_cf_CPartsChange_rodata[0x128] = {
     0x63, 0x66, 0x3A, 0x3A, 0x43, 0x50, 0x61, 0x72, 0x74, 0x73, 0x43, 0x68,
     0x61, 0x6E, 0x67, 0x65, 0x00, 0x00, 0x00, 0x00, 0x25, 0x73, 0x25, 0x73,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x72, 0x65, 0x73, 0x6C,

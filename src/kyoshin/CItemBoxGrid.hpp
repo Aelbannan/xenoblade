@@ -396,8 +396,6 @@ extern "C" int* CtrlObjectParam_GetSlotTableBase(void);
 extern "C" void CItemBlock_setFlag120EC(u8, u32);
 extern "C" void* CItemBlock_getPtr20E8(void);
 extern "C" void CItemBlock_setCount(int);
-extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
-extern "C" void deleteRegion__17UnkClass_8045F564Fv(void*);
 extern "C" u32 CtrlObjectParam_GetCurrentRowKey(void*);
 
 
@@ -406,8 +404,7 @@ extern "C" u32 Bdat_GetMaxRow_B1EC(void*);
 #include "kyoshin/cf/CtrlRemoteApi.hpp"
 extern "C" void startEnumObjects(void*, u32, u32);
 extern "C" void* getEntryAt(void*, u32);
-extern "C" void* getCfObjectPc__FPQ22cf12CfObjectMove(void*);
-namespace cf { class CfObjectPc; }
+namespace cf { class CfObjectMove; class CfObjectPc; }
 void CfObjectPc_setupFrame(cf::CfObjectPc* obj);
 extern "C" void func_80043E88(void*, int);
 extern "C" void CtrlObjectParam_SetEquipSlot5(void*, int);
@@ -423,13 +420,7 @@ extern "C" int IsSkillItem(void*);
 extern "C" u16 CItemBlock_getFlag120EC(int);
 extern "C" u32 CItemBlock_countKindSlots(u8);
 extern "C" char* CopyEntry9Bytes(char*, const char*);
-extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv();
-extern "C" void* getHandleMEM1__Q23mtl10MemManagerFv();
-extern "C" u32 getMaxAllocSize__Q23mtl10MemManagerFUl(u32);
-extern "C" void deallocate__Q23mtl10MemManagerFPv(void*);
 extern "C" int KyoshinHeap_GetField44();
-extern "C" void* readFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, const char*, void*, int, int);
-extern "C" void* readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, const char*, void*, int, int);
 
 extern "C" void termPresentWin(void*);
 extern "C" void CopyGridEntry9(void*, void*);
@@ -444,51 +435,23 @@ extern "C" void UIWin_BuildFlagBufRec(u32, u32, u32);
 extern "C" void CtrlObjectParam_ClaimArtsSlotRow(void*, u8);
 // UIWin_BuildFlagBuf is owned by kyoshin/CUIWindowManager.hpp.
 
-extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv(void);
-extern "C" void* createRegion__17UnkClass_8045F564FiiPCci(void*, void*, int, const char*, int);
-extern "C" void __ct__14Class_8045F858FP17UnkClass_8045F564(void*, void*);
-extern "C" void setMemInitFlag__Q23mtl10MemManagerFb(bool);
 extern "C" void* __ct__CTagProcessor(void*);
-extern "C" bool Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(nw4r::lyt::ArcResourceAccessor*, void*, const char*);
  extern "C" CBaseCur* __ct__CCur07(void*, void*);
-extern "C" void __ct__12CItemBoxInfoFUcUs(void*, int, int);
 extern "C" void __ct__CNumSelect(void*, int);
 extern "C" void __ct__CPresentWin(void*);
-extern "C" void __ct__7CSysWinFUc(void*, int);
-extern "C" void __as__17UnkClass_8045F564FRC17UnkClass_8045F564(void*, void*);
 extern "C" CBaseCur* __ct__CCur09(void*, void*);
 extern "C" CBaseCur* __ct__CCur16(void*, void*);
 extern "C" CBaseCur* __ct__CCur11(void*, void*);
-extern "C" void __dt__6CCur07Fv(void*, int);
-extern "C" void __dt__6CCur09Fv(void*, int);
-extern "C" void __dt__6CCur16Fv(void*, int);
-extern "C" void __dt__6CCur11Fv(void*, int);
-extern "C" void __dt__7CSysWinFv(void*, int);
-extern "C" void __dt__11CPresentWinFv(void*, int);
-extern "C" void __dt__10CNumSelectFv(void*, int);
-extern "C" void __dt__17UnkClass_8045F564Fv(void*, int);
 extern "C" void MenuShopSellCopyData(void*, void*);
-extern "C" void __dt__14Class_8045F858Fv(void*, int);
-extern "C" void validateHeap__17UnkClass_8045F564Fv(void*);
 extern "C" void initPresentWin(void*, void*);
 
 // ---- UnequipPartyItem imports/helpers ----
 extern "C" void CtrlObjectParam_SyncParamFromActor(void*);
 
-// Enum list returned by get__16CfEnumListHolderFv: element count at +0x620.
-struct CItemBoxGridEnumList {
-    u8 _pad00[0x620];
-    u32 field_620;
-};
 // Slot from getEntryAt: move object pointer at +0x04.
 struct CItemBoxGridEnumSlot {
     u32 field_00;
-    void* field_04;
-};
-// Move object whose +0x3f28 halfword holds the player index.
-struct CItemBoxGridMoveObj {
-    u8 _pad00[0x3f28];
-    u16 field_3f28;
+    cf::CfObjectMove* field_04;
 };
 // ---- CItemBoxGrid ctor: mirror shapes of the sub-blocks copied by value out
 // of the CItemBoxInfo/CNumSelect/CExchangeWin stack temporaries and
@@ -550,16 +513,10 @@ struct CibgByteBlock200 {
     u8 arr[0x200];
 };
 
-// 16-byte memory region whose copy goes through the retail
-// __as__17UnkClass_8045F564FRC17UnkClass_8045F564 helper (same-TU inline folds the wrapper away,
-// leaving the single bl the retail assignments show).
-class CibgUnk16 {
-public:
-    u8 d[0x10];
-    CibgUnk16& operator=(const CibgUnk16& o) {
-        __as__17UnkClass_8045F564FRC17UnkClass_8045F564((void*)d, (void*)o.d);
-        return *this;
-    }
+// 16-byte memory region copied as four aligned words by the compiler's
+// default assignment (the retail helper's inline body is the same copy).
+struct CibgUnk16 {
+    u32 w0, w1, w2, w3;
 };
 
 // Occupies layout space but emits no copy code: the empty operator= inlines

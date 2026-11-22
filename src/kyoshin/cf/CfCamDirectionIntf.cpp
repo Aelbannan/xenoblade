@@ -7,8 +7,6 @@ namespace cf {
 extern "C" {
     extern "C" void cfCam_posMinusOff(ml::CVec3* out, ml::CVec3* pos274, ml::CVec3 const* dir, f32 unk284);
     // Compute result lookat from base position, current lookat, and direction.
-    extern "C" void cfCam_vecToAngles(ml::CVec3* pos274, ml::CVec3* lookat, ml::CVec3* out);
-    extern const f32 lbl_eu_80666268;
 
 // Stub: CfCamDirectionIntf vtable update entry - does nothing for directional cameras.
 void CfCamDirectionIntf_update(CfCamDirectionIntf* /*self*/) {

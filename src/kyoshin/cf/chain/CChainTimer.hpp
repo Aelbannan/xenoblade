@@ -37,7 +37,7 @@ namespace cf {
         virtual void v25(); virtual void v26(); virtual void v27();
         virtual void v28(); virtual void v29(); virtual void v30();
         virtual void v31(); virtual void v32(); virtual void v33();
-        virtual void v34(); virtual void v35(); virtual void v36();
+        virtual void v34(); virtual float v35(); virtual void v36();
         virtual void v37(); virtual void v38(); virtual void v39();
         virtual void v40();
         virtual nw4r::math::VEC3* v41(); // index 41 -> vtable offset 0xAC
@@ -247,6 +247,10 @@ namespace cf {
         u16 field_3F28;             // 0x3F28 (battle id)
         u8 _pad3F2A[0x3F60 - 0x3F2A]; // 0x3F2A-0x3F5F
         CChainField3F60* field_3F60; // 0x3F60
+        u8 _pad3F64[0x44A8 - 0x3F64]; // 0x3F64-0x44A7
+        u8 mCollision44A8[4];       // 0x44A8 (collision region) // name-guess: Coli* accessors in CChainActorPc/CfObjectPc
+        u8 _pad44AC[0x455A - 0x44AC]; // 0x44AC-0x4559
+        u16 mField455A;             // 0x455A (attested in CfObjWrap)
     };
 
     // Chain-state object operated on by func_8027Dxxx / func_8027Exxx.

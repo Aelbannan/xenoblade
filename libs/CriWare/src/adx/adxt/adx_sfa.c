@@ -3,14 +3,12 @@
 
 #include <harness_catalog.h>
 
-extern u32 lbl_eu_805E3338[2];
+u32 sfa_init_cnt;
+
 void SFA_Init(void) {
-    ((u32*)lbl_eu_805E3338)[0]++;
+    sfa_init_cnt++;
 }
 
-extern u32 lbl_eu_805E3338[2];
 void SFA_Finish(void) {
-    ((u32*)lbl_eu_805E3338)[0]--;
+    sfa_init_cnt--;
 }
-
-u32 lbl_eu_805E3338[2];

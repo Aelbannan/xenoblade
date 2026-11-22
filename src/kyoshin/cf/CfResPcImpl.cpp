@@ -15,6 +15,7 @@
 #include <string.h>
 #include "kyoshin/cf/CfGameManagerData.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
+#include "monolib/util/MemManager.hpp"
 #include "kyoshin/cf/object/CfObject.hpp"
 #include "kyoshin/cf/object/CfObjectModel.hpp"
 #include "kyoshin/cf/object/CfObjectMove.hpp"
@@ -812,7 +813,7 @@ void CfResPcImpl_advance(cf::CfResPcImpl* self) {
         return;
     }
     self->field_08++;
-    setMemInitFlag__Q23mtl10MemManagerFb(false);
+    mtl::MemManager::setMemInitFlag(false);
     if ((self->field_00->field_6C & 0x20) && self->field_00->field_98 == 0) {
         u8* h = 0;
         int v1 = (self)->CfResPcImpl_getSlotTableEntry(1);
@@ -874,7 +875,7 @@ void CfResPcImpl_advance(cf::CfResPcImpl* self) {
         int v6 = (self)->CfResPcImpl_getSlotTableEntry(6);
         self->field_00->field_6E0 = ((u32)slot << 20) | 0x78000000 | ((u32)v6 >> 10) & 0x3F8000;
     }
-    setMemInitFlag__Q23mtl10MemManagerFb(true);
+    mtl::MemManager::setMemInitFlag(true);
     u32 f68 = self->field_00->field_68;
     int b20 = (f68 >> 11) & 1;
     if (f68 & 0x100000) {
@@ -996,7 +997,7 @@ void CfResPcImpl_open(cf::CfResPcImpl* self) {
     if (ok != 0) {
         self->field_08++;
         reinterpret_cast<cf::CfObjectMove*>(self->field_00)->CfObjectMove_flushEffectSlots();
-        setMemInitFlag__Q23mtl10MemManagerFb(false);
+        mtl::MemManager::setMemInitFlag(false);
         CScnItemModel* obj98 = reinterpret_cast<CScnItemModel*>(self->field_00->field_98);
         if ((self->field_00->field_6C & 0x1000) && self->field_00->field_6F8[0] == 0) {
             self->field_00->field_700 = (cf::CfResPc700Obj*)(entry_d->field_2C)->getResourceBase(entry_d, slot);
@@ -1068,7 +1069,7 @@ u32 bdat2 = (u32)cf::CfBdat::getBdatStringEntry(self->field_00->field_70C[1]);
                 }
             }
         }
-        setMemInitFlag__Q23mtl10MemManagerFb(true);
+        mtl::MemManager::setMemInitFlag(true);
         if (self->field_00->field_38 != 0) {
 reinterpret_cast<cf::CfObject*>(self->field_00->field_38)->CfObject_getPosTriple();
         }
@@ -1432,9 +1433,9 @@ CfRes_tryRefreshByBits(((u32)gmGlobalFlag44 << 10) | (((u32)gmGlobalFlag42 << 20
 // .o, so typed pointer tables match byte-for-byte; reloc names are ignored
 // by the data gate when bytes match.
 // .rodata 0x50: position table copied by CfResPcImpl_open (10 float pairs).
-__declspec(section ".rodata") __attribute__((aligned(8), used))
+__attribute__((aligned(8), used))
 // name-guess: typed 0x50 position table copied by CfResPcImpl_open.
-cf::CfResPcPosTable cfResPcPosTableData = { {
+const cf::CfResPcPosTable cfResPcPosTableData = { {
     {0.1f, 0.9f}, {0.04f, 0.9f}, {0.19f, 0.9f}, {0.07f, 0.9f}, {0.1f, 0.9f},
     {0.19f, 0.9f}, {0.1f, 0.9f}, {0.19f, 0.9f}, {0.1f, 0.9f}, {0.1f, 0.9f},
 } };
@@ -1449,7 +1450,7 @@ __declspec(section ".rodata") __attribute__((aligned(8), used))
 char lbl_eu_80503BB8[0x0C] = "CScnItem";
 // .data 0x30: PMF dispatch rows ({0,-1,func}; free-function targets are not
 // expressible as PMFs, so init via the raw-word view like CfResObjImpl).
-__declspec(section ".data") __attribute__((aligned(8), used))
+__attribute__((aligned(8), used))
 // name-guess: 0x30 dispatch table walked by CfResPcImpl_reload.
 CfResPcImplPmfEntry cfResPcPmfDispatch[4] = {
     { 0, 0xFFFFFFFFu, (u32)CfResPcImpl_reload },

@@ -31,9 +31,9 @@ extern u32 MpfTevZModeFlags;
 // Ambient-color / key-color globals used by func_80474E24/E68/74DAC. The
 // effective compiled header (libs/monolib/include/...) does not declare
 // these, so they are declared here like the other lbl_* externs in this file.
-extern u32 lbl_eu_80665878;
-extern u32 lbl_eu_8066587C;
-extern GXColor lbl_eu_80663858;
+extern GXColor sMpfAmbientColor0;
+extern GXColor sMpfAmbientColor1;
+extern GXColor sMpfKeyColor;
 extern const f32 lbl_eu_8066A7D8;
 extern const f32 lbl_eu_8066A734;
 extern const f32 lbl_eu_8066A738;
@@ -49,6 +49,11 @@ extern const f32 lbl_eu_8066A74C;
 extern const f32 lbl_eu_8066A758;
 extern const f32 lbl_eu_8066A75C;
 extern const f32 lbl_eu_8066A770;
+
+// [.sdata2] 0x8066A728: shared billboard corner count (retail value 32).
+// Definition: the canonical declaration lives in the owning mpfsys header.
+extern const s32 MpfBillboardCount = 32;
+
 // Embedded-subobject pointer cache (written by initMpfDrawBuffer in
 // code_8047BB54.cpp); func_80471FCC registers `this` here.
 extern void* sMpfsysDrawState;
@@ -368,31 +373,6 @@ void buildDisplayList__Q26mpfsys17UnkClass_80471EC8Fv(
     }
     DCStoreRange(bufBase, tail->itemCount * 0x300);
 }
-
-// Per-layer animation record laid out by initLayerRecords (stride 0xB4).
-// Uses a trivial POD vector so member copies stay inline word copies
-// (retail never calls the ml::CVec3 assignment operator here).
-struct MpfsysVec3 {
-    union {
-        struct {
-            f32 x;
-            f32 y;
-            f32 z;
-        };
-        u32 w[3];
-    };
-};
-struct MpfsysLayerRec {
-    MpfsysVec3 f00;   // +0x00
-    MpfsysVec3 f0C;   // +0x0C
-    MpfsysVec3 f18;   // +0x18
-    MpfsysVec3 f24;   // +0x24
-    MpfsysVec3 f30;   // +0x30
-    MpfsysVec3 f3C;   // +0x3C
-    MpfsysVec3 dir;   // +0x48
-    Mtx mtxA;         // +0x54
-    Mtx mtxB;         // +0x84
-};
 
 // Reset overlay for the layer-state tail of UnkClass_80471EC8.
 struct MpfsysInitLayout {
@@ -1301,10 +1281,9 @@ void drawMapLayer__Q26mpfsys17UnkClass_80471EC8Fv(
     GXLoadLightObjImm(&lightObj, GX_LIGHT1);
 
     ((mpfsys::UnkClass_80471EC8*)sMpfsysDrawState)->getLayerColors(
-        (GXColor*)&lbl_eu_80665878, (GXColor*)&lbl_eu_8066587C);
+        &sMpfAmbientColor0, &sMpfAmbientColor1);
 
-    GXColor ambColor;
-    *(u32*)&ambColor = lbl_eu_80665878;
+    GXColor ambColor = sMpfAmbientColor0;
     GXSetChanAmbColor(GX_COLOR0, ambColor);
     GXSetChanMatColor(GX_COLOR0, keyColor);
 
@@ -1746,10 +1725,10 @@ void mpfsys::UnkClass_80471EC8::applyTevColor() {
 
 // TEV key-color alpha setter. Scales lbl_eu_8066A7D8 by the argument,
 // stores the converted byte as the alpha of the shared key color
-// (lbl_eu_80663858), then pushes that color as TEV K-color 0.
+// (sMpfKeyColor), then pushes that color as TEV K-color 0.
 void mpfsys::UnkClass_80471EC8::setKeyAlpha(f32 value) {
-    lbl_eu_80663858.a = (u8)(s32)(lbl_eu_8066A7D8 * value);
-    GXColor color = lbl_eu_80663858;
+    sMpfKeyColor.a = (u8)(s32)(lbl_eu_8066A7D8 * value);
+    GXColor color = sMpfKeyColor;
     GXSetTevKColor(GX_KCOLOR0, color);
 }
 
@@ -1776,18 +1755,16 @@ void mpfsys::UnkClass_80471EC8::resetAmbient(void) {
     u32 flags = MpfTevZModeFlags;
     if (flags & 0x20) {
         MpfTevZModeFlags = flags & ~0x20;
-        GXColor color;
-        *(u32*)&color = lbl_eu_80665878;
+        GXColor color = sMpfAmbientColor0;
         GXSetChanAmbColor(GX_COLOR0, color);
     }
 }
 
 void mpfsys::UnkClass_80471EC8::applyAmbient(void) {
     // One-shot ambient-color push: when the 0x20 flag is clear, push the
-    // shared ambient color (lbl_eu_8066587C) for channel 0, then set the flag.
+    // shared ambient color (sMpfAmbientColor1) for channel 0, then set the flag.
     if (!(MpfTevZModeFlags & 0x20)) {
-        GXColor color;
-        *(u32*)&color = lbl_eu_8066587C;
+        GXColor color = sMpfAmbientColor1;
         GXSetChanAmbColor(GX_COLOR0, color);
         MpfTevZModeFlags |= 0x20;
     }
@@ -1844,7 +1821,7 @@ extern "C" u32 lbl_eu_80663848[2] = { (u32)&lbl_eu_80523D80, (u32)&lbl_eu_8056DB
 // them into entirely different values.
 f32 sMpfWobbleScale = 0.002f; // name-guess: 0.002f random wobble scale in simulateLayer
 f32 sMpfJitterScale = 0.005f; // name-guess: 0.005f random dx/dy/dz scale in updateLayerPositions
-GXColor lbl_eu_80663858 = { 0xFF, 0xFF, 0xFF, 0xFF };
+GXColor sMpfKeyColor = { 0xFF, 0xFF, 0xFF, 0xFF }; // name-guess: shared TEV key color whose alpha setKeyAlpha overwrites
 char sMpfRefTag0[4] = {'r', 'e', 'f', '\0'}; // name-guess: "ref" Panic vararg at setupMapTexture check 1
 char sMpfRefTag1[4] = {'r', 'e', 'f', '\0'}; // name-guess: adjacent "ref" string, no remaining code ref
 char sMpfRefTag2[4] = {'r', 'e', 'f', '\0'}; // name-guess: adjacent "ref" string, no remaining code ref
@@ -1859,7 +1836,7 @@ u32 MpfTevEntryTable;
 u32 MpfTevZModeFlags;
 u32 MpfSlotChainHead;
 u32 MpfDrawWalkConfig;
-u32 lbl_eu_80665878;
-u32 lbl_eu_8066587C;
+GXColor sMpfAmbientColor0; // name-guess: first GXColor output of getLayerColors, pushed by resetAmbient
+GXColor sMpfAmbientColor1; // name-guess: second GXColor output of getLayerColors, pushed by applyAmbient
 f32 lbl_eu_80665880;
 u32 lbl_eu_80665884;

@@ -277,27 +277,26 @@ static void sfbuf_DestroySlot(SfdSupply *slot) {
 }
 
 /* The supply record address is kept in its own local: retail materialises the
- * slot base once and indexes the SJ object off it (a directly derived
- * member pointer loses that shape and costs the match). */
+ * slot base once and indexes the SJ object off it. */
 void SFBUF_DestroySj(void *self) {
-    u32 *rec = (u32 *)((u8 *)self + 0x13C8);
-    u8 *base = (u8 *)self;
+    SfdBuf *slots = sfbuf_slot(self, 0);
+    SfdSupply *rec = &slots[0].sup;
 
     /* Ring buffer */
-    if (*(s32 *)(base + 0x13B8) == SFBUF_STATE_ACTIVE) {
-        sfbuf_DestroySlot((SfdSupply *)rec);
+    if (slots[0].state == SFBUF_STATE_ACTIVE) {
+        sfbuf_DestroySlot(rec);
     }
 
     /* Vfrm buffer */
-    rec = (u32 *)(base + 0x143C);
-    if (*(s32 *)(base + 0x142C) == SFBUF_STATE_ACTIVE) {
-        sfbuf_DestroySlot((SfdSupply *)rec);
+    rec = &slots[1].sup;
+    if (slots[1].state == SFBUF_STATE_ACTIVE) {
+        sfbuf_DestroySlot(rec);
     }
 
     /* Aring buffer */
-    rec = (u32 *)(base + 0x14B0);
-    if (*(s32 *)(base + 0x14A0) == SFBUF_STATE_ACTIVE) {
-        sfbuf_DestroySlot((SfdSupply *)rec);
+    rec = &slots[2].sup;
+    if (slots[2].state == SFBUF_STATE_ACTIVE) {
+        sfbuf_DestroySlot(rec);
     }
 }
 

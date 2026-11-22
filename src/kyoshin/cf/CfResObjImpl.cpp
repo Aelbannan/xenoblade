@@ -75,65 +75,65 @@ int ResObj_PollActive_C950(CfResObjImpl* self) {
 // builds the model + text resources through the parent's +0x90/+0x94/+0x9C
 // slots (selected by parent flag bits 0x20/0x10), dispatches the +0xDC anim
 // setter and finally runs the +0x38/+0x98 sub-objects.
-void ResObj_ReleaseModels_C98C(cf::CfResObjImpl* self) {
+void cf::CfResObjImpl::ResObj_ReleaseModels_C98C() {
     u8 buf64[0x44];    // sp+0x8 (FixStr<64> name buffer)
 
-    ((cf::CfObjectModel*)self->field_00)->CfObjectModel_releaseModelList();
-    ((cf::CfObjectModel*)self->field_00)->CfObjectModel_releaseModelSub();
-    self->field_00->field_90 = 0;
-    cf::CfResObjParent* parent = self->field_00;
+    ((cf::CfObjectModel*)this->field_00)->CfObjectModel_releaseModelList();
+    ((cf::CfObjectModel*)this->field_00)->CfObjectModel_releaseModelSub();
+    this->field_00->field_90 = 0;
+    cf::CfResObjParent* parent = this->field_00;
     parent->field_94 = 0;
     if (((cf::CfGameManager*)parent)->getEffectFlagState() == 0) return;
     ResInfoEntry* entry = (ResInfoEntry*)CfRes_getInstPtr170();
     int ok = 1;
     if (entry->field_0x2C->isInUse(entry) == 0) ok = 0;
     if (!ok) return;
-    self->field_08 = self->field_08 + 1;
+    this->field_08 = this->field_08 + 1;
     mtl::MemManager::setMemInitFlag(false);
-    if ((self->field_00->field_6C & 0x20) && self->field_00->field_98 == 0) {
-        u32 handle1 = self->ResObj_GetWork_CCBC(1);
-        self->field_00->field_90 = CfRes_findEntryById(entry, handle1);
-f32 anim = ((cf::CfObject*)self->field_00)->CfObject_getObjScale();
-        u8* obj = scnImN4BuildByIdx((u8*)gmScene, self->field_00->field_90, 6, 1, 0, 0x70);
-        CfModel_InstallSub(self->field_00, obj);
-        if (self->field_00->field_98 != 0 &&
-            (((cf::CfResObjModel98Data*)self->field_00->field_98)->field_7A4 & 0x800000) != 0 &&
+    if ((this->field_00->field_6C & 0x20) && this->field_00->field_98 == 0) {
+        u32 handle1 = this->ResObj_GetWork_CCBC(1);
+        this->field_00->field_90 = CfRes_findEntryById(entry, handle1);
+f32 anim = ((cf::CfObject*)this->field_00)->CfObject_getObjScale();
+        u8* obj = scnImN4BuildByIdx((u8*)gmScene, this->field_00->field_90, 6, 1, 0, 0x70);
+        CfModel_InstallSub(this->field_00, obj);
+        if (this->field_00->field_98 != 0 &&
+            (((cf::CfResObjModel98Data*)this->field_00->field_98)->field_7A4 & 0x800000) != 0 &&
             cf::CfGameManager::getGameSubManager() != 0 &&
             ((cf::CfResObjGm98View*)cf::CfGameManager::getGameSubManager())->field_98 != 0) {
-            self->field_00->field_98->vfunc78(((cf::CfResObjGm98View*)cf::CfGameManager::getGameSubManager())->field_98);
+            this->field_00->field_98->vfunc78(((cf::CfResObjGm98View*)cf::CfGameManager::getGameSubManager())->field_98);
         }
-((cf::CfObject*)self->field_00)->CfObject_setObjScale(anim);
+((cf::CfObject*)this->field_00)->CfObject_setObjScale(anim);
     }
-    if (self->field_00->field_6C & 0x10) {
+    if (this->field_00->field_6C & 0x10) {
         // Direct buffer derefs so the address is recomputed at each use
         // (retail emits stb/stw against sp and `addi r3, sp, 8` before the
         // formatter call, rather than keeping &buf64 in a saved register).
         ((ml::FixStr<64>*)buf64)->mString[0] = 0;   // retail stb/stw init (no bl ctor)
         ((ml::FixStr<64>*)buf64)->mLength = 0;
-        if (self->field_00->field_9C == 0) {
-            u32 handle0 = self->ResObj_GetWork_CCBC(0);
+        if (this->field_00->field_9C == 0) {
+            u32 handle0 = this->ResObj_GetWork_CCBC(0);
             Tok_FormatStr(*(ml::FixStr<64>*)buf64, handle0, 0, 0);
-            u32 handle1 = self->ResObj_GetWork_CCBC(0);
-            self->field_00->field_94 = CfRes_findEntryById(entry, handle1);
-            self->field_00->field_9C = (u8*)initMcaFile(
-                (u32)CfRes_getD80Flag(), (u32)self->field_00->field_94, (const char*)buf64);
+            u32 handle1 = this->ResObj_GetWork_CCBC(0);
+            this->field_00->field_94 = CfRes_findEntryById(entry, handle1);
+            this->field_00->field_9C = (u8*)initMcaFile(
+                (u32)CfRes_getD80Flag(), (u32)this->field_00->field_94, (const char*)buf64);
         }
     }
     mtl::MemManager::setMemInitFlag(true);
-    CfObjectMove_initAnimTarget((cf::CfObjectMove*)self->field_00);
-    u32 handle = self->ResObj_GetWork_CCBC(1);
+    CfObjectMove_initAnimTarget((cf::CfObjectMove*)this->field_00);
+    u32 handle = this->ResObj_GetWork_CCBC(1);
     u8* obj = CfRes_findEntryById(entry, (handle & 0x07FFFFFF) | 0xF0000000);
     if (obj != 0) {
-        ColiNodeSetWord0Rebuild(self->field_00->field_60C, obj);
-        CfObjectMove_setRegionAttached(self->field_00, 1);
-        self->field_00->field_6B8 = 2;
-        self->field_00->field_6B4 |= 0x800;
+        ColiNodeSetWord0Rebuild(this->field_00->field_60C, obj);
+        CfObjectMove_setRegionAttached(this->field_00, 1);
+        this->field_00->field_6B8 = 2;
+        this->field_00->field_6B4 |= 0x800;
     }
-    if (self->field_00->field_38 != 0) {
-((cf::CfObject*)self->field_00->field_38)->CfObject_getPosTriple();
+    if (this->field_00->field_38 != 0) {
+((cf::CfObject*)this->field_00->field_38)->CfObject_getPosTriple();
     }
-    if (self->field_00->field_98 != 0) {
-        self->field_00->field_98->vfunc88((self->field_00->field_6C >> 28) & 1);
+    if (this->field_00->field_98 != 0) {
+        this->field_00->field_98->vfunc88((this->field_00->field_6C >> 28) & 1);
     }
 }
 
@@ -145,22 +145,21 @@ extern "C" u32 ResObj_GetWork_CCBC(CfResObjImpl* self, int index) {
     return 0;
 }
 
-void ResObj_Noop_CCDC(void) {}
+void cf::CfResObjImpl::ResObj_Noop_CCDC() {}
 
-// One-time install of the null PMTF into lbl_eu_80530F20, then dispatch
-// through the state-selected entry (when the state at +0x08 is < 3).
+// State dispatch through a function-local static PTMF table (state at +0x08
+// selects the row when < 3). Row 0 is the null member pointer, which MWCC
+// installs from __ptmf_null once under the static's guard byte; the other
+// two rows are static {0,-1,func} data.
 void ResObj_DispatchState_CCE0(CfResObjImpl* self) {
-    if (lbl_eu_80664270 == 0) {
-        u32* src = __ptmf_null;
-        u32* dst = (u32*)lbl_eu_80530F20;
-        dst[0] = *src++;
-        dst[1] = *src++;
-        dst[2] = *src++;
-        lbl_eu_80664270 = 1;
-    }
+    static void (cf::CfResObjImpl::*table[3])() = {
+        0,
+        &cf::CfResObjImpl::ResObj_ReleaseModels_C98C,
+        &cf::CfResObjImpl::ResObj_Noop_CCDC,
+    };
     u16 idx = self->field_08;
     if (idx < 3) {
-        (self->*lbl_eu_80530F20[idx].p)();
+        (self->*table[idx])();
     }
 }
 
@@ -198,13 +197,6 @@ extern const void* __RTTI__Q22cf12CfResObjImpl[2];
 extern const void* lbl_eu_806623D8[2];
 extern const void* lbl_eu_80530FB0[4];
 
-// .data 0x24: PMF dispatch rows ({0,0,0} + two {0,-1,func}).
-__attribute__((used))
-CfPmfEntry lbl_eu_80530F20[3] = {
-    { 0, 0, 0 },
-    { 0, 0xFFFFFFFFu, (u32)ResObj_ReleaseModels_C98C },
-    { 0, 0xFFFFFFFFu, (u32)ResObj_Noop_CCDC },
-};
 // .data 0x6C: hand-built vtable (RTTI + 0 + dtor + 24 slots).
 __attribute__((used))
 cf::CfResObjImplVtbl lbl_eu_80530F44 = { {
@@ -241,8 +233,6 @@ cf::CfResObjImplVtbl lbl_eu_80530F44 = { {
 __attribute__((used))
 const void* lbl_eu_80530FB0[4] = { lbl_eu_806623D8, 0, 0, 0 };
 
-// .sbss 0x8: one-time PMF-table init flag (byte) plus padding.
-char lbl_eu_80664270;
 // Pad word: sbss objects after the first 4-align, so the flag (1B @0)
 // leaves a 3-byte gap and one word fills the section to 8 bytes.
 __attribute__((used))

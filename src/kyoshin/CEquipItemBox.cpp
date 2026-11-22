@@ -758,9 +758,9 @@ void CEquipItemGrid::sortEIBByVf30() {
             CEquipItemData* b = &data[j + 1];
             CItemInstance* objA = (CItemInstance*)CItem_kindPtr(cat, a->unk0);
             objB = (CItemInstance*)CItem_kindPtr(cat, b->unk0);
-            u32 keyB = CItem_initItemImplInstances((CItemData*)objB)->vf30((CItemData*)objB);
-            u32 keyA = CItem_initItemImplInstances((CItemData*)objA)->vf30((CItemData*)objA);
-            if ((u16)keyA < (u16)keyB) {
+            u16 keyB = CItem_initItemImplInstances((CItemData*)objB)->vf30((CItemData*)objB);
+            u16 keyA = CItem_initItemImplInstances((CItemData*)objA)->vf30((CItemData*)objA);
+            if (keyA < keyB) {
                 CEquipItemData tC;
                 CEquipItemData tB;
                 CEquipItemData tA;
@@ -2161,10 +2161,13 @@ int CEquipItemBox::eibHudPrompt() {
 // Returns 1 when the lookup byte of the grid cell selected by (unk_1f5) equals
 // GetCollectedFlagByte's category byte; an unk_1f5 of -1 always returns 0.
 int CEquipItemBox::isEIBCatMatch() {
-    if ((s8)unk_1f5 == -1) return 0;
-    u8 cat = (u8)((unk_1fc >> 8) & 0xff);
+    u32 a;
+    u8 row = (u8)unk_1f5;
+    if ((s8)row == -1) return 0;
+    row = row * 5 + unk_1f4;
+    u32 cat = (unk_1fc >> 8) & 0xff;
     CEquipItemGrid* grid = &mGrid;
-    u32 a = grid->getEIBByte2((u8)(unk_1f4 + unk_1f5 * 5));
+    a = grid->getEIBByte2(row);
     u32 b = GetCollectedFlagByte(cat);
     return b == a;
 }
@@ -2289,18 +2292,18 @@ void CEquipItemBox::refreshEIBCellText(s8 v,
         char* str = BdatTouchStringCell("MNU_item", "name",
                                   0x1e - ((u8)n - 1));
         sprintf(bufText, "%s", str);
-        PaneMatSetTevColorsByName(field_38, bufName, (const GXColorS10*)equipItemBox_sortOptionLabelNeutralTop, (const GXColorS10*)equipItemBox_sortOptionLabelNeutralBottom);
+        PaneMatSetTevColorsByName(field_38, bufName, &equipItemBox_sortOptionLabelNeutralTop, &equipItemBox_sortOptionLabelNeutralBottom);
     } else if (v > 0) {
         sprintf(bufText, "%d");
-        PaneMatSetTevColorsByName(field_38, bufName, (const GXColorS10*)equipItemBox_sortOptionLabelNeutralTop, (const GXColorS10*)equipItemBox_sortOptionLabelNeutralBottom);
+        PaneMatSetTevColorsByName(field_38, bufName, &equipItemBox_sortOptionLabelNeutralTop, &equipItemBox_sortOptionLabelNeutralBottom);
     } else if (v == 0) {
         sprintf(bufText, "");
     } else if (v == -2) {
         sprintf(bufText, getErrMesText16());
-        PaneMatSetTevColorsByName(field_38, bufName, (const GXColorS10*)equipItemBox_sortOptionLabelSelectedTop, (const GXColorS10*)equipItemBox_sortOptionLabelSelectedBottom);
+        PaneMatSetTevColorsByName(field_38, bufName, &equipItemBox_sortOptionLabelSelectedTop, &equipItemBox_sortOptionLabelSelectedBottom);
     } else if (v == -3) {
         sprintf(bufText, getErrMesText15());
-        PaneMatSetTevColorsByName(field_38, bufName, (const GXColorS10*)equipItemBox_sortOptionLabelAltTop, (const GXColorS10*)equipItemBox_sortOptionLabelAltBottom);
+        PaneMatSetTevColorsByName(field_38, bufName, &equipItemBox_sortOptionLabelAltTop, &equipItemBox_sortOptionLabelAltBottom);
     } else {
         sprintf(bufText, "");
     }
@@ -2749,11 +2752,11 @@ void CEquipItemBox::refreshEIBSortTabs() {
                 flagB = true;
             }
             if ((u32)(v - 4) <= 4 || (int)v == 2 || (int)v == 0xb) {
-                PaneMatSetTevColorsByName(field_38, buf1, (const GXColorS10*)equipItemBox_sortMenuTabSelectedTop, (const GXColorS10*)equipItemBox_sortMenuTabSelectedBottom);
-                PaneMatSetTevColorsByName(field_38, buf2, (const GXColorS10*)equipItemBox_sortMenuTabSelectedTop, (const GXColorS10*)equipItemBox_sortMenuTabSelectedBottom);
+                PaneMatSetTevColorsByName(field_38, buf1, &equipItemBox_sortMenuTabSelectedTop, &equipItemBox_sortMenuTabSelectedBottom);
+                PaneMatSetTevColorsByName(field_38, buf2, &equipItemBox_sortMenuTabSelectedTop, &equipItemBox_sortMenuTabSelectedBottom);
             } else {
-                PaneMatSetTevColorsByName(field_38, buf1, (const GXColorS10*)equipItemBox_sortMenuTabNeutralTop, (const GXColorS10*)equipItemBox_sortMenuTabNeutralBottom);
-                PaneMatSetTevColorsByName(field_38, buf2, (const GXColorS10*)equipItemBox_sortMenuTabNeutralTop, (const GXColorS10*)equipItemBox_sortMenuTabNeutralBottom);
+                PaneMatSetTevColorsByName(field_38, buf1, &equipItemBox_sortMenuTabNeutralTop, &equipItemBox_sortMenuTabNeutralBottom);
+                PaneMatSetTevColorsByName(field_38, buf2, &equipItemBox_sortMenuTabNeutralTop, &equipItemBox_sortMenuTabNeutralBottom);
             }
         }
         nw4r::lyt::Pane* pane1 = field_38->GetRootPane()->FindPaneByName(buf1, true);
@@ -2844,37 +2847,37 @@ void CEquipItemBox::refreshEIBSortPages(int a) {
     }
     u8 v2 = unk_36c[(s8)unk_373];
     if ((u32)(v2 - 4) <= 4 || (int)v2 == 2 || (int)v2 == 0xb) {
-        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x3f9], (const GXColorS10*)equipItemBox_sortMenuTabSelectedTop, (const GXColorS10*)equipItemBox_sortMenuTabSelectedBottom);
-        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x405], (const GXColorS10*)equipItemBox_sortMenuTabSelectedTop, (const GXColorS10*)equipItemBox_sortMenuTabSelectedBottom);
-        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x411], (const GXColorS10*)equipItemBox_sortMenuTabSelectedTop, (const GXColorS10*)equipItemBox_sortMenuTabSelectedBottom);
-        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x41d], (const GXColorS10*)equipItemBox_sortMenuTabSelectedTop, (const GXColorS10*)equipItemBox_sortMenuTabSelectedBottom);
-        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x429], (const GXColorS10*)equipItemBox_sortMenuTabSelectedTop, (const GXColorS10*)equipItemBox_sortMenuTabSelectedBottom);
-        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x435], (const GXColorS10*)equipItemBox_sortMenuTabSelectedTop, (const GXColorS10*)equipItemBox_sortMenuTabSelectedBottom);
-        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x441], (const GXColorS10*)equipItemBox_sortMenuTabSelectedTop, (const GXColorS10*)equipItemBox_sortMenuTabSelectedBottom);
-        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x44d], (const GXColorS10*)equipItemBox_sortMenuTabSelectedTop, (const GXColorS10*)equipItemBox_sortMenuTabSelectedBottom);
-        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x459], (const GXColorS10*)equipItemBox_sortMenuTabSelectedTop, (const GXColorS10*)equipItemBox_sortMenuTabSelectedBottom);
-        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x465], (const GXColorS10*)equipItemBox_sortMenuTabSelectedTop, (const GXColorS10*)equipItemBox_sortMenuTabSelectedBottom);
-        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x470], (const GXColorS10*)equipItemBox_sortMenuTabSelectedTop, (const GXColorS10*)equipItemBox_sortMenuTabSelectedBottom);
-        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x47b], (const GXColorS10*)equipItemBox_sortMenuTabSelectedTop, (const GXColorS10*)equipItemBox_sortMenuTabSelectedBottom);
-        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x486], (const GXColorS10*)equipItemBox_sortMenuTabSelectedTop, (const GXColorS10*)equipItemBox_sortMenuTabSelectedBottom);
-        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x491], (const GXColorS10*)equipItemBox_sortMenuTabSelectedTop, (const GXColorS10*)equipItemBox_sortMenuTabSelectedBottom);
-        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x49c], (const GXColorS10*)equipItemBox_sortMenuTabSelectedTop, (const GXColorS10*)equipItemBox_sortMenuTabSelectedBottom);
+        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x3f9], &equipItemBox_sortMenuTabSelectedTop, &equipItemBox_sortMenuTabSelectedBottom);
+        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x405], &equipItemBox_sortMenuTabSelectedTop, &equipItemBox_sortMenuTabSelectedBottom);
+        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x411], &equipItemBox_sortMenuTabSelectedTop, &equipItemBox_sortMenuTabSelectedBottom);
+        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x41d], &equipItemBox_sortMenuTabSelectedTop, &equipItemBox_sortMenuTabSelectedBottom);
+        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x429], &equipItemBox_sortMenuTabSelectedTop, &equipItemBox_sortMenuTabSelectedBottom);
+        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x435], &equipItemBox_sortMenuTabSelectedTop, &equipItemBox_sortMenuTabSelectedBottom);
+        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x441], &equipItemBox_sortMenuTabSelectedTop, &equipItemBox_sortMenuTabSelectedBottom);
+        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x44d], &equipItemBox_sortMenuTabSelectedTop, &equipItemBox_sortMenuTabSelectedBottom);
+        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x459], &equipItemBox_sortMenuTabSelectedTop, &equipItemBox_sortMenuTabSelectedBottom);
+        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x465], &equipItemBox_sortMenuTabSelectedTop, &equipItemBox_sortMenuTabSelectedBottom);
+        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x470], &equipItemBox_sortMenuTabSelectedTop, &equipItemBox_sortMenuTabSelectedBottom);
+        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x47b], &equipItemBox_sortMenuTabSelectedTop, &equipItemBox_sortMenuTabSelectedBottom);
+        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x486], &equipItemBox_sortMenuTabSelectedTop, &equipItemBox_sortMenuTabSelectedBottom);
+        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x491], &equipItemBox_sortMenuTabSelectedTop, &equipItemBox_sortMenuTabSelectedBottom);
+        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x49c], &equipItemBox_sortMenuTabSelectedTop, &equipItemBox_sortMenuTabSelectedBottom);
     } else {
-        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x3f9], (const GXColorS10*)equipItemBox_sortMenuTabNeutralTop, (const GXColorS10*)equipItemBox_sortMenuTabNeutralBottom);
-        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x405], (const GXColorS10*)equipItemBox_sortMenuTabNeutralTop, (const GXColorS10*)equipItemBox_sortMenuTabNeutralBottom);
-        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x411], (const GXColorS10*)equipItemBox_sortMenuTabNeutralTop, (const GXColorS10*)equipItemBox_sortMenuTabNeutralBottom);
-        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x41d], (const GXColorS10*)equipItemBox_sortMenuTabNeutralTop, (const GXColorS10*)equipItemBox_sortMenuTabNeutralBottom);
-        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x429], (const GXColorS10*)equipItemBox_sortMenuTabNeutralTop, (const GXColorS10*)equipItemBox_sortMenuTabNeutralBottom);
-        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x435], (const GXColorS10*)equipItemBox_sortMenuTabNeutralTop, (const GXColorS10*)equipItemBox_sortMenuTabNeutralBottom);
-        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x441], (const GXColorS10*)equipItemBox_sortMenuTabNeutralTop, (const GXColorS10*)equipItemBox_sortMenuTabNeutralBottom);
-        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x44d], (const GXColorS10*)equipItemBox_sortMenuTabNeutralTop, (const GXColorS10*)equipItemBox_sortMenuTabNeutralBottom);
-        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x459], (const GXColorS10*)equipItemBox_sortMenuTabNeutralTop, (const GXColorS10*)equipItemBox_sortMenuTabNeutralBottom);
-        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x465], (const GXColorS10*)equipItemBox_sortMenuTabNeutralTop, (const GXColorS10*)equipItemBox_sortMenuTabNeutralBottom);
-        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x470], (const GXColorS10*)equipItemBox_sortMenuTabNeutralTop, (const GXColorS10*)equipItemBox_sortMenuTabNeutralBottom);
-        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x47b], (const GXColorS10*)equipItemBox_sortMenuTabNeutralTop, (const GXColorS10*)equipItemBox_sortMenuTabNeutralBottom);
-        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x486], (const GXColorS10*)equipItemBox_sortMenuTabNeutralTop, (const GXColorS10*)equipItemBox_sortMenuTabNeutralBottom);
-        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x491], (const GXColorS10*)equipItemBox_sortMenuTabNeutralTop, (const GXColorS10*)equipItemBox_sortMenuTabNeutralBottom);
-        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x49c], (const GXColorS10*)equipItemBox_sortMenuTabNeutralTop, (const GXColorS10*)equipItemBox_sortMenuTabNeutralBottom);
+        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x3f9], &equipItemBox_sortMenuTabNeutralTop, &equipItemBox_sortMenuTabNeutralBottom);
+        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x405], &equipItemBox_sortMenuTabNeutralTop, &equipItemBox_sortMenuTabNeutralBottom);
+        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x411], &equipItemBox_sortMenuTabNeutralTop, &equipItemBox_sortMenuTabNeutralBottom);
+        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x41d], &equipItemBox_sortMenuTabNeutralTop, &equipItemBox_sortMenuTabNeutralBottom);
+        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x429], &equipItemBox_sortMenuTabNeutralTop, &equipItemBox_sortMenuTabNeutralBottom);
+        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x435], &equipItemBox_sortMenuTabNeutralTop, &equipItemBox_sortMenuTabNeutralBottom);
+        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x441], &equipItemBox_sortMenuTabNeutralTop, &equipItemBox_sortMenuTabNeutralBottom);
+        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x44d], &equipItemBox_sortMenuTabNeutralTop, &equipItemBox_sortMenuTabNeutralBottom);
+        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x459], &equipItemBox_sortMenuTabNeutralTop, &equipItemBox_sortMenuTabNeutralBottom);
+        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x465], &equipItemBox_sortMenuTabNeutralTop, &equipItemBox_sortMenuTabNeutralBottom);
+        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x470], &equipItemBox_sortMenuTabNeutralTop, &equipItemBox_sortMenuTabNeutralBottom);
+        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x47b], &equipItemBox_sortMenuTabNeutralTop, &equipItemBox_sortMenuTabNeutralBottom);
+        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x486], &equipItemBox_sortMenuTabNeutralTop, &equipItemBox_sortMenuTabNeutralBottom);
+        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x491], &equipItemBox_sortMenuTabNeutralTop, &equipItemBox_sortMenuTabNeutralBottom);
+        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x49c], &equipItemBox_sortMenuTabNeutralTop, &equipItemBox_sortMenuTabNeutralBottom);
     }
 }
 
@@ -3047,13 +3050,13 @@ void CEquipItemBox::rebuildEIBEquipPage(int a, int b) {
     LayoutSetTextBoxFmtValue(field_38, "txt_value22", "", 0);
     LayoutSetTextBoxFmtValue(field_38, "txt_para24", "", 0);
     LayoutSetTextBoxFmtValue(field_38, "txt_para25", "", 0);
-    PaneMatSetTevColorsByName(field_38, "txt_para01", (const GXColorS10*)equipItemBox_cellLabelNeutralTop, (const GXColorS10*)equipItemBox_cellLabelNeutralBottom);
-    PaneMatSetTevColorsByName(field_38, "txt_para10", (const GXColorS10*)equipItemBox_cellLabelNeutralTop, (const GXColorS10*)equipItemBox_cellLabelNeutralBottom);
-    PaneMatSetTevColorsByName(field_38, "txt_para11", (const GXColorS10*)equipItemBox_cellLabelNeutralTop, (const GXColorS10*)equipItemBox_cellLabelNeutralBottom);
-    PaneMatSetTevColorsByName(field_38, "txt_para04", (const GXColorS10*)equipItemBox_cellLabelNeutralTop, (const GXColorS10*)equipItemBox_cellLabelNeutralBottom);
-    PaneMatSetTevColorsByName(field_38, "txt_para08", (const GXColorS10*)equipItemBox_cellLabelNeutralTop, (const GXColorS10*)equipItemBox_cellLabelNeutralBottom);
-    PaneMatSetTevColorsByName(field_38, "txt_para22", (const GXColorS10*)equipItemBox_cellLabelMutedTop, (const GXColorS10*)equipItemBox_cellLabelMutedBottom);
-    PaneMatSetTevColorsByName(field_38, "txt_para23", (const GXColorS10*)equipItemBox_cellLabelMutedTop, (const GXColorS10*)equipItemBox_cellLabelMutedBottom);
+    PaneMatSetTevColorsByName(field_38, "txt_para01", &equipItemBox_cellLabelNeutralTop, &equipItemBox_cellLabelNeutralBottom);
+    PaneMatSetTevColorsByName(field_38, "txt_para10", &equipItemBox_cellLabelNeutralTop, &equipItemBox_cellLabelNeutralBottom);
+    PaneMatSetTevColorsByName(field_38, "txt_para11", &equipItemBox_cellLabelNeutralTop, &equipItemBox_cellLabelNeutralBottom);
+    PaneMatSetTevColorsByName(field_38, "txt_para04", &equipItemBox_cellLabelNeutralTop, &equipItemBox_cellLabelNeutralBottom);
+    PaneMatSetTevColorsByName(field_38, "txt_para08", &equipItemBox_cellLabelNeutralTop, &equipItemBox_cellLabelNeutralBottom);
+    PaneMatSetTevColorsByName(field_38, "txt_para22", &equipItemBox_cellLabelMutedTop, &equipItemBox_cellLabelMutedBottom);
+    PaneMatSetTevColorsByName(field_38, "txt_para23", &equipItemBox_cellLabelMutedTop, &equipItemBox_cellLabelMutedBottom);
     rebuildEIBKind2Cells(a, b);
 }
 
@@ -3131,13 +3134,13 @@ void CEquipItemBox::rebuildEIBKind48Page(int kind, int item) {
         }
     }
     LayoutSetTextBoxFmtValue(field_38, "txt_para25", str2, 0);
-    PaneMatSetTevColorsByName(field_38, "txt_para01", (const GXColorS10*)equipItemBox_cellLabelMutedTop, (const GXColorS10*)equipItemBox_cellLabelMutedBottom);
-    PaneMatSetTevColorsByName(field_38, "txt_para10", (const GXColorS10*)equipItemBox_cellLabelNeutralTop, (const GXColorS10*)equipItemBox_cellLabelNeutralBottom);
-    PaneMatSetTevColorsByName(field_38, "txt_para11", (const GXColorS10*)equipItemBox_cellLabelNeutralTop, (const GXColorS10*)equipItemBox_cellLabelNeutralBottom);
-    PaneMatSetTevColorsByName(field_38, "txt_para04", (const GXColorS10*)equipItemBox_cellLabelMutedTop, (const GXColorS10*)equipItemBox_cellLabelMutedBottom);
-    PaneMatSetTevColorsByName(field_38, "txt_para08", (const GXColorS10*)equipItemBox_cellLabelMutedTop, (const GXColorS10*)equipItemBox_cellLabelMutedBottom);
-    PaneMatSetTevColorsByName(field_38, "txt_para22", (const GXColorS10*)equipItemBox_cellLabelNeutralTop, (const GXColorS10*)equipItemBox_cellLabelNeutralBottom);
-    PaneMatSetTevColorsByName(field_38, "txt_para23", (const GXColorS10*)equipItemBox_cellLabelNeutralTop, (const GXColorS10*)equipItemBox_cellLabelNeutralBottom);
+    PaneMatSetTevColorsByName(field_38, "txt_para01", &equipItemBox_cellLabelMutedTop, &equipItemBox_cellLabelMutedBottom);
+    PaneMatSetTevColorsByName(field_38, "txt_para10", &equipItemBox_cellLabelNeutralTop, &equipItemBox_cellLabelNeutralBottom);
+    PaneMatSetTevColorsByName(field_38, "txt_para11", &equipItemBox_cellLabelNeutralTop, &equipItemBox_cellLabelNeutralBottom);
+    PaneMatSetTevColorsByName(field_38, "txt_para04", &equipItemBox_cellLabelMutedTop, &equipItemBox_cellLabelMutedBottom);
+    PaneMatSetTevColorsByName(field_38, "txt_para08", &equipItemBox_cellLabelMutedTop, &equipItemBox_cellLabelMutedBottom);
+    PaneMatSetTevColorsByName(field_38, "txt_para22", &equipItemBox_cellLabelNeutralTop, &equipItemBox_cellLabelNeutralBottom);
+    PaneMatSetTevColorsByName(field_38, "txt_para23", &equipItemBox_cellLabelNeutralTop, &equipItemBox_cellLabelNeutralBottom);
     rebuildEIBKind2Cells(kind, item);
 }
 
@@ -3565,19 +3568,19 @@ bool CEquipItemBox::OnFileEvent(CEventFile* ev) {
         copyVEC3((float*)&unk_200,
                  (float*)&posPane->GetTranslate());
         GXColorS10 c0 = PaneMatGetS16QuadByName(field_38, "pic_tbbcof01", 0);
-        CopyVec4s((GXColorS10*)equipItemBox_sortMenuColorSrcTop, &c0);
+        CopyVec4s(&equipItemBox_sortMenuColorSrcTop, &c0);
         GXColorS10 c1 = PaneMatGetS16QuadByName(field_38, "pic_tbbcof01", 1);
-        CopyVec4s((GXColorS10*)equipItemBox_sortMenuColorSrcBottom, &c1);
-        s16 v0c = equipItemBox_sortMenuColorSrcTop[3];
-        s16 v1c = equipItemBox_sortMenuColorSrcBottom[3];
-        equipItemBox_sortMenuTabNeutralTop[3] = v0c;
-        equipItemBox_sortMenuTabNeutralBottom[3] = v1c;
-        equipItemBox_sortMenuTabSelectedTop[3] = v0c;
-        equipItemBox_sortMenuTabSelectedBottom[3] = v1c;
-        equipItemBox_sortMenuTabColor2Top[3] = v0c;
-        equipItemBox_sortMenuTabColor2Bottom[3] = v1c;
-        equipItemBox_sortMenuTabColor3Top[3] = v0c;
-        equipItemBox_sortMenuTabColor3Bottom[3] = v1c;
+        CopyVec4s(&equipItemBox_sortMenuColorSrcBottom, &c1);
+        s16 v0c = equipItemBox_sortMenuColorSrcTop.a;
+        s16 v1c = equipItemBox_sortMenuColorSrcBottom.a;
+        equipItemBox_sortMenuTabNeutralTop.a = v0c;
+        equipItemBox_sortMenuTabNeutralBottom.a = v1c;
+        equipItemBox_sortMenuTabSelectedTop.a = v0c;
+        equipItemBox_sortMenuTabSelectedBottom.a = v1c;
+        equipItemBox_sortMenuTabColor2Top.a = v0c;
+        equipItemBox_sortMenuTabColor2Bottom.a = v1c;
+        equipItemBox_sortMenuTabColor3Top.a = v0c;
+        equipItemBox_sortMenuTabColor3Bottom.a = v1c;
         // Cursor objects: construct stack temps and assign them (the implicit
         // CEIBCur::operator= is called out of line, weak in CPartyStateWin), then
         // dispatch initLayout (CEIBCur's empty dtor inlines away; the
@@ -3620,29 +3623,29 @@ bool CEquipItemBox::OnFileEvent(CEventFile* ev) {
         nw4r::lyt::Pane* paneB =
             field_38->GetRootPane()->FindPaneByName("txt_para01", true);
         GXColorS10 p1 = PaneMatGetS16Quad(paneB, 0);
-        CopyVec4s((GXColorS10*)equipItemBox_cellLabelNeutralTop, &p1);
+        CopyVec4s(&equipItemBox_cellLabelNeutralTop, &p1);
         GXColorS10 p2 = PaneMatGetS16Quad(paneB, 1);
-        CopyVec4s((GXColorS10*)equipItemBox_cellLabelNeutralBottom, &p2);
-        equipItemBox_cellLabelMutedTop[3] = equipItemBox_cellLabelNeutralTop[3];
-        equipItemBox_cellLabelMutedBottom[3] = equipItemBox_cellLabelNeutralBottom[3];
+        CopyVec4s(&equipItemBox_cellLabelNeutralBottom, &p2);
+        equipItemBox_cellLabelMutedTop.a = equipItemBox_cellLabelNeutralTop.a;
+        equipItemBox_cellLabelMutedBottom.a = equipItemBox_cellLabelNeutralBottom.a;
         nw4r::lyt::Pane* pane5 =
             field_38->GetRootPane()->FindPaneByName("txt_value02", true);
         p1 = PaneMatGetS16Quad(pane5, 0);
-        CopyVec4s((GXColorS10*)equipItemBox_kind48LabelNeutralTop, &p1);
+        CopyVec4s(&equipItemBox_kind48LabelNeutralTop, &p1);
         p2 = PaneMatGetS16Quad(pane5, 1);
-        CopyVec4s((GXColorS10*)equipItemBox_kind48LabelNeutralBottom, &p2);
-        equipItemBox_kind48LabelMutedTop[3] = equipItemBox_kind48LabelNeutralTop[3];
-        equipItemBox_kind48LabelMutedBottom[3] = equipItemBox_kind48LabelNeutralBottom[3];
+        CopyVec4s(&equipItemBox_kind48LabelNeutralBottom, &p2);
+        equipItemBox_kind48LabelMutedTop.a = equipItemBox_kind48LabelNeutralTop.a;
+        equipItemBox_kind48LabelMutedBottom.a = equipItemBox_kind48LabelNeutralBottom.a;
         nw4r::lyt::Pane* pane79 =
             field_38->GetRootPane()->FindPaneByName("txt_num01", true);
         p1 = PaneMatGetS16Quad(pane79, 0);
-        CopyVec4s((GXColorS10*)equipItemBox_sortOptionLabelNeutralTop, &p1);
+        CopyVec4s(&equipItemBox_sortOptionLabelNeutralTop, &p1);
         p2 = PaneMatGetS16Quad(pane79, 1);
-        CopyVec4s((GXColorS10*)equipItemBox_sortOptionLabelNeutralBottom, &p2);
-        equipItemBox_sortOptionLabelSelectedTop[3] = equipItemBox_sortOptionLabelNeutralTop[3];
-        equipItemBox_sortOptionLabelSelectedBottom[3] = equipItemBox_sortOptionLabelNeutralBottom[3];
-        equipItemBox_sortOptionLabelAltTop[3] = equipItemBox_sortOptionLabelNeutralTop[3];
-        equipItemBox_sortOptionLabelAltBottom[3] = equipItemBox_sortOptionLabelNeutralBottom[3];
+        CopyVec4s(&equipItemBox_sortOptionLabelNeutralBottom, &p2);
+        equipItemBox_sortOptionLabelSelectedTop.a = equipItemBox_sortOptionLabelNeutralTop.a;
+        equipItemBox_sortOptionLabelSelectedBottom.a = equipItemBox_sortOptionLabelNeutralBottom.a;
+        equipItemBox_sortOptionLabelAltTop.a = equipItemBox_sortOptionLabelNeutralTop.a;
+        equipItemBox_sortOptionLabelAltBottom.a = equipItemBox_sortOptionLabelNeutralBottom.a;
         closeEIBSortMenu();
         field_24 = 0;
         mRegion04.validateHeap();
@@ -3684,30 +3687,30 @@ bool CEquipItemBox::OnFileEvent(CEventFile* ev) {
 // sort-menu page rebuild (PaneMatSetTevColorsByName pairs). SplitU32ToS16s clears a table,
 // setGXColorS10 sets its RGBA values.
 extern "C" void sinit_8028DAB0() {
-    SplitU32ToS16s(equipItemBox_sortMenuColorSrcTop, 0);
-    SplitU32ToS16s(equipItemBox_sortMenuColorSrcBottom, 0);
-    setGXColorS10((GXColorS10*)equipItemBox_sortMenuTabNeutralTop, 0x79, 0x49, 0x7, 0x0);
-    setGXColorS10((GXColorS10*)equipItemBox_sortMenuTabNeutralBottom, 0xed, 0xcd, 0x83, 0x0);
-    setGXColorS10((GXColorS10*)equipItemBox_sortMenuTabSelectedTop, 0x1a, 0x43, 0x53, 0x0);
-    setGXColorS10((GXColorS10*)equipItemBox_sortMenuTabSelectedBottom, 0xc4, 0xe8, 0xeb, 0x0);
-    setGXColorS10((GXColorS10*)equipItemBox_sortMenuTabColor2Top, 0x74, 0x54, 0x1d, 0x0);
-    setGXColorS10((GXColorS10*)equipItemBox_sortMenuTabColor2Bottom, 0xd5, 0xb9, 0x78, 0x0);
-    setGXColorS10((GXColorS10*)equipItemBox_sortMenuTabColor3Top, 0x3d, 0x68, 0x78, 0x0);
-    setGXColorS10((GXColorS10*)equipItemBox_sortMenuTabColor3Bottom, 0xc4, 0xe8, 0xeb, 0x0);
-    SplitU32ToS16s(equipItemBox_cellLabelNeutralTop, 0);
-    SplitU32ToS16s(equipItemBox_cellLabelNeutralBottom, 0);
-    setGXColorS10((GXColorS10*)equipItemBox_cellLabelMutedTop, 0x80, 0x80, 0x80, 0x0);
-    setGXColorS10((GXColorS10*)equipItemBox_cellLabelMutedBottom, 0x80, 0x80, 0x80, 0x0);
-    SplitU32ToS16s(equipItemBox_kind48LabelNeutralTop, 0);
-    SplitU32ToS16s(equipItemBox_kind48LabelNeutralBottom, 0);
-    setGXColorS10((GXColorS10*)equipItemBox_kind48LabelMutedTop, 0xff, 0xff, 0xfa, 0x0);
-    setGXColorS10((GXColorS10*)equipItemBox_kind48LabelMutedBottom, 0x80, 0x80, 0x80, 0x0);
-    SplitU32ToS16s(equipItemBox_sortOptionLabelNeutralTop, 0);
-    SplitU32ToS16s(equipItemBox_sortOptionLabelNeutralBottom, 0);
-    setGXColorS10((GXColorS10*)equipItemBox_sortOptionLabelSelectedTop, 0x12, 0xa3, 0xe7, 0x0);
-    setGXColorS10((GXColorS10*)equipItemBox_sortOptionLabelSelectedBottom, 0xff, 0xff, 0xff, 0x0);
-    setGXColorS10((GXColorS10*)equipItemBox_sortOptionLabelAltTop, 0xb3, 0x9, 0xc0, 0x0);
-    setGXColorS10((GXColorS10*)equipItemBox_sortOptionLabelAltBottom, 0xff, 0xff, 0xff, 0x0);
+    SplitU32ToS16s(&equipItemBox_sortMenuColorSrcTop, 0);
+    SplitU32ToS16s(&equipItemBox_sortMenuColorSrcBottom, 0);
+    setGXColorS10(&equipItemBox_sortMenuTabNeutralTop, 0x79, 0x49, 0x7, 0x0);
+    setGXColorS10(&equipItemBox_sortMenuTabNeutralBottom, 0xed, 0xcd, 0x83, 0x0);
+    setGXColorS10(&equipItemBox_sortMenuTabSelectedTop, 0x1a, 0x43, 0x53, 0x0);
+    setGXColorS10(&equipItemBox_sortMenuTabSelectedBottom, 0xc4, 0xe8, 0xeb, 0x0);
+    setGXColorS10(&equipItemBox_sortMenuTabColor2Top, 0x74, 0x54, 0x1d, 0x0);
+    setGXColorS10(&equipItemBox_sortMenuTabColor2Bottom, 0xd5, 0xb9, 0x78, 0x0);
+    setGXColorS10(&equipItemBox_sortMenuTabColor3Top, 0x3d, 0x68, 0x78, 0x0);
+    setGXColorS10(&equipItemBox_sortMenuTabColor3Bottom, 0xc4, 0xe8, 0xeb, 0x0);
+    SplitU32ToS16s(&equipItemBox_cellLabelNeutralTop, 0);
+    SplitU32ToS16s(&equipItemBox_cellLabelNeutralBottom, 0);
+    setGXColorS10(&equipItemBox_cellLabelMutedTop, 0x80, 0x80, 0x80, 0x0);
+    setGXColorS10(&equipItemBox_cellLabelMutedBottom, 0x80, 0x80, 0x80, 0x0);
+    SplitU32ToS16s(&equipItemBox_kind48LabelNeutralTop, 0);
+    SplitU32ToS16s(&equipItemBox_kind48LabelNeutralBottom, 0);
+    setGXColorS10(&equipItemBox_kind48LabelMutedTop, 0xff, 0xff, 0xfa, 0x0);
+    setGXColorS10(&equipItemBox_kind48LabelMutedBottom, 0x80, 0x80, 0x80, 0x0);
+    SplitU32ToS16s(&equipItemBox_sortOptionLabelNeutralTop, 0);
+    SplitU32ToS16s(&equipItemBox_sortOptionLabelNeutralBottom, 0);
+    setGXColorS10(&equipItemBox_sortOptionLabelSelectedTop, 0x12, 0xa3, 0xe7, 0x0);
+    setGXColorS10(&equipItemBox_sortOptionLabelSelectedBottom, 0xff, 0xff, 0xff, 0x0);
+    setGXColorS10(&equipItemBox_sortOptionLabelAltTop, 0xb3, 0x9, 0xc0, 0x0);
+    setGXColorS10(&equipItemBox_sortOptionLabelAltBottom, 0xff, 0xff, 0xff, 0x0);
 }
 
 // Rebuild the equip grid for a page: clear all 0x400 cells (per-cell byte 6),
@@ -3899,3 +3902,30 @@ u8 CEquipItemGrid::countEIBPages() {
     }
     return (u8)n;
 }
+
+// .sbss 0x80664920: the 24 sort-menu colour quads owned by this TU,
+// in retail address order. Appended so earlier functions keep their line numbers.
+GXColorS10 equipItemBox_sortMenuColorSrcTop;
+GXColorS10 equipItemBox_sortMenuColorSrcBottom;
+GXColorS10 equipItemBox_sortMenuTabNeutralTop;
+GXColorS10 equipItemBox_sortMenuTabNeutralBottom;
+GXColorS10 equipItemBox_sortMenuTabSelectedTop;
+GXColorS10 equipItemBox_sortMenuTabSelectedBottom;
+GXColorS10 equipItemBox_sortMenuTabColor2Top;
+GXColorS10 equipItemBox_sortMenuTabColor2Bottom;
+GXColorS10 equipItemBox_sortMenuTabColor3Top;
+GXColorS10 equipItemBox_sortMenuTabColor3Bottom;
+GXColorS10 equipItemBox_cellLabelNeutralTop;
+GXColorS10 equipItemBox_cellLabelNeutralBottom;
+GXColorS10 equipItemBox_cellLabelMutedTop;
+GXColorS10 equipItemBox_cellLabelMutedBottom;
+GXColorS10 equipItemBox_kind48LabelNeutralTop;
+GXColorS10 equipItemBox_kind48LabelNeutralBottom;
+GXColorS10 equipItemBox_kind48LabelMutedTop;
+GXColorS10 equipItemBox_kind48LabelMutedBottom;
+GXColorS10 equipItemBox_sortOptionLabelNeutralTop;
+GXColorS10 equipItemBox_sortOptionLabelNeutralBottom;
+GXColorS10 equipItemBox_sortOptionLabelSelectedTop;
+GXColorS10 equipItemBox_sortOptionLabelSelectedBottom;
+GXColorS10 equipItemBox_sortOptionLabelAltTop;
+GXColorS10 equipItemBox_sortOptionLabelAltBottom;

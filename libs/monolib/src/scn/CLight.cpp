@@ -187,9 +187,8 @@ void LightCtlInitSpot(CLight* self, float cutoff, _GXSpotFn spotFn) {
     self->mpLightObj->InitLightSpot(cutoff, spotFn);
 }
 void LightCtlScaleColor(){}
-extern "C" void InitLightDistAttn__Q34nw4r3g3d8LightObjFff13_GXDistAttnFn(void*, float, float, int);
 // retail: lwz r3,0x2c(r3); b InitLightDistAttn__... (args pass through)
-extern "C" void LightCtlInitDistAttn(u8* self, float a, float b, int c) {
-    InitLightDistAttn__Q34nw4r3g3d8LightObjFff13_GXDistAttnFn(*(void**)((char*)self + 0x2c), a, b, c);
+extern "C" void LightCtlInitDistAttn(CLight* self, float a, float b, int c) {
+    self->mpLightObj->InitLightDistAttn(a, b, (GXDistAttnFn)c);
 }
 void LightCtlInitGXLight(){}

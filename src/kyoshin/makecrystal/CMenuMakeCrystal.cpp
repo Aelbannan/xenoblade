@@ -46,7 +46,7 @@ void mkCrystalTeardown(void*);
 // setPresentationFlag: canonical setPresentationFlag__Q22cf13CfGameManagerFv(bool).
 // Retail symbol keeps its Fv mangling even though it takes the pad index.
 // Unmangled local helper (bound literally).
-extern "C" void MakeCrystalInitWin(void* self);
+extern "C" void MakeCrystalInitWin(CMenuMakeCrystal* self);
 void BgTex_Acquire_3C14(void* self);                            // CBgTex init
 void MakeCrystalCopyDispArea(void* dst, const void* src);            // big state copy
 void MakeCrystalCopyBox(void* dst, const void* src);                  // crystal-box state copy
@@ -259,25 +259,14 @@ MCStateRecord* MakeCrystalCopyStateRecord(MCStateRecord* dst, volatile MCStateRe
 #include "monolib/scn/CScn.hpp"
 #include "kyoshin/code_80135FDC_Lyt.hpp"
 
-// Typed view over the +0x58..+0x80 sub-objects (exact layout, explicit
-// pads): render anchor, owning scene, CBgTex block, CMakeCrystalWin head.
-struct MCSubObjView {
-    u8 _pad58[0x58];
-    u8 render58[0x4];   // 0x58-0x5B IScnRender sub-object (address taken)
-    CScn* scene5C;      // 0x5C owning scene (loaded)
-    u8 bg60[0x20];      // 0x60-0x7F CBgTex sub-object (address taken)
-    u8 win80;           // 0x80 CMakeCrystalWin sub-object (address taken)
-};
-
 void CMenuMakeCrystal::Term() {
     waitForDrawDone__9CDeviceVIFv();
     CUICfManager_createQueuedMenus();
-    Scn_SetPauseFlag(reinterpret_cast<MCSubObjView*>(this)->scene5C, 1);
-    void* render = this;
-    if (this) render = reinterpret_cast<MCSubObjView*>(this)->render58;
-    reinterpret_cast<MCSubObjView*>(this)->scene5C->removeRenderCB((IScnRender*)render);
-    BgTex_Release_3D9C(reinterpret_cast<MCSubObjView*>(this)->bg60);
-    mkCrystalTeardown(&reinterpret_cast<MCSubObjView*>(this)->win80);
+    Scn_SetPauseFlag(mScene, 1);
+    IScnRender* render = this;
+    mScene->removeRenderCB(render);
+    BgTex_Release_3D9C(&mBgTex);
+    mkCrystalTeardown(&mCrystalWin);
     sInstance = nullptr;
     setPresentationFlag__Q22cf13CfGameManagerFv(0);
 }
@@ -298,11 +287,10 @@ struct MCDoneFlag {
 void CMenuMakeCrystal::Move() {
     if (CTaskGame::getInstance()->isFlag01Set() || (gmPauseFlags & 0x200000))
         return;
-    u8* self = reinterpret_cast<u8*>(this);
     MCStateBytes* st = reinterpret_cast<MCStateBytes*>(this);
     MCDoneFlag* done = reinterpret_cast<MCDoneFlag*>(this);
 
-    if (reinterpret_cast<CMakeCrystalWin*>(&reinterpret_cast<MCSubObjView*>(self)->win80)->mkCrystalIsBusyState() == 0) {
+    if (mCrystalWin.mkCrystalIsBusyState() == 0) {
         CPad* pad = cf::CfGameManager::getCurrentPad();
         u32 btn;
         // Button bit depends on the controller type (classic vs Wii).
@@ -328,7 +316,7 @@ void CMenuMakeCrystal::Move() {
         st->state = 2;
         break;
     case 2:
-        if (mkCrystalGetFlag4361(self + 0x80) != 0) {
+        if (mkCrystalGetFlag4361(&mCrystalWin) != 0) {
             st->state = 3;
         }
         break;
@@ -337,11 +325,11 @@ void CMenuMakeCrystal::Move() {
         break;
     }
 
-    BgTex_Tick_3D54(self + 0x60);
-    mkCrystalTick(self + 0x80);
+    BgTex_Tick_3D54(&mBgTex);
+    mkCrystalTick(&mCrystalWin);
 }
 
-void CMenuMakeCrystal::cbRenderBefore() {
+void CMenuMakeCrystal::cbRenderBefore(CScn*) {
     if (CTaskGame::getInstance()->isFlag01Set() || (gmPauseFlags & 0x200000))
         return;
     if (IsMenuState621F0() == 0)
@@ -382,9 +370,9 @@ extern "C" int BgTex_IsLoaded_3E34(void*);
 extern "C" void mkCrystalBuildWin(void*);
 
 // Init the +0x60 sub-object when it reports active, then set the +0x43E4 flag.
-extern "C" void MakeCrystalInitWin(void* self) {
-    if (BgTex_IsLoaded_3E34((u8*)self + 0x60) != 0) {
-        mkCrystalBuildWin((u8*)self + 0x80);
-        *(u8*)((u8*)self + 0x43E4) = 1;
+extern "C" void MakeCrystalInitWin(CMenuMakeCrystal* self) {
+    if (BgTex_IsLoaded_3E34(&self->mBgTex) != 0) {
+        mkCrystalBuildWin(&self->mCrystalWin);
+        self->mField43E4 = 1;
     }
 }

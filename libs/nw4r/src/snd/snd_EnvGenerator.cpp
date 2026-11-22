@@ -1,6 +1,6 @@
 #include <nw4r/snd.h>
 
-extern "C" __declspec(section ".rodata") __attribute__((aligned(8))) const short lbl_eu_8051FC40[128] = {
+const s16 nw4r::snd::detail::EnvGenerator::DecibelSquareTable[128] = {
     -723, -722, -721, -651, -601, -562, -530, -503,
     -480, -460, -442, -425, -410, -396, -383, -371,
     -360, -349, -339, -330, -321, -313, -305, -297,
@@ -18,7 +18,7 @@ extern "C" __declspec(section ".rodata") __attribute__((aligned(8))) const short
     -22, -20, -19, -17, -16, -14, -13, -11,
     -10, -8, -7, -6, -4, -3, -1, 0
 };
-extern "C" __declspec(section ".rodata") __attribute__((aligned(8))) const float lbl_eu_8051FD40[128] = {
+static const f32 attackTable[128] = {
     0.9992175102233887f, 0.9984325766563416f, 0.9976451992988586f, 0.9968553185462952f,
     0.9960628747940063f, 0.995267927646637f, 0.9944704174995422f, 0.9936704039573669f,
     0.9928677082061768f, 0.992062509059906f, 0.9912546277046204f, 0.9904441237449646f,
@@ -131,7 +131,7 @@ void EnvGenerator::Update(int msec) {
     }
 
     case STATUS_DECAY: {
-        f32 target = (f32)lbl_eu_8051FC40[mSustain];
+        f32 target = (f32)DecibelSquareTable[mSustain];
         mValue -= mDecay * (f32)msec;
 
         if (mValue < target) {
@@ -156,7 +156,7 @@ void EnvGenerator::Update(int msec) {
 
 
 void EnvGenerator::SetAttack(int attack) {
-    mAttack = lbl_eu_8051FD40[attack];
+    mAttack = attackTable[attack];
 }
 
 

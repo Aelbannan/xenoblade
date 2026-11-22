@@ -26,34 +26,34 @@ static const char* eff = "eff";
 cf::CREvtEffect::CREvtEffect(CREvtParam* param)
     : CREvtObj(1), mPtr18(0), mParam1C(param), mModel(0), mMaterial(0), mAnim28(0),
       mBdatEntry(0), mEffectCount(0), mNodeIdC0(-1), mNodeIdC4(-1), mNodeIdC8(-1) {
-    mAnm1Translate[0] = lbl_eu_8066793C;
-    mAnm1Translate[1] = lbl_eu_8066793C;
-    mAnm1Translate[2] = lbl_eu_8066793C;
-    mAnm1Rotate[0] = lbl_eu_8066793C;
-    mAnm1Rotate[1] = lbl_eu_8066793C;
-    mAnm1Rotate[2] = lbl_eu_8066793C;
-    mAnm1Scale[0] = lbl_eu_8066793C;
-    mAnm1Scale[1] = lbl_eu_8066793C;
-    mAnm1Scale[2] = lbl_eu_8066793C;
+    mAnm1Translate[0] = 0.0f;
+    mAnm1Translate[1] = 0.0f;
+    mAnm1Translate[2] = 0.0f;
+    mAnm1Rotate[0] = 0.0f;
+    mAnm1Rotate[1] = 0.0f;
+    mAnm1Rotate[2] = 0.0f;
+    mAnm1Scale[0] = 0.0f;
+    mAnm1Scale[1] = 0.0f;
+    mAnm1Scale[2] = 0.0f;
 
-    mAnm2Scale[0] = lbl_eu_80667940;
-    mAnm2Scale[1] = lbl_eu_80667940;
-    mAnm2Scale[2] = lbl_eu_80667940;
+    mAnm2Scale[0] = 1.0f;
+    mAnm2Scale[1] = 1.0f;
+    mAnm2Scale[2] = 1.0f;
 
-    mAnm2Rotate[0] = lbl_eu_8066793C;
-    mAnm2Rotate[1] = lbl_eu_8066793C;
-    mAnm2Rotate[2] = lbl_eu_8066793C;
-    mAnm2Translate[0] = lbl_eu_8066793C;
-    mAnm2Translate[1] = lbl_eu_8066793C;
-    mAnm2Translate[2] = lbl_eu_8066793C;
-    mAnm3Translate[0] = lbl_eu_8066793C;
-    mAnm3Translate[1] = lbl_eu_8066793C;
-    mAnm3Translate[2] = lbl_eu_8066793C;
+    mAnm2Rotate[0] = 0.0f;
+    mAnm2Rotate[1] = 0.0f;
+    mAnm2Rotate[2] = 0.0f;
+    mAnm2Translate[0] = 0.0f;
+    mAnm2Translate[1] = 0.0f;
+    mAnm2Translate[2] = 0.0f;
+    mAnm3Translate[0] = 0.0f;
+    mAnm3Translate[1] = 0.0f;
+    mAnm3Translate[2] = 0.0f;
 
-    mAnm3Scale[0] = lbl_eu_80667940;
-    mAnm3Scale[1] = lbl_eu_80667940;
-    mAnm3Scale[2] = lbl_eu_80667940;
-    mFloat12C = lbl_eu_80667940;
+    mAnm3Scale[0] = 1.0f;
+    mAnm3Scale[1] = 1.0f;
+    mAnm3Scale[2] = 1.0f;
+    mFloat12C = 1.0f;
 
     mLastFrame = -1;
     mFlag134 = 0;

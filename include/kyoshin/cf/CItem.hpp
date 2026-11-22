@@ -42,7 +42,7 @@ extern "C" int sprintf(char*, const char*, ...);
 // BDAT handle used by CItem_rollWeighted4's weighted random-roll lookups.
 
 
-// Global item block base pointer (allocated once; freed by __dt__80157150).
+// Global item block base pointer (allocated once; freed by CItemBlock_free).
 extern char* spItemBlock;
 
 // Per-category name tables indexed by (itemWord >> 7) & 7.
@@ -173,10 +173,20 @@ struct CItemData {
 // records at 0x08, s16 entry array at 0x28 with u8 count at 0x30.
 // CItemExt_getEntry returns mEntries[idx] when idx < mCount else 0;
 // CItem_clearUsedSubs clears the 0x08 sub-records and the entries in place.
+// Category-sized record copy (CItem.cpp); backs CItemExt's copy constructor.
+void* CItem_copyRecordByCat(void* dst, const void* src);
+
 struct CItemExt {
+    // Default ctor zeroes the flag halfword (+4) then the packed word (+0).
+    CItemExt() {
+        field_04 = 0;
+        field_00 = 0;
+    }
+    // Copies only the category-sized prefix of the source record.
+    CItemExt(const CItemExt& other) { CItem_copyRecordByCat(this, &other); }
+
     /* 0x00 */ u32 field_00;
-    /* 0x04 */ u8 field_04;
-    /* 0x05 */ u8 field_05;
+    /* 0x04 */ u16 field_04;
     /* 0x06 */ u8 field_06;
     /* 0x07 */ u8 field_07;
     /* 0x08 */ u8 field_08[0x20];
@@ -195,7 +205,7 @@ struct CItemExt {
 struct CItemFour {
     /* 0x00 */ CItemExt mItems[4];
     /* 0xD0 */ u32 mCount;
-    CItemFour();
+    CItemFour() { mCount = 0; }
 };
 
 // Shared four-record item block used by CItem_openAreaEventBox / CItem_createBoxContents.
@@ -310,51 +320,7 @@ extern s8 sItemSortBufBInit;
 extern CItemSortBuf sItemSortBufA;
 extern CItemSortBuf sItemSortBufB;
 
-// ---------------------------------------------------------------------------
-// Per-category item-impl instances (lazy-initialized by
-// CItem_initItemImplInstances)
-// ---------------------------------------------------------------------------
-
-// 4-byte impl instance shell: the only member is the vtable pointer that the
-// lazy-init guard blocks write (retail stw of a .data vtable address).
-struct CItemImplInst {
-    void* vtable;
-};
-extern CItemImplInst sPurifyKessyouImpl;
-extern CItemImplInst sKessyouImpl;
-extern CItemImplInst sPurifyCrystalImpl;
-extern CItemImplInst sDropCrystalImpl;
-extern CItemImplInst sCrystalImpl;
-extern CItemImplInst sEquipImpl;
-extern CItemImplInst sConsImpl;
-extern CItemImplInst sDummyImpl;
-
-// Lazy-init guard flags (one per impl instance above).
-extern s8 sPurifyKessyouImplInit;
-extern s8 sKessyouImplInit;
-extern s8 sPurifyCrystalImplInit;
-extern s8 sDropCrystalImplInit;
-extern s8 sCrystalImplInit;
-extern s8 sEquipImplInit;
-extern s8 sConsImplInit;
-extern s8 sDummyImplInit;
-
-// Vtable objects written into the impl instances' vtable slots.
-extern u8 lbl_eu_8052FC58[];
-extern u8 lbl_eu_8052FBA8[];
-extern u8 lbl_eu_8052FAF8[];
-extern u8 lbl_eu_8052FA48[];
-extern u8 lbl_eu_8052F990[];
-extern u8 lbl_eu_8052F8D8[];
-extern u8 lbl_eu_8052F828[];
-extern u8 lbl_eu_8052F770[];
-
-// Item-implementation vtable interface returned by
-// CItem_initItemImplInstances. Only the vtable offsets exercised by the
-// retail call sites (0x08, 0x1C, 0x4C, 0x50, 0x68, 0x78, 0x80) are named;
-// the remaining virtuals are placeholders that keep those offsets exact.
-// (MWCC auto-inserts RTTI + null at vtable slots 0-1, so the first
-// declared virtual lands at slot 2 = offset 0x08.)
+// Item-implementation classes returned by CItem_initItemImplInstances.
 #include "kyoshin/cf/CItemImpl.hpp"
 
 // Lazy item-impl accessor: returns the per-category impl instance for self.
@@ -363,9 +329,6 @@ extern "C" CItemImpl* CItem_initItemImplInstances(CItemData* self);
 // Item-slot initializer defined in kyoshin/cf/CItem.cpp.
 extern "C" void CItem_initSlot(CItemData* self, u32 family, u32 row, u16 kind);
 
-// Per-kind impl table
-// of CItem_initItemImplInstances.
-extern CItemImpl* sItemKindImplTable[16];
 
 // Sort scratch filler shared with CItem_sortBuf (writes the u8 at 0x00 and
 // the u32 at 0x40 of buf).

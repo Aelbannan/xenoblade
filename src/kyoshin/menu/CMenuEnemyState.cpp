@@ -13,7 +13,6 @@
 extern "C" void* MapFx_ResolveOwner(void* r3);
 // Shared-arc text value (unmangled retail symbol); feeds setLayoutTextBoxFont.
 // 4-short colour pairs read off a pane (unmangled retail symbol).
-extern "C" void __dt__8CProcessFv(void* self, int flags);
 extern "C" void EneSt_RegisterPanel(CMenuEnemyState* self, u32 actorId);
 // Layout sound effect helper (retail symbol is unmangled).
 // Apply a loaded texture to a pane (retail symbol is unmangled).
@@ -34,8 +33,6 @@ void* getEffOwner(void* obj);
 
 // CPcSelectCursor vtable (.data; the retail ctor stores its address at +0x00).
 // (Mini-vtable decl lives in the .cpp: MWCC rejects an hpp extern for it.)
-// String pool base (EneSt_ScalePaneWidths pane names at +0xd3/+0xdd/+0x11d).
-extern char sMenuEnemyNamePool[];
 // sdata2 constants used by the panel-highlight helpers.
 // The ctor's animMarker initializer reads the retail UNDEF pool label;
 // later uses go through the typed sdata2_MESPool object below.
@@ -117,22 +114,6 @@ char sEnemyTexture3Name[0x18] = "mf71_btl00_pnmk03.tpl";
 // the reader loads them as U32x4, matching the hpp u32[] decl).
 __declspec(section ".rodata") __attribute__((used))
 u32 sEnemyTextureNameTable[4] = {(u32)sEnemyTexture0Name, (u32)sEnemyTexture1Name, (u32)sEnemyTexture2Name, (u32)sEnemyTexture3Name};
-// .rodata type names.
-__declspec(section ".rodata") __attribute__((used))
-const char sMenuEnemyStateTypeName[0x10] = "CMenuEnemyState";
-__declspec(section ".rodata") __attribute__((used))
-const char sCursorTypeName[0x10] = "CPcSelectCursor";
-// .rodata 0x2A0: layout/pane-name block.
-__declspec(section ".rodata") __attribute__((used))
-char sMenuEnemyNamePool[0x2A0] =
-"CPcSelectCursor\0mf80_info00_target_pc.brlyt\0mf80_info00_target_pc_in.brlan\0"
-"mf80_info00_target_pc_on.brlan\0nul_crs\0nul_crs_f\0pic_crs02\0pic_crs03\0pic_crs_f02\0pic_crs_f03\0"
-"CMenuEnemyState\0mf71_battle10_hpgage.brlyt\0pic_pcbar\0pic_enbar\0pic_tgbar_f\0pic_pic_death\0"
-"pic_panic\0nul_pc\0nul_enemmy\0pic_tgbar\0nul_tg\0mf80_info00_target.brlyt\0pic_crs00\0pic_bs\0"
-"pic_sns\0nul_mkgr\0pic_crs_s\0mf80_info00_targetinfo.brlyt\0mf80_info00_targetinfo_roop.brlan\0"
-"txt_lv00\0txt_lv01\0nul_npc\0nul_en_s\0nul_en_g\0pic_gr_e00\0pic_gr_e01\0pic_status_b\0"
-"pic_status_g\0mf80_tginf00_enmk00.tpl\0mf80_tginf00_enmk01.tpl\0mf80_tginf00_enmk02.tpl\0"
-"MNU_battle\0name\0txt_name_npc\0%03d\0txt_name_enemmy\0frame\0pic_gr\0icon\0\0\0\0\0\0";
 // Forward views: the .data RTTI area (defined at file end) plus sibling-TU
 // sdata locators and CfRes's "." separator -- UNDEF here, addresses only,
 // zero bytes in-file. (80661A40 is CfRes's char[8]; a const-char view here.)
@@ -209,13 +190,6 @@ struct PaneSizeView {
     f32 width;    // +0x4C
     f32 height;   // +0x50
 };
-
-// Scale helper used by EneSt_ScalePaneWidths: keep the pane's current height, set the
-// width. Written as a helper so the inlined Size temp shares one home pair
-// across the three call sites (retail frame holds a single 0x8/0xc pair).
-static void MenuEnemySetPaneWidth(nw4r::lyt::Pane* pane, f32 width) {
-    pane->SetSize(nw4r::lyt::Size(width, pane->GetSize().height));
-}
 
 // Many rendering / actor objects have a flag byte at +0xBB.
 struct ObjBBFlag {
@@ -348,13 +322,6 @@ struct RLayout {
     f32 val2C;
 };
 
-// Minimal overlay for nw4r::lyt::AnimTransform field at +0x10.
-struct AnimTransformOverlay {
-    u8 gap00[0x10];
-    f32 field10;
-};
-
-
 
 // ---------------------------------------------------------------------------
 // End of overlay structs
@@ -365,17 +332,6 @@ struct AnimTransformOverlay {
 // cbRenderBefore above.
 // Batch 2026-07-14k: menu-enemy-ctor owns __ct__CMenuEnemyState exclusively.
 
-
-
-CMenuEnemyState::CMenuEnemyState(CScn* scn)
-    : unk60(scn), unk74(NULL), unk78(NULL), field7C(0), field80(0), field84(0),
-      field88(0), field8C(0), field90(0), field94(0), field98(0), field9C(0),
-      fieldA0(0), field7C4(0), field7C8(sEnemyPanelAnimMarker), field7CC(sEnemyPanelAnimMarker),
-      field7D0(sEnemyPanelAnimMarker), field7D4(0), field7D8(sEnemyPanelAnimMarker), field7DC(0),
-      field7E0(0), field82C(0), unk830(0), unk834(0), unk838(lbl_eu_80667004) {
-    selectCursor = CPcSelectCursor();
-}
-
 // ---------------------------------------------------------------------------
 // CMenuEnemyState dtor (us-8010fe9c): retail D0/D1/D2-merged dtor. The
 // embedded UnkClass_8045F564 regions (+0x7EC = selectCursor.mem08, +0x64) and
@@ -385,30 +341,6 @@ CMenuEnemyState::CMenuEnemyState(CScn* scn)
 // the virtual dtor automatically.
 // ---------------------------------------------------------------------------
 CMenuEnemyState::~CMenuEnemyState() {
-}
-
-// ---------------------------------------------------------------------------
-// CPcSelectCursor ctor (us-8010f540): retail stores the vtable address at
-// +0x00 (a plain u32 field in this deliberately non-polymorphic model),
-// zeroes field04, constructs the embedded UnkClass_8045F564 region, zeroes
-// the rest, sets byte40 and returns this. The vptr store uses the real
-// CPcSelectCursor vtable (__vt__15CPcSelectCursor), emitted by this TU with
-// the out-of-line virtual destructor.
-// ---------------------------------------------------------------------------
-CPcSelectCursor::CPcSelectCursor()
-    : field04(0), mem08() {
-    field18 = 0;
-    layout1C = NULL;
-    anim20 = NULL;
-    anim24 = NULL;
-    field28 = 0;
-    field2C = 0;
-    field30 = 0;
-    field34 = 0;
-    field38 = 0;
-    field3C = 0;
-    byte40 = 1;
-    field44 = 0;
 }
 
 // ---------------------------------------------------------------------------
@@ -544,114 +476,491 @@ struct SubSlot5CResult {
     u32 word30;  // +0x30
 };
 
-void CMenuEnemyState::cbRenderBefore() {
-    CTaskGame::getInstance();
-    if (CTaskGame::isFlag01Set()) {
-        goto done;
+// CBattleMan_FetchVisionObj result view: the current battle-target actor id at +0x04 and
+// the status flag word at +0x824 (bit 17 / bit 10 drive the indicator).
+struct BattleMgrResult {
+    u8 gap00[0x04];
+    u32 targetId04;           // +0x04
+    u8 gap08[0x824 - 0x08];
+    u32 flags824;             // +0x824
+};
+
+// Scale helper used by EneSt_ScalePaneWidths: keep the pane's current height, set the
+// width. Written as a helper so the inlined Size temp shares one home pair
+// across the three call sites (retail frame holds a single 0x8/0xc pair).
+static void MenuEnemySetPaneWidth(nw4r::lyt::Pane* pane, f32 width) {
+    pane->SetSize(nw4r::lyt::Size(width, pane->GetSize().height));
+}
+
+
+// ---------------------------------------------------------------------------
+// CPcSelectCursor ctor (us-8010f540): retail stores the vtable address at
+// +0x00 (a plain u32 field in this deliberately non-polymorphic model),
+// zeroes field04, constructs the embedded UnkClass_8045F564 region, zeroes
+// the rest, sets byte40 and returns this. The vptr store uses the real
+// CPcSelectCursor vtable (__vt__15CPcSelectCursor), emitted by this TU with
+// the out-of-line virtual destructor.
+// ---------------------------------------------------------------------------
+CPcSelectCursor::CPcSelectCursor()
+    : field04(0), mem08() {
+    field18 = 0;
+    layout1C = NULL;
+    anim20 = NULL;
+    anim24 = NULL;
+    field28 = 0;
+    field2C = 0;
+    field30 = 0;
+    field34 = 0;
+    field38 = 0;
+    field3C = 0;
+    byte40 = 1;
+    field44 = 0;
+}
+
+// EneSt_CursorBuild (us-8010f620): CPcSelectCursor layout/anim init. Creates a
+// 0x2000 scratch region, builds the layout + two anims from the shared arc
+// accessor (field18), grabs six named panes off the root pane, then enables
+// anim20. Called after the ctor from the owning menu's file-event path.
+void CPcSelectCursor::EneSt_CursorBuild() {
+    this->mem08.createRegion(mtl::MemManager::getHandleMEM2(), 0x2000,
+                             "CPcSelectCursor", 0);
+    Class_8045F858 regionGuard(&this->mem08);
+    mtl::MemManager::setMemInitFlag(false);
+
+    // Retail reloads field18 (the arc accessor) and layout1C per call instead
+    // of caching them in locals, so each is re-loaded from the object.
+    buildLayout(&this->layout1C,
+                  reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(this->field18),
+                  "mf80_info00_target_pc.brlyt");
+    bindLayoutAnimTransform(this->layout1C, &this->anim20,
+                  reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(this->field18),
+                  "mf80_info00_target_pc_in.brlan");
+    bindLayoutAnimTransform(this->layout1C, &this->anim24,
+                  reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(this->field18),
+                  "mf80_info00_target_pc_on.brlan");
+
+    this->field28 = (u32)this->layout1C->GetRootPane()->FindPaneByName(
+        "nul_crs", true);
+    this->field34 = (u32)this->layout1C->GetRootPane()->FindPaneByName(
+        "nul_crs_f", true);
+    this->field2C = (u32)this->layout1C->GetRootPane()->FindPaneByName(
+        "pic_crs02", true);
+    this->field30 = (u32)this->layout1C->GetRootPane()->FindPaneByName(
+        "pic_crs03", true);
+    this->field38 = (u32)this->layout1C->GetRootPane()->FindPaneByName(
+        "pic_crs_f02", true);
+    this->field3C = (u32)this->layout1C->GetRootPane()->FindPaneByName(
+        "pic_crs_f03", true);
+
+    this->layout1C->SetAnimationEnable(this->anim24, false);
+    this->layout1C->SetAnimationEnable(this->anim20, true);
+    this->layout1C->Animate(0);
+}
+
+// Cursor first-activation (retail bare EneSt_CursorActivate): when the state word
+// is clear, set it and clear the flag byte.
+void EneSt_CursorActivate(CPcSelectCursor* self) {
+    if ((s32)self->field44 == 0) {
+        self->field44 = 1;
+        self->byte40 = 0;
     }
-    if ((gmPauseFlags & (1u << 21)) != 0) {
-        goto done;
+}
+
+// Cursor state 2 -> 3 (retail bare EneSt_CursorToState3).
+void EneSt_CursorToState3(CPcSelectCursor* self) {
+    if ((s32)self->field44 == 2) {
+        self->field44 = 3;
+        self->byte40 = 0;
     }
-    if (!IsMenuState621F0()) {
-        goto done;
+}
+
+// EneSt_CursorToState4 (us-8010f834): cursor state 2 -> 4; swaps the active anim.
+void EneSt_CursorToState4(CPcSelectCursor* self) {
+    if ((s32)self->field44 == 2) {
+        self->field44 = 4;
+        self->byte40 = 0;
+        self->layout1C->SetAnimationEnable(self->anim20, false);
+        self->layout1C->SetAnimationEnable(self->anim24, true);
     }
-    if (gmGameFlags & 0xAFA40000u) {
-        goto done;
+}
+
+// Cursor flag-byte getter (retail bare EneSt_CursorGetFlag).
+int EneSt_CursorGetFlag(CPcSelectCursor* self) {
+    return self->byte40;
+}
+
+// Cursor select setter + per-frame update tail call (retail bare
+// EneSt_CursorSet41: stb + b EneSt_CursorUpdate).
+void EneSt_CursorSet41(CPcSelectCursor* self, u8 val) {
+    self->byte41 = val;
+    return self->EneSt_CursorUpdate();
+}
+
+// EneSt_CursorReset (us-8010f8c0): reset the cursor (state 0, marker frame,
+// anim advance) and mark it ready.
+void EneSt_CursorReset(CPcSelectCursor* self) {
+    self->field44 = 0;
+    self->anim20->SetFrame(sEnemyPanelAnimMarker);
+    self->layout1C->Animate(0);
+    self->byte40 = 1;
+}
+
+// EneSt_CursorUpdate (us-8010f91c): CPcSelectCursor per-frame update. Clears the
+// highlight bit on all six indicator panes, re-lights the four "target" panes
+// when the battle actor list is non-empty, then positions the arrow pane
+// (field28, or field34 when the battle target matches) over the current enemy
+// (findObjB28ById table entry by byte41, subobject at +0x3E9C): the cursor is
+// projected with the scene pose and its Y only moves downward toward the
+// enemy's live position.
+void CPcSelectCursor::EneSt_CursorUpdate() {
+    // Retail reloads every pane field from the object (no pane locals).
+    reinterpret_cast<ObjBBFlag*>(this->field28)->flagBB &= 0xFE;
+    reinterpret_cast<ObjBBFlag*>(this->field34)->flagBB &= 0xFE;
+    reinterpret_cast<ObjBBFlag*>(this->field2C)->flagBB &= 0xFE;
+    reinterpret_cast<ObjBBFlag*>(this->field30)->flagBB &= 0xFE;
+    reinterpret_cast<ObjBBFlag*>(this->field38)->flagBB &= 0xFE;
+    reinterpret_cast<ObjBBFlag*>(this->field3C)->flagBB &= 0xFE;
+
+    // Battle actor list non-empty -> light the four "target" panes.
+    cf::CBattleManager* bm = cf::CBattleManager::getInstance();
+    _reslist_node<cf::CfObjectActor*>* node;
+    u32 count;
+    _reslist_node<cf::CfObjectActor*>* end = bm->mActorList1.mStartNodePtr;
+    node = end->mNext;
+    count = 0;
+    while (node != end) {
+        node = node->mNext;
+        count++;
+    }
+    if (count != 0) {
+        reinterpret_cast<ObjBBFlag*>(this->field2C)->flagBB =
+            (reinterpret_cast<ObjBBFlag*>(this->field2C)->flagBB & 0xFE) | 1;
+        reinterpret_cast<ObjBBFlag*>(this->field30)->flagBB =
+            (reinterpret_cast<ObjBBFlag*>(this->field30)->flagBB & 0xFE) | 1;
+        reinterpret_cast<ObjBBFlag*>(this->field38)->flagBB =
+            (reinterpret_cast<ObjBBFlag*>(this->field38)->flagBB & 0xFE) | 1;
+        reinterpret_cast<ObjBBFlag*>(this->field3C)->flagBB =
+            (reinterpret_cast<ObjBBFlag*>(this->field3C)->flagBB & 0xFE) | 1;
     }
 
-    {
-        GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
-        nw4r::lyt::DrawInfo drawInfo;
-        SetWideLocAdjust(&drawInfo);
+    // Arrow pane; enemy subobject via the byte41 table entry (+4 words).
+    ObjBBFlag* arrow = reinterpret_cast<ObjBBFlag*>(this->field28);
+    u8* tbl = reinterpret_cast<u8*>(CtrlObjectParam_GetSlotTableBase());
+    void* entry = *reinterpret_cast<void**>(tbl + this->byte41 * 4 + 4);
+    void* sub = findObjB28ById(static_cast<s32>(reinterpret_cast<u32>(entry)));
+    // Retail copies sub into the target register first, then patches up
+    // +0x3E9C only when non-null (mr/beq/addi shape).
+    PcEmbedLayout* target = reinterpret_cast<PcEmbedLayout*>(sub);
+    if (sub != NULL) {
+        target = reinterpret_cast<PcEmbedLayout*>(reinterpret_cast<u8*>(sub) + 0x3E9C);
+    }
+    if (target != NULL) {
+        // Retail re-calls getInstance here (second reloc) instead of reusing bm.
+        BattleTargetView* bt = static_cast<BattleTargetView*>(
+            cf::CBattleManager::getInstance()->CBattleMan_FetchVisionObj());
+        if (bt != NULL && bt->field04 != NULL &&
+            target->field74 == reinterpret_cast<u32>(bt->field04)) {
+            arrow = reinterpret_cast<ObjBBFlag*>(this->field34);
+        }
+        arrow->flagBB = (arrow->flagBB & 0xFE) | 1;
 
-        u32 indices[0x18];
-        u8 fill;
-        for (fill = 0; fill < 0x18; fill++) {
-            indices[fill] = fill;
+        // Stack-home order (posTmp=0x08, tmp=0x14, out=0x20, pos=0x2c) comes
+        // from this declaration order under MWCC's reverse-allocation packing.
+        Vec3f pos;
+        Vec3f out;
+        Vec3f tmp;
+        Vec3f posTmp;
+        const Vec3f* src;
+        void* rRaw = reinterpret_cast<cf::CfObject*>(target)->CfObject_getPosSample(0x64);
+        RLayout* r = static_cast<RLayout*>(rRaw);
+        if (r != NULL) {
+            // Declared z,y,x then stored x,y,z - reproduces retail's batched
+            // f0/f1/f2 loads followed by the three stack stores.
+            f32 fz = r->val2C;
+            f32 fy = r->val1C;
+            f32 fx = r->val0C;
+            posTmp.x = fx;
+            posTmp.y = fy;
+            posTmp.z = fz;
+            src = &posTmp;
+        } else {
+            src = reinterpret_cast<const Vec3f*>(reinterpret_cast<cf::CfObject*>(target)->CfObject_getPosVector());
+        }
+        pos = *src;
+
+        PoseLayout* pose = static_cast<PoseLayout*>(
+            Scn_FindCamItem(reinterpret_cast<void*>(this->field04), -1));
+        CamMan_ProjectToScreen(&out, pose, &pos);
+
+        arrow->flagBB = (arrow->flagBB & 0xFE) | 1;
+        // Highlight stays lit only while the projected X sits left of the
+        // marker bound. Volatile reads keep the two marker-constant uses as
+        // separate loads, matching retail.
+        // Highlight stays lit only while the projected X sits left of the
+        // marker bound.
+        if (!(out.x <= sEnemyPanelAnimMarker)) {
+            arrow->flagBB &= 0xFE;
         }
 
-        // Outer for(left!=0) -> mtctr/bdnz. Inner bottom-tested goto keeps CTR outer.
-        // Rematerialize &indices[j] each step (retail addi r1,0x8). Load depthB before
-        // depthA so fcmpo uses f1/f0. XOR via store-reload of order[j]/pair[1].
+        // Marker Y moves only downward: scale, clamp, then snap to the live
+        // position when it is below the clamped value. The dead `dead` copy
+        // (word-wise lwz/stw block) is present in retail and must be kept.
+        out.y = (out.y - (sdata2_MESPool.fF4)) * (sdata2_MESPool.fF8);
+        out.z = sEnemyPanelAnimMarker;
+        out.x = out.x - (sdata2_MESPool.fF0);
+        // Retail retains this copy: &pos escaped into CamMan_ProjectToScreen above, so
+        // MWCC cannot prove pos dead and emits the word-wise copy block.
+        pos = out;
+        if (out.y > (sdata2_MESPool.fFC)) {
+            out.y = (sdata2_MESPool.fFC);
+            ml::CVec3* tmpPos = reinterpret_cast<cf::CfObject*>(target)->CfObject_getPosVector();
+            CamMan_ProjectToScreen(&tmp, pose, reinterpret_cast<const Vec3f*>(tmpPos));
+            tmp.y = (tmp.y - (sdata2_MESPool.fF4)) * (sdata2_MESPool.fF8) - (sdata2_MESPool.f00);
+            f32 sel = (tmp.y >= out.y) ? tmp.y : out.y;
+            if (sel > out.y) {
+                if (tmp.y >= out.y) {
+                    out.y = tmp.y;
+                }
+            }
+        }
+        PaneScaleVec3* pane = reinterpret_cast<PaneScaleVec3*>(arrow);
+        pane->scale.x = out.x;
+        pane->scale.y = out.y;
+        pane->scale.z = out.z;
+    }
+}
+
+CMenuEnemyState::CMenuEnemyState(CScn* scn)
+    : unk60(scn), unk74(NULL), unk78(NULL), field7C(0), field80(0), field84(0),
+      field88(0), field8C(0), field90(0), field94(0), field98(0), field9C(0),
+      fieldA0(0), field7C4(0), field7C8(sEnemyPanelAnimMarker), field7CC(sEnemyPanelAnimMarker),
+      field7D0(sEnemyPanelAnimMarker), field7D4(0), field7D8(sEnemyPanelAnimMarker), field7DC(0),
+      field7E0(0), field82C(0), unk830(0), unk834(0), unk838(lbl_eu_80667004) {
+    selectCursor = CPcSelectCursor();
+}
+
+// ---------------------------------------------------------------------------
+// CMenuEnemyState::Init (us-8010ff24): create the 24-panel enemy-indicator
+// array (zeroed template copied into each entry), build the per-panel
+// layout1/layout2 arcs + panes, snapshot the shared colour quads from pane
+// 0x147 on the first pass, then set up the main menu layout, the font, the
+// ten pane handles and the select-cursor subobject, register the render CB
+// and release the scratch region.
+// ---------------------------------------------------------------------------
+void CMenuEnemyState::Init() {
+    // Scratch region for all menu layouts (freed by the RAII guard). Retail
+    // re-derives this+0x64 at every use - no cached region pointer.
+    mem64.createRegion(
+        mtl::MemManager::getHandleMEM2(), 0x3EC00, "CMenuEnemyState", 0);
+    Class_8045F858 regionGuard(&mem64);
+
+    // Loop-invariant values hoisted by retail before the loop (f30/f31 +
+    // r21-r24): the anim marker, the marker y value, zero, one and the two
+    // pane sound/colour constants.
+    f32 markerY = sEnemyHighlightScale;
+    u32 zero = 0;
+    u8 one = 1;
+    u32 colD3 = 0xCD8FDFF;
+    u32 colDD = 0xFAF01EFF;
+
+    for (u8 i = 0; i < 24; i++) {
+        MenuEnemyPanel* panel = &panels[i];
+        nw4r::lyt::Layout** pLayout1 = &panel->layout1;
+        *panel = MenuEnemyPanel();
+
+        // ---- layout1 arc + panes ----
+        buildLayout(pLayout1,
+                      reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(CUICfManager_getArcResourceAccessor()),
+                      "mf71_battle10_hpgage.brlyt");
+        PaneSetVtxColorByName(*pLayout1, "pic_pcbar", colD3);
+        PaneSetVtxColorByName(*pLayout1, "pic_enbar", colDD);
+
         {
-            // pass-before-order + block-scoped limit -> order=r9, j=r12, swapped=r11
-            // (retail). Peak 99.172%: pass/limit/pair still color r8/r10/r30 vs
-            // retail r10/r5/r8; XOR operand/dest Chaitin follows from that.
-            // Decl order pins colors: order=r9, pass=r10, limit=r5, left=CTR;
-            // pair rematerializes into the freed r8 each step.
-            // No alias pointer here: retail caches the bare array base in a
-            // register for indexed x[j] accesses while j+1 accesses go through
-            // a recomputed element address.
-            u8 pass = 0;
-            u32 left;
-            for (left = 0x17; left != 0; left--) {
-                u8 swapped = 0;
-                u8 j = 0;
-                goto sort_test;
-            sort_body: {
-                    u32 idxA = indices[j];
-                    u32 idxB = indices[j + 1];
-                    if (panels[idxA].animMarker > panels[idxB].animMarker) {
-                        // Source-level XOR swap; retail interleaves the flag
-                        // store after the first assignment.
-                        indices[j] ^= indices[j + 1];
-                        swapped = 1;
-                        indices[j + 1] ^= indices[j];
-                        indices[j] ^= indices[j + 1];
-                    }
-                    j++;
-                }
-            sort_test:
-                if ((s32)j < 0x17 - (s32)pass) {
-                    goto sort_body;
-                }
-                if (swapped == 0) {
-                    break;
-                }
-                pass++;
+            nw4r::lyt::Pane* p = (*pLayout1)->GetRootPane()
+                ->FindPaneByName("pic_tgbar_f", true);
+            reinterpret_cast<ObjBBFlag*>(p)->flagBB &= 0xFE;
+        }
+        {
+            nw4r::lyt::Pane* p = (*pLayout1)->GetRootPane()
+                ->FindPaneByName("pic_pic_death", true);
+            reinterpret_cast<ObjBBFlag*>(p)->flagBB &= 0xFE;
+        }
+        {
+            nw4r::lyt::Pane* p = (*pLayout1)->GetRootPane()
+                ->FindPaneByName("pic_panic", true);
+            reinterpret_cast<ObjBBFlag*>(p)->flagBB &= 0xFE;
+        }
+
+        // Copy pane 0x10b onto itself preserving x/z, resetting y. Retail
+        // copies x/z as raw WORDS into a stack temp, then writes them back as
+        // floats - model the temp as a word union so MWCC emits lwz/stw.
+        {
+            V3WordFloat tmp;
+            {
+                PanePosLayout* s = reinterpret_cast<PanePosLayout*>((*pLayout1)
+                    ->GetRootPane()->FindPaneByName("nul_pc", true));
+                tmp.w[0] = s->wx;
+                tmp.w[2] = s->wz;
+                PanePosLayout* d = reinterpret_cast<PanePosLayout*>((*pLayout1)
+                    ->GetRootPane()->FindPaneByName("nul_pc", true));
+                d->v2C = tmp.f[0];
+                d->v30 = sEnemyPanelAnimMarker;
+                d->v34 = tmp.f[2];
+            }
+            // Copy pane 0x112 the same way, y = markerY.
+            {
+                PanePosLayout* s = reinterpret_cast<PanePosLayout*>((*pLayout1)
+                    ->GetRootPane()->FindPaneByName("nul_enemmy", true));
+                tmp.f[0] = s->v2C;
+                tmp.f[1] = markerY;
+                tmp.f[2] = s->v34;
+                PanePosLayout* d = reinterpret_cast<PanePosLayout*>((*pLayout1)
+                    ->GetRootPane()->FindPaneByName("nul_enemmy", true));
+                d->v2C = tmp.f[0];
+                d->v30 = sEnemyHighlightScale;
+                d->v34 = tmp.f[2];
             }
         }
 
-        // NV decl order entry, order, i -> r30/r29/r28 (MWCC_CASES 8c6).
-        // u32 counter; cast to u8 only when indexing. Compare stays cmpli (no
-        // terminal clrlwi) so .text is retail 0x274.
-        // Declare order before i so saved-reg claim gives order=r29, i=r28
-        // (docs/register_mapping.md Rule A / mwcc-wii-1.1 claim descending).
-        {
-            u32* order;
-            u32 i;
-            order = indices;
-            i = 0;
-            do {
-                MenuEnemyPanel& p = panels[order[static_cast<u8>(i)]];
-                if (p.visible == 0) {
-                    goto draw_next;
-                }
-                if (p.unk29 == 0) {
-                    goto draw_next;
-                }
-                if (p.panelType != 0) {
-                    drawLayout(unk74, &drawInfo, 0, 1);
-                }
-                {
-                    int drawFlag = (p.panelType == 0) ? 0 : 1;
-                    drawFlag = (drawFlag == 0) ? 1 : 0;
-                    drawLayout(p.layout2, &drawInfo, drawFlag, 1);
-                }
-                if (p.drawLayout0Flag == 0) {
-                    drawLayout(p.layout1, &drawInfo, 0, 1);
-                }
-            draw_next:
-                i++;
-            } while (i < 0x18);
+        // First pass: snapshot the indicator-pane widths for the scale math.
+        if (i == 0) {
+            field7C8 = (*pLayout1)->GetRootPane()
+                ->FindPaneByName("pic_pcbar", true)->GetSize().width;
+            field7CC = (*pLayout1)->GetRootPane()
+                ->FindPaneByName("pic_enbar", true)->GetSize().width;
+            field7D0 = (*pLayout1)->GetRootPane()
+                ->FindPaneByName("pic_tgbar", true)->GetSize().width;
         }
 
-        if (selectCursor.field44 != 0) {
-            drawLayout(selectCursor.layout1C, &drawInfo, 0, 1);
+        panel->unk44 = (u32)(*pLayout1)->GetRootPane()
+            ->FindPaneByName("nul_tg", true);
+        panel->unk48 = (u32)(*pLayout1)->GetRootPane()
+            ->FindPaneByName("pic_panic", true);
+
+        // ---- layout2 arc + panes ----
+        nw4r::lyt::Layout** pLayout2 = &panel->layout2;
+        buildLayout(pLayout2,
+                      reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(CUICfManager_getArcResourceAccessor()),
+                      "mf80_info00_target.brlyt");
+
+        // First pass: pull the four shared colour quads off pane 0x147 and
+        // propagate the last channel into the three alternate quads.
+        if (i == 0) {
+            nw4r::lyt::Pane* pane = (*pLayout2)->GetRootPane()
+                ->FindPaneByName("pic_crs00", true);
+            GXColorS10 fs0 = PaneMatGetS16Quad(pane, 0);
+            sEnemyColorQuad0[0] = fs0.r;
+            sEnemyColorQuad0[1] = fs0.g;
+            sEnemyColorQuad0[2] = fs0.b;
+            sEnemyColorQuad0[3] = fs0.a;
+            GXColorS10 fs1 = PaneMatGetS16Quad(pane, 1);
+            sEnemyColorQuad1[0] = fs1.r;
+            sEnemyColorQuad1[1] = fs1.g;
+            sEnemyColorQuad1[2] = fs1.b;
+            sEnemyColorQuad1[3] = fs1.a;
+            sEnemyColorQuad2[3] = sEnemyColorQuad0[3];
+            sEnemyColorQuad3[3] = sEnemyColorQuad1[3];
+            sEnemyColorQuad4[3] = sEnemyColorQuad0[3];
+            sEnemyColorQuad5[3] = sEnemyColorQuad1[3];
+            sEnemyColorQuad6[3] = sEnemyColorQuad0[3];
+            sEnemyColorQuad7[3] = sEnemyColorQuad1[3];
+        }
+
+        panel->obj1 = (*pLayout2)->GetRootPane()
+            ->FindPaneByName("pic_bs", true);
+        panel->obj2 = (*pLayout2)->GetRootPane()
+            ->FindPaneByName("pic_sns", true);
+        panel->obj3 = (*pLayout2)->GetRootPane()
+            ->FindPaneByName("nul_mkgr", true);
+        panel->unk38 = (u32)(*pLayout2)->GetRootPane()
+            ->FindPaneByName("pic_crs00", true);
+        panel->unk3C = (u32)(*pLayout2)->GetRootPane()
+            ->FindPaneByName("nul_crs", true);
+        panel->unk40 = (u32)(*pLayout2)->GetRootPane()
+            ->FindPaneByName("pic_crs_s", true);
+    }
+
+    // ---- main menu layout ----
+    buildLayout(&unk74,
+                  reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(CUICfManager_getArcResourceAccessor()),
+                  "mf80_info00_targetinfo.brlyt");
+    bindLayoutAnimTransform(unk74, &unk78,
+                  reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(CUICfManager_getArcResourceAccessor()),
+                  "mf80_info00_targetinfo_roop.brlan");
+
+    // Bind the font: root pane + font object slot 0x24, push back onto root.
+    nw4r::lyt::Pane* rootPane = unk74->GetRootPane();
+    void* fontObj = CDeviceFont::getFontInfo(1, unk74);
+    ApplyFontToTxtPanes(rootPane, (const nw4r::ut::Font*)(reinterpret_cast<cf::CObjectState*>(fontObj)->checkStateFlags8(0)));
+
+    setLayoutTextBoxFont(unk74, "txt_lv00", (u32)CUICfManager_getPackedFontD8());
+    setLayoutTextBoxFont(unk74, "txt_lv01", (u32)CUICfManager_getPackedFontD8());
+
+    unk74->SetAnimationEnable(unk78, true);
+    unk78->SetFrame(sEnemyPanelAnimMarker);
+    unk74->Animate(0);
+
+    field7C = (u32)unk74->GetRootPane()->FindPaneByName("nul_npc", true);
+    field80 = (u32)unk74->GetRootPane()->FindPaneByName("nul_enemmy", true);
+    field84 = (u32)unk74->GetRootPane()->FindPaneByName("nul_en_s", true);
+    field88 = (u32)unk74->GetRootPane()->FindPaneByName("nul_en_g", true);
+    field8C = (u32)unk74->GetRootPane()->FindPaneByName("pic_gr_e00", true);
+    field90 = (u32)unk74->GetRootPane()->FindPaneByName("pic_gr_e01", true);
+    field94 = (u32)unk74->GetRootPane()->FindPaneByName("pic_status_b", true);
+    field98 = (u32)unk74->GetRootPane()->FindPaneByName("pic_status_g", true);
+    field9C = (u32)unk74->GetRootPane()->FindPaneByName("pic_sns", true);
+    fieldA0 = (u32)unk74->GetRootPane()->FindPaneByName("nul_mkgr", true);
+
+    // Cursor: stash the shared arc accessor + scene, then build the layouts.
+    u32 scn = (u32)unk60;
+    selectCursor.field18 = (u32)CUICfManager_getArcResourceAccessor();
+    selectCursor.field04 = scn;
+    ((CPcSelectCursor*)(&selectCursor))->EneSt_CursorBuild();
+
+    field7C4 = 1;
+
+    reinterpret_cast<CScn*>(unk60)->addRenderCB(this, 8, 0);
+
+    mem64.validateHeap();
+}
+
+// ---------------------------------------------------------------------------
+// CMenuEnemyState::Term (us-8011074c): wait for VI draw completion, detach the
+// IScnRender callback at +0x5C, delete all panel/layout objects (double
+// null-guard is the retail MWCC idiom for delete-then-null), release the two
+// scratch regions and clear the singleton.
+// ---------------------------------------------------------------------------
+void CMenuEnemyState::Term() {
+    CDeviceVI::waitForDrawDone();
+
+    reinterpret_cast<CScn*>(unk60)->removeRenderCB(this);
+
+    for (u8 i = 0; i < 24; i++) {
+        MenuEnemyPanel& p = panels[i];
+        // `delete` emits its own null-check, so the single outer if gives the
+        // retail two `beq`s (skip-all + skip-delete) around the vtable dtor.
+        if (p.layout1 != 0) {
+            delete p.layout1;
+            p.layout1 = 0;
+        }
+        if (p.layout2 != 0) {
+            delete p.layout2;
+            p.layout2 = 0;
         }
     }
-done:
-    ;
+
+    if (unk74 != 0) {
+        delete unk74;
+        unk74 = 0;
+    }
+    if (selectCursor.layout1C != 0) {
+        delete selectCursor.layout1C;
+        selectCursor.layout1C = 0;
+    }
+
+    selectCursor.mem08.deleteRegion();
+    mem64.deleteRegion();
+    CMenuEnemyState::sInstance = 0;
 }
 
 void CMenuEnemyState::Move() {
@@ -1023,7 +1332,7 @@ void CMenuEnemyState::Move() {
         break;
     case 4:
         if (advanceAnimTransform(selectCursor.anim24, (sdata2_MESPool.fE8)) != 0) {
-            reinterpret_cast<AnimTransformOverlay*>(selectCursor.anim24)->field10 = sEnemyPanelAnimMarker;
+            selectCursor.anim24->SetFrame(sEnemyPanelAnimMarker);
             selectCursor.layout1C->Animate(0);
             selectCursor.layout1C->SetAnimationEnable(selectCursor.anim24, false);
             selectCursor.layout1C->SetAnimationEnable(selectCursor.anim20, true);
@@ -1044,139 +1353,114 @@ done:
     ;
 }
 
-// EneSt_CursorBuild (us-8010f620): CPcSelectCursor layout/anim init. Creates a
-// 0x2000 scratch region, builds the layout + two anims from the shared arc
-// accessor (field18), grabs six named panes off the root pane, then enables
-// anim20. Called after the ctor from the owning menu's file-event path.
-void CPcSelectCursor::EneSt_CursorBuild() {
-    this->mem08.createRegion(mtl::MemManager::getHandleMEM2(), 0x2000,
-                             &sMenuEnemyNamePool[0x00], 0);
-    Class_8045F858 regionGuard(&this->mem08);
-    mtl::MemManager::setMemInitFlag(false);
-
-    // Retail reloads field18 (the arc accessor) and layout1C per call instead
-    // of caching them in locals, so each is re-loaded from the object.
-    buildLayout(&this->layout1C,
-                  reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(this->field18),
-                  &sMenuEnemyNamePool[0x10]);
-    bindLayoutAnimTransform(this->layout1C, &this->anim20,
-                  reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(this->field18),
-                  &sMenuEnemyNamePool[0x2c]);
-    bindLayoutAnimTransform(this->layout1C, &this->anim24,
-                  reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(this->field18),
-                  &sMenuEnemyNamePool[0x4b]);
-
-    this->field28 = (u32)this->layout1C->GetRootPane()->FindPaneByName(
-        &sMenuEnemyNamePool[0x6a], true);
-    this->field34 = (u32)this->layout1C->GetRootPane()->FindPaneByName(
-        &sMenuEnemyNamePool[0x72], true);
-    this->field2C = (u32)this->layout1C->GetRootPane()->FindPaneByName(
-        &sMenuEnemyNamePool[0x7c], true);
-    this->field30 = (u32)this->layout1C->GetRootPane()->FindPaneByName(
-        &sMenuEnemyNamePool[0x86], true);
-    this->field38 = (u32)this->layout1C->GetRootPane()->FindPaneByName(
-        &sMenuEnemyNamePool[0x90], true);
-    this->field3C = (u32)this->layout1C->GetRootPane()->FindPaneByName(
-        &sMenuEnemyNamePool[0x9c], true);
-
-    this->layout1C->SetAnimationEnable(this->anim24, false);
-    this->layout1C->SetAnimationEnable(this->anim20, true);
-    this->layout1C->Animate(0);
-}
-
-// Cursor first-activation (retail bare EneSt_CursorActivate): when the state word
-// is clear, set it and clear the flag byte.
-void EneSt_CursorActivate(CPcSelectCursor* self) {
-    if ((s32)self->field44 == 0) {
-        self->field44 = 1;
-        self->byte40 = 0;
+void CMenuEnemyState::cbRenderBefore(CScn*) {
+    CTaskGame::getInstance();
+    if (CTaskGame::isFlag01Set()) {
+        goto done;
     }
-}
-
-// Cursor state 2 -> 3 (retail bare EneSt_CursorToState3).
-void EneSt_CursorToState3(CPcSelectCursor* self) {
-    if ((s32)self->field44 == 2) {
-        self->field44 = 3;
-        self->byte40 = 0;
+    if ((gmPauseFlags & (1u << 21)) != 0) {
+        goto done;
     }
-}
-
-// Cursor flag-byte getter (retail bare EneSt_CursorGetFlag).
-int EneSt_CursorGetFlag(CPcSelectCursor* self) {
-    return self->byte40;
-}
-
-// Cursor select setter + per-frame update tail call (retail bare
-// EneSt_CursorSet41: stb + b EneSt_CursorUpdate).
-void EneSt_CursorSet41(CPcSelectCursor* self, u8 val) {
-    self->byte41 = val;
-    return self->EneSt_CursorUpdate();
-}
-
-// EneSt_CursorToState4 (us-8010f834): cursor state 2 -> 4; swaps the active anim.
-void EneSt_CursorToState4(CPcSelectCursor* self) {
-    if ((s32)self->field44 == 2) {
-        self->field44 = 4;
-        self->byte40 = 0;
-        self->layout1C->SetAnimationEnable(self->anim20, false);
-        self->layout1C->SetAnimationEnable(self->anim24, true);
+    if (!IsMenuState621F0()) {
+        goto done;
     }
-}
+    if (gmGameFlags & 0xAFA40000u) {
+        goto done;
+    }
 
-// EneSt_CursorReset (us-8010f8c0): reset the cursor (state 0, marker frame,
-// anim advance) and mark it ready.
-void EneSt_CursorReset(CPcSelectCursor* self) {
-    self->field44 = 0;
-    reinterpret_cast<AnimTransformOverlay*>(self->anim20)->field10 = sEnemyPanelAnimMarker;
-    self->layout1C->Animate(0);
-    self->byte40 = 1;
-}
+    {
+        GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
+        nw4r::lyt::DrawInfo drawInfo;
+        SetWideLocAdjust(&drawInfo);
 
-// EneSt_ScalePaneWidths (us-801125e4): scale the widths of the three enemy-indicator
-// panes by a clamped v128/v12c ratio, then animate the panel layout. t starts
-// at the anim marker and is only replaced when both input floats exceed it.
-void EneSt_ScalePaneWidths(CMenuEnemyState* self, u8* panelData, f32 v128, f32 v12c) {
-    f32 t = sEnemyPanelAnimMarker;
-    if (v12c > sEnemyPanelAnimMarker && v128 > sEnemyPanelAnimMarker) {
-        t = v128 / v12c;
-        if (t > (sdata2_MESPool.fE8)) {
-            t = (sdata2_MESPool.fE8);
+        u32 indices[0x18];
+        u8 fill;
+        for (fill = 0; fill < 0x18; fill++) {
+            indices[fill] = fill;
+        }
+
+        // Outer for(left!=0) -> mtctr/bdnz. Inner bottom-tested goto keeps CTR outer.
+        // Rematerialize &indices[j] each step (retail addi r1,0x8). Load depthB before
+        // depthA so fcmpo uses f1/f0. XOR via store-reload of order[j]/pair[1].
+        {
+            // pass-before-order + block-scoped limit -> order=r9, j=r12, swapped=r11
+            // (retail). Peak 99.172%: pass/limit/pair still color r8/r10/r30 vs
+            // retail r10/r5/r8; XOR operand/dest Chaitin follows from that.
+            // Decl order pins colors: order=r9, pass=r10, limit=r5, left=CTR;
+            // pair rematerializes into the freed r8 each step.
+            // No alias pointer here: retail caches the bare array base in a
+            // register for indexed x[j] accesses while j+1 accesses go through
+            // a recomputed element address.
+            u8 pass = 0;
+            u32 left;
+            for (left = 0x17; left != 0; left--) {
+                u8 swapped = 0;
+                u8 j = 0;
+                goto sort_test;
+            sort_body: {
+                    u32 idxA = indices[j];
+                    u32 idxB = indices[j + 1];
+                    if (panels[idxA].animMarker > panels[idxB].animMarker) {
+                        // Source-level XOR swap; retail interleaves the flag
+                        // store after the first assignment.
+                        indices[j] ^= indices[j + 1];
+                        swapped = 1;
+                        indices[j + 1] ^= indices[j];
+                        indices[j] ^= indices[j + 1];
+                    }
+                    j++;
+                }
+            sort_test:
+                if ((s32)j < 0x17 - (s32)pass) {
+                    goto sort_body;
+                }
+                if (swapped == 0) {
+                    break;
+                }
+                pass++;
+            }
+        }
+
+        // NV decl order entry, order, i -> r30/r29/r28 (MWCC_CASES 8c6).
+        // u32 counter; cast to u8 only when indexing. Compare stays cmpli (no
+        // terminal clrlwi) so .text is retail 0x274.
+        // Declare order before i so saved-reg claim gives order=r29, i=r28
+        // (docs/register_mapping.md Rule A / mwcc-wii-1.1 claim descending).
+        {
+            u32* order;
+            u32 i;
+            order = indices;
+            i = 0;
+            do {
+                MenuEnemyPanel& p = panels[order[static_cast<u8>(i)]];
+                if (p.visible == 0) {
+                    goto draw_next;
+                }
+                if (p.unk29 == 0) {
+                    goto draw_next;
+                }
+                if (p.panelType != 0) {
+                    drawLayout(unk74, &drawInfo, 0, 1);
+                }
+                {
+                    int drawFlag = (p.panelType == 0) ? 0 : 1;
+                    drawFlag = (drawFlag == 0) ? 1 : 0;
+                    drawLayout(p.layout2, &drawInfo, drawFlag, 1);
+                }
+                if (p.drawLayout0Flag == 0) {
+                    drawLayout(p.layout1, &drawInfo, 0, 1);
+                }
+            draw_next:
+                i++;
+            } while (i < 0x18);
+        }
+
+        if (selectCursor.field44 != 0) {
+            drawLayout(selectCursor.layout1C, &drawInfo, 0, 1);
         }
     }
-
-    MenuEnemyPanel* panel = reinterpret_cast<MenuEnemyPanel*>(panelData);
-
-    // One named Size temp (copy-inited from the first pane's size - no
-    // zero-init stores) shared by all three sites; retail keeps a single
-    // 0x8/0xc spill pair.
-    nw4r::lyt::Pane* p;
-    p = panel->layout1->GetRootPane()->FindPaneByName(
-        &sMenuEnemyNamePool[0xd3], true);
-    nw4r::lyt::Size sz = p->GetSize();
-    sz.width = self->field7C8 * t;
-    p->SetSize(sz);
-
-    p = panel->layout1->GetRootPane()->FindPaneByName(
-        &sMenuEnemyNamePool[0xdd], true);
-    sz.height = p->GetSize().height;
-    sz.width = self->field7CC * t;
-    p->SetSize(sz);
-
-    p = panel->layout1->GetRootPane()->FindPaneByName(
-        &sMenuEnemyNamePool[0x11d], true);
-    sz.height = p->GetSize().height;
-    sz.width = self->field7D0 * t;
-    p->SetSize(sz);
-
-    panel->layout1->Animate(0);
-}
-
-// retail: lwz r3, CMenuEnemyState::sInstance; blr
-extern "C" u32 EneSt_GetSingleton() { return (u32)CMenuEnemyState::sInstance; }
-
-// CMenuEnemyState +0x54 marker (retail bare EneSt_MarkUnk54).
-void EneSt_MarkUnk54(CMenuEnemyState* self) {
-    self->mField54 = 1;
+done:
+    ;
 }
 
 // Create-or-reuse the singleton. When it does not exist yet and the shared arc
@@ -1197,6 +1481,9 @@ CMenuEnemyState* CMenuEnemyState::create(CProcess* parent, CScn* scene, void* ar
     }
     return sInstance;
 }
+
+// retail: lwz r3, CMenuEnemyState::sInstance; blr
+extern "C" u32 EneSt_GetSingleton() { return (u32)CMenuEnemyState::sInstance; }
 
 // EneSt_RegisterPanel (us-80111554): register a new enemy indicator panel. Scans
 // the first 16 panels for an existing entry with the same actor id (returns
@@ -1332,15 +1619,15 @@ extern "C" void EneSt_RegisterPanel(CMenuEnemyState* self, u32 actorId) {
     switch (*p258) {
     case 1:
         tex = static_cast<nw4r::lyt::ArcResourceAccessor*>(CUICfManager_getArcResourceAccessor())
-                  ->GetResource(0x74696D67, &sMenuEnemyNamePool[0x20e], 0);
+                  ->GetResource(0x74696D67, "mf80_tginf00_enmk00.tpl", 0);
         break;
     case 2:
         tex = static_cast<nw4r::lyt::ArcResourceAccessor*>(CUICfManager_getArcResourceAccessor())
-                  ->GetResource(0x74696D67, &sMenuEnemyNamePool[0x226], 0);
+                  ->GetResource(0x74696D67, "mf80_tginf00_enmk01.tpl", 0);
         break;
     case 3:
         tex = static_cast<nw4r::lyt::ArcResourceAccessor*>(CUICfManager_getArcResourceAccessor())
-                  ->GetResource(0x74696D67, &sMenuEnemyNamePool[0x23e], 0);
+                  ->GetResource(0x74696D67, "mf80_tginf00_enmk02.tpl", 0);
         break;
     default:
         break;
@@ -1353,6 +1640,722 @@ extern "C" void EneSt_RegisterPanel(CMenuEnemyState* self, u32 actorId) {
     u8 byteVal = static_cast<u8>(reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_isMarkVisible());
     ObjBBFlag* f34 = reinterpret_cast<ObjBBFlag*>(panel->obj3);
     f34->flagBB = (f34->flagBB & 0xFE) | byteVal;
+}
+
+// CMenuEnemyState +0x54 marker (retail bare EneSt_MarkUnk54).
+void EneSt_MarkUnk54(CMenuEnemyState* self) {
+    self->mField54 = 1;
+}
+
+// EneSt_PositionPanel (us-80111b5c): position one enemy indicator panel. Projects
+// posA with the scene pose into v, lights the two indicator panes, then for
+// panelType==0 builds the marker scale from the (1,1,0) normal transform and
+// the posA/t offsets and writes posA + the scaled pose vector into the
+// layout2 root pane; otherwise zeroes the vector fields. Then the position
+// marker v is clamped (y only moves downward) and written into the layout1
+// root pane (and layout2/unk74 panes when panelType != 0).
+void CMenuEnemyState::EneSt_PositionPanel(u8* panelData, void* posA, void* posB) {
+    MenuEnemyPanel* panel = reinterpret_cast<MenuEnemyPanel*>(panelData);
+    PoseLayout* pose = static_cast<PoseLayout*>(Scn_FindCamItem(this->unk60, -1));
+    nw4r::math::VEC3* pa = static_cast<nw4r::math::VEC3*>(posA);
+    nw4r::math::VEC3* pb = static_cast<nw4r::math::VEC3*>(posB);
+    nw4r::math::VEC3 v;
+    CamMan_ProjectToScreen(&v, pose, pa);
+    panel->animMarker = v.z;
+
+    // Retail refetches the root panes for every single flag/store access
+    // (no cached pane pointer survives any call).
+    reinterpret_cast<ObjBBFlag*>(panel->layout1->GetRootPane())->flagBB =
+        (reinterpret_cast<ObjBBFlag*>(panel->layout1->GetRootPane())->flagBB & 0xFE) | 1;
+    reinterpret_cast<ObjBBFlag*>(panel->layout2->GetRootPane())->flagBB =
+        (reinterpret_cast<ObjBBFlag*>(panel->layout2->GetRootPane())->flagBB & 0xFE) | 1;
+    if (v.x <= sEnemyPanelAnimMarker) {
+        reinterpret_cast<ObjBBFlag*>(panel->layout1->GetRootPane())->flagBB &= 0xFE;
+        reinterpret_cast<ObjBBFlag*>(panel->layout2->GetRootPane())->flagBB &= 0xFE;
+    }
+
+    if (panel->panelType == 0) {
+        nw4r::math::VEC3 t;
+        t.x = (sdata2_MESPool.fE8);
+        t.y = (sdata2_MESPool.fE8);
+        t.z = sEnemyPanelAnimMarker;
+        VEC3TransformNormal(&t, &pose->mtx9C, &t);
+        // Retail keeps the added temp and the projection dest as two distinct
+        // stack homes (elementwise copy between them).
+        nw4r::math::VEC3 sum = *pa + t;
+        nw4r::math::VEC3 out;
+        CamMan_ProjectToScreen(&out, pose, &sum);
+        f32 scaleX = (sdata2_MESPool.fE8) / fabsf(v.x - t.x);
+        f32 scaleY = (sdata2_MESPool.fE8) / fabsf(v.y - t.y);
+        if (!CDeviceVI::isWideAspectRatio()) {
+            scaleX *= (sdata2_MESPool.f18);
+        }
+        f32 s = (sdata2_MESPool.f1C) / ml::pi;
+        PanePosLayout* pane = reinterpret_cast<PanePosLayout*>(panel->layout2->GetRootPane());
+        pane->v2C = pa->x;
+        pane->v30 = pa->y;
+        pane->v34 = pa->z;
+        // Two distinct VEC3 homes in retail: base copy of pose.vec118, then
+        // the scaled result.
+        nw4r::math::VEC3 scBase;
+        scBase.x = pose->vec118_x;
+        scBase.y = pose->vec118_y;
+        scBase.z = pose->vec118_z;
+        nw4r::math::VEC3 sc = scBase * s;
+        pane->v38 = sc.x;
+        pane->v3C = sc.y;
+        pane->v40 = sc.z;
+        pane->v44 = scaleX;
+        pane->v48 = scaleY;
+    } else {
+        PanePosLayout* pane = reinterpret_cast<PanePosLayout*>(panel->layout2->GetRootPane());
+        pane->v38 = zero__Q22ml5CVec3.x;
+        pane->v3C = zero__Q22ml5CVec3.y;
+        pane->v40 = zero__Q22ml5CVec3.z;
+        pane->v44 = (sdata2_MESPool.fE8);
+        pane->v48 = (sdata2_MESPool.fE8);
+    }
+
+    panel->unk29 = 1;
+    nw4r::math::VEC3 a;
+    a.x = pose->vec10c_x;
+    a.y = pose->vec10c_y;
+    a.z = pose->vec10c_z;
+    nw4r::math::VEC3 b;
+    b.x = pose->vec138_x;
+    b.y = pose->vec138_y;
+    b.z = pose->vec138_z;
+    // Retail stages a copy of pa into a stack temp before the frustum test.
+    nw4r::math::VEC3 paCopy = *pa;
+    if (!CheckViewAngle60(&a, &b, &paCopy)) {
+        panel->unk29 = 0;
+    }
+
+    // Marker Y moves only downward: scale, clamp per panelType, snap.
+    // Retail keeps named memory homes for the transformed coords.
+    f32 vx = v.x - (sdata2_MESPool.fF0);
+    f32 vy = (v.y - (sdata2_MESPool.fF4)) * (sdata2_MESPool.fF8);
+    v.x = vx;
+    v.y = vy;
+    v.z = sEnemyPanelAnimMarker;
+    if (panel->panelType != 0) {
+        if (vy > (sdata2_MESPool.f20)) {
+            vy = (sdata2_MESPool.f20);
+            v.y = vy;
+            nw4r::math::VEC3 tmp;
+            CamMan_ProjectToScreen(&tmp, pose, pb);
+            tmp.y = (tmp.y - (sdata2_MESPool.fF4)) * (sdata2_MESPool.fF8) - (sdata2_MESPool.f24);
+            if (v.y < (tmp.y >= v.y ? tmp.y : v.y)) {
+                v.y = (tmp.y >= v.y ? tmp.y : v.y);
+            }
+            reinterpret_cast<ObjBBFlag*>(panel->unk3C)->flagBB &= 0xFE;
+        }
+    } else if (panel->unk1C != 0) {
+        if (vy > (sdata2_MESPool.fFC)) {
+            vy = (sdata2_MESPool.fFC);
+            v.y = vy;
+            nw4r::math::VEC3 tmp;
+            CamMan_ProjectToScreen(&tmp, pose, pb);
+            tmp.y = (tmp.y - (sdata2_MESPool.fF4)) * (sdata2_MESPool.fF8) - (sdata2_MESPool.f00);
+            if (v.y < (tmp.y >= v.y ? tmp.y : v.y)) {
+                v.y = (tmp.y >= v.y ? tmp.y : v.y);
+            }
+            reinterpret_cast<ObjBBFlag*>(panel->unk3C)->flagBB &= 0xFE;
+        }
+    } else {
+        if (vy > (sdata2_MESPool.f20)) {
+            vy = (sdata2_MESPool.f20);
+            v.y = vy;
+            nw4r::math::VEC3 tmp;
+            CamMan_ProjectToScreen(&tmp, pose, pb);
+            tmp.y = (tmp.y - (sdata2_MESPool.fF4)) * (sdata2_MESPool.fF8) - (sdata2_MESPool.f24);
+            if (v.y < (tmp.y >= v.y ? tmp.y : v.y)) {
+                v.y = (tmp.y >= v.y ? tmp.y : v.y);
+            }
+            reinterpret_cast<ObjBBFlag*>(panel->unk3C)->flagBB &= 0xFE;
+        }
+    }
+
+    PanePosLayout* p1 = reinterpret_cast<PanePosLayout*>(panel->layout1->GetRootPane());
+    p1->v2C = v.x;
+    p1->v30 = v.y;
+    p1->v34 = v.z;
+    if (panel->panelType != 0) {
+        PanePosLayout* pane = reinterpret_cast<PanePosLayout*>(panel->layout2->GetRootPane());
+        pane->v2C = v.x;
+        pane->v30 = v.y;
+        pane->v34 = v.z;
+        PanePosLayout* p74 =
+            reinterpret_cast<PanePosLayout*>(this->unk74->GetRootPane());
+        p74->v2C = v.x;
+        p74->v30 = v.y;
+        p74->v34 = v.z;
+    }
+}
+
+// EneSt_UpdatePanelHighlight (us-801120c4): per-panel highlight update. Selects the
+// highlight style by unk1E/unk1F/unk20/unk1D, loads the matching name text
+// (or formats the actor2 sub-id with sprintf), refreshes the highlight-slot
+// textures (EneSt_ScanSlotHighlight) and closes with the unk44 scale reset.
+void CMenuEnemyState::EneSt_UpdatePanelHighlight(u8* panelData) {
+    MenuEnemyPanel* panel = reinterpret_cast<MenuEnemyPanel*>(panelData);
+    char buf[0x20];
+    panel->panelType = 0;
+    Obj64_91* obj = reinterpret_cast<Obj64_91*>(
+        findObjectById(static_cast<int>(panel->actorId)));
+    if (obj == NULL) return;
+
+    // Only the last-selected enemy gets the full highlight path. (Retail
+    // reloads the panel/this pane fields at every site - no cached locals.)
+    reinterpret_cast<ObjBBFlag*>(panel->unk3C)->flagBB &= 0xFE;
+    if (panel->unk1D != 0) {
+        reinterpret_cast<ObjBBFlag*>(panel->obj1)->flagBB =
+            (reinterpret_cast<ObjBBFlag*>(panel->obj1)->flagBB & 0xFE) | 1;
+    }
+    // Retail: li r5,2 default overwritten with 1 - must stay a branchy
+    // if/else (the ?: form compiles branchless via neg/srawi).
+    int which = 2;
+    if (panel->unk1C != 0) {
+        which = 1;
+    }
+    this->EneSt_HighlightPane(panelData, which);
+
+    // Retail evaluates actorId first (cmpl r3,r0 operand order).
+    if (panel->actorId !=
+        reinterpret_cast<Fe68CView*>(Selector_GetInstance())->lastId90E4) {
+        return;
+    }
+    Obj64_91* lastObj = reinterpret_cast<Obj64_91*>(findObjectById(
+        static_cast<int>(reinterpret_cast<Fe68CView*>(Selector_GetInstance())->lastId90E4)));
+    if (lastObj == NULL) return;
+
+    u32 sub74 = lastObj->word74;
+    reinterpret_cast<ObjBBFlag*>(panel->unk3C)->flagBB =
+        (reinterpret_cast<ObjBBFlag*>(panel->unk3C)->flagBB & 0xFE) | 1;
+    reinterpret_cast<ObjBBFlag*>(panel->obj1)->flagBB &= 0xFE;
+    this->EneSt_HighlightPane(panelData, 3);
+    panel->panelType = 1;
+    if (this->field7D4 != sub74) {
+        this->field7D4 = sub74;
+    }
+
+    reinterpret_cast<ObjBBFlag*>(this->field7C)->flagBB &= 0xFE;
+    reinterpret_cast<ObjBBFlag*>(this->field80)->flagBB &= 0xFE;
+    reinterpret_cast<ObjBBFlag*>(this->field84)->flagBB &= 0xFE;
+    reinterpret_cast<ObjBBFlag*>(this->field88)->flagBB &= 0xFE;
+
+    if (panel->unk1E != 0 || panel->unk1F != 0) {
+        reinterpret_cast<ObjBBFlag*>(this->field7C)->flagBB =
+            (reinterpret_cast<ObjBBFlag*>(this->field7C)->flagBB & 0xFE) | 1;
+        if (panel->unk20 != 0) {
+            char* npcName = BdatTouchStringCell("MNU_battle", "name", 8);
+            LayoutSetTextBoxFmtValue(this->unk74, "txt_name_npc", npcName, 0);
+        } else if (panel->unk1F != 0) {
+            LayoutSetTextBoxFmtValue(this->unk74, "txt_name_npc",
+                          reinterpret_cast<char*>(
+                              reinterpret_cast<cf::CObjectParam*>(obj)->CObjectParam_getParamPtr()),
+                          0);
+        } else {
+            LayoutSetTextBoxFmtValue(this->unk74, "txt_name_npc",
+                          GetBdatNameByNumId(reinterpret_cast<char*>(
+                              reinterpret_cast<cf::CObjectParam*>(obj)->CObjectParam_getParamPtr())),
+                          0);
+        }
+    } else if (panel->unk1D != 0) {
+        reinterpret_cast<ObjBBFlag*>(this->field80)->flagBB =
+            (reinterpret_cast<ObjBBFlag*>(this->field80)->flagBB & 0xFE) | 1;
+        Actor2Layout* actor2 = reinterpret_cast<Actor2Layout*>(MapFx_ResolveOwner(obj));
+        u32 special = 0;
+        if ((obj->word64 & (1 << 2)) != 0) {
+            // int local so the 0x96b/0x9c9 compares emit signed cmpwi.
+            int id = obj->id8C;
+            if ((u32)(id - 0x967) <= 1 || id == 0x96b || id == 0x9c9) {
+                special = 1;
+            }
+        }
+        // Retail compares the pane id with signed cmpw.
+        // Real virtual calls - retail dispatches through r12.
+        s32 a2id = static_cast<s32>(static_cast<u32>(
+            reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_getActorLevel()));
+        if (special != 0) {
+            LayoutSetTextBoxFmtValue(this->unk74, "txt_lv00",
+                          BdatTouchStringCell("MNU_battle",
+                                        "name", 7),
+                          0);
+        } else {
+            sprintf(buf, "%03d", a2id);
+            LayoutSetTextBoxText(this->unk74, "txt_lv00", buf, 0);
+        }
+        a2id = static_cast<s32>(static_cast<u32>(
+            reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_getActorLevel()));
+        if (static_cast<s32>(panel->unk24) != a2id) {
+            panel->unk24 = static_cast<u32>(
+                reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_getActorLevel());
+            this->EneSt_RefreshNameColor(panelData);
+        }
+        LayoutSetTextBoxFmtValue(this->unk74, "txt_name_enemmy",
+                      reinterpret_cast<char*>(
+                          const_cast<char*>(reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_getActorName())),
+                      0);
+        // Retail materialises 0xEDE8DAFF as lis 0xEDE8 / subi 0x2501.
+        PaneSetVtxColorByName(this->unk74, "txt_name_enemmy",
+                      0xEDE80000 - 0x2501);
+        this->EneSt_ScanSlotHighlight(actor2);
+
+        void* sub = getEffOwner____FPv(obj);
+        if (sub != NULL) {
+            u8 v = BdatGetU8Direct((const void*)::cf::CfBdat::spCurBtlEneListFileData, "frame",
+                                 static_cast<AD860Result*>(sub)->id3F28);
+            // Retail clrlwi's the result - keep the u8 narrowing.
+            switch (v) {
+            case 1:
+                reinterpret_cast<ObjBBFlag*>(this->field84)->flagBB =
+                    (reinterpret_cast<ObjBBFlag*>(this->field84)->flagBB & 0xFE) | 1;
+                break;
+            case 2:
+                reinterpret_cast<ObjBBFlag*>(this->field88)->flagBB =
+                    (reinterpret_cast<ObjBBFlag*>(this->field88)->flagBB & 0xFE) | 1;
+                break;
+            }
+        }
+
+        int v1 = *static_cast<int*>(reinterpret_cast<cf::CObjectState*>(actor2->subObj4)->getStateData());
+        if (testActorStatus(actor2, &v1, 0xa) == 0) {
+            int v2 = *static_cast<int*>(reinterpret_cast<cf::CObjectState*>(actor2->subObj4)->getStateData());
+            if (testActorStatus(actor2, &v2, 9) == 0) {
+                goto tail;
+            }
+        }
+        // Slot 164: MWCC prepends 2 dtor entries to the view vtable
+        // (dispatch offset = n*4 + 8), so 0x298 == m164.
+        Obj298View* v298 = reinterpret_cast<Obj298View*>(
+            reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_getBattleStats());
+        if (v298->field50 != NULL) {
+            Obj50View* o50 = static_cast<Obj50View*>(v298->field50);
+            if ((o50->word78 & (1 << 30)) != 0 && o50->f7C == sEnemyPanelAnimMarker) {
+                LayoutSetTextBoxFmtValue(this->unk74, "txt_name_enemmy",
+                              reinterpret_cast<char*>(o50), 0);
+                PaneSetVtxColorByName(this->unk74, "txt_name_enemmy", 0xF52819FF);
+            }
+        }
+    }
+tail:
+    PaneScaleVec3* v = reinterpret_cast<PaneScaleVec3*>(panel->unk44);
+    Vec3f tmp = v->scale;
+    tmp.y = (sdata2_MESPool.f28);
+    v->scale = tmp;
+}
+
+// EneSt_ScalePaneWidths (us-801125e4): scale the widths of the three enemy-indicator
+// panes by a clamped v128/v12c ratio, then animate the panel layout. t starts
+// at the anim marker and is only replaced when both input floats exceed it.
+void EneSt_ScalePaneWidths(CMenuEnemyState* self, u8* panelData, f32 v128, f32 v12c) {
+    f32 t = sEnemyPanelAnimMarker;
+    if (v12c > sEnemyPanelAnimMarker && v128 > sEnemyPanelAnimMarker) {
+        t = v128 / v12c;
+        if (t > (sdata2_MESPool.fE8)) {
+            t = (sdata2_MESPool.fE8);
+        }
+    }
+
+    MenuEnemyPanel* panel = reinterpret_cast<MenuEnemyPanel*>(panelData);
+
+    // One named Size temp (copy-inited from the first pane's size - no
+    // zero-init stores) shared by all three sites; retail keeps a single
+    // 0x8/0xc spill pair.
+    nw4r::lyt::Pane* p;
+    p = panel->layout1->GetRootPane()->FindPaneByName(
+        "pic_pcbar", true);
+    nw4r::lyt::Size sz = p->GetSize();
+    sz.width = self->field7C8 * t;
+    p->SetSize(sz);
+
+    p = panel->layout1->GetRootPane()->FindPaneByName(
+        "pic_enbar", true);
+    sz.height = p->GetSize().height;
+    sz.width = self->field7CC * t;
+    p->SetSize(sz);
+
+    p = panel->layout1->GetRootPane()->FindPaneByName(
+        "pic_tgbar", true);
+    sz.height = p->GetSize().height;
+    sz.width = self->field7D0 * t;
+    p->SetSize(sz);
+
+    panel->layout1->Animate(0);
+}
+
+// EneSt_HighlightPane (us-8011272c): highlight one of the three enemy-indicator
+// panes - two found by name off panelData->layout1's root pane, the third is
+// panelData->unk44. `which` 0-3 selects which pane gets its +0xBB bit-0 set
+// (the others are cleared); case 3 additionally plays a layout sound and
+// nudges a scale vec3 on unk44. Called from EneSt_UpdateIndicator with which=3.
+// (arg1 `self` is not referenced by retail.)
+void CMenuEnemyState::EneSt_HighlightPane(u8* panelData, int which) {
+    MenuEnemyPanel* panel = reinterpret_cast<MenuEnemyPanel*>(panelData);
+
+    ObjBBFlag* f1 = reinterpret_cast<ObjBBFlag*>(
+        panel->layout1->GetRootPane()->FindPaneByName("nul_pc", true));
+    ObjBBFlag* f2 = reinterpret_cast<ObjBBFlag*>(
+        panel->layout1->GetRootPane()->FindPaneByName("nul_enemmy", true));
+    ObjBBFlag* f3 = reinterpret_cast<ObjBBFlag*>(panel->unk44);
+
+    switch (which) {
+    case 0:
+        f1->flagBB &= 0xFE;
+        f2->flagBB &= 0xFE;
+        f3->flagBB &= 0xFE;
+        break;
+    case 1:
+        f1->flagBB = (f1->flagBB & 0xFE) | 1;
+        f2->flagBB &= 0xFE;
+        f3->flagBB &= 0xFE;
+        break;
+    case 2:
+        f1->flagBB &= 0xFE;
+        f2->flagBB = (f2->flagBB & 0xFE) | 1;
+        f3->flagBB &= 0xFE;
+        break;
+    case 3:
+        f1->flagBB &= 0xFE;
+        f2->flagBB &= 0xFE;
+        f3->flagBB = (f3->flagBB & 0xFE) | 1;
+        PaneSetVtxColorByName(panel->layout1, "pic_tgbar",
+                      (panel->unk1C != 0) ? 0x0CD8FDFF : 0xFAF01EFF);
+        if (panel->unk1C != 0) {
+            PaneScaleVec3* v = reinterpret_cast<PaneScaleVec3*>(panel->unk44);
+            Vec3f tmp = v->scale;
+            tmp.y = sEnemyPanelAnimMarker;
+            v->scale = tmp;
+        } else if (panel->unk1D != 0 && panel->panelType == 0) {
+            PaneScaleVec3* v = reinterpret_cast<PaneScaleVec3*>(panel->unk44);
+            Vec3f tmp = v->scale;
+            tmp.y = sEnemyHighlightScale;
+            v->scale = tmp;
+        }
+        break;
+    }
+}
+
+// EneSt_UpdateIndicator (us-8011294c): per-frame enemy-indicator update. Clears the
+// three pane highlights, decides whether this enemy is the current target
+// (either via the battle manager's status bits or by comparing the panel's
+// actor against the battle target), and on a hit re-highlights pane e7 with
+// an hp-ratio scaled width plus a colour-coded sound, optionally resets pane
+// f3's y, and rescales pane 11d.
+void EneSt_UpdateIndicator(CMenuEnemyState* self, u8* panelData, f32 v128, f32 v12c) {
+    MenuEnemyPanel* panel = reinterpret_cast<MenuEnemyPanel*>(panelData);
+
+    // Clear bit0 on all three indicator panes (two by name off layout1's
+    // root pane, the third is the stored unk48 handle). paneE7 stays live:
+    // it is re-highlighted below on the target path.
+    nw4r::lyt::Pane* paneE7 =
+        panel->layout1->GetRootPane()->FindPaneByName("pic_tgbar_f", true);
+    reinterpret_cast<ObjBBFlag*>(paneE7)->flagBB &= 0xFE;
+    {
+        ObjBBFlag* p = reinterpret_cast<ObjBBFlag*>(
+            panel->layout1->GetRootPane()->FindPaneByName("pic_pic_death", true));
+        p->flagBB &= 0xFE;
+    }
+    reinterpret_cast<ObjBBFlag*>(panel->unk48)->flagBB &= 0xFE;
+
+    void* bmRes = cf::CBattleManager::getInstance()->CBattleMan_FetchVisionObj();
+    if (bmRes == NULL) {
+        return;
+    }
+    BattleMgrResult* bm = static_cast<BattleMgrResult*>(bmRes);
+
+    // Target decision: status bit17 requires the persistent-flag panel,
+    // otherwise the panel actor must be the battle manager's current target.
+    // Written bit-clear-first so MWCC lays the compare path as fallthrough
+    // and branches forward over it to the unk1C check (retail layout).
+    if ((bm->flags824 & 0x20000) == 0) {
+        Obj64_91* cur = reinterpret_cast<Obj64_91*>(
+            findObjectById(static_cast<int>(panel->actorId)));
+        if (cur == NULL) {
+            return;
+        }
+        u32 targetId = bm->targetId04;
+        if (targetId == 0) {
+            return;
+        }
+        Obj64_91* tgt = reinterpret_cast<Obj64_91*>(
+            findObjectById(static_cast<int>(targetId)));
+        if (tgt == NULL || cur != tgt) {
+            return;
+        }
+    } else if (panel->unk1C == 0) {
+        return;
+    }
+
+    self->EneSt_HighlightPane(panelData, 3);
+    reinterpret_cast<ObjBBFlag*>(paneE7)->flagBB =
+        (reinterpret_cast<ObjBBFlag*>(paneE7)->flagBB & 0xFE) | 1;
+
+    // Pane e7: width scaled by the hp-adjusted ratio, colour-picked sound.
+    // The double damage adjustment is formed before the divisor test so the
+    // fsubs pair sits between the compare and the branch (retail schedule).
+    // hp-adjusted ratio: the double difference is formed before the tests.
+    f64 dmgVal = ScMain_GetSummedInt((ScMain*)bmRes);
+    f64 dmgAdj = dmgVal - sEnemyTextDoubleBias;
+    f64 hpDiff = v128 - dmgAdj;
+    f32 ratio = sEnemyPanelAnimMarker;
+    if (v12c > sEnemyPanelAnimMarker && hpDiff > sEnemyPanelAnimMarker) {
+        ratio = hpDiff / v12c;
+        if (ratio > (sdata2_MESPool.fE8)) {
+            ratio = (sdata2_MESPool.fE8);
+        }
+    }
+    {
+        PaneSizeView* pv = reinterpret_cast<PaneSizeView*>(paneE7);
+        f32 h = pv->height;
+        pv->width = self->field7D0 * ratio;
+        pv->height = h;
+    }
+    PaneSetVtxColorByName(panel->layout1, "pic_tgbar_f",
+                  (panel->unk1C != 0) ? 0x0CD8FDFF : 0xFAF01EFF);
+
+    // Pane f3: only when either battle-status bit is set - re-highlight and
+    // reset its y (x/z preserved through the temp).
+    if (((bm->flags824 & 0x400) != 0) || ((bm->flags824 & 0x20000) != 0)) {
+        PanePosLayout* pp = reinterpret_cast<PanePosLayout*>(
+            panel->layout1->GetRootPane()
+                ->FindPaneByName("pic_pic_death", true));
+        pp->flagBB = (pp->flagBB & 0xFE) | 1;
+        Vec3f tmp = *reinterpret_cast<const Vec3f*>(&pp->v2C);
+        tmp.y = (sdata2_MESPool.f2C);
+        *reinterpret_cast<Vec3f*>(&pp->v2C) = tmp;
+    }
+
+    // Pane 11d: always rescaled by the plain clamped ratio + fixed sound.
+    f32 ratio2 = sEnemyPanelAnimMarker;
+    if (v12c > sEnemyPanelAnimMarker && v128 > sEnemyPanelAnimMarker) {
+        ratio2 = v128 / v12c;
+        if (ratio2 > (sdata2_MESPool.fE8)) {
+            ratio2 = (sdata2_MESPool.fE8);
+        }
+    }
+    {
+        PanePosLayout* pp11d = reinterpret_cast<PanePosLayout*>(
+            panel->layout1->GetRootPane()->FindPaneByName("pic_tgbar", true));
+        PaneSizeView* pv = reinterpret_cast<PaneSizeView*>(pp11d);
+        f32 h = pv->height;
+        pv->width = self->field7D0 * ratio2;
+        pv->height = h;
+    }
+    PaneSetVtxColorByName(panel->layout1, "pic_tgbar", 0xD81710FF);
+}
+
+// EneSt_RefreshNameColor (us-80112c4c): refresh the enemy-name colour pane. When the
+// panel's actor is a "special" enemy (word64 bit 2 + actor id), force the
+// highlight colour; otherwise pick the colour from the diff between the
+// panel's unk24 and the player-target id. Then scan the enemy slot list for a
+// matching id and light the unk40 pane.
+void CMenuEnemyState::EneSt_RefreshNameColor(u8* panelData) {
+    MenuEnemyPanel* panel = reinterpret_cast<MenuEnemyPanel*>(panelData);
+    if (panel->unk1D == 0) return;
+
+    cf::CfObjectPc* pc = getCfObjectPc(cf::CfGameManager::getPlayer(0));
+    if (pc == NULL) return;
+    // Retail keeps this value in r29 and later reuses the same register for
+    // the unk24 difference (subf r29,r29,r0), so one variable serves both.
+    s32 tgt = (s32)reinterpret_cast<cf::CActorParam*>(pc)->CActorParam_getActorLevel();
+
+    // Tail locals declared early; birth order pins tail colours.
+    // OPEN ITEM (us-80112c4c): residual is a pure reg_swap - sub lands in r30
+    // and i in r28 (retail: sub=r28, i=r30); list is correct at r29. The
+    // colorer always pops sub first (degree-driven), so no declaration order
+    // reaches mismatch 0; see session notes for the full tried matrix.
+    void* list;
+    void* sub;
+
+    // Retail initialises the special flag (r28) before the actor lookup.
+    s32 special = 0;
+    Obj64_91* obj = reinterpret_cast<Obj64_91*>(
+        findObjectById(static_cast<int>(panel->actorId)));
+    if (obj != NULL && (obj->word64 & (1 << 2)) != 0) {
+        // Signed int id: retail uses cmpwi against 0x96b/0x9c9.
+        int id = obj->id8C;
+        if ((u32)(id - 0x967) <= 1 || id == 0x96b || id == 0x9c9) {
+            special = 1;
+        }
+    }
+
+    if (special != 0) {
+        nw4r::lyt::Pane* pane = panel->layout2->GetRootPane()->FindPaneByName(
+            "pic_gr", true);
+        PaneSetVtxColorPairs(pane, 0xFF5A0000 + 0x3CFF, 0xFF5A0000 + 0x3CFF);
+        if (panel->panelType != 0) {
+            // Retail hoists the second call's pane pointer (r28) ahead of the
+            // first call's argument setup.
+            void* p90 = reinterpret_cast<void*>(this->field90);
+            PaneSetVtxColorPairs((nw4r::lyt::Pane*)(reinterpret_cast<void*>(this->field8C)), 0xFF5A0000 + 0x3CFF, 0xFF5A0000 + 0x3C00);
+            PaneSetVtxColorPairs((nw4r::lyt::Pane*)p90, 0xFF5A0000 + 0x3CFF, 0xFF5A0000 + 0x3C00);
+        }
+    } else {
+        nw4r::lyt::Pane* pane = panel->layout2->GetRootPane()->FindPaneByName(
+            "pic_gr", true);
+        tgt = static_cast<s32>(panel->unk24) - tgt;
+        // Colours are written as hi/lo halves so MWCC emits them literally
+        // (lis hi / addi lo) instead of re-splitting the folded constant.
+        if (tgt >= 6) {
+            PaneSetVtxColorPairs(pane, 0xFF5A0000 + 0x3CFF, 0xFF5A0000 + 0x3CFF);
+        } else if (tgt >= 3) {
+            PaneSetVtxColorPairs(pane, 0xD2D20000 + 0x28FF, 0xD2D20000 + 0x28FF);
+        } else if (tgt <= -6) {
+            PaneSetVtxColorPairs(pane, 0, 0);
+        } else if (tgt <= -3) {
+            PaneSetVtxColorPairs(pane, 0x288D0000 - 1, 0x288D0000 - 1);
+        } else {
+            PaneSetVtxColorPairs(pane, 0xD2D30000 - 0x2D01, 0xD2D30000 - 0x2D01);
+        }
+        if (panel->panelType != 0) {
+            // Both pane pointers are common to every branch; retail hoists
+            // both loads above the branch chain (calls would clobber them).
+            void* p8C = reinterpret_cast<void*>(this->field8C);
+            void* p90 = reinterpret_cast<void*>(this->field90);
+            if (tgt >= 6) {
+                PaneSetVtxColorPairs((nw4r::lyt::Pane*)p8C, 0xFF5A0000 + 0x3CFF, 0xFF5A0000 + 0x3C00);
+                PaneSetVtxColorPairs((nw4r::lyt::Pane*)p90, 0xFF5A0000 + 0x3CFF, 0xFF5A0000 + 0x3C00);
+            } else if (tgt >= 3) {
+                PaneSetVtxColorPairs((nw4r::lyt::Pane*)p8C, 0xD2D20000 + 0x28FF, 0xD2D20000 + 0x2800);
+                PaneSetVtxColorPairs((nw4r::lyt::Pane*)p90, 0xD2D20000 + 0x28FF, 0xD2D20000 + 0x2800);
+            } else if (tgt <= -6) {
+                PaneSetVtxColorPairs((nw4r::lyt::Pane*)p8C, 0, 0);
+                PaneSetVtxColorPairs((nw4r::lyt::Pane*)p90, 0, 0);
+            } else if (tgt <= -3) {
+                PaneSetVtxColorPairs((nw4r::lyt::Pane*)p8C, 0x288D0000 - 1, 0x288D0000 - 0x100);
+                PaneSetVtxColorPairs((nw4r::lyt::Pane*)p90, 0x288D0000 - 1, 0x288D0000 - 0x100);
+            } else {
+                PaneSetVtxColorPairs((nw4r::lyt::Pane*)p8C, 0xD2D30000 - 0x2D01, 0xD2D30000 - 0x2E00);
+                PaneSetVtxColorPairs((nw4r::lyt::Pane*)p90, 0xD2D30000 - 0x2D01, 0xD2D30000 - 0x2E00);
+            }
+        }
+    }
+
+    // Enemy slot list scan: light unk40 when a slot holds the same actor id.
+    // (Retail reloads panel->unk40 for the clear and the set.)
+    reinterpret_cast<ObjBBFlag*>(panel->unk40)->flagBB &= 0xFE;
+    u32 lastId = reinterpret_cast<Fe68CView*>(Selector_GetInstance())->lastId90E4;
+    Obj64_91* lastObj = reinterpret_cast<Obj64_91*>(
+        findObjectById(static_cast<int>(lastId)));
+    if (lastObj != NULL) {
+        sub = getEffOwner____FPv(lastObj);
+        if (sub != NULL) {
+            list = lookupCA0By45C0();
+            if (list != NULL) {
+                // Wide counter (retail cmplwi r30,0x10), truncated to u8 only
+                // at the call site (clrlwi).
+                for (u32 i = 0; i < 0x10; i++) {
+                    EnemySlotListEntry* e = static_cast<EnemySlotListEntry*>(
+                        CPartsChange_GetEnemySlotAt(list, static_cast<u8>(i)));
+                    if (e != NULL && e != sub && e->id3F10 == panel->actorId) {
+                        // Retail clears bit 0 then sets it (rlwinm + ori).
+                        reinterpret_cast<ObjBBFlag*>(panel->unk40)->flagBB =
+                            (reinterpret_cast<ObjBBFlag*>(panel->unk40)->flagBB & 0xFE) | 1;
+                        break;
+                    }
+                }
+            }
+        }
+    }
+}
+
+// EneSt_ScanSlotHighlight (us-80112fa4): enemy-slot highlight scan. When the highlight
+// timer (field7D8) passes its threshold, reset it and scan the actor's slots
+// (from field7DC+1, wrapping at 0x20) for a valid id, loading the matching
+// texture and flagging field94. Then rebuild the 32-entry id table plus the
+// 0x20 sentinel from actor2->field1530 and scan field98 from field7E0+1
+// (wrapping at 0x21) the same way.
+void CMenuEnemyState::EneSt_ScanSlotHighlight(Actor2Layout* actor2) {
+    this->field7D8 += (sdata2_MESPool.fE8);
+    if (this->field7D8 > (sdata2_MESPool.f38)) {
+        this->field7D8 = sEnemyPanelAnimMarker;
+        u8 idx = (u8)(this->field7DC + 1);
+        for (;;) {
+            if (idx >= 0x20) {
+                idx = 0;
+            }
+            ObjBBFlag* f94 = reinterpret_cast<ObjBBFlag*>(this->field94);
+            f94->flagBB &= 0xFE;
+            SubSlot5CResult* res =
+                reinterpret_cast<SubSlot5CResult*>(reinterpret_cast<cf::CBattleState*>(&actor2->sub8)->CBattleState_getEventEntry(idx));
+            if (res->word30 != 0x800 && res->id0C != 0 && res->id0C != 0xF &&
+                res->id0C != 0x10 && res->id0C != 0x12) {
+                u16 id = BdatGetU16Direct(::cf::CfBdat::spBtlBuffListFileData,
+                                       "icon", res->id0C);
+                if (id != 0) {
+                    char* name = MakeTplNameSysFile(id);
+                    nw4r::lyt::ArcResourceAccessor* accessor =
+                        static_cast<nw4r::lyt::ArcResourceAccessor*>(CUICfManager_getArcResourceAccessor());
+                    void* tex = accessor->GetResource(0x74696D67, name, 0);
+                    if (tex != 0) {
+                        f94->flagBB = (f94->flagBB & 0xFE) | 1;
+                        PaneSetTexPalette((nw4r::lyt::Pane*)f94, (TPLPalette*)tex);
+                        this->field7DC = idx;
+                        break;
+                    }
+                }
+            }
+            if ((s32)(u8)idx == (s32)this->field7DC) {
+                break;
+            }
+            idx++;
+        }
+
+        {
+            u16 arr16[0x21];
+            for (u8 i = 0; i < 0x20; i++) {
+                SubSlot5CResult* res =
+                    reinterpret_cast<SubSlot5CResult*>(reinterpret_cast<cf::CBattleState*>(&actor2->sub8)->CBattleState_fetchStatusEntry(i));
+                arr16[i] = (res->word30 == 0x800) ? 0 : res->id0C;
+            }
+            arr16[0x20] = (u16)actor2->field1530;
+
+            u8 idx2 = (u8)(this->field7E0 + 1);
+            for (;;) {
+                if (idx2 >= 0x21) {
+                    idx2 = 0;
+                }
+                ObjBBFlag* f98 = reinterpret_cast<ObjBBFlag*>(this->field98);
+                f98->flagBB &= 0xFE;
+                u16 v = arr16[idx2];
+                if (v != 0) {
+                    if (idx2 == 0x20) {
+                        char* name = MakeTplNameSysFile(0x13d);
+                        nw4r::lyt::ArcResourceAccessor* accessor =
+                            static_cast<nw4r::lyt::ArcResourceAccessor*>(CUICfManager_getArcResourceAccessor());
+                        void* tex = accessor->GetResource(0x74696D67, name, 0);
+                        if (tex != 0) {
+                            f98->flagBB = (f98->flagBB & 0xFE) | 1;
+                            PaneSetTexPalette((nw4r::lyt::Pane*)f98, (TPLPalette*)tex);
+                            this->field7E0 = idx2;
+                            break;
+                        }
+                    } else {
+                        u16 id = BdatGetU16Direct(::cf::CfBdat::spBtlBuffListFileData,
+                                               "icon", v);
+                        if (id != 0) {
+                            char* name = MakeTplNameSysFile(id);
+                            nw4r::lyt::ArcResourceAccessor* accessor =
+                                static_cast<nw4r::lyt::ArcResourceAccessor*>(CUICfManager_getArcResourceAccessor());
+                            void* tex = accessor->GetResource(0x74696D67, name, 0);
+                            if (tex != 0) {
+                                f98->flagBB = (f98->flagBB & 0xFE) | 1;
+                                PaneSetTexPalette((nw4r::lyt::Pane*)f98, (TPLPalette*)tex);
+                                this->field7E0 = idx2;
+                                break;
+                            }
+                        }
+                    }
+                }
+                if ((s32)(u8)idx2 == (s32)this->field7E0) {
+                    break;
+                }
+                idx2++;
+            }
+        }
+    }
 }
 
 // EneSt_RefreshMenu (us-8011328c): per-frame enemy-menu refresh driven by the
@@ -1507,15 +2510,15 @@ void CMenuEnemyState::EneSt_RefreshMenu() {
                 switch (*reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_getMarkKindPtr()) {
                 case 1:
                     tex = static_cast<nw4r::lyt::ArcResourceAccessor*>(CUICfManager_getArcResourceAccessor())
-                              ->GetResource(0x74696D67, &sMenuEnemyNamePool[0x20e], 0);
+                              ->GetResource(0x74696D67, "mf80_tginf00_enmk00.tpl", 0);
                     break;
                 case 2:
                     tex = static_cast<nw4r::lyt::ArcResourceAccessor*>(CUICfManager_getArcResourceAccessor())
-                              ->GetResource(0x74696D67, &sMenuEnemyNamePool[0x226], 0);
+                              ->GetResource(0x74696D67, "mf80_tginf00_enmk01.tpl", 0);
                     break;
                 case 3:
                     tex = static_cast<nw4r::lyt::ArcResourceAccessor*>(CUICfManager_getArcResourceAccessor())
-                              ->GetResource(0x74696D67, &sMenuEnemyNamePool[0x23e], 0);
+                              ->GetResource(0x74696D67, "mf80_tginf00_enmk02.tpl", 0);
                     break;
                 }
                 if (tex != NULL) {
@@ -1669,15 +2672,15 @@ void CMenuEnemyState::EneSt_RefreshMenu() {
                 switch (*reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_getMarkKindPtr()) {
                 case 1:
                     tex2 = static_cast<nw4r::lyt::ArcResourceAccessor*>(CUICfManager_getArcResourceAccessor())
-                               ->GetResource(0x74696D67, &sMenuEnemyNamePool[0x20e], 0);
+                               ->GetResource(0x74696D67, "mf80_tginf00_enmk00.tpl", 0);
                     break;
                 case 2:
                     tex2 = static_cast<nw4r::lyt::ArcResourceAccessor*>(CUICfManager_getArcResourceAccessor())
-                               ->GetResource(0x74696D67, &sMenuEnemyNamePool[0x226], 0);
+                               ->GetResource(0x74696D67, "mf80_tginf00_enmk01.tpl", 0);
                     break;
                 case 3:
                     tex2 = static_cast<nw4r::lyt::ArcResourceAccessor*>(CUICfManager_getArcResourceAccessor())
-                               ->GetResource(0x74696D67, &sMenuEnemyNamePool[0x23e], 0);
+                               ->GetResource(0x74696D67, "mf80_tginf00_enmk02.tpl", 0);
                     break;
                 }
                 if (tex2 != NULL) {
@@ -1699,816 +2702,6 @@ void CMenuEnemyState::EneSt_RefreshMenu() {
         this->field7E0 = 0;
         playUISound(0x57);
     }
-}
-
-// EneSt_CursorUpdate (us-8010f91c): CPcSelectCursor per-frame update. Clears the
-// highlight bit on all six indicator panes, re-lights the four "target" panes
-// when the battle actor list is non-empty, then positions the arrow pane
-// (field28, or field34 when the battle target matches) over the current enemy
-// (findObjB28ById table entry by byte41, subobject at +0x3E9C): the cursor is
-// projected with the scene pose and its Y only moves downward toward the
-// enemy's live position.
-void CPcSelectCursor::EneSt_CursorUpdate() {
-    // Retail reloads every pane field from the object (no pane locals).
-    reinterpret_cast<ObjBBFlag*>(this->field28)->flagBB &= 0xFE;
-    reinterpret_cast<ObjBBFlag*>(this->field34)->flagBB &= 0xFE;
-    reinterpret_cast<ObjBBFlag*>(this->field2C)->flagBB &= 0xFE;
-    reinterpret_cast<ObjBBFlag*>(this->field30)->flagBB &= 0xFE;
-    reinterpret_cast<ObjBBFlag*>(this->field38)->flagBB &= 0xFE;
-    reinterpret_cast<ObjBBFlag*>(this->field3C)->flagBB &= 0xFE;
-
-    // Battle actor list non-empty -> light the four "target" panes.
-    cf::CBattleManager* bm = cf::CBattleManager::getInstance();
-    _reslist_node<cf::CfObjectActor*>* node;
-    u32 count;
-    _reslist_node<cf::CfObjectActor*>* end = bm->mActorList1.mStartNodePtr;
-    node = end->mNext;
-    count = 0;
-    while (node != end) {
-        node = node->mNext;
-        count++;
-    }
-    if (count != 0) {
-        reinterpret_cast<ObjBBFlag*>(this->field2C)->flagBB =
-            (reinterpret_cast<ObjBBFlag*>(this->field2C)->flagBB & 0xFE) | 1;
-        reinterpret_cast<ObjBBFlag*>(this->field30)->flagBB =
-            (reinterpret_cast<ObjBBFlag*>(this->field30)->flagBB & 0xFE) | 1;
-        reinterpret_cast<ObjBBFlag*>(this->field38)->flagBB =
-            (reinterpret_cast<ObjBBFlag*>(this->field38)->flagBB & 0xFE) | 1;
-        reinterpret_cast<ObjBBFlag*>(this->field3C)->flagBB =
-            (reinterpret_cast<ObjBBFlag*>(this->field3C)->flagBB & 0xFE) | 1;
-    }
-
-    // Arrow pane; enemy subobject via the byte41 table entry (+4 words).
-    ObjBBFlag* arrow = reinterpret_cast<ObjBBFlag*>(this->field28);
-    u8* tbl = reinterpret_cast<u8*>(CtrlObjectParam_GetSlotTableBase());
-    void* entry = *reinterpret_cast<void**>(tbl + this->byte41 * 4 + 4);
-    void* sub = findObjB28ById(static_cast<s32>(reinterpret_cast<u32>(entry)));
-    // Retail copies sub into the target register first, then patches up
-    // +0x3E9C only when non-null (mr/beq/addi shape).
-    PcEmbedLayout* target = reinterpret_cast<PcEmbedLayout*>(sub);
-    if (sub != NULL) {
-        target = reinterpret_cast<PcEmbedLayout*>(reinterpret_cast<u8*>(sub) + 0x3E9C);
-    }
-    if (target != NULL) {
-        // Retail re-calls getInstance here (second reloc) instead of reusing bm.
-        BattleTargetView* bt = static_cast<BattleTargetView*>(
-            cf::CBattleManager::getInstance()->CBattleMan_FetchVisionObj());
-        if (bt != NULL && bt->field04 != NULL &&
-            target->field74 == reinterpret_cast<u32>(bt->field04)) {
-            arrow = reinterpret_cast<ObjBBFlag*>(this->field34);
-        }
-        arrow->flagBB = (arrow->flagBB & 0xFE) | 1;
-
-        // Stack-home order (posTmp=0x08, tmp=0x14, out=0x20, pos=0x2c) comes
-        // from this declaration order under MWCC's reverse-allocation packing.
-        Vec3f pos;
-        Vec3f out;
-        Vec3f tmp;
-        Vec3f posTmp;
-        const Vec3f* src;
-        void* rRaw = reinterpret_cast<cf::CfObject*>(target)->CfObject_getPosSample(0x64);
-        RLayout* r = static_cast<RLayout*>(rRaw);
-        if (r != NULL) {
-            // Declared z,y,x then stored x,y,z - reproduces retail's batched
-            // f0/f1/f2 loads followed by the three stack stores.
-            f32 fz = r->val2C;
-            f32 fy = r->val1C;
-            f32 fx = r->val0C;
-            posTmp.x = fx;
-            posTmp.y = fy;
-            posTmp.z = fz;
-            src = &posTmp;
-        } else {
-            src = reinterpret_cast<const Vec3f*>(reinterpret_cast<cf::CfObject*>(target)->CfObject_getPosVector());
-        }
-        pos = *src;
-
-        PoseLayout* pose = static_cast<PoseLayout*>(
-            Scn_FindCamItem(reinterpret_cast<void*>(this->field04), -1));
-        CamMan_ProjectToScreen(&out, pose, &pos);
-
-        arrow->flagBB = (arrow->flagBB & 0xFE) | 1;
-        // Highlight stays lit only while the projected X sits left of the
-        // marker bound. Volatile reads keep the two marker-constant uses as
-        // separate loads, matching retail.
-        // Highlight stays lit only while the projected X sits left of the
-        // marker bound.
-        if (!(out.x <= sEnemyPanelAnimMarker)) {
-            arrow->flagBB &= 0xFE;
-        }
-
-        // Marker Y moves only downward: scale, clamp, then snap to the live
-        // position when it is below the clamped value. The dead `dead` copy
-        // (word-wise lwz/stw block) is present in retail and must be kept.
-        out.y = (out.y - (sdata2_MESPool.fF4)) * (sdata2_MESPool.fF8);
-        out.z = sEnemyPanelAnimMarker;
-        out.x = out.x - (sdata2_MESPool.fF0);
-        // Retail retains this copy: &pos escaped into CamMan_ProjectToScreen above, so
-        // MWCC cannot prove pos dead and emits the word-wise copy block.
-        pos = out;
-        if (out.y > (sdata2_MESPool.fFC)) {
-            out.y = (sdata2_MESPool.fFC);
-            ml::CVec3* tmpPos = reinterpret_cast<cf::CfObject*>(target)->CfObject_getPosVector();
-            CamMan_ProjectToScreen(&tmp, pose, reinterpret_cast<const Vec3f*>(tmpPos));
-            tmp.y = (tmp.y - (sdata2_MESPool.fF4)) * (sdata2_MESPool.fF8) - (sdata2_MESPool.f00);
-            f32 sel = (tmp.y >= out.y) ? tmp.y : out.y;
-            if (sel > out.y) {
-                if (tmp.y >= out.y) {
-                    out.y = tmp.y;
-                }
-            }
-        }
-        PaneScaleVec3* pane = reinterpret_cast<PaneScaleVec3*>(arrow);
-        pane->scale.x = out.x;
-        pane->scale.y = out.y;
-        pane->scale.z = out.z;
-    }
-}
-
-// EneSt_RefreshNameColor (us-80112c4c): refresh the enemy-name colour pane. When the
-// panel's actor is a "special" enemy (word64 bit 2 + actor id), force the
-// highlight colour; otherwise pick the colour from the diff between the
-// panel's unk24 and the player-target id. Then scan the enemy slot list for a
-// matching id and light the unk40 pane.
-void CMenuEnemyState::EneSt_RefreshNameColor(u8* panelData) {
-    MenuEnemyPanel* panel = reinterpret_cast<MenuEnemyPanel*>(panelData);
-    if (panel->unk1D == 0) return;
-
-    cf::CfObjectPc* pc = getCfObjectPc(cf::CfGameManager::getPlayer(0));
-    if (pc == NULL) return;
-    // Retail keeps this value in r29 and later reuses the same register for
-    // the unk24 difference (subf r29,r29,r0), so one variable serves both.
-    s32 tgt = (s32)reinterpret_cast<cf::CActorParam*>(pc)->CActorParam_getActorLevel();
-
-    // Tail locals declared early; birth order pins tail colours.
-    // OPEN ITEM (us-80112c4c): residual is a pure reg_swap - sub lands in r30
-    // and i in r28 (retail: sub=r28, i=r30); list is correct at r29. The
-    // colorer always pops sub first (degree-driven), so no declaration order
-    // reaches mismatch 0; see session notes for the full tried matrix.
-    void* list;
-    void* sub;
-
-    // Retail initialises the special flag (r28) before the actor lookup.
-    s32 special = 0;
-    Obj64_91* obj = reinterpret_cast<Obj64_91*>(
-        findObjectById(static_cast<int>(panel->actorId)));
-    if (obj != NULL && (obj->word64 & (1 << 2)) != 0) {
-        // Signed int id: retail uses cmpwi against 0x96b/0x9c9.
-        int id = obj->id8C;
-        if ((u32)(id - 0x967) <= 1 || id == 0x96b || id == 0x9c9) {
-            special = 1;
-        }
-    }
-
-    if (special != 0) {
-        nw4r::lyt::Pane* pane = panel->layout2->GetRootPane()->FindPaneByName(
-            &sMenuEnemyNamePool[0x28e], true);
-        PaneSetVtxColorPairs(pane, 0xFF5A0000 + 0x3CFF, 0xFF5A0000 + 0x3CFF);
-        if (panel->panelType != 0) {
-            // Retail hoists the second call's pane pointer (r28) ahead of the
-            // first call's argument setup.
-            void* p90 = reinterpret_cast<void*>(this->field90);
-            PaneSetVtxColorPairs((nw4r::lyt::Pane*)(reinterpret_cast<void*>(this->field8C)), 0xFF5A0000 + 0x3CFF, 0xFF5A0000 + 0x3C00);
-            PaneSetVtxColorPairs((nw4r::lyt::Pane*)p90, 0xFF5A0000 + 0x3CFF, 0xFF5A0000 + 0x3C00);
-        }
-    } else {
-        nw4r::lyt::Pane* pane = panel->layout2->GetRootPane()->FindPaneByName(
-            &sMenuEnemyNamePool[0x28e], true);
-        tgt = static_cast<s32>(panel->unk24) - tgt;
-        // Colours are written as hi/lo halves so MWCC emits them literally
-        // (lis hi / addi lo) instead of re-splitting the folded constant.
-        if (tgt >= 6) {
-            PaneSetVtxColorPairs(pane, 0xFF5A0000 + 0x3CFF, 0xFF5A0000 + 0x3CFF);
-        } else if (tgt >= 3) {
-            PaneSetVtxColorPairs(pane, 0xD2D20000 + 0x28FF, 0xD2D20000 + 0x28FF);
-        } else if (tgt <= -6) {
-            PaneSetVtxColorPairs(pane, 0, 0);
-        } else if (tgt <= -3) {
-            PaneSetVtxColorPairs(pane, 0x288D0000 - 1, 0x288D0000 - 1);
-        } else {
-            PaneSetVtxColorPairs(pane, 0xD2D30000 - 0x2D01, 0xD2D30000 - 0x2D01);
-        }
-        if (panel->panelType != 0) {
-            // Both pane pointers are common to every branch; retail hoists
-            // both loads above the branch chain (calls would clobber them).
-            void* p8C = reinterpret_cast<void*>(this->field8C);
-            void* p90 = reinterpret_cast<void*>(this->field90);
-            if (tgt >= 6) {
-                PaneSetVtxColorPairs((nw4r::lyt::Pane*)p8C, 0xFF5A0000 + 0x3CFF, 0xFF5A0000 + 0x3C00);
-                PaneSetVtxColorPairs((nw4r::lyt::Pane*)p90, 0xFF5A0000 + 0x3CFF, 0xFF5A0000 + 0x3C00);
-            } else if (tgt >= 3) {
-                PaneSetVtxColorPairs((nw4r::lyt::Pane*)p8C, 0xD2D20000 + 0x28FF, 0xD2D20000 + 0x2800);
-                PaneSetVtxColorPairs((nw4r::lyt::Pane*)p90, 0xD2D20000 + 0x28FF, 0xD2D20000 + 0x2800);
-            } else if (tgt <= -6) {
-                PaneSetVtxColorPairs((nw4r::lyt::Pane*)p8C, 0, 0);
-                PaneSetVtxColorPairs((nw4r::lyt::Pane*)p90, 0, 0);
-            } else if (tgt <= -3) {
-                PaneSetVtxColorPairs((nw4r::lyt::Pane*)p8C, 0x288D0000 - 1, 0x288D0000 - 0x100);
-                PaneSetVtxColorPairs((nw4r::lyt::Pane*)p90, 0x288D0000 - 1, 0x288D0000 - 0x100);
-            } else {
-                PaneSetVtxColorPairs((nw4r::lyt::Pane*)p8C, 0xD2D30000 - 0x2D01, 0xD2D30000 - 0x2E00);
-                PaneSetVtxColorPairs((nw4r::lyt::Pane*)p90, 0xD2D30000 - 0x2D01, 0xD2D30000 - 0x2E00);
-            }
-        }
-    }
-
-    // Enemy slot list scan: light unk40 when a slot holds the same actor id.
-    // (Retail reloads panel->unk40 for the clear and the set.)
-    reinterpret_cast<ObjBBFlag*>(panel->unk40)->flagBB &= 0xFE;
-    u32 lastId = reinterpret_cast<Fe68CView*>(Selector_GetInstance())->lastId90E4;
-    Obj64_91* lastObj = reinterpret_cast<Obj64_91*>(
-        findObjectById(static_cast<int>(lastId)));
-    if (lastObj != NULL) {
-        sub = getEffOwner____FPv(lastObj);
-        if (sub != NULL) {
-            list = lookupCA0By45C0();
-            if (list != NULL) {
-                // Wide counter (retail cmplwi r30,0x10), truncated to u8 only
-                // at the call site (clrlwi).
-                for (u32 i = 0; i < 0x10; i++) {
-                    EnemySlotListEntry* e = static_cast<EnemySlotListEntry*>(
-                        CPartsChange_GetEnemySlotAt(list, static_cast<u8>(i)));
-                    if (e != NULL && e != sub && e->id3F10 == panel->actorId) {
-                        // Retail clears bit 0 then sets it (rlwinm + ori).
-                        reinterpret_cast<ObjBBFlag*>(panel->unk40)->flagBB =
-                            (reinterpret_cast<ObjBBFlag*>(panel->unk40)->flagBB & 0xFE) | 1;
-                        break;
-                    }
-                }
-            }
-        }
-    }
-}
-
-// EneSt_UpdatePanelHighlight (us-801120c4): per-panel highlight update. Selects the
-// highlight style by unk1E/unk1F/unk20/unk1D, loads the matching name text
-// (or formats the actor2 sub-id with sprintf), refreshes the highlight-slot
-// textures (EneSt_ScanSlotHighlight) and closes with the unk44 scale reset.
-void CMenuEnemyState::EneSt_UpdatePanelHighlight(u8* panelData) {
-    MenuEnemyPanel* panel = reinterpret_cast<MenuEnemyPanel*>(panelData);
-    char buf[0x20];
-    panel->panelType = 0;
-    Obj64_91* obj = reinterpret_cast<Obj64_91*>(
-        findObjectById(static_cast<int>(panel->actorId)));
-    if (obj == NULL) return;
-
-    // Only the last-selected enemy gets the full highlight path. (Retail
-    // reloads the panel/this pane fields at every site - no cached locals.)
-    reinterpret_cast<ObjBBFlag*>(panel->unk3C)->flagBB &= 0xFE;
-    if (panel->unk1D != 0) {
-        reinterpret_cast<ObjBBFlag*>(panel->obj1)->flagBB =
-            (reinterpret_cast<ObjBBFlag*>(panel->obj1)->flagBB & 0xFE) | 1;
-    }
-    // Retail: li r5,2 default overwritten with 1 - must stay a branchy
-    // if/else (the ?: form compiles branchless via neg/srawi).
-    int which = 2;
-    if (panel->unk1C != 0) {
-        which = 1;
-    }
-    this->EneSt_HighlightPane(panelData, which);
-
-    // Retail evaluates actorId first (cmpl r3,r0 operand order).
-    if (panel->actorId !=
-        reinterpret_cast<Fe68CView*>(Selector_GetInstance())->lastId90E4) {
-        return;
-    }
-    Obj64_91* lastObj = reinterpret_cast<Obj64_91*>(findObjectById(
-        static_cast<int>(reinterpret_cast<Fe68CView*>(Selector_GetInstance())->lastId90E4)));
-    if (lastObj == NULL) return;
-
-    u32 sub74 = lastObj->word74;
-    reinterpret_cast<ObjBBFlag*>(panel->unk3C)->flagBB =
-        (reinterpret_cast<ObjBBFlag*>(panel->unk3C)->flagBB & 0xFE) | 1;
-    reinterpret_cast<ObjBBFlag*>(panel->obj1)->flagBB &= 0xFE;
-    this->EneSt_HighlightPane(panelData, 3);
-    panel->panelType = 1;
-    if (this->field7D4 != sub74) {
-        this->field7D4 = sub74;
-    }
-
-    reinterpret_cast<ObjBBFlag*>(this->field7C)->flagBB &= 0xFE;
-    reinterpret_cast<ObjBBFlag*>(this->field80)->flagBB &= 0xFE;
-    reinterpret_cast<ObjBBFlag*>(this->field84)->flagBB &= 0xFE;
-    reinterpret_cast<ObjBBFlag*>(this->field88)->flagBB &= 0xFE;
-
-    if (panel->unk1E != 0 || panel->unk1F != 0) {
-        reinterpret_cast<ObjBBFlag*>(this->field7C)->flagBB =
-            (reinterpret_cast<ObjBBFlag*>(this->field7C)->flagBB & 0xFE) | 1;
-        if (panel->unk20 != 0) {
-            LayoutSetTextBoxFmtValue(this->unk74, &sMenuEnemyNamePool[0x266],
-                          BdatTouchStringCell(&sMenuEnemyNamePool[0x256],
-                                        &sMenuEnemyNamePool[0x261], 8),
-                          0);
-        } else if (panel->unk1F != 0) {
-            LayoutSetTextBoxFmtValue(this->unk74, &sMenuEnemyNamePool[0x266],
-                          reinterpret_cast<char*>(
-                              reinterpret_cast<cf::CObjectParam*>(obj)->CObjectParam_getParamPtr()),
-                          0);
-        } else {
-            LayoutSetTextBoxFmtValue(this->unk74, &sMenuEnemyNamePool[0x266],
-                          GetBdatNameByNumId(reinterpret_cast<char*>(
-                              reinterpret_cast<cf::CObjectParam*>(obj)->CObjectParam_getParamPtr())),
-                          0);
-        }
-    } else if (panel->unk1D != 0) {
-        reinterpret_cast<ObjBBFlag*>(this->field80)->flagBB =
-            (reinterpret_cast<ObjBBFlag*>(this->field80)->flagBB & 0xFE) | 1;
-        Actor2Layout* actor2 = reinterpret_cast<Actor2Layout*>(MapFx_ResolveOwner(obj));
-        u32 special = 0;
-        if ((obj->word64 & (1 << 2)) != 0) {
-            // int local so the 0x96b/0x9c9 compares emit signed cmpwi.
-            int id = obj->id8C;
-            if ((u32)(id - 0x967) <= 1 || id == 0x96b || id == 0x9c9) {
-                special = 1;
-            }
-        }
-        // Retail compares the pane id with signed cmpw.
-        // Real virtual calls - retail dispatches through r12.
-        s32 a2id = static_cast<s32>(static_cast<u32>(
-            reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_getActorLevel()));
-        if (special != 0) {
-            LayoutSetTextBoxFmtValue(this->unk74, &sMenuEnemyNamePool[0x1b2],
-                          BdatTouchStringCell(&sMenuEnemyNamePool[0x256],
-                                        &sMenuEnemyNamePool[0x261], 7),
-                          0);
-        } else {
-            sprintf(buf, &sMenuEnemyNamePool[0x273], a2id);
-            LayoutSetTextBoxText(this->unk74, &sMenuEnemyNamePool[0x1b2], buf, 0);
-        }
-        a2id = static_cast<s32>(static_cast<u32>(
-            reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_getActorLevel()));
-        if (static_cast<s32>(panel->unk24) != a2id) {
-            panel->unk24 = static_cast<u32>(
-                reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_getActorLevel());
-            this->EneSt_RefreshNameColor(panelData);
-        }
-        LayoutSetTextBoxFmtValue(this->unk74, &sMenuEnemyNamePool[0x278],
-                      reinterpret_cast<char*>(
-                          const_cast<char*>(reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_getActorName())),
-                      0);
-        // Retail materialises 0xEDE8DAFF as lis 0xEDE8 / subi 0x2501.
-        PaneSetVtxColorByName(this->unk74, &sMenuEnemyNamePool[0x278],
-                      0xEDE80000 - 0x2501);
-        this->EneSt_ScanSlotHighlight(actor2);
-
-        void* sub = getEffOwner____FPv(obj);
-        if (sub != NULL) {
-            u8 v = BdatGetU8Direct((const void*)::cf::CfBdat::spCurBtlEneListFileData, &sMenuEnemyNamePool[0x288],
-                                 static_cast<AD860Result*>(sub)->id3F28);
-            // Retail clrlwi's the result - keep the u8 narrowing.
-            switch (v) {
-            case 1:
-                reinterpret_cast<ObjBBFlag*>(this->field84)->flagBB =
-                    (reinterpret_cast<ObjBBFlag*>(this->field84)->flagBB & 0xFE) | 1;
-                break;
-            case 2:
-                reinterpret_cast<ObjBBFlag*>(this->field88)->flagBB =
-                    (reinterpret_cast<ObjBBFlag*>(this->field88)->flagBB & 0xFE) | 1;
-                break;
-            }
-        }
-
-        int v1 = *static_cast<int*>(reinterpret_cast<cf::CObjectState*>(actor2->subObj4)->getStateData());
-        if (testActorStatus(actor2, &v1, 0xa) == 0) {
-            int v2 = *static_cast<int*>(reinterpret_cast<cf::CObjectState*>(actor2->subObj4)->getStateData());
-            if (testActorStatus(actor2, &v2, 9) == 0) {
-                goto tail;
-            }
-        }
-        // Slot 164: MWCC prepends 2 dtor entries to the view vtable
-        // (dispatch offset = n*4 + 8), so 0x298 == m164.
-        Obj298View* v298 = reinterpret_cast<Obj298View*>(
-            reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_getBattleStats());
-        if (v298->field50 != NULL) {
-            Obj50View* o50 = static_cast<Obj50View*>(v298->field50);
-            if ((o50->word78 & (1 << 30)) != 0 && o50->f7C == sEnemyPanelAnimMarker) {
-                LayoutSetTextBoxFmtValue(this->unk74, &sMenuEnemyNamePool[0x278],
-                              reinterpret_cast<char*>(o50), 0);
-                PaneSetVtxColorByName(this->unk74, &sMenuEnemyNamePool[0x278], 0xF52819FF);
-            }
-        }
-    }
-tail:
-    PaneScaleVec3* v = reinterpret_cast<PaneScaleVec3*>(panel->unk44);
-    Vec3f tmp = v->scale;
-    tmp.y = (sdata2_MESPool.f28);
-    v->scale = tmp;
-}
-
-// EneSt_PositionPanel (us-80111b5c): position one enemy indicator panel. Projects
-// posA with the scene pose into v, lights the two indicator panes, then for
-// panelType==0 builds the marker scale from the (1,1,0) normal transform and
-// the posA/t offsets and writes posA + the scaled pose vector into the
-// layout2 root pane; otherwise zeroes the vector fields. Then the position
-// marker v is clamped (y only moves downward) and written into the layout1
-// root pane (and layout2/unk74 panes when panelType != 0).
-void CMenuEnemyState::EneSt_PositionPanel(u8* panelData, void* posA, void* posB) {
-    MenuEnemyPanel* panel = reinterpret_cast<MenuEnemyPanel*>(panelData);
-    PoseLayout* pose = static_cast<PoseLayout*>(Scn_FindCamItem(this->unk60, -1));
-    nw4r::math::VEC3* pa = static_cast<nw4r::math::VEC3*>(posA);
-    nw4r::math::VEC3* pb = static_cast<nw4r::math::VEC3*>(posB);
-    nw4r::math::VEC3 v;
-    CamMan_ProjectToScreen(&v, pose, pa);
-    panel->animMarker = v.z;
-
-    // Retail refetches the root panes for every single flag/store access
-    // (no cached pane pointer survives any call).
-    reinterpret_cast<ObjBBFlag*>(panel->layout1->GetRootPane())->flagBB =
-        (reinterpret_cast<ObjBBFlag*>(panel->layout1->GetRootPane())->flagBB & 0xFE) | 1;
-    reinterpret_cast<ObjBBFlag*>(panel->layout2->GetRootPane())->flagBB =
-        (reinterpret_cast<ObjBBFlag*>(panel->layout2->GetRootPane())->flagBB & 0xFE) | 1;
-    if (v.x <= sEnemyPanelAnimMarker) {
-        reinterpret_cast<ObjBBFlag*>(panel->layout1->GetRootPane())->flagBB &= 0xFE;
-        reinterpret_cast<ObjBBFlag*>(panel->layout2->GetRootPane())->flagBB &= 0xFE;
-    }
-
-    if (panel->panelType == 0) {
-        nw4r::math::VEC3 t;
-        t.x = (sdata2_MESPool.fE8);
-        t.y = (sdata2_MESPool.fE8);
-        t.z = sEnemyPanelAnimMarker;
-        VEC3TransformNormal(&t, &pose->mtx9C, &t);
-        // Retail keeps the added temp and the projection dest as two distinct
-        // stack homes (elementwise copy between them).
-        nw4r::math::VEC3 sum = *pa + t;
-        nw4r::math::VEC3 out;
-        CamMan_ProjectToScreen(&out, pose, &sum);
-        f32 scaleX = (sdata2_MESPool.fE8) / fabsf(v.x - t.x);
-        f32 scaleY = (sdata2_MESPool.fE8) / fabsf(v.y - t.y);
-        if (!CDeviceVI::isWideAspectRatio()) {
-            scaleX *= (sdata2_MESPool.f18);
-        }
-        f32 s = (sdata2_MESPool.f1C) / ml::pi;
-        PanePosLayout* pane = reinterpret_cast<PanePosLayout*>(panel->layout2->GetRootPane());
-        pane->v2C = pa->x;
-        pane->v30 = pa->y;
-        pane->v34 = pa->z;
-        // Two distinct VEC3 homes in retail: base copy of pose.vec118, then
-        // the scaled result.
-        nw4r::math::VEC3 scBase;
-        scBase.x = pose->vec118_x;
-        scBase.y = pose->vec118_y;
-        scBase.z = pose->vec118_z;
-        nw4r::math::VEC3 sc = scBase * s;
-        pane->v38 = sc.x;
-        pane->v3C = sc.y;
-        pane->v40 = sc.z;
-        pane->v44 = scaleX;
-        pane->v48 = scaleY;
-    } else {
-        PanePosLayout* pane = reinterpret_cast<PanePosLayout*>(panel->layout2->GetRootPane());
-        pane->v38 = zero__Q22ml5CVec3.x;
-        pane->v3C = zero__Q22ml5CVec3.y;
-        pane->v40 = zero__Q22ml5CVec3.z;
-        pane->v44 = (sdata2_MESPool.fE8);
-        pane->v48 = (sdata2_MESPool.fE8);
-    }
-
-    panel->unk29 = 1;
-    nw4r::math::VEC3 a;
-    a.x = pose->vec10c_x;
-    a.y = pose->vec10c_y;
-    a.z = pose->vec10c_z;
-    nw4r::math::VEC3 b;
-    b.x = pose->vec138_x;
-    b.y = pose->vec138_y;
-    b.z = pose->vec138_z;
-    // Retail stages a copy of pa into a stack temp before the frustum test.
-    nw4r::math::VEC3 paCopy = *pa;
-    if (!CheckViewAngle60(&a, &b, &paCopy)) {
-        panel->unk29 = 0;
-    }
-
-    // Marker Y moves only downward: scale, clamp per panelType, snap.
-    // Retail keeps named memory homes for the transformed coords.
-    f32 vx = v.x - (sdata2_MESPool.fF0);
-    f32 vy = (v.y - (sdata2_MESPool.fF4)) * (sdata2_MESPool.fF8);
-    v.x = vx;
-    v.y = vy;
-    v.z = sEnemyPanelAnimMarker;
-    if (panel->panelType != 0) {
-        if (vy > (sdata2_MESPool.f20)) {
-            vy = (sdata2_MESPool.f20);
-            v.y = vy;
-            nw4r::math::VEC3 tmp;
-            CamMan_ProjectToScreen(&tmp, pose, pb);
-            tmp.y = (tmp.y - (sdata2_MESPool.fF4)) * (sdata2_MESPool.fF8) - (sdata2_MESPool.f24);
-            if (v.y < (tmp.y >= v.y ? tmp.y : v.y)) {
-                v.y = (tmp.y >= v.y ? tmp.y : v.y);
-            }
-            reinterpret_cast<ObjBBFlag*>(panel->unk3C)->flagBB &= 0xFE;
-        }
-    } else if (panel->unk1C != 0) {
-        if (vy > (sdata2_MESPool.fFC)) {
-            vy = (sdata2_MESPool.fFC);
-            v.y = vy;
-            nw4r::math::VEC3 tmp;
-            CamMan_ProjectToScreen(&tmp, pose, pb);
-            tmp.y = (tmp.y - (sdata2_MESPool.fF4)) * (sdata2_MESPool.fF8) - (sdata2_MESPool.f00);
-            if (v.y < (tmp.y >= v.y ? tmp.y : v.y)) {
-                v.y = (tmp.y >= v.y ? tmp.y : v.y);
-            }
-            reinterpret_cast<ObjBBFlag*>(panel->unk3C)->flagBB &= 0xFE;
-        }
-    } else {
-        if (vy > (sdata2_MESPool.f20)) {
-            vy = (sdata2_MESPool.f20);
-            v.y = vy;
-            nw4r::math::VEC3 tmp;
-            CamMan_ProjectToScreen(&tmp, pose, pb);
-            tmp.y = (tmp.y - (sdata2_MESPool.fF4)) * (sdata2_MESPool.fF8) - (sdata2_MESPool.f24);
-            if (v.y < (tmp.y >= v.y ? tmp.y : v.y)) {
-                v.y = (tmp.y >= v.y ? tmp.y : v.y);
-            }
-            reinterpret_cast<ObjBBFlag*>(panel->unk3C)->flagBB &= 0xFE;
-        }
-    }
-
-    PanePosLayout* p1 = reinterpret_cast<PanePosLayout*>(panel->layout1->GetRootPane());
-    p1->v2C = v.x;
-    p1->v30 = v.y;
-    p1->v34 = v.z;
-    if (panel->panelType != 0) {
-        PanePosLayout* pane = reinterpret_cast<PanePosLayout*>(panel->layout2->GetRootPane());
-        pane->v2C = v.x;
-        pane->v30 = v.y;
-        pane->v34 = v.z;
-        PanePosLayout* p74 =
-            reinterpret_cast<PanePosLayout*>(this->unk74->GetRootPane());
-        p74->v2C = v.x;
-        p74->v30 = v.y;
-        p74->v34 = v.z;
-    }
-}
-
-// EneSt_ScanSlotHighlight (us-80112fa4): enemy-slot highlight scan. When the highlight
-// timer (field7D8) passes its threshold, reset it and scan the actor's slots
-// (from field7DC+1, wrapping at 0x20) for a valid id, loading the matching
-// texture and flagging field94. Then rebuild the 32-entry id table plus the
-// 0x20 sentinel from actor2->field1530 and scan field98 from field7E0+1
-// (wrapping at 0x21) the same way.
-void CMenuEnemyState::EneSt_ScanSlotHighlight(Actor2Layout* actor2) {
-    this->field7D8 += (sdata2_MESPool.fE8);
-    if (this->field7D8 > (sdata2_MESPool.f38)) {
-        this->field7D8 = sEnemyPanelAnimMarker;
-        u8 idx = (u8)(this->field7DC + 1);
-        for (;;) {
-            if (idx >= 0x20) {
-                idx = 0;
-            }
-            ObjBBFlag* f94 = reinterpret_cast<ObjBBFlag*>(this->field94);
-            f94->flagBB &= 0xFE;
-            SubSlot5CResult* res =
-                reinterpret_cast<SubSlot5CResult*>(reinterpret_cast<cf::CBattleState*>(&actor2->sub8)->CBattleState_getEventEntry(idx));
-            if (res->word30 != 0x800 && res->id0C != 0 && res->id0C != 0xF &&
-                res->id0C != 0x10 && res->id0C != 0x12) {
-                u16 id = BdatGetU16Direct(::cf::CfBdat::spBtlBuffListFileData,
-                                       &sMenuEnemyNamePool[0x295], res->id0C);
-                if (id != 0) {
-                    char* name = MakeTplNameSysFile(id);
-                    nw4r::lyt::ArcResourceAccessor* accessor =
-                        static_cast<nw4r::lyt::ArcResourceAccessor*>(CUICfManager_getArcResourceAccessor());
-                    void* tex = accessor->GetResource(0x74696D67, name, 0);
-                    if (tex != 0) {
-                        f94->flagBB = (f94->flagBB & 0xFE) | 1;
-                        PaneSetTexPalette((nw4r::lyt::Pane*)f94, (TPLPalette*)tex);
-                        this->field7DC = idx;
-                        break;
-                    }
-                }
-            }
-            if ((s32)(u8)idx == (s32)this->field7DC) {
-                break;
-            }
-            idx++;
-        }
-
-        {
-            u16 arr16[0x21];
-            for (u8 i = 0; i < 0x20; i++) {
-                SubSlot5CResult* res =
-                    reinterpret_cast<SubSlot5CResult*>(reinterpret_cast<cf::CBattleState*>(&actor2->sub8)->CBattleState_fetchStatusEntry(i));
-                arr16[i] = (res->word30 == 0x800) ? 0 : res->id0C;
-            }
-            arr16[0x20] = (u16)actor2->field1530;
-
-            u8 idx2 = (u8)(this->field7E0 + 1);
-            for (;;) {
-                if (idx2 >= 0x21) {
-                    idx2 = 0;
-                }
-                ObjBBFlag* f98 = reinterpret_cast<ObjBBFlag*>(this->field98);
-                f98->flagBB &= 0xFE;
-                u16 v = arr16[idx2];
-                if (v != 0) {
-                    if (idx2 == 0x20) {
-                        char* name = MakeTplNameSysFile(0x13d);
-                        nw4r::lyt::ArcResourceAccessor* accessor =
-                            static_cast<nw4r::lyt::ArcResourceAccessor*>(CUICfManager_getArcResourceAccessor());
-                        void* tex = accessor->GetResource(0x74696D67, name, 0);
-                        if (tex != 0) {
-                            f98->flagBB = (f98->flagBB & 0xFE) | 1;
-                            PaneSetTexPalette((nw4r::lyt::Pane*)f98, (TPLPalette*)tex);
-                            this->field7E0 = idx2;
-                            break;
-                        }
-                    } else {
-                        u16 id = BdatGetU16Direct(::cf::CfBdat::spBtlBuffListFileData,
-                                               &sMenuEnemyNamePool[0x295], v);
-                        if (id != 0) {
-                            char* name = MakeTplNameSysFile(id);
-                            nw4r::lyt::ArcResourceAccessor* accessor =
-                                static_cast<nw4r::lyt::ArcResourceAccessor*>(CUICfManager_getArcResourceAccessor());
-                            void* tex = accessor->GetResource(0x74696D67, name, 0);
-                            if (tex != 0) {
-                                f98->flagBB = (f98->flagBB & 0xFE) | 1;
-                                PaneSetTexPalette((nw4r::lyt::Pane*)f98, (TPLPalette*)tex);
-                                this->field7E0 = idx2;
-                                break;
-                            }
-                        }
-                    }
-                }
-                if ((s32)(u8)idx2 == (s32)this->field7E0) {
-                    break;
-                }
-                idx2++;
-            }
-        }
-    }
-}
-
-
-
-// EneSt_HighlightPane (us-8011272c): highlight one of the three enemy-indicator
-// panes - two found by name off panelData->layout1's root pane, the third is
-// panelData->unk44. `which` 0-3 selects which pane gets its +0xBB bit-0 set
-// (the others are cleared); case 3 additionally plays a layout sound and
-// nudges a scale vec3 on unk44. Called from EneSt_UpdateIndicator with which=3.
-// (arg1 `self` is not referenced by retail.)
-void CMenuEnemyState::EneSt_HighlightPane(u8* panelData, int which) {
-    MenuEnemyPanel* panel = reinterpret_cast<MenuEnemyPanel*>(panelData);
-
-    ObjBBFlag* f1 = reinterpret_cast<ObjBBFlag*>(
-        panel->layout1->GetRootPane()->FindPaneByName(&sMenuEnemyNamePool[0x10b], true));
-    ObjBBFlag* f2 = reinterpret_cast<ObjBBFlag*>(
-        panel->layout1->GetRootPane()->FindPaneByName(&sMenuEnemyNamePool[0x112], true));
-    ObjBBFlag* f3 = reinterpret_cast<ObjBBFlag*>(panel->unk44);
-
-    switch (which) {
-    case 0:
-        f1->flagBB &= 0xFE;
-        f2->flagBB &= 0xFE;
-        f3->flagBB &= 0xFE;
-        break;
-    case 1:
-        f1->flagBB = (f1->flagBB & 0xFE) | 1;
-        f2->flagBB &= 0xFE;
-        f3->flagBB &= 0xFE;
-        break;
-    case 2:
-        f1->flagBB &= 0xFE;
-        f2->flagBB = (f2->flagBB & 0xFE) | 1;
-        f3->flagBB &= 0xFE;
-        break;
-    case 3:
-        f1->flagBB &= 0xFE;
-        f2->flagBB &= 0xFE;
-        f3->flagBB = (f3->flagBB & 0xFE) | 1;
-        PaneSetVtxColorByName(panel->layout1, &sMenuEnemyNamePool[0x11d],
-                      (panel->unk1C != 0) ? 0x0CD8FDFF : 0xFAF01EFF);
-        if (panel->unk1C != 0) {
-            PaneScaleVec3* v = reinterpret_cast<PaneScaleVec3*>(panel->unk44);
-            Vec3f tmp = v->scale;
-            tmp.y = sEnemyPanelAnimMarker;
-            v->scale = tmp;
-        } else if (panel->unk1D != 0 && panel->panelType == 0) {
-            PaneScaleVec3* v = reinterpret_cast<PaneScaleVec3*>(panel->unk44);
-            Vec3f tmp = v->scale;
-            tmp.y = sEnemyHighlightScale;
-            v->scale = tmp;
-        }
-        break;
-    }
-}
-
-// CBattleMan_FetchVisionObj result view: the current battle-target actor id at +0x04 and
-// the status flag word at +0x824 (bit 17 / bit 10 drive the indicator).
-struct BattleMgrResult {
-    u8 gap00[0x04];
-    u32 targetId04;           // +0x04
-    u8 gap08[0x824 - 0x08];
-    u32 flags824;             // +0x824
-};
-
-// EneSt_UpdateIndicator (us-8011294c): per-frame enemy-indicator update. Clears the
-// three pane highlights, decides whether this enemy is the current target
-// (either via the battle manager's status bits or by comparing the panel's
-// actor against the battle target), and on a hit re-highlights pane e7 with
-// an hp-ratio scaled width plus a colour-coded sound, optionally resets pane
-// f3's y, and rescales pane 11d.
-void EneSt_UpdateIndicator(CMenuEnemyState* self, u8* panelData, f32 v128, f32 v12c) {
-    MenuEnemyPanel* panel = reinterpret_cast<MenuEnemyPanel*>(panelData);
-
-    // Clear bit0 on all three indicator panes (two by name off layout1's
-    // root pane, the third is the stored unk48 handle). paneE7 stays live:
-    // it is re-highlighted below on the target path.
-    nw4r::lyt::Pane* paneE7 =
-        panel->layout1->GetRootPane()->FindPaneByName(&sMenuEnemyNamePool[0xe7], true);
-    reinterpret_cast<ObjBBFlag*>(paneE7)->flagBB &= 0xFE;
-    {
-        ObjBBFlag* p = reinterpret_cast<ObjBBFlag*>(
-            panel->layout1->GetRootPane()->FindPaneByName(&sMenuEnemyNamePool[0xf3], true));
-        p->flagBB &= 0xFE;
-    }
-    reinterpret_cast<ObjBBFlag*>(panel->unk48)->flagBB &= 0xFE;
-
-    void* bmRes = cf::CBattleManager::getInstance()->CBattleMan_FetchVisionObj();
-    if (bmRes == NULL) {
-        return;
-    }
-    BattleMgrResult* bm = static_cast<BattleMgrResult*>(bmRes);
-
-    // Target decision: status bit17 requires the persistent-flag panel,
-    // otherwise the panel actor must be the battle manager's current target.
-    // Written bit-clear-first so MWCC lays the compare path as fallthrough
-    // and branches forward over it to the unk1C check (retail layout).
-    if ((bm->flags824 & 0x20000) == 0) {
-        Obj64_91* cur = reinterpret_cast<Obj64_91*>(
-            findObjectById(static_cast<int>(panel->actorId)));
-        if (cur == NULL) {
-            return;
-        }
-        u32 targetId = bm->targetId04;
-        if (targetId == 0) {
-            return;
-        }
-        Obj64_91* tgt = reinterpret_cast<Obj64_91*>(
-            findObjectById(static_cast<int>(targetId)));
-        if (tgt == NULL || cur != tgt) {
-            return;
-        }
-    } else if (panel->unk1C == 0) {
-        return;
-    }
-
-    self->EneSt_HighlightPane(panelData, 3);
-    reinterpret_cast<ObjBBFlag*>(paneE7)->flagBB =
-        (reinterpret_cast<ObjBBFlag*>(paneE7)->flagBB & 0xFE) | 1;
-
-    // Pane e7: width scaled by the hp-adjusted ratio, colour-picked sound.
-    // The double damage adjustment is formed before the divisor test so the
-    // fsubs pair sits between the compare and the branch (retail schedule).
-    // hp-adjusted ratio: the double difference is formed before the tests.
-    f64 dmgVal = ScMain_GetSummedInt((ScMain*)bmRes);
-    f64 dmgAdj = dmgVal - sEnemyTextDoubleBias;
-    f64 hpDiff = v128 - dmgAdj;
-    f32 ratio = sEnemyPanelAnimMarker;
-    if (v12c > sEnemyPanelAnimMarker && hpDiff > sEnemyPanelAnimMarker) {
-        ratio = hpDiff / v12c;
-        if (ratio > (sdata2_MESPool.fE8)) {
-            ratio = (sdata2_MESPool.fE8);
-        }
-    }
-    {
-        PaneSizeView* pv = reinterpret_cast<PaneSizeView*>(paneE7);
-        f32 h = pv->height;
-        pv->width = self->field7D0 * ratio;
-        pv->height = h;
-    }
-    PaneSetVtxColorByName(panel->layout1, &sMenuEnemyNamePool[0xe7],
-                  (panel->unk1C != 0) ? 0x0CD8FDFF : 0xFAF01EFF);
-
-    // Pane f3: only when either battle-status bit is set - re-highlight and
-    // reset its y (x/z preserved through the temp).
-    if (((bm->flags824 & 0x400) != 0) || ((bm->flags824 & 0x20000) != 0)) {
-        PanePosLayout* pp = reinterpret_cast<PanePosLayout*>(
-            panel->layout1->GetRootPane()
-                ->FindPaneByName(&sMenuEnemyNamePool[0xf3], true));
-        pp->flagBB = (pp->flagBB & 0xFE) | 1;
-        Vec3f tmp = *reinterpret_cast<const Vec3f*>(&pp->v2C);
-        tmp.y = (sdata2_MESPool.f2C);
-        *reinterpret_cast<Vec3f*>(&pp->v2C) = tmp;
-    }
-
-    // Pane 11d: always rescaled by the plain clamped ratio + fixed sound.
-    f32 ratio2 = sEnemyPanelAnimMarker;
-    if (v12c > sEnemyPanelAnimMarker && v128 > sEnemyPanelAnimMarker) {
-        ratio2 = v128 / v12c;
-        if (ratio2 > (sdata2_MESPool.fE8)) {
-            ratio2 = (sdata2_MESPool.fE8);
-        }
-    }
-    {
-        PanePosLayout* pp11d = reinterpret_cast<PanePosLayout*>(
-            panel->layout1->GetRootPane()->FindPaneByName(&sMenuEnemyNamePool[0x11d], true));
-        PaneSizeView* pv = reinterpret_cast<PaneSizeView*>(pp11d);
-        f32 h = pv->height;
-        pv->width = self->field7D0 * ratio2;
-        pv->height = h;
-    }
-    PaneSetVtxColorByName(panel->layout1, &sMenuEnemyNamePool[0x11d], 0xD81710FF);
 }
 
 // EneSt_SearchHighlightTexture (us-80113d84): panel-highlight texture search. Scans the
@@ -2590,231 +2783,6 @@ void EneSt_SearchHighlightTexture(CMenuEnemyState* self, u8* panelData, void* ac
     }
 }
 
-// ---------------------------------------------------------------------------
-// CMenuEnemyState::Init (us-8010ff24): create the 24-panel enemy-indicator
-// array (zeroed template copied into each entry), build the per-panel
-// layout1/layout2 arcs + panes, snapshot the shared colour quads from pane
-// 0x147 on the first pass, then set up the main menu layout, the font, the
-// ten pane handles and the select-cursor subobject, register the render CB
-// and release the scratch region.
-// ---------------------------------------------------------------------------
-void CMenuEnemyState::Init() {
-    // Scratch region for all menu layouts (freed by the RAII guard). Retail
-    // re-derives this+0x64 at every use - no cached region pointer.
-    mem64.createRegion(
-        mtl::MemManager::getHandleMEM2(), 0x3EC00, &sMenuEnemyNamePool[0xa8], 0);
-    Class_8045F858 regionGuard(&mem64);
-
-    // Loop-invariant values hoisted by retail before the loop (f30/f31 +
-    // r21-r24): the anim marker, the marker y value, zero, one and the two
-    // pane sound/colour constants.
-    f32 markerY = sEnemyHighlightScale;
-    u32 zero = 0;
-    u8 one = 1;
-    u32 colD3 = 0xCD8FDFF;
-    u32 colDD = 0xFAF01EFF;
-
-    for (u8 i = 0; i < 24; i++) {
-        MenuEnemyPanel* panel = &panels[i];
-        nw4r::lyt::Layout** pLayout1 = &panel->layout1;
-        *panel = MenuEnemyPanel();
-
-        // ---- layout1 arc + panes ----
-        buildLayout(pLayout1,
-                      reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(CUICfManager_getArcResourceAccessor()),
-                      &sMenuEnemyNamePool[0xb8]);
-        PaneSetVtxColorByName(*pLayout1, &sMenuEnemyNamePool[0xd3], colD3);
-        PaneSetVtxColorByName(*pLayout1, &sMenuEnemyNamePool[0xdd], colDD);
-
-        {
-            nw4r::lyt::Pane* p = (*pLayout1)->GetRootPane()
-                ->FindPaneByName(&sMenuEnemyNamePool[0xe7], true);
-            reinterpret_cast<ObjBBFlag*>(p)->flagBB &= 0xFE;
-        }
-        {
-            nw4r::lyt::Pane* p = (*pLayout1)->GetRootPane()
-                ->FindPaneByName(&sMenuEnemyNamePool[0xf3], true);
-            reinterpret_cast<ObjBBFlag*>(p)->flagBB &= 0xFE;
-        }
-        {
-            nw4r::lyt::Pane* p = (*pLayout1)->GetRootPane()
-                ->FindPaneByName(&sMenuEnemyNamePool[0x101], true);
-            reinterpret_cast<ObjBBFlag*>(p)->flagBB &= 0xFE;
-        }
-
-        // Copy pane 0x10b onto itself preserving x/z, resetting y. Retail
-        // copies x/z as raw WORDS into a stack temp, then writes them back as
-        // floats - model the temp as a word union so MWCC emits lwz/stw.
-        {
-            V3WordFloat tmp;
-            {
-                PanePosLayout* s = reinterpret_cast<PanePosLayout*>((*pLayout1)
-                    ->GetRootPane()->FindPaneByName(&sMenuEnemyNamePool[0x10b], true));
-                tmp.w[0] = s->wx;
-                tmp.w[2] = s->wz;
-                PanePosLayout* d = reinterpret_cast<PanePosLayout*>((*pLayout1)
-                    ->GetRootPane()->FindPaneByName(&sMenuEnemyNamePool[0x10b], true));
-                d->v2C = tmp.f[0];
-                d->v30 = sEnemyPanelAnimMarker;
-                d->v34 = tmp.f[2];
-            }
-            // Copy pane 0x112 the same way, y = markerY.
-            {
-                PanePosLayout* s = reinterpret_cast<PanePosLayout*>((*pLayout1)
-                    ->GetRootPane()->FindPaneByName(&sMenuEnemyNamePool[0x112], true));
-                tmp.f[0] = s->v2C;
-                tmp.f[1] = markerY;
-                tmp.f[2] = s->v34;
-                PanePosLayout* d = reinterpret_cast<PanePosLayout*>((*pLayout1)
-                    ->GetRootPane()->FindPaneByName(&sMenuEnemyNamePool[0x112], true));
-                d->v2C = tmp.f[0];
-                d->v30 = sEnemyHighlightScale;
-                d->v34 = tmp.f[2];
-            }
-        }
-
-        // First pass: snapshot the indicator-pane widths for the scale math.
-        if (i == 0) {
-            field7C8 = (*pLayout1)->GetRootPane()
-                ->FindPaneByName(&sMenuEnemyNamePool[0xd3], true)->GetSize().width;
-            field7CC = (*pLayout1)->GetRootPane()
-                ->FindPaneByName(&sMenuEnemyNamePool[0xdd], true)->GetSize().width;
-            field7D0 = (*pLayout1)->GetRootPane()
-                ->FindPaneByName(&sMenuEnemyNamePool[0x11d], true)->GetSize().width;
-        }
-
-        panel->unk44 = (u32)(*pLayout1)->GetRootPane()
-            ->FindPaneByName(&sMenuEnemyNamePool[0x127], true);
-        panel->unk48 = (u32)(*pLayout1)->GetRootPane()
-            ->FindPaneByName(&sMenuEnemyNamePool[0x101], true);
-
-        // ---- layout2 arc + panes ----
-        nw4r::lyt::Layout** pLayout2 = &panel->layout2;
-        buildLayout(pLayout2,
-                      reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(CUICfManager_getArcResourceAccessor()),
-                      &sMenuEnemyNamePool[0x12e]);
-
-        // First pass: pull the four shared colour quads off pane 0x147 and
-        // propagate the last channel into the three alternate quads.
-        if (i == 0) {
-            nw4r::lyt::Pane* pane = (*pLayout2)->GetRootPane()
-                ->FindPaneByName(&sMenuEnemyNamePool[0x147], true);
-            GXColorS10 fs0 = PaneMatGetS16Quad(pane, 0);
-            sEnemyColorQuad0[0] = fs0.r;
-            sEnemyColorQuad0[1] = fs0.g;
-            sEnemyColorQuad0[2] = fs0.b;
-            sEnemyColorQuad0[3] = fs0.a;
-            GXColorS10 fs1 = PaneMatGetS16Quad(pane, 1);
-            sEnemyColorQuad1[0] = fs1.r;
-            sEnemyColorQuad1[1] = fs1.g;
-            sEnemyColorQuad1[2] = fs1.b;
-            sEnemyColorQuad1[3] = fs1.a;
-            sEnemyColorQuad2[3] = sEnemyColorQuad0[3];
-            sEnemyColorQuad3[3] = sEnemyColorQuad1[3];
-            sEnemyColorQuad4[3] = sEnemyColorQuad0[3];
-            sEnemyColorQuad5[3] = sEnemyColorQuad1[3];
-            sEnemyColorQuad6[3] = sEnemyColorQuad0[3];
-            sEnemyColorQuad7[3] = sEnemyColorQuad1[3];
-        }
-
-        panel->obj1 = (*pLayout2)->GetRootPane()
-            ->FindPaneByName(&sMenuEnemyNamePool[0x151], true);
-        panel->obj2 = (*pLayout2)->GetRootPane()
-            ->FindPaneByName(&sMenuEnemyNamePool[0x158], true);
-        panel->obj3 = (*pLayout2)->GetRootPane()
-            ->FindPaneByName(&sMenuEnemyNamePool[0x160], true);
-        panel->unk38 = (u32)(*pLayout2)->GetRootPane()
-            ->FindPaneByName(&sMenuEnemyNamePool[0x147], true);
-        panel->unk3C = (u32)(*pLayout2)->GetRootPane()
-            ->FindPaneByName(&sMenuEnemyNamePool[0x6a], true);
-        panel->unk40 = (u32)(*pLayout2)->GetRootPane()
-            ->FindPaneByName(&sMenuEnemyNamePool[0x169], true);
-    }
-
-    // ---- main menu layout ----
-    buildLayout(&unk74,
-                  reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(CUICfManager_getArcResourceAccessor()),
-                  &sMenuEnemyNamePool[0x173]);
-    bindLayoutAnimTransform(unk74, &unk78,
-                  reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(CUICfManager_getArcResourceAccessor()),
-                  &sMenuEnemyNamePool[0x190]);
-
-    // Bind the font: root pane + font object slot 0x24, push back onto root.
-    nw4r::lyt::Pane* rootPane = unk74->GetRootPane();
-    void* fontObj = CDeviceFont::getFontInfo(1, unk74);
-    ApplyFontToTxtPanes(rootPane, (const nw4r::ut::Font*)(reinterpret_cast<cf::CObjectState*>(fontObj)->checkStateFlags8(0)));
-
-    setLayoutTextBoxFont(unk74, &sMenuEnemyNamePool[0x1b2], (u32)CUICfManager_getPackedFontD8());
-    setLayoutTextBoxFont(unk74, &sMenuEnemyNamePool[0x1bb], (u32)CUICfManager_getPackedFontD8());
-
-    unk74->SetAnimationEnable(unk78, true);
-    reinterpret_cast<AnimTransformOverlay*>(unk78)->field10 = sEnemyPanelAnimMarker;
-    unk74->Animate(0);
-
-    field7C = (u32)unk74->GetRootPane()->FindPaneByName(&sMenuEnemyNamePool[0x1c4], true);
-    field80 = (u32)unk74->GetRootPane()->FindPaneByName(&sMenuEnemyNamePool[0x112], true);
-    field84 = (u32)unk74->GetRootPane()->FindPaneByName(&sMenuEnemyNamePool[0x1cc], true);
-    field88 = (u32)unk74->GetRootPane()->FindPaneByName(&sMenuEnemyNamePool[0x1d5], true);
-    field8C = (u32)unk74->GetRootPane()->FindPaneByName(&sMenuEnemyNamePool[0x1de], true);
-    field90 = (u32)unk74->GetRootPane()->FindPaneByName(&sMenuEnemyNamePool[0x1e9], true);
-    field94 = (u32)unk74->GetRootPane()->FindPaneByName(&sMenuEnemyNamePool[0x1f4], true);
-    field98 = (u32)unk74->GetRootPane()->FindPaneByName(&sMenuEnemyNamePool[0x201], true);
-    field9C = (u32)unk74->GetRootPane()->FindPaneByName(&sMenuEnemyNamePool[0x158], true);
-    fieldA0 = (u32)unk74->GetRootPane()->FindPaneByName(&sMenuEnemyNamePool[0x160], true);
-
-    // Cursor: stash the shared arc accessor + scene, then build the layouts.
-    u32 scn = (u32)unk60;
-    selectCursor.field18 = (u32)CUICfManager_getArcResourceAccessor();
-    selectCursor.field04 = scn;
-    ((CPcSelectCursor*)(&selectCursor))->EneSt_CursorBuild();
-
-    field7C4 = 1;
-
-    reinterpret_cast<CScn*>(unk60)->addRenderCB(this, 8, 0);
-
-    mem64.validateHeap();
-}
-
-// ---------------------------------------------------------------------------
-// CMenuEnemyState::Term (us-8011074c): wait for VI draw completion, detach the
-// IScnRender callback at +0x5C, delete all panel/layout objects (double
-// null-guard is the retail MWCC idiom for delete-then-null), release the two
-// scratch regions and clear the singleton.
-// ---------------------------------------------------------------------------
-void CMenuEnemyState::Term() {
-    CDeviceVI::waitForDrawDone();
-
-    reinterpret_cast<CScn*>(unk60)->removeRenderCB(this);
-
-    for (u8 i = 0; i < 24; i++) {
-        MenuEnemyPanel& p = panels[i];
-        // `delete` emits its own null-check, so the single outer if gives the
-        // retail two `beq`s (skip-all + skip-delete) around the vtable dtor.
-        if (p.layout1 != 0) {
-            delete p.layout1;
-            p.layout1 = 0;
-        }
-        if (p.layout2 != 0) {
-            delete p.layout2;
-            p.layout2 = 0;
-        }
-    }
-
-    if (unk74 != 0) {
-        delete unk74;
-        unk74 = 0;
-    }
-    if (selectCursor.layout1C != 0) {
-        delete selectCursor.layout1C;
-        selectCursor.layout1C = 0;
-    }
-
-    selectCursor.mem08.deleteRegion();
-    mem64.deleteRegion();
-    CMenuEnemyState::sInstance = 0;
-}
-
-
 // --- restored from git history (base:gone); do not expand beyond these functions ---
 // from commit 6d2ef546718a needle=sinit_801134E8
 // LLM-HARNESS-END: us-80111b50
@@ -2856,4 +2824,3 @@ extern "C" void sinit_801134E8() {
 // LLM-HARNESS-END: us-80113fc4
 // LLM-HARNESS-BEGIN: us-801140a4
 extern "C" bool func_801135C8() { return false; }
-

@@ -26,10 +26,10 @@ NW4R_G3D_RTTI_DEF(AnmObjTexSrtRes);
 // AnmObj::IsDerivedFrom body (retail inlines the base chain into every
 // derived class; the 0x650/0x640 checks come from this helper's boundary).
 static bool anmObjBaseIsDerivedFrom(G3dObj::TypeObj other) {
-    if (other == G3dObj::TypeObj(lbl_eu_8051D650)) {
+    if (other == AnmObj::GetTypeObjStatic()) {
         return true;
     }
-    if (other == G3dObj::TypeObj(lbl_eu_8051D640)) {
+    if (other == G3dObj::GetTypeObjStatic()) {
         return true;
     }
     return false;
@@ -91,8 +91,6 @@ void AnmObjTexSrt::DetachAll() {}
 
 
 
-extern nw4r::g3d::PlayPolicyFunc lbl_eu_80663458[]; // anm play-policy table
-
 namespace nw4r {
 namespace g3d {
 
@@ -115,7 +113,7 @@ inline AnmObjTexSrtRes::AnmObjTexSrtRes(MEMAllocator* pAllocator,
                                         TexSrtAnmResult* pCacheBuf)
     : AnmObjTexSrt(pAllocator, pBindingBuf, numBinding),
       FrameCtrl(0.0f, AnmTexSrtConvU16ToF(srt.ref().info.numFrame),
-                lbl_eu_80663458[srt.ref().info.policy]),
+                GetAnmPlayPolicy(srt.GetAnmPolicy())),
       mRes(srt), mpResultCache(pCacheBuf) {}
 
 } // namespace g3d

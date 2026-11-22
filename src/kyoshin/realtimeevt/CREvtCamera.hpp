@@ -177,10 +177,6 @@ using cf::CREvtCamera;
 // unmangled by MWCC, so no extern "C" is needed here).
 // +0x00: "CamEvent" string pool (offsets used as sub-string names)
 extern const char lbl_eu_805036D8[];
-// +0x00: "Cam2", +0x04: "Cam" animation names
-// (const char* string pointers)
-extern const char* lbl_eu_80662448;
-extern const char* lbl_eu_8066244C;
 // Default floats (camera fov / player fields)
 extern f32 lbl_eu_806678B0;
 // Double constant used by the manual u32->f64 bit trick in REvtCam_UpdateFromAnim

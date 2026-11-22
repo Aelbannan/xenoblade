@@ -72,16 +72,6 @@ struct CfMoveSub {
     u16 mField530;            // 0x530
 };
 
-// Move-data block referenced by CCtrlMovePC::mpDataPtr.
-struct CfMoveData {
-    u8 pad_00[0x4];
-    u32 mField04;             // 0x04
-    u8 pad_08[0xC];
-    f32 mField14;             // 0x14
-    u8 pad_18[0x10];          // 0x18..0x27
-    void* field_28;           // 0x28 embedded move-object (vtable 0xAC = getPosition)
-};
-
 // Wrapper for the object referenced by mObject/mPlayer: the move-state
 // sub-object at +0x3F60 and the animation id u16 at +0x455A.
 struct CfObjWrap {
@@ -109,12 +99,6 @@ struct CfObjState {
 struct CfBase30Obj {
     u8 pad_00[0x22];
     u16 mField22;             // 0x22
-};
-
-// Battle manager singleton (s16 at +0x20C8).
-struct CfBattleState {
-    u8 pad_00[0x20C8];
-    s16 mField20C8;           // 0x20C8
 };
 
 // Party-slot list returned by CtrlObjectParam_GetSlotTableBase: two character ids.
@@ -150,10 +134,12 @@ int  moveBaseRoute(cf::CCtrlMovePC* self, ml::CVec3* out, int flag);
 void Warning__Q24nw4r2dbFPCciPCce(const char* file, int line, const char* fmt, ...);
 }
 
+namespace cf { struct CfPartyInfo; }
+
 // C-linkage imports for the move-state helpers (retail names).
 extern "C" {
 int  InitRecord(void* out, void* src, int a, f32 b, f32 c, f32 d, int e);
-int  CPartsChange_ProcessPartyInfo(void* a, void* b);
+int  CPartsChange_ProcessPartyInfo(cf::CfPartyInfo* a, void* b);
 int  ScnRes_SegQueryForward_E348(void* a, void* b, int c, int d, int e);
 void ScnRes_CopyEntryHead(void* out, int a);
 void ScnRes_CopyEntryMid(void* out, int a);
@@ -209,16 +195,6 @@ struct CfPartyInfoOut {
     u8 pad_98[0x4];      // 0x98..0x9C
     u8 mField9C;         // 0x9C
     u8 mField9E;         // 0x9E
-};
-
-// Input block for InitRecord (party-info builder).
-struct CfPartyInfoIn {
-    u8 pad_00[0x24];
-    f32 mField24;        // 0x24 candidate height
-    u8 pad_28[2];
-    u8 mField2C;         // 0x2C valid-height flag
-    u8 mField2D;
-    u8 mField2E;         // 0x2E mode byte
 };
 
 // The 20 retail functions (placeholder symbols). Implemented in CtrlMovePC.cpp.

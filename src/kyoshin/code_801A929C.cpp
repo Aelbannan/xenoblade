@@ -4,14 +4,13 @@
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/plugin/ocBdat.hpp"  // getBdatStringColumnValue
 #include "monolib/math/CVec3.hpp"
+#include "kyoshin/cf/CfGameManager.hpp"
+#include "kyoshin/cf/object/CfObjectMove.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 #include "kyoshin/cf/object/CfObject.hpp" // owner of the +0xAC player slot (UVF23)
 #include "kyoshin/cf/CfCamEventApi.hpp"
 #include <math.h>
 #include "kyoshin/cf/CfSoundMan.hpp"
-
-// KEEP (extern-C cleanup 2026-10-23): CfSoundMan.hpp cannot be included in this TU (its headers clash with local copies).
-extern "C" u16 playActorSound__Q22cf10CfSoundManFUlUlUlUlf(u32 a, u32 b, u32 c, u32 d, f32 e);
 
 // Global runtime-flag word
 
@@ -22,15 +21,21 @@ CtrlStateWork* gpBattleCtrlStateWork;
 
 // Camera/scene gate query declared by the owning CfCamEvent_1.hpp.
 
-// Byte view of a CtrlState entry's +0x2C match-slot word (mirrors
-// CtrlState::m2C, s16 init -1; the full struct is defined below).
-struct MarkSlotView {
-    u8 _00[0x2C];
-    u16 m2C; // +0x2C
+struct CtrlState {
+    u8 _00[0x1C];
+    f32 m1C; // +0x1C
+    f32 m20; // +0x20
+    u8 pad24[4];
+    f32 m28; // +0x28
+    u16 m2C; // +0x2C, init -1
+    u16 m2E;
+    s16 m30;
+    u8 m32;
+    u8 pad33[5];
 };
 
 void BattleWork_MarkSlotFFFF(void* self) {
-    ((MarkSlotView*)self)->m2C = 0xFFFF;
+    static_cast<CtrlState*>(self)->m2C = 0xFFFF;
 }
 
 // Retail exports the blend helper under a plain C symbol, so the definition
@@ -193,8 +198,6 @@ D80VolObj* Scn_QueryUnk80State();
 extern "C" float VecMath_ClosestPtSeg(const ml::CVec3& a, const ml::CVec3& b,
                                const ml::CVec3& c, float* outT, ml::CVec3* out);
 SndSlotRef* CfSoundMan_TouchSlotById(u16 handle);
-// playActorSound__Q22cf10CfSoundManFUlUlUlUlf is declared by the catalog
-// (CCol6System.hpp): returns the sound handle.
 extern const char lbl_eu_80526324[]; // nw4r::db::Warning source string
 extern const char lbl_eu_80526300[]; // nw4r::db::Warning format string
 extern char lbl_eu_80503FA0[];       // bdat column-name blob
@@ -307,8 +310,8 @@ extern "C" void BattleWork_TickSndCtrl(SndCtrlObj* self, ml::CVec3* unk4, int fa
             self->m1C = 1.0f;
             prio = 0;
         }
-        u16 h = playActorSound__Q22cf10CfSoundManFUlUlUlUlf(1, self->m2E, prio, 0,
-                                                           self->m1C);
+        u16 h = (u16)cf::CfSoundMan::playActorSound(1, self->m2E, prio, 0,
+                                                    self->m1C);
         self->m2C = h;
         SndSlotRef* slot = (SndSlotRef*)CfSoundMan_TouchSlotById((u16)h);
         if (slot != NULL && slot->mSound != NULL) {
@@ -353,7 +356,7 @@ extern "C" void BattleWork_TickSndCtrl(SndCtrlObj* self, ml::CVec3* unk4, int fa
     // apply the same D80/presentation-bit volume chain.
     DirSrc* pose = (DirSrc*)Scn_FindCamItem(gmScene, -1);
     BattleWork_ComputeAim((ml::CVec3*)&self->m20, &self->m1C, pose,
-                  (ml::CVec3*)gmAimPoint, &self->mVec1,
+                  &gmAimPoint, &self->mVec1,
                   0.5f, 0.5f + self->m18);
     f32 vol = self->m1C * self->m24;
     if (CfRes_getD80Flag()) {
@@ -381,19 +384,6 @@ extern "C" void BattleWork_TickSndCtrl(SndCtrlObj* self, ml::CVec3* unk4, int fa
 // 128 entries and publish the object as the singleton.
 // ----------------------------------------------------------------------------
 extern u32 visionCallbackMarkSlotFFFFFirst[3];
-
-struct CtrlState {
-    u8 _00[0x1C];
-    f32 m1C; // +0x1C
-    f32 m20; // +0x20
-    u8 pad24[4];
-    f32 m28; // +0x28
-    s16 m2C; // +0x2C, init -1
-    s16 m2E;
-    s16 m30;
-    u8 m32;
-    u8 pad33[5];
-};
 
 class CtrlStateWork {
 public:
@@ -639,13 +629,6 @@ void BattleWork_FillStateWork(void* param) {
 // updates the entry sound through BattleWork_TickSndCtrl or stops it.
 // ----------------------------------------------------------------------------
 
-// CfGameManager imports (retail mangled symbols). Player objects are
-// cf::CfObject instances; the +0xAC slot is CfObject_getPosVector.
-extern "C" void* getPlayer__Q22cf13CfGameManagerFi(int index);
-extern "C" u32 getCurrentSlotIndex__Q22cf13CfGameManagerFv();
-extern "C" u32 getControllerWordA33C__Q22cf13CfGameManagerFv();
-extern "C" void getControllerWordA37C__Q22cf13CfGameManagerFv();
-extern "C" u8 getGlobalFlag34__Q22cf13CfGameManagerFv();
 extern "C" u16 getReloadParam0(void); // chapter/episode clock (CAIAction.hpp canonical form)
 extern "C" u32 getResourceFromTable__Q22cf13CfGameManagerFv(u32 resourceId);
 
@@ -678,14 +661,8 @@ extern "C" u32 Bdat_ReadCell_B434(void* table, const char* col, u32 colHandle,
 // retail-unmangled names).
 extern "C" int BattleWork_TestModePhase(int self, int phase, int area, int mode);
 
-// View of one 0x38-byte ctrl-state entry, exposing the match key at +0x2E.
-struct ScanEntry {
-    u8 _00[0x2E];
-    u16 m2E; // +0x2E
-};
-
 void BattleWork_TickDriver(UpdWork* self) {
-    cf::CfObject* player = (cf::CfObject*)getPlayer__Q22cf13CfGameManagerFi(0);
+    cf::CfObjectMove* player = cf::CfGameManager::getPlayer(0);
     if (player == NULL) {
         return;
     }
@@ -697,9 +674,9 @@ void BattleWork_TickDriver(UpdWork* self) {
         return;
     }
 
-    u32 phase = getCurrentSlotIndex__Q22cf13CfGameManagerFv();
-    u16 area = (u16)getControllerWordA33C__Q22cf13CfGameManagerFv();
-    getControllerWordA37C__Q22cf13CfGameManagerFv(); // result discarded (retail calls it)
+    u32 phase = cf::CfGameManager::getCurrentSlotIndex();
+    u16 area = (u16)cf::CfGameManager::getControllerWordA33C();
+    cf::CfGameManager::getControllerWordA37C(); // result discarded (retail calls it)
 
     s32 row = Bdat_GetRowBase_B41C(tbl);          // first row of the range
     s32 endRow = row + Bdat_GetMaxRow_B1EC(tbl); // one past the last row
@@ -807,7 +784,7 @@ void BattleWork_TickDriver(UpdWork* self) {
             gate = 1;
         }
 
-        u8 farGate = getGlobalFlag34__Q22cf13CfGameManagerFv();
+        u8 farGate = cf::CfGameManager::getGlobalFlag34();
         ColVal t49;
         t49.v = Bdat_ReadCell_B434(tbl, cols + 0x49, colH[10], idx, entry);
         int volOk = 1;
@@ -951,8 +928,6 @@ extern "C" int BattleWork_TestModePhase(int self, int b, int c, int d) {
 // CItem.hpp, whose full include closure clashes with this TU.
 extern "C" u32 Bdat_GetRowBase_B41C(void* bdat);   // bdat first row
 extern "C" u32 Bdat_GetMaxRow_B1EC(void* bdat);   // bdat row count
-// Game-manager active gate; canonical member is cf::CfGameManager::getEffectFlagState.
-extern "C" u32 getEffectFlagState__Q22cf13CfGameManagerFv();
 // Sound-slot play entry (defined in CfSoundMan.cpp); C linkage so the call
 // reloc binds to the retail-unmangled name.
 
@@ -978,12 +953,12 @@ bool BattleWork_CheckEffectTableReady(u32 id) {
     // Re-read the singleton: scan its entry table from 'row' for 'count' rows.
     CtrlStateWork* work2 = gpBattleCtrlStateWork;
     s32 endRow = row + count;
-    ScanEntry* it = (ScanEntry*)&work2->mEntries[row];
+    CtrlState* it = &work2->mEntries[row];
     for (; row < endRow; row++) {
         if (id == it->m2E) {
             return true;
         }
-        it = (ScanEntry*)((char*)it + 0x38);
+        ++it;
     }
     return false;
 }

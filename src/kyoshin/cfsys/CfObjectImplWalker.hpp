@@ -1,6 +1,7 @@
 #pragma once
 #include "kyoshin/cf/CtrlRemoteApi.hpp"
 #include "kyoshin/cf/CfBdat.hpp"
+#include "kyoshin/cf/object/CfObject.hpp"
 #include "kyoshin/code_8025FB10.hpp"  // Counter_TestBit (owner)
 #include "kyoshin/cf/CfCamSymbols.hpp"
 #include <types.h>
@@ -748,14 +749,6 @@ struct CfWalkBattleState3F60 {
     u32 field_0C;                            // 0xC
     u8 _10[0x4EC - 0x10];                    // 0x10-0x4EB
     u32 field_4EC;                           // 0x4EC
-};
-
-// Phantom view of cf::CfObject for the direct member call that emits the
-// mangled reloc requestVoice__Q22cf8CfObjectFiUlff (note unsigned long so
-// the mangling matches retail's Ul).
-class CfObject {
-public:
-    void requestVoice(int a, unsigned long b, float c, float d);
 };
 
 // Battle-object view reached through CfWalkBattleObj::field_3F60 (battle

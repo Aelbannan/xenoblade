@@ -932,11 +932,6 @@ extern const f32 lbl_eu_80666C9C;
 extern const char lbl_eu_8052ADB0[]; // nw4r::db::Warning source file
 extern const char lbl_eu_8052AD88[]; // nw4r::db::Warning message
 
-// nw4r math FIdx trig helpers (retail symbols unmangled).
-extern "C" f32 SinFIdx__Q24nw4r4mathFf(f32);
-extern "C" f32 CosFIdx__Q24nw4r4mathFf(f32);
-extern "C" f32 Atan2FIdx__Q24nw4r4mathFff(f32 y, f32 x);
-
 namespace nw4r {
 namespace db {
 void Warning(const char* file, int line, const char* fmt, ...);

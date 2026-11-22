@@ -2,6 +2,27 @@
 
 #include <types.h>
 
+/* SFD_Create parameter block.  mwsfdcre.c fills one and sfd_ply.c copies its
+ * first 0x50 bytes into the player handle as the initial runtime config. */
+typedef struct SfdCreateCfg {
+    u32 field_0x00;         /* 0x00 */
+    void* stmBuf;           /* 0x04 stream buffer, 32-byte aligned by sfply_InitHn */
+    u32 field_0x08;         /* 0x08 */
+    u32 field_0x0c;         /* 0x0c */
+    u32 field_0x10;         /* 0x10 */
+    u8 pad_0x14[0x14];      /* 0x14..0x27 */
+    u32 field_0x28;         /* 0x28 */
+    u32 field_0x2c;         /* 0x2c */
+    u32 field_0x30;         /* 0x30 */
+    u32 field_0x34;         /* 0x34 */
+    u32 width;              /* 0x38 */
+    u32 height;             /* 0x3c */
+    u32 modeIdx;            /* 0x40 */
+    void* work;             /* 0x44 caller work area */
+    u32 workSize;           /* 0x48 caller work area size */
+    u32 field_0x4c;         /* 0x4c */
+} SfdCreateCfg;             /* 0x50 */
+
 /*
  * Internal work layouts of the Sofdec (SFD) movie player, as seen by the
  * sfdcore modules (sfmpv, sfmpvf, sflib, sftim, sfbuf, sftrn, sfsee, ...).
@@ -896,9 +917,10 @@ typedef struct SfdHandle {
     u8  field_0x0044[0x0c]; /* 0x0044 */
     s32 field_0x0050;       /* 0x0050 */
     s32 errorState;         /* 0x0054 0 = handle not open (SFLIB_CheckHn) */
-    u8  field_0x0058[0x04]; /* 0x0058 */
+    s32 substatus;          /* 0x0058 player sub-state (sfply_StatPrep) */
     s32 field_0x005c;       /* 0x005c */
-    u8  field_0x0060[0x08]; /* 0x0060 */
+    s32 field_0x0060;       /* 0x0060 */
+    s32 field_0x0064;       /* 0x0064 */
     s32 field_0x0068;       /* 0x0068 play mode, 2 = playing */
     s32 displayCount;       /* 0x006c */
     s32 field_0x0070;       /* 0x0070 */
@@ -909,7 +931,7 @@ typedef struct SfdHandle {
     s32 imageHeight;        /* 0x0920 */
     u32 field_0x0924;       /* 0x0924 */
     u32 field_0x0928;       /* 0x0928 */
-    u8  field_0x092c[0x04]; /* 0x092c */
+    s32 field_0x092c;       /* 0x092c */
     s32 field_0x0930;       /* 0x0930 picture rate */
     s32 field_0x0934;       /* 0x0934 packed header field (hdr->picRate/50) */
     s32 field_0x0938;       /* 0x0938 system header field */
@@ -964,13 +986,15 @@ typedef struct SfdHandle {
     s32 usrPesFnArg;        /* 0x0d60 */
     void* delimCb;          /* 0x0d64 demux delimiter callback */
     void* delimCbArg;       /* 0x0d68 */
-    void* field_0x0d6c;     /* 0x0d6c */
-    u8  field_0x0d70[0x04]; /* 0x0d70 */
-    void* field_0x0d74;     /* 0x0d74 */
-    void* field_0x0d78;     /* 0x0d78 */
+    void (*field_0x0d6c)(void*, void*, u32*); /* 0x0d6c decoded-picture hook */
+    void* field_0x0d70;     /* 0x0d70 decoded-picture hook arg */
+    void (*field_0x0d74)(void*, void*, u32*); /* 0x0d74 skipped-picture hook */
+    void* field_0x0d78;     /* 0x0d78 skipped-picture hook arg */
     s32 (*chkImageSize)(void*); /* 0x0d7c */
     void* chkImageSizeArg;  /* 0x0d80 */
-    u8  field_0x0d84[0x0c]; /* 0x0d84 */
+    u32 field_0x0d84;       /* 0x0d84 multi-buffer callback enable */
+    u32 field_0x0d88;       /* 0x0d88 multi-buffer callback argument */
+    void* field_0x0d8c;     /* 0x0d8c multi-buffer callback */
     void* field_0x0d90;     /* 0x0d90 */
     void* field_0x0d94;     /* 0x0d94 */
     SfdTim tim;             /* 0x0d98 time controller (SFTIM context) */
@@ -986,7 +1010,13 @@ typedef struct SfdHandle {
     SfdSee see;             /* 0x2670 seek/head-analysis control block */
     SfdSeeki seeki;         /* 0x2680 seek-skip control block */
     u8  field_0x269c[0x04]; /* 0x269c */
-    u8  field_0x26a0[0xe0]; /* 0x26a0 timer accumulators */
+    u8  field_0x26a0[0xa0]; /* 0x26a0 five 0x20-byte timer accumulators */
+    u8  field_0x2740[0x20]; /* 0x2740 last-frame accumulator */
+    u64 field_0x2760;       /* 0x2760 last frame timer stamp */
+    u64 field_0x2768;       /* 0x2768 current timer stamp */
+    u64 field_0x2770;       /* 0x2770 timer unit */
+    s32 field_0x2778;       /* 0x2778 frame-rate numerator */
+    f32 field_0x277c;       /* 0x277c measured frame rate */
     SfdMpvParaWork para;    /* 0x2780 MPV parameter table */
     s32 frameCount;         /* 0x27ec frame records in use */
     s32 termFlag;           /* 0x27f0 termination requested */

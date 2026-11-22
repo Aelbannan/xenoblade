@@ -3,6 +3,7 @@ extern "C" int Counter_TestBit(void* obj, u32 idx);
 #include "kyoshin/cf/object/CfObjectMoveHelpers.hpp"
 #include "kyoshin/code_8025FB10.hpp"
 #include "kyoshin/cf/CfCamSymbols.hpp"
+#include "kyoshin/cf/CtrlObjectParamSymbols.hpp"  // CtrlObjectParam_GetArtsStatsRow (owner)
 #include <types.h>
 #include "kyoshin/CTaskGameEff.hpp"
 #include "kyoshin/cf/CfSoundMan.hpp"
@@ -812,7 +813,9 @@ public:
 
     CfObjectImplPcBattle4* field_04; // 0x04
     CfObjectImplPc8 mArts;           // 0x08 arts container (isBattleStatusActive operates on &+0x8)
-    u8 _pad0C[0x3374 - 0x0C];        // 0x0C-0x3373
+    u8 _pad0C[0x1530 - 0x0C];        // 0x0C-0x152F
+    u32 mPendingArtsCommand;         // name-guess: ArtsData::field_1528 at &+0x08 (0x1530)
+    u8 _pad1534[0x3374 - 0x1534];    // 0x1534-0x3373
     u32 field_3374;                  // 0x3374 flags
     u8 _pad3378[0x3380 - 0x3378];    // 0x3378-0x337F
     CfObjectImplPc3380 field_3380;   // 0x3380 block managed by aiActionClearBlockADC
@@ -840,12 +843,6 @@ public:
     CfObjectImplPcTgt* field_4598;   // 0x4598
     u8 _pad459C[0x45B0 - 0x459C];    // 0x459C-0x45AF
     u8 field_45B0;                   // 0x45B0
-};
-
-// Enum list returned by get__16CfEnumListHolderFv: element count at +0x620.
-struct CfEnumList {
-    u8 _pad00[0x620];                // 0x00-0x61F
-    u32 field_620;                   // 0x620
 };
 
 // Object at CfObjectImplPc98: vtable slot 0x28 called with (const char*, int).
@@ -1030,7 +1027,6 @@ void calcBattleDamage(int a, void* obj, int c);
 void CCharVoiceMan_EnqueueGaugeResultVoice(void* a, void* b);
 void* findBattleStatusEntry(void* obj, int id);
 void* CtrlObjectParam_GetCharEntry(u32 index); // canonical owner-form (void*, u32): CtrlObjectParam.cpp / CfObjectPc.hpp; matches CVS_THREAD.hpp (MWCC 10197)
-u8* CtrlObjectParam_GetArtsStatsRow(u8* info, int a);
 }
 
 // C++-mangled imports (plain declarations let MWCC append the retail

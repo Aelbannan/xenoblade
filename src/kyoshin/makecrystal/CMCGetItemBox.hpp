@@ -59,6 +59,8 @@ struct CMCSubFixStr128 {
    The FixStr<64> at +0x108 and FixStr<128> at +0x14C are the short/long
    item-name buffers (mLength at +0x148 / +0x1CC). */
 struct CMCItemBoxSub {
+    ~CMCItemBoxSub() {}
+
     s16 table[0x80];                // 0x000-0x0FF: offset table
     u16 count;                      // 0x100: number of entries
     u8  pad_102;                    // 0x102 (also read as an index source)
@@ -70,33 +72,8 @@ struct CMCItemBoxSub {
     u8  field_1D4;                  // 0x1D4
 };
 
-/* Dispatch-only shim for the CItem impl-instance vtable returned by
-   CItem_initItemImplInstances(item). Never instantiated; all virtuals are pure
-   (no vtable/code is emitted). MWCC RTTI occupies vtable slots 0,4, so a
-   declared virtual slot N lands at vtable offset N*4+8: getKind = 0x08,
-   getName = 0x20, getCount = 0x80. */
-class CMCItemImplShim {
-public:
-    virtual u32 getKind(void* entry) = 0;            // vtable offset 0x08
-    virtual void vf_04() = 0; virtual void vf_08() = 0;
-    virtual void vf_0C() = 0; virtual void vf_10() = 0;
-    virtual void vf_14() = 0;
-    virtual void* getName(void* entry) = 0;          // vtable offset 0x20
-    virtual void vf_1C() = 0; virtual void vf_20() = 0;
-    virtual void vf_24() = 0; virtual void vf_28() = 0;
-    virtual void vf_2C() = 0; virtual void vf_30() = 0;
-    virtual void vf_34() = 0; virtual void vf_38() = 0;
-    virtual void vf_3C() = 0; virtual void vf_40() = 0;
-    virtual void vf_44() = 0; virtual void vf_48() = 0;
-    virtual u32 getIcon(void* entry) = 0;           // vtable offset 0x54
-    virtual void vf_50() = 0; virtual void vf_54() = 0;
-    virtual void vf_58() = 0;
-    virtual void vf_5C() = 0; virtual void vf_60() = 0;
-    virtual void vf_64() = 0; virtual void vf_68() = 0;
-    virtual void vf_6C() = 0; virtual void vf_70() = 0;
-    virtual void vf_74() = 0;
-    virtual u32 getCount(void* entry) = 0;           // vtable offset 0x80
-};
+// Item-impl virtual interface returned by CItem_initItemImplInstances (owner).
+#include "kyoshin/cf/CItemImpl.hpp"
 
 /* Item-box widget of the crystal-crafting menu (RTTI "CMCGetItemBox", base
    list IWorkEvent: retail vtable __vt__13CMCGetItemBox, dtor @+0x08,
@@ -174,8 +151,8 @@ extern "C" u16 ArrayGet12(const unsigned short*, unsigned char);
 extern "C" void CopyTabSlotVec(u32*, void*, u32);
 extern "C" char* getMCItemSubText(CMCItemBoxSub*, u16);
 extern "C" char* getMCItemSubName(CMCItemBoxSub*, u16);
-extern "C" __declspec(noinline) u32 getMCItemSubItemId(CMCItemBoxSub*, u32);
-extern "C" __declspec(noinline) s8 getMCItemSubKind(CMCItemBoxSub*, u32);
+extern "C" u32 getMCItemSubItemId(CMCItemBoxSub*, u32);
+extern "C" s8 getMCItemSubKind(CMCItemBoxSub*, u32);
 // Retail mangled names kept as source names so the reloc matches exactly.
 extern "C" char lbl_eu_8050FF8C[];
 extern "C" void* sCrystalItemTable;  // unused address anchor - kept void*
@@ -190,8 +167,8 @@ extern "C" const float lbl_eu_80668BF0;
 extern "C" void moveMCGetItemBoxCursor(CMCGetItemBox*);
 extern "C" void initMCGetItemBoxList(CMCGetItemBox*, u16, void*, u8);
 extern "C" void setMCSlotIconTex(CMCGetItemBox*, u32, CMCItemBoxEntry*, u8);
-__declspec(noinline) void setMCSlotNameTex(CMCGetItemBox*, u32, CMCItemBoxEntry*, u8);
-extern "C" __declspec(noinline) CMCItemBoxEntry* getMCItemSubEntry(CMCItemBoxSub*, u32);
+void setMCSlotNameTex(CMCGetItemBox*, u32, CMCItemBoxEntry*, u8);
+extern "C" CMCItemBoxEntry* getMCItemSubEntry(CMCItemBoxSub*, u32);
 
 // ---------------------------------------------------------------------------
 // OnFileEvent / getMCItemSubText imports (retail symbol names verbatim)

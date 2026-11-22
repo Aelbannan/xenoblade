@@ -12,8 +12,8 @@
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 #include <string.h>
 
-// Imports from code_800F42AC.cpp (TU-local, as in the other callers).
-extern "C" void* getInstance__Q22cf13CfGameManagerFv(void);
+// Singleton manager import via its real owner header.
+#include "kyoshin/cf/CfGameManager.hpp"
 
 #include "kyoshin/plugin/ocBdat.hpp"
 
@@ -86,7 +86,7 @@ void CfObjectNpc::CfObject_UnkVirtualFunc4() {
         this->checkStateFlags8(1) == 0) {
         // fall through to timer reset (resetTimer stays true)
     } else {
-        getInstance__Q22cf13CfGameManagerFv();
+        cf::CfGameManager::getInstance();
         if (isGlobalCamFlagSet(0x40000) == 0 &&
             this->checkStateFlags8(1) == 0 &&
             this->checkStateFlags(1) == 0 &&
@@ -137,7 +137,7 @@ void CfObjectNpc::CfObject_UnkVirtualFunc4() {
 // 0x4330 integer-to-double bias constant.
 void CfObjectNpc::CObjectParam_UnkVirtualFunc4() {
     Bdat_GetTable_AA34();
-    void* fp = getFP((const char*)this + 0x78);
+    void* fp = getFP(mObjectName);
 
     // Length-probe the name column: if it exceeds 0x1F chars, fall back to
     // the fixed string baked into the column-name table at +0xC.
@@ -172,7 +172,7 @@ void CfObjectNpc::CObjectParam_UnkVirtualFunc4() {
 // 0x800C0314
 void CfObjectNpc::loadIconType() {
     Bdat_GetTable_AA34();
-    void* fp = getFP((const char*)this + 0x78);
+    void* fp = getFP(mObjectName);
     u16 row = unk8C_3;
     // Read the icon_type column value (return value's low byte holds it).
     const char* v = (const char*)getBdatStringColumnValue(fp, "icon_type", row);
@@ -183,7 +183,7 @@ void CfObjectNpc::loadIconType() {
 s16 CfObjectNpc::getRltMeet() {
     if (mRltMeet == -1) {
         Bdat_GetTable_AA34();
-        void* fp = getFP((const char*)this + 0x78);
+        void* fp = getFP(mObjectName);
         u16 row = unk8C_3;
         // Lazily load the rlt_meet value from the BDAT column on first access.
         const char* v = (const char*)getBdatStringColumnValue(fp, "rlt_meet", row);

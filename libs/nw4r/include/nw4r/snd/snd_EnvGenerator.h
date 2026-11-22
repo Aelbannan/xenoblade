@@ -2,21 +2,9 @@
 #define NW4R_SND_ENV_GENERATOR_H
 #include <nw4r/types_nw4r.h>
 
-// ---------------------------------------------------------------------------
-// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
-// ---------------------------------------------------------------------------
-
-
-// Attack table (128 f32 entries).  Retail: lbl_eu_8051FD40.
-extern "C" const f32 lbl_eu_8051FD40[128];
-
 namespace nw4r {
 namespace snd {
 namespace detail {
-
-// Retail .rodata table referenced by the inline CalcDecibelSquare below so
-// the data relocation matches the stripped retail object.
-extern "C" const s16 lbl_eu_8051FC40[128];
 
 class EnvGenerator {
 public:
@@ -51,6 +39,7 @@ private:
     static const int DECAY_INIT = 127;
     static const int SUSTAIN_INIT = 127;
     static const int RELEASE_INIT = 127;
+    static const s16 DecibelSquareTable[128];
 
 private:
     f32 CalcRelease(int release) {
@@ -76,7 +65,7 @@ private:
     // trimmed to the retail-empty split.
 
     int CalcDecibelSquare(int scale) {
-        return lbl_eu_8051FC40[scale];
+        return DecibelSquareTable[scale];
     }
 
 private:

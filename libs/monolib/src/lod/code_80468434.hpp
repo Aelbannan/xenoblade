@@ -89,13 +89,6 @@ void ScnData_FwdB7E0C(void* res, void* viewData, void* renderParams);
 
 // Object + records used by submitLodBillMtx (stride-0x68 record array selected
 // through the per-type pointer tables).
-struct LodObj1 {
-    u8  pad_00[0x4];
-    u16 field_0x4;    // 0x04 record count
-    u8  pad_06[0x28 - 0x06];
-    u32 field_0x28;   // 0x28 byte offset to the record array
-};
-
 struct LodRec1 {      // stride 0x68
     u16 field_0x0;    // 0x00 flags (bit 2 = concat + submit)
     u16 field_0x2;    // 0x02 (unused by this helper)
@@ -103,18 +96,6 @@ struct LodRec1 {      // stride 0x68
     u8  pad_06[0x68 - 0x06];
 };
 
-// Object-header view used by dispatchLodRecord (u32 offsets at +0x10/0x14/0x18).
-struct LodHeader34 {
-    u16 field_0x0;    // 0x00
-    u16 field_0x2;    // 0x02
-    u16 field_0x4;    // 0x04
-    u8  pad_06[0x10 - 0x06];
-    u32 field_0x10;   // 0x10
-    u32 field_0x14;   // 0x14
-    u32 field_0x18;   // 0x18
-    u8  pad_1C[0x28 - 0x1C];
-    u32 field_0x28;   // 0x28
-};
 
 // Object-header view used by the record-draw helpers drawLodBillView1C /
 // drawLodBillNorm / drawLodBillView48.  Reads the header bytes with the widths
@@ -203,7 +184,8 @@ struct LodRenderRecord {
     u16 field_0x20;        // 0x20
     u16 field_0x22;        // 0x22
     u8  field_0x24;        // 0x24 fog/alpha byte
-    u8  field_0x25[0x2C - 0x25];
+    u8  field_0x25[3];     // 0x25..0x27
+    u32 field_0x28;        // 0x28 byte offset to the per-record array
 };
 
 class UnkClass_80468434 {

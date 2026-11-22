@@ -26,14 +26,14 @@
 extern "C" u32 __cvt_fp2unsigned(double);
 namespace cf {
     void* CfObjectImplWalker::Walker_InnerPtr68() { return (void*)((u8*)this + 0x68); }
-    u32 CfObjectImplWalker::Walker_GetField380() { return *(u32*)((u8*)this + 0x380); }
+    u32 CfObjectImplWalker::Walker_GetField380() { return field_380; }
 }
 
 // Resets the walker's battle hook state: notifies the battle manager that
 // the owning actor joins a battle, runs the PC-side init, then clears the
 // walker's own status fields (six u32s, a byte and a float).
 void Walker_ResetBattleHook(cf::CfObjectImplWalker* self) {
-    ((CfWalkBMView*)getInstance__Q22cf14CBattleManagerFv())->setPartyMaskFlag(1, 1);
+    cf::CBattleManager::getInstance()->setPartyMaskFlag(1, 1);
     ObjPc_InitLink_5998(reinterpret_cast<cf::CfObjectImplPc*>(self));
     self->field_384 = 0;
     self->field_388 = 0;
@@ -130,8 +130,8 @@ void Walker_OnBattleChange(cf::CfObjectImplWalker* self) {
         }
     }
 L2DBC:
-    if (getInstance__Q22cf14CBattleManagerFv() != 0) {
-        cf::PartyGaugeSetClamped(reinterpret_cast<cf::UnkClass_8018C5FC*>((u8*)getInstance__Q22cf14CBattleManagerFv() + 0x194), 0);
+    if (cf::CBattleManager::getInstance() != 0) {
+        cf::PartyGaugeSetClamped(reinterpret_cast<cf::UnkClass_8018C5FC*>((u8*)cf::CBattleManager::getInstance() + 0x194), 0);
     }
     func_80084654__Q22cf13CfGameManagerFv(1);
 L2DE0:
@@ -185,11 +185,11 @@ L2EE8:
         getInstance__Q22cf13CfGameManagerFv();
         if (isGlobalCamFlagSet(0x200) != 0) goto L3030;
         {
-            CfWalkBMView* bm = (CfWalkBMView*)getInstance__Q22cf14CBattleManagerFv();
+            cf::CBattleManager* bm = cf::CBattleManager::getInstance();
             u32 count = 0;
-            CfWalkChainNode* head = bm->field_48;
-            CfWalkChainNode* cur;
-            for (cur = head->next; cur != head; cur = cur->next) {
+            _reslist_node<cf::CfObjectActor*>* head = bm->mActorList3.mStartNodePtr;
+            _reslist_node<cf::CfObjectActor*>* cur;
+            for (cur = head->mNext; cur != head; cur = cur->mNext) {
                 count++;
             }
             if (count != 0) goto L3030;
@@ -214,12 +214,12 @@ L3030:
     if (!(dist > 5.0f)) goto L30F0;
     {
         CfWalkBMView* bm =
-            (CfWalkBMView*)getInstance__Q22cf14CBattleManagerFv();
+            (CfWalkBMView*)cf::CBattleManager::getInstance();
         if (bm->field_194 < 0x64) goto L30C4;
         if (((cf::CfWalkEnumList*)holder.get())->field_620 == 0) goto L30C4;
         // Count live battles on the second list; an empty chain or the
         // multi-battle flag disarms.
-        bm = (CfWalkBMView*)getInstance__Q22cf14CBattleManagerFv();
+        bm = (CfWalkBMView*)cf::CBattleManager::getInstance();
         u32 count = 0;
         CfWalkChainNode* head = bm->field_28;
         CfWalkChainNode* cur;
@@ -345,12 +345,12 @@ L34E4:
         if (((cf::CfWalkField3ED4*)self->field_18->mSub.field_38)->vf40() == 0) {
             goto L35D8;
         }
-        u8 b = ((CfWalkBMView*)getInstance__Q22cf14CBattleManagerFv())->field_1AA;
+        u8 b = cf::CBattleManager::getInstance()->mChain.mHead.field_2;
         bool ok = (b >= 1 && b <= 0x18);
         if (ok) {
             if (self->field_18->vf298()->field_4 != 0) goto L35D8;
         }
-        if (((CfWalkBMView*)getInstance__Q22cf14CBattleManagerFv())->field_20C8 == 0) goto end;
+        if (((CfWalkBMView*)cf::CBattleManager::getInstance())->field_20C8 == 0) goto end;
         if (self->field_18->vf298()->field_4 == 0) goto end;
     }
 L35D8:
@@ -362,7 +362,7 @@ L3600:
     {
         u32 m = self->field_18->mSub.m4C();
         if (Selector_IssueRequest((cf::CfObjectSelectorObj*)Selector_GetInstance(), 0x80000003, 0, m) != 0) {
-            if (((CfWalkBMView*)getInstance__Q22cf14CBattleManagerFv())->vf28(1) != 0) {
+            if (cf::CBattleManager::getInstance()->CheckUnk84Flag(1) != 0) {
                 self->vf80();
             }
         } else {
@@ -415,7 +415,7 @@ void Walker_DispatchBattleSub(cf::CfObjectImplWalker* self) {
 void Walker_ForwardBattleEntry(cf::CfObjectImplWalker* self, u32 battleId) {
     if (battleId == self->field_18->field_3F60) {
         self->vf64();
-        evalBattleTarget(getInstance__Q22cf14CBattleManagerFv(), self->field_18);
+        evalBattleTarget(cf::CBattleManager::getInstance(), self->field_18);
     }
 }
 
@@ -439,7 +439,7 @@ void Walker_DispatchBattleCmd(cf::CfObjectImplWalker* self, u32 battleId, u32 cm
             cf::CfWalkBattleObj* bo = self->field_18;
             u32 v = bo->field_04->b30()->field_0;
             if (testActorStatus(bo, &v, 3) != 0) {
-                registerBattleActor(getInstance__Q22cf14CBattleManagerFv(),
+                registerBattleActor(cf::CBattleManager::getInstance(),
                               self->field_18);
             }
             break;
@@ -494,11 +494,11 @@ void Walker_UpdatePartyBattle(cf::CfObjectImplWalker* self) {
         }
     }
     // With no battle running, arm the walker's battle-exit notification.
-    CfWalkBMView* bm = (CfWalkBMView*)getInstance__Q22cf14CBattleManagerFv();
-    CfWalkChainNode* cur;
+    cf::CBattleManager* bm = cf::CBattleManager::getInstance();
+    _reslist_node<cf::CfObjectActor*>* cur;
     u32 count = 0;
-    CfWalkChainNode* head = bm->field_48;
-    for (cur = head->next; cur != head; cur = cur->next, count++) {
+    _reslist_node<cf::CfObjectActor*>* head = bm->mActorList3.mStartNodePtr;
+    for (cur = head->mNext; cur != head; cur = cur->mNext, count++) {
     }
     if (count == 0) {
         void* r = ((cf::CfWalkBattleObjVtbl*)self->field_18)->vf2A4();
@@ -553,14 +553,14 @@ void Walker_ToggleTargetSel(cf::CfObjectImplWalker* self) {
 // starts a battle (camera/art setup, party sight-line clamps) or runs the
 // non-talk fallback for other actor kinds.
 void Walker_ExitBattleSweep(cf::CfObjectImplWalker* self) {
-    CfWalkBMView* bm = (CfWalkBMView*)getInstance__Q22cf14CBattleManagerFv();
+    cf::CBattleManager* bm = cf::CBattleManager::getInstance();
     // Count registered battles; retail keeps two independent reads of the
     // list head live in separate registers across the walk.
     u32 count = 0;
-    CfWalkChainNode* head = bm->field_08;
-    CfWalkChainNode* cur = head->next;
-    while (cur != bm->field_08) {
-        cur = cur->next;
+    _reslist_node<cf::CfObjectActor*>* head = bm->mActorList1.mStartNodePtr;
+    _reslist_node<cf::CfObjectActor*>* cur = head->mNext;
+    while (cur != bm->mActorList1.mStartNodePtr) {
+        cur = cur->mNext;
         count++;
     }
     if (count != 0) return;
@@ -1079,14 +1079,14 @@ reset:
 // source, arms the walker hooks, sweeps the party for sight-line clamps,
 // syncs the battle object and resets the walker's state word).
 void Walker_TryStartBattle(cf::CfObjectImplWalker* self) {
-    CfWalkBMView* bm = (CfWalkBMView*)getInstance__Q22cf14CBattleManagerFv();
+    cf::CBattleManager* bm = cf::CBattleManager::getInstance();
     // Retail counts the chain with the list pointer kept live in a register
     // across the whole walk.
     u32 count = 0;
-    CfWalkChainNode* cur = bm->field_08->next;
-    CfWalkChainNode* head = bm->field_08;
+    _reslist_node<cf::CfObjectActor*>* cur = bm->mActorList1.mStartNodePtr->mNext;
+    _reslist_node<cf::CfObjectActor*>* head = bm->mActorList1.mStartNodePtr;
     while (cur != head) {
-        cur = cur->next;
+        cur = cur->mNext;
         count++;
     }
     if (count != 0) return;
@@ -1305,10 +1305,10 @@ void Walker_FanfareBattleStart(cf::CfObjectImplWalker* self, u32 flag) {
     // Notify the battle manager of the battle start (variant depends on the
     // caller's flag), then sync the battle object.
     if (flag != 0) {
-        func_800F3970(getInstance__Q22cf14CBattleManagerFv(), self->field_18,
+        func_800F3970(cf::CBattleManager::getInstance(), self->field_18,
                       0, 0, 0);
     } else {
-        func_800F3970(getInstance__Q22cf14CBattleManagerFv(), self->field_18,
+        func_800F3970(cf::CBattleManager::getInstance(), self->field_18,
                       0, 1, 0);
     }
     CCharVoiceMan_EnqueueBattleBeginVoice(self->field_18);
@@ -1346,7 +1346,7 @@ void Walker_FanfareBattleStart(cf::CfObjectImplWalker* self, u32 flag) {
             for (u32 j = 0; j < (u32)((cf::CfWalkEnumList*)holder.get())->field_620; j++) {
                 void* item = MapFx_ResolveOwner(
                     getObjectAt(holder.get(), (int)j));
-                CBattleMan_FireActorEvent918(getInstance__Q22cf14CBattleManagerFv(), (BattleObjAccessor*)item,
+                CBattleMan_FireActorEvent918(cf::CBattleManager::getInstance(), (BattleObjAccessor*)item,
                               (Func800EA9A8_Arg5*)&spawn, (void*)0x20);
             }
         }
@@ -1361,7 +1361,7 @@ void Walker_FanfareBattleStart(cf::CfObjectImplWalker* self, u32 flag) {
             for (u32 j = 0; j < (u32)((cf::CfWalkEnumList*)holder.get())->field_620; j++) {
                 void* item = MapFx_ResolveOwner(
                     getObjectAt(holder.get(), (int)j));
-                CBattleMan_FireActorEvent918(getInstance__Q22cf14CBattleManagerFv(), (BattleObjAccessor*)item,
+                CBattleMan_FireActorEvent918(cf::CBattleManager::getInstance(), (BattleObjAccessor*)item,
                               (Func800EA9A8_Arg5*)&spawn, (void*)0x21);
             }
         }
@@ -1374,7 +1374,7 @@ void Walker_FanfareBattleStart(cf::CfObjectImplWalker* self, u32 flag) {
             for (u32 j = 0; j < (u32)((cf::CfWalkEnumList*)holder.get())->field_620; j++) {
                 void* item = MapFx_ResolveOwner(
                     getObjectAt(holder.get(), (int)j));
-                CBattleMan_FireActorEvent918(getInstance__Q22cf14CBattleManagerFv(), (BattleObjAccessor*)item,
+                CBattleMan_FireActorEvent918(cf::CBattleManager::getInstance(), (BattleObjAccessor*)item,
                               (Func800EA9A8_Arg5*)&spawn, (void*)0x33);
             }
         }
@@ -1427,11 +1427,11 @@ void Walker_BindBattleObj(cf::CfObjectImplWalker* self) {
     cf::CfWalkSub88* sub;
     cf::CfWalkActorObj* actor;
     // Count live battle objects; bail if any battle is already registered.
-    CfWalkBMView* bm = (CfWalkBMView*)getInstance__Q22cf14CBattleManagerFv();
-    CfWalkChainNode* cur;
+    cf::CBattleManager* bm = cf::CBattleManager::getInstance();
+    _reslist_node<cf::CfObjectActor*>* cur;
     u32 count = 0;
-    CfWalkChainNode* head = bm->field_08;
-    for (cur = head->next; cur != head; cur = cur->next, count++) {
+    _reslist_node<cf::CfObjectActor*>* head = bm->mActorList1.mStartNodePtr;
+    for (cur = head->mNext; cur != head; cur = cur->mNext, count++) {
     }
     if (count != 0) return;
     if (gmGameFlags & 0xD2C8004) return;

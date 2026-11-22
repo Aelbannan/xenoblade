@@ -138,6 +138,7 @@ def main(argv=None) -> int:
     k = sub.add_parser("check"); k.add_argument("--task", required=True); k.add_argument("--baseline"); k.add_argument("--rename", nargs="*"); k.add_argument("--allow", action="append"); k.add_argument("--jobs", type=int, default=8); k.add_argument("--only", nargs="*", help="refuse unless every unledgered file is one of these")
     sub.add_parser("apply", add_help=False)
     sub.add_parser("pack", add_help=False)
+    sub.add_parser("wave", add_help=False)
     d = sub.add_parser("adopt"); d.add_argument("--task", required=True); d.add_argument("--reason", required=True)
     sub.add_parser("verify-staged")
     sub.add_parser("install-hook")
@@ -152,6 +153,9 @@ def main(argv=None) -> int:
     if argv and argv[0] == "pack":
         from tools.coop.land import pack
         return pack.main(argv[1:])
+    if argv and argv[0] == "wave":
+        from tools.coop.land import wave
+        return wave.main(argv[1:])
     a = ap.parse_args(argv)
     return {"snapshot": cmd_snapshot, "compare": cmd_compare, "check": cmd_check, "adopt": cmd_adopt,
             "verify-staged": cmd_verify_staged, "install-hook": cmd_install_hook}[a.cmd](a)

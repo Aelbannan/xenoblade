@@ -247,3 +247,36 @@ class PackTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class WaveScreenTests(unittest.TestCase):
+    """wave.screen: drop no-ops, auto-hold counter rises, flag review hints."""
+
+    def setUp(self):
+        from tools.coop.land import wave
+        self.screen = wave.screen
+
+    def test_no_change_and_comment_only_dropped(self):
+        o = {"a.cpp": "int f() { return 1; }\n"}
+        self.assertEqual(self.screen(o, dict(o))[0], "drop")
+        c = {"a.cpp": "// note\nint f() {  return 1; }\n"}
+        self.assertEqual(self.screen(o, c), ("drop", ["comment/whitespace only"]))
+
+    def test_counter_rise_auto_held(self):
+        o = {"a.cpp": "void f(S* s) {\n    if (s->flags) {}\n}\n"}
+        a = {"a.cpp": "void f(S* s) {\n    const u32* p = &s->flags;\n    if (*p) {}\n}\n"}
+        v, flags = self.screen(o, a)
+        self.assertEqual(v, "hold")
+        self.assertIn("ban:scalar_ptr_alias +1", flags)
+
+    def test_offset_cast_rise_auto_held(self):
+        o = {"a.cpp": "int f(S* s) { return s->x; }\n"}
+        a = {"a.cpp": "int f(S* s) { return *(int*)((u8*)s + 0x10); }\n"}
+        self.assertEqual(self.screen(o, a)[0], "hold")
+
+    def test_real_change_goes_to_review_with_hints(self):
+        o = {"a.cpp": "int f(S* s) { return s->x ? 1 : 0; }\n"}
+        a = {"a.cpp": "int f(S* s) { return s->x != 0; }\n"}
+        self.assertEqual(self.screen(o, a), ("review", []))
+        b = {"a.cpp": "extern int gCount;\nint f(S* s) { return s->x != gCount; }\n"}
+        self.assertEqual(self.screen(o, b), ("review", ["new extern"]))

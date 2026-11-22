@@ -73,3 +73,11 @@ The gate catches mechanical regressions; it cannot judge whether a shape is what
 programmer wrote. Before queueing a harvested patch, read it and hold anything that steers the
 compiler (see the pack rules in `tools/coop/land/pack.py`), rewrites a known SDK/middleware idiom, or
 reorders against a known original. Held patches go to `/tmp/xb/plans/held/` with a one-line reason.
+
+## Waves and mechanical censuses
+
+`python -m tools.coop.land wave {census,select,prep,wait,collect,record,queue}` runs a low-touch
+agent wave: register-allocation-only residuals are never selected, `collect` restores the tree,
+writes patches and auto-holds anything that raises a counter. Mechanical fix candidates come from
+`tools/coop/census_fixes.py {splits,sigs}` and `tools/coop/census_unit_rules.py`. The orchestrator
+workflow is in `CLAUDE.md`.

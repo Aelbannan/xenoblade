@@ -148,12 +148,6 @@
       0,
       4
      ]
-    ],
-    "exact_renames": [
-     [
-      "CActorParam_UnkVirtualFunc180__Q22cf11CActorParamFv__FPQ22cf11CActorParamPQ22cf17CActorParam180Arg",
-      "CActorParam_UnkVirtualFunc180__Q22cf11CActorParamFv"
-     ]
     ]
    },
    "owner": "category-b",
@@ -545,18 +539,6 @@
      [
       "__RTTI__Q221@unnamed@CDevice_cpp@16CDeviceException",
       "lbl_eu_80663680"
-     ]
-    ],
-    "inject_relocs": [
-     [
-      ".data",
-      8,
-      "__dt__Q221@unnamed@CDevice_cpp@16CDeviceExceptionFv"
-     ],
-     [
-      ".data",
-      152,
-      "wkStandbyLogout__Q221@unnamed@CDevice_cpp@16CDeviceExceptionFv"
      ]
     ]
    },
@@ -1760,12 +1742,6 @@
     "extern_data_sections": [
      ".data",
      ".sdata2"
-    ],
-    "pool_patterns": [
-     [
-      "hex:4330000080000000",
-      "lbl_eu_80668670"
-     ]
     ]
    },
    "owner": "category-d",
@@ -2111,13 +2087,6 @@
      ".rodata",
      ".sdata",
      ".sdata2"
-    ],
-    "retarget_relocs": [
-     [
-      ".text",
-      2312,
-      "__dt__800FED0C"
-     ]
     ]
    },
    "owner": "category-d",
@@ -4858,26 +4827,6 @@
   "adx_tlk.o": {
    "class": "rename",
    "fields": {
-    "add_symbols": [
-     [
-      "lbl_eu_805162D0",
-      ".rodata",
-      0,
-      4
-     ],
-     [
-      "lbl_eu_805162F0",
-      ".rodata",
-      32,
-      8
-     ],
-     [
-      "lbl_eu_805162F8",
-      ".rodata",
-      40,
-      1936
-     ]
-    ],
     "set_data_align": [
      [
       ".bss",
@@ -6616,32 +6565,6 @@
   "lyt_arcResourceAccessor.o": {
    "class": "layout",
    "fields": {
-    "data_pool_patterns": [
-     [
-      ".sdata",
-      "hex:2e00",
-      "lbl_eu_806634C8"
-     ],
-     [
-      ".sdata",
-      "hex:2e2e00",
-      "lbl_eu_806634CC"
-     ]
-    ],
-    "exact_renames": [
-     [
-      "@5236",
-      "@1133"
-     ],
-     [
-      "@5237",
-      "@1134"
-     ],
-     [
-      "@5238",
-      "@1135"
-     ]
-    ],
     "repack_after_drop": 16
    },
    "owner": "category-d",
@@ -6683,12 +6606,6 @@
   "lyt_group.o": {
    "class": "layout",
    "fields": {
-    "exact_renames": [
-     [
-      "@5371",
-      "lbl_8054D7DC"
-     ]
-    ],
     "repack_after_drop": 16
    },
    "owner": "category-b",
@@ -6730,25 +6647,6 @@
   "lyt_layout.o": {
    "class": "content",
    "fields": {
-    "exact_renames": [
-     [
-      "@5580",
-      "lbl_8054D82C"
-     ]
-    ],
-    "extern_data_sections": [
-     ".sdata2"
-    ],
-    "pool_patterns": [
-     [
-      "hex:00000000",
-      "lbl_eu_80669A68"
-     ],
-     [
-      "hex:3f000000",
-      "lbl_eu_80669A84"
-     ]
-    ],
     "repack_after_drop": 16,
     "swap_data_blocks": [
      [
@@ -7910,28 +7808,6 @@
   "snd_MmlParser.o": {
    "class": "layout",
    "fields": {
-    "exact_renames": [
-     [
-      "@9737",
-      "lbl_eu_806634D8"
-     ],
-     [
-      "@9738",
-      "lbl_eu_806634DC"
-     ],
-     [
-      "@9739",
-      "lbl_eu_806634E0"
-     ],
-     [
-      "@9740",
-      "lbl_eu_8056A890"
-     ],
-     [
-      "@9742",
-      "jumptable_eu_8056A8B8"
-     ]
-    ],
     "extern_data_sections": [
      ".sdata2"
     ],
@@ -8156,23 +8032,10 @@
       120
      ]
     ],
-    "drop_nobits_range": [
-     [
-      ".bss",
-      16408,
-      16416
-     ]
-    ],
     "exact_renames": [
      [
       "__vt__Q54nw4r3snd6detail10StrmPlayer16StrmDataLoadTask",
       "lbl_eu_8056ACC0"
-     ]
-    ],
-    "set_data_align": [
-     [
-      ".bss",
-      8
      ]
     ]
    },
@@ -8584,12 +8447,6 @@
       ".data",
       792,
       848
-     ]
-    ],
-    "exact_renames": [
-     [
-      "@2516",
-      "lbl_8055FAA0"
      ]
     ]
    },

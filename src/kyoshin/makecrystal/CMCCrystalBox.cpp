@@ -23,6 +23,14 @@
 #include "kyoshin/plugin/ocBdat.hpp"
 #include "kyoshin/code_80135FDC_Lyt.hpp"
 
+// name-guess: the BDAT file pointer cached from getFP("MNU_skill") and used
+// by updateCrystalBoxSysWin / loadCrystalBoxArchive (the retail .sbss pointer).
+unsigned long gpCrystalBoxSkillBdat;
+
+// name-guess: the three BDAT row ids copied by rebuildCrystalSortMenu
+// (the retail 0x80508870 table); emitted here so MWCC owns the rodata table.
+extern const unsigned long sCrystalBoxSortIds[3] = { 0x44, 0x58, 0 };
+
 // Retail symbols: advanceAnimTransform keeps the mangled C++ name, but AnimRewindFrame
 // is the unmangled C name (per retail relocs).
 
@@ -404,7 +412,7 @@ void CMCCrystalBox::initCrystalBoxResources() {
     MCCrystal_LoadLayouts(&this->crystalInfo);
     this->mScrollBar.loadLayoutArc();
     this->sysWin.loadSystemArc();
-    lbl_eu_806646D0 = 0;
+    gpCrystalBoxSkillBdat = 0;
     CItemBlock_setFlag120EC(9, 0);
 }
 
@@ -1662,7 +1670,7 @@ void CMCCrystalBox::updateCrystalBoxSysWin() {
             // Open the window with the current item name; unk1504 doubles as
             // the 3-arg BdatGetPtrDirect key (retail hoists the r5 load above the
             // branch that also tests it).
-            char* msg = BdatGetPtrDirect((const void*)lbl_eu_806646D0,
+            char* msg = BdatGetPtrDirect((const void*)gpCrystalBoxSkillBdat,
                                       sMakeCrystalStrings + 0xa4, this->unk1504);
             reinterpret_cast<CSysWin*>(&this->sysWin)->switchKindPane(0);
             reinterpret_cast<CSysWin*>(&this->sysWin)->setKindContent(reinterpret_cast<char*>((u32)msg), 0);
@@ -1820,7 +1828,7 @@ void CMCCrystalBox::loadCrystalBoxArchive() {
     // [cmp][bne body][b exit][body] layout.
     if (this->mLayout == 0) goto end;
     if (this->mArcAcc1 == 0) goto end;
-    if (lbl_eu_806646D0 != 0) goto reload;
+    if (gpCrystalBoxSkillBdat != 0) goto reload;
     goto end;
 end:
     return;
@@ -2288,7 +2296,7 @@ void CMCCrystalBox::updateCrystalBoxRows() {
 // stmw r28 frame + check-at-top loop are the -O4,s shapes (unit flag).
 void CMCCrystalBox::rebuildCrystalSortMenu() {
     int arr[3];
-    const unsigned long* src = lbl_eu_80508870;
+    const unsigned long* src = sCrystalBoxSortIds;
     arr[0] = *src++;
     arr[1] = *src++;
     arr[2] = *src++;
@@ -3053,7 +3061,7 @@ bool CMCCrystalBox::OnFileEvent(CEventFile* event) {
             CBdat::setBdatEntry(2, data3);
         }
         Bdat_GetTable_AA34();
-        lbl_eu_806646D0 = (unsigned long)getFP(sMakeCrystalStrings + 0x550);
+        gpCrystalBoxSkillBdat = (unsigned long)getFP(sMakeCrystalStrings + 0x550);
         loadCrystalBoxArchive();
         mFileHandle2 = 0;
         return true;

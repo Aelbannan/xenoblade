@@ -68,6 +68,8 @@ public:
 #include "monolib/work/CEventFile.hpp"
 #include "kyoshin/cf/CTaskREvtSequence.hpp"
 
+struct CScnEnvLgtCtrlResList;  // env-controller list owner (CScn::mLgtCtrl)
+
 extern "C" {
 void Tok_FormatStr(ml::FixStr<64>& buf, u32 packed, int prefixFlag, int suffixFlag);
 u32 EvtSeqGetCounter100();
@@ -84,8 +86,8 @@ void* Scn_SetupAnim(void* a, void* b, int c, int d);
 void simSetFlag2OnTree(void* pEmote, int flag);
 void simSetLeafDist7B0(void* pEmote, float scale);
 void simRefreshFlag8(void* pEmote, float time);
-void scnLgtRemoveLgtItem(void* pData);
-void* scnLgtCreateEnvController(void* pData, void* pFile, int flags);
+void scnLgtRemoveLgtItem(CScnEnvLgtCtrlResList* pData);
+void* scnLgtCreateEnvController(CScnEnvLgtCtrlResList* pData, void* pFile, int flags);
 mtl::ALLOC_HANDLE getScnCounter__Fv();
 extern void* getMapEffectManager__Q22cf13CfGameManagerFv();
 extern void setHandleParam__11CDeviceFileFP11CFileHandleUl(CFileHandle*, u32);
@@ -176,7 +178,7 @@ int CREvtModelMap::reset()
         mEmoteModel = nullptr;
     }
     if (mLoadedModelData) {
-        scnLgtRemoveLgtItem(*(void**)((u8*)gmScene + 0x7C));
+        scnLgtRemoveLgtItem(gmScene->mLgtCtrl);
         mLoadedModelData = nullptr;
     }
     void* p1 = mFileData1;
@@ -429,7 +431,7 @@ void CREvtModelMap::onEvent(u32 visible)
                 acquireLODResource__8CTaskLODFv(mFileData2, 1);
             }
             if (mFileData3) {
-                mLoadedModelData = scnLgtCreateEnvController(*(void**)((u8*)gmScene + 0x7C), mFileData3, 7);
+                mLoadedModelData = scnLgtCreateEnvController(gmScene->mLgtCtrl, mFileData3, 7);
                 cf::CfGameManager* m2 = (cf::CfGameManager*)cf::CfGameManager::getGameSubManager();
                 if (m2 && *(void**)((u8*)m2 + 0x2F3C)) {
                     CScnEnvLgtCtrlListItem* fx = (CScnEnvLgtCtrlListItem*)(*(void**)((u8*)cf::CfGameManager::getGameSubManager() + 0x2F3C));
@@ -443,7 +445,7 @@ void CREvtModelMap::onEvent(u32 visible)
                 sVisibleModel = 0;
             }
             if (mLoadedModelData) {
-                scnLgtRemoveLgtItem(*(void**)((u8*)gmScene + 0x7C));
+                scnLgtRemoveLgtItem(gmScene->mLgtCtrl);
                 mLoadedModelData = 0;
                 cf::CfGameManager* m2 = (cf::CfGameManager*)cf::CfGameManager::getGameSubManager();
                 if (m2 && *(void**)((u8*)m2 + 0x2F3C)) {

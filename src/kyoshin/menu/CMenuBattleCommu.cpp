@@ -157,7 +157,7 @@ void CMenuBattleCommu::Init() {
     mField74->SetAnimationEnable(mField88, false);
     mField74->SetAnimationEnable(mField8C, false);
     mField74->SetAnimationEnable(mField78, true);
-    mField78->SetFrame(lbl_eu_80667DE0);
+    mField78->SetFrame(0.0f);
     mField74->Animate();
 
     LayoutSetTextBoxFmtValue(reinterpret_cast<nw4r::lyt::Layout*>(mField74),
@@ -327,7 +327,7 @@ void battleCommuDisableAnims() {
     self->mField74->SetAnimationEnable(self->mField84, false);
     self->mField74->SetAnimationEnable(self->mField88, false);
     self->mField74->SetAnimationEnable(self->mField8C, true);
-    self->mField8C->SetFrame(lbl_eu_80667DE0);
+    self->mField8C->SetFrame(0.0f);
     // The virtual calls above may alias the global, so re-read the singleton
     // for the final store (retail reloads it).
     spMenuBattleCommuInstance->mField90 = 6;
@@ -550,7 +550,7 @@ void showBattleCommu(CMenuBattleCommu* self) {
     self->mField74->SetAnimationEnable(self->mField88, false);
     self->mField74->SetAnimationEnable(self->mField8C, false);
     self->mField74->SetAnimationEnable(self->mField78, true);
-    self->mField78->SetFrame(lbl_eu_80667DE0);
+    self->mField78->SetFrame(0.0f);
     playUISound(0x60);
     self->mField90 = 1;
 }
@@ -561,7 +561,7 @@ void showBattleCommu(CMenuBattleCommu* self) {
 // keeps the commu up.
 // ---------------------------------------------------------------------------
 void battleCommuAdvanceAnim80(CMenuBattleCommu* self) {
-    if (advanceAnimTransform(self->mField80, lbl_eu_80667DE4) == 0) {
+    if (advanceAnimTransform(self->mField80, 1.0f) == 0) {
         return;
     }
 
@@ -595,7 +595,7 @@ void battleCommuAdvanceAnim80(CMenuBattleCommu* self) {
             self->mField74->SetAnimationEnable(self->mField7C, false);
             self->mField74->SetAnimationEnable(self->mField80, false);
             self->mField74->SetAnimationEnable(self->mField84, true);
-            self->mField84->SetFrame(lbl_eu_80667DE0);
+            self->mField84->SetFrame(0.0f);
             self->mField90 = 4;
             return;
         }
@@ -607,7 +607,7 @@ void battleCommuAdvanceAnim80(CMenuBattleCommu* self) {
     self->mField74->SetAnimationEnable(self->mField7C, false);
     self->mField74->SetAnimationEnable(self->mField80, false);
     self->mField74->SetAnimationEnable(self->mField84, true);
-    self->mField84->SetFrame(lbl_eu_80667DE0);
+    self->mField84->SetFrame(0.0f);
     self->mField90 = 4;
 }
 

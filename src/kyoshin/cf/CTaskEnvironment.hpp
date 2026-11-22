@@ -4,12 +4,9 @@
 #include "monolib/math/CVec3.hpp"
 #include "monolib/scn/CVirtualLightObj.hpp"
 
-// Environment-light-control object layout used by CTaskEnvironment::Init
-// (reached through the scene manager slot at +0x7C; retail monolib
-// CScnEnvLgtCtrl). Only the flag word Init touches is declared.
-struct CTaskEnvLgtCtrlAccess {
-    u32 field_0;   // +0x00 flag word (Init ORs 0x80)
-};
+// Env-controller list owner reached through the scene slot at +0x7C
+// (monolib CScnEnvLgtCtrl.hpp; Init ORs 0x80 into its flag word).
+struct CScnEnvLgtCtrlResList;
 
 // World/clock source object reached through CTaskEnvScene +0x78 (and through
 // the scene-process argument of the constructor). Its clamped time fields are
@@ -51,7 +48,7 @@ struct CTaskEnvScene {
     u32 field_0x70;                       // +0x70
     u8 pad74[0x78 - 0x74];
     CTaskEnvWorld* field_0x78;            // +0x78 world/clock object
-    CTaskEnvLgtCtrlAccess* mEnvLgtCtrl;   // +0x7C
+    CScnEnvLgtCtrlResList* mEnvLgtCtrl;   // +0x7C
 };
 
 // Opaque monolib light-group objects created by Env_BuildLights.
@@ -74,7 +71,7 @@ struct CTaskEnvGlobal {
 };
 
 // C-linkage import (retail symbol): env-light-control enable (monolib scn).
-extern "C" void scnLgtSetBlendBloom(CTaskEnvLgtCtrlAccess* ctrl, int flag);
+extern "C" void scnLgtSetBlendBloom(CScnEnvLgtCtrlResList* ctrl, int flag);
 
 // Time-of-day record: seconds as float at +0x70, minute/hour/day/month carry
 // chain (+0x6C/+0x68/+0x64/+0x60) and a total counter at +0x5C. Written by
@@ -109,9 +106,9 @@ extern "C" int isManagerInitialized__Q22cf13CfGameManagerFv();
 extern "C" void getControllerValues__Q22cf13CfGameManagerFv(unsigned short* outA,
                                                        unsigned short* outB);
 extern "C" unsigned int getControllerWordA3BC__Q22cf13CfGameManagerFv();
-extern "C" void scnLgtSetSinkBit1(CTaskEnvLgtCtrlAccess* ctrl, int flag);
-extern "C" void scnLgtSetParamIdle(CTaskEnvLgtCtrlAccess* ctrl, int flag);
-extern "C" void scnLgtBindLightArg(CTaskEnvLgtCtrlAccess* ctrl, void* arg);
+extern "C" void scnLgtSetSinkBit1(CScnEnvLgtCtrlResList* ctrl, int flag);
+extern "C" void scnLgtSetParamIdle(CScnEnvLgtCtrlResList* ctrl, int flag);
+extern "C" void scnLgtBindLightArg(CScnEnvLgtCtrlResList* ctrl, void* arg);
 extern "C" void* copyVec3Words(void* dst, const void* src);
 extern "C" void* writeVec3f(void* out, float x, float y, float z);
 extern "C" float cosAnimFIdx(float angle);

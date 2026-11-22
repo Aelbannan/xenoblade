@@ -267,8 +267,8 @@ extern "C" void* __construct_new_array(void* block, ConstructorDestructor ctor,
 void LightCtlSetObj(CLight* self, int lightObjPtr);
 extern "C" void LightCtlCopyObj(CLight* self, u32 value);
 extern "C" void LightCtlScaleColor(CLight* self, f32 intensity);
-class CScnEnvLgtCtrl;
-extern "C" void scnLgtGatherLights(CScnEnvLgtCtrl* self, CScnEnvLgtData* data, void* arg,
+struct CScnEnvLgtCtrlResList;
+extern "C" void scnLgtGatherLights(CScnEnvLgtCtrlResList* self, CScnEnvLgtData* data, void* arg,
                                    f32 f);
 extern "C" void blendSlotAmbient(CLightEnv* self, const ml::CVec3* v);
 extern "C" void bindOrientedLight(CLightEnv* self, u32 a, f32 f1, f32 f2);

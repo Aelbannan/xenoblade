@@ -12,35 +12,6 @@
 // Typed .sdata (retail 0x8): "pc1" + pad to section size.
 __declspec(section ".sdata") __attribute__((used, aligned(8))) char lbl_eu_80662228[8] = "pc1";
 
-// Typed .sdata2 (retail 0x38): float, empty string, EXwp tags.
-// Struct freezes retail declaration order (MWCC reorders loose floats by first-use).
-struct Sdata2_CfBdat {
-    float f0;          // +0x00 lbl_eu_80667368 0.0f (lfs pool)
-    char empty[4];     // +0x04 lbl_eu_8066736C "" (empty string for quest table slot 0)
-    char exL[8];        // +0x08 lbl_eu_80667370 "EXwp_L"
-    char exR[8];        // +0x10 lbl_eu_80667378 "EXwp_R"
-    char exS[8];        // +0x18 lbl_eu_80667380 "EXwp_S"
-    char exH[8];        // +0x20 lbl_eu_80667388 "EXwp_H"
-    char exHL[8];       // +0x28 lbl_eu_80667390 "EXwp_HL"
-    char exHR[8];       // +0x30 lbl_eu_80667398 "EXwp_HR"
-};
-__declspec(section ".sdata2") __attribute__((used, aligned(8))) const Sdata2_CfBdat sdata2_CfBdat = {
-    0.0f, "", "EXwp_L", "EXwp_R", "EXwp_S", "EXwp_H", "EXwp_HL", "EXwp_HR"
-};
-#define lbl_eu_80667368 sdata2_CfBdat.f0
-#define lbl_eu_8066736C sdata2_CfBdat.empty
-#define lbl_eu_80667370 sdata2_CfBdat.exL
-#define lbl_eu_80667378 sdata2_CfBdat.exR
-#define lbl_eu_80667380 sdata2_CfBdat.exS
-#define lbl_eu_80667388 sdata2_CfBdat.exH
-#define lbl_eu_80667390 sdata2_CfBdat.exHL
-#define lbl_eu_80667398 sdata2_CfBdat.exHR
-
-extern "C" u32 lbl_eu_8052E6F0[10] = {
-    (u32)&sdata2_CfBdat.empty, (u32)&sdata2_CfBdat.exL, (u32)&sdata2_CfBdat.exR,
-    (u32)&sdata2_CfBdat.exR, (u32)&sdata2_CfBdat.exS, (u32)&sdata2_CfBdat.exH,
-    (u32)&sdata2_CfBdat.exHL, (u32)&sdata2_CfBdat.exHR, (u32)&sdata2_CfBdat.exHR, 0x00000000,
-};
 // Plain BDAT file-name literals at their real getFP/format use sites.
 extern "C" void Bdat_GetTable_AA34();
 extern "C" u32 getBdatStringColumnValue(void* b, const char* c, s32 i);
@@ -77,11 +48,18 @@ void cf::CfBdat::loadBdatFileTable() { Bdat_GetTable_AA34();
     ::cf::CfBdat::spItmBodyListFileData = getFP("ITM_bodylist");
     ::cf::CfBdat::spItmArmListFileData = getFP("ITM_armlist");
     ::cf::CfBdat::spItmWaistListFileData = getFP("ITM_waistlist");
+    lbl_eu_8066418C = 0.0f;
     ::cf::CfBdat::spItmLeggListFileData = getFP("ITM_legglist");
     ::cf::CfBdat::spBtlPsvSkillFileData = getFP("BTL_PSVskill");
     ::gKizunagramBdatTableId = (u32)getFP("BTL_PSVlink");
     ::cf::CfBdat::spBtlPssListFileData = getFP("BTL_PSSlist");
 }
+// name-guess: no retail/JP map name for this .data table (us lbl_eu_8052E6F0).
+const char* sBdatExwpTags[10] = {
+    "", "EXwp_L", "EXwp_R", "EXwp_R", "EXwp_S", "EXwp_H",
+    "EXwp_HL", "EXwp_HR", "EXwp_HR", 0,
+};
+
 void cf::CfBdat::loadMapBdatFileDataPointers(int mapId, int areaId) {
     mapName(::cf::CfBdat::spCurRouteListFileData, "routelist%02d%02d", mapId, areaId);
     mapName(::cf::CfBdat::spCurMapEffListFileData, "mapefflist%02d%02d", mapId, areaId);
@@ -221,7 +199,7 @@ u32 cf::CfBdat::resolveWpnTok(u32 param1) {
 }
 
 const char* cf::CfBdat::getBdatStringEntry(u16 index) {
-    return (const char*)lbl_eu_8052E6F0[index];
+    return sBdatExwpTags[index];
 }
 
 // Remaining table-name literals at their real lookup sites.

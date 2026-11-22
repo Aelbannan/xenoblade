@@ -13,7 +13,7 @@ class CTaskLOD;
 // by the activateLOD/deactivateLOD/setLODEnable wrappers.
 struct LODParam1Obj {
     u8 _00[0x7C];
-    CScnEnvLgtCtrl* field_0x7C;  // +0x7C light-control list head
+    CScnEnvLgtCtrlResList* field_0x7C;  // +0x7C light-control list head
 };
 
 // CTaskLOD wraps a LODMemMan and manages its lifecycle.
@@ -106,10 +106,10 @@ extern "C" void setElementCachedValue__Q23LOD17UnkClass_8046D144Fif(LOD::UnkClas
 // freePersistentBuffer is a static LOD::LODMemMan member (LODMemMan.hpp).
 
 
-// (memberized: scnLgtCallLightV26 -> CScnEnvLgtCtrl::CallLightV26; declaration moved into class CScnEnvLgtCtrl)
+// (memberized: scnLgtCallLightV26 -> CScnEnvLgtCtrlResList::CallLightV26; declaration moved into struct CScnEnvLgtCtrlResList)
 // teardownG3dObjects is a real LOD::UnkClass_8046D144 member (int param).
 extern "C" void configureShrinkTargets__Q23LOD17UnkClass_8046D144Ffsi(LOD::UnkClass_8046D144* self, CTaskLOD* task, int a);
-// (memberized: scnLgtCallLightV27 -> CScnEnvLgtCtrl::CallLightV27; declaration moved into class CScnEnvLgtCtrl)
+// (memberized: scnLgtCallLightV27 -> CScnEnvLgtCtrlResList::CallLightV27; declaration moved into struct CScnEnvLgtCtrlResList)
 
 // --- FULL_MATCH functions ---
 

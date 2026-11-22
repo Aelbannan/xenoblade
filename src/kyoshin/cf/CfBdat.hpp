@@ -8,11 +8,7 @@
 // Opaque bdat file-data table type (actual layout handled by ocBdat helpers).
 struct BdatFileData;
 
-// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
-extern const char lbl_eu_80500FA4[0x3E4];
-extern "C" u32 lbl_eu_8052E6F0[10];
-
-// C-linkage imports for the bdat helpers.  These are retail-unmangled globals;
+// C-linkage imports for the bdat helpers.
 extern "C" u32 Tok_ParseFile(const char* path);
 // the CBdat static-member forms in ocBdat.hpp mangle the reloc name, so the
 // free-function forms are used here where reloc-name-exact codegen is needed.
@@ -22,15 +18,9 @@ extern "C" u32 Tok_ParseFile(const char* path);
 // Retail sbss bdat file-pointer globals (anonymous lbl_eu_* labels in retail).
 // The CfBdat static members are kept for the file-data assignment functions.
 extern u8* gLockBdatTable;      // lock-gimmick BDAT table (.sbss)
-extern void* lbl_eu_80664190;   // sinit instance pointer
-// Additional sbss bdat file-data globals used by bdatGetItemName.
-extern void* lbl_eu_806640F0;
-
-extern u32 lbl_eu_80664184;     // cached fld-map row index
 extern u32 gCachedFldMapRow;     // cached fld-map row (mirror of 80664184)
 extern float lbl_eu_8066418C;   // fld-map cache float
 // .data block whose address is stored into lbl_eu_80664194 by the sinit.
-extern "C" u32 lbl_eu_8052E718[34];
 
 namespace cf{
 
@@ -128,11 +118,6 @@ namespace cf{
     };
 
 } //namespace cf
-
-// Data-pool constants referenced by CfBdat.cpp free functions (global scope so
-// MWCC emits them unmangled).
-extern float lbl_eu_80667368;
-extern __attribute__((aligned(8))) char lbl_eu_80662228[8];
 
 // ---- static-initializer support (retail __sinit_\CfBdat_cpp) ----
 // The retail sinit initializes an anonymous 4-byte prototype object at

@@ -15,16 +15,6 @@ const char* getErrMesText20();
 // (defined in kyoshin/CNandData.cpp, called from kyoshin/main.cpp).
 void NandData_SetupBanner_11C0();
 
-// Banner image file pointer (retail .sdata object, SDA21-referenced).
-extern const char* lbl_eu_80662E00;
-
-// Ordered list of up to 8 icon textures + parallel per-icon frame counts
-// (retail .data arrays, 9 entries each).
-extern const char* lbl_eu_8053A3D8[9];
-extern int lbl_eu_8053A3FC[9];
-
-// Japanese-region NAND save display data. The single sInstance owns the
-// CNBanner that is configured from the string/array statics above.
 class CNandData {
 public:
     CNBanner mNandBanner;
@@ -44,4 +34,8 @@ public:
 
 private:
     static CNandData sInstance;
+
+    static const char* scNandBannerFilename;
+    static const char* sNandIconTextureFilenames[9];
+    static int sNandIconTextureSomething[9];
 };

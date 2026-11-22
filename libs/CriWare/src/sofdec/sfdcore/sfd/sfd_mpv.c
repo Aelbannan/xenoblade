@@ -141,15 +141,26 @@ s32 fn_803C34F8(s32 val, u32 err_code);
 // Global data
 extern void* gpSfdCoreTraceCb;
 extern u32 lbl_eu_8051C4E0;
-extern u32 lbl_eu_8051C940[];
-extern u32 lbl_eu_8051C97C[];
-extern u32 lbl_eu_8051CBF8[];
-extern u8 lbl_eu_8051C9E0[];
+int SFMPV_RequestStop(SfdHandle* self); int SFMPV_Start(void); int SFMPV_Stop(void); int SFMPV_Pause(void);
+s32 SFMPV_GetWrite(void* h); s32 SFMPV_AddWrite(void* h); void SFMPV_GetRead(void* self, void* a, void* b);
+void SFMPV_AddRead(void); int fn_803CA368(void); int SFMPV_Finish(void); s32 SFMPV_Init(void);
+s32 SFMPV_ExecServer(SfdHandle* self); s32 SFMPV_Create(SfdHandle* self); s32 SFMPV_Destroy(SfdHandle* self);
+/* JP map: SFD_tr_vd_mpv (MPEG video decode transfer module interface) */
+const SfdTrIf SFD_tr_vd_mpv = {
+    SFMPV_Init, SFMPV_Finish, SFMPV_ExecServer, SFMPV_Create,
+    SFMPV_Destroy, SFMPV_RequestStop, SFMPV_Start, SFMPV_Stop,
+    SFMPV_Pause, SFMPV_GetWrite, SFMPV_AddWrite, SFMPV_GetRead,
+    SFMPV_AddRead, SFMPV_Seek, fn_803CA368,
+};
+const s32 sfmpv_fps_round[9] = {0, 24, 24, 25, 30, 30, 50, 60, 60};
+const s32 sfmpv_conv_29_97[8] = {107892, 17982, 1800, 1798, 28, 30, 10, 2};
+const s32 sfmpv_conv_59_94[8] = {215784, 35964, 3600, 3596, 56, 60, 10, 4};
+extern const s32 SFTIM_prate[];
 extern u32 sTraceSfmpvExecServer[];
 extern u32 sTraceDecodePicAtr[];
 extern u32 sTraceDecodeFrm[];
 extern u32 sTraceDecodePicAtrRet[];
-extern u32 sTraceSfdIsSkip[];
+extern SfdTrcRecIn sTraceSfdIsSkip;
 extern u32 sTraceSfdWaitSupply[];
 extern u32 sTraceSfdWaitRelFrm[];
 extern u32 sTraceSfmpvConcatSub[];
@@ -1037,7 +1048,7 @@ s32 sfmpv_DecodePicAtr(SfdHandle* self, u32* pic, void* sj, s32 pat, s32* out) {
         if (r != 0) {
             s32 rate2;
             SFPTS_ReadPtsQue(self, self->trn[2].bufIdx, r, pque);
-            rate2 = lbl_eu_8051CBF8[frm->rateIndex];
+            rate2 = SFTIM_prate[frm->rateIndex];
             if (self->fhd.info.active != 0 && self->fhd.info.video[4] != -1) {
                 rate2 = self->fhd.info.video[4];
             }
@@ -1393,8 +1404,7 @@ typedef struct SFMPVPts2TcOut {
 // low-half 0xea24) or straight base-60 decomposition.
 void sfmpv_Pts2Tc(s64 a, s32 v, s32 t, s32 u, u32* out) {
     SFMPVPts2TcOut* tc = (SFMPVPts2TcOut*)out;
-    const s32* rateTbl = (const s32*)lbl_eu_8051CBF8;
-    const s32* tbl = (const s32*)lbl_eu_8051C940;
+    const s32* rateTbl = SFTIM_prate;
     const s32* p;
     s32 v0;
     s32 t0;
@@ -1408,7 +1418,7 @@ void sfmpv_Pts2Tc(s64 a, s32 v, s32 t, s32 u, u32* out) {
     s64 prod;
 
     v0 = rateTbl[v];
-    t0 = tbl[15 + v];
+    t0 = sfmpv_fps_round[v];
     prod = UTY_MulDivRound64(a, (s64)(v0 * 2), 0x55d4a80);
     m = (s32)prod;
     tc->fld_0x1E = (s16)(m & 1);
@@ -1433,9 +1443,9 @@ void sfmpv_Pts2Tc(s64 a, s32 v, s32 t, s32 u, u32* out) {
         s32 x;
         s32 y;
         if (v0 == 0x7512) {
-            p = tbl + 24;
+            p = sfmpv_conv_29_97;
         } else {
-            p = tbl + 32;
+            p = sfmpv_conv_59_94;
         }
         w0 = p[0];
         w1 = p[1];
@@ -1494,7 +1504,7 @@ void sfmpv_NextTc(s32* in, s32* out) {
     s32 sum = t7 + t8;
     s32 t5 = in[5];
     s32 t6 = in[6];
-    s32 rate = lbl_eu_8051C97C[t0];
+    s32 rate = sfmpv_fps_round[t0];
     s32 a = t5 + t6 + 1 + sum / 2;
     s32 s = sum % 2;
     s32 t1 = in[1];
@@ -1769,10 +1779,10 @@ s32 sfmpv_IsSkip(SfdHandle* self, void* bpic) {
         if (r != 0) {
             void (*fn)(void*, void*);
             if (gpSfdCoreTraceCb != NULL) {
-                sTraceSfdIsSkip[3] = (u32)self;
-                sTraceSfdIsSkip[0x18 / 4] = (u32)lbl_eu_8051C9E0;
+                sTraceSfdIsSkip.entry.args[0].value = self;
+                sTraceSfdIsSkip.entry.args[1].value = "before seek time";
                 fn = *(void (**)(void*, void*))((u8*)*(u32*)gpSfdCoreTraceCb + 0x24);
-                fn(gpSfdCoreTraceCb, &sTraceSfdIsSkip[1]);
+                fn(gpSfdCoreTraceCb, &sTraceSfdIsSkip.entry);
             }
             wk = (void*)1;
             goto out;
@@ -1798,10 +1808,10 @@ s32 sfmpv_IsSkip(SfdHandle* self, void* bpic) {
         if (cond) {
             void (*fn)(void*, void*);
             if (gpSfdCoreTraceCb != NULL) {
-                sTraceSfdIsSkip[3] = (u32)self;
-                sTraceSfdIsSkip[0x18 / 4] = (u32)&lbl_eu_8051C9E0[0x11];
+                sTraceSfdIsSkip.entry.args[0].value = self;
+                sTraceSfdIsSkip.entry.args[1].value = "ptype";
                 fn = *(void (**)(void*, void*))((u8*)*(u32*)gpSfdCoreTraceCb + 0x24);
-                fn(gpSfdCoreTraceCb, &sTraceSfdIsSkip[1]);
+                fn(gpSfdCoreTraceCb, &sTraceSfdIsSkip.entry);
             }
             wk = (void*)1;
             goto out;
@@ -1810,10 +1820,10 @@ s32 sfmpv_IsSkip(SfdHandle* self, void* bpic) {
     if (sfmpv_IsEmptyBpic(self, (s32)wk, bpic) != 0) {
         void (*fn)(void*, void*);
         if (gpSfdCoreTraceCb != NULL) {
-            sTraceSfdIsSkip[3] = (u32)self;
-            sTraceSfdIsSkip[0x18 / 4] = (u32)&lbl_eu_8051C9E0[0x17];
+            sTraceSfdIsSkip.entry.args[0].value = self;
+            sTraceSfdIsSkip.entry.args[1].value = "empty B";
             fn = *(void (**)(void*, void*))((u8*)*(u32*)gpSfdCoreTraceCb + 0x24);
-            fn(gpSfdCoreTraceCb, &sTraceSfdIsSkip[1]);
+            fn(gpSfdCoreTraceCb, &sTraceSfdIsSkip.entry);
         }
         wk = (void*)1;
         goto out;
@@ -1833,10 +1843,10 @@ s32 sfmpv_IsSkip(SfdHandle* self, void* bpic) {
         if (flg != 0) {
             void (*fn)(void*, void*);
             if (gpSfdCoreTraceCb != NULL) {
-                sTraceSfdIsSkip[3] = (u32)self;
-                sTraceSfdIsSkip[0x18 / 4] = (u32)&lbl_eu_8051C9E0[0x1f];
+                sTraceSfdIsSkip.entry.args[0].value = self;
+                sTraceSfdIsSkip.entry.args[1].value = "defect";
                 fn = *(void (**)(void*, void*))((u8*)*(u32*)gpSfdCoreTraceCb + 0x24);
-                fn(gpSfdCoreTraceCb, &sTraceSfdIsSkip[1]);
+                fn(gpSfdCoreTraceCb, &sTraceSfdIsSkip.entry);
             }
             wk = (void*)1;
             goto out;
@@ -1844,10 +1854,10 @@ s32 sfmpv_IsSkip(SfdHandle* self, void* bpic) {
         if (sfmpv_IsLate(self, (s32)wk) != 0) {
             void (*fn)(void*, void*);
             if (gpSfdCoreTraceCb != NULL) {
-                sTraceSfdIsSkip[3] = (u32)self;
-                sTraceSfdIsSkip[0x18 / 4] = (u32)&lbl_eu_8051C9E0[0x26];
+                sTraceSfdIsSkip.entry.args[0].value = self;
+                sTraceSfdIsSkip.entry.args[1].value = "late";
                 fn = *(void (**)(void*, void*))((u8*)*(u32*)gpSfdCoreTraceCb + 0x24);
-                fn(gpSfdCoreTraceCb, &sTraceSfdIsSkip[1]);
+                fn(gpSfdCoreTraceCb, &sTraceSfdIsSkip.entry);
             }
             wk = (void*)1;
             goto out;

@@ -21,12 +21,13 @@ extern "C" void MoveImplEne_MatchTokenRelease(cf::CfObjectImplEneObj* self, u32 
 
 // The retail .sdata pointer owns this string; define it here so the emitted
 // small-data address matches the object that strstr reads in the original.
-const char* lbl_eu_80661D48 = "en0153";
+// name-guess: sole .sdata pointer defined in this TU, read only by the token-name strstr.
+const char* sEneTokenName = "en0153";
 
 // Runs the per-frame update: prepares via MoveImplInitFields, dispatches vtable
 // slot 0xe4, feeds the result + sub-fields into CharEffInit, pushes the
 // +0x28 sub-object into attachOwner, and finally triggers vtable slot 0x30
-// when the +0x14 object's +0x70 token formats to the lbl_eu_80661D48 name.
+// when the +0x14 object's +0x70 token formats to the token name.
 void MoveImplEne_InitFieldsToken(cf::CfObjectImplEneObj* self) {
     MoveImplInitFields(self);
     CharEffInit(self->vfE4(), self->field_14, self->field_18);
@@ -36,7 +37,7 @@ void MoveImplEne_InitFieldsToken(cf::CfObjectImplEneObj* self) {
     if (p != 0) {
         ml::FixStr<64> buf(true);
         if (Tok_FormatStr(buf, p->field_70, 0, 0) != 0) {
-            if (strstr(buf.mString, lbl_eu_80661D48) != 0) {
+            if (strstr(buf.mString, sEneTokenName) != 0) {
                 self->vf30(0x400, 1);
             }
         }

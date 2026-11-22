@@ -6,8 +6,7 @@
 #include "libs/CriWare/src/adx/adxt/adx_tlk.h"
 
 // Large section arrays for data diff - generated
-__attribute__((aligned(8), used)) unsigned char __large_bss_for_CriWare_src_sofdec_sfdcore_sfd_sfd[0x28]; // .bss 0x28 at 0x80606DE8 large bss
-__declspec(section ".rodata") __attribute__((aligned(8), used)) const unsigned char __large_rodata_for_CriWare_src_sofdec_sfdcore_sfd_[0x70] = {0x80, 0x3B, 0xFC, 0xBC, 0x80, 0x3B, 0xFC, 0xF8, 0x80, 0x3B, 0xFD, 0x2C, 0x80, 0x3C, 0x08, 0x3C, 0x80, 0x3C, 0x0D, 0x18, 0x80, 0x3C, 0x0E, 0x00, 0x80, 0x3C, 0x0E, 0x08, 0x80, 0x3C, 0x0E, 0x68, 0x80, 0x3C, 0x0E, 0x94, 0x80, 0x3C, 0x0F, 0xBC, 0x80, 0x3C, 0x0F, 0xC8, 0x80, 0x3C, 0x0F, 0xD4, 0x80, 0x3C, 0x0F, 0xE0, 0x80, 0x3C, 0x0F, 0xEC, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x44, 0xD8, 0x67, 0x7D, 0x3C, 0x23, 0xD7, 0x0A, 0x3F, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x43, 0x30, 0x00, 0x00, 0x80, 0x00, 0x00, 0x00, 0x28, 0x63, 0x29, 0x43, 0x52, 0x49, 0x00, 0x00}; // .rodata 0x70 at 0x8051C4E0
+__attribute__((aligned(8), used)) const unsigned char __large_rodata_for_CriWare_src_sofdec_sfdcore_sfd_[0x70] = {0x80, 0x3B, 0xFC, 0xBC, 0x80, 0x3B, 0xFC, 0xF8, 0x80, 0x3B, 0xFD, 0x2C, 0x80, 0x3C, 0x08, 0x3C, 0x80, 0x3C, 0x0D, 0x18, 0x80, 0x3C, 0x0E, 0x00, 0x80, 0x3C, 0x0E, 0x08, 0x80, 0x3C, 0x0E, 0x68, 0x80, 0x3C, 0x0E, 0x94, 0x80, 0x3C, 0x0F, 0xBC, 0x80, 0x3C, 0x0F, 0xC8, 0x80, 0x3C, 0x0F, 0xD4, 0x80, 0x3C, 0x0F, 0xE0, 0x80, 0x3C, 0x0F, 0xEC, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x44, 0xD8, 0x67, 0x7D, 0x3C, 0x23, 0xD7, 0x0A, 0x3F, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x43, 0x30, 0x00, 0x00, 0x80, 0x00, 0x00, 0x00, 0x28, 0x63, 0x29, 0x43, 0x52, 0x49, 0x00, 0x00}; // .rodata 0x70 at 0x8051C4E0
 
 /* --- external ADX / SJ / SFD helpers used by this TU --- */
 
@@ -80,10 +79,10 @@ void SFADXT_SetSpeed(SfdHandle* handle, s32 speed, s32 base) {
     SFTST_SetSpeed(&handle->tim.tst, speed, base);
 }
 
-extern u32 lbl_eu_80606DE8[7];
+u32 sfadxt_para[7];
 
 void SFD_SetAdxtPara(u32 *src) {
-    u32 *dst = lbl_eu_80606DE8;
+    u32 *dst = sfadxt_para;
     dst[0] = src[0];
     dst[1] = src[1];
     u32 tmp = src[2] + 0x1f;
@@ -102,7 +101,7 @@ extern int UTY_MemsetDword(u32*, u32, int);
 int SFADXT_Init(void) {
     ADXT_Init();
     SFA_Init();
-    UTY_MemsetDword((u32*)lbl_eu_80606DE8, 0, 7);
+    UTY_MemsetDword((u32*)sfadxt_para, 0, 7);
     return 0;
 }
 
@@ -417,7 +416,7 @@ extern s32 ADXT_GetErrCode(void*);
 extern void SFTST_SetAdjFlg(void* self, s32 val);
 extern void SFBUF_SetTermFlg(void* self, s32 idx, u32 flg);
 extern s32 SFBUF_GetTermFlg(void* self, s32 idx);
-extern s32 lbl_eu_80606E04;
+s32 sfadxt_adxterr;
 
 extern void ADXT_TermSupply(void *self);
 
@@ -436,7 +435,7 @@ void sfadxt_ChkTermFlg(SfdHandle* self, s32 flag_idx) {
 
     /* publish the raw decoder error code for the EU-side error hook */
     if (err != 0)
-        lbl_eu_80606E04 = err;
+        sfadxt_adxterr = err;
 
     /* condition 26 gates whether decoder errors are surfaced at all */
     if (SFSET_GetCond(self, 26) == 0)
@@ -521,7 +520,7 @@ extern void SFTIM_SetTimeFn(void *self, void *fn, u32 idx);
 extern void *SJRBF_Create(void *pool_mem, u32 buf_size, u32 xtr_size);
 
 s32 sfadxt_InitInf(SfdHandle* handle, u32 *inf) {
-    u32 *prm = lbl_eu_80606DE8;
+    u32 *prm = sfadxt_para;
     SfdTst *tim;
     u32 v0;
     u32 v1;
@@ -660,7 +659,7 @@ chk:
     return 0;
 }
 
-extern u32 lbl_eu_80606E08;
+u32 sfadxt_stat;
 extern u64 UTY_GetTmr(void);
 extern u64 UTY_GetTmrUnit(void);
 extern void ADXT_GetTime(void *, u32 *, u32 *);
@@ -680,7 +679,7 @@ s32 sfadxt_GetTime(SfdHandle* handle, int *out1, int *out2) {
         return 0;
     }
     if ((s32)handle->errorState == 4) {
-        lbl_eu_80606E08 = (u32)ADXT_GetStat(adxt);
+        sfadxt_stat = (u32)ADXT_GetStat(adxt);
         ADXT_GetTime(adxt, &t[0], &t[1]);
         cur1 = (s64)(s32)t[0];
         cur2 = (s64)(s32)t[1];
@@ -725,7 +724,7 @@ int SFADXT_Destroy(SfdHandle* handle) {
         return 0;
     }
     /* stash the stream configuration back into the global parameter block */
-    para = (SFADXT_PARA *)lbl_eu_80606DE8;
+    para = (SFADXT_PARA *)sfadxt_para;
     /* the work area mirrors three word pairs of the parameter block */
     para->p[0] = *(SFADXT_PAIR *)&w->field_0x08;
     para->p[1] = *(SFADXT_PAIR *)&w->pool;
@@ -839,7 +838,8 @@ s32 SFADXT_AddRead(void* h) {
     return SFLIB_SetErr(h, 0xff000c03);
 }
 
-extern void *lbl_eu_80606E0C;
+// name-guess: JP map has only lbl_8060A2C4; SFADXT_Seek stores this callback.
+static void (*sfadxt_seekfn)(void *, u32, u32, u32);
 extern void ADXT_SetTimeOfst(void *, u32);
 
 s32 SFADXT_Seek(SfdHandle* handle) {
@@ -867,7 +867,7 @@ s32 SFADXT_Seek(SfdHandle* handle) {
         if (conv->seek == 0) {
             return 0;
         }
-        seekfn = (void (*)(void *, u32, u32, u32))lbl_eu_80606E0C;
+        seekfn = sfadxt_seekfn;
         seekfn(adxt, (u32)conv->numChan, (u32)conv->sfreq,
                (u32)conv->numSmpl);
         ADXT_SetTimeOfst(adxt, 0);

@@ -86,8 +86,8 @@ reslist<cf::CfObject*>* getListB28();
 extern u32 lbl_eu_80539D88[];  // CVS_THREAD_VISION_BREAK vtable
 
 // Voice-ID tables indexed by mtRand(3)*2 (halfword entries).
-extern s16 lbl_eu_80662D40[4]; // Voice IDs for field_0x24 >= 3 phase
-extern s16 lbl_eu_80662D48[4]; // Voice IDs for field_0x24 < 3 phase
+extern s16 visionBreakLateVoiceIds[4]; // Voice IDs for field_0x24 >= 3 phase
+extern s16 visionBreakEarlyVoiceIds[4]; // Voice IDs for field_0x24 < 3 phase
 
 // C-linkage imports from sibling voice TUs (retail symbol names - keep
 // linkage/signatures verbatim). Genuine retail C/ABI symbols.

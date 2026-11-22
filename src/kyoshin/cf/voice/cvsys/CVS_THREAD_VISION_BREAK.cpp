@@ -118,26 +118,26 @@ void CVS_THREAD_VISION_BREAK::dispatchPlayback() {
     CCharVoice* voicePtr;
     int voiceId;
     if (self->field_0x24 >= 3) {
-        // Late phase: handle + voice IDs from lbl_eu_80662D40.
+        // Late phase: handle + voice IDs from visionBreakLateVoiceIds.
         h = self->field_0x20;
         voicePtr = (CCharVoice*)h;
         if (self->field_0x20 != NULL) {
             voicePtr = &h->voice;
         }
-        voiceId = lbl_eu_80662D40[ml::math::mtRand(3)];
+        voiceId = visionBreakLateVoiceIds[ml::math::mtRand(3)];
         if (TryRequestVoice(self, voicePtr, voiceId) == 0) {
             // Play failed -- fire the advance/process virtual (vtable offset
             // 8 = PlayThreadVoice), not the size-getter blank1 (offset 0x10).
             self->PlayThreadVoice();
         }
     } else {
-        // Early phase: handle + voice IDs from lbl_eu_80662D48.
+        // Early phase: handle + voice IDs from visionBreakEarlyVoiceIds.
         h = self->field_0x20;
         voicePtr = (CCharVoice*)h;
         if (self->field_0x20 != NULL) {
             voicePtr = &h->voice;
         }
-        voiceId = lbl_eu_80662D48[ml::math::mtRand(3)];
+        voiceId = visionBreakEarlyVoiceIds[ml::math::mtRand(3)];
         if (TryRequestVoice(self, voicePtr, voiceId) == 0) {
             // Play failed -- fire the advance/process virtual (vtable offset
             // 8 = PlayThreadVoice), not the size-getter blank1 (offset 0x10).
@@ -254,14 +254,16 @@ u32 lbl_eu_80539DA4[3] = {
     0,
 };
 
-__declspec(section ".sdata") extern s16 lbl_eu_80662D40[4] = {
+// name-guess: late-phase vision-break voice IDs from usage in dispatchPlayback.
+s16 visionBreakLateVoiceIds[4] = {
     0x192,
     0x195,
     0x196,
     0,
 };
 
-__declspec(section ".sdata") extern s16 lbl_eu_80662D48[4] = {
+// name-guess: early-phase vision-break voice IDs from usage in dispatchPlayback.
+s16 visionBreakEarlyVoiceIds[4] = {
     0x191,
     0x193,
     0x194,

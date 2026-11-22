@@ -32,50 +32,12 @@ char sMapItemPerScratchKey[8] = "itm?Per";
 // KEEP (extern-C cleanup 2026-10-23): CfSoundMan.hpp cannot be included in this TU (its headers clash with local copies).
 extern "C" u16 playActorSound__Q22cf10CfSoundManFUlUlUlUlf(u32 a, u32 b, u32 c, u32 d, f32 e);
 
-// .sdata2 0x70 as one struct: MWCC reorders individually-declared floats by
-// first use, so the pool is frozen in retail order (floats, pads, doubles).
-// Code keeps using the retail label names via the macros below (read-only).
-struct Sdata2_MapItem {
-    float f7780, f7784, f7788, f778C, f7790, f7794, f7798;
-    u32 pad1C;
-    double d77A0;
-    float f77A8;
-    u32 pad2C;
-    double d77B0;
-    float f77B8, f77BC, f77C0, f77C4, f77C8, f77CC, f77D0, f77D4;
-    float f77D8, f77DC, f77E0, f77E4, f77E8, f77EC;
-};
-__declspec(section ".sdata2") __attribute__((used, aligned(8)))
-const Sdata2_MapItem sdata2_MapItem = {
-    0.0f, 0.01f, 45.0f, 40.743664f, 1.0f, 30.0f, 0.5f, 0,
-    4503601774854144.0,
-    60.0f, 0,
-    4503599627370496.0,
-    3600.0f, 100.0f, 40000.0f, 50.0f, 22500.0f, 1.5f, 2.25f, 0.6f,
-    6.0f, 0.0f, 1.0f, 0.0f, 1.0f, 30.0f
-};
-#define lbl_eu_80667780 (sdata2_MapItem.f7780)
-#define lbl_eu_80667784 (sdata2_MapItem.f7784)
-#define lbl_eu_80667788 (sdata2_MapItem.f7788)
-#define lbl_eu_8066778C (sdata2_MapItem.f778C)
-#define lbl_eu_80667790 (sdata2_MapItem.f7790)
-#define lbl_eu_80667794 (sdata2_MapItem.f7794)
-#define lbl_eu_80667798 (sdata2_MapItem.f7798)
-#define lbl_eu_806677A0 (sdata2_MapItem.d77A0)
-#define lbl_eu_806677A8 (sdata2_MapItem.f77A8)
-#define lbl_eu_806677B0 (sdata2_MapItem.d77B0)
-#define lbl_eu_806677B8 (sdata2_MapItem.f77B8)
-#define lbl_eu_806677BC (sdata2_MapItem.f77BC)
-#define lbl_eu_806677C0 (sdata2_MapItem.f77C0)
-#define lbl_eu_806677C4 (sdata2_MapItem.f77C4)
-#define lbl_eu_806677C8 (sdata2_MapItem.f77C8)
-#define lbl_eu_806677CC (sdata2_MapItem.f77CC)
-#define lbl_eu_806677D0 (sdata2_MapItem.f77D0)
-#define lbl_eu_806677D4 (sdata2_MapItem.f77D4)
-#define lbl_eu_806677E4 (sdata2_MapItem.f77E4)
-#define lbl_eu_806677E8 (sdata2_MapItem.f77E8)
-#define lbl_eu_806677EC (sdata2_MapItem.f77EC)
-// Owned by the next TU's pool (CActorParam sdata2): keep as externs.
+// The .sdata2 pool is emitted by MWCC from the literals at their use sites.
+// These three constants belong to the CActorParam TU's pool (and the two
+// conversion magics below it); this TU only references them.
+extern f32 lbl_eu_806677E4;
+extern f32 lbl_eu_806677E8;
+extern f32 lbl_eu_806677EC;
 extern double lbl_eu_806677F0;
 extern double lbl_eu_806677F8;
 
@@ -110,7 +72,7 @@ int isSceneReadyForInput__Q22cf13CfGameManagerFv();
 #include "kyoshin/CUICfManager.hpp"
 void* CItem_thunkAllocRecord(int v);
 int UIWin_BuildFlagBuf(int a, int b, int c, int d);
-void setInputMaskByAmount__Q22cf13CfGameManagerFv(u32 v);
+void setInputMaskByAmount__Q22cf13CfGameManagerFv(u32 v, f32 amount);
 void hikariInitRecordTimers(u32 h);
 u32 hikariAddRecord(u8* a, u32* b, int c);
 void* getPlayer__Q22cf13CfGameManagerFi(int idx);
@@ -225,13 +187,6 @@ int CfMapItemManager::placeMapItemPick(u32 row, void* c, int pick) {
         // Try up to 16 randomized offsets around the spawn point until a
         // ground probe succeeds.
         int placed = 0;
-        // Loop-invariant spread/sin constants; retail caches these in
-        // callee-saved f27-f31 across the probe calls.
-        const f32 sinA = 45.0f;
-        const f32 sinB = ml::deg2rad;
-        const f32 sinC = 40.743664f;
-        const f32 angStep = lbl_eu_80667790;
-        const f32 spread = 0.01f;
         ml::CVec3 rnd;      // raw random offset
         ml::CVec3 scaled;   // random offset scaled by the spread factor
         ml::CVec3 center;   // column offsets as a vector
@@ -240,7 +195,7 @@ int CfMapItemManager::placeMapItemPick(u32 row, void* c, int pick) {
         ml::CVec3 probe;    // probe segment endpoint
         for (int i = 0; i < 16; i++) {
             VecMath_RandomAngleOffset(&rnd, count * 100);
-            scaled = rnd * spread;
+            scaled = rnd * 0.01f;
             center.set(scaled);
             pos = center + offs;
             cur = pos;
@@ -252,11 +207,12 @@ int CfMapItemManager::placeMapItemPick(u32 row, void* c, int pick) {
             }
             float ang;
             if (self->isEventActive()) {
-                ang = lbl_eu_80667780;
+                ang = 0.0f;
             } else {
-                ang = nw4r::math::SinFIdx(sinC * (sinA * sinB));
+                f32 angleScale = 45.0f;
+                ang = nw4r::math::SinFIdx(ml::deg2rad * angleScale * 40.743664f);
             }
-            probe.y -= angStep;
+            probe.y -= 1.0f;
             if (VecMath_GroundProbeDown(&probe, &cur, 0x4a05, 30.0f, ang)) {
                 placed = 1;
                 break;
@@ -284,7 +240,7 @@ int CfMapItemManager::placeMapItemPick(u32 row, void* c, int pick) {
             buf->field_00 = 0;
             buf->field_18 =
                 (buf->field_18 | ((row >> 12) & 0xFFFu)) & ~0x38000u;
-            buf->field_10 = lbl_eu_80667780;
+            buf->field_10 = 0.0f;
             buf->field_16 = 0;
         } else {
             self->isEventActive();
@@ -366,19 +322,13 @@ void CfMapItemManager::collectItems() {
     s32 end;
     s32 row = (s32)Bdat_GetRowBase_B41C(table);
     end = row + (s32)Bdat_GetMaxRow_B1EC(table);    f32 one;
-    f32 scale = lbl_eu_80667780;
+    f32 scale = 0.0f;
     if (gFixedMapItemFlag != 0) {
-        // Runtime-shaped int->double conversion via the 0x43300000 scratch
-        // double, minus the shared magic constant (retail keeps the full
-        // store/lfd/fsub sequence).
-        union { double d; u32 w[2]; } cv;
-        cv.w[1] = 1;
-        cv.w[0] = 0x43300000;
-        scale = 60.0f * (30.0f * (cv.d - lbl_eu_806677B0));
+        scale = 60.0f * (30.0f * (f32)gFixedMapItemFlag);
     }
     self->mCount = 1;
     const u32* zeroW = reinterpret_cast<const u32*>(&ml::CVec3::zero);
-    one = lbl_eu_80667780;
+    one = 0.0f;
     MapItemBuffer buf;
 
     while (row < end) {
@@ -444,7 +394,7 @@ void CfValueItemManager::collectItems() {
     u32 cnt = Bdat_GetMaxRow_B1EC(table);
     self->mCount = 1;
     s32 end = row + (s32)cnt;
-    f32 one = lbl_eu_80667780;
+    f32 one = 0.0f;
 
     while (row < end) {
         u8 type = (u8)getBdatStringColumnValue(table, "mapID", row);
@@ -511,21 +461,18 @@ int CfMapItemManager::updateMapItems(ml::CVec3* pos) {
     BdatCell cSeLo;   // col +0x56 -> sp+0x0c (half)
     BdatCell cSeHi;   // col +0x60 -> sp+0x08 (half)
 
+    // Declaration order follows the retail literal pool.
+    f32 kB8 = 3600.0f;
     f32 bestDist = 100.0f;
-    f32 k80 = lbl_eu_80667780;
-    f32 dyLimit = bestDist;
+    f32 kC0 = 40000.0f;
     f32 kC4 = 50.0f;
     f32 kC8 = 22500.0f;
-    f32 kD0 = 2.25f;
     f32 kCC = 1.5f;
-    f32 kC0 = 40000.0f;
-    f32 kB8 = 3600.0f;
+    f32 kD0 = 2.25f;
+    f32 k80 = 0.0f;
+    f32 dyLimit = bestDist;
     s32 resultIdx = 0;
     s32 nearestIdx = 0;
-    // Held-in-register constants across the loop (retail keeps 3 and 0 in
-    // callee-saved r27/r28 for the respawn seed and the null handle store).
-    const s16 spawnRespawn = 3;
-    const u32 nullHandle = 0;
 
     u32 i;
     for (i = 1; i < self->mCount; i++) {
@@ -564,7 +511,7 @@ int CfMapItemManager::updateMapItems(ml::CVec3* pos) {
             u32 h = rec->handle;
             if (h != 0) {
                 hikariRemoveRecordTarget(ClearMenu_GetGlobal10(), reinterpret_cast<CfHikariItemRecord*>(h));
-                rec->handle = nullHandle;
+                rec->handle = 0;
                 if (self->field_3806 != 0) self->field_3806--;
             }
             continue;
@@ -577,7 +524,7 @@ int CfMapItemManager::updateMapItems(ml::CVec3* pos) {
             u32 h = rec->handle;
             if (h != 0) {
                 hikariInitRecordTimers(h);
-                rec->handle = nullHandle;
+                rec->handle = 0;
                 if (self->field_3806 != 0) self->field_3806--;
             }
             continue;
@@ -587,7 +534,7 @@ int CfMapItemManager::updateMapItems(ml::CVec3* pos) {
             u32 h = rec->handle;
             if (h != 0) {
                 hikariInitRecordTimers(h);
-                rec->handle = nullHandle;
+                rec->handle = 0;
                 if (self->field_3806 != 0) self->field_3806--;
             }
             continue;
@@ -601,7 +548,7 @@ int CfMapItemManager::updateMapItems(ml::CVec3* pos) {
                 u32 h = rec->handle;
                 if (h != 0) {
                     hikariInitRecordTimers(h);
-                    rec->handle = nullHandle;
+                    rec->handle = 0;
                     if (self->field_3806 != 0) self->field_3806--;
                 }
                 continue;
@@ -615,7 +562,7 @@ int CfMapItemManager::updateMapItems(ml::CVec3* pos) {
                 u32 h = rec->handle;
                 if (h != 0) {
                     hikariInitRecordTimers(h);
-                    rec->handle = nullHandle;
+                    rec->handle = 0;
                     if (self->field_3806 != 0) self->field_3806--;
                 }
                 continue;
@@ -629,7 +576,7 @@ int CfMapItemManager::updateMapItems(ml::CVec3* pos) {
             u32 h = rec->handle;
             if (h != 0) {
                 hikariInitRecordTimers(h);
-                rec->handle = nullHandle;
+                rec->handle = 0;
                 if (self->field_3806 != 0) self->field_3806--;
             }
             continue;
@@ -640,7 +587,7 @@ int CfMapItemManager::updateMapItems(ml::CVec3* pos) {
             u32 h = rec->handle;
             if (h != 0) {
                 hikariRemoveRecordTarget(ClearMenu_GetGlobal10(), reinterpret_cast<CfHikariItemRecord*>(h));
-                rec->handle = nullHandle;
+                rec->handle = 0;
                 if (self->field_3806 != 0) self->field_3806--;
             }
             continue;
@@ -652,7 +599,7 @@ int CfMapItemManager::updateMapItems(ml::CVec3* pos) {
             rec->handle = hikariAddRecord(reinterpret_cast<u8*>(ClearMenu_GetGlobal10()),
                                         reinterpret_cast<u32*>(&rec->pos.x),
                                         !occupied);
-            rec->field_16 = spawnRespawn;
+            rec->field_16 = 3;
             self->field_3806++;
         } else if (rec->field_16 > 0) {
             rec->field_16--;
@@ -676,7 +623,7 @@ int CfMapItemManager::updateMapItems(ml::CVec3* pos) {
         u32 h = recN->handle;
         if (h != 0) {
             hikariRemoveRecordTarget(ClearMenu_GetGlobal10(), reinterpret_cast<CfHikariItemRecord*>(h));
-            recN->handle = nullHandle;
+            recN->handle = 0;
             if (self->field_3806 != 0) self->field_3806--;
         }
     }
@@ -722,7 +669,7 @@ void CfMapItemManager::tryPickupMapItem() {
     pos.x = pp->x;
     pos.y = pp->y;
     pos.z = pp->z;
-    pos.y += lbl_eu_80667790;
+    pos.y += 1.0f;
     idx = self->updateMapItems(&pos);
     if (idx == 0) return;
     if (!func_80083118__Q22cf13CfGameManagerFv(0)) return;
@@ -779,7 +726,7 @@ void CfMapItemManager::tryPickupMapItem() {
         CtrlRemote_SetSharedBit((rec->field_18 >> 20) + 0x2b9c, 1);
         rec->field_14 = 0;
         rec->handle = 0;
-        rec->field_10_f = lbl_eu_80667780;
+        rec->field_10_f = 0.0f;
         rec->field_16 = 0;
         rec->field_18 = (rec->field_18 & 0xFFFF) & ~0x2000;
     } else {
@@ -787,23 +734,19 @@ void CfMapItemManager::tryPickupMapItem() {
         CUICfManager_queueGetItemMenuNarrowed(kind);
         u8 secs = (u8)getBdatStringColumnValue((void*)::cf::CfBdat::spFldMapListFileData, "e_repoptime", lbl_eu_80664184);
         if (secs != 0) {
-            // u32->double via the 0x43300000 scratch double.
-            union { double d; u32 w[2]; } cv;
-            cv.w[0] = 0x43300000;
-            cv.w[1] = secs;
             rec->field_14 = 0;
             rec->handle = 0;
             rec->field_18 |= 0x10000;
-            rec->field_10_f = 60.0f * (30.0f * (cv.d - lbl_eu_806677B0));
+            rec->field_10_f = 60.0f * (30.0f * (f32)secs);
         } else {
             rec->field_14 = 0;
             rec->handle = 0;
-            rec->field_10_f = lbl_eu_80667780;
+            rec->field_10_f = 0.0f;
             rec->field_16 = 0;
             rec->field_18 = (rec->field_18 & 0xFFFF) & ~0x2000;
         }
     }
-    setInputMaskByAmount__Q22cf13CfGameManagerFv(UIWin_BuildFlagBuf(2, kind, 0, 0));
+    setInputMaskByAmount__Q22cf13CfGameManagerFv(UIWin_BuildFlagBuf(2, kind, 0, 0), 6.0f);
 }
 
 // cf::CfValueItemManager +0x0C override: an event is always active.

@@ -98,16 +98,9 @@ struct CfEnumList90940 {
 
 // --- imports used by the Move / dispatcher functions ---------------------
 
-// Colour-unpack scale/magic pair (CfCmd_FadeColor's u8->float ladder).
+// Colour-unpack scale (CfCmd_FadeColor's u8->float ladder).
 extern const float lbl_eu_80667A78;
-extern const f64 lbl_eu_80667A80;
 
-// u32 word-pair / f64 view for MWCC's 0x43300000 u8->float conversion
-// (same convention as CPSkillF64Conv in CPassiveSkill.hpp).
-union PTStateF64Conv {
-    u32 w[2];
-    f64 d;
-};
 extern const float lbl_eu_80667A88;
 extern const float lbl_eu_80667A8C;
 

@@ -234,8 +234,6 @@ struct CScnItemModelActData {
 // forces reloads per use and can swap the assigned FPRs.
 extern const float lbl_eu_8066A8C0;
 extern const float lbl_eu_8066A8C4;
-extern const float lbl_eu_8066A8C8;
-extern const float lbl_eu_8066A8CC;
 
 // Retail vtable data for CScnItemModel (.data at 0x8056DD70, 0xE0 bytes).
 // Declared as a char array so the ctor can install the label explicitly.

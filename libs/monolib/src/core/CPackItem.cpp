@@ -81,7 +81,7 @@ void CPackItem::update(){
             }
             
             mFileHandle = CDeviceFile::readFile(lbl_eu_80663BC8, mFilePath, this, 0, 0);
-            setHandleParam__11CDeviceFileFP11CFileHandleUl(mFileHandle, mtl::MemManager::getHandleMEM2());
+            CDeviceFile::setHandleParam(mFileHandle, mtl::MemManager::getHandleMEM2());
             
             if((s32)field_0x68 >= 0){
                 func_eu_804521B0();

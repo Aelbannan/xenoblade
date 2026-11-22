@@ -31,22 +31,6 @@ struct PaneTranslateMirror {
     f32 mZ;   // +0x34
 };
 
-// SDA21 float constants referenced by the anim-completion callbacks (retail
-// symbol names; the sentinel is the completion-check value passed to
-// advanceAnimTransform / AnimRewindFrame).
-extern const float lbl_eu_80668470;  // anim sentinel constant used by completion checks
-extern float lbl_eu_8066845C;
-extern float lbl_eu_80668474;
-extern float lbl_eu_80668478;
-
-// BDAT table pointer (sda21) and sdata2 constants used by the crystal-box
-// refresh callbacks (setCrystalSlotTexture / setCrystalSlotCapacity / updateCrystalBoxRows).
-extern double lbl_eu_80668460;    // 2^52 double conversion constant (unsigned path)
-extern double lbl_eu_80668468;    // 2^52 + 2^31 double conversion constant (signed path)
-extern float lbl_eu_8066847C;
-
-
-
 // Transient (crystal id, quantity) pair of the aggregation loops
 // (CMCCrystalSelTable::buildIdList, getCrystalSelTopCount). set is emitted
 // out of line after its first user (retail 0x8021BB68).
@@ -424,9 +408,9 @@ public:
 // Returns the destination pointer (retail reuses it as a call argument).
 extern "C" int func_8021A8EC(void*);
 extern "C" char sMakeCrystalStrings[];
-extern "C" unsigned long lbl_eu_80508870[];
+extern const unsigned long sCrystalBoxSortIds[3];
 
-extern unsigned long lbl_eu_806646D0;
+extern unsigned long gpCrystalBoxSkillBdat;
 // Selection-table helpers on the +0x1480 box-head scratch (not CMCCrystalBox).
 // Crystal-slot refresh callbacks (defined in this TU).
 // Item-kind check (defined in this TU); noinline keeps the bl in the slot
@@ -448,9 +432,6 @@ extern "C" u16 CItemBlock_getFlag120EC(int);
 // C++ linkage so MWCC mangles to the retail getPackedFont__Fv.
 extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
 extern "C" void* Bdat_GetTable_AA34();   // matches code_801862C0.hpp's declaration
-extern "C" float lbl_eu_80668488;
-extern "C" float lbl_eu_8066848C;
-extern "C" float lbl_eu_80668490;
 extern "C" void* CItem_kindPtr(u32, s16);
 extern "C" u32 CItemBlock_countKindSlots(u8);
 extern "C" void deleteRegion__17UnkClass_8045F564Fv(void*);
@@ -462,8 +443,6 @@ extern "C" void deleteRegion__17UnkClass_8045F564Fv(void*);
 // retail masks the u16 crystal id into the argument register (clrlwi 16), so
 // this TU saw a u16 parameter. Literal mangled identifier links to the same
 // symbol as setLayoutTextBoxNumber.
-extern float lbl_eu_80668480;
-extern float lbl_eu_80668484;
 
 // Selection/refresh helpers for the update callbacks and the ctor copy-init.
 // Retail symbols are unmangled; declared here so the call relocs bind to the

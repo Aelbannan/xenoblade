@@ -1139,12 +1139,11 @@ extern "C" void tickAnimFrame(CActParamAnim* self) {
     view->field4D6++;
 }
 
-// Retail symbol is Fv but the body reads r4 (one extra param) - forced-name
-// free function, same scheme as initAnimBlendVectors__13CActParamAnimFv.
+// Member taking r4 (one extra param) (true mangle; was an Fv forced-name free function).
 // Compares the sub-object's progress float against an int threshold widened
 // to double (retail xoris/0x4330 magic conversion).
-int calcAnimBlendWeight__13CActParamAnimFv(CActParamAnim* self, u32 param) {
-    CActParamAnim* view = (CActParamAnim*)self;
+int CActParamAnim::calcAnimBlendWeight(u32 param) {
+    CActParamAnim* view = (CActParamAnim*)this;
     if (param != 0) {
         int result = 1;
         if (simRefreshFadeDist2(view->object3A0, param) == 0) {
@@ -1174,16 +1173,15 @@ int calcAnimBlendWeight__13CActParamAnimFv(CActParamAnim* self, u32 param) {
     return result;
 }
 
-// Retail symbol is Fv but the body reads r4/r5 (two extra args: anim id +
-// dispatch arg) -- forced-name free function, same scheme as
-// initAnimBlendVectors__13CActParamAnimFv.
-extern "C" int dispatchAnimSlot__13CActParamAnimFv(CActParamAnim* self, u32 param, u32 arg2) {
-    CActParamAnim* view = (CActParamAnim*)self;
+// Member taking r4/r5 (anim id + dispatch arg); true mangle (was an Fv
+// forced-name free function).
+int CActParamAnim::dispatchAnimSlot(u32 param, u32 arg2) {
+    CActParamAnim* view = (CActParamAnim*)this;
     u32 localBig;
     u32 localSmall;
     // Dispatch through the vtable slot at +0x80 (retail: lwz r12, 0x80(r12));
     // proceed unless BOTH the virtual call and the child reset return 0.
-    if (reinterpret_cast<CActParamAnimVt80*>(self)->dispatch80(arg2) != 0 ||
+    if (reinterpret_cast<CActParamAnimVt80*>(this)->dispatch80(arg2) != 0 ||
         getParamByteSel((CActParamData*)view->mChildData10, 0) != 0) {
         if (view->field30 >= 0) {
             view->field374 = view->field30;
@@ -1206,24 +1204,24 @@ extern "C" int dispatchAnimSlot__13CActParamAnimFv(CActParamAnim* self, u32 para
                     if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                 }
                 u32 ret = evalParamBySlot((CActParamData*)data, &localSmall, param, b, flag);
-                switchSubAnim(self, localSmall, ret, view->field2A4, 0);
+                switchSubAnim(this, localSmall, ret, view->field2A4, 0);
                 view->field0C &= ~0x200;
             }
         } else {
             u32 ret = evalParamChain(view->mChildData10, &localBig, param, 1, 0);
-            switchSubAnim(self, localBig, ret, view->field2A4, (view->field0C >> 9) & 1);
+            switchSubAnim(this, localBig, ret, view->field2A4, (view->field0C >> 9) & 1);
         }
         return 1;
     }
     return 0;
 }
 
-// Retail symbol is Fv but the body reads r4 (one extra param) - forced-name
-// free function. Gate: proceed only when the anim is NOT finished, i.e. owner
+// Member taking r4 (one extra param) (true mangle; was an Fv forced-name free function).
+// Gate: proceed only when the anim is NOT finished, i.e. owner
 // is null, or anim speed (+0x394) is zero, or the scaled remaining time
 // (+0x430 * owner +0x14) is still below 0.10000000149011612f.
-extern "C" int startUnfinishedAnim__13CActParamAnimFv(CActParamAnim* self, u32 param) {
-    CActParamAnim* view = (CActParamAnim*)self;
+int CActParamAnim::startUnfinishedAnim(u32 param) {
+    CActParamAnim* view = (CActParamAnim*)this;
     CActParamAnimOwner* owner = view->owner08;
     u32 localSmall;
     u32 localBig;
@@ -1264,7 +1262,7 @@ extern "C" int startUnfinishedAnim__13CActParamAnimFv(CActParamAnim* self, u32 p
                 if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
             }
             u32 ret = evalParamBySlot((CActParamData*)view->mChildData10, &localSmall, param, b, flag);
-            switchSubAnim(self, localSmall, ret, view->field2A4, 0);
+            switchSubAnim(this, localSmall, ret, view->field2A4, 0);
             view->field0C &= ~0x200;
         }
         return 1;
@@ -1275,12 +1273,12 @@ extern "C" int startUnfinishedAnim__13CActParamAnimFv(CActParamAnim* self, u32 p
         if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
     }
     u32 ret = evalParamChain(view->mChildData10, &localBig, param, flag, 0);
-    switchSubAnim(self, localBig, ret, view->field2A4, (view->field0C >> 9) & 1);
+    switchSubAnim(this, localBig, ret, view->field2A4, (view->field0C >> 9) & 1);
     return 1;
 }
 
-// Retail symbol is Fv but the body reads r4 (one extra param) - forced-name
-// free function. Gate: proceed only when the anim IS finished (owner non-null,
+// Member taking r4 (one extra param) (true mangle; was an Fv forced-name free function).
+// Gate: proceed only when the anim IS finished (owner non-null,
 // speed non-zero, and scaled remaining time below 0.10000000149011612f).
 // Open-item packet (best 85 mismatch / 75 structural / 10 reg-swap, decomp
 // 432B vs retail 420B, no name/type reloc drift - only presence drift from
@@ -1298,8 +1296,8 @@ extern "C" int startUnfinishedAnim__13CActParamAnimFv(CActParamAnim* self, u32 p
 //   r31; our build keeps the view pointer in r3 and parks child-data in r5.
 // - Next experiments: none found within high-level C++; likely the shared
 //   MWCC float-compare canonicalization + scheduler tie-break walls.
-extern "C" int startFinishedAnim__13CActParamAnimFv(CActParamAnim* self, u32 param) {
-    CActParamAnim* view = (CActParamAnim*)self;
+int CActParamAnim::startFinishedAnim(u32 param) {
+    CActParamAnim* view = (CActParamAnim*)this;
     CActParamAnimOwner* owner = view->owner08;
     u32 localSmall;
     u32 localBig;
@@ -1338,7 +1336,7 @@ extern "C" int startFinishedAnim__13CActParamAnimFv(CActParamAnim* self, u32 par
                 if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
             }
             u32 ret = evalParamBySlot((CActParamData*)view->mChildData10, &localSmall, param, b, flag);
-            switchSubAnim(self, localSmall, ret, view->field2A4, 0);
+            switchSubAnim(this, localSmall, ret, view->field2A4, 0);
             view->field0C &= ~0x200;
         }
         return 1;
@@ -1349,14 +1347,13 @@ extern "C" int startFinishedAnim__13CActParamAnimFv(CActParamAnim* self, u32 par
         if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
     }
     u32 ret = evalParamChain(view->mChildData10, &localBig, param, flag, 0);
-    switchSubAnim(self, localBig, ret, view->field2A4, (view->field0C >> 9) & 1);
+    switchSubAnim(this, localBig, ret, view->field2A4, (view->field0C >> 9) & 1);
     return 1;
 }
 
-// Retail symbol is Fv but the body reads r4 (one extra param) -- forced-name
-// free function, same scheme as initAnimBlendVectors__13CActParamAnimFv.
-int fireAnimParam__13CActParamAnimFv(CActParamAnim* self, u32 param) {
-    CActParamAnim* view = (CActParamAnim*)self;
+// Member taking r4 (one extra param) (true mangle; was an Fv forced-name free function).
+int CActParamAnim::fireAnimParam(u32 param) {
+    CActParamAnim* view = (CActParamAnim*)this;
     CActParamAnimOwner* owner = view->owner08;
     u32 localSmall;
     u32 localBig;
@@ -1392,7 +1389,7 @@ int fireAnimParam__13CActParamAnimFv(CActParamAnim* self, u32 param) {
                             if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                         }
                         u32 ret = evalParamBySlot((CActParamData*)view->mChildData10, &localSmall, param, b, flag);
-                        switchSubAnim(self, localSmall, ret, view->field2A4, 0);
+                        switchSubAnim(this, localSmall, ret, view->field2A4, 0);
                         view->field0C &= ~0x200;
                     }
                 } else {
@@ -1402,7 +1399,7 @@ int fireAnimParam__13CActParamAnimFv(CActParamAnim* self, u32 param) {
                         if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                     }
                     u32 ret = evalParamChain(view->mChildData10, &localBig, param, flag, 0);
-                    switchSubAnim(self, localBig, ret, view->field2A4, (view->field0C >> 9) & 1);
+                    switchSubAnim(this, localBig, ret, view->field2A4, (view->field0C >> 9) & 1);
                 }
             }
             view->field0C &= ~0x80000;
@@ -1413,10 +1410,9 @@ int fireAnimParam__13CActParamAnimFv(CActParamAnim* self, u32 param) {
     return 0;
 }
 
-// Retail symbol is Fv but the body reads r4 (one extra param) -- forced-name
-// free function, same scheme as initAnimBlendVectors__13CActParamAnimFv.
-extern "C" int startOwnerFlag8Anim__13CActParamAnimFv(CActParamAnim* self, u32 param) {
-    CActParamAnim* view = (CActParamAnim*)self;
+// Member taking r4 (one extra param) (true mangle; was an Fv forced-name free function).
+int CActParamAnim::startOwnerFlag8Anim(u32 param) {
+    CActParamAnim* view = (CActParamAnim*)this;
     CActParamAnimOwner* owner = view->owner08;
     u32 localSmall;
     u32 localBig;
@@ -1442,7 +1438,7 @@ extern "C" int startOwnerFlag8Anim__13CActParamAnimFv(CActParamAnim* self, u32 p
                         if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                     }
                     u32 ret = evalParamBySlot((CActParamData*)data, &localSmall, param, b, flag);
-                    switchSubAnim(self, localSmall, ret, view->field2A4, 0);
+                    switchSubAnim(this, localSmall, ret, view->field2A4, 0);
                     view->field0C &= ~0x200;
                 }
             } else {
@@ -1452,7 +1448,7 @@ extern "C" int startOwnerFlag8Anim__13CActParamAnimFv(CActParamAnim* self, u32 p
                     if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                 }
                 u32 ret = evalParamChain(view->mChildData10, &localBig, param, flag, 0);
-                switchSubAnim(self, localBig, ret, view->field2A4, (view->field0C >> 9) & 1);
+                switchSubAnim(this, localBig, ret, view->field2A4, (view->field0C >> 9) & 1);
             }
         }
         return 1;
@@ -1460,8 +1456,7 @@ extern "C" int startOwnerFlag8Anim__13CActParamAnimFv(CActParamAnim* self, u32 p
     return 0;
 }
 
-// Retail symbol is Fv but the body reads r4 (one extra param) -- forced-name
-// free function, same scheme as initAnimBlendVectors__13CActParamAnimFv.
+// Member taking r4 (one extra param) (true mangle; was an Fv forced-name free function).
 // Plateau packet (best 30 mismatch / 24 structural / 6 reg-swap, size PASS,
 // no reloc drift): semantics fully reconstructed; residual confined to the
 // call-arg materialization region of the small path. Same scheduler tie-break
@@ -1482,8 +1477,8 @@ extern "C" int startOwnerFlag8Anim__13CActParamAnimFv(CActParamAnim* self, u32 p
 // parks child-data in r5 so the view pointer stays live in r3.
 // Load-bearing shape: data-temp first assignment (fixes r8 model alloc),
 // shadowed inner localSmall decl, b temp loaded before the flags clear.
-extern "C" int startOwnerFlag2Anim__13CActParamAnimFv(CActParamAnim* self, u32 param) {
-    CActParamAnim* view = (CActParamAnim*)self;
+int CActParamAnim::startOwnerFlag2Anim(u32 param) {
+    CActParamAnim* view = (CActParamAnim*)this;
     u32 localSmall;
     u32 localBig;
     CActParamAnimOwner* owner = view->owner08;
@@ -1510,7 +1505,7 @@ extern "C" int startOwnerFlag2Anim__13CActParamAnimFv(CActParamAnim* self, u32 p
                     if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                 }
                 u32 ret = evalParamBySlot((CActParamData*)data, &localSmall, param, b, flag);
-                switchSubAnim(self, localSmall, ret, view->field2A4, 0);
+                switchSubAnim(this, localSmall, ret, view->field2A4, 0);
                 view->field0C &= ~0x200;
             }
         } else {
@@ -1520,7 +1515,7 @@ extern "C" int startOwnerFlag2Anim__13CActParamAnimFv(CActParamAnim* self, u32 p
                 if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
             }
             u32 ret = evalParamChain(view->mChildData10, &localBig, param, flag, 0);
-            switchSubAnim(self, localBig, ret, view->field2A4, (view->field0C >> 9) & 1);
+            switchSubAnim(this, localBig, ret, view->field2A4, (view->field0C >> 9) & 1);
         }
         view->field4C8 = -1;
         return 1;
@@ -1610,10 +1605,9 @@ extern "C" void* getAnimChain(CActParamAnim* self) {
 
 int CActParamAnim::func_8004DAE0() { return 0; }
 
-// Retail symbol is Fv but the body reads r4 (one extra param) -- forced-name
-// free function, same scheme as initAnimBlendVectors__13CActParamAnimFv.
-extern "C" int startFlag2000Anim__13CActParamAnimFv(CActParamAnim* self, u32 param) {
-    CActParamAnim* view = (CActParamAnim*)self;
+// Member taking r4 (one extra param) (true mangle; was an Fv forced-name free function).
+int CActParamAnim::startFlag2000Anim(u32 param) {
+    CActParamAnim* view = (CActParamAnim*)this;
     CActParamAnimOwner* owner = view->owner08;
     int ok;
     if (owner == 0) {
@@ -1654,7 +1648,7 @@ extern "C" int startFlag2000Anim__13CActParamAnimFv(CActParamAnim* self, u32 par
                         if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                     }
                     u32 ret = evalParamBySlot((CActParamData*)view->mChildData10, &local, param, b, flag);
-                    switchSubAnim(self, local, ret, view->field2A4, 0);
+                    switchSubAnim(this, local, ret, view->field2A4, 0);
                     view->field0C &= ~0x200;
                 }
             } else {
@@ -1665,7 +1659,7 @@ extern "C" int startFlag2000Anim__13CActParamAnimFv(CActParamAnim* self, u32 par
                     if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                 }
                 u32 ret = evalParamChain(view->mChildData10, &local, param, flag, 0);
-                switchSubAnim(self, local, ret, view->field2A4, (view->field0C >> 9) & 1);
+                switchSubAnim(this, local, ret, view->field2A4, (view->field0C >> 9) & 1);
             }
             return 1;
         }
@@ -1673,11 +1667,10 @@ extern "C" int startFlag2000Anim__13CActParamAnimFv(CActParamAnim* self, u32 par
     return 0;
 }
 
-// Retail symbol is Fv but the body reads r4 (one extra param) -- forced-name
-// free function, same scheme as initAnimBlendVectors__13CActParamAnimFv. Mirror of
+// Member taking r4 (one extra param) (true mangle; was an Fv forced-name free function). Mirror of
 // startFlag2000Anim with the owner flag mask 0x800.
-int startFlag0800Anim__13CActParamAnimFv(CActParamAnim* self, u32 param) {
-    CActParamAnim* view = (CActParamAnim*)self;
+int CActParamAnim::startFlag0800Anim(u32 param) {
+    CActParamAnim* view = (CActParamAnim*)this;
     CActParamAnimOwner* owner = view->owner08;
     int ok;
     if (owner == 0) {
@@ -1719,7 +1712,7 @@ int startFlag0800Anim__13CActParamAnimFv(CActParamAnim* self, u32 param) {
                         if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                     }
                     u32 ret = evalParamBySlot((CActParamData*)view->mChildData10, &local, param, b, flag);
-                    switchSubAnim(self, local, ret, view->field2A4, 0);
+                    switchSubAnim(this, local, ret, view->field2A4, 0);
                     view->field0C &= ~0x200;
                 }
             } else {
@@ -1730,7 +1723,7 @@ int startFlag0800Anim__13CActParamAnimFv(CActParamAnim* self, u32 param) {
                     if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                 }
                 u32 ret = evalParamChain(view->mChildData10, &local, param, flag, 0);
-                switchSubAnim(self, local, ret, view->field2A4, (view->field0C >> 9) & 1);
+                switchSubAnim(this, local, ret, view->field2A4, (view->field0C >> 9) & 1);
             }
             return 1;
         }
@@ -1738,11 +1731,10 @@ int startFlag0800Anim__13CActParamAnimFv(CActParamAnim* self, u32 param) {
     return 0;
 }
 
-// Retail symbol is Fv but the body reads r4 (one extra param) -- forced-name
-// free function, same scheme as initAnimBlendVectors__13CActParamAnimFv. Mirror of
+// Member taking r4 (one extra param) (true mangle; was an Fv forced-name free function). Mirror of
 // startFlag2000Anim with the owner flag mask 0x400.
-int startFlag0400Anim__13CActParamAnimFv(CActParamAnim* self, u32 param) {
-    CActParamAnim* view = (CActParamAnim*)self;
+int CActParamAnim::startFlag0400Anim(u32 param) {
+    CActParamAnim* view = (CActParamAnim*)this;
     CActParamAnimOwner* owner = view->owner08;
     int ok;
     if (owner == 0) {
@@ -1784,7 +1776,7 @@ int startFlag0400Anim__13CActParamAnimFv(CActParamAnim* self, u32 param) {
                         if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                     }
                     u32 ret = evalParamBySlot((CActParamData*)view->mChildData10, &local, param, b, flag);
-                    switchSubAnim(self, local, ret, view->field2A4, 0);
+                    switchSubAnim(this, local, ret, view->field2A4, 0);
                     view->field0C &= ~0x200;
                 }
             } else {
@@ -1795,7 +1787,7 @@ int startFlag0400Anim__13CActParamAnimFv(CActParamAnim* self, u32 param) {
                     if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                 }
                 u32 ret = evalParamChain(view->mChildData10, &local, param, flag, 0);
-                switchSubAnim(self, local, ret, view->field2A4, (view->field0C >> 9) & 1);
+                switchSubAnim(this, local, ret, view->field2A4, (view->field0C >> 9) & 1);
             }
             return 1;
         }
@@ -1803,11 +1795,10 @@ int startFlag0400Anim__13CActParamAnimFv(CActParamAnim* self, u32 param) {
     return 0;
 }
 
-// Retail symbol is Fv but the body reads r4 (one extra param) -- forced-name
-// free function, same scheme as initAnimBlendVectors__13CActParamAnimFv. Mirror of
+// Member taking r4 (one extra param) (true mangle; was an Fv forced-name free function). Mirror of
 // startFlag2000Anim with the owner flag mask 0x1000.
-int startFlag1000Anim__13CActParamAnimFv(CActParamAnim* self, u32 param) {
-    CActParamAnim* view = (CActParamAnim*)self;
+int CActParamAnim::startFlag1000Anim(u32 param) {
+    CActParamAnim* view = (CActParamAnim*)this;
     CActParamAnimOwner* owner = view->owner08;
     int ok;
     if (owner == 0) {
@@ -1849,7 +1840,7 @@ int startFlag1000Anim__13CActParamAnimFv(CActParamAnim* self, u32 param) {
                         if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                     }
                     u32 ret = evalParamBySlot((CActParamData*)view->mChildData10, &local, param, b, flag);
-                    switchSubAnim(self, local, ret, view->field2A4, 0);
+                    switchSubAnim(this, local, ret, view->field2A4, 0);
                     view->field0C &= ~0x200;
                 }
             } else {
@@ -1860,7 +1851,7 @@ int startFlag1000Anim__13CActParamAnimFv(CActParamAnim* self, u32 param) {
                     if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                 }
                 u32 ret = evalParamChain(view->mChildData10, &local, param, flag, 0);
-                switchSubAnim(self, local, ret, view->field2A4, (view->field0C >> 9) & 1);
+                switchSubAnim(this, local, ret, view->field2A4, (view->field0C >> 9) & 1);
             }
             return 1;
         }
@@ -1868,8 +1859,7 @@ int startFlag1000Anim__13CActParamAnimFv(CActParamAnim* self, u32 param) {
     return 0;
 }
 
-// Retail symbol is Fv but the body reads r4 (one extra param) - forced-name
-// free function, same scheme as initAnimBlendVectors__13CActParamAnimFv.
+// Member taking r4 (one extra param) (true mangle; was an Fv forced-name free function).
 // Plateau packet (best 35 mismatch / 28 structural / 7 reg-swap, size PASS
 // 404B=404B, no reloc drift): residual is the small-path arg-
 // materialization scheduler wall from the fireParamGate packet - retail
@@ -1881,8 +1871,8 @@ int startFlag1000Anim__13CActParamAnimFv(CActParamAnim* self, u32 param) {
 // p = param copy local (coalesces at every tried position - function top,
 // branch top, after model load - identical output), ternary moved before
 // the field4BD load / flags clear (identical 35/28).
-int fireSpeedGate__13CActParamAnimFv(CActParamAnim* self, u32 param) {
-    CActParamAnim* view = (CActParamAnim*)self;
+int CActParamAnim::fireSpeedGate(u32 param) {
+    CActParamAnim* view = (CActParamAnim*)this;
     CActParamAnimOwner* owner = view->owner08;
     u32 localSmall;
     u32 localBig;
@@ -1921,7 +1911,7 @@ int fireSpeedGate__13CActParamAnimFv(CActParamAnim* self, u32 param) {
                         }
                     }
                     u32 ret = evalParamBySlot((CActParamData*)view->mChildData10, &localSmall, p, b, flag);
-                    switchSubAnim(self, localSmall, ret, view->field2A4, 0);
+                    switchSubAnim(this, localSmall, ret, view->field2A4, 0);
                     view->field0C &= ~0x200;
                 }
             } else {
@@ -1931,7 +1921,7 @@ int fireSpeedGate__13CActParamAnimFv(CActParamAnim* self, u32 param) {
                     if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                 }
                 u32 ret = evalParamChain(view->mChildData10, &localBig, param, flag, 0);
-                switchSubAnim(self, localBig, ret, view->field2A4, (view->field0C >> 9) & 1);
+                switchSubAnim(this, localBig, ret, view->field2A4, (view->field0C >> 9) & 1);
             }
         }
         return 1;
@@ -1939,10 +1929,9 @@ int fireSpeedGate__13CActParamAnimFv(CActParamAnim* self, u32 param) {
     return 0;
 }
 
-// Retail symbol is Fv but the body reads r4 (one extra param) -- forced-name
-// free function, same scheme as initAnimBlendVectors__13CActParamAnimFv.
-int fireSpeedOkGt__13CActParamAnimFv(CActParamAnim* self, u32 param) {
-    CActParamAnim* view = (CActParamAnim*)self;
+// Member taking r4 (one extra param) (true mangle; was an Fv forced-name free function).
+int CActParamAnim::fireSpeedOkGt(u32 param) {
+    CActParamAnim* view = (CActParamAnim*)this;
     CActParamAnimOwner* owner = view->owner08;
     u32 localSmall;
     u32 localBig;
@@ -1977,7 +1966,7 @@ int fireSpeedOkGt__13CActParamAnimFv(CActParamAnim* self, u32 param) {
                         if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                     }
                     u32 ret = evalParamBySlot((CActParamData*)view->mChildData10, &localSmall, param, b, flag);
-                    switchSubAnim(self, localSmall, ret, view->field2A4, 0);
+                    switchSubAnim(this, localSmall, ret, view->field2A4, 0);
                     view->field0C &= ~0x200;
                 }
             } else {
@@ -1987,7 +1976,7 @@ int fireSpeedOkGt__13CActParamAnimFv(CActParamAnim* self, u32 param) {
                     if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                 }
                 u32 ret = evalParamChain(view->mChildData10, &localBig, param, flag, 0);
-                switchSubAnim(self, localBig, ret, view->field2A4, (view->field0C >> 9) & 1);
+                switchSubAnim(this, localBig, ret, view->field2A4, (view->field0C >> 9) & 1);
             }
         }
         return 1;
@@ -1995,12 +1984,12 @@ int fireSpeedOkGt__13CActParamAnimFv(CActParamAnim* self, u32 param) {
     return 0;
 }
 
-// Retail symbol is Fv but the body reads r4 (one extra param) - forced-name
-// free function. Gate chain: blend accumulator (+0x44C) below the threshold,
+// Member taking r4 (one extra param) (true mangle; was an Fv forced-name free function).
+// Gate chain: blend accumulator (+0x44C) below the threshold,
 // +0x454 above 10.0f, owner present, speed non-zero, and scaled
 // remaining time above +0x434.
-int fireBlendGate__13CActParamAnimFv(CActParamAnim* self, u32 param) {
-    CActParamAnim* view = (CActParamAnim*)self;
+int CActParamAnim::fireBlendGate(u32 param) {
+    CActParamAnim* view = (CActParamAnim*)this;
     CActParamAnimOwner* owner = view->owner08;
     u32 localSmall;
     u32 localBig;
@@ -2029,7 +2018,7 @@ int fireBlendGate__13CActParamAnimFv(CActParamAnim* self, u32 param) {
                 if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
             }
             u32 ret = evalParamBySlot((CActParamData*)view->mChildData10, &localSmall, param, b, flag);
-            switchSubAnim(self, localSmall, ret, view->field2A4, 0);
+            switchSubAnim(this, localSmall, ret, view->field2A4, 0);
             view->field0C &= ~0x200;
         }
         return 1;
@@ -2040,11 +2029,11 @@ int fireBlendGate__13CActParamAnimFv(CActParamAnim* self, u32 param) {
         if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
     }
     u32 ret = evalParamChain(view->mChildData10, &localBig, param, flag, 0);
-    switchSubAnim(self, localBig, ret, view->field2A4, (view->field0C >> 9) & 1);
+    switchSubAnim(this, localBig, ret, view->field2A4, (view->field0C >> 9) & 1);
     return 1;
 }
 
-void func_8004E9EC__13CActParamAnimFv(CActParamAnim* self) {
+void CActParamAnim::func_8004E9EC() {
     // TODO: reconstruct body (retail 0x26c bytes)
 }
 
@@ -2061,16 +2050,14 @@ extern "C" f32 safeFSqrt(f32 value) {
                                       : value * nw4r::math::FrSqrt(value);
 }
 
-void CActParamAnim::stepAnimState() const {}
 
-// Retail symbol is Fv but the body reads r4 (one extra param) -- forced-name
-// free function, same scheme as initAnimBlendVectors__13CActParamAnimFv. Per-frame
+// Member taking r4 (one extra param) (true mangle; was an Fv forced-name free function). Per-frame
 // anim update: gates on the active/playing flags, starts the requested anim
 // (param) through the data dispatcher, then advances the anim axis state and
 // writes the per-frame delta to +0x48C.
-int stepAnimState__13CActParamAnimFv(CActParamAnim* self, u32 param) {
-    CActParamAnim* view = (CActParamAnim*)self;
-    CActParamAnim* sview = (CActParamAnim*)self;
+int CActParamAnim::stepAnimState(u32 param) {
+    CActParamAnim* view = (CActParamAnim*)this;
+    CActParamAnim* sview = (CActParamAnim*)this;
     u32 flags = sview->field0C;
     if ((flags & 0x40) != 0) return 0;
     if ((flags & 0x2) != 0) return 0;
@@ -2121,7 +2108,7 @@ int stepAnimState__13CActParamAnimFv(CActParamAnim* self, u32 param) {
                 u8 b = sview->field4BD;
                 u32 ret = evalParamBySlot((CActParamData*)sview->mChildData10, &localSmall,
                                         param, b, flag2);
-                switchSubAnim(self, localSmall, ret, sview->field2A4, 0);
+                switchSubAnim(this, localSmall, ret, sview->field2A4, 0);
                 sview->field0C &= ~0x200;
             }
         } else {
@@ -2136,7 +2123,7 @@ int stepAnimState__13CActParamAnimFv(CActParamAnim* self, u32 param) {
             u32 ret = evalParamChain(sview->mChildData10, &localBig, param,
                                     flag2, 0);
             bool b = (sview->field0C & 0x200) != 0;
-            switchSubAnim(self, localBig, ret, sview->field2A4, b);
+            switchSubAnim(this, localBig, ret, sview->field2A4, b);
         }
     }
 
@@ -2197,10 +2184,9 @@ int stepAnimState__13CActParamAnimFv(CActParamAnim* self, u32 param) {
     return 1;
 }
 
-// Retail symbol is Fv but the body reads r4/r5 (two extra args) -- forced-name
-// free function, same scheme as initAnimBlendVectors__13CActParamAnimFv.
-int fireCountGate__13CActParamAnimFv(CActParamAnim* self, u32 param, s32 val) {
-    CActParamAnim* view = (CActParamAnim*)self;
+// Member taking r4/r5 (two extra args) (true mangle; was an Fv forced-name free function).
+int CActParamAnim::fireCountGate(u32 param, s32 val) {
+    CActParamAnim* view = (CActParamAnim*)this;
     u32 localBig;
     u32 localSmall;
     if (view->field374 != val) {
@@ -2232,7 +2218,7 @@ int fireCountGate__13CActParamAnimFv(CActParamAnim* self, u32 param, s32 val) {
             }
         }
         u32 ret = evalParamBySlot((CActParamData*)view->mChildData10, &localSmall, param, b, flag);
-        switchSubAnim(self, localSmall, ret, view->field2A4, 0);
+        switchSubAnim(this, localSmall, ret, view->field2A4, 0);
         view->field0C &= ~0x200;
     } else {
         u32 flag = 0;
@@ -2243,15 +2229,14 @@ int fireCountGate__13CActParamAnimFv(CActParamAnim* self, u32 param, s32 val) {
             }
         }
         u32 ret = evalParamChain(view->mChildData10, &localBig, param, flag, 0);
-        switchSubAnim(self, localBig, ret, view->field2A4, (view->field0C >> 9) & 1);
+        switchSubAnim(this, localBig, ret, view->field2A4, (view->field0C >> 9) & 1);
     }
     return 1;
 }
 
-// Retail symbol is Fv but the body reads r4/r5 (two extra args) -- forced-name
-// free function, same scheme as initAnimBlendVectors__13CActParamAnimFv.
-int fireWord378Gt__13CActParamAnimFv(CActParamAnim* self, u32 param, s32 val) {
-    CActParamAnim* view = (CActParamAnim*)self;
+// Member taking r4/r5 (two extra args) (true mangle; was an Fv forced-name free function).
+int CActParamAnim::fireWord378Gt(u32 param, s32 val) {
+    CActParamAnim* view = (CActParamAnim*)this;
     u32 localBig;
     u32 localSmall;
     if (view->field378 == val) {
@@ -2276,7 +2261,7 @@ int fireWord378Gt__13CActParamAnimFv(CActParamAnim* self, u32 param, s32 val) {
                         if ((model & 0x10) == 0 && (model & 0x8) == 0) flag = 1;
                     }
                     u32 ret = evalParamBySlot((CActParamData*)data, &localSmall, param, b, flag);
-                    switchSubAnim(self, localSmall, ret, view->field2A4, 0);
+                    switchSubAnim(this, localSmall, ret, view->field2A4, 0);
                     view->field0C &= ~0x200;
                 }
             } else {
@@ -2288,7 +2273,7 @@ int fireWord378Gt__13CActParamAnimFv(CActParamAnim* self, u32 param, s32 val) {
                 }
                 u32 ret =
                     evalParamChain(view->mChildData10, &localBig, param, flag, 0);
-                switchSubAnim(self, localBig, ret, view->field2A4, (view->field0C >> 9) & 1);
+                switchSubAnim(this, localBig, ret, view->field2A4, (view->field0C >> 9) & 1);
             }
         }
         return 1;
@@ -2296,10 +2281,9 @@ int fireWord378Gt__13CActParamAnimFv(CActParamAnim* self, u32 param, s32 val) {
     return 0;
 }
 
-// Retail symbol is Fv but the body reads r4/r5 (two extra args) -- forced-name
-// free function, same scheme as initAnimBlendVectors__13CActParamAnimFv.
-int fireTwinCount__13CActParamAnimFv(CActParamAnim* self, u32 param, s32 val) {
-    CActParamAnim* view = (CActParamAnim*)self;
+// Member taking r4/r5 (two extra args) (true mangle; was an Fv forced-name free function).
+int CActParamAnim::fireTwinCount(u32 param, s32 val) {
+    CActParamAnim* view = (CActParamAnim*)this;
     u32 localSmall;
     u32 localBig;
     s32 f37C = view->field37C;
@@ -2322,7 +2306,7 @@ int fireTwinCount__13CActParamAnimFv(CActParamAnim* self, u32 param, s32 val) {
                         if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                     }
                     u32 ret = evalParamBySlot((CActParamData*)view->mChildData10, &localSmall, param, view->field4BD, flag);
-                    switchSubAnim(self, localSmall, ret, view->field2A4, 0);
+                    switchSubAnim(this, localSmall, ret, view->field2A4, 0);
                     view->field0C &= ~0x200;
                 }
             } else {
@@ -2332,7 +2316,7 @@ int fireTwinCount__13CActParamAnimFv(CActParamAnim* self, u32 param, s32 val) {
                     if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                 }
                 u32 ret = evalParamChain(view->mChildData10, &localBig, param, flag, 0);
-                switchSubAnim(self, localBig, ret, view->field2A4, (view->field0C >> 9) & 1);
+                switchSubAnim(this, localBig, ret, view->field2A4, (view->field0C >> 9) & 1);
             }
         }
         return 1;
@@ -2340,15 +2324,14 @@ int fireTwinCount__13CActParamAnimFv(CActParamAnim* self, u32 param, s32 val) {
     return 0;
 }
 
-// Retail symbol claims Fv but the body reads r4/r5 (forced-name member):
-// (self, animId, id). Guards the anim start behind an id match against the
+// Member taking r4/r5 (animId, id); true mangle (was an Fv forced-name
+// free function). Guards the anim start behind an id match against the
 // owner interface (or the cached +0x4B8 state word when unowned), then runs
 // the same small/big anim-start split as startAnimDual. Returns 1 when the
 // request was consumed (including the 0x40000/0x12 guard skip), 0 when the
 // id did not match.
-extern "C" int fireOwnerIdGt__13CActParamAnimFv(CActParamAnim* self,
-                                                u32 animId, u32 id) {
-    CActParamAnim* view = (CActParamAnim*)self;
+int CActParamAnim::fireOwnerIdGt(u32 animId, u32 id) {
+    CActParamAnim* view = (CActParamAnim*)this;
     if (view->owner08 == NULL) {
         if ((s32)view->field4B8 != (s32)id) {
             goto fail;
@@ -2373,7 +2356,7 @@ extern "C" int fireOwnerIdGt__13CActParamAnimFv(CActParamAnim* self,
                 }
                 u32 local;
                 u32 ret = evalParamBySlot((CActParamData*)data, &local, animId, b, flag);
-                switchSubAnim(self, local, ret, view->field2A4, 0);
+                switchSubAnim(this, local, ret, view->field2A4, 0);
                 view->field0C &= ~0x200;
             }
         } else {
@@ -2385,7 +2368,7 @@ extern "C" int fireOwnerIdGt__13CActParamAnimFv(CActParamAnim* self,
             }
             u32 local;
             u32 ret = evalParamChain(view->mChildData10, &local, animId, flag, 0);
-            switchSubAnim(self, local, ret, view->field2A4,
+            switchSubAnim(this, local, ret, view->field2A4,
                           (view->field0C >> 9) & 1);
         }
         return 1;
@@ -2413,7 +2396,7 @@ extern "C" int fireOwnerIdGt__13CActParamAnimFv(CActParamAnim* self,
             }
             u32 local;
             u32 ret = evalParamBySlot((CActParamData*)data, &local, animId, b, flag);
-            switchSubAnim(self, local, ret, view->field2A4, 0);
+            switchSubAnim(this, local, ret, view->field2A4, 0);
             view->field0C &= ~0x200;
         }
     } else {
@@ -2425,7 +2408,7 @@ extern "C" int fireOwnerIdGt__13CActParamAnimFv(CActParamAnim* self,
         }
         u32 local;
         u32 ret = evalParamChain(view->mChildData10, &local, animId, flag, 0);
-        switchSubAnim(self, local, ret, view->field2A4,
+        switchSubAnim(this, local, ret, view->field2A4,
                       (view->field0C >> 9) & 1);
     }
         return 1;
@@ -2435,10 +2418,9 @@ fail:
 }
 void CActParamAnim::func_8004F884() {}
 
-// Retail symbol is Fv but the body reads r4 (one extra param) -- forced-name
-// free function, same scheme as initAnimBlendVectors__13CActParamAnimFv.
-void fireBlendDflt__13CActParamAnimFv(CActParamAnim* self, u32 param) {
-    CActParamAnim* view = (CActParamAnim*)self;
+// Member taking r4 (one extra param) (true mangle; was an Fv forced-name free function).
+void CActParamAnim::fireBlendDflt(u32 param) {
+    CActParamAnim* view = (CActParamAnim*)this;
     view->field384 = 1.0f;
     if (param != 0) {
         if (param < 0x68) {
@@ -2459,7 +2441,7 @@ void fireBlendDflt__13CActParamAnimFv(CActParamAnim* self, u32 param) {
                     if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                 }
                 u32 ret = evalParamBySlot((CActParamData*)view->mChildData10, &local, param, b, flag);
-                switchSubAnim(self, local, ret, view->field2A4, 0);
+                switchSubAnim(this, local, ret, view->field2A4, 0);
                 view->field0C &= ~0x200;
             }
         } else {
@@ -2470,7 +2452,7 @@ void fireBlendDflt__13CActParamAnimFv(CActParamAnim* self, u32 param) {
                 if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
             }
             u32 ret = evalParamChain(view->mChildData10, &local, param, flag, 0);
-            switchSubAnim(self, local, ret, view->field2A4, (view->field0C >> 9) & 1);
+            switchSubAnim(this, local, ret, view->field2A4, (view->field0C >> 9) & 1);
         }
     }
     // Y-rotation of the anim axis: build the rotation matrix, transform the
@@ -2490,13 +2472,12 @@ void fireBlendDflt__13CActParamAnimFv(CActParamAnim* self, u32 param) {
     r.x = m[0][0] * v.x + m[0][1] * v.y + m[0][2] * v.z;
     r.y = m[1][0] * v.x + m[1][1] * v.y + m[1][2] * v.z;
     r.z = m[2][0] * v.x + m[2][1] * v.y + m[2][2] * v.z;
-    reinterpret_cast<u32&>(self->field3C0) = *reinterpret_cast<u32*>(&r.x);
-    reinterpret_cast<u32&>(self->field3C4) = *reinterpret_cast<u32*>(&r.y);
-    reinterpret_cast<u32&>(self->field3C8) = *reinterpret_cast<u32*>(&r.z);
+    reinterpret_cast<u32&>(this->field3C0) = *reinterpret_cast<u32*>(&r.x);
+    reinterpret_cast<u32&>(this->field3C4) = *reinterpret_cast<u32*>(&r.y);
+    reinterpret_cast<u32&>(this->field3C8) = *reinterpret_cast<u32*>(&r.z);
 }
 
-// Retail symbol is Fv but the body reads r4 (one extra param) -- forced-name
-// free function, same scheme as initAnimBlendVectors__13CActParamAnimFv.
+// Member taking r4 (one extra param) (true mangle; was an Fv forced-name free function).
 // Plateau packet (best 51 mismatch / 29 structural / 22 reg-swap, size PASS
 // 376=376, no reloc drift): residual is the same small-path arg-
 // materialization scheduler wall as startAnimDual/51448/51584 -- retail parks
@@ -2510,8 +2491,8 @@ void fireBlendDflt__13CActParamAnimFv(CActParamAnim* self, u32 param) {
 // branches (identical), flag clears (canonicalized, identical),
 // reference view alias instead of pointer (identical), nested-call form
 // (evalParamBySlot inlined into the BDCC arg list, canonicalized, identical).
-int fireParamGate__13CActParamAnimFv(CActParamAnim* self, u32 param) {
-    CActParamAnim* view = (CActParamAnim*)self;
+int CActParamAnim::fireParamGate(u32 param) {
+    CActParamAnim* view = (CActParamAnim*)this;
     u32 localSmall;
     u32 localBig;
     // Both gates share the out-of-line return-0 block (retail: beq/ble to
@@ -2536,7 +2517,7 @@ int fireParamGate__13CActParamAnimFv(CActParamAnim* self, u32 param) {
                         }
                         u32 localSmall;
                         u32 ret = evalParamBySlot((CActParamData*)view->mChildData10, &localSmall, param, view->field4BD, flag);
-                        switchSubAnim(self, localSmall, ret, view->field2A4, 0);
+                        switchSubAnim(this, localSmall, ret, view->field2A4, 0);
                         view->field0C &= ~0x200;
                     }
                 } else {
@@ -2547,7 +2528,7 @@ int fireParamGate__13CActParamAnimFv(CActParamAnim* self, u32 param) {
                     }
                     u32 localBig;
                     u32 ret = evalParamChain(view->mChildData10, &localBig, param, flag, 0);
-                    switchSubAnim(self, localBig, ret, view->field2A4, (view->field0C >> 9) & 1);
+                    switchSubAnim(this, localBig, ret, view->field2A4, (view->field0C >> 9) & 1);
                 }
             }
             return 1;
@@ -2556,10 +2537,9 @@ int fireParamGate__13CActParamAnimFv(CActParamAnim* self, u32 param) {
     return 0;
 }
 
-// Retail symbol is Fv but the body reads r4 (one extra param) -- forced-name
-// free function, same scheme as initAnimBlendVectors__13CActParamAnimFv.
-int fireBlendCust__13CActParamAnimFv(CActParamAnim* self, u32 param) {
-    CActParamAnim* view = (CActParamAnim*)self;
+// Member taking r4 (one extra param) (true mangle; was an Fv forced-name free function).
+int CActParamAnim::fireBlendCust(u32 param) {
+    CActParamAnim* view = (CActParamAnim*)this;
     u32 localSmall;
     u32 localBig;
     view->field384 = 10.0f;
@@ -2580,7 +2560,7 @@ int fireBlendCust__13CActParamAnimFv(CActParamAnim* self, u32 param) {
                     if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                 }
                 u32 ret = evalParamBySlot((CActParamData*)view->mChildData10, &localSmall, param, view->field4BD, flag);
-                switchSubAnim(self, localSmall, ret, view->field2A4, 0);
+                switchSubAnim(this, localSmall, ret, view->field2A4, 0);
                 view->field0C &= ~0x200;
             }
         } else {
@@ -2590,23 +2570,22 @@ int fireBlendCust__13CActParamAnimFv(CActParamAnim* self, u32 param) {
                 if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
             }
             u32 ret = evalParamChain(view->mChildData10, &localBig, param, flag, 0);
-            switchSubAnim(self, localBig, ret, view->field2A4, (view->field0C >> 9) & 1);
+            switchSubAnim(this, localBig, ret, view->field2A4, (view->field0C >> 9) & 1);
         }
     }
     if ((view->field0C & 0x4000000) == 0) {
-        reinterpret_cast<CActParamAnimVtEC*>(self)->dispatchEC();
+        reinterpret_cast<CActParamAnimVtEC*>(this)->dispatchEC();
     }
     return 1;
 }
 
-// Retail symbol is Fv (no params) -- forced-name free function, same scheme as
-// initAnimBlendVectors__13CActParamAnimFv. Per-frame anim-axis update: builds the
+// Real member (no params; was a forced-name free function). Per-frame anim-axis update: builds the
 // Y-rotation matrix from the anim angle, optionally aligns the anim quaternion
 // (+0x414) through alignAnimQuat and pulls the running value toward +0x460,
 // then computes the frame delta (+0x48C) from the rotated axis and the speed.
-void solveHeadRate__13CActParamAnimFv(CActParamAnim* self) {
-    CActParamAnim* view = (CActParamAnim*)self;
-    CActParamAnim* sview = (CActParamAnim*)self;
+void CActParamAnim::solveHeadRate() {
+    CActParamAnim* view = (CActParamAnim*)this;
+    CActParamAnim* sview = (CActParamAnim*)this;
 
     f32 f29 = view->field440;
     f32 f31 = view->field460;
@@ -2620,7 +2599,7 @@ void solveHeadRate__13CActParamAnimFv(CActParamAnim* self) {
     };
 
     if ((sview->field0C & 0x400000) != 0) {
-        if (alignAnimQuat(self,
+        if (alignAnimQuat(this,
                           reinterpret_cast<ml::CVec3*>(&view->field3D8)) != 0) {
             CActParamAnimOwner* owner = sview->owner08;
             int r0;
@@ -2669,7 +2648,7 @@ void solveHeadRate__13CActParamAnimFv(CActParamAnim* self) {
             v0.y = 0.0f;
         }
     } else {
-        f31 = view->field380 * reinterpret_cast<CActParamAnimVt14*>(self)->f03();
+        f31 = view->field380 * reinterpret_cast<CActParamAnimVt14*>(this)->f03();
         v0.y = f31 * CDeviceVI::getSecPerFrame() * 0.5f;
     }
 
@@ -2733,10 +2712,9 @@ extern "C" f32 dotVec3f(const f32* a, const f32* b){
 
 void func_800504DC(CActParamAnim* self) {}
 
-// Retail symbol is Fv but the body reads r4 (one extra param) -- forced-name
-// free function, same scheme as initAnimBlendVectors__13CActParamAnimFv.
-int startIfActive__13CActParamAnimFv(CActParamAnim* self, u32 param) {
-    CActParamAnim* view = (CActParamAnim*)self;
+// Member taking r4 (one extra param) (true mangle; was an Fv forced-name free function).
+int CActParamAnim::startIfActive(u32 param) {
+    CActParamAnim* view = (CActParamAnim*)this;
     u32 localBig;
     u32 localSmall;
     if ((view->field0C & 2) != 0) {
@@ -2759,7 +2737,7 @@ int startIfActive__13CActParamAnimFv(CActParamAnim* self, u32 param) {
                         if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                     }
                     u32 ret = evalParamBySlot((CActParamData*)data, &localSmall, param, b, flag);
-                    switchSubAnim(self, localSmall, ret, view->field2A4, 0);
+                    switchSubAnim(this, localSmall, ret, view->field2A4, 0);
                     view->field0C &= ~0x200;
                 }
             } else {
@@ -2769,7 +2747,7 @@ int startIfActive__13CActParamAnimFv(CActParamAnim* self, u32 param) {
                     if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                 }
                 u32 ret = evalParamChain(view->mChildData10, &localBig, param, flag, 0);
-                switchSubAnim(self, localBig, ret, view->field2A4, (view->field0C >> 9) & 1);
+                switchSubAnim(this, localBig, ret, view->field2A4, (view->field0C >> 9) & 1);
             }
         }
         return 1;
@@ -2803,7 +2781,7 @@ int startIfActive__13CActParamAnimFv(CActParamAnim* self, u32 param) {
         }                                                                       \
         u32 startRet =                                                          \
             evalParamBySlot((CActParamData*)view->mChildData10, &outLocal, param, b, flag);        \
-        switchSubAnim(self, outLocal, startRet, view->field2A4, 0);              \
+        switchSubAnim(this, outLocal, startRet, view->field2A4, 0);              \
         view->field0C &= ~0x200u;                                               \
     } while (0)
 
@@ -2815,12 +2793,12 @@ int startIfActive__13CActParamAnimFv(CActParamAnim* self, u32 param) {
             if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;                    \
         }                                                                       \
         u32 ret = evalParamChain(view->mChildData10, &outLocal, param, flag, 0); \
-        switchSubAnim(self, outLocal, ret, view->field2A4,                      \
+        switchSubAnim(this, outLocal, ret, view->field2A4,                      \
                       (view->field0C >> 9) & 1);                                \
     } while (0)
 
-int fireTimerGate__13CActParamAnimFv(CActParamAnim* self, u32 param, s32 val) {
-    CActParamAnim* view = (CActParamAnim*)self;
+int CActParamAnim::fireTimerGate(u32 param, s32 val) {
+    CActParamAnim* view = (CActParamAnim*)this;
     // Shared scratch across the three halves.
     u32 model;
     u8 b;
@@ -2894,10 +2872,9 @@ failOwner:
 #undef ACT_PARAM_ANIM_START_BIG
 }
 
-// Retail symbol is Fv but the body reads r4/r5 (anim id + rng arg) --
-// forced-name free function, same scheme as initAnimBlendVectors__13CActParamAnimFv.
-int startRandAnim__13CActParamAnimFv(CActParamAnim* self, u32 param, int rngArg) {
-    CActParamAnim* view = (CActParamAnim*)self;
+// Member taking r4/r5 (anim id + rng arg) (true mangle; was an Fv forced-name free function).
+int CActParamAnim::startRandAnim(u32 param, int rngArg) {
+    CActParamAnim* view = (CActParamAnim*)this;
     u32 localSmall;
     u32 localBig;
     if (ml::math::mtRand(rngArg) == 0) {
@@ -2921,7 +2898,7 @@ int startRandAnim__13CActParamAnimFv(CActParamAnim* self, u32 param, int rngArg)
                         if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                     }
                     u32 ret = evalParamBySlot((CActParamData*)data, &localSmall, param, b, flag);
-                    switchSubAnim(self, localSmall, ret, view->field2A4, 0);
+                    switchSubAnim(this, localSmall, ret, view->field2A4, 0);
                     view->field0C &= ~0x200;
                 }
             } else {
@@ -2931,7 +2908,7 @@ int startRandAnim__13CActParamAnimFv(CActParamAnim* self, u32 param, int rngArg)
                     if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                 }
                 u32 ret = evalParamChain(view->mChildData10, &localBig, param, flag, 0);
-                switchSubAnim(self, localBig, ret, view->field2A4, (view->field0C >> 9) & 1);
+                switchSubAnim(this, localBig, ret, view->field2A4, (view->field0C >> 9) & 1);
             }
         }
         return 1;
@@ -2939,11 +2916,11 @@ int startRandAnim__13CActParamAnimFv(CActParamAnim* self, u32 param, int rngArg)
     return 0;
 }
 
-// Retail symbol is Fv but the body reads r4 (one extra param) - forced-name
-// free function. Gate: wrap the anim angle delta into [-pi, pi), scale it,
+// Member taking r4 (one extra param) (true mangle; was an Fv forced-name free function).
+// Gate: wrap the anim angle delta into [-pi, pi), scale it,
 // and proceed only when -90.0f < scaled <= -20.0f.
-int fireAngleGate__13CActParamAnimFv(CActParamAnim* self, u32 param) {
-    CActParamAnim* view = (CActParamAnim*)self;
+int CActParamAnim::fireAngleGate(u32 param) {
+    CActParamAnim* view = (CActParamAnim*)this;
     u32 localSmall;
     u32 localBig;
 
@@ -2972,7 +2949,7 @@ int fireAngleGate__13CActParamAnimFv(CActParamAnim* self, u32 param) {
                 if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
             }
             u32 ret = evalParamBySlot((CActParamData*)view->mChildData10, &localSmall, param, b, flag);
-            switchSubAnim(self, localSmall, ret, view->field2A4, 0);
+            switchSubAnim(this, localSmall, ret, view->field2A4, 0);
             view->field0C &= ~0x200;
         }
         return 1;
@@ -2983,12 +2960,12 @@ int fireAngleGate__13CActParamAnimFv(CActParamAnim* self, u32 param) {
         if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
     }
     u32 ret = evalParamChain(view->mChildData10, &localBig, param, flag, 0);
-    switchSubAnim(self, localBig, ret, view->field2A4, (view->field0C >> 9) & 1);
+    switchSubAnim(this, localBig, ret, view->field2A4, (view->field0C >> 9) & 1);
     return 1;
 }
 
-// Retail symbol is Fv but the body reads r4 (one extra param) - forced-name
-// free function.
+// Member taking r4 (one extra param) (true mangle; was an Fv forced-name free function).
+//
 // Plateau packet (best 41 mismatch / 31 structural / 10 reg-swap, size PASS
 // 416B=416B, reloc drift: one A1FC presence pair):
 // - Residual clusters: (1) retail hoists the loop1 2*pi lfs to +0x08 before
@@ -3021,8 +2998,8 @@ int fireAngleGate__13CActParamAnimFv(CActParamAnim* self, u32 param) {
 //   (because retail's addi r3,r3,0x10 destroys self earlier).
 // - Next: find a lever for the early A1FC lfs hoist and the early param/
 //   &local materialization (possibly tied to how `param` reaches the call).
-int fireAngleLoGt__13CActParamAnimFv(CActParamAnim* self, u32 param) {
-    CActParamAnim* view = (CActParamAnim*)self;
+int CActParamAnim::fireAngleLoGt(u32 param) {
+    CActParamAnim* view = (CActParamAnim*)this;
     u32 localSmall;
     u32 localBig;
     // Wrap the anim angle delta into [-pi, pi) (same wrap as wrapAnglePi),
@@ -3057,7 +3034,7 @@ int fireAngleLoGt__13CActParamAnimFv(CActParamAnim* self, u32 param) {
                         if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                     }
                     u32 ret = evalParamBySlot((CActParamData*)view->mChildData10, &localSmall, param, b, flag);
-                    switchSubAnim(self, localSmall, ret, view->field2A4, 0);
+                    switchSubAnim(this, localSmall, ret, view->field2A4, 0);
                     view->field0C &= ~0x200;
                 }
             } else {
@@ -3067,7 +3044,7 @@ int fireAngleLoGt__13CActParamAnimFv(CActParamAnim* self, u32 param) {
                     if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                 }
                 u32 ret = evalParamChain(view->mChildData10, &localBig, param, flag, 0);
-                switchSubAnim(self, localBig, ret, view->field2A4, (view->field0C >> 9) & 1);
+                switchSubAnim(this, localBig, ret, view->field2A4, (view->field0C >> 9) & 1);
             }
         }
         return 1;
@@ -3075,11 +3052,11 @@ int fireAngleLoGt__13CActParamAnimFv(CActParamAnim* self, u32 param) {
     return 0;
 }
 
-// Retail symbol is Fv but the body reads r4 (one extra param) - forced-name
-// free function. Gate: wrap the anim angle delta into [-pi, pi), scale it,
+// Member taking r4 (one extra param) (true mangle; was an Fv forced-name free function).
+// Gate: wrap the anim angle delta into [-pi, pi), scale it,
 // and proceed only when 20.0f <= scaled < 90.0f.
-int fireAngleBand__13CActParamAnimFv(CActParamAnim* self, u32 param) {
-    CActParamAnim* view = (CActParamAnim*)self;
+int CActParamAnim::fireAngleBand(u32 param) {
+    CActParamAnim* view = (CActParamAnim*)this;
     u32 localSmall;
     u32 localBig;
 
@@ -3108,7 +3085,7 @@ int fireAngleBand__13CActParamAnimFv(CActParamAnim* self, u32 param) {
                 if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
             }
             u32 ret = evalParamBySlot((CActParamData*)view->mChildData10, &localSmall, param, b, flag);
-            switchSubAnim(self, localSmall, ret, view->field2A4, 0);
+            switchSubAnim(this, localSmall, ret, view->field2A4, 0);
             view->field0C &= ~0x200;
         }
         return 1;
@@ -3119,14 +3096,13 @@ int fireAngleBand__13CActParamAnimFv(CActParamAnim* self, u32 param) {
         if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
     }
     u32 ret = evalParamChain(view->mChildData10, &localBig, param, flag, 0);
-    switchSubAnim(self, localBig, ret, view->field2A4, (view->field0C >> 9) & 1);
+    switchSubAnim(this, localBig, ret, view->field2A4, (view->field0C >> 9) & 1);
     return 1;
 }
 
-// Retail symbol is Fv but the body reads r4 (one extra param) -- forced-name
-// free function, same scheme as initAnimBlendVectors__13CActParamAnimFv.
-int fireAngleHiGt__13CActParamAnimFv(CActParamAnim* self, u32 param) {
-    CActParamAnim* view = (CActParamAnim*)self;
+// Member taking r4 (one extra param) (true mangle; was an Fv forced-name free function).
+int CActParamAnim::fireAngleHiGt(u32 param) {
+    CActParamAnim* view = (CActParamAnim*)this;
     u32 localSmall;
     u32 localBig;
     // Wrap the anim angle delta into [-pi, pi) (same wrap as wrapAnglePi;
@@ -3158,7 +3134,7 @@ int fireAngleHiGt__13CActParamAnimFv(CActParamAnim* self, u32 param) {
                         if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                     }
                     u32 ret = evalParamBySlot((CActParamData*)data, &localSmall, param, b, flag);
-                    switchSubAnim(self, localSmall, ret, view->field2A4, 0);
+                    switchSubAnim(this, localSmall, ret, view->field2A4, 0);
                     view->field0C &= ~0x200;
                 }
             } else {
@@ -3168,7 +3144,7 @@ int fireAngleHiGt__13CActParamAnimFv(CActParamAnim* self, u32 param) {
                     if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                 }
                 u32 ret = evalParamChain(view->mChildData10, &localBig, param, flag, 0);
-                switchSubAnim(self, localBig, ret, view->field2A4, (view->field0C >> 9) & 1);
+                switchSubAnim(this, localBig, ret, view->field2A4, (view->field0C >> 9) & 1);
             }
         }
         return 1;
@@ -3207,10 +3183,9 @@ int fireAngleHiGt__13CActParamAnimFv(CActParamAnim* self, u32 param) {
 // MWCC_CASES rfc_send_test: MWCC scheduler tie-break on hoisting side-effect-
 // free arg computations above branches. Byte-identical sibling
 // fireOpenGate2 carries the identical residual.
-// Retail symbol is Fv but the body reads r4 (one extra param) -- forced-name
-// free function, same scheme as initAnimBlendVectors__13CActParamAnimFv.
-int fireOpenGate1__13CActParamAnimFv(CActParamAnim* self, u32 param) {
-    CActParamAnim* view = (CActParamAnim*)self;
+// Member taking r4 (one extra param) (true mangle; was an Fv forced-name free function).
+int CActParamAnim::fireOpenGate1(u32 param) {
+    CActParamAnim* view = (CActParamAnim*)this;
     u32 local;
     if (param != 0) {
         if (param < 0x68) {
@@ -3231,7 +3206,7 @@ int fireOpenGate1__13CActParamAnimFv(CActParamAnim* self, u32 param) {
                     if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                 }
                 u32 ret = evalParamBySlot((CActParamData*)data, &local, param, b, flag);
-                switchSubAnim(self, local, ret, view->field2A4, 0);
+                switchSubAnim(this, local, ret, view->field2A4, 0);
                 view->field0C &= ~0x200;
             }
         } else {
@@ -3242,16 +3217,15 @@ int fireOpenGate1__13CActParamAnimFv(CActParamAnim* self, u32 param) {
                 if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
             }
             u32 ret = evalParamChain(view->mChildData10, &local, param, flag, 0);
-            switchSubAnim(self, local, ret, view->field2A4, (view->field0C >> 9) & 1);
+            switchSubAnim(this, local, ret, view->field2A4, (view->field0C >> 9) & 1);
         }
     }
     return 1;
 }
 
-// Retail symbol is Fv but the body reads r4 (one extra param) - forced-name
-// free function, same scheme as initAnimBlendVectors__13CActParamAnimFv.
-int fireOpenGate2__13CActParamAnimFv(CActParamAnim* self, u32 param) {
-    CActParamAnim* view = (CActParamAnim*)self;
+// Member taking r4 (one extra param) (true mangle; was an Fv forced-name free function).
+int CActParamAnim::fireOpenGate2(u32 param) {
+    CActParamAnim* view = (CActParamAnim*)this;
     if (param != 0) {
         if (param < 0x68) {
             // Skip the anim start while the 0x40000 guard flag is set and the
@@ -3272,7 +3246,7 @@ int fireOpenGate2__13CActParamAnimFv(CActParamAnim* self, u32 param) {
                 }
                 u32 local;
                 u32 ret = evalParamBySlot((CActParamData*)data, &local, param, b, flag);
-                switchSubAnim(self, local, ret, view->field2A4, 0);
+                switchSubAnim(this, local, ret, view->field2A4, 0);
                 view->field0C &= ~0x200;
             }
         } else {
@@ -3284,16 +3258,15 @@ int fireOpenGate2__13CActParamAnimFv(CActParamAnim* self, u32 param) {
             }
             u32 local;
             u32 ret = evalParamChain(view->mChildData10, &local, param, flag, 0);
-            switchSubAnim(self, local, ret, view->field2A4, (view->field0C >> 9) & 1);
+            switchSubAnim(this, local, ret, view->field2A4, (view->field0C >> 9) & 1);
         }
     }
     return 1;
 }
 
-// Retail symbol is Fv but the body reads r4 (one extra param) -- forced-name
-// free function, same scheme as initAnimBlendVectors__13CActParamAnimFv.
-int fireOpenGate3__13CActParamAnimFv(CActParamAnim* self, u32 param) {
-    CActParamAnim* view = (CActParamAnim*)self;
+// Member taking r4 (one extra param) (true mangle; was an Fv forced-name free function).
+int CActParamAnim::fireOpenGate3(u32 param) {
+    CActParamAnim* view = (CActParamAnim*)this;
     u32 localBig;
     u32 localSmall;
     if (param != 0) {
@@ -3315,7 +3288,7 @@ int fireOpenGate3__13CActParamAnimFv(CActParamAnim* self, u32 param) {
                     if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                 }
                 u32 ret = evalParamBySlot((CActParamData*)data, &localSmall, param, b, flag);
-                switchSubAnim(self, localSmall, ret, view->field2A4, 0);
+                switchSubAnim(this, localSmall, ret, view->field2A4, 0);
                 view->field0C &= ~0x200;
             }
         } else {
@@ -3326,16 +3299,15 @@ int fireOpenGate3__13CActParamAnimFv(CActParamAnim* self, u32 param) {
                 if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
             }
             u32 ret = evalParamChain(view->mChildData10, &localBig, param, flag, 0);
-            switchSubAnim(self, localBig, ret, view->field2A4, (view->field0C >> 9) & 1);
+            switchSubAnim(this, localBig, ret, view->field2A4, (view->field0C >> 9) & 1);
         }
     }
     return 1;
 }
 
-// Retail symbol is Fv but the body reads r4 (one extra param) -- forced-name
-// free function, same scheme as initAnimBlendVectors__13CActParamAnimFv.
-int fireFlag4D4Gt__13CActParamAnimFv(CActParamAnim* self, u32 param) {
-    CActParamAnim* view = (CActParamAnim*)self;
+// Member taking r4 (one extra param) (true mangle; was an Fv forced-name free function).
+int CActParamAnim::fireFlag4D4Gt(u32 param) {
+    CActParamAnim* view = (CActParamAnim*)this;
     u32 localSmall;
     u32 localBig;
     if (view->field4D4 != 0) {
@@ -3359,7 +3331,7 @@ int fireFlag4D4Gt__13CActParamAnimFv(CActParamAnim* self, u32 param) {
                         if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                     }
                     u32 ret = evalParamBySlot((CActParamData*)data, &localSmall, param, b, flag);
-                    switchSubAnim(self, localSmall, ret, view->field2A4, 0);
+                    switchSubAnim(this, localSmall, ret, view->field2A4, 0);
                     view->field0C &= ~0x200;
                 }
             } else {
@@ -3369,7 +3341,7 @@ int fireFlag4D4Gt__13CActParamAnimFv(CActParamAnim* self, u32 param) {
                     if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                 }
                 u32 ret = evalParamChain(view->mChildData10, &localBig, param, flag, 0);
-                switchSubAnim(self, localBig, ret, view->field2A4, (view->field0C >> 9) & 1);
+                switchSubAnim(this, localBig, ret, view->field2A4, (view->field0C >> 9) & 1);
             }
         }
         return 1;
@@ -3377,11 +3349,10 @@ int fireFlag4D4Gt__13CActParamAnimFv(CActParamAnim* self, u32 param) {
     return 0;
 }
 
-// Retail symbol is Fv but the body reads r4 (one extra param) -- forced-name
-// free function, same scheme as initAnimBlendVectors__13CActParamAnimFv. Mirror of
+// Member taking r4 (one extra param) (true mangle; was an Fv forced-name free function). Mirror of
 // fireFlag4D4Gt with the 0x4D4 guard inverted.
-int fire4D4ZeroGt__13CActParamAnimFv(CActParamAnim* self, u32 param) {
-    CActParamAnim* view = (CActParamAnim*)self;
+int CActParamAnim::fire4D4ZeroGt(u32 param) {
+    CActParamAnim* view = (CActParamAnim*)this;
     u32 localSmall;
     u32 localBig;
     if (view->field4D4 == 0) {
@@ -3405,7 +3376,7 @@ int fire4D4ZeroGt__13CActParamAnimFv(CActParamAnim* self, u32 param) {
                         if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                     }
                     u32 ret = evalParamBySlot((CActParamData*)data, &localSmall, param, b, flag);
-                    switchSubAnim(self, localSmall, ret, view->field2A4, 0);
+                    switchSubAnim(this, localSmall, ret, view->field2A4, 0);
                     view->field0C &= ~0x200;
                 }
             } else {
@@ -3415,7 +3386,7 @@ int fire4D4ZeroGt__13CActParamAnimFv(CActParamAnim* self, u32 param) {
                     if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                 }
                 u32 ret = evalParamChain(view->mChildData10, &localBig, param, flag, 0);
-                switchSubAnim(self, localBig, ret, view->field2A4, (view->field0C >> 9) & 1);
+                switchSubAnim(this, localBig, ret, view->field2A4, (view->field0C >> 9) & 1);
             }
         }
         return 1;

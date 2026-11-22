@@ -280,87 +280,7 @@ __declspec(section ".rodata") __attribute__((used)) char lbl_eu_805090FC[0x114] 
 
 // RTTI is emitted by MWCC from the real CModelDispMakeCrystal class.
 
-// MWCC 4.3 (-ipa file) rules, verified by micro-probes against this TU's flags:
-//  - scalar const-float/double reads fold into an anonymous first-use pool
-//    (named defs dropped, pool order diverges) and const-int reads fold into
-//    immediates; struct/array member reads at nonzero offset cost an extra
-//    address instruction. So every code-referenced constant is its own
-//    NON-CONST global: uses stay single SDA21 loads, emission follows
-//    declaration order (hpp decls for A8..C0 updated to match).
-//  - any all-zero object exiles to .sbss2 despite section+used (plain,
-//    const, volatile, scalar and aggregate alike), and every aggregate
-//    (struct or array) is 8-aligned in .sdata2, so no aggregate can own the
-//    0x04 word. Zero words therefore live where MWCC leaves them: A4's 0.0
-//    is the orphan pad MWCC emits before the 8-aligned arr08, the 0x43 gap
-//    hides in E2's u8[2], and the unreferenced 0.0 tails ride in wider
-//    const arrays. A4 itself is the pad, named by its retail label rather
-//    than a second object in the pool tail (which landed in List's slice).
-__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_806684A0[1] = {1.0f};
-#define lbl_eu_806684A0 (lbl_eu_806684A0[0])
-__declspec(section ".sdata2") __attribute__((used)) const float arr08[1] __attribute__((aligned(8))) = {0.063f};
-__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_806684AC[1] = {-0.15f};
-#define lbl_eu_806684AC (lbl_eu_806684AC[0])
-__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_806684B0[1] = {-1.659f};
-#define lbl_eu_806684B0 (lbl_eu_806684B0[0])
-__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_806684B4[1] = {2.037f};
-#define lbl_eu_806684B4 (lbl_eu_806684B4[0])
-__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_806684B8[1] = {-0.941f};
-#define lbl_eu_806684B8 (lbl_eu_806684B8[0])
-__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_806684BC[1] = {70.0f};
-#define lbl_eu_806684BC (lbl_eu_806684BC[0])
-__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_806684C0[1] = {-110.0f};
-#define lbl_eu_806684C0 (lbl_eu_806684C0[0])
-__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_806684C4[1] = {-86.0f};
-#define lbl_eu_806684C4 (lbl_eu_806684C4[0])
-__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_806684C8[1] = {72.0f};
-#define lbl_eu_806684C8 (lbl_eu_806684C8[0])
-__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_806684CC[1] = {5.0f};
-#define lbl_eu_806684CC (lbl_eu_806684CC[0])
-__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_806684D0[1] = {0.2f};
-#define lbl_eu_806684D0 (lbl_eu_806684D0[0])
-__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_806684D4[1] = {50.0f};
-#define lbl_eu_806684D4 (lbl_eu_806684D4[0])
-__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_806684D8[1] = {30.0f};
-#define lbl_eu_806684D8 (lbl_eu_806684D8[0])
-__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_806684DC[1] = {20.0f};
-#define lbl_eu_806684DC (lbl_eu_806684DC[0])
-// E2's 0xFF + the 0x43 gap ride here: u8 aggregates will not pack at 0x42
-// (4-aligned minimum), but this 4-byte struct lands at 0x40 with exact C
-// packing e0@+0/e2@+2, so only E2's single red-function use costs extra.
-__declspec(section ".sdata2") __attribute__((used)) struct Tag42 { u16 e0; u8 e2[2]; } tag42 = {0xFFFF, 0xFF, 0x00};
-#define lbl_eu_806684E0 (tag42.e0)
-#define lbl_eu_806684E2 (tag42.e2[0])
-__declspec(section ".sdata2") __attribute__((used)) u32 lbl_eu_806684E4 = 0xFFFFFFFF;
-__declspec(section ".sdata2") __attribute__((used)) u16 lbl_eu_806684E8 = 0xFFFF;
-__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_806684EC[1] = {0.01f};
-#define lbl_eu_806684EC (lbl_eu_806684EC[0])
-__declspec(section ".sdata2") __attribute__((aligned(8))) __attribute__((used)) double lbl_eu_806684F0 = 4503599627370496.0;
-__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_806684F8[1] = {100.0f};
-#define lbl_eu_806684F8 (lbl_eu_806684F8[0])
-__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_806684FC[1] = {0.04f};
-#define lbl_eu_806684FC (lbl_eu_806684FC[0])
-__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_80668500[1] = {25.0f};
-#define lbl_eu_80668500 (lbl_eu_80668500[0])
-__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_80668504[1] = {1.5f};
-#define lbl_eu_80668504 (lbl_eu_80668504[0])
-__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_80668508[1] = {1.05f};
-#define lbl_eu_80668508 (lbl_eu_80668508[0])
-__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_8066850C[1] = {-1.3f};
-#define lbl_eu_8066850C (lbl_eu_8066850C[0])
-__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_80668510[3] = {-20.0f, 0.0f, 0.0f};
-__declspec(section ".sdata2") __attribute__((aligned(8))) __attribute__((used)) double lbl_eu_80668520 = 4503599627370496.0;
-__declspec(section ".sdata2") __attribute__((used)) float lbl_eu_80668528 = 30.0f;
-__declspec(section ".sdata2") __attribute__((used)) float lbl_eu_8066852C = 0.01f;
-__declspec(section ".sdata2") __attribute__((aligned(8))) __attribute__((used)) double lbl_eu_80668530 = 4503601774854144.0;
-__declspec(section ".sdata2") __attribute__((used)) const float arr98[3] = {1.0f, 0.0f, 0.0f};
-// 0x806684A4 is the alignment pad before the 8-aligned arr08, emitted by
-// this TU already; no second object may own it (the old tail copy landed in
-// CMCCrystalList's slice at 0x80668548). Name the pad, don't duplicate it.
-extern const f32 lbl_eu_806684A4;
-#define lbl_eu_806684A8 (arr08[0])
-#define lbl_eu_80668518 (lbl_eu_80668510[2])
-#define lbl_eu_80668538 (arr98)
-#define lbl_eu_80668540 (arr98[2])
+// .sdata2 literal pool: emitted by MWCC from the literals below (first-use order).
 
 // .bss 2x0xC (crystal vec work) + .sbss crystal-state bytes (hpp declares u8[8]).
 // Plain zero-init: MWCC sorts by size into .bss/.sbss like the old absorbs.
@@ -476,12 +396,12 @@ CModelDispMakeCrystal::CModelDispMakeCrystal(CScn* scene)
     base[0x2dd5] = zero2;
 
     // --- crystal-position groups (two VEC3 pairs) ---
-    writeVec3f(&group1[0], lbl_eu_806684A8, lbl_eu_806684AC, lbl_eu_806684B0);
-    f32 g1y = lbl_eu_806684BC * ml::deg2rad;
-    f32 g2y = lbl_eu_806684C0 * ml::deg2rad;
-    group1[1].x = lbl_eu_806684B4;
-    group1[1].y = lbl_eu_806684AC;
-    group1[1].z = lbl_eu_806684B8;
+    writeVec3f(&group1[0], 0.063f, -0.15f, -1.659f);
+    group1[1].x = 2.037f;
+    group1[1].y = -0.15f;
+    group1[1].z = -0.941f;
+    f32 g1y = 70.0f * ml::deg2rad;
+    f32 g2y = -110.0f * ml::deg2rad;
     group2[0].x = 0.0f;
     group2[0].y = g1y;
     group2[0].z = 0.0f;
@@ -722,8 +642,8 @@ void MakeCrystal_StartCharge(CModelDispMakeCrystal* self)
     crystalListState0To1(reinterpret_cast<CMCCrystalList*>(base + 0xc18));
     u8* entries = reinterpret_cast<CModelDispMakeCrystal*>(base)->mEntries;
     nw4r::math::VEC3 v;
-    v.x = lbl_eu_806684C4;
-    v.y = lbl_eu_806684C8;
+    v.x = -86.0f;
+    v.y = 72.0f;
     v.z = 0.0f;
     reinterpret_cast<CScrollBar*>(base + 0xe38)->InitRootPane(reinterpret_cast<const nw4r::math::VEC3*>(&v));
     reinterpret_cast<CScrollBar*>(base + 0xe38)->UpdateThumb(8, entries[0]);
@@ -753,8 +673,8 @@ void MakeCrystal_TickCharge(CModelDispMakeCrystal* self)
     f32* fbe4 = reinterpret_cast<f32*>(base + 0xbe4);
     f32* fbe0 = reinterpret_cast<f32*>(base + 0xbe0);
     f32 v4 = (*fbe4 += 1.0f);
-    if (v4 >= lbl_eu_806684CC) {
-        f32 v0 = *fbe0 - lbl_eu_806684D0;
+    if (v4 >= 5.0f) {
+        f32 v0 = *fbe0 - 0.2f;
         *fbe0 = v0;
         if (v0 < 0.0f) {
             *fbe0 = 0.0f;
@@ -802,7 +722,7 @@ void MakeCrystal_StateChargeWait(CModelDispMakeCrystal* self)
     else
         bit = (pad->mTurboPressButtonFlags >> 4) & 1;
     if (bit) {
-        *reinterpret_cast<f32*>(base + 0x2dcc) = lbl_eu_806684D4;
+        *reinterpret_cast<f32*>(base + 0x2dcc) = 50.0f;
         base[0x2dd5] = 1;
     }
     MakeCrystal_DispatchState(self);
@@ -832,10 +752,10 @@ void MakeCrystal_StateStartFx(CModelDispMakeCrystal* self)
 {
     u8* base = reinterpret_cast<u8*>(self);
     f32* vel = reinterpret_cast<f32*>(base + 0x2dcc);
-    *vel += lbl_eu_806684A0;
+    *vel += 1.0f;
     if (isFinished__11CMCEffStartFv(base + 0xc8c)) {
-        if (!(*vel < lbl_eu_806684D8)) {
-            *vel = lbl_eu_806684A4;
+        if (!(*vel < 30.0f)) {
+            *vel = 0.0f;
             for (u8 i = 0; i < 2; i++) {
                 u8* s = base + (u32)i * 0x5cc;
                 if (*reinterpret_cast<u32*>(s + 0x44)) {
@@ -858,10 +778,10 @@ void MakeCrystal_TickRise(CModelDispMakeCrystal* self)
 {
     u8* base = reinterpret_cast<u8*>(self);
     f32* f2dcc = reinterpret_cast<f32*>(base + 0x2dcc);
-    f32 v = *f2dcc + lbl_eu_806684A0;
+    f32 v = *f2dcc + 1.0f;
     *f2dcc = v;
-    if (v < lbl_eu_806684D8) return;
-    *f2dcc = lbl_eu_806684A4;
+    if (v < 30.0f) return;
+    *f2dcc = 0.0f;
     // Reload the 0x610 flag (CSE'd with the test load) to make MWCC emit
     // retail's dead duplicate beq before the 5-arg call setup.
     if (*reinterpret_cast<u32*>(base + 0x610)) {
@@ -914,10 +834,10 @@ void MakeCrystal_StateChargeStep(CModelDispMakeCrystal* self)
 {
     u8* base = reinterpret_cast<u8*>(self);
     f32* vel = reinterpret_cast<f32*>(base + 0x2dcc);
-    f32 v = (*vel += lbl_eu_806684A0);
-    if (v < lbl_eu_806684DC) return;
+    f32 v = (*vel += 1.0f);
+    if (v < 20.0f) return;
     u32 f44 = *reinterpret_cast<u32*>(base + 0x44);
-    *vel = lbl_eu_806684A4;
+    *vel = 0.0f;
     // Nested reload reproduces retail's dead duplicate beq before the call.
     if (f44) {
         void* m = *reinterpret_cast<void**>(base + 0x44);
@@ -950,7 +870,7 @@ void MakeCrystal_FinishRound(CModelDispMakeCrystal* self)
     u8* base = reinterpret_cast<u8*>(self);
     f32* vel = reinterpret_cast<f32*>(base + 0x2dcc);
     *vel += 1.0f;
-    if (*vel < lbl_eu_806684DC) return;
+    if (*vel < 20.0f) return;
     *vel = 0.0f;
     MakeCrystal_PlaceCrystals(self);
     incrementEventCounter(0x79);
@@ -1011,9 +931,9 @@ void MakeCrystal_NopD3E4(CModelDispMakeCrystal* self)
 {
     u8* base = reinterpret_cast<u8*>(self);
     f32* f2dcc = reinterpret_cast<f32*>(base + 0x2dcc);
-    f32 v = (*f2dcc += lbl_eu_806684A0);
-    if (v < lbl_eu_806684DC) return;
-    *f2dcc = lbl_eu_806684A4;
+    f32 v = (*f2dcc += 1.0f);
+    if (v < 20.0f) return;
+    *f2dcc = 0.0f;
     base[0x13bf]++;
     sCrystalProbState[4]++;
     MakeCrystal_PlaceCrystals(self);
@@ -1062,9 +982,9 @@ void MakeCrystal_StateChargeLoop(CModelDispMakeCrystal* self)
 {
     u8* base = reinterpret_cast<u8*>(self);
     f32* f2dcc = reinterpret_cast<f32*>(base + 0x2dcc);
-    f32 v = (*f2dcc += lbl_eu_806684A0);
-    if (v < lbl_eu_806684DC) return;
-    *f2dcc = lbl_eu_806684A4;
+    f32 v = (*f2dcc += 1.0f);
+    if (v < 20.0f) return;
+    *f2dcc = 0.0f;
     u8 n = base[0x2dc8] + 1;
     int charged = 0;
     base[0x2dc8] = n;
@@ -1105,13 +1025,13 @@ void MakeCrystal_StateChargeLoop(CModelDispMakeCrystal* self)
 extern "C" void MakeCrystal_TrySlots(void* selfp)
 {
     u8* base = reinterpret_cast<u8*>(selfp);
-    *reinterpret_cast<f32*>(base + 0x2dcc) = lbl_eu_806684D8;
+    *reinterpret_cast<f32*>(base + 0x2dcc) = 30.0f;
     if ((u8)code80135FDC_getByte_64077() > 2) {
         u8 charId = (u8)GetCollectedFlagByte(base[0xbbc]);
         for (u8 i = 0; i < 7; i++) {
             if ((s8)base[0x13b8 + i] <= 0) continue;
             u16 val = LookupRelateValue(charId, base[0x13b8 + i]);
-            s32 iv = (s32)((float)(u32)val * lbl_eu_806684EC);
+            s32 iv = (s32)((float)(u32)val * 0.01f);
             ml::MTRand::getInstance();
             if ((s8)(rand31__Q22ml6MTRandFv() % 100) >= (u16)iv) continue;
             // Success: reset the charge, place the crystals, and stop.
@@ -1119,12 +1039,8 @@ extern "C" void MakeCrystal_TrySlots(void* selfp)
             ml::MTRand::getInstance();
             u8* entries = reinterpret_cast<CModelDispMakeCrystal*>(base)->mEntries;
             s8 n = (s8)(rand31__Q22ml6MTRandFv() % 3) + 1;
-            u8 buf8[4];
-            u8 buf12[8];
-            buf8[0] = (u8)lbl_eu_806684E0;
-            buf8[2] = lbl_eu_806684E2;
-            *(u32*)(buf12 + 0) = lbl_eu_806684E4;
-            *(u16*)(buf12 + 4) = lbl_eu_806684E8;
+            s8 picks[3] = {-1, -1, -1};
+            s16 adds[3] = {-1, -1, -1};
             u8 count = entries[0];
             u8 j = 0;
             do {
@@ -1135,28 +1051,28 @@ extern "C" void MakeCrystal_TrySlots(void* selfp)
                 u8 found = 0;
                 u8 k = 0;
                 do {
-                    if ((s8)buf8[k] == pick) {
-                        *(s16*)(buf12 + (k << 1)) =
-                            (s16)(*(s16*)(buf12 + (k << 1)) + delta);
+                    if (picks[k] == pick) {
+                        adds[k] =
+                            (s16)(adds[k] + delta);
                         found = 1;
                     }
                     k++;
                 } while (k < (u8)n);
                 if (found == 0) {
-                    buf8[j] = (u8)pick;
-                    *(s16*)(buf12 + (j << 1)) = delta;
+                    picks[j] = pick;
+                    adds[j] = delta;
                 }
                 j++;
             } while (j < (u8)n);
             u8 m = 0;
             do {
-                if ((s8)buf8[m] != -1) {
+                if (picks[m] != -1) {
                     setCrystalPosEntry(
                         entries,
-                        (u16)(s8)buf8[m],
-                        (u16)(*(s16*)(buf12 + (m << 1)) +
-                              *(u16*)(entries + (((u16)(s8)buf8[m]) << 3) + 4)),
-                        (u16)(s8)buf8[m]);
+                        (u16)picks[m],
+                        (u16)(adds[m] +
+                              *(u16*)(entries + (((u16)picks[m]) << 3) + 4)),
+                        (u16)picks[m]);
                 }
                 m++;
             } while (m < (u8)n);
@@ -1252,9 +1168,9 @@ void MakeCrystal_StatePlacedDone(CModelDispMakeCrystal* self)
 
 void MakeCrystal_StateFailWait(CModelDispMakeCrystal* self) {
     u8* base = reinterpret_cast<u8*>(self);
-    *(reinterpret_cast<f32*>(base + 0x2dcc)) += lbl_eu_806684A0;
+    *(reinterpret_cast<f32*>(base + 0x2dcc)) += 1.0f;
     if (isFinished__11CMCEffStartFv(base + 0xd78)) {
-        *(reinterpret_cast<f32*>(base + 0x2dcc)) = lbl_eu_806684A4;
+        *(reinterpret_cast<f32*>(base + 0x2dcc)) = 0.0f;
         base[0xbdd] = 0x10;
         reinterpret_cast<CMCEffSuccess*>(base + 0xd5c)->startOut();
     }
@@ -1268,7 +1184,7 @@ void MakeCrystal_StateDivideSel(CModelDispMakeCrystal* self)
 {
     u8* base = reinterpret_cast<u8*>(self);
     if (reinterpret_cast<CMCCrystalList*>(base + 0xc18)->crystalListIsActive()) {
-        if (lbl_eu_806684D4 == *reinterpret_cast<f32*>(base + 0x2dcc)) {
+        if (50.0f == *reinterpret_cast<f32*>(base + 0x2dcc)) {
             base[0xbdd] = 0xf;
         } else {
             base[0xbdd] = 0xc;
@@ -1322,9 +1238,9 @@ void MakeCrystal_StateRankUp(CModelDispMakeCrystal* self)
     u8* base = reinterpret_cast<u8*>(self);
     if (isFinished__11CMCEffStartFv(base + 0xdcc) == 0) return;
     f32* vel = reinterpret_cast<f32*>(base + 0x2dcc);
-    f32 v = (*vel += lbl_eu_806684A0);
-    if (v < lbl_eu_806684D8) return;
-    *vel = lbl_eu_806684A4;
+    f32 v = (*vel += 1.0f);
+    if (v < 30.0f) return;
+    *vel = 0.0f;
     u16 count = ((MCCountHead*)reinterpret_cast<CModelDispMakeCrystal*>(base)->mEntries)->count04;
     if (count >= 0x12c) {
         // Success path: full crystal count reached.
@@ -1355,7 +1271,7 @@ void MakeCrystal_StateDivideDone(CModelDispMakeCrystal* self)
 {
     u8* base = reinterpret_cast<u8*>(self);
     if (isFinished__11CMCEffStartFv(base + 0xde4)) {
-        *reinterpret_cast<f32*>(base + 0x2dcc) = lbl_eu_806684A4;
+        *reinterpret_cast<f32*>(base + 0x2dcc) = 0.0f;
         base[0xbdd] = 0xf;
         reinterpret_cast<CMCEffCrystal*>(base + 0xd90)->setTraceVisible(1);
         reinterpret_cast<CMCEffCrystal*>(base + 0xd90)->startOut();
@@ -1374,7 +1290,7 @@ void MakeCrystal_StateCrystalDone(CModelDispMakeCrystal* self)
             base[0xbdd] = 0xb;
             crystalListState3To8(reinterpret_cast<CMCCrystalList*>(base + 0xc18));
         } else {
-            *reinterpret_cast<f32*>(base + 0x2dcc) = lbl_eu_806684A4;
+            *reinterpret_cast<f32*>(base + 0x2dcc) = 0.0f;
             base[0xbdd] = 0x10;
             reinterpret_cast<CMCEffSuccess*>(base + 0xd5c)->startOut();
         }
@@ -1749,9 +1665,9 @@ void MakeCrystal_StateChargeFinal(CModelDispMakeCrystal* self)
 {
     u8* base = reinterpret_cast<u8*>(self);
     f32* fbe0 = reinterpret_cast<f32*>(base + 0xbe0);
-    f32 v = (*fbe0 += lbl_eu_806684D0);
-    if (v > lbl_eu_806684A0) {
-        *fbe0 = lbl_eu_806684A0;
+    f32 v = (*fbe0 += 0.2f);
+    if (v > 1.0f) {
+        *fbe0 = 1.0f;
         base[0xbdc] = 0;
         base[0xbe8] = 1;
         base[0x2dc3] = 1;
@@ -1766,7 +1682,7 @@ void MakeCrystal_StateChargeFinal(CModelDispMakeCrystal* self)
             reinterpret_cast<CScnItemModel*>(p)->vfunc48(*fbe0);
         }
     }
-    if (!(*fbe0 < lbl_eu_806684A0)) {
+    if (!(*fbe0 < 1.0f)) {
         if (reinterpret_cast<CMCCrystalList*>(base + 0xc18)->crystalListIsActive()) {
             base[0xbdd] = 0x16;
             crystalListState3To4(reinterpret_cast<CMCCrystalList*>(base + 0xc18));
@@ -2282,14 +2198,12 @@ extern "C" void MakeCrystal_ReleaseAnimObj(CModelDispMakeCrystal* self, u8* obj)
         if (e[4] != 0) {
             *reinterpret_cast<u32*>(e + 0) = 0;
             e[4] = 0;
-        } else {
-            void* p = *reinterpret_cast<void**>(e);
-            if (p == 0) continue;
-            mtl::MemManager::deallocate(p);
+        } else if (*reinterpret_cast<void**>(e) != 0) {
+            mtl::MemManager::deallocate(*reinterpret_cast<void**>(e));
             *reinterpret_cast<u32*>(e) = 0;
         }
     }
-    obj[0x5AC] = 0xFF;
+    *reinterpret_cast<s8*>(obj + 0x5AC) = -1;
 }
 
 extern "C" void MakeCrystal_ResetSlotList(CModelDispMakeCrystal* self, u8 arg4)
@@ -2333,7 +2247,7 @@ extern "C" void MakeCrystal_RefreshSlotEntries(CModelDispMakeCrystal* self)
     u8 flagA = GetCollectedFlagByte(base[0x5f0]);
     u8 flagB = GetCollectedFlagByte(base[0xbbc]);
     u16 val = LookupRelateValue(flagA, flagB);
-    s16 iv = (s16)(lbl_eu_806684FC * val + lbl_eu_806684F8);
+    s16 iv = (s16)(0.04f * val + 100.0f);
     *reinterpret_cast<f32*>(base + 0x2dcc) = 0.0f;
     base[0x2dc8] = 0;
     *reinterpret_cast<u16*>(base + 0x2dc4) = iv;
@@ -2498,7 +2412,7 @@ void MakeCrystal_PlaceCrystals(CModelDispMakeCrystal* self)
         u8 c = GetCollectedFlagByte(self->mSlots[0].field_5ac);
         if (c == 5) {
             self->mGauge.addFillValue(
-                lbl_eu_80668500);
+                25.0f);
         } else {
             self->mGauge.addFillValue(
                 0.0f);
@@ -2630,11 +2544,11 @@ void MakeCrystal_AppendItemSteps(void* selfp)
         // Percent-based split of the display count between the two columns:
         // A = count * scale, B = A * scale2, countB = count - B, then
         // result = diff * countB * scale + first (all truncating).
-        u16 a16 = (u16)((s32)((float)count * lbl_eu_806684EC));
+        u16 a16 = (u16)((s32)((float)count * 0.01f));
         u8 diff = (u8)(second - first);
-        s32 b = (s32)((float)a16 * lbl_eu_806684F8);
+        s32 b = (s32)((float)a16 * 100.0f);
         u16 countB = (u16)(count - b);
-        result = (u8)((s32)((float)diff * ((float)countB * lbl_eu_806684EC)) + first);
+        result = (u8)((s32)((float)diff * ((float)countB * 0.01f)) + first);
     }
     ((CItemImpl*)CItem_initItemImplInstances((CItemData*)&item))->vf94((CItemData*)&item, result);
     // Append the step record (stride 0x34 at +0x13c0) the requested times.
@@ -3341,7 +3255,7 @@ void MakeCrystal_UnlinkFileSlot(CModelDispMakeCrystal* self, u8 slotA, u8 slotB)
     nw4r::math::VEC3 v1;
     writeVec3f(&v1, 0.0f, 1.0f, 0.0f);
     nw4r::math::VEC3 v2;
-    writeVec3f(&v2, 0.0f, lbl_eu_80668504, lbl_eu_806684CC);
+    writeVec3f(&v2, 0.0f, 1.5f, 5.0f);
     ScnCamPointAt(m, &v2, &v1);
     for (u8 j = 0; j < 2; j++) {
         for (u8 i = 0; i < 6; i++) {
@@ -3409,8 +3323,8 @@ extern "C" void releaseCrystalDispThunk(CModelDispMakeCrystal* self) { ((void(*)
 
 void sinit_80221DDC() {
     initCrystalData(sCrystalProbState);
-    writeVec3f(sCrystalLeafVecA, lbl_eu_80668508, lbl_eu_806684AC, lbl_eu_8066850C);
-    writeVec3f(sCrystalLeafVecB, lbl_eu_806684A4, scaleByGlobal(lbl_eu_80668510[0]), lbl_eu_806684A4);
+    writeVec3f(sCrystalLeafVecA, 1.05f, -0.15f, -1.3f);
+    writeVec3f(sCrystalLeafVecB, 0.0f, scaleByGlobal(-20.0f), 0.0f);
 }
 
 

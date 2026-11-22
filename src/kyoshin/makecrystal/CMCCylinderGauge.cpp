@@ -15,44 +15,7 @@ extern void incrementEventCounter(u32);
 // extern "C" (lint forbids it for non-lbl_ relocs) nor the pre-mangled name
 // (that would double-mangle).
 
-// Retail data slices owned by this TU (splits: .rodata 80509210-805092B0,
-// .data 80535F48-80535F58, .sdata 806627F0-806627F8). The class is novtable
-// so the vtable + RTTI are hand-built exactly like the sibling CMCEffStart
-// prefix (const void* tables, (u32)&label static inits carry ADDR32 relocs).
-// .rodata head is the RTTI class-name string; the layout-name strings live
-// in the explicit lbl_eu_80509224 table (retail +0x14), referenced by code
-// as table+offset, so .text relocs only renumber.
-extern "C" void __dt__16CMCCylinderGaugeFv(); // member dtor defined below
-extern const char lbl_eu_80509210[0x11];
-extern char lbl_eu_80509224[0x8C];
-__declspec(section ".rodata") __attribute__((used))
-extern const char lbl_eu_80509210[0x11] = "CMCCylinderGauge";
-// .rodata layout-name table (0x8C): the six pooled literals in retail order
-// (brlyt +0x00, in +0x16, up +0x2F, full +0x48, out +0x63, txt_sylinder
-// +0x7D) plus 2 zero pad bytes. Code below references every string as
-// table+offset, so no compiler pool remains and the section is retail-exact.
-__declspec(section ".rodata") __attribute__((used, aligned(4)))
-char lbl_eu_80509224[0x8C] =
-    "mf10_cry01_gage.brlyt\0"
-    "mf10_cry01_gage_in.brlan\0"
-    "mf10_cry01_gage_up.brlan\0"
-    "mf10_cry01_gage_full.brlan\0"
-    "mf10_cry01_gage_out.brlan\0"
-    "txt_sylinder\0";
-__declspec(section ".sdata") __attribute__((used))
-const void* __RTTI__16CMCCylinderGauge[2] = { lbl_eu_80509210, nullptr };
-extern "C" {
-__declspec(section ".data") __attribute__((aligned(8), used))
-u32 lbl_eu_80535F48[4] = {
-    (u32)&__RTTI__16CMCCylinderGauge,
-    0,
-    (u32)&__dt__16CMCCylinderGaugeFv,
-    0,
-};
-} // extern "C"
-
 CMCCylinderGauge::CMCCylinderGauge(nw4r::lyt::ArcResourceAccessor* arg) {
-    *(u32**)this = lbl_eu_80535F48;
     mArcResourceAccessor = arg;
     mLayout = nullptr;
     mAnimTransC = nullptr;
@@ -69,15 +32,15 @@ CMCCylinderGauge::CMCCylinderGauge(nw4r::lyt::ArcResourceAccessor* arg) {
 CMCCylinderGauge::~CMCCylinderGauge() {}
 
 void CMCCylinderGauge::init() {
-    buildLayout(&mLayout, mArcResourceAccessor, (lbl_eu_80509224 + 0x00));
+    buildLayout(&mLayout, mArcResourceAccessor, "mf10_cry01_gage.brlyt");
 
-    bindLayoutAnimTransform(mLayout, &mAnimTransC, mArcResourceAccessor, (lbl_eu_80509224 + 0x16));
-    bindLayoutAnimTransform(mLayout, &mAnimTrans10, mArcResourceAccessor, (lbl_eu_80509224 + 0x2F));
-    bindLayoutAnimTransform(mLayout, &mAnimTrans14, mArcResourceAccessor, (lbl_eu_80509224 + 0x48));
-    bindLayoutAnimTransform(mLayout, &mAnimTrans18, mArcResourceAccessor, (lbl_eu_80509224 + 0x63));
+    bindLayoutAnimTransform(mLayout, &mAnimTransC, mArcResourceAccessor, "mf10_cry01_gage_in.brlan");
+    bindLayoutAnimTransform(mLayout, &mAnimTrans10, mArcResourceAccessor, "mf10_cry01_gage_up.brlan");
+    bindLayoutAnimTransform(mLayout, &mAnimTrans14, mArcResourceAccessor, "mf10_cry01_gage_full.brlan");
+    bindLayoutAnimTransform(mLayout, &mAnimTrans18, mArcResourceAccessor, "mf10_cry01_gage_out.brlan");
 
-    setLayoutTextBoxFont(mLayout, (lbl_eu_80509224 + 0x7D), getPackedFont());
-    setLayoutTextBoxNumber(mLayout, (lbl_eu_80509224 + 0x7D), unk25);
+    setLayoutTextBoxFont(mLayout, "txt_sylinder", getPackedFont());
+    setLayoutTextBoxNumber(mLayout, "txt_sylinder", unk25);
 
     unk28 = 0.0f;
     bindInAnim();
@@ -163,7 +126,7 @@ void CMCCylinderGauge::addFillValue(float arg) {
 
 void CMCCylinderGauge::decrementLevel() {
     unk25 -= 1;
-    setLayoutTextBoxNumber(mLayout, (lbl_eu_80509224 + 0x7D), unk25);
+    setLayoutTextBoxNumber(mLayout, "txt_sylinder", unk25);
 }
 
 u8 CMCCylinderGauge::getLevel() {
@@ -176,7 +139,7 @@ u8 CMCCylinderGauge::getLevel() {
 
 void CMCCylinderGauge::setLevel(u8 arg) {
     unk25 = arg;
-    setLayoutTextBoxNumber(mLayout, (lbl_eu_80509224 + 0x7D), unk25);
+    setLayoutTextBoxNumber(mLayout, "txt_sylinder", unk25);
 }
 
 void CMCCylinderGauge::updateIn() {
@@ -206,7 +169,7 @@ void CMCCylinderGauge::updateFill() {
         if(unk28 >= 1.0f) {
             if(unk25 < 9) {
                 unk25++;
-                setLayoutTextBoxNumber(mLayout, (lbl_eu_80509224 + 0x7D), unk25);
+                setLayoutTextBoxNumber(mLayout, "txt_sylinder", unk25);
                 unk28--;
                 if(unk28 < 0.0f) {
                     unk28 = 0.0f;

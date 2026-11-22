@@ -77,20 +77,6 @@ public:
 // the live CArtsInfo in r3, so the declaration intentionally has no argument.
 extern "C" void ArtsInfo_SetReadyFlag();
 
-// Overlay structs for the 'timg' message resource consumed by OnFileEvent:
-// the resource object holds a chain whose first field points at the u16
-// row/column pair used to size the message panes.
-struct CArtsCoords {
-    u16 col; // 0x0
-    u16 row; // 0x2
-};
-struct CArtsMsgChain {
-    CArtsCoords* pCoords; // 0x0
-};
-struct CArtsMsgObj {
-    u8 gap[0x8];
-    CArtsMsgChain* chain; // 0x8
-};
 
 
 

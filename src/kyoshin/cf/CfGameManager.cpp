@@ -99,6 +99,9 @@
 #include "kyoshin/cf/CfNandManager.hpp"  // gCfNandRestoredEventFlag (owner)
 #include "kyoshin/code_800AA008.hpp"  // Tok_ParseFile (owner)
 #include "kyoshin/cf/CTaskEnvironment.hpp"  // Scn_SetPalFixFlag (owner)
+#include "monolib/work/CProcess.hpp"
+#include "kyoshin/CMainMenu.hpp"
+#include "kyoshin/menu/CMenuPause.hpp"
 
 extern "C" u32 getEffectFlagFromMgr(void* mgr);
 extern "C" void setGimmick(void* obj, bool enable);
@@ -159,7 +162,6 @@ extern "C" void CfScript_SleepReq2();
 extern "C" void evtUpdateSequenceKick();
 
 extern "C" void* __ct__Q22cf17UnkClass_8018EF3CFv(void* self);
-extern "C" void func_8007DCB8__Q22cf13CfGameManagerFv();
 
 // --- imports for func_80086B5C ---
 extern "C" void* MapFx_ResolveOwner(void* source);
@@ -202,7 +204,6 @@ extern "C" void cfCam_setClear04(void* manager, u32 mask, s32 flag);
 extern "C" void loadLayoutScales();
 extern "C" void setTrackedTarget(float value, u32 a, u32 b);
 extern "C" void cfCam_copyBlock16(void* dst, void* src);
-extern "C" void disableFlag20__Q22cf13CfGameManagerFv();
 extern "C" void cfCam_syncFollowD();
 extern "C" void CfScript_MakeName(char* dest, const char* src1, const char* src2,
                               const char* src3);
@@ -741,16 +742,16 @@ void cf::CfGameManager::teardownGameManager() {
     CfRes_callFunc_67FE0();
     KyoshinHeap_Shutdown();
     if (gmTaskMain != nullptr) {
-        Remove__8CProcessFv(gmTaskMain);
+        gmTaskMain->Remove();
         gmTaskMain = nullptr;
     }
     if (gmResManager != nullptr) {
-        Remove__8CProcessFv(gmResManager);
+        gmResManager->Remove();
         gmResManager = nullptr;
     }
     CBdat::getEntry(1);
     if (gmPadTask != nullptr) {
-        Remove__8CProcessFv(gmPadTask);
+        gmPadTask->Remove();
         gmPadTask = nullptr;
     }
 }
@@ -871,8 +872,8 @@ void cf::CfGameManager::enablePadFlags(u32 inputFlags, bool enable) {
 }
 u32 cf::CfGameManager::getEnabledInputFlags() {
     if (isSceneLoading()) {
-        if (isAnyMenuOpen__9CMainMenuFv() || getInstance__11CSysWinBuffFv() != nullptr ||
-            isInitialized__10CMenuPauseFv()) {
+        if (CMainMenu::isAnyMenuOpen() || getInstance__11CSysWinBuffFv() != nullptr ||
+            CMenuPause::isInitialized()) {
             return 0xFFFFFFFF;
         }
     }
@@ -1149,7 +1150,7 @@ void* cf::CfGameManager::func_8007C8C8() {
                     BpsStateSingletonToInt() &&
                     (gmPauseFlags & 0x8000000) == 0 &&
                     (gmGameFlags & 0x80) != 0) {
-                    flushEventQueue__Q22cf13CfGameManagerFv();
+                    cf::CfGameManager::flushEventQueue();
                 }
             }
         }
@@ -1257,9 +1258,9 @@ void cf::CfGameManager::stubEmptyB() {}
 void cf::CfGameManager::stubEmptyC() {}
 void cf::CfGameManager::stubEmptyD() {}
 void cf::CfGameManager::stubEmptyE() {}
-extern "C" void* getNullPtrA__Q22cf13CfGameManagerFv() { return nullptr; }
-extern "C" void* getNullPtrB__Q22cf13CfGameManagerFv() { return nullptr; }
-extern "C" void* getNullPtrC__Q22cf13CfGameManagerFv() { return nullptr; }
+void* cf::CfGameManager::getNullPtrA() { return nullptr; }
+void* cf::CfGameManager::getNullPtrB() { return nullptr; }
+void* cf::CfGameManager::getNullPtrC() { return nullptr; }
 // Slot +0x124 base: retail returns nullptr from the real virtual member.
 void* cf::CfObject::CfObject_getIndexedNodeMatrix(u32) const {
     return nullptr;
@@ -1276,14 +1277,14 @@ extern u32 lbl_eu_80664184;
 u32 cf::CfGameManager::getGlobalWord64184() { return lbl_eu_80664184; }
 u32 cf::CfGameManager::getGlobalWord64184Dup() { return lbl_eu_80664184; }
 extern u32 lbl_eu_8066409C;
-extern "C" u32 getGlobalPtr6409C__Q22cf13CfGameManagerFv() { return lbl_eu_8066409C; }
+u32 cf::CfGameManager::getGlobalPtr6409C() { return lbl_eu_8066409C; }
 u32 cf::CfGameManager::getGlobalPtr640A8() { return (u32)::cf::CfBdat::spFldMapListFileData; }
-extern "C" u32 getGlobalWord640A4__Q22cf13CfGameManagerFv() { return (u32)::cf::CfBdat::spCurRouteListFileData; }
-extern "C" u32 getGlobalWord640F4__Q22cf13CfGameManagerFv() { return (u32)::cf::CfBdat::spItmWpnListFileData; }
+u32 cf::CfGameManager::getGlobalWord640A4() { return (u32)::cf::CfBdat::spCurRouteListFileData; }
+u32 cf::CfGameManager::getGlobalWord640F4() { return (u32)::cf::CfBdat::spItmWpnListFileData; }
 
-extern "C" u32 getFieldD90Value__Q22cf13CfGameManagerFv() { return gCfTEventFrameCounter; }
+u32 cf::CfGameManager::getFieldD90Value() { return gCfTEventFrameCounter; }
 extern u8 gmGlobalFlag34;
-extern "C" u8 getGlobalFlag34__Q22cf13CfGameManagerFv() { return gmGlobalFlag34; }
+u8 cf::CfGameManager::getGlobalFlag34() { return gmGlobalFlag34; }
 extern u8 gmVoiceFlag5D;
 u8 cf::CfGameManager::getVoiceFlag5D() { return gmVoiceFlag5D; }
 extern u8 gNandTeardownByte;
@@ -1431,7 +1432,7 @@ u16 cf::CfGameManager::getItemId() {
 }
 
 extern u16 gmEventCounterA;
-extern "C" u16 getEventCounterA__Q22cf13CfGameManagerFv() { return gmEventCounterA; }
+u16 cf::CfGameManager::getEventCounterA() { return gmEventCounterA; }
 
 extern "C" void setEventCounterA__Q22cf13CfGameManagerFv(u16 value) {
     gmEventCounterA = value;
@@ -1655,7 +1656,7 @@ cf::CfGameManager* UnkClass_8007DAE0::init(CScnNw4r* scene, CView* view,
     CmText_RegisterCallback(&cf::CfGameManager::tickGameManager, 0);
     gmInitArg = arg;
     // Bare Fv-name call: retail leaves r3 untouched here.
-    func_8007DCB8__Q22cf13CfGameManagerFv();
+    cf::CfGameManager::func_8007DCB8();
     CtrlObjectParam_MoveValueToHead(CtrlObjectParam_GetSlotTableBase(), gmInitArg);
     s32 fallback = -1;
     syncBdatDataCache__Q22cf13CfGameManagerFv(gmInitArg, &fallback, 4);
@@ -2842,7 +2843,7 @@ extern "C" void func_800838F4__Q22cf13CfGameManagerFv(u32 mode, u32 first,
         queueCameraRequest__Q22cf13CfGameManagerFv(0x18, 0, 0, 0, 0);
     }
 
-    disableFlag20__Q22cf13CfGameManagerFv();
+    cf::CfGameManager::disableFlag20();
     gmQueuedEventCount = 0;
     CfRes_callFunc_67E78(0);
     CfRes_callFunc_67FE0();

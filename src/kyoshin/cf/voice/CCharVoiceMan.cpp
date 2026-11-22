@@ -230,11 +230,12 @@ extern "C" void CCharVoiceMan_Tick(){
     if (m->mPaused == 0) {
         // Battle-participant count changed: gate a frequency voice node.
         int oldCount = m->mPrevBattleCount;
-        void* bm = getInstance__Q22cf14CBattleManagerFv();
+        cf::CBattleManager* bm = cf::CBattleManager::getInstance();
         int count = 0;
-        cf::CVoiceBattleNode* cur;
-        cf::CVoiceBattleNode* sentinel = ((cf::CBattleManagerNodeList*)bm)->sentinel;
-        for (cur = sentinel->next; cur != sentinel; cur = cur->next)
+        _reslist_node<cf::CfObjectActor*>* cur;
+        _reslist_node<cf::CfObjectActor*>* sentinel =
+            bm->mActorList3.mStartNodePtr;
+        for (cur = sentinel->mNext; cur != sentinel; cur = cur->mNext)
             count++;
         m->mPrevBattleCount = count;
         if (count != oldCount && !(m->mVoiceTimer < 150.0f) &&
@@ -256,10 +257,10 @@ extern "C" void CCharVoiceMan_Tick(){
         // battle object and, if its browse gate passes, voice the pending
         // action source (mPendingActionId) as a node.
         if (!(gmGameFlags & 0x00400000)) {
-            cf::CVoiceBFC68* br =
-                (cf::CVoiceBFC68*)getCfObjectPc__FPQ22cf12CfObjectMove(getPlayer__Q22cf13CfGameManagerFi(0));
+            cf::CfObjectImplPc18* br =
+                getCfObjectPc__FPQ22cf12CfObjectMove(getPlayer__Q22cf13CfGameManagerFi(0));
             if (br != 0) {
-                cf::CfObjectImplPcED4* edge = (cf::CfObjectImplPcED4*)br->field_3ED4;
+                cf::CfObjectImplPcED4* edge = br->field_3ED4;
                 if (edge != 0 && edge->vf40(0x800) == 0) {
                     if (m->mPendingActionId != 0) {
                         void* src = MapFx_ResolveOwner(findObjectById((BOOL)m->mPendingActionId));
@@ -301,11 +302,12 @@ extern "C" void CCharVoiceMan_Tick(){
 
         // Interact/battle voice: probe the top gauges and enqueue on rising edge.
         u8 oldInteract = m->mInteractState;
-        void* bm2 = getInstance__Q22cf14CBattleManagerFv();
-        cf::CVoiceBattleNode* cur2;
+        cf::CBattleManager* bm2 = cf::CBattleManager::getInstance();
+        _reslist_node<cf::CfObjectActor*>* cur2;
         int icount = 0;
-        cf::CVoiceBattleNode* sentinel2 = ((cf::CBattleManagerNodeList*)bm2)->sentinel;
-        for (cur2 = sentinel2->next; cur2 != sentinel2; cur2 = cur2->next)
+        _reslist_node<cf::CfObjectActor*>* sentinel2 =
+            bm2->mActorList3.mStartNodePtr;
+        for (cur2 = sentinel2->mNext; cur2 != sentinel2; cur2 = cur2->mNext)
             icount++;
         int iresult;
         cf::CVoiceActorState* arr2[3];
@@ -384,11 +386,12 @@ noAutoTalkClear:;
 
         // No battle participants and the flag is clear: rolling gauge node.
         if (m->mBattleActive != 0) {
-            void* bm3 = getInstance__Q22cf14CBattleManagerFv();
-            cf::CVoiceBattleNode* cur3;
+            cf::CBattleManager* bm3 = cf::CBattleManager::getInstance();
+            _reslist_node<cf::CfObjectActor*>* cur3;
             int acount = 0;
-            cf::CVoiceBattleNode* sentinel3 = ((cf::CBattleManagerNodeList*)bm3)->sentinel;
-            for (cur3 = sentinel3->next; cur3 != sentinel3; cur3 = cur3->next)
+            _reslist_node<cf::CfObjectActor*>* sentinel3 =
+                bm3->mActorList3.mStartNodePtr;
+            for (cur3 = sentinel3->mNext; cur3 != sentinel3; cur3 = cur3->mNext)
                 acount++;
             if (acount <= 0 && !(gmGameFlags & 0x00400000)) {
                 float g = m->mVoiceTimer;
@@ -490,7 +493,7 @@ extern "C" void CCharVoiceMan_CheckAutoTalk(cf::CVoiceActorState* self) {
 }
 // Battle-slot voice hook: if the battle slot manager reports a slot whose id
 // matches b's voice id, copy a's pending id into mPendingActorId.
-extern "C" void CCharVoiceMan_HookBattleSlotVoice(cf::CVoiceActorInfo* a, cf::CVoiceActorInfo* b) {
+extern "C" void CCharVoiceMan_HookBattleSlotVoice(cf::CfObjectImplPc18* a, cf::CfObjectImplPc18* b) {
     cf::CCharVoiceMan* m = spCharVoiceMan;
     cf::CVoiceBtlSlot* bs = (cf::CVoiceBtlSlot*)cf::CBattleManager::getInstance()->CBattleMan_FetchVisionObj();
     if (bs != 0) {
@@ -648,7 +651,7 @@ extern "C" void CCharVoiceMan_EnqueueBattleBeginVoice(cf::CVoiceActorState* self
     }
 }
 // If the passed actor is active, teed a u32 from +0x3F10 into mPendingActionId.
-extern "C" void CCharVoiceMan_LatchPendingVoiceId(cf::CVoiceActorInfo* self) {
+extern "C" void CCharVoiceMan_LatchPendingVoiceId(cf::CfObjectImplPc18* self) {
     if (BtlBeg_IsVoiceBit_03A4(self) != 0) {
         spCharVoiceMan->mPendingActionId = self->field_3F10;
     }
@@ -1102,11 +1105,12 @@ extern "C" void CCharVoiceMan_ResetAndAppend() {
 // If the battle-manager actor ring has any entries and the flag is clear,
 // flag the manager's byte 0x22A.
 extern "C" void CCharVoiceMan_FlagBattleActiveVoice() {
-    void* bm = getInstance__Q22cf14CBattleManagerFv();
-    cf::CVoiceBattleNode* cur = 0;
+    cf::CBattleManager* bm = cf::CBattleManager::getInstance();
+    _reslist_node<cf::CfObjectActor*>* cur = 0;
     int count = 0;
-    cf::CVoiceBattleNode* sent = ((cf::CBattleListAccessor*)bm)->list0;
-    for (cur = sent->next; cur != sent; cur = cur->next)
+    _reslist_node<cf::CfObjectActor*>* sent =
+        bm->mActorList2.mStartNodePtr;
+    for (cur = sent->mNext; cur != sent; cur = cur->mNext)
         count++;
     if (count > 0 && !(gmGameFlags & 0x00400000)) {
         spCharVoiceMan->mBattleActive = 1;
@@ -1414,7 +1418,7 @@ extern "C" int CCharVoiceMan_IsNodeActive(u32 arg) {
 // bits 0x2/0x4/0x8 at +0x64), broadcast to every matching type of voice node.
 void cf::CCharVoiceMan::FactoryEvent2(cf::CfObject* actor) {
     cf::CCharVoiceMan* self = this;
-    u32 flags = ((cf::CVoiceFactoryActor*)actor)->field_64;
+    u32 flags = actor->unk64;
     if (!(flags & 0x2) && !(flags & 0x8) && !(flags & 0x4))
         return;
     bool match;
@@ -1436,10 +1440,11 @@ void cf::CCharVoiceMan::FactoryEvent2(cf::CfObject* actor) {
 extern "C" int CCharVoiceMan_CheckBattleGauge(cf::CCharVoiceMan* self) {
     // Hoisted so MWCC colors this call-crossing local into r31 like retail.
     cf::CVoiceActorState* actor;
-    cf::CBattleManagerNodeList* list = (cf::CBattleManagerNodeList*)getInstance__Q22cf14CBattleManagerFv();
+    cf::CBattleManager* list = cf::CBattleManager::getInstance();
     int count = 0;
-    cf::CVoiceBattleNode* cur;
-    for (cur = list->sentinel->next; list->sentinel != cur; cur = cur->next)
+    _reslist_node<cf::CfObjectActor*>* cur;
+    for (cur = list->mActorList3.mStartNodePtr->mNext;
+         list->mActorList3.mStartNodePtr != cur; cur = cur->mNext)
         count++;
     if (count <= 0)
         return 0;

@@ -27,21 +27,12 @@
 struct UnkClass_8009ECB0;
 struct UnkClass_805764CC;
 
-// Planted s32->f32 conversion magic (0x4330000080000000 = 2^52 + 2^31),
-// imported from retail sdata2: MWCC pools the builtin cast's magic as a
-// TU-local label that resolves to this symbol (MWCC_CASES 7i).
-extern const f64 lbl_eu_80665E40;
-
 // ============================================================================
 // External declarations (called functions not declared in included headers)
 // ============================================================================
 extern "C" {
     extern unsigned long gmPauseFlags;  // game state flags 2
     extern float lbl_eu_80663EDC;          // wait pop timer
-    extern float lbl_80665E38__Q23mtl10MemManager;          // scale factor
-    extern float lbl_eu_80665E3C;          // 1.0f
-    extern float lbl_eu_80665E48;          // various constants
-    extern float lbl_eu_80665E4C;          // 0.0f
 
     void CTaskGame_setLoadScreen(int, int);
     void CTaskGame_callCGameInit();
@@ -270,9 +261,9 @@ int setMapJumpArea(VMThread* pThread) {
         center.y = cornerMin.y + cornerMax.y;
         center.z = cornerMin.z + cornerMax.z;
         centerCopy = center;
-        scaledV.x = centerCopy.x * lbl_80665E38__Q23mtl10MemManager;
-        scaledV.y = centerCopy.y * lbl_80665E38__Q23mtl10MemManager;
-        scaledV.z = centerCopy.z * lbl_80665E38__Q23mtl10MemManager;
+        scaledV.x = centerCopy.x * 0.5f;
+        scaledV.y = centerCopy.y * 0.5f;
+        scaledV.z = centerCopy.z * 0.5f;
         scaledCopy = scaledV;
 
         // Party-position dispatch through CfGameManager vtable slot 0x9C.
@@ -287,7 +278,7 @@ int setMapJumpArea(VMThread* pThread) {
     }
 
     // Called unconditionally.
-    queueBdatTextB__Q22cf13CfGameManagerFv(lbl_eu_80665E3C, optC, optD);
+    queueBdatTextB__Q22cf13CfGameManagerFv(4.0f, optC, optD);
     return 0;
 }
 
@@ -398,9 +389,9 @@ int setMapJumpAreaBox(VMThread* pThread) {
     cf::CfGameManager* mgr =
         (cf::CfGameManager*)createBdatCollisionObj__Q22cf13CfGameManagerFv();
     if (mgr != NULL) {
-        CollObjSetupVecPair(mgr, lbl_eu_80665E48, 360.0f, &corners[3], &corners[3]);
+        CollObjSetupVecPair(mgr, 0.1f, 360.0f, &corners[3], &corners[3]);
         CollObjSetupRotBoxFromAVec((cf::CfObjectColl*)mgr, (cf::CollVec*)&corners[6],
-                                   (const ml::CVec3*)&corners[0], lbl_eu_80665E4C);
+                                   (const ml::CVec3*)&corners[0], 0.0f);
         CollObjSetResIdPairName(mgr, ids[1], ids[0], name);
 
         // Preload notifier dispatch through CfGameManager vtable slot 0x158.
@@ -410,7 +401,7 @@ int setMapJumpAreaBox(VMThread* pThread) {
     }
 
     // Called unconditionally, even without a manager.
-    queueBdatTextB__Q22cf13CfGameManagerFv(lbl_eu_80665E3C, opt2, lowV[0]);
+    queueBdatTextB__Q22cf13CfGameManagerFv(4.0f, opt2, lowV[0]);
     return 0;
 }
 
@@ -539,9 +530,9 @@ int setWarpArea(VMThread* pThread) {
         center.y = cornerMin.y + cornerMax.y;
         center.z = cornerMin.z + cornerMax.z;
         centerCopy = center;
-        scaledV.x = centerCopy.x * lbl_80665E38__Q23mtl10MemManager;
-        scaledV.y = centerCopy.y * lbl_80665E38__Q23mtl10MemManager;
-        scaledV.z = centerCopy.z * lbl_80665E38__Q23mtl10MemManager;
+        scaledV.x = centerCopy.x * 0.5f;
+        scaledV.y = centerCopy.y * 0.5f;
+        scaledV.z = centerCopy.z * 0.5f;
         scaledCopy = scaledV;
 
         CollObjSetResIdPairName(mgr, id0, id1, name);
@@ -552,7 +543,7 @@ int setWarpArea(VMThread* pThread) {
         ((CfGameManagerWarpView*)mgr)->warpFade = (float)(s32)fade;
     }
 
-    queueBdatTextB__Q22cf13CfGameManagerFv(lbl_eu_80665E3C, optC, optD);
+    queueBdatTextB__Q22cf13CfGameManagerFv(4.0f, optC, optD);
     return 0;
 }
 
@@ -584,7 +575,7 @@ int setMapPreloadArea(VMThread* pThread) {
     float boxMin[3];
 
     // Builtin biased int->float casts emit MWCC's 0x4330/xoris idiom; the
-    // pooled magic resolves to the shared retail blob lbl_eu_80665E40.
+    // The builtin cast pools one 2^52 magic double in this TU's .sdata2.
     boxMax[0] = (float)(s32)fx0 / 4096.0f;
     boxMax[1] = (float)(s32)fy0 / 4096.0f;
     boxMax[2] = (float)(s32)fz0 / 4096.0f;
@@ -650,7 +641,7 @@ int mapJump(VMThread* pThread) {
     queueSceneEventA__Q22cf13CfGameManagerFv(areaId & 0xFFFF, subId & 0xFFFF,
                                            (u32)&pt[0], (u32)name,
                                            (float)(s32)rot / 4096.0f);
-    func_8007C374__Q22cf13CfGameManagerFv(flag, frames, lbl_eu_80665E3C, 1);
+    func_8007C374__Q22cf13CfGameManagerFv(flag, frames, 1, 4.0f);
     return 0;
 }
 
@@ -1173,7 +1164,7 @@ int makeParty(VMThread* pThread) {
     float scale[3];
     // Zero scale held in a local across the loop so MWCC colors it into
     // the callee-saved f31 (retail saves/restores f31).
-    const float zeroF = lbl_eu_80665E4C;
+    float zeroF = 0.0f;
     for (int i = 0; i < 3; i++) {
         pos[i] = ml::CVec3::zero;
         scale[i] = zeroF;
@@ -1641,7 +1632,7 @@ int applyPcPrm(VMThread* vmThread) {
 // --- setDispOffArea (us-8004ac34) ---
 // Looks up the map object referenced by the script OC argument and pushes a
 // display-offset area id onto it. The int->float conversion uses MWCC's
-// 0x4330/xoris double-magic idiom pooled at lbl_eu_80665E40.
+// 0x4330/xoris double-magic idiom from the builtin int->float cast.
 int setDispOffArea(VMThread* vmThread) {
     VMArg* arg = vmArgPtrGet(vmThread, 1);
     void* ocObj = vmArgOCGet(2, arg);
@@ -1654,7 +1645,7 @@ int setDispOffArea(VMThread* vmThread) {
         // The singleton from getInstance__Fv is passed as the callee's self.
         // The int->float arg uses MWCC's builtin biased-conversion idiom
         // (xoris/lis 0x4330/stw/stw/lfd/fsubs); its magic pools as a TU-local
-        // label that resolves to lbl_eu_80665E40 (MWCC_CASES 7i/fsub-rule).
+        // The compiler pools that magic once per TU (MWCC_CASES 7i/fsub-rule).
         UnkClass_805764CC* box = (UnkClass_805764CC*)getInstance__Fv();
         setTrackedTarget(box, obj, 1, areaId);
     }
@@ -1851,7 +1842,7 @@ int clearPartyGauge(VMThread* vmThread) {
 int waitPop(VMThread* vmThread) {
     if (!scanBattleReady()) {
         if (!(gmPauseFlags & 0x10)) {
-            lbl_eu_80663EDC = lbl_eu_80665E4C;
+            lbl_eu_80663EDC = 0.0f;
         }
         gmPauseFlags |= 0x10;
         vmWaitModeSet(vmThread);

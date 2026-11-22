@@ -6,10 +6,10 @@
 
 #include "functions.hpp"
 
-class CTaskEnvLgtCtrlAccess;
+struct CScnEnvLgtCtrlResList;
 extern "C" void nopFunc();  // retail no-op helper defined below
 extern "C" float scaleByGlobal(float val);
-extern "C" u32 checkBitFlag(CTaskEnvLgtCtrlAccess* self);
+extern "C" u32 checkBitFlag(CScnEnvLgtCtrlResList* self);
 extern "C" void Env_CopyLightPreset(void* dst, const void* src);
 extern "C" void Env_CopyLightGate(void* self, const void* src);
 extern "C" void Env_AddVec4(ml::CVec4* out, const ml::CVec4* a,
@@ -23,6 +23,7 @@ extern "C" void copyWord4Offset(u32* dst, const u32* src);
 #define FC4 -3.0f
 #define FC8 5.0f
 #include "kyoshin/cf/CTaskEnvironment.hpp"
+#include "libs/monolib/src/scn/CScnEnvLgtCtrlResList.hpp"  // env-controller list owner (flags word)
 #include "monolib/math/CVec4.hpp"
 #include "monolib/util/MemManager.hpp"
 #include "monolib/work/CWorkThreadSystem.hpp"
@@ -248,7 +249,7 @@ extern "C" void* getGlobalSda() { return spTaskEnvironmentManager; }
 
 extern "C" u32 getField68(CTaskEnvironment* self) { return self->field_0x68; }
 
-extern "C" CTaskEnvLgtCtrlAccess* getSubField7C(CTaskEnvScene* self) { return self->mEnvLgtCtrl; }
+extern "C" CScnEnvLgtCtrlResList* getSubField7C(CTaskEnvScene* self) { return self->mEnvLgtCtrl; }
 
 // Clock helper: hours = minute/c + second/c/c (c = sdata2 rate constant,
 // 60.0f; the int->float conversion uses the retail double trick).
@@ -380,7 +381,7 @@ extern "C" void Env_ScaleVec4(ml::CVec4* out, const ml::CVec4* in, float s) {
 void CTaskEnvironment::Init() {
     Env_BuildLights(this);
     scnLgtSetBlendBloom(mScene->mEnvLgtCtrl, 1);
-    mScene->mEnvLgtCtrl->field_0 |= 0x80;
+    mScene->mEnvLgtCtrl->flags |= 0x80;
 }
 
 void CTaskEnvironment::Term() {
@@ -787,7 +788,7 @@ extern "C" void Env_MtxMulVec(ml::CVec3* out, const CTaskEnvRotMtx* m,
     out->y = yc;
 }
 
-extern "C" u32 checkBitFlag(CTaskEnvLgtCtrlAccess* self) { return (self->field_0 >> 1) & 0x1u; }
+extern "C" u32 checkBitFlag(CScnEnvLgtCtrlResList* self) { return (self->flags >> 1) & 0x1u; }
 
 // Converted to inline member function in header
 

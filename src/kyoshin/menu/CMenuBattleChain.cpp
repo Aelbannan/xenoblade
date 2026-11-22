@@ -34,10 +34,6 @@ class IScnRender;
  * .rodata:0x80510878 (the address __RTTI__16CMenuBattleChain points at) and the
  * block follows at 0x8051088C.
  */
-// Thunk targets (retail mangled names). extern "C" keeps the exact symbol
-// (no extra __FPv); GetItemMulti idiom.
-extern "C" void* __dt__16CMenuBattleChainFv(CMenuBattleChain* self, int flags);
-extern "C" void cbRenderBefore__16CMenuBattleChainFv(CMenuBattleChain* self);
 
 // Term helpers (retail names; CDeviceVI static + UnkClass member).
 namespace CDeviceVI {

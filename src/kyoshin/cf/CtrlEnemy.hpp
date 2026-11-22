@@ -295,33 +295,11 @@ public:
     u16 field_45CA;                   // 0x45CA
 };
 
-// Minimal CBattleManager view for this TU: getInstance + vtable slot 0x28
-// (battle-state probe, one u32 mask).
-class CtrlEnemyBM {
-public:
-    virtual void m008(); virtual void m00C(); virtual void m010();
-    virtual void m014(); virtual void m018(); virtual void m01C();
-    virtual void m020(); virtual void m024();
-    virtual int m028(u32 mask);      // index 8 -> vtable 0x28
-};
-
-// Enum list view (CfEnumListHolder::get()): element count at +0x620.
-struct CtrlEnemyEnumList {
-    u8 _pad00[0x620];                // 0x00-0x61F
-    u32 field_620;                   // 0x620 (count)
-};
-
  
 // Battle-actor +0x3F60 target: u16 flag word at +0x530 (bit 0 probed).
 struct CtrlEnemySubFlag {
     u8 _pad00[0x530];                // 0x00-0x52F
     u16 field_530;                   // 0x530
-};
-
-// Arts-info object returned by findBattleStatusEntry: word at +0x10.
-struct CtrlEnemyArtsInfo {
-    u8 _pad00[0x10];                 // 0x00-0x0F
-    u32 field_10;                    // 0x10
 };
 
 class __declspec(novtable) CtrlEnemy {
@@ -422,15 +400,6 @@ public:
 
 // cf::CtrlEnemy retail vtable (.data).
 extern u8 lbl_eu_80527738[];
-
-// Retail data symbols (global scope: MWCC emits these unmangled).
-extern f32 lbl_eu_80666570;    // 0.0f
-extern f32 lbl_eu_80666574;    // 10.0f
-extern f32 lbl_eu_80666578;    // 4.0f
-extern f32 lbl_eu_8066657C;    // 1.0f
-extern f32 lbl_eu_80666580;    // 0.15f
-extern f32 lbl_eu_80666584;    // 100.0f
-extern f64 lbl_eu_80666588;    // 2^52 + 2^31 (signed int -> double magic)
 
 // C++-linkage imports (mangle to the retail __Fi forms).
 void* findObjectById(int id);       // findObjectById__Fi

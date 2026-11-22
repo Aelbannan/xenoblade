@@ -12,75 +12,16 @@ using namespace ml;
 // ---------------------------------------------------------------------------
 // Retail data-slice definitions owned by this TU (splits.txt: .rodata
 // 0x804FA9F0-0x804FAC20, .data 0x80525D68-0x80525E98, .sdata2
-// 0x80665DB8-0x80665DF8). The command-name strings, slot table and plugin
-// table are defined here explicitly in retail order; MWCC's literal pool
-// (int->float conversion magic copies) trails the .sdata2 defs and is
-// trimmed by UnitRules after its relocs are rebound to the real defs.
+// 0x80665DB8-0x80665DF8). The command-name strings are plain literals in
+// the command table; placed after the fade casts, MWCC pools the fade
+// alpha/magic and those strings into the retail .sdata2 order. The slot
+// table and plugin table remain explicit TU-owned data.
 // ---------------------------------------------------------------------------
-
-// .sdata2: fade alpha constant + int->float magic + plugin-name strings.
-__declspec(section ".sdata2") __attribute__((used))
-double lbl_eu_80665DC0 = 4503601774854144.0;
-__declspec(section ".sdata2") __attribute__((used))
-char lbl_eu_80665DC8[] = "winTalk";
-__declspec(section ".sdata2") __attribute__((used))
-char lbl_eu_80665DD0[] = "pcTalk";
-__declspec(section ".sdata2") __attribute__((used))
-char lbl_eu_80665DD8[] = "fadeIn";
-__declspec(section ".sdata2") __attribute__((used))
-char lbl_eu_80665DE0[] = "fadeOut";
-__declspec(section ".sdata2") __attribute__((used))
-char lbl_eu_80665DE8[] = "winSys";
-__declspec(section ".sdata2") __attribute__((used))
-char lbl_eu_80665DF0[] = "save";
 
 // .rodata: effect-slot table + VM command names + shared message strings.
 __declspec(section ".rodata") __attribute__((aligned(8))) __attribute__((used))
 CfSlotTable pluginTrustEffectSlots = {{0x00000010u, 0x00100000u, 0x00200000u}};
 
-// .data: VM plugin command table (38 name/function pairs + null terminator).
-// First table carries aligned(8) for the section alignment.
-__declspec(section ".data") __attribute__((aligned(8))) __attribute__((used))
-const void* pluginCommandTable[76] = {
-    (const void*)lbl_eu_80665DC8, (const void*)winTalk,
-    (const void*)lbl_eu_80665DD0, (const void*)pcTalk,
-    "winTalkWait", (const void*)winTalkWait,
-    "winTalkNoName", (const void*)winTalkNoName,
-    (const void*)lbl_eu_80665DD8, (const void*)fadeIn_1,
-    (const void*)lbl_eu_80665DE0, (const void*)fadeOut_1,
-    "fadeWait", (const void*)fadeWait_1,
-    "createCol6Sys", (const void*)createCol6Sys,
-    "createCol6Hint", (const void*)createCol6Hint,
-    "createCol6Invite", (const void*)createCol6Invite,
-    "createCol6Init", (const void*)createCol6Init,
-    "checkCol6Bat", (const void*)checkCol6Bat,
-    "simpleEventStart", (const void*)simpleEventStart,
-    "simpleEventEnd", (const void*)simpleEventEnd,
-    "setTrust", (const void*)setTrust,
-    "setItemMulti", (const void*)setItemMulti,
-    "setKizunaTalk", (const void*)setKizunaTalk,
-    (const void*)lbl_eu_80665DE8, (const void*)winSys,
-    "winSysSelect", (const void*)winSysSelect,
-    "getSelectNum", (const void*)getSelectNum,
-    "mesGetArts", (const void*)mesGetArts,
-    "mesAddPT", (const void*)mesAddPT,
-    "mesSubPT", (const void*)mesSubPT,
-    "mesVisionON", (const void*)mesVisionON,
-    "mesVisionOFF", (const void*)mesVisionOFF,
-    "mesMonadoON", (const void*)mesMonadoON,
-    "mesMonadoOFF", (const void*)mesMonadoOFF,
-    "ptChangeNotice", (const void*)ptChangeNotice,
-    (const void*)lbl_eu_80665DF0, (const void*)save,
-    "kizunaTalkStart", (const void*)kizunaTalkStart,
-    "kizunaTalkEnd", (const void*)kizunaTalkEnd,
-    "isPrioReq", (const void*)isPrioReq,
-    "gameClear", (const void*)gameClear,
-    "setLastTalkNpc", (const void*)setLastTalkNpc,
-    "isSETalkVoiceWait", (const void*)isSETalkVoiceWait,
-    "setSETalkVoiceWait", (const void*)uiSetSETalkVoiceWait,
-    "clearSETalkVoiceWait", (const void*)uiClearSETalkVoiceWait,
-    (const void*)0, (const void*)0
-};
 
 void ui_mesGetArts(VMThread* pThread) {
     int num1 = vmArgIntGet(2, vmArgPtrGet(pThread, 1));
@@ -147,10 +88,10 @@ int winSys(VMThread* pThread) {
 
 // Fade-in script command: (duration, count?). Same shape as fadeOut_1 but
 // mode 2; the duration converts through MWCC's implicit int->float expansion
-// (xoris/0x43300000 word-pair + fsubs against the shared sdata2 correction
-// constant). NOTE: the pooled magic lands on anon label @2067; the
-// pluginUi.o UnitRules exact_renames key in tools/postprocess_reloc_names.py
-// still says @2082 and must be refreshed to @2067 for the reloc-name gate.
+// (xoris/0x43300000 word-pair + fsubs against the sdata2 correction pool).
+// The fade casts precede the command table so MWCC emits the retail
+// .sdata2 pool order from the natural literals, with no hand-placed double
+// and no trailing duplicate constant.
 int fadeIn_1(VMThread* pThread) {
     int v1 = vmArgIntGet(2, vmArgPtrGet(pThread, 1));
     int v2;
@@ -176,6 +117,50 @@ int fadeOut_1(VMThread* pThread) {
     CUICfManager_queueFadeMenu(0, v2, -1.0f, (float)(s32)v1, -1.0f);
     return 0;
 }
+// .data: VM plugin command table (38 name/function pairs + null terminator).
+// First table carries aligned(8) for the section alignment.
+__declspec(section ".data") __attribute__((aligned(8))) __attribute__((used))
+const void* pluginCommandTable[76] = {
+    (const void*)"winTalk", (const void*)winTalk,
+    (const void*)"pcTalk", (const void*)pcTalk,
+    "winTalkWait", (const void*)winTalkWait,
+    "winTalkNoName", (const void*)winTalkNoName,
+    (const void*)"fadeIn", (const void*)fadeIn_1,
+    (const void*)"fadeOut", (const void*)fadeOut_1,
+    "fadeWait", (const void*)fadeWait_1,
+    "createCol6Sys", (const void*)createCol6Sys,
+    "createCol6Hint", (const void*)createCol6Hint,
+    "createCol6Invite", (const void*)createCol6Invite,
+    "createCol6Init", (const void*)createCol6Init,
+    "checkCol6Bat", (const void*)checkCol6Bat,
+    "simpleEventStart", (const void*)simpleEventStart,
+    "simpleEventEnd", (const void*)simpleEventEnd,
+    "setTrust", (const void*)setTrust,
+    "setItemMulti", (const void*)setItemMulti,
+    "setKizunaTalk", (const void*)setKizunaTalk,
+    (const void*)"winSys", (const void*)winSys,
+    "winSysSelect", (const void*)winSysSelect,
+    "getSelectNum", (const void*)getSelectNum,
+    "mesGetArts", (const void*)mesGetArts,
+    "mesAddPT", (const void*)mesAddPT,
+    "mesSubPT", (const void*)mesSubPT,
+    "mesVisionON", (const void*)mesVisionON,
+    "mesVisionOFF", (const void*)mesVisionOFF,
+    "mesMonadoON", (const void*)mesMonadoON,
+    "mesMonadoOFF", (const void*)mesMonadoOFF,
+    "ptChangeNotice", (const void*)ptChangeNotice,
+    (const void*)"save", (const void*)save,
+    "kizunaTalkStart", (const void*)kizunaTalkStart,
+    "kizunaTalkEnd", (const void*)kizunaTalkEnd,
+    "isPrioReq", (const void*)isPrioReq,
+    "gameClear", (const void*)gameClear,
+    "setLastTalkNpc", (const void*)setLastTalkNpc,
+    "isSETalkVoiceWait", (const void*)isSETalkVoiceWait,
+    "setSETalkVoiceWait", (const void*)uiSetSETalkVoiceWait,
+    "clearSETalkVoiceWait", (const void*)uiClearSETalkVoiceWait,
+    (const void*)0, (const void*)0
+};
+
 // Fade-wait script command: park the thread while a fade is running.
 int fadeWait_1(VMThread* pThread) {
     if (getFadeMenu() && isFadeActive()) {

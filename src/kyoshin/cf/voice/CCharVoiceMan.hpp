@@ -23,19 +23,9 @@ namespace cf{
         u8 unk20[0x10];
     };
 
-    struct CVoiceFactoryActor {
-        u8 unk0[0x64];
-        u32 field_64;
-    };
-
     struct CVoiceBtlSlot {
         u32 id0;
         u32 id1;
-    };
-
-    struct CVoiceActorInfo {
-        u8 unk0[0x3F10];
-        u32 field_3F10;
     };
 
     struct CVoiceActorBase {
@@ -70,21 +60,6 @@ namespace cf{
     struct CBattleCountAccessor {
         u8 unk0[0x194];
         int field_194;
-    };
-    struct CVoiceBattleNode {
-        CVoiceBattleNode* next;
-    };
-    struct CBattleListAccessor {
-        u8 unk0[0x28];
-        CVoiceBattleNode* list0;
-    };
-    struct CBattleManagerNodeList {
-        u8 unk0[0x48];
-        CVoiceBattleNode* sentinel;
-    };
-    struct CVoiceBFC68 {
-        u8 pad0[0x3ED4];
-        void* field_3ED4;
     };
     struct CVoiceSrcNode {
         u8 pad0[4];
@@ -160,7 +135,7 @@ class CVS_THREAD_BATTLE_MAIN { public: static void* create(int); };
 class CVS_THREAD_BATTLE_END_SP { public: static CVS_THREAD_BATTLE_END_SP* create(); };
 class CVS_THREAD_BATTLE_END { public: static CVS_THREAD_BATTLE_END* create(int); };
 class CVS_THREAD_BATTLE_BEGIN { public: static CVS_THREAD_BATTLE_BEGIN* create(struct CVoiceHandle*, struct CVoiceHandle*); };
-extern "C" void* getCfObjectPc__FPQ22cf12CfObjectMove(void* self);
+extern "C" cf::CfObjectImplPc18* getCfObjectPc__FPQ22cf12CfObjectMove(void* self);
 extern "C" cf::CSoundNode* BtlBeg_PlayLine_0344(void* src);
 extern "C" u32 getQueuedFileEventCount__Q22cf13CfGameManagerFv(void);
 extern "C" void* HpVoice_FindBySubState(int a);

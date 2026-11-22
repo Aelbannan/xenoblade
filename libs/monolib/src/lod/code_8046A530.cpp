@@ -286,10 +286,6 @@ void setVariation__Q23LOD17UnkClass_8046A530Fv(LOD::UnkClass_8046A530* self, int
 // extra arguments to; declare them with the exact names so the call relocs
 // match.
 // ---------------------------------------------------------------------------
-extern "C" void updateLodWalk__Q23LOD17UnkClass_8046A530Fv(LOD::UnkClass_8046A530* self, u8* elem);
-extern "C" void updateLodBatch0__Q23LOD17UnkClass_8046A530Fv(LOD::UnkClass_8046A530* self, u8* elem, f32 c);
-extern "C" void updateLodBatch1__Q23LOD17UnkClass_8046A530Fv(LOD::UnkClass_8046A530* self, u8* elem, f32 c);
-extern "C" void updateLodBatch2__Q23LOD17UnkClass_8046A530Fv(LOD::UnkClass_8046A530* self, u8* elem, f32 c);
 
 #pragma push
 #pragma auto_inline off  // noinline-ok: retail keeps the updateLod* walk helpers out of line; -ipa off / -inline noauto both lose all 4 fns
@@ -308,7 +304,7 @@ extern "C" void advanceLodAnim__Q23LOD17UnkClass_8046A530Fv(LOD::UnkClass_8046A5
     if (flags & 0x8) {
         u8* p = reinterpret_cast<u8*>(self);
         for (int i = 0; i < 8; i++, p += 0x24) {
-            updateLodWalk__Q23LOD17UnkClass_8046A530Fv(self, p);
+            self->updateLodWalk(p);
         }
     }
     if (flags & 0x10) {
@@ -317,19 +313,19 @@ extern "C" void advanceLodAnim__Q23LOD17UnkClass_8046A530Fv(LOD::UnkClass_8046A5
         int i;
         u8* p = reinterpret_cast<u8*>(self) + 0x120;
         for (i = 0; i < 8; i++, p += 0xb4) {
-            updateLodBatch0__Q23LOD17UnkClass_8046A530Fv(self, p, 0.4f);
+            self->updateLodBatch0(p, 0.4f);
         }
     }
     if (flags & 0x20) {
         for (int i = 0; i < 8; i++) {
-            updateLodBatch1__Q23LOD17UnkClass_8046A530Fv(
-                self, reinterpret_cast<u8*>(self) + (i + 8) * 0xb4 + 0x120, 0.4f);
+            self->updateLodBatch1(
+                reinterpret_cast<u8*>(self) + (i + 8) * 0xb4 + 0x120, 0.4f);
         }
     }
     if (flags & 0x40) {
         for (int i = 0; i < 8; i++) {
-            updateLodBatch2__Q23LOD17UnkClass_8046A530Fv(
-                self, reinterpret_cast<u8*>(self) + (i + 16) * 0xb4 + 0x120, 0.4f);
+            self->updateLodBatch2(
+                reinterpret_cast<u8*>(self) + (i + 16) * 0xb4 + 0x120, 0.4f);
         }
     }
 }
@@ -341,8 +337,8 @@ extern "C" void advanceLodAnim__Q23LOD17UnkClass_8046A530Fv(LOD::UnkClass_8046A5
 // is pushed along v[0], with a repulsion term when v[1] gets too far from
 // the element origin.
 // ---------------------------------------------------------------------------
-extern "C" void updateLodWalk__Q23LOD17UnkClass_8046A530Fv(LOD::UnkClass_8046A530* self, u8* elem) {
-    LODLayout_8046A530* l = reinterpret_cast<LODLayout_8046A530*>(self);
+void LOD::UnkClass_8046A530::updateLodWalk(u8* elem) {
+    LODLayout_8046A530* l = reinterpret_cast<LODLayout_8046A530*>(this);
     LODElement_8046A530* e = reinterpret_cast<LODElement_8046A530*>(elem);
 
     // Working vectors.  MWCC assigns stack slots in reverse declaration
@@ -407,8 +403,8 @@ extern "C" void updateLodWalk__Q23LOD17UnkClass_8046A530Fv(LOD::UnkClass_8046A53
 // v[0..6] chain, then rebuilds the two orientation matrices from the
 // v[2]-v[0] / v[1]-v[0] axes against the global Y axis.
 // ---------------------------------------------------------------------------
-extern "C" void updateLodBatch0__Q23LOD17UnkClass_8046A530Fv(LOD::UnkClass_8046A530* self, u8* elem, f32 c) {
-    LODLayout_8046A530* l = reinterpret_cast<LODLayout_8046A530*>(self);
+void LOD::UnkClass_8046A530::updateLodBatch0(u8* elem, f32 c) {
+    LODLayout_8046A530* l = reinterpret_cast<LODLayout_8046A530*>(this);
     LODElement_8046A530* e = reinterpret_cast<LODElement_8046A530*>(elem);
 
     f32 f31 = l->field_0x1210 * c;
@@ -583,8 +579,8 @@ tmp.x *= sLodBatch0VelocityScale * s32ToF_678((rand() % 100) + 100);
 // orientation matrices built against a local (0, -1, 0) vector instead of
 // the global Y axis.
 // ---------------------------------------------------------------------------
-extern "C" void updateLodBatch1__Q23LOD17UnkClass_8046A530Fv(LOD::UnkClass_8046A530* self, u8* elem, f32 c) {
-    LODLayout_8046A530* l = reinterpret_cast<LODLayout_8046A530*>(self);
+void LOD::UnkClass_8046A530::updateLodBatch1(u8* elem, f32 c) {
+    LODLayout_8046A530* l = reinterpret_cast<LODLayout_8046A530*>(this);
     LODElement_8046A530* e = reinterpret_cast<LODElement_8046A530*>(elem);
 
     f32 f31 = l->field_0x1210 * c;
@@ -753,8 +749,8 @@ tmp.x *= sLodBatch1VelocityScale * s32ToF_678((rand() % 100) + 100);
 // Byte-identical skeleton to updateLodBatch0, but the orientation matrices are
 // built against the global X axis instead of the Y axis.
 // ---------------------------------------------------------------------------
-extern "C" void updateLodBatch2__Q23LOD17UnkClass_8046A530Fv(LOD::UnkClass_8046A530* self, u8* elem, f32 c) {
-    LODLayout_8046A530* l = reinterpret_cast<LODLayout_8046A530*>(self);
+void LOD::UnkClass_8046A530::updateLodBatch2(u8* elem, f32 c) {
+    LODLayout_8046A530* l = reinterpret_cast<LODLayout_8046A530*>(this);
     LODElement_8046A530* e = reinterpret_cast<LODElement_8046A530*>(elem);
 
     f32 f31 = l->field_0x1210 * c;

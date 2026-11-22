@@ -10,6 +10,17 @@
 #include "kyoshin/cf/CfSoundMan.hpp"
 #include "kyoshin/menu/CMenuArtsSelect.hpp"
 #include "kyoshin/cf/CArtsSet.hpp" // cf::CAttackParam (arts param +0x5e probe)
+// name-guess: no recovered name at 0x80662A20/24/28/30/38 or 0x805381C8 in config/*/symbols.txt; roles inferred from CChain_PickVoiceId and the voice-reset helpers.
+// Chain-voice state owned by this TU (retail .sdata/.data objects): the -1
+// sentinel, per-chain-type id tables and default table are written/read by
+// the chain state machine below.
+s32 sChainVoiceId = -1;
+int sChainVoiceIdMode2Type8[1] = { 0x7DB };
+int sChainVoiceIdMode2TypeA[2] = { 0x7DB, 0x7DC };
+int sChainVoiceIdMode3Types[2] = { 0x7DD, 0 };
+int sChainVoiceIdMode3Default[2] = { 0x7DD, 0x7E0 };
+int sChainVoiceIdMode2Default[3] = { 0x7DB, 0x7DC, 0x7DF };
+
 #include "monolib/math/Random.hpp"
 #include "kyoshin/cf/object/CAIActionApi.hpp"
 #include "kyoshin/cf/CSuddenCommu.hpp"
@@ -92,8 +103,8 @@ bool CChain_isValidChain(unsigned char* a1, unsigned char* a2, int a3) {
 // Returns the chain-voice state: 0 when the global voice id is the -1
 // sentinel, otherwise the voice-node lookup result for that id.
 int CChain_QueryVoiceNode() {
-    if ((u32)lbl_eu_80662A20 + 0x10000 == 0xffff) return 0;
-    return CCharVoiceMan_IsNodeActive((u32)lbl_eu_80662A20);
+    if ((u32)sChainVoiceId + 0x10000 == 0xffff) return 0;
+    return CCharVoiceMan_IsNodeActive((u32)sChainVoiceId);
 }
 // Chain-gauge accumulation: when the chain is active (type byte set and the
 // battle-object flag bit 2 set), add the frame delta to the gauge at 0x1EF0,
@@ -151,16 +162,16 @@ extern "C" void CChain_noop_AA0C() {}
 // -1 (not loaded) sentinel. noinline: retail CChain_TickChain emits a real bl.
 __declspec(noinline) void CChain_ResetVoiceMgr() {
     CCharVoiceMan_FlushAll();
-    lbl_eu_80662A20 = -1;
+    sChainVoiceId = -1;
 }
 // If a voice id is loaded, retire it (CCharVoiceMan_PlayNodeById) and clear the global
 // back to the -1 sentinel. noinline: retail CChain_UpdatePerFrame emits a real bl.
 __declspec(noinline) void CChain_RetireVoiceId() {
-    if ((u32)lbl_eu_80662A20 + 0x10000 != 0xffff) {
-        if (CCharVoiceMan_IsNodeActive((u32)lbl_eu_80662A20) == 0) {
-            if ((u32)lbl_eu_80662A20 + 0x10000 != 0xffff) {
-                CCharVoiceMan_PlayNodeById((u32)lbl_eu_80662A20);
-                lbl_eu_80662A20 = -1;
+    if ((u32)sChainVoiceId + 0x10000 != 0xffff) {
+        if (CCharVoiceMan_IsNodeActive((u32)sChainVoiceId) == 0) {
+            if ((u32)sChainVoiceId + 0x10000 != 0xffff) {
+                CCharVoiceMan_PlayNodeById((u32)sChainVoiceId);
+                sChainVoiceId = -1;
             }
         }
     }
@@ -170,12 +181,12 @@ __declspec(noinline) void CChain_RetireVoiceId() {
 // @p c (unused) mirrors the retail three-arg call shape.
 void CChain_ReloadVoiceDispatch(u8* a, CChainBattleObjTail* b, int c) {
     int ret = CChain_PickVoiceId((int)a, reinterpret_cast<cf::CChainBattleObj*>(b), reinterpret_cast<cf::CChainBattleObj*>(c));
-    if ((u32)lbl_eu_80662A20 + 0x10000 != 0xffff) {
-        CCharVoiceMan_PlayNodeById((u32)lbl_eu_80662A20);
-        lbl_eu_80662A20 = -1;
+    if ((u32)sChainVoiceId + 0x10000 != 0xffff) {
+        CCharVoiceMan_PlayNodeById((u32)sChainVoiceId);
+        sChainVoiceId = -1;
     }
     int id = CCharVoiceMan_AllocChainVoiceId();
-    lbl_eu_80662A20 = id;
+    sChainVoiceId = id;
     if ((u32)id + 0x10000 != 0xffff) {
         if (b != 0) b = (CChainBattleObjTail*)&b->field_0x3E9C;
         CCharVoiceMan_ForwardNodeCall(id, b, ret);
@@ -248,9 +259,9 @@ int CChain_PickVoiceId(int mode, cf::CChainBattleObj* p1, cf::CChainBattleObj* p
         else if (v == 0xc) m = 0xb;
         else if (v == 0xd) m = 0xc;
         else m = v;
-        if (m == 8) return lbl_eu_80662A24[ml::math::mtRand(1)];
-        if (m == 0xa) return lbl_eu_80662A28[ml::math::mtRand(2)];
-        return lbl_eu_805381C8[ml::math::mtRand(3)];
+        if (m == 8) return sChainVoiceIdMode2Type8[ml::math::mtRand(1)];
+        if (m == 0xa) return sChainVoiceIdMode2TypeA[ml::math::mtRand(2)];
+        return sChainVoiceIdMode2Default[ml::math::mtRand(3)];
     }
     case 3: {
         int m;
@@ -262,8 +273,8 @@ int CChain_PickVoiceId(int mode, cf::CChainBattleObj* p1, cf::CChainBattleObj* p
         else if (v == 0xc) m = 0xb;
         else if (v == 0xd) m = 0xc;
         else m = v;
-        if (m == 8 || m == 0xa) return lbl_eu_80662A30[ml::math::mtRand(1)];
-        return lbl_eu_80662A38[ml::math::mtRand(2)];
+        if (m == 8 || m == 0xa) return sChainVoiceIdMode3Types[ml::math::mtRand(1)];
+        return sChainVoiceIdMode3Default[ml::math::mtRand(2)];
     }
     case 4:
         return ml::math::mtRand(2) + 0x835;
@@ -278,9 +289,9 @@ int CChain_PickVoiceId(int mode, cf::CChainBattleObj* p1, cf::CChainBattleObj* p
 // If a voice id is loaded, retire it and clear the global back to the -1
 // sentinel (auto_inline off keeps CChain_ForwardVoiceClear's call a real bl).
 extern "C" void CChain_DiscardVoiceId(void* self) {
-    if ((u32)lbl_eu_80662A20 + 0x10000 != 0xffff) {
-        CCharVoiceMan_PlayNodeById((u32)lbl_eu_80662A20);
-        lbl_eu_80662A20 = -1;
+    if ((u32)sChainVoiceId + 0x10000 != 0xffff) {
+        CCharVoiceMan_PlayNodeById((u32)sChainVoiceId);
+        sChainVoiceId = -1;
     }
 }
 #pragma pop

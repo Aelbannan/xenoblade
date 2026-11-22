@@ -403,7 +403,7 @@ void __OSLaunchNextFirmware(void) {
         }
     }
 
-    titleId = *(u64 *)((u8 *)discTmd + 0x184);
+    titleId = discTmd->head.sysVersion;
     err = ESP_InitLib();
     if (err != 0) {
         OSReport(lbl_80551F30, err, 0x400);

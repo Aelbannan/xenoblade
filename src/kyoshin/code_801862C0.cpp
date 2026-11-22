@@ -250,12 +250,9 @@ void ArtsSelect_SpawnRow(MapProxy** objects, int row) {
     }
 
     Vec3f pos;
-    pos.x = lbl_eu_806679C0 *
-            (f32)((f64)(s32)getBdatStringColumnValue(bdat, cols + 0x0d, row) - lbl_eu_806679D0);
-    pos.y = lbl_eu_806679C0 *
-            (f32)((f64)(s32)getBdatStringColumnValue(bdat, cols + 0x12, row) - lbl_eu_806679D0);
-    pos.z = lbl_eu_806679C0 *
-            (f32)((f64)(s32)getBdatStringColumnValue(bdat, cols + 0x17, row) - lbl_eu_806679D0);
+    pos.x = 0.0001f * (f32)(s32)getBdatStringColumnValue(bdat, cols + 0x0d, row);
+    pos.y = 0.0001f * (f32)(s32)getBdatStringColumnValue(bdat, cols + 0x12, row);
+    pos.z = 0.0001f * (f32)(s32)getBdatStringColumnValue(bdat, cols + 0x17, row);
 
     // Rotations are hundredths of a degree (s16 column) times 0.01; volatile
     // keeps them in stack slots across the intervening bdat calls.
@@ -263,11 +260,11 @@ void ArtsSelect_SpawnRow(MapProxy** objects, int row) {
     volatile f32 rotY;
     volatile f32 rotZ;
     u32 rotXCol = getBdatStringColumnValue(bdat, cols + 0x1c, row);
-    rotX = lbl_eu_806679C4 * (f32)((f64)*(s16*)&rotXCol - lbl_eu_806679D0);
+    rotX = 0.01f * (f32)(s16)rotXCol;
     u32 rotYCol = getBdatStringColumnValue(bdat, cols + 0x21, row);
-    rotY = lbl_eu_806679C4 * (f32)((f64)*(s16*)&rotYCol - lbl_eu_806679D0);
+    rotY = 0.01f * (f32)(s16)rotYCol;
     u32 rotZCol = getBdatStringColumnValue(bdat, cols + 0x26, row);
-    rotZ = lbl_eu_806679C4 * (f32)((f64)*(s16*)&rotZCol - lbl_eu_806679D0);
+    rotZ = 0.01f * (f32)(s16)rotZCol;
 
     u32 airCol = getBdatStringColumnValue(bdat, cols + 0x2b, row);
     u32 groundCol = getBdatStringColumnValue(bdat, cols + 0x32, row);
@@ -275,16 +272,16 @@ void ArtsSelect_SpawnRow(MapProxy** objects, int row) {
     // byte live in a callee-saved register until the setVisible calls).
     int ground = *(u8*)&groundCol;
     u32 scaleCol = getBdatStringColumnValue(bdat, cols + 0x3a, row);
-    f32 scale = lbl_eu_806679C8 * (f32)((f64)*(u16*)&scaleCol - lbl_eu_806679D8);
+    f32 scale = 0.1f * (f32)(u16)scaleCol;
 
     Vec3f rot;
     rot.x = rotX * ml::deg2rad;
     rot.y = rotY * ml::deg2rad;
     rot.z = rotZ * ml::deg2rad;
     if (*(u8*)&airCol == 0) {
-        objects[row]->placeOnGround(reinterpret_cast<ml::CVec3*>(&pos), lbl_eu_806679CC);
+        objects[row]->placeOnGround(reinterpret_cast<ml::CVec3*>(&pos), 1000.0f);
     } else {
-        objects[row]->placeInAir(reinterpret_cast<ml::CVec3*>(&pos), lbl_eu_806679CC);
+        objects[row]->placeInAir(reinterpret_cast<ml::CVec3*>(&pos), 1000.0f);
     }
     // Retail copies the current position out (result unused) - keep it.
     Vec3f curPos = *reinterpret_cast<Vec3f*>(objects[row]->getPos());

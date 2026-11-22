@@ -16,7 +16,6 @@ struct GlobalStruct_80572B94;
 // Retail linker labels referenced from this TU (unmangled global data names;
 // plain extern at global scope -- MWCC does not mangle global variable names)
 // ---------------------------------------------------------------------------
-extern char lbl_eu_804FBF60[];
 extern char sHeapRegionBlocks[];
 extern char sHeapList78[];
 extern char sHeapList38[];

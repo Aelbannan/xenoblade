@@ -87,7 +87,7 @@ int Util::CalcLpfFreq(f32 scale) {
         return 16000;
     }
 
-    return lbl_eu_805223E0[static_cast<int>((scale - lbl_eu_8066A0F4) /
+    return Util::CalcLpfFreqTable[static_cast<int>((scale - lbl_eu_8066A0F4) /
                                             lbl_eu_8066A0FC)];
 }
 
@@ -676,9 +676,11 @@ const u16 Util::RemoteFilterCoefTable[COEF_TABLE_SIZE][IIR_COEF_COUNT] = {
     // clang-format on
 };
 
-extern "C" __declspec(section ".rodata") __attribute__((aligned(8))) const u32 lbl_eu_805223E0[12] = {
-    0x00500064, 0x008000A0, 0x00C80100, 0x01400190, 0x01F40280, 0x032003E8,
-    0x05000640, 0x07D00A00, 0x0C800FA0, 0x14001900, 0x1F402800, 0x32003E80
+const u16 Util::CalcLpfFreqTable[24] = {
+    80,   100,  128,  160,  200,  256,
+    320,  400,  500,  640,  800,  1000,
+    1280, 1600, 2000, 2560, 3200, 4000,
+    5120, 6400, 8000, 10240, 12800, 16000
 };
 
 } // namespace detail

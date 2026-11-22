@@ -1,12 +1,6 @@
 #include "monolib/core/CPadManager.hpp"
 #include <cstring>
 
-// The only remaining shared-pool reference is the zero entry
-// (lbl_eu_8066A324): retail's CPadManager.o pool puts it at offset 0x4,
-// whereas a source literal would emit a second zero later in the pool and
-// change the .sdata2 reloc order. The u8->f32 magic double is now a cast.
-extern float lbl_eu_8066A324;  // 0.0f
-
 inline float u8ToF32(u8 v) {
     return (float)(u32)v;
 }
@@ -312,21 +306,21 @@ void CPad::setMiscValues(CWpadStatus* pPadStatus){
             if(mWpadData.mDpdValidFg > 0){
                 mWpadData.mPos.x = pPadStatus->pos.x * 320.0f;
                 mWpadData.mPos.y = pPadStatus->pos.y * 210.0f;
-                mWpadData.mPos.z = lbl_eu_8066A324;
+                mWpadData.mPos.z = 0.0f;
 
                 mWpadData.mVec.x = pPadStatus->vec.x;
                 mWpadData.mVec.y = pPadStatus->vec.y;
-                mWpadData.mVec.z = lbl_eu_8066A324;
+                mWpadData.mVec.z = 0.0f;
 
                 mWpadData.mSpeed = pPadStatus->speed;
 
                 mWpadData.mHorizon.x = pPadStatus->horizon.x;
                 mWpadData.mHorizon.y = pPadStatus->horizon.y;
-                mWpadData.mHorizon.z = lbl_eu_8066A324;
+                mWpadData.mHorizon.z = 0.0f;
 
                 mWpadData.mHoriVec.x = pPadStatus->hori_vec.x;
                 mWpadData.mHoriVec.y = pPadStatus->hori_vec.y;
-                mWpadData.mHoriVec.z = lbl_eu_8066A324;
+                mWpadData.mHoriVec.z = 0.0f;
 
                 mWpadData.mHoriSpeed = pPadStatus->hori_speed;
                 mWpadData.mDist = pPadStatus->dist;
@@ -464,9 +458,9 @@ void CPadManager::updatePadInputs(){
             if(error == -7){
                 pad->mPadType = PAD_TYPE_CORE;
                 padStatus->hold &= ~(WPAD_BUTTON_FS_Z | WPAD_BUTTON_FS_C);
-                pad->mLStickYRaw = lbl_eu_8066A324;
-                pad->mLStickXRaw = lbl_eu_8066A324;
-                pad->mLStickX = lbl_eu_8066A324;
+                pad->mLStickYRaw = 0.0f;
+                pad->mLStickXRaw = 0.0f;
+                pad->mLStickX = 0.0f;
             }else if(error != 0){
                 pad->mHeldButtonFlags = 0;
                 pad->mPressedButtonFlags = 0;
@@ -485,13 +479,12 @@ void CPadManager::updatePadInputs(){
 }
 
 void CPad::updateMotor(){
-    const float zero = lbl_eu_8066A324;
-    if(mMotorTimer > zero){
+    if(mMotorTimer > 0.0f){
         mMotorTimer -= 0.03333333333333333;
 
         //If the motor timer reached zero, turn off the motor
-        if(mMotorTimer <= zero){
-            mMotorTimer = zero;
+        if(mMotorTimer <= 0.0f){
+            mMotorTimer = 0.0f;
 
             switch(mPadType){
                 case PAD_TYPE_CORE ... PAD_TYPE_7:

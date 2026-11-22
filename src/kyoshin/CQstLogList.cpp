@@ -25,6 +25,9 @@ extern "C" {
 #include <stdio.h>
 #include "kyoshin/code_80135FDC_State.hpp"
 
+// name-guess: quest-pane vertex colour cached by this TU from the layout.
+u32 sQuestLogPaneColor = 0xFFFFFFFF;
+
 // Quest-log list constructor. Members come up in declaration order (the
 // CSortMenu/QstData wrappers run the retail ctor calls); the three re-init
 // blocks are assignments from temporaries, like the menu Init functions.
@@ -234,8 +237,24 @@ void CQstLogList::ConfirmSort(int flag) {
 // retail: lwz r0,sSelectedQuestId@sda21; clrlwi r3,r0,16 = (u16)global
 u32 CQstLogList::GetSelectedQuestLo() { return sSelectedQuestId & 0xFFFF; }
 
+// Sort-menu open-in animation start (one-shot on mode 0): switch animations,
+// prime the scroll bar geometry and request scroll-in.
+void CQstLogList::BeginSortOpen() {
+    if (field_0x174 == 0) {
+        field_0x174 = 1;
+        mSortEnabled = 0;
+        ShowOpenAnim();
+        MoveCursor();
+        nw4r::math::VEC3 pos(214.0f, 118.0f, 0.0f);
+        mScrollBar.InitRootPane(&pos);
+        mScrollBar.UpdateThumb(10, (u16)sQuestListScrollBase);
+        mScrollBar.PlaceThumb((u16)field_0x17E);
+        mScrollBar.requestScrollIn();
+    }
+}
+
 void CQstLogList::StepOpenAnim() {
-    f32 frame = lbl_eu_80668584;
+    f32 frame = 1.0f;
     nw4r::lyt::AnimTransform* anim = mpAnim0;
     if (advanceAnimTransform(anim, frame) != 0) {
         field_0x174 = 2;
@@ -244,7 +263,7 @@ void CQstLogList::StepOpenAnim() {
 }
 
 void CQstLogList::StepSortAnim() {
-    f32 frame = lbl_eu_80668584;
+    f32 frame = 1.0f;
     nw4r::lyt::AnimTransform* anim = mpAnim1;
     if (advanceAnimTransform(anim, frame) != 0) {
         field_0x174 = 3;
@@ -255,14 +274,14 @@ void CQstLogList::StepSortAnim() {
 }
 
 void CQstLogList::RewindSortAnim() {
-    if (AnimRewindFrame(mpAnim1, lbl_eu_80668584) != 0) {
+    if (AnimRewindFrame(mpAnim1, 1.0f) != 0) {
         field_0x174 = 5;
         ShowOpenAnim();
     }
 }
 
 void CQstLogList::RewindOpenAnim() {
-    if (AnimRewindFrame(mpAnim0, lbl_eu_80668584) != 0) {
+    if (AnimRewindFrame(mpAnim0, 1.0f) != 0) {
         field_0x174 = 0;
         mSortEnabled = 1;
     }
@@ -289,7 +308,7 @@ void CQstLogList::DrawRow(const char* name, int questId, int index,
     sprintf(buf, &lbl_eu_80509AB4[0x48], index);
     LayoutSetTextBoxFmtValue(mpLayout, buf, (char*)str, 0);
     PaneSetVtxColorByName(mpLayout, buf,
-                  a6 != 0 ? 0xC81E1EFFu : lbl_eu_80662860);
+                  a6 != 0 ? 0xC81E1EFFu : sQuestLogPaneColor);
 
     // Detail text: BDAT lookup chain (name -> column A -> column B -> row
     // string) formatted into the second pane.
@@ -300,7 +319,7 @@ void CQstLogList::DrawRow(const char* name, int questId, int index,
     sprintf(buf, &lbl_eu_80509AB4[0x7b], index);
     LayoutSetTextBoxFmtValue(mpLayout, buf, (char*)str2, 0);
     PaneSetVtxColorByName(mpLayout, buf,
-                  a6 != 0 ? 0xC81E1EFFu : lbl_eu_80662860);
+                  a6 != 0 ? 0xC81E1EFFu : sQuestLogPaneColor);
 
     sprintf(buf, &lbl_eu_80509AB4[0x87], index);
     nw4r::lyt::Pane* pane1 = mpLayout->GetRootPane()->FindPaneByName(buf, true);
@@ -664,7 +683,7 @@ bool CQstLogList::OnFileEvent(CEventFile* event) {
     }
 
     // Store the quest text color fetched from the log pane.
-    lbl_eu_80662860 = mpLayout->GetRootPane()
+    sQuestLogPaneColor = mpLayout->GetRootPane()
                           ->FindPaneByName(&s[0x1b1], true)
                           ->GetVtxColor(0);
 
@@ -716,25 +735,6 @@ void CQstLogList::Teardown() {
     mScrollBar.Teardown();
     mSortMenu.Term();
     mMemRegion.deleteRegion();
-}
-
-// Sort-menu open-in animation start (one-shot on mode 0): switch animations,
-// prime the scroll bar geometry and request scroll-in.
-void CQstLogList::BeginSortOpen() {
-    if (field_0x174 == 0) {
-        field_0x174 = 1;
-        mSortEnabled = 0;
-        ShowOpenAnim();
-        MoveCursor();
-        f32 pos[3];
-        pos[0] = lbl_eu_80668578;
-        pos[1] = lbl_eu_8066857C;
-        pos[2] = lbl_eu_80668580;
-        mScrollBar.InitRootPane(reinterpret_cast<const nw4r::math::VEC3*>(pos));
-        mScrollBar.UpdateThumb(10, (u16)sQuestListScrollBase);
-        mScrollBar.PlaceThumb((u16)field_0x17E);
-        mScrollBar.requestScrollIn();
-    }
 }
 
 // Sort-menu confirm: adopt the selected page/entry indices into the list,

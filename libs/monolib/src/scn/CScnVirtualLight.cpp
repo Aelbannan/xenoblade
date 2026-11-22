@@ -842,7 +842,7 @@ extern "C" void scnVlUpdate(CScnVirtualLight* self, CScnEnvLgtData* data,
     CLight* dst;
     scnVlUpdateShape(data, vec, mode, enabled, f1 + scnVlGetFade((void*)self));
     if (checkBitFlag(getSubField7C(self->mSub)) != 0) {
-        scnLgtGatherLights((CScnEnvLgtCtrl*)getSubField7C(self->mSub), data, (void*)vec, f1);
+        scnLgtGatherLights((CScnEnvLgtCtrlResList*)getSubField7C(self->mSub), data, (void*)vec, f1);
     } else {
         scnVlInitVec4(&v18);
         CScnVirtualLightData* p = (CScnVirtualLightData*)scnVlPtrVal14(

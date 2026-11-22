@@ -113,22 +113,14 @@ extern "C" int NandTitleFile(void (*pCallback)(void*, unsigned int, unsigned cha
 // Cursor-position builder (retail calls it via bl, so keep it out of line).
 extern "C" void CTitleMenu_calcCursorPos(nw4r::math::VEC3* dest, CTitleMenu* menu, u8 val);
 
-// Shared string pool (split1 .rodata) - "/menu/Title.arc" etc.
-extern char lbl_eu_80513628[];
-// Secondary mode bitfield (.sbss) - bit 30 gates the menu color pass.
 extern u32 gmPauseFlags;
 #include "kyoshin/CTitleAHelp.hpp"  // setGXColorS10 (defined in CTitleAHelp.cpp)
 
-extern const float lbl_eu_80668FE0;
-extern double lbl_eu_80668FE8; // 0x4330000000000000 (2^52) - u32->f32 conversion magic
-extern float lbl_eu_80668FF0;
 // vtables (.data): CTitle / CTitleLogo / CTitleMenu. Declared as arrays so
 // MWCC uses full 32-bit (lis/addi) addressing like the retail.
 extern void* lbl_eu_8053B2C8[];
 extern void* lbl_eu_8053B368[];
 extern void* lbl_eu_8053B35C[];
-// Current CTitle instance (.sbss) - file-event callback target.
-extern void* lbl_eu_80664C38;
 
 namespace cf {
 

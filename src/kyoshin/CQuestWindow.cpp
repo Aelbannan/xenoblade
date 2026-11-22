@@ -265,11 +265,10 @@ CQuestWindow* createQuestWindow(CProcess* parent, u32 arg1, u32 arg2, u32 arg3) 
         return 0;
     }
     mtl::ALLOC_HANDLE mem = CWorkThreadSystem::getWorkMem();
-    spQuestWindow = reinterpret_cast<QuestWindowState*>(
-        new (mtl::MemManager::allocate(0xec, mem))
-            CQuestWindow((CScn*)arg1, arg2, arg3));
-    reinterpret_cast<CProcess*>(spQuestWindow)->Regist(parent, 0);
-    return reinterpret_cast<CQuestWindow*>(spQuestWindow);
+    spQuestWindow = new (mtl::MemManager::allocate(0xec, mem))
+        CQuestWindow((CScn*)arg1, arg2, arg3);
+    static_cast<CProcess*>(spQuestWindow)->Regist(parent, 0);
+    return spQuestWindow;
 }
 
 // Window open animation: wait until anim A (+0x98) reaches the completion
@@ -294,10 +293,10 @@ void completeWindowOpen(QuestWinObj* self) {
 // ---------------------------------------------------------------------------
 void handleQuestInput(QuestWinObj* self) {
     if (self->field_0xC8 != 0) {
-        CPadView* pad = (CPadView*)getCurrentPad__Q22cf13CfGameManagerFv();
+        const CPad* pad = (const CPad*)getCurrentPad__Q22cf13CfGameManagerFv();
         int classic = cf::CfGameManager::isClassicController(-1) != 0;
-        u32 confirm = (classic != 0) ? ((pad->field_04 >> 21) & 1)
-                                     : ((pad->field_04 >> 4) & 1);
+        u32 confirm = (classic != 0) ? ((pad->mPressedButtonFlags >> 21) & 1)
+                                     : ((pad->mPressedButtonFlags >> 4) & 1);
         if (confirm != 0) {
             enableAnimA(self);
             playUISound(3);
@@ -305,18 +304,18 @@ void handleQuestInput(QuestWinObj* self) {
             self->mCursor.SetVisible(0);
         }
     } else if (self->field_0xC4 != 0) {
-        CPadView* pad = (CPadView*)getCfPadData__Q22cf13CfGameManagerFv();
+        const cf::CfPadData* pad = (const cf::CfPadData*)getCfPadData__Q22cf13CfGameManagerFv();
         int classic = cf::CfGameManager::isClassicController(-1) != 0;
         u32 dLeft, dRight, confirm;
         if (classic != 0) {
-            u32 turbo = pad->field_104;
-            u32 pressed = pad->field_04;
+            u32 turbo = pad->mTurboPressButtonFlags;
+            u32 pressed = pad->mPad.mPressedButtonFlags;
             dLeft = (turbo & 0x8004) != 0;
             dRight = (((turbo >> 15) & 1) | ((turbo >> 28) & 1)) != 0;
             confirm = (pressed >> 21) & 1;
         } else {
-            u32 turbo = pad->field_104;
-            u32 pressed = pad->field_04;
+            u32 turbo = pad->mTurboPressButtonFlags;
+            u32 pressed = pad->mPad.mPressedButtonFlags;
             dLeft = (turbo & 0x8004) != 0;
             dRight = (((turbo >> 15) & 1) | ((turbo >> 28) & 1)) != 0;
             confirm = (pressed >> 4) & 1;
@@ -342,18 +341,18 @@ void handleQuestInput(QuestWinObj* self) {
             playUISound(1);
         }
     } else {
-        CPadView* pad = (CPadView*)getCfPadData__Q22cf13CfGameManagerFv();
+        const cf::CfPadData* pad = (const cf::CfPadData*)getCfPadData__Q22cf13CfGameManagerFv();
         int classic = cf::CfGameManager::isClassicController(-1) != 0;
         u32 dLeft, dRight, confirm;
         if (classic != 0) {
-            u32 turbo = pad->field_104;
-            u32 pressed = pad->field_04;
+            u32 turbo = pad->mTurboPressButtonFlags;
+            u32 pressed = pad->mPad.mPressedButtonFlags;
             dLeft = (turbo & 0x8004) != 0;
             dRight = (((turbo >> 15) & 1) | ((turbo >> 28) & 1)) != 0;
             confirm = (pressed >> 21) & 1;
         } else {
-            u32 turbo = pad->field_104;
-            u32 pressed = pad->field_04;
+            u32 turbo = pad->mTurboPressButtonFlags;
+            u32 pressed = pad->mPad.mPressedButtonFlags;
             dLeft = (turbo & 0x8004) != 0;
             dRight = (((turbo >> 15) & 1) | ((turbo >> 28) & 1)) != 0;
             confirm = (pressed >> 4) & 1;
@@ -773,8 +772,7 @@ void refreshQuestContent(CQuestWindow* self) {
         playUISound(0x1c);
         self->field_0xC0 = 0;
     }
-    IScnRender* render = reinterpret_cast<IScnRender*>(self);
-    if (self != 0) render = reinterpret_cast<IScnRender*>((u8*)self + 0x70);
+    IScnRender* render = self;
     self->mpScn->addRenderCB(render, 0x10, 0);
 }
 
@@ -884,7 +882,7 @@ template<> void CTTask<IUIWindow>::Draw() {
 // Retail: lwz spQuestWindow@sda21; null-check; lbz +0xDA; addic/subfe
 // setnz (byte != 0). Returns 1 while the quest-window state byte is non-zero.
 bool isQuestWindowOpen() {
-    QuestWindowState* p = spQuestWindow;
+    CQuestWindow* p = spQuestWindow;
     if (p != 0) {
         return p->field_0xDA != 0;
     }

@@ -2,19 +2,11 @@
 
 #include <algorithm>
 
-extern "C" {
-__declspec(section ".sdata") __attribute__((aligned(8))) f32 lbl_eu_806634D0[2] = {0.0001f, 0.0f};
-}
-
 namespace nw4r {
 namespace math {
 
-// Shared MWCC float/double pool entries this function's constants resolve to
-// in the retail build. extern "C" keeps the flat blob-label names (a plain
-// C++ decl inside namespace nw4r::math gets mangled with __Q24nw4r4math and
-// the SDA21 relocs drift).
-extern "C" {
-extern f32 lbl_eu_806634D0[2]; // 0.0001f (defined at global scope)
+namespace detail {
+f32 epsilon = 0.0001f;
 }
 
 void PLANE::Set(const VEC3* p0, const VEC3* p1, const VEC3* p2) {
@@ -317,7 +309,7 @@ f32 DistSqSegment3ToSegment3(const SEGMENT3* pSegment0,
     f32 tNumerator;
     f32 tDenominator = determinant;
 
-    if (determinant < lbl_eu_806634D0[0]) {
+    if (determinant < detail::epsilon) {
         sNumerator = 0.0f;
         sDenominator = 1.0f;
         tNumerator = e;
@@ -363,9 +355,9 @@ f32 DistSqSegment3ToSegment3(const SEGMENT3* pSegment0,
         }
     }
 
-    f32 s = FAbs(sNumerator) < lbl_eu_806634D0[0] ? 0.0f
+    f32 s = FAbs(sNumerator) < detail::epsilon ? 0.0f
                                                : sNumerator / sDenominator;
-    f32 t = FAbs(tNumerator) < lbl_eu_806634D0[0] ? 0.0f
+    f32 t = FAbs(tNumerator) < detail::epsilon ? 0.0f
                                                : tNumerator / tDenominator;
 
     if (pOut0 != 0) {

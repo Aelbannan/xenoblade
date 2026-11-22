@@ -141,7 +141,7 @@ void CtrlPc_UpdateLockOnAim(cf::CtrlPc* self) {
             diff.y = p2->f[1] - p1->f[1];
             diff.z = p2->f[2] - p1->f[2];
             ml::CVec3 d = diff;
-            self->mField10 = lbl_eu_80666718 * nw4r::math::Atan2FIdx(d.x, d.z);
+            self->mField10 = 0.0245436926f * nw4r::math::Atan2FIdx(d.x, d.z);
         } else {
             flag26 = 1;
         }
@@ -269,7 +269,7 @@ probe100:
     self->mField10 = self->mFieldC;
     if (isBattleStatusActive(&self->mField5C->mField8, 6) != 0 ||
         (cf::CfGameManager::getInstance(), isGlobalCamFlagSet(0x400000) != 0)) {
-        self->mField14 = lbl_eu_80666720;
+        self->mField14 = 0.0f;
     }
 tail:
     self->vf35();
@@ -307,7 +307,7 @@ void dispatchCtrlPcActions(cf::CtrlPc* self) {
     if (isBattleStatusActive(&self->mField5C->mField8, 0xF) != 0 ||
         isBattleStatusActive(&self->mField5C->mField8, 9) != 0) {
     fail:
-        self->mField14 = lbl_eu_80666720;
+        self->mField14 = 0.0f;
         return;
     }
 
@@ -330,7 +330,7 @@ void dispatchCtrlPcActions(cf::CtrlPc* self) {
     p = self->mField5C;
     v5 = *p->mField4->vf30();
     if (testActorStatus(p, &v5, 5) != 0) {
-        self->mField14 = lbl_eu_80666720;
+        self->mField14 = 0.0f;
     } else {
         p = self->mField5C;
         v6 = *p->mField4->vf30();
@@ -349,7 +349,7 @@ void dispatchCtrlPcActions(cf::CtrlPc* self) {
     if (testActorStatus(p, &v8, 0x4000) != 0 ||
         isBattleStatusActive(&self->mField5C->mField8, 6) != 0 ||
         isBattleStatusActive(&self->mField5C->mField8, 0xCD) != 0) {
-        self->mField14 = lbl_eu_80666720;
+        self->mField14 = 0.0f;
     }
     {
         // Any of the three actor-id probes set routes into the voice sync.
@@ -370,7 +370,7 @@ void dispatchCtrlPcActions(cf::CtrlPc* self) {
     if (self->mField5C->mSub3E9C.v01(4) == 0) {
         return;
     }
-    self->mField14 = lbl_eu_80666720;
+    self->mField14 = 0.0f;
     self->mField5C->mSub3E9C.v47(self->mFieldC);
     CfObjectMove_setAnimModeArgs((u8*)&self->mField5C->mSub3E9C, 3, 0, -1, 1);
     self->mField5C->mSub3E9C.v02(4);
@@ -485,7 +485,7 @@ void CtrlPc_UpdateBattleState(cf::CtrlPc* self) {
     if (testActorStatus(p, &v8, 0x4000) != 0 ||
         isBattleStatusActive(&self->mField5C->mField8, 6) != 0 ||
         isBattleStatusActive(&self->mField5C->mField8, 0xCD) != 0) {
-        self->mField14 = lbl_eu_80666720;
+        self->mField14 = 0.0f;
     }
     // Any of the three actor-id probes set routes into the voice sync.
     p = self->mField5C;
@@ -504,7 +504,7 @@ void CtrlPc_UpdateBattleState(cf::CtrlPc* self) {
     if (self->mField5C->mSub3E9C.v01(4) == 0) {
         return;
     }
-    self->mField14 = lbl_eu_80666720;
+    self->mField14 = 0.0f;
     self->mField5C->mSub3E9C.v47(self->mFieldC);
     CfObjectMove_setAnimModeArgs((u8*)&self->mField5C->mSub3E9C, 3, 0, -1, 1);
     self->mField5C->mSub3E9C.v02(4);
@@ -592,7 +592,7 @@ void CtrlPc_InstallArtsAction(cf::CtrlPc* self, char arg1, char arg2) {
     slot.b_0D = (u8)arg2;
     slot.b_0E = 0x64;
     slot.h_10 = (u16)mask;
-    slot.f_14 = lbl_eu_80666720;
+    slot.f_14 = 0.0f;
     aiRingPrepend(self->mField5C, &slot);
     void* hand = self->mField5C->mSub3E9C.v17();
     if (hand == 0) {

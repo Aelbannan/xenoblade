@@ -31,13 +31,6 @@
 #include "kyoshin/code_80135FDC_Lyt.hpp"
 #include "kyoshin/menu/CMenuBattleCommu.hpp"
 
-// u32-word pair / f64 view used for MWCC's 0x43300000 int->float conversion
-// (subtracts the retail .sdata2 magic double lbl_eu_80667080).
-union F64Conv {
-    u32 w[2];
-    f64 d;
-};
-
 // Mirror of the font object returned by CDeviceFont::getFontInfo: vtable
 // slot 0x24 (index 9, no args) yields the u32 bound into the layout's font
 // pane via ApplyFontToTxtPanes. Never instantiated, so no vtable is emitted; a
@@ -54,13 +47,6 @@ public:
     virtual void vf20();            // 0x20
     virtual u32 getFontHandle();    // 0x24
 };
-
-// Key-assign string table (region name, layout name, button-pane formats).
-extern char lbl_eu_804FDEE8[];
-// sdata2 double 0x4330000000000000 - u32->f32 conversion magic (openKeyAssignPlayer).
-extern f64 lbl_eu_80667080;
-// sdata2 f32 compared against the arts-select gauge in Move (arts vf128).
-extern f32 lbl_eu_80667078;
 
 // Move's view of the arts-state object (MapFx_ResolveOwner result): sub-object at
 // +4 whose vtable slot 0x30 returns the actor-id word.
@@ -157,13 +143,13 @@ void CMenuKeyAssign::Init() {
     // The region address is recomputed at each use (this+0x64) - a held
     // pointer local would claim an extra callee-saved register.
     mUnkClass.createRegion(
-        (int)mtl::MemManager::getHandleMEM2(), 0x4200, lbl_eu_804FDEE8, 0);
+        (int)mtl::MemManager::getHandleMEM2(), 0x4200, "CMenuKeyAssign", 0);
     Class_8045F858 memHost(&mUnkClass);
 
     mtl::MemManager::setMemInitFlag(false);
 
     // Build the layout from the arc resource.
-    buildLayout(&mLayout, CUICfManager_getArcResourceAccessor(), &lbl_eu_804FDEE8[0xf]);
+    buildLayout(&mLayout, CUICfManager_getArcResourceAccessor(), "mf70_cf40_keyassign.brlyt");
 
     // Bind the font: push the font object's pane back onto the root pane.
     nw4r::lyt::Pane* rootPane = mLayout->GetRootPane();
@@ -321,7 +307,7 @@ void CMenuKeyAssign::Move() {
             }
             // arts == 0 or testActorStatus == 0: retail dereferences arts here.
             f32 gauge = ((f32 (*)(void*))((void**)arts)[0x128 / 4])(arts);
-            if (gauge <= lbl_eu_80667078) {
+            if (gauge <= 0.0f) {
                 self->openKeyAssignButtons(0x18, 1, 9, 0, 0, 1);
             } else {
                 self->openKeyAssignButtons(1, 2, 9, 0, 0, 1);
@@ -474,7 +460,7 @@ void CMenuKeyAssign::Move() {
                     if (pid != 0) {
                         f32 gauge =
                             ((f32 (*)(void*))((void**)arts)[0x128 / 4])(arts);
-                        if (gauge <= lbl_eu_80667078) {
+                        if (gauge <= 0.0f) {
                             self->openKeyAssignColumns(1, 1, 0);
                             goto done;
                         }
@@ -660,20 +646,12 @@ CMenuKeyAssign* CMenuKeyAssign::create(CProcess* parent, CScn* scene) {
 
 // Open the key-assign menu for `count` remap columns starting at `state`
 // (target us-80115b3c). Hides the panes, loads the remap-column names via
-// BdatGetU16ByTableKey/BdatTouchStringCell, finds the "timg" texture and sizes the pane
-// from the texture dimensions (u16 -> f32 via the 0x43300000 magic double),
-// then assigns the button labels through setKeyAssignLabels. The F64Conv pairs are
-// function-scope (their 0x43300000 words are stored once, before the guards).
+// BdatGetU16ByTableKey/BdatTouchStringCell, finds the "timg" texture, sizes
+// the pane from the texture dimensions and assigns the button labels.
 void CMenuKeyAssign::openKeyAssignColumns(int state, int count, int mode) {
-    // F64Conv pairs are function-scope (their 0x43300000 words are stored once,
-    // before the guards).
-    F64Conv ch, cw;
     f32 sx, sy;
     f32 sx2, sy2;
     f32 sx3, sy3;
-
-    cw.w[0] = 0x43300000;
-    ch.w[0] = 0x43300000;
 
     if ((s32)this->mField_78 == state) {
         return;
@@ -684,24 +662,21 @@ void CMenuKeyAssign::openKeyAssignColumns(int state, int count, int mode) {
         return;
     }
 
-    const char* base = lbl_eu_804FDEE8;
-    const char* name = &base[0x29];
+    const char* name = "fileID_1";
     if (cf::CfGameManager::isClassicController(-1) != 0) {
-        name = &base[0x32];
+        name = "fileID_2";
     }
 
     if (count > 0) {
-        // The 0x43300000 magic double is loaded once into a loop-scoped local
-        // (retail keeps it in f31 across the loop calls).
-        f64 magic = lbl_eu_80667080;
         int i;
         for (i = 0; i < count; i++) {
             int idx = state + i;
             u32 timg = 0x74696d67;
-            u16 r = BdatGetU16ByTableKey(&base[0x3b], name, idx);
+            u16 r = BdatGetU16ByTableKey("MNU_kyeassign", name, idx);
             ml::FixStr<32> str(true);
             f32 sx, sy;
-            str.format(&base[0x5f], BdatTouchStringCell(&base[0x49], &base[0x56], r));
+            char* texName = BdatTouchStringCell("SYS_filelist", "filename", r);
+            str.format("%s.tpl", texName);
             nw4r::lyt::ArcResourceAccessor* acc = CUICfManager_getArcResourceAccessor();
             TPLPalette* tex = (TPLPalette*)acc->GetResource(timg, str.mString, NULL);
             if (tex != 0) {
@@ -709,72 +684,68 @@ void CMenuKeyAssign::openKeyAssignColumns(int state, int count, int mode) {
                 if (count == 3 && mode != 0 && i == 2) {
                     flag = 1;
                 }
-                str.format(&base[0x66], (flag ? 4 : i) + 1);
+                str.format("pic_pos%02d", (flag ? 4 : i) + 1);
                 nw4r::lyt::Pane* pane =
                     this->mLayout->GetRootPane()->FindPaneByName(str.mString, true);
                 PaneSetTexPalette(pane, (TPLPalette*)tex);
                 u16 w = tex->descriptorArray->textureHeader->width;
                 u16 h = tex->descriptorArray->textureHeader->height;
-                cw.w[1] = (u32)w;
-                ch.w[1] = (u32)h;
-                sx = (f32)(cw.d - magic);
-                sy = (f32)(ch.d - magic);
+                sx = (f32)(u32)w;
+                sy = (f32)(u32)h;
                 pane->SetSize(nw4r::lyt::Size(sx, sy));
                 pane->SetVisible(true);
             }
             if (i < 4) {
-                char* s2 = BdatTouchStringCell(&base[0x3b], &base[0x72], idx);
+                char* s2 = BdatTouchStringCell("MNU_kyeassign", "help", idx);
                 this->setKeyAssignLabels(s2, i);
             }
         }
     } else {
         // count <= 0: two fixed panes (name index 26, then `state`).
         {
-            u16 r = BdatGetU16ByTableKey(&base[0x3b], name, 26);
+            u16 r = BdatGetU16ByTableKey("MNU_kyeassign", name, 26);
             ml::FixStr<32> str2(true);
             f32 sx2, sy2;
-            str2.format(&base[0x5f], BdatTouchStringCell(&base[0x49], &base[0x56], r));
+            char* texName = BdatTouchStringCell("SYS_filelist", "filename", r);
+            str2.format("%s.tpl", texName);
             nw4r::lyt::ArcResourceAccessor* acc = CUICfManager_getArcResourceAccessor();
             TPLPalette* tex = (TPLPalette*)acc->GetResource(0x74696d67, str2.mString, NULL);
             if (tex != 0) {
-                str2.format(&base[0x66], 1);
+                str2.format("pic_pos%02d", 1);
                 nw4r::lyt::Pane* pane =
                     this->mLayout->GetRootPane()->FindPaneByName(str2.mString, true);
                 PaneSetTexPalette(pane, (TPLPalette*)tex);
                 u16 w = tex->descriptorArray->textureHeader->width;
                 u16 h = tex->descriptorArray->textureHeader->height;
-                cw.w[1] = (u32)w;
-                ch.w[1] = (u32)h;
-                sx2 = (f32)(cw.d - lbl_eu_80667080);
-                sy2 = (f32)(ch.d - lbl_eu_80667080);
+                sx2 = (f32)(u32)w;
+                sy2 = (f32)(u32)h;
                 pane->SetSize(nw4r::lyt::Size(sx2, sy2));
                 pane->SetVisible(true);
             }
-            char* s2 = BdatTouchStringCell(&base[0x3b], &base[0x72], 26);
+            char* s2 = BdatTouchStringCell("MNU_kyeassign", "help", 26);
             this->setKeyAssignLabels(s2, 0);
         }
         {
-            u16 r = BdatGetU16ByTableKey(&base[0x3b], name, state);
+            u16 r = BdatGetU16ByTableKey("MNU_kyeassign", name, state);
             ml::FixStr<32> str3(true);
             f32 sx3, sy3;
-            str3.format(&base[0x5f], BdatTouchStringCell(&base[0x49], &base[0x56], r));
+            char* texName = BdatTouchStringCell("SYS_filelist", "filename", r);
+            str3.format("%s.tpl", texName);
             nw4r::lyt::ArcResourceAccessor* acc = CUICfManager_getArcResourceAccessor();
             TPLPalette* tex = (TPLPalette*)acc->GetResource(0x74696d67, str3.mString, NULL);
             if (tex != 0) {
-                str3.format(&base[0x66], 2);
+                str3.format("pic_pos%02d", 2);
                 nw4r::lyt::Pane* pane =
                     this->mLayout->GetRootPane()->FindPaneByName(str3.mString, true);
                 PaneSetTexPalette(pane, (TPLPalette*)tex);
                 u16 w = tex->descriptorArray->textureHeader->width;
                 u16 h = tex->descriptorArray->textureHeader->height;
-                cw.w[1] = (u32)w;
-                ch.w[1] = (u32)h;
-                sx3 = (f32)(cw.d - lbl_eu_80667080);
-                sy3 = (f32)(ch.d - lbl_eu_80667080);
+                sx3 = (f32)(u32)w;
+                sy3 = (f32)(u32)h;
                 pane->SetSize(nw4r::lyt::Size(sx3, sy3));
                 pane->SetVisible(true);
             }
-            char* s2 = BdatTouchStringCell(&base[0x3b], &base[0x72], state);
+            char* s2 = BdatTouchStringCell("MNU_kyeassign", "help", state);
             this->setKeyAssignLabels(s2, 1);
         }
     }
@@ -786,10 +757,6 @@ void CMenuKeyAssign::openKeyAssignColumns(int state, int count, int mode) {
 // is the index of the first zero id (5 when all non-zero); the ids are kept in
 // a stack array because the loop indexes them by pointer.
 void CMenuKeyAssign::openKeyAssignButtons(int a, int b, int c, int d, int e, int mode) {
-    F64Conv cw, ch;
-    cw.w[0] = 0x43300000;
-    ch.w[0] = 0x43300000;
-
     int state = (e + (d + b)) + (c + a);
     state *= 100;
 
@@ -802,10 +769,9 @@ void CMenuKeyAssign::openKeyAssignButtons(int a, int b, int c, int d, int e, int
         return;
     }
 
-    const char* base = lbl_eu_804FDEE8;
-    const char* name = &base[0x29];
+    const char* name = "fileID_1";
     if (cf::CfGameManager::isClassicController(-1) != 0) {
-        name = &base[0x32];
+        name = "fileID_2";
     }
 
     int count = 0;
@@ -825,15 +791,13 @@ void CMenuKeyAssign::openKeyAssignButtons(int a, int b, int c, int d, int e, int
     }
 
     if (count > 0) {
-        // The 0x43300000 magic double is loaded once into a loop-scoped local
-        // (retail keeps it in f31 across the loop calls).
-        f64 magic = lbl_eu_80667080;
         int i;
         for (i = 0; i < count; i++) {
             int idx = args[i];
-            u16 r = BdatGetU16ByTableKey(&base[0x3b], name, idx);
+            u16 r = BdatGetU16ByTableKey("MNU_kyeassign", name, idx);
             ml::FixStr<32> str(true);
-            str.format(&base[0x5f], BdatTouchStringCell(&base[0x49], &base[0x56], r));
+            char* texName = BdatTouchStringCell("SYS_filelist", "filename", r);
+            str.format("%s.tpl", texName);
             nw4r::lyt::ArcResourceAccessor* acc = CUICfManager_getArcResourceAccessor();
             TPLPalette* tex = (TPLPalette*)acc->GetResource(0x74696d67, str.mString, NULL);
             if (tex != 0) {
@@ -841,80 +805,75 @@ void CMenuKeyAssign::openKeyAssignButtons(int a, int b, int c, int d, int e, int
                 if (count >= 3 && mode != 0 && i == 2) {
                     flag = 1;
                 }
-                str.format(&base[0x66], (flag ? 4 : i) + 1);
+                str.format("pic_pos%02d", (flag ? 4 : i) + 1);
                 nw4r::lyt::Pane* pane =
                     this->mLayout->GetRootPane()->FindPaneByName(str.mString, true);
                 PaneSetTexPalette(pane, (TPLPalette*)tex);
                 u16 w = tex->descriptorArray->textureHeader->width;
                 u16 h = tex->descriptorArray->textureHeader->height;
-                cw.w[1] = (u32)w;
-                ch.w[1] = (u32)h;
-                f32 sx = (f32)(cw.d - magic);
-                f32 sy = (f32)(ch.d - magic);
+                f32 sx = (f32)(u32)w;
+                f32 sy = (f32)(u32)h;
                 pane->SetSize(nw4r::lyt::Size(sx, sy));
                 pane->SetVisible(true);
             }
             if (i < 4) {
-                char* s2 = BdatTouchStringCell(&base[0x3b], &base[0x72], idx);
+                char* s2 = BdatTouchStringCell("MNU_kyeassign", "help", idx);
                 this->setKeyAssignLabels(s2, i);
             }
         }
     } else {
         // count == 0: two fixed panes (name index 26, then `state`).
         {
-            u16 r = BdatGetU16ByTableKey(&base[0x3b], name, 26);
+            u16 r = BdatGetU16ByTableKey("MNU_kyeassign", name, 26);
             ml::FixStr<32> str2(true);
-            str2.format(&base[0x5f], BdatTouchStringCell(&base[0x49], &base[0x56], r));
+            char* texName = BdatTouchStringCell("SYS_filelist", "filename", r);
+            str2.format("%s.tpl", texName);
             nw4r::lyt::ArcResourceAccessor* acc = CUICfManager_getArcResourceAccessor();
             TPLPalette* tex = (TPLPalette*)acc->GetResource(0x74696d67, str2.mString, NULL);
             if (tex != 0) {
-                str2.format(&base[0x66], 1);
+                str2.format("pic_pos%02d", 1);
                 nw4r::lyt::Pane* pane =
                     this->mLayout->GetRootPane()->FindPaneByName(str2.mString, true);
                 PaneSetTexPalette(pane, (TPLPalette*)tex);
                 u16 w = tex->descriptorArray->textureHeader->width;
                 u16 h = tex->descriptorArray->textureHeader->height;
-                cw.w[1] = (u32)w;
-                ch.w[1] = (u32)h;
-                f32 sx = (f32)(cw.d - lbl_eu_80667080);
-                f32 sy = (f32)(ch.d - lbl_eu_80667080);
+                f32 sx = (f32)(u32)w;
+                f32 sy = (f32)(u32)h;
                 pane->SetSize(nw4r::lyt::Size(sx, sy));
                 pane->SetVisible(true);
             }
-            char* s2 = BdatTouchStringCell(&base[0x3b], &base[0x72], 26);
+            char* s2 = BdatTouchStringCell("MNU_kyeassign", "help", 26);
             this->setKeyAssignLabels(s2, 0);
         }
         {
-            u16 r = BdatGetU16ByTableKey(&base[0x3b], name, state);
+            u16 r = BdatGetU16ByTableKey("MNU_kyeassign", name, state);
             ml::FixStr<32> str3(true);
-            str3.format(&base[0x5f], BdatTouchStringCell(&base[0x49], &base[0x56], r));
+            char* texName = BdatTouchStringCell("SYS_filelist", "filename", r);
+            str3.format("%s.tpl", texName);
             nw4r::lyt::ArcResourceAccessor* acc = CUICfManager_getArcResourceAccessor();
             TPLPalette* tex = (TPLPalette*)acc->GetResource(0x74696d67, str3.mString, NULL);
             if (tex != 0) {
-                str3.format(&base[0x66], 2);
+                str3.format("pic_pos%02d", 2);
                 nw4r::lyt::Pane* pane =
                     this->mLayout->GetRootPane()->FindPaneByName(str3.mString, true);
                 PaneSetTexPalette(pane, (TPLPalette*)tex);
                 u16 w = tex->descriptorArray->textureHeader->width;
                 u16 h = tex->descriptorArray->textureHeader->height;
-                cw.w[1] = (u32)w;
-                ch.w[1] = (u32)h;
-                f32 sx = (f32)(cw.d - lbl_eu_80667080);
-                f32 sy = (f32)(ch.d - lbl_eu_80667080);
+                f32 sx = (f32)(u32)w;
+                f32 sy = (f32)(u32)h;
                 pane->SetSize(nw4r::lyt::Size(sx, sy));
                 pane->SetVisible(true);
             }
-            char* s2 = BdatTouchStringCell(&base[0x3b], &base[0x72], state);
+            char* s2 = BdatTouchStringCell("MNU_kyeassign", "help", state);
             this->setKeyAssignLabels(s2, 1);
         }
     }
 }
 
 // Open the key-assign menu for one of the 4 player indices (state 3 = already
-// open). Loads the remap-column names via BdatGetU16ByTableKey/BdatTouchStringCell, finds
-// the corresponding "timg" texture and sizes the target pane from the texture
-// dimensions (u16 -> f32 via the 0x43300000 magic double), then assigns the
-// button labels through setKeyAssignLabels.
+// open). Loads the remap-column names via BdatGetU16ByTableKey/BdatTouchStringCell,
+// finds the corresponding "timg" texture, sizes the target pane and assigns
+// the button labels through setKeyAssignLabels.
 void CMenuKeyAssign::openKeyAssignPlayer() {
     if ((s32)this->mField_78 == 3) {
         return;
@@ -922,17 +881,11 @@ void CMenuKeyAssign::openKeyAssignPlayer() {
     this->mField_78 = 3;
     this->hideKeyAssignPanes();
 
-    const char* base = lbl_eu_804FDEE8;
-    const char* name = &base[0x29];
+    const char* name = "fileID_1";
     if (cf::CfGameManager::isClassicController(-1) != 0) {
-        name = &base[0x32];
+        name = "fileID_2";
     }
 
-    // The 0x43300000 magic double lives in f31 across the whole loop.
-    f64 magic = lbl_eu_80667080;
-    F64Conv cw, ch;
-    cw.w[0] = 0x43300000;
-    ch.w[0] = 0x43300000;
     for (u8 i = 0; i < 4; i++) {
         u8 mapped = i;
         if (i == 2) {
@@ -941,28 +894,26 @@ void CMenuKeyAssign::openKeyAssignPlayer() {
             mapped = 5;
         }
         u8 idx = i + 3;
-        u16 r = BdatGetU16ByTableKey(&base[0x3b], name, idx);
+        u16 r = BdatGetU16ByTableKey("MNU_kyeassign", name, idx);
         ml::FixStr<32> str(true);
-        str.format(&base[0x5f], BdatTouchStringCell(&base[0x49], &base[0x56], r));
+        char* texName = BdatTouchStringCell("SYS_filelist", "filename", r);
+        str.format("%s.tpl", texName);
         nw4r::lyt::ArcResourceAccessor* acc = CUICfManager_getArcResourceAccessor();
         TPLPalette* tex = (TPLPalette*)acc->GetResource(0x74696d67, str.mString, NULL);
         if (tex != 0) {
-            str.format(&base[0x66], mapped + 1);
+            str.format("pic_pos%02d", mapped + 1);
             nw4r::lyt::Pane* pane =
                 this->mLayout->GetRootPane()->FindPaneByName(str.mString, true);
             PaneSetTexPalette(pane, (TPLPalette*)tex);
-            // u16 -> f32 via MWCC's 0x43300000 magic double pair.
-            cw.w[1] = (u32)tex->descriptorArray->textureHeader->width;
-            ch.w[1] = (u32)tex->descriptorArray->textureHeader->height;
-            f32 sx = (f32)(cw.d - magic);
-            f32 sy = (f32)(ch.d - magic);
+            f32 sx = (f32)(u32)tex->descriptorArray->textureHeader->width;
+            f32 sy = (f32)(u32)tex->descriptorArray->textureHeader->height;
             pane->SetSize(nw4r::lyt::Size(sx, sy));
             pane->SetVisible(true);
         }
         if (mapped == 4) {
             mapped = 2;
         }
-        char* s2 = BdatTouchStringCell(&base[0x3b], &base[0x72], idx);
+        char* s2 = BdatTouchStringCell("MNU_kyeassign", "help", idx);
         this->setKeyAssignLabels(s2, mapped);
     }
 }
@@ -974,23 +925,23 @@ void CMenuKeyAssign::hideKeyAssignPanes() {
     char buf[0x20];
     int i;
     for (i = 1; i <= 6; i++) {
-        sprintf(buf, &lbl_eu_804FDEE8[0x66], i);
+        sprintf(buf, "pic_pos%02d", i);
         nw4r::lyt::Pane* p = this->mLayout->GetRootPane()->FindPaneByName(buf, true);
         p->SetVisible(false);
         if (i != 5) {
-            sprintf(buf, &lbl_eu_804FDEE8[0x77], i);
+            sprintf(buf, "txt_pos%02d", i);
             p = this->mLayout->GetRootPane()->FindPaneByName(buf, true);
             p->SetVisible(false);
-            sprintf(buf, &lbl_eu_804FDEE8[0x83], i);
+            sprintf(buf, "txt_pos%02d_l", i);
             p = this->mLayout->GetRootPane()->FindPaneByName(buf, true);
             p->SetVisible(false);
-            sprintf(buf, &lbl_eu_804FDEE8[0x91], i);
+            sprintf(buf, "txt_pos%02d_r", i);
             p = this->mLayout->GetRootPane()->FindPaneByName(buf, true);
             p->SetVisible(false);
-            sprintf(buf, &lbl_eu_804FDEE8[0x9f], i);
+            sprintf(buf, "txt_pos%02d_o", i);
             p = this->mLayout->GetRootPane()->FindPaneByName(buf, true);
             p->SetVisible(false);
-            sprintf(buf, &lbl_eu_804FDEE8[0xad], i);
+            sprintf(buf, "txt_pos%02d_u", i);
             p = this->mLayout->GetRootPane()->FindPaneByName(buf, true);
             p->SetVisible(false);
         }
@@ -1003,23 +954,23 @@ void CMenuKeyAssign::hideKeyAssignPanes() {
 void CMenuKeyAssign::setKeyAssignLabels(char* str, int idx) {
     char buf[0x20];
     int v = idx + 1;
-    sprintf(buf, &lbl_eu_804FDEE8[0x77], v);
+    sprintf(buf, "txt_pos%02d", v);
     LayoutSetTextBoxFmtValue(this->mLayout, buf, str, 0);
     nw4r::lyt::Pane* p = this->mLayout->GetRootPane()->FindPaneByName(buf, true);
     p->SetVisible(true);
-    sprintf(buf, &lbl_eu_804FDEE8[0x83], v);
+    sprintf(buf, "txt_pos%02d_l", v);
     LayoutSetTextBoxFmtValue(this->mLayout, buf, str, 0);
     p = this->mLayout->GetRootPane()->FindPaneByName(buf, true);
     p->SetVisible(true);
-    sprintf(buf, &lbl_eu_804FDEE8[0x91], v);
+    sprintf(buf, "txt_pos%02d_r", v);
     LayoutSetTextBoxFmtValue(this->mLayout, buf, str, 0);
     p = this->mLayout->GetRootPane()->FindPaneByName(buf, true);
     p->SetVisible(true);
-    sprintf(buf, &lbl_eu_804FDEE8[0x9f], v);
+    sprintf(buf, "txt_pos%02d_o", v);
     LayoutSetTextBoxFmtValue(this->mLayout, buf, str, 0);
     p = this->mLayout->GetRootPane()->FindPaneByName(buf, true);
     p->SetVisible(true);
-    sprintf(buf, &lbl_eu_804FDEE8[0xad], v);
+    sprintf(buf, "txt_pos%02d_u", v);
     LayoutSetTextBoxFmtValue(this->mLayout, buf, str, 0);
     p = this->mLayout->GetRootPane()->FindPaneByName(buf, true);
     p->SetVisible(true);

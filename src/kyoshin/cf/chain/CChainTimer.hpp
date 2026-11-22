@@ -312,15 +312,5 @@ int* CtrlObjectParam_GetSlotTableBase();
 extern void* findObjectById(int id);
 
 // Data imports (plain globals - MWCC does not mangle global data names).
-extern f32 lbl_eu_80668A90;
-extern f32 lbl_eu_80668A94;
-extern f32 lbl_eu_80668A98;
-extern f32 lbl_eu_80668AA8;
-extern f64 lbl_eu_80668AA0;
-extern f64 lbl_eu_80668AB0;
-extern f64 lbl_eu_80668AB8;
-extern f32 lbl_eu_80668AC0;
-extern f32 lbl_eu_80668AC4;
-extern f32 lbl_eu_80668AC8;
 extern f32 lbl_eu_80656C40[3];
 extern f32 lbl_eu_80656C64[3];

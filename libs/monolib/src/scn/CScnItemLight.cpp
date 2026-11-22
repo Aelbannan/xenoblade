@@ -20,7 +20,7 @@ extern "C" {
 // with lis+addi exactly like retail.
 extern u32 lbl_eu_8056DD08[];
 
-extern "C" void* getItemLightData(u8* self) { return (void*)((u8*)self + 0x11d8); }
+extern "C" void* getItemLightData(CScnItemLight* self) { return self->mName; }
 
 extern "C" void __ct__CScnItemLightNw4r(void*, int);
 extern "C" void constructItemLightNw4r(u8* self, int val) {

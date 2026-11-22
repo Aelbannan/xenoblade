@@ -1592,7 +1592,7 @@ extern "C" u8 CtrlObjectParam_LearnArtsSlots(cf::CtrlObjectParamEntry* self) {
     u16 rowKey = self->field_00[6];
     void* itemBdat = reinterpret_cast<void*>(::cf::CfBdat::spItmWpnListFileData);
     u32 colv = getBdatStringColumnValue(itemBdat, &strBase[0x58], rowKey);
-    u8 rowIdx = (u8)colv;
+    u8 rowIdx = *(const u8*)&colv;   // memory round-trip (retail stw/lbz)
     // Snapshot the two slot offset tables through walking bases (retail
     // lwzu + fixed-offset loads): first words stay live, rest spill.
     u32* srcA = &sCtrlObjectParamPermTableB[0];
@@ -1621,10 +1621,10 @@ extern "C" u8 CtrlObjectParam_LearnArtsSlots(cf::CtrlObjectParamEntry* self) {
             col[4] = rowCh;
             col[5] = (u8)(gridCol + 0x31);
             u32 c = getBdatStringColumnValue(itemBdat, col, rowKey);
-            u8 artsId = (u8)c;
+            u8 artsId = *(const u8*)&c;   // memory round-trip (retail stw/lbz)
             if (artsId == 0) continue;
             u32 v = getBdatStringColumnValue(fp, &strBase[0x109], artsId);
-            u8 col2 = (u8)v;
+            u8 col2 = *(const u8*)&v;   // memory round-trip (retail stw/lbz)
             u8* slotRow = rows + col2 * 2;
             if (self->field_00[0] == 8 && gridRow == 2) {
                 u16 level = CItem_getNameIdFromFam(self->field_00[5]);
@@ -1840,9 +1840,13 @@ extern "C" void CtrlObjectParam_ApplyArtsRankUp(void* selfV, u32 value, u32 a, u
                 self->mParam.CActorParam_getArtsDataBlock());
             u16 w0 = (u16)*v94b;
             if ((self->display.flagsE6 & 4) != 0) {
-                u16 v1 = (u16)CItem_initItemImplInstances(reinterpret_cast<CItemData*>(item))->vf28(reinterpret_cast<CItemData*>(item), &strBase[0x22]);
+                CItemImpl* impl1 = CItem_initItemImplInstances(reinterpret_cast<CItemData*>(item));
+                u32 v1raw = impl1->vf28(reinterpret_cast<CItemData*>(item), &strBase[0x22]);
+                u16 v1 = *(const u16*)&v1raw;   // memory round-trip (retail stw 0x8(sp)/lhz)
                 self->display.displayD4 = (s16)(scaleA * (f32)(s32)(w0 * v1));
-                u16 v2 = (u16)CItem_initItemImplInstances(reinterpret_cast<CItemData*>(item))->vf28(reinterpret_cast<CItemData*>(item), &strBase[0x2A]);
+                CItemImpl* impl2 = CItem_initItemImplInstances(reinterpret_cast<CItemData*>(item));
+                u32 v2raw = impl2->vf28(reinterpret_cast<CItemData*>(item), &strBase[0x2A]);
+                u16 v2 = *(const u16*)&v2raw;   // memory round-trip (retail stw 0xC(sp)/lhz)
                 self->display.displayD6 = (s16)(scaleB * (f32)(s32)(w0 * v2));
                 if (self->display.displayD4 > cap) self->display.displayD4 = cap;
                 if (self->display.displayD6 > cap) self->display.displayD6 = cap;

@@ -1106,14 +1106,10 @@ UNIT_RULES: dict[str, UnitRules] = {
         ),
     ),
     "CTitleAHelp.o": UnitRules(
-        # Data dissolve: string pool ships as lbl_eu_805054BC (content drift
-        # vs decomp strings is a source-level residual); 1.0f pool ->
+        # Data dissolve: 1.0f pool ->
         # lbl_eu_80667F28; magic double sites load lbl_eu_80667F20 in retail.
         pool_patterns=(
             (struct.pack(">I", 0x3F800000), "lbl_eu_80667F28"),
-        ),
-        exact_renames=(
-            ("@stringBase0", "lbl_eu_805054BC"),
         ),
         extern_data_sections=(".data", ".rodata", ".sdata", ".sdata2"),
     ),
@@ -1397,18 +1393,6 @@ UNIT_RULES: dict[str, UnitRules] = {
         # Retail .rodata carries linker alignment padding after the last
         # RTTI name (MWCC packs the two explicit names contiguously); pad
         # the section back to the retail 0x30.
-    ),
-    "pluginUi.o": UnitRules(
-        # Typified: the TU owns its retail data slice and emits it from
-        # source (see the data block at the top of pluginUi.cpp): the
-        # .rodata slot table + command names and the .data plugin table are
-        # raw-exact, as is the .sdata2 head (fade constant, conversion
-        # magic, plugin-name strings). MWCC pools one extra copy of the
-        # int->double magic for the fadeIn_1/fadeOut_1 (float) casts after
-        # the defs; rename its .text relocs onto the real def and trim it.
-        pool_patterns=(
-            (struct.pack(">II", 0x43300000, 0x80000000), "lbl_eu_80665DC0"),
-        ),
     ),
     "code_804CC2B8.o": UnitRules(
         # pool-coupled: lone unsigned int->double magic constant
@@ -1972,23 +1956,6 @@ UNIT_RULES: dict[str, UnitRules] = {
             (".data", 0xD4, "__RTTI__Q36nw4hbm3lyt4Pane"),
         ),
         drop_data_tail=((".data", 0xE8),),
-    ),
-
-    "lyt_pane.o#Q36nw4hbm3lyt": UnitRules(
-        # The dropped weaks occupied mid-section 16-aligned slots; without
-        # repacking, MWCC's pre-drop padding residue leaves later survivors off
-        # the retail offsets (same fix as lyt_group/lyt_layout).
-        repack_after_drop=16,
-        # Retail keeps Pane's 0x68 vtable in .data. Natural MWCC output GCs
-        # it (weak, unreferenced); the source-side &dtor reference in
-        # sPaneVtableSlots makes -ipa emit the full table. Two slots point
-        # outside this TU and stay unrelocated in our object:
-        #   +0x00 -> __RTTI__Pane   (+0x0C -> GetRuntimeTypeInfo__PaneCFv,
-        # dropped from .text here; the DOL link resolves it via the weak def
-        # in HBMGUIManager.o, per the drop note above). Inject both.
-        exact_renames=(
-            ("sPaneVtableSlots", "__vt__Q36nw4hbm3lyt4Pane"),
-        ),
     ),
 
     "snd_BiquadFilterPreset.o": UnitRules(

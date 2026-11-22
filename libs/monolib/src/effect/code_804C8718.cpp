@@ -241,7 +241,7 @@ void cerandRandArc(ml::CVec3* out, const ml::CVec3* a, const ml::CVec3* b);
 struct CScnRootEnv;
 extern CScnRootEnv* sActiveSceneRoot;
 extern u8 lbl_eu_80663B3C;
-extern u32 lbl_eu_8066B0D0;
+extern const GXColor sEffectAmbientColor;
 
 // u16 -> float.
 inline f32 u16ToF_b0c8(u16 v) {
@@ -371,9 +371,8 @@ struct EmitData {
 // Defined in CETrail.cpp with C++ linkage.
 void Trail_SnapFog(CScnRootEnv* scene);
 
-// Effect memory-region name string
-// incl. zero padding; retail shape).
-extern "C" __declspec(align(8)) const char lbl_eu_805244E0[0x20] = "CEffectHeap";
+// name-guess: effect memory-region name; array length matches the retail slot.
+static __declspec(align(8)) const char sEffectHeapName[0x20] = "CEffectHeap";
 
 // EffSys_AdvanceChain: advance the per-effect node chain head (0x24) using the
 // accumulated frame fraction at 0x14.
@@ -562,7 +561,7 @@ extern "C" void EffSys_Startup(EffectRoot* self, u32 memAlloc, u32 size2) {
     self->flags0 = (u16)(self->flags0 | 0x8800);
     self->allocHandle =
         mtl::MemManager::create(mtl::MemManager::getHandleMEM1(), 0x60000,
-                                lbl_eu_805244E0);
+                                sEffectHeapName);
 }
 
 // EffSys_InitScene: when the 0x8000 flag is set, fold clz(arg) into flag bit 10,
@@ -756,9 +755,7 @@ void EffRender_SetupGX() {
     GXSetAlphaUpdate(GX_FALSE);
     GXSetAlphaCompare(GX_ALWAYS, 0, GX_AOP_AND, GX_ALWAYS, 0);
     GXSetClipMode(GX_CLIP_ENABLE);
-    GXColor amb;
-    *(u32*)&amb = lbl_eu_8066B0D0;
-    GXSetChanAmbColor(GX_COLOR0A0, amb);
+    GXSetChanAmbColor(GX_COLOR0A0, sEffectAmbientColor);
     GXSetCurrentMtx(GX_PNMTX0);
     SchedRes_ClearBuf60();
 }
@@ -1643,3 +1640,5 @@ void EffTypeObj::PickEmitVec(ml::CVec3* out, s32 mode, s32 emitScale, const ml::
         break;
     }
 }
+// name-guess: retail .sdata2 word is the ambient colour 60 60 60 ff.
+const GXColor sEffectAmbientColor = { 0x60, 0x60, 0x60, 0xff };

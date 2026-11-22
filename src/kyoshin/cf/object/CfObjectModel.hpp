@@ -5,14 +5,6 @@
 #include "monolib/math/CVec3.hpp"
 
 // Retail data labels referenced by this unit.
-extern const float lbl_eu_80666A68;   // CfObject_UnkVirtualFunc20 constant / CfObject_UnkVirtualFunc56 fallback
-extern float lbl_eu_80666A6C;   // CfModel_NotifyReady position constant (stack-vector fill)
-extern const float lbl_eu_80666A70;   // UnkVirtualFunc25 first probe FP arg
-extern const float lbl_eu_80666A74;   // UnkVirtualFunc25 probe second FP arg
-extern const float lbl_eu_80666A78;   // UnkVirtualFunc25 lift-offset Y element
-extern const float lbl_eu_80666A7C;   // UnkVirtualFunc25 lifted re-probe FP arg
-extern const float lbl_eu_80666A80;   // CfObject_UnkVirtualFunc20 (model) stack-vector middle element
-extern const float lbl_eu_80666A84;   // CfObject_UnkVirtualFunc20 (model) slot +0xB4 scale argument
 extern u8 lbl_eu_804FC548[];   // CfObjectModel_getModelName null placeholder (rodata, 8 bytes)
 extern u8 lbl_eu_80529318[];   // cf::CfObject vtable (retail .data, stored by the model dtor)
 extern u8 __vt__Q22cf8CfObject[];   // cf::CfObjectModel vtable (retail .data)

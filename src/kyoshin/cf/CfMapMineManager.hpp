@@ -58,7 +58,6 @@ extern "C" u32 Bdat_GetMaxRow_B1EC(void* file);
 extern "C" u32 Bdat_GetRowBase_B41C(void* file);
 extern "C" int CfRes_getD80Flag();
 extern "C" u32 CfRes_getAllocHandle();
-extern "C" const f32 lbl_eu_806682B0;
 extern "C" void* allocate_array__Q23mtl10MemManagerFUlUl(u32 size, u32 handle);
 extern "C" void* __construct_new_array(void* block, void* ctor, void* dtor,
                                        u32 size, u32 n);
@@ -105,18 +104,4 @@ extern "C" char lbl_eu_80508424[];              // rodata: bdat column names
 extern "C" char lbl_eu_80535720[];              // data: scratch name buffer 2
 extern "C" u8 lbl_eu_8053572C[];                // data: reslist vtable
 extern "C" u8 lbl_eu_80535744[];                // data: _reslist_base vtable
-extern "C" const f32 lbl_eu_806682B0;           // rodata: 0.0f literal
-extern const f32 lbl_eu_806682B4;               // sdata2: 1.0e-4f
-extern const f64 lbl_eu_806682B8;               // sdata2: 2^52 + 2^31 (int->double fixup)
-extern const f32 lbl_eu_806682C8;               // rodata: 50.0f
-extern const f32 lbl_eu_806682CC;               // rodata: 40000.0f
-extern const f32 lbl_eu_806682D0;               // rodata: 2.5f
-extern const f32 lbl_eu_806682D4;               // rodata: 6.25f
-extern const f32 lbl_eu_806682E0;               // rodata: sound timer reset value
-extern const f32 lbl_eu_806682E4;               // rodata: 0.6f
-extern const f32 lbl_eu_806682E8;               // rodata: small y offset
-extern const f32 lbl_eu_806682EC;               // rodata: respawn timer scale
-extern const f32 lbl_eu_806682F0;               // rodata: respawn timer scale 2
-extern const f32 lbl_eu_806682F4;               // rodata: message display time
 extern "C" const f64 lbl_eu_806682D8;           // rodata: 0.0 double literal
-extern "C" const f64 lbl_eu_806682C0;               // rodata: 160.0 double literal

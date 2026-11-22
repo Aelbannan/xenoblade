@@ -777,7 +777,7 @@ extern "C" void mineUpdateMsgRing(CfMapMineManager* self) {
 // bdat range, then compare horizontal distance (X/Z only; Y is only used as
 // an absolute threshold of 50).
 extern "C" void mineFindNearestPoint(MineNode** out, CfMapMineManager* mgr,
-                              CfMapMineManager* list, f32* pos) {
+                              MineListBase* list, f32* pos) {
     BdatFilePointer* file = (BdatFilePointer*)::cf::CfBdat::spCurMineListFileData;
     u16 area = gmGlobalFlag42;
     u16 sub = gmGlobalFlag44;
@@ -794,9 +794,9 @@ extern "C" void mineFindNearestPoint(MineNode** out, CfMapMineManager* mgr,
 
     const char* cols = lbl_eu_80508424;
     void* released = 0;
-    MineNode* n = list->mPoints.mStartPtr->mNext;
+    MineNode* n = list->mStartPtr->mNext;
     // Retail re-reads the sentinel from the list object on every iteration.
-    while (n != list->mPoints.mStartPtr) {
+    while (n != list->mStartPtr) {
         n->mItem.mFlags &= ~0x00060000u;
         if (n->mItem.mTimer14 > 0.0f ||
             ((n->mItem.mFlags >> 8) & 0xFF) == 0) {
@@ -939,18 +939,18 @@ void CfMapMineManager::ScanPoints() {
                 u32 idx = ListFindFree(this);
                 MineNode* slot = (MineNode*)((u8*)this->mPoints.mList + idx * 0x2C);
                 MinePoint* dst = &slot->mItem;
-                *(u32*)((u8*)dst + 0x00) = *(u32*)((u8*)&tmp + 0x00);
-                *(u32*)((u8*)dst + 0x04) = *(u32*)((u8*)&tmp + 0x04);
-                *(f32*)((u8*)dst + 0x08) = *(f32*)((u8*)&tmp + 0x08);
-                *(f32*)((u8*)dst + 0x0C) = *(f32*)((u8*)&tmp + 0x0C);
-                *(f32*)((u8*)dst + 0x10) = *(f32*)((u8*)&tmp + 0x10);
-                *(f32*)((u8*)dst + 0x14) = *(f32*)((u8*)&tmp + 0x14);
-                *(u16*)((u8*)dst + 0x18) = *(u16*)((u8*)&tmp + 0x18);
-                *(s16*)((u8*)dst + 0x1A) = *(s16*)((u8*)&tmp + 0x1A);
-                *(u16*)((u8*)dst + 0x1C) = *(u16*)((u8*)&tmp + 0x1C);
-                *(u8*)((u8*)dst + 0x1E) = *(u8*)((u8*)&tmp + 0x1E);
-                *(u8*)((u8*)dst + 0x1F) = *(u8*)((u8*)&tmp + 0x1F);
-                *(u32*)((u8*)dst + 0x20) = *(u32*)((u8*)&tmp + 0x20);
+                dst->mObj0 = tmp.mObj0;
+                dst->mObj4 = tmp.mObj4;
+                dst->mPosX = tmp.mPosX;
+                dst->mPosY = tmp.mPosY;
+                dst->mPosZ = tmp.mPosZ;
+                dst->mTimer14 = tmp.mTimer14;
+                dst->mId18 = tmp.mId18;
+                dst->mCounter1A = tmp.mCounter1A;
+                dst->mPointId1C = tmp.mPointId1C;
+                dst->mArea1E = tmp.mArea1E;
+                dst->mAreaSub1F = tmp.mAreaSub1F;
+                dst->mFlags = tmp.mFlags;
                 // push_back into the intrusive list
                 MineNode* head = this->mPoints.mStartPtr;
                 slot->mNext = head;
@@ -1154,7 +1154,7 @@ extern "C" void mineUpdateAll(CfMapMineManager* self) {
 
     // Scan window open: clear the collected flag and find the nearest point.
     gmGameFlags &= ~0x80000000u;
-    mineFindNearestPoint(&nearest, mgr, (CfMapMineManager*)((u8*)mgr + 0x4), pos);
+    mineFindNearestPoint(&nearest, mgr, &mgr->mPoints, pos);
     if (nearest == 0) return;
     if (cf::CfGameManager::isTimerActive() != 0) return;
 

@@ -4,6 +4,11 @@
 // running VM thread plus its script arguments and reports the result through
 // vmRetValSet (return value 1 = a result was produced).
 
+// name-guess: shared OcMsg ring storage, retail .bss 0x805704C8 (getOcMsgList).
+OcThreadMsgStorage sOcMsgList;
+// name-guess: shared OcLog ring storage, retail .bss 0x80570538 (getOcLogList).
+OcThreadLogStorage sOcLogList;
+
 // thread(funcId, subType): resolve the function id to an OC instance id and
 // return it as an OC-typed result; throws a VM exception if unresolved.
 int thread(VMThread* pThread, int unused, u32 subType) {
@@ -88,11 +93,11 @@ void ocThreadRegist() {
 }
 
 extern "C" OcThreadListHdr* getOcMsgList() {
-    return &lbl_eu_805704C8;
+    return &sOcMsgList;
 }
 
 extern "C" OcThreadListHdr* getOcLogList() {
-    return &lbl_eu_80570538;
+    return &sOcLogList;
 }
 
 // Static initializer: clears both BSS list headers. The odd store order
@@ -100,8 +105,8 @@ extern "C" OcThreadListHdr* getOcLogList() {
 // derived storage types so no base conversion perturbs MWCC's register
 // allocation (header fields are inherited at identical offsets).
 void sinit_8003A4F8() {
-    OcThreadMsgStorage* a = &lbl_eu_805704C8;
-    OcThreadLogStorage* b = &lbl_eu_80570538;
+    OcThreadMsgStorage* a = &sOcMsgList;
+    OcThreadLogStorage* b = &sOcLogList;
 
     // Retail store order (both headers).
     a->count = 0;
@@ -116,7 +121,3 @@ void sinit_8003A4F8() {
     b->readIdx = 0;
     b->capacity = 9;
 }
-
-// BSS ring storages (plain tentatives auto-route to .bss).
-OcThreadMsgStorage lbl_eu_805704C8;
-OcThreadLogStorage lbl_eu_80570538;

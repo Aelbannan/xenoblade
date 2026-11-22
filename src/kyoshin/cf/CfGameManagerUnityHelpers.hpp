@@ -217,7 +217,6 @@ struct SceneCDA8View {
 
 extern "C" s32 gmCommandCounter;
 extern "C" u8 gmGlobalFlag34;
-extern "C" bool isAnyMenuOpen__9CMainMenuFv();
 extern "C" bool isPlayerReadyForEvent__Q22cf13CfGameManagerFv(
     s32 playerIndex, bool requireFlag);
 extern "C" void BattleWork_TickDriver(UnkClass_8007E864* object);
@@ -230,7 +229,7 @@ extern "C" void updateCameraState__Q22cf13CfGameManagerFv(
         return;
     }
     if (cf::CfGameManager::isSceneLoading() &&
-        isAnyMenuOpen__9CMainMenuFv()) {
+        CMainMenu::isAnyMenuOpen()) {
         gmCommandCounter = 15;
         return;
     }

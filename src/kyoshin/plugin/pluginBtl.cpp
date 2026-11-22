@@ -15,6 +15,50 @@
 // reloc-name fix rather than including the heavy menu header.
 extern "C" bool CMenuArtsSelect_isCreated();
 
+#include "monolib/vm/yvm2.h"
+
+// name-guess: retail .data object 0x80532360, the btl plugin's VM command table.
+int startObserve(VMThread*);
+int endObserve(VMThread*);
+int defeatingCount(VMThread*);
+int isEnd(VMThread*);
+int end(VMThread*);
+int attack(VMThread*);
+int attackEne(VMThread*);
+int selectTgt(VMThread*);
+int vision(VMThread*);
+int voiceEvent(VMThread*);
+int isVoiceEvent(VMThread*);
+int unlockMonadoArts(VMThread*);
+int setTensionLv(VMThread*);
+int setTP(VMThread*);
+int breakVision(VMThread*);
+int setPTG(VMThread*);
+int getPTG(VMThread*);
+int test(VMThread*);
+
+static PluginFuncData sBtlPluginFuncs[] = {
+    { "startObserve", startObserve },
+    { "endObserve", endObserve },
+    { "defeatingCount", defeatingCount },
+    { "isEnd", isEnd },
+    { "end", end },
+    { "attack", attack },
+    { "attackEne", attackEne },
+    { "selectTgt", selectTgt },
+    { "vision", vision },
+    { "voiceEvent", voiceEvent },
+    { "isVoiceEvent", isVoiceEvent },
+    { "unlockMonadoArts", unlockMonadoArts },
+    { "setTensionLv", setTensionLv },
+    { "setTP", setTP },
+    { "breakVision", breakVision },
+    { "setPTG", setPTG },
+    { "getPTG", getPTG },
+    { "test", test },
+    { nullptr, nullptr },
+};
+
 #include "kyoshin/cf/CBattleManager.hpp"
 #include "kyoshin/plugin/ocBdat.hpp"
 #include "kyoshin/CfEnumListHolder.hpp"
@@ -419,9 +463,5 @@ int test(VMThread* pThread) {
 // --- Plugin registration ---
 
 extern "C" void pluginBtlRegist() {
-    extern void vmPluginRegist(void*, void*);
-    // Retail reloc names carry the eu_ prefix.
-    extern char lbl_eu_805038B0[];
-    extern char lbl_eu_80532360[];
-    vmPluginRegist((void*)(lbl_eu_805038B0 + 0xe), (void*)lbl_eu_80532360);
+    vmPluginRegist("btl", sBtlPluginFuncs);
 }

@@ -16,11 +16,8 @@ extern s32 UTY_CmpTime(s32 a, s32 b, s32 c, s32 d);
 /* External globals */
 extern char sSfdGlob[];   /* SFD work area */
 extern void* gpSfdCoreTraceCb;    /* callback table pointer */
-extern u32 lbl_eu_8051CBF8[];    /* fps denominator table */
-extern char lbl_eu_8051C888[];
-extern char lbl_eu_8051C628[];
-extern char lbl_eu_8051C89C[];
-extern char lbl_eu_8051C8A4[];
+/* JP map: SFTIM_prate (0x28) */
+const s32 SFTIM_prate[10] = {1, 23976, 24000, 25000, 29970, 30000, 50000, 59940, 60000, 0};
 
 /* Debug snapshots written by the audio/video start-sample getters.
  * name-guess: field roles come from SFTIM_GetAudioStartSample /
@@ -42,11 +39,7 @@ __attribute__((aligned(8))) SfdVideoStartSample sSfdVideoStartSample;
 
 /* name-guess: the trace-record block is named from its sole user
  * SFTIM_VbIn and the retail "sftim_UpdateTime" record string. */
-__attribute__((aligned(8))) unsigned int sSfdTimTraceData[28] = {
-    (unsigned int)lbl_eu_8051C888, 0, 3, 0, 0xB, (unsigned int)lbl_eu_8051C628, 0, 4,
-    (unsigned int)lbl_eu_8051C89C, 0, 4, (unsigned int)lbl_eu_8051C8A4, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-};
+extern SfdTrcRecIn sSfdTimTraceData;
 
 /* Absorbed .rodata 0x8051CC20 (0x78) - function table + float constants */
 void sftim_Tc2Time23N(s32, void*, s32*, s32*, s32);
@@ -361,7 +354,7 @@ void SFTIM_VbIn(void) {
     wk = (u8*)sSfdGlob;
     ppHn = (u32**)(wk + 0x1FC);
     *(u32*)(wk + 0x19C) = *(u32*)(wk + 0x19C) + 1;
-    cb = (u8*)sSfdTimTraceData;
+    cb = (u8*)&sSfdTimTraceData;
 
     for (i = 0; i < 8; i++, ppHn++) {
         h = (void*)*ppHn;
@@ -797,7 +790,7 @@ void SFTIM_Tc2Time(void* tcdata, s32* out1, s32* out2) {
     if (format == 1) {
         rate = 4;
     }
-    fn(lbl_eu_8051CBF8[format], tcdata, out1, out2, rate);
+    fn(SFTIM_prate[format], tcdata, out1, out2, rate);
 }
 
 /* Timecode block read by the Tc2Time converters: hours/minutes/seconds and the
@@ -1023,7 +1016,7 @@ void SFTIM_Pause(void* self, s32 mode) {
             den = 0x7512;
         } else {
             num = 1000;
-            den = lbl_eu_8051CBF8[fps];
+            den = SFTIM_prate[fps];
         }
 
         {
@@ -1058,7 +1051,7 @@ void SFTIM_GetTimeOneFrmVideo(void* self, int* out1, int* out2) {
         *out2 = 0x7512;
     } else {
         *out1 = 1000;
-        *out2 = lbl_eu_8051CBF8[fps];
+        *out2 = SFTIM_prate[fps];
     }
 }
 
@@ -1075,7 +1068,7 @@ s32 SFD_GetFps(void* self, s32* out) {
         if (fps == 0) {
             return 0;
         }
-        *out = lbl_eu_8051CBF8[fps];
+        *out = SFTIM_prate[fps];
         if (h->fhd.info.active != 0) {
             s32 ovrFps = h->fhd.info.video[4];
             if (ovrFps != -1) {

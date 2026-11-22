@@ -186,8 +186,6 @@ extern "C" CfGimmickVec3 gGimmickAnchorPoint;
 // Downward drop offset recorded by CfGimmick_UpdatePartyAnchorState when the stage ground is
 // above zero (.sdata).
 extern "C" f32 lbl_eu_80662780;
-// 1.0f fill constant used when no player is present (.sdata2).
-extern "C" const f32 lbl_eu_80668360;
 
 
 // Bdat table data used by CfGimmick_LookupBdatGimmickName / CfGimmick_LoadBdatAreaPos columns.
@@ -205,27 +203,9 @@ extern "C" u32 Bdat_GetMaxRow_B1EC(void* bdat);
 extern "C" void CfObjectMove_setMoveSpeedGated(cf::CfObjectMove* player, float value);
 extern "C" void CfObjectMove_setMoveSpeed(cf::CfObjectMove* player, float value);
 
-// Scale factor for bdat int -> float position conversion.
-extern "C" const float lbl_eu_80668364;
-// Alternative scale factor used by the +0x1C-family column readers.  Const
-// declaration matches CfObjectModel.hpp (which also references it).
-// 2^52 magic constant subtracted in the u16->f32 double-trick conversions
-// (lfd + fsubs per bdat-column reader block).
-extern "C" const double lbl_eu_80668370;
-// Base of the +0, +0xA, +0x15, +0x20 column-name string block.
-// Sentinel used by the player loops (CfGimmick_ApplyPartyMoveSpeed / CfGimmick_ApplyPartyMoveSpeedGated) and the
-// gimmick extent checks.  Const so MWCC treats the SDA load as read-only and
-// schedules it at retail's position (CfObjectMove.hpp pattern).
-extern "C" const float lbl_eu_80668350;
-
 // CfSoundMan_PlayLinkedParam(u32 mode, u32 value, u32 playerValue, float first, float second)
 // u32 spellings (not unsigned int): must match CfObjectImplMove.hpp/UnityHelpers exactly
-// Sound constants loaded in CfGimmick_PlaySoundAtPos / CfGimmick_PlaySoundAtPosScaled (retail .sda21 loads)
-extern "C" const float lbl_eu_80668358;
-extern "C" const float lbl_eu_8066835C;
 extern "C" void CfGimmick_TriggerSound2CC8(u32 id, u32 value);
-// FIdx scale applied to the rotation point before MTX34RotXYZFIdx.
-extern "C" const f32 lbl_eu_80668354;
 
 // Checker functions dispatched by gimmick->field_44 (jumptable_eu_80535830).
 typedef int (*CfGimmickChecker)(cf::CfGimmick*, const CfGimmickVec3*, const CfGimmickVec3*);
@@ -235,9 +215,6 @@ extern "C" CfGimmickList* getReslistB68();
 // Fixed rotation angle used by CfGimmick_QueryTrigger's mask-0x4 occlusion test.
 extern "C" f32 gGimmickFixedRotationAngle;
 
-// Height-offset pair (1.5, 0.0) for spawned objects; [0] is the live offset.
-// Array shape preserves retail's trailing pad float at 8066837C.
-extern "C" const f32 lbl_eu_80668378[2];
 extern "C" void ObjPoint_SetName_13FC(void* obj, const char* name, int arg);
 // Create/attach a gimmick object (C-ABI, unmangled): manager first, then flags.
 extern "C" CfGimmickObject* spawnMaskedObject(void* mgr, int a, int b, int c);

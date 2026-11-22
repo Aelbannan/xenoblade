@@ -277,7 +277,7 @@ extern "C" void PlayThreadVoice();
 extern "C" bool CCharVoiceMan_AlwaysTrue();
 extern "C" int CCharVoiceMan_NullVoiceDispatch(void* self);
 extern u32 __RTTI__Q22cf10CVS_THREAD[2];
-extern u32 __RTTI__Q22cf24CVS_THREAD_BATTLE_END_SP[2];
+extern const void* __RTTI__Q22cf24CVS_THREAD_BATTLE_END_SP[2];
 
 // Packing helpers: MWCC 8-aligns file-scope objects of 8+ bytes, but the
 // retail tables pack records at 4-byte intervals. Wrapping 8-/16-byte
@@ -348,7 +348,6 @@ static const u8 rodatablob[0x120] = {
     0x06, 0x13, 0x04, 0x0D, 0x05, 0x0E, 0x06, 0x14, 0x00, 0x00, 0x00, 0x00,
     0x06, 0x16, 0x07, 0x10, 0x06, 0x17, 0x05, 0x10, 0x00, 0x00, 0x00, 0x00,
 };
-extern const char lbl_eu_80510AF0[0x20] = "cf::CVS_THREAD_BATTLE_END_SP";
 
 u32 BattleEndSpVoiceSet00[5] = { (u32)&sdata2blob1[0x0], (u32)&sdata2blob1[0x4], (u32)&sdata2blob1[0xC], (u32)&rodatablob[0x0], 0 };
 u32 BattleEndSpVoiceSet01[3] = { (u32)&sdata2blob1[0x14], (u32)&sdata2blob1[0x18], 0 };
@@ -423,7 +422,7 @@ u32 lbl_eu_8053A1D4[3] = {
     0,
 };
 
-__declspec(section ".sdata") extern u32 __RTTI__Q22cf24CVS_THREAD_BATTLE_END_SP[2] = {
-    (u32)lbl_eu_80510AF0,
-    (u32)lbl_eu_8053A1D4,
+__declspec(section ".sdata") extern const void* __RTTI__Q22cf24CVS_THREAD_BATTLE_END_SP[2] = {
+    "cf::CVS_THREAD_BATTLE_END_SP",
+    lbl_eu_8053A1D4,
 };

@@ -19,8 +19,10 @@
 #include "kyoshin/code_80135FDC.hpp"
 #include "kyoshin/code_80296898.hpp"
 #include "kyoshin/CPassiveSkill.hpp"
+#include "kyoshin/CPcKizunagram.hpp"
 #include "monolib/util/MemManager.hpp"
 #include "kyoshin/code_80135FDC_Bdat.hpp"
+#include "kyoshin/CTagProcessor.hpp"
 namespace nw4r { namespace db { void Panic(const char* file, int line, const char* fmt, ...); } }
 
 namespace {
@@ -97,18 +99,10 @@ extern char lbl_eu_805377CC[];
 extern char lbl_eu_80537798[];
 extern char lbl_eu_80537784[];
 extern char lbl_eu_80537748[];
-extern char lbl_eu_8052DC70[];
-extern char lbl_eu_8052DC3C[];
-extern char lbl_eu_8052DD84[];
-extern char lbl_eu_8052DD50[];
-extern char lbl_eu_8052DC28[];
-extern char lbl_eu_8052DBF4[];
 extern char lbl_eu_8053785C[];
 extern char lbl_eu_80537828[];
 extern char lbl_eu_80537818[];
 extern char lbl_eu_805377E0[];
-extern char lbl_eu_8052DCFC[];
-extern char lbl_eu_8052DCC8[];
 extern char lbl_eu_805378A0[];
 extern char lbl_eu_8053786C[];
 extern char lbl_eu_80537734[];
@@ -237,15 +231,10 @@ struct CUnk8025FB10 {
     s32 mValues888[1];              // +0x888
 };
 
-// Linked-list node walked by IdTable_WalkToLast (+0x18 = next pointer).
-struct CUnkList8025FB10 {
-    u8 pad_0[0x18];
-    CUnkList8025FB10* field_18;     // +0x18
-};
-
 // Walk the +0x18 chain to its last node (defined below; called by the
-// accessor family after their 16-level unroll).
-extern "C" CUnkList8025FB10* IdTable_WalkToLast(CUnkList8025FB10* p);
+// accessor family after their 16-level unroll). The node is a real
+// CPcKizunaSlotEntry from the canonical Kizunagram header.
+extern "C" CPcKizunaSlotEntry* IdTable_WalkToLast(CPcKizunaSlotEntry* p);
 
 // ID-table entry / walk node for the IdTable_SumValues accessor family.  Rows of
 // the +0x000 table are 0xC4 bytes (6 entries + 4 pad); each entry is 32
@@ -394,7 +383,7 @@ s32 IdTable_SumValues(CUnkObj8025FB10* obj, int index) {
     if (t == 0) goto SUM;
     result = t->mChild;
     if (result == 0) goto K16;
-    result = (CUnkItem8025FB10*)IdTable_WalkToLast((CUnkList8025FB10*)result);
+    result = (CUnkItem8025FB10*)IdTable_WalkToLast((CPcKizunaSlotEntry*)result);
     goto SUM;
 K16: result = t; goto SUM;
 K14: result = t; goto SUM;
@@ -423,16 +412,16 @@ SUM:
 // KizunaEntryFindListHead pattern); the fully-flat or fully-nested forms differ.
 // extern "C" keeps the self tail-call reloc name verbatim (reloc-site
 // gate) - same as KizunaEntryFindListHead in CPcKizunagram.cpp.
-extern "C" CUnkList8025FB10* IdTable_WalkToLast(CUnkList8025FB10* p) {
-    CUnkList8025FB10* n1 = p->field_18;
+extern "C" CPcKizunaSlotEntry* IdTable_WalkToLast(CPcKizunaSlotEntry* p) {
+    CPcKizunaSlotEntry* n1 = p->pField18;
     if (n1 == 0) return p;
-    CUnkList8025FB10* n2 = n1->field_18;
+    CPcKizunaSlotEntry* n2 = n1->pField18;
     if (n2 != 0) {
-        CUnkList8025FB10* n3 = n2->field_18;
+        CPcKizunaSlotEntry* n3 = n2->pField18;
         if (n3 != 0) {
-            CUnkList8025FB10* n4 = n3->field_18;
+            CPcKizunaSlotEntry* n4 = n3->pField18;
             if (n4 == 0) return n3;
-            CUnkList8025FB10* n5 = n4->field_18;
+            CPcKizunaSlotEntry* n5 = n4->pField18;
             if (n5 != 0) {
                 return IdTable_WalkToLast(n5);
             }
@@ -497,7 +486,7 @@ s32 IdTable_MaxValueC(CUnkObj8025FB10* obj, int index) {
     if (t == 0) goto SMAX;
     result = t->mChild;
     if (result == 0) goto S16;
-    result = (CUnkItem8025FB10*)IdTable_WalkToLast((CUnkList8025FB10*)result);
+    result = (CUnkItem8025FB10*)IdTable_WalkToLast((CPcKizunaSlotEntry*)result);
     goto SMAX;
 S16: result = t; goto SMAX;
 S14: result = t; goto SMAX;
@@ -577,7 +566,7 @@ f32 IdTable_MaxValue10(CUnkObj8025FB10* obj, int index) {
     if (t == 0) goto MMAX;
     result = t->mChild;
     if (result == 0) goto M16;
-    result = (CUnkItem8025FB10*)IdTable_WalkToLast((CUnkList8025FB10*)result);
+    result = (CUnkItem8025FB10*)IdTable_WalkToLast((CPcKizunaSlotEntry*)result);
     goto MMAX;
 M16: result = t; goto MMAX;
 M14: result = t; goto MMAX;
@@ -660,7 +649,7 @@ bool IdTable_GetSum(CUnkObj8025FB10* obj, int index, s32* outSum) {
             b = a->mChild;
             if (b == 0) goto PSUM;
             result =
-                (CUnkItem8025FB10*)IdTable_WalkToLast((CUnkList8025FB10*)a);
+                (CUnkItem8025FB10*)IdTable_WalkToLast((CPcKizunaSlotEntry*)a);
             goto PSUM;
         P19: result = b; goto PSUM;
         P17: result = b; goto PSUM;
@@ -766,7 +755,7 @@ bool IdTable_QuerySumFloat(CUnkObj8025FB10* obj, int index, s32* outSum, f32* ou
     if (n20 == 0) goto DSUM;
     result = n20->mChild;
     if (result == 0) goto D21;
-    result = (CUnkItem8025FB10*)IdTable_WalkToLast((CUnkList8025FB10*)result);
+    result = (CUnkItem8025FB10*)IdTable_WalkToLast((CPcKizunaSlotEntry*)result);
     goto DSUM;
 D21: result = n20; goto DSUM;
 D19: result = n18; goto DSUM;
@@ -866,7 +855,7 @@ SUMSTORE:
     if (f20 == 0) goto EMAX;
     resultF = f20->mChild;
     if (resultF == 0) goto E21;
-    resultF = (CUnkItem8025FB10*)IdTable_WalkToLast((CUnkList8025FB10*)resultF);
+    resultF = (CUnkItem8025FB10*)IdTable_WalkToLast((CPcKizunaSlotEntry*)resultF);
     goto EMAX;
 E21: resultF = f20; goto EMAX;
 E19: resultF = f18; goto EMAX;
@@ -945,7 +934,7 @@ bool IdTable_GetSumMax(CUnkObj8025FB10* obj, int index, s32* outSum, s32* outMax
             b = a->mChild;
             if (b == 0) goto ASUM;
             result =
-                (CUnkItem8025FB10*)IdTable_WalkToLast((CUnkList8025FB10*)a);
+                (CUnkItem8025FB10*)IdTable_WalkToLast((CPcKizunaSlotEntry*)a);
             goto ASUM;
         A15: result = b; goto ASUM;
         A13: result = b; goto ASUM;
@@ -1030,7 +1019,7 @@ bool IdTable_GetSumMax(CUnkObj8025FB10* obj, int index, s32* outSum, s32* outMax
             b = a->mChild;
             if (b == 0) goto BMAX;
             result =
-                (CUnkItem8025FB10*)IdTable_WalkToLast((CUnkList8025FB10*)a);
+                (CUnkItem8025FB10*)IdTable_WalkToLast((CPcKizunaSlotEntry*)a);
             goto BMAX;
         B21: result = b; goto BMAX;
         B19: result = b; goto BMAX;
@@ -1141,7 +1130,7 @@ bool IdTable_QuerySumMaxFloat(CUnkObj8025FB10* obj, int index, s32* outSum, s32*
     if (s20 == 0) goto SSUM;
     result = s20->mChild;
     if (result == 0) goto SS21;
-    result = (CUnkItem8025FB10*)IdTable_WalkToLast((CUnkList8025FB10*)result);
+    result = (CUnkItem8025FB10*)IdTable_WalkToLast((CPcKizunaSlotEntry*)result);
     goto SSUM;
 SS21: result = s20; goto SSUM;
 SS19: result = s18; goto SSUM;
@@ -1240,7 +1229,7 @@ SUMSTORE:
     if (m20 == 0) goto MMAX;
     resultM = m20->mChild;
     if (resultM == 0) goto MM21;
-    resultM = (CUnkItem8025FB10*)IdTable_WalkToLast((CUnkList8025FB10*)resultM);
+    resultM = (CUnkItem8025FB10*)IdTable_WalkToLast((CPcKizunaSlotEntry*)resultM);
     goto MMAX;
 MM21: resultM = m20; goto MMAX;
 MM19: resultM = m18; goto MMAX;
@@ -1343,7 +1332,7 @@ MAXSTORE:
     if (g20 == 0) goto GMAX;
     resultF = g20->mChild;
     if (resultF == 0) goto GG21;
-    resultF = (CUnkItem8025FB10*)IdTable_WalkToLast((CUnkList8025FB10*)resultF);
+    resultF = (CUnkItem8025FB10*)IdTable_WalkToLast((CPcKizunaSlotEntry*)resultF);
     goto GMAX;
 GG21: resultF = g20; goto GMAX;
 GG19: resultF = g18; goto GMAX;
@@ -1508,17 +1497,6 @@ namespace {
 
 // UTF-16 string staging helper from code_80135FDC.cpp (C linkage there).
 
-// Field view of the game tag-processor object stored at textStateTagProcessor;
-// slot +0x14 renders a UTF-16 string buffer at a float position.
-class TagProcMsgView {
-public:
-    virtual ~TagProcMsgView();
-    virtual void vfunc08();
-    virtual void vfunc0C();
-    virtual void vfunc10();
-    virtual s32 drawMessage(u16* msgBuf, f32 x, f32 y, u32 flag); // +0x14
-};
-
 } // namespace
 
 void IdTable_SeekIndex(int idx) {
@@ -1563,9 +1541,9 @@ void IdTable_SeekIndex(int idx) {
         return;
     }
     Utf8ToWcsCopyFix((const char*)found, (u16*)textStateTextBuffer, 0x200);
-    textStateMessageText = ((TagProcMsgView*)textStateTagProcessor)
-                          ->drawMessage((u16*)textStateTextBuffer,
-                                        38.0f, 38.0f, 0);
+    textStateMessageText = (s32)((CTagProcessorBase*)textStateTagProcessor)
+                          ->Proc((wchar_t*)textStateTextBuffer, 0,
+                                 38.0f, 38.0f);
 }
 
 // us-80263d14 - draw the shared message centered horizontally,

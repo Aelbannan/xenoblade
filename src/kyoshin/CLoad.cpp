@@ -15,9 +15,7 @@
 #include "kyoshin/code_80135FDC_Lyt.hpp"
 #include "kyoshin/code_80135FDC_State.hpp"
 
-// Data imports (retail symbol names; global data is not C++-mangled).
-extern const float lbl_eu_80668DF0;
-extern const float lbl_eu_80668DF4;
+// Data import (retail symbol name; global data is not C++-mangled).
 extern char lbl_eu_80510CC8[];
 
 // nw4r layout animation helpers (retail names; resolved by symbol tooling).
@@ -82,7 +80,7 @@ void CLoadUpdateLayout(CLoad* self) {
             CLoadAdvanceFadeHold(self);
             break;
         case 2:
-            advanceAnimTransform(self->mAnimTrans1, lbl_eu_80668DF0);
+            advanceAnimTransform(self->mAnimTrans1, 1.0f);
             break;
         case 3:
             CLoadFinishRetryIdle(self);
@@ -162,13 +160,13 @@ void CLoadStartRetryStep(CLoad* self) {
 
 // Step 1 -> 2: fade-in finished; swap to mAnimTrans1 held on its last frame.
 void CLoadAdvanceFadeHold(CLoad* self) {
-    if (advanceAnimTransform(self->mAnimTrans0, lbl_eu_80668DF0) == 0) {
+    if (advanceAnimTransform(self->mAnimTrans0, 1.0f) == 0) {
         return;
     }
     self->mAnimStep = 2;
     self->mLayout->SetAnimationEnable(self->mAnimTrans0, 0);
     self->mLayout->SetAnimationEnable(self->mAnimTrans1, 1);
-    self->mAnimTrans1->SetFrame(lbl_eu_80668DF4);
+    self->mAnimTrans1->SetFrame(0.0f);
     self->mLayout->Animate(0);
     self->field_2C = 1;
 }
@@ -177,7 +175,7 @@ void CLoadAdvanceFadeHold(CLoad* self) {
 
 // Step 3 -> idle: retry animation finished.
 void CLoadFinishRetryIdle(CLoad* self) {
-    if (AnimRewindFrame(self->mAnimTrans0, lbl_eu_80668DF0) != 0) {
+    if (AnimRewindFrame(self->mAnimTrans0, 1.0f) != 0) {
         self->mAnimStep = 0;
         self->field_2C = 1;
     }
@@ -258,8 +256,6 @@ __declspec(section ".rodata") __attribute__((used)) char lbl_eu_80510CC8[0x98] =
     "mf00_load00_in.brlan\0"
     "mf00_load01_roop.brlan\0"
     "mf00_load00_roop.brlan\0";
-__attribute__((used)) const float lbl_eu_80668DF0 = 1.0f;
-__attribute__((used)) const float lbl_eu_80668DF4 = 0.0f;
 
 // __vt__5CLoad, its .sdata RTTI descriptor and the IWorkEvent base list are
 // emitted by MWCC from the real IWorkEvent inheritance declared in CLoad.hpp.

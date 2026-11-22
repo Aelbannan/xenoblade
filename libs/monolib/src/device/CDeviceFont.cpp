@@ -21,6 +21,7 @@
 #include <nw4r/ut/ut_TextWriterBase.h>
 
 #include "monolib/work/CWorkUtil.hpp"
+#include "monolib/device/CDeviceFontLoader.hpp"
 #include "monolib/core/CFontLayer.hpp"
 
 // ---- Retail data labels (monolibdata2 dissolve) ----
@@ -624,20 +625,15 @@ void CDeviceFont::wkUpdate() {
                 // (retail keeps base in r3 and folds the offset into r30
                 // before the getWorkMem call).
                 name = "CDeviceFontLoader";
-                CDeviceFontLoader* loader =
-                    (CDeviceFontLoader*)mtl::MemManager::allocate(
-                        0x210, CWorkThreadSystem::getWorkMem());
-                if (loader != 0) {
-                    loader = (CDeviceFontLoader*)__ct__CDeviceFontLoader(
-                        loader, name, this);
-                }
+                CDeviceFontLoader* loader = new (CWorkThreadSystem::getWorkMem())
+                    CDeviceFontLoader(name, this);
                 CWorkUtil::entryWork((CWorkThread*)loader, (CWorkThread*)this,
                                      false);
                 if (func_eu_8044A600()) {
-                    setFontPath__17CDeviceFontLoaderFv(loader, (void*)1,
+                    setFontPath__17CDeviceFontLoaderFv(loader, 1,
                                                           sMenuFontPath);
                 } else {
-                    setFontPath__17CDeviceFontLoaderFv(loader, (void*)1,
+                    setFontPath__17CDeviceFontLoaderFv(loader, 1,
                                                           sEuFontPath);
                 }
                 field_0x1EC = 1;

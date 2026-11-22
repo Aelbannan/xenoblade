@@ -4,6 +4,8 @@
 
 #include <types.h>
 
+struct CVoiceModelPos;
+
 namespace cf {
 
 // Interface mirrors for the battle-object actor passed to checkArtsFull
@@ -54,7 +56,7 @@ public:
     virtual void s66(); virtual void s67(); virtual void s68();
     virtual void s69(); virtual void s70(); virtual void s71();
     virtual void s72();
-    virtual void* s73(); // index 73 -> vtable offset 0x12c
+    virtual CVoiceModelPos* s73(); // index 73 -> vtable offset 0x12c
 };
 
 // Battle-object / arts-set actor (both the r4 argument of checkArtsFull and

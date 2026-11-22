@@ -33,7 +33,7 @@ CMapSel::CMapSel()
       mAllocatedMem(nullptr), mLayout(nullptr), mAnimTransform1(nullptr),
       mAnimTransform2(nullptr), mActive(0), mState(0), mVisible(0),
       mInitFlag(1), mScrollBar(0), mCursor(nullptr) {
-    float timer = lbl_eu_80668738;
+    float timer = 0.0f;
     mSelY = 0;
     mSelX = 0;
     mCount = 0;
@@ -368,11 +368,11 @@ u8 CMapSel::getMapGridCell() {
    enable both animations, mark the widget visible (state 2), and configure
    the scrollbar for the current selection. mCount is the map count. */
 void CMapSel::tickOpen() {
-    if (advanceAnimTransform(mAnimTransform1, lbl_eu_8066873C) != 0) {
+    if (advanceAnimTransform(mAnimTransform1, 1.0f) != 0) {
         mLayout->SetAnimationEnable(mAnimTransform1, false);
         mLayout->SetAnimationEnable(mAnimTransform2, true);
         mState = 2;
-        nw4r::math::VEC3 pos(lbl_eu_80668740, lbl_eu_80668744, lbl_eu_80668738);
+        nw4r::math::VEC3 pos(-56.0f, 123.0f, 0.0f);
         mScrollBar.InitRootPane(&pos);
         mScrollBar.UpdateThumb(10, mCount);
         s8 selX = mSelX;
@@ -385,7 +385,7 @@ void CMapSel::tickOpen() {
    mAnimTransform2 finishes, move to state 3 (transitioning out), flag +0x33,
    reset the cursor and refresh its grid position. */
 void CMapSel::tickOpenIn() {
-    if (advanceAnimTransform(mAnimTransform2, lbl_eu_8066873C) != 0) {
+    if (advanceAnimTransform(mAnimTransform2, 1.0f) != 0) {
         mState = 3;
         mInitFlag = 1;
         mCursor.SetVisible(1);
@@ -405,7 +405,7 @@ void CMapSel::tickClose() {
 }
 
 void CMapSel::tickCloseEnd() {
-    if (AnimRewindFrame(mAnimTransform1, lbl_eu_8066873C) != 0) {
+    if (AnimRewindFrame(mAnimTransform1, 1.0f) != 0) {
         mInitFlag = 1;
         mState = 0;
     }
@@ -475,8 +475,8 @@ void CMapSel::refreshImage() {
    allocated buffer) and start loading the newly selected map's file. */
 void CMapSel::loadSelectedMapResource() {
     CDeviceVI::waitForDrawDone();
-    if (mTimer > lbl_eu_80668738) {
-        mTimer -= lbl_eu_8066873C;
+    if (mTimer > 0.0f) {
+        mTimer -= 1.0f;
         return;
     }
     if (mImagePending == 0) return;
@@ -499,7 +499,7 @@ void CMapSel::loadSelectedMapResource() {
 
 void CMapSel::requestImage() {
     mImagePending = 1;
-    mTimer = lbl_eu_8066873C;
+    mTimer = 1.0f;
     setPaneVisible(mLayout->GetRootPane()->FindPaneByName(lbl_eu_8050B4A8 + 0x66, true), 0);
 }
 

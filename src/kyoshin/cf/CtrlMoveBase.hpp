@@ -87,16 +87,7 @@ extern "C" int dispatchScnCommand__17UnkClass_8047D2ACFv(void* a, void* b,
                                                      f32 c, f32 d);
 
 // Float constants in .sdata2 (values recovered from the retail binary).
-extern const f32 lbl_eu_80666598;
-extern const f32 lbl_eu_8066659C;
-extern f32 lbl_eu_806665A0;   // 0.0f
-extern f32 lbl_eu_806665A4;   // 1.0f
-extern f32 lbl_eu_806665A8;
 extern f32 lbl_eu_806665AC;
-extern f32 lbl_eu_806665B0;
-extern f32 lbl_eu_806665B4;
-extern f32 lbl_eu_806665B8;
-extern f32 lbl_eu_806665BC;
 extern f32 lbl_eu_8066AF20;
 
 // Canonical declarations for the free helpers defined in CtrlMoveBase.cpp.

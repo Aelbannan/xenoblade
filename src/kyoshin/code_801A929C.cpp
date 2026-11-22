@@ -15,8 +15,10 @@ extern "C" u16 playActorSound__Q22cf10CfSoundManFUlUlUlUlf(u32 a, u32 b, u32 c, 
 
 // Global runtime-flag word
 
+class CtrlStateWork;
+
 // Shared ctrl-state singleton pointer (retail .sbss).
-void* gpBattleCtrlStateWork;
+CtrlStateWork* gpBattleCtrlStateWork;
 
 // Camera/scene gate query declared by the owning CfCamEvent_1.hpp.
 
@@ -707,34 +709,34 @@ void BattleWork_TickDriver(UpdWork* self) {
     // Key scans: is any entry keyed 0x65 (else 0x66) present in the singleton?
     int keyFlag = 0;
     if (getEffectFlagState__Q22cf13CfGameManagerFv() != 0) {
-        CtrlStateWork* work = (CtrlStateWork*)gpBattleCtrlStateWork;
+        CtrlStateWork* work = gpBattleCtrlStateWork;
         BdatTable* table = gpBattleCtrlBdatTable;
         if (work != NULL && table != NULL) {
             s32 r = Bdat_GetRowBase_B41C(table);
             s32 e = r + Bdat_GetMaxRow_B1EC(table);
-            ScanEntry* it = (ScanEntry*)((char*)work + 0x20 + r * 0x38);
+            CtrlState* it = &work->mEntries[r];
             for (; r < e; r++) {
                 if (it->m2E == 0x65) {
                     keyFlag = 1;
                     break;
                 }
-                it = (ScanEntry*)((char*)it + 0x38);
+                ++it;
             }
         }
     }
     if (keyFlag == 0 && getEffectFlagState__Q22cf13CfGameManagerFv() != 0) {
-        CtrlStateWork* work = (CtrlStateWork*)gpBattleCtrlStateWork;
+        CtrlStateWork* work = gpBattleCtrlStateWork;
         BdatTable* table = gpBattleCtrlBdatTable;
         if (work != NULL && table != NULL) {
             s32 r = Bdat_GetRowBase_B41C(table);
             s32 e = r + Bdat_GetMaxRow_B1EC(table);
-            ScanEntry* it = (ScanEntry*)((char*)work + 0x20 + r * 0x38);
+            CtrlState* it = &work->mEntries[r];
             for (; r < e; r++) {
                 if (it->m2E == 0x66) {
                     keyFlag = 1;
                     break;
                 }
-                it = (ScanEntry*)((char*)it + 0x38);
+                ++it;
             }
         }
     }
@@ -974,7 +976,7 @@ bool BattleWork_CheckEffectTableReady(u32 id) {
     s32 row = Bdat_GetRowBase_B41C(table);   // first row of the range
     s32 count = Bdat_GetMaxRow_B1EC(table); // number of rows
     // Re-read the singleton: scan its entry table from 'row' for 'count' rows.
-    CtrlStateWork* work2 = (CtrlStateWork*)gpBattleCtrlStateWork;
+    CtrlStateWork* work2 = gpBattleCtrlStateWork;
     s32 endRow = row + count;
     ScanEntry* it = (ScanEntry*)&work2->mEntries[row];
     for (; row < endRow; row++) {
@@ -1008,18 +1010,18 @@ extern "C" void BattleWork_ApplyVolume(u32 id, u32 kind, int store, float scale)
         // The singleton global is re-read for every statement (retail never
         // caches it across statements).
         if (id != 0 &&
-            ((CtrlStateWork*)gpBattleCtrlStateWork)->mEntries[row].m30 != id) {
+            gpBattleCtrlStateWork->mEntries[row].m30 != id) {
             continue;
         }
-        if (((CtrlStateWork*)gpBattleCtrlStateWork)->mEntries[row].m2C != -1) {
+        if (gpBattleCtrlStateWork->mEntries[row].m2C != -1) {
             CfSoundMan_SetSlotVolume(
-                1, ((CtrlStateWork*)gpBattleCtrlStateWork)->mEntries[row].m2C,
+                1, gpBattleCtrlStateWork->mEntries[row].m2C,
                 kind,
-                scale * ((CtrlStateWork*)gpBattleCtrlStateWork)->mEntries[row].m1C);
+                scale * gpBattleCtrlStateWork->mEntries[row].m1C);
         }
         if (store != 0) {
-            ((CtrlStateWork*)gpBattleCtrlStateWork)->mEntries[row].m28 = scale;
-            ((CtrlStateWork*)gpBattleCtrlStateWork)->mEntries[row].m32 = kind;
+            gpBattleCtrlStateWork->mEntries[row].m28 = scale;
+            gpBattleCtrlStateWork->mEntries[row].m32 = kind;
         }
     }
 }
@@ -1030,15 +1032,15 @@ extern "C" void BattleWork_ApplyVolumeStore(u32 a, u32 b, float s){ BattleWork_A
 
 extern "C" void func_801AAC78(u8 v) {
     extern const f32 lbl_eu_80667D64; // retail .sdata2 zero literal (0x80667D64)
-    void* p = gpBattleCtrlStateWork;
+    CtrlStateWork* p = gpBattleCtrlStateWork;
     if (p == 0) return;
-    *(u8*)((u8*)p + 0x1A) = v;
+    p->m1A = v;
     if (v == 0) return;
     BattleWork_ApplyVolume(0, 0, 0, lbl_eu_80667D64);
 }
 
 extern "C" void BattleWork_StoreFlagByte1B(unsigned char v) {
-    CtrlStateWork* p = (CtrlStateWork*)gpBattleCtrlStateWork;
+    CtrlStateWork* p = gpBattleCtrlStateWork;
     if (p) p->m1B = v;
 }
 
@@ -1058,6 +1060,6 @@ void BattleWork_CopyPairToWork(unsigned int* pSrcA, unsigned int* pSrcB) {
 }
 
 extern "C" void func_801AAD08() {
-    void* p = gpBattleCtrlStateWork;
-    if (p) *(unsigned char*)((u8*)p + 0x18) = 0;
+    CtrlStateWork* p = gpBattleCtrlStateWork;
+    if (p) p->m18 = 0;
 }

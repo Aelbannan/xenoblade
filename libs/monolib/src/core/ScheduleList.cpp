@@ -62,20 +62,12 @@ template<> reslist<CSchedule*>::~reslist() {}
 typedef ScheduleList SLList;
 
 // ============================================================================
-// .sbss (24B): zero-init globals owned by this unit.
+// .sbss (16B): zero-init globals owned by this unit.
 // ============================================================================
 extern "C" SLList* sMainScheduleList = 0;
 extern "C" SLList* sAlternateScheduleList = 0;
 extern "C" void*   lbl_eu_80665A58 = 0;
 extern "C" char    lbl_eu_80665A5C = 0;
-extern "C" void*   lbl_eu_80665A60 = 0;
-extern "C" char    lbl_eu_80665A64 = 0;
-extern "C" char    lbl_eu_80665A65 = 0;
-extern "C" char    lbl_eu_80665A66 = 0;
-// Trailing byte: retail .sbss packs 23 bytes of objects into a 24-byte
-// 8-aligned region (the DOL keeps the section at its rounded size); NOBITS
-// gate compares size+align only, so an anonymous tail byte closes it.
-extern "C" char    lbl_eu_80665A67 = 0;
 
 // ---------------------------------------------------------------------------
 // Virtual-dispatch interfaces. Both object families carry their vtable

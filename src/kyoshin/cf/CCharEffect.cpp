@@ -16,6 +16,14 @@
 
 #include <string.h>
 
+// name-guess: per-effect-type action selector read by CharEffApplyToTarget
+// (retail 0x80501DF8: 1 = copy the data string, 2 = scale the target).
+static const s8 sCharEffTypeAction[0x30] = {
+    2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2,
+    2, 2, 1, 1, 1, 0, 1, 1, 2, 2, 2, 1, 0, 0, 0, 0,
+};
+
 // The retail symbol __ct__CCharEffect is a plain (non-member) function, not
 // a mangled member ctor: cf::CCharEffect's real dtor is
 // __dt__Q22cf11CCharEffectFv elsewhere, and CfGameManagerUnityHelpers.hpp
@@ -299,8 +307,8 @@ bool CharEffIsSlotOccupied(unsigned int* param1, int param2) {
 // of hasParamByteVal (data holder + 0x10, type&0xFF) to get a boolean flag,
 // then attaches the target to the manager, drives its setEffLockFg_ method
 // with the flag, and dispatches a per-type handler (byte table
-// lbl_eu_80501DF8: 1 = copy the data string into the target, 2 = scale
-// the target via CfObject_setObjScale by lbl_eu_80667530 * data->field_2E8).
+// sCharEffTypeAction: 1 = copy the data string into the target, 2 = scale
+// the target via CfObject_setObjScale by 0.25f * data->field_2E8).
 void CharEffApplyToTarget(CCharEffect* self, cf::CfObjectEff* eff, u32 type, u32 flags) {
     CCharEffectData* data = (CCharEffectData*)((CCharEffectMgr*)self->mManager)->field_98;
     if (data == NULL) return;
@@ -317,13 +325,13 @@ void CharEffApplyToTarget(CCharEffect* self, cf::CfObjectEff* eff, u32 type, u32
     bindPartnerO_((cf::CfObjectEff*)eff, (u8*)(CCharEffectMgr*)self->mManager, (u8*)0);
     eff->setEffLockFg_(bitFlag);
 
-    s8 v = lbl_eu_80501DF8[type];
+    s8 v = sCharEffTypeAction[type];
     if (v == 1) {
         CCharEffectData* d = (CCharEffectData*)((CCharEffectMgr*)self->mManager)->field_98;
         setChild34Sc_(eff, &d->field_304);
     } else if (v == 2) {
         CCharEffectData* d = (CCharEffectData*)((CCharEffectMgr*)self->mManager)->field_98;
-        eff->CfObject_setObjScale(lbl_eu_80667530 * d->field_2E8);
+        eff->CfObject_setObjScale(0.25f * d->field_2E8);
     }
 
     simGetLeafDist7B0((u8*)((CCharEffectMgr*)self->mManager)->field_98);

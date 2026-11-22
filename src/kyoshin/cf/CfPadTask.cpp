@@ -12,17 +12,12 @@
 
 extern "C" {
     extern u32 gmPauseFlags;
-    extern const float lbl_eu_80667EA8; // 0.0f
     const wchar_t* getErrMesText04();
     const wchar_t* getErrMesText05();
     const wchar_t* getErrMesText06();
     const wchar_t* getErrMesText07();
     // Retail symbols.txt recovers this as Fv (wrong mangling); call by that name for reloc match.
     void setPad__Q22cf13CfGameManagerFv(int padIdx, CPad* pPad, u32 systemType);
-    // Retail sbss singleton (config symbols.txt); mangled spInstance fails reloc name match.
-    extern cf::CfPadTask* lbl_eu_80664448;
-    // Retail sbss battery slot; mangled sWiimoteBattery fails reloc name match.
-    extern u32 lbl_eu_80664444;
     // CTaskGame static gate (flat retail name; defined in CTaskGame.cpp). Declared
     // here instead of including CTaskGame.hpp: that header declares a minimal
     // CLibHbm which collides with the full CLibHbm.hpp already pulled in by
@@ -58,6 +53,12 @@ template<>
 CTTask<cf::CfPadTask>::~CTTask() {}
 
 namespace cf{
+    u8 CfPadTask::sMainPadExtension;
+    u8 CfPadTask::sDpadDisableTimer;
+    bool CfPadTask::sMainPadIsGCController;
+    u8 CfPadTask::sWpadDisconnectTimer;
+    u32 CfPadTask::sWiimoteBattery;
+    CfPadTask* CfPadTask::spInstance;
     u32 CfPadTask::lbl_80666D3C;
     u32 CfPadTask::sMainPadType;
     float CfPadTask::sInputDisableTimer;
@@ -73,12 +74,12 @@ namespace cf{
 void CfPadTask::Init(){
     mErrorFrameCount = 0;
     mNoErrorFrameCount = 0;
-    lbl_eu_80664448 = this;
+    spInstance = this;
 }
 
     void CfPadTask::Term(){
         CLibHbm::setCurrentWpadChannel(WPAD_CHAN_INVALID);
-        lbl_eu_80664448 = nullptr;
+        spInstance = nullptr;
     }
 
 void CfPadTask::copyInputFlag(CPad* pPad, u32 srcFlag, u32 dstFlag){
@@ -115,7 +116,7 @@ bool CfPadTask::isInputDisabled(){
 //Set the button disable timer (A/B/+- buttons ignored until timer expires)
 void CfPadTask::setButtonDisableTime(float f1) {
     if (f1 < ml::epsilon) {
-        sButtonDisableTimer = lbl_eu_80667EA8;
+        sButtonDisableTimer = 0.0f;
     } else if (f1 > sButtonDisableTimer) {
         sButtonDisableTimer = f1;
     }
@@ -227,20 +228,20 @@ void CfPadTask::setButtonDisableTime(float f1) {
 
         sMainPadChannel = mainPadChannel;
 
-        if(sInputDisableTimer > lbl_eu_80667EA8){
+        if(sInputDisableTimer > 0.0f){
             enabledInputFlags = 0;
             sInputDisableTimer -= 1.0f;
-            if(sInputDisableTimer <= lbl_eu_80667EA8){
-                sInputDisableTimer = lbl_eu_80667EA8;
+            if(sInputDisableTimer <= 0.0f){
+                sInputDisableTimer = 0.0f;
             }
         }
 
-        if(sButtonDisableTimer > lbl_eu_80667EA8){
+        if(sButtonDisableTimer > 0.0f){
             enabledInputFlags &= ~(PAD_INPUT_FLAG_CORE_A | PAD_INPUT_FLAG_CORE_B | PAD_INPUT_FLAG_1 | PAD_INPUT_FLAG_2 | PAD_INPUT_FLAG_PLUS
             | PAD_INPUT_FLAG_MINUS | PAD_INPUT_FLAG_CLASSIC_A | PAD_INPUT_FLAG_CLASSIC_B);
             sButtonDisableTimer -= 1.0f;
-            if(sButtonDisableTimer <= lbl_eu_80667EA8){
-                sButtonDisableTimer = lbl_eu_80667EA8;
+            if(sButtonDisableTimer <= 0.0f){
+                sButtonDisableTimer = 0.0f;
             }
         }
 
@@ -491,12 +492,12 @@ int CfPadTask::checkForControllerError(bool noError) {
     }
 
 u32 CfPadTask::getWiimoteBattery() {
-    return lbl_eu_80664444;
+    return sWiimoteBattery;
 }
 
 void CfPadTask::wpadGetInfoCallback(s32 chan, s32 result){
-    if(lbl_eu_80664448 != NULL && result == WPAD_ERR_OK){
-        lbl_eu_80664444 = sWpadInfo.battery;
+    if(spInstance != NULL && result == WPAD_ERR_OK){
+        sWiimoteBattery = sWpadInfo.battery;
     }
 }
 

@@ -13,6 +13,7 @@
 #include "kyoshin/cf/object/CfObject.hpp"
 #include "kyoshin/cf/object/CfObjectMap.hpp"
 #include "monolib/math/CVec3.hpp"
+#include "monolib/scn/CScn.hpp"  // CScn::mLgtCtrl (env-controller list owner)
 // CScnEnvLgtCtrlListItem is the real owner of the +0x2F3C map-effect object
 // (v24 at slot 0x68 takes the retail int flag; cf. CfObjectMap.cpp).
 #include "libs/monolib/src/scn/CScnEnvLgtCtrl.hpp"
@@ -23,25 +24,11 @@ struct GameSubMapFxView {
     CScnEnvLgtCtrlListItem* mapFx; // 0x2F3C
 };
 
-// Local view of gmScene past +0x7C (resource mgr); same slot as
-// UnkSceneView::field_0x7C in CfObjectMap.hpp.
-struct SceneResMgrView {
-    u8 pad_00[0x7C];
-    void* resMgr; // 0x7C
-};
 
 
-// Resource globals / imports (C ABI from external TUs). scnLgtCreateEnvController is
-// declared in CfObjectMap.hpp as (void*, const void*, int) to cover both
-// const char* (CREvtLight) and void* (CfObjectMap) call sites.
-extern "C" void scnLgtRemoveLgtItem(void* mgr, void* handle);
-extern "C" void* scnLgtCreateEnvController(void* mgr, const void* name, int flag);
+// Resource globals / imports (C ABI from external TUs). scnLgtCreateEnvController /
+// scnLgtRemoveLgtItem are declared in CfObjectMap.hpp (owner = CScn::mLgtCtrl).
 extern "C" u32   REvtCam_IsTaskListEmpty(void);
-
-// Math constants.
-extern "C" const f32 lbl_eu_80667F08;  // angle conversion factor
-extern "C" const f32 lbl_eu_80667F0C;  // pi
-extern "C" const f32 lbl_eu_80667F10;  // pi/2 threshold base
 
 // ============================================================================
 // Constructor: base CREvtObj(2) (light kind), then the light fields.
@@ -61,7 +48,7 @@ cf::CREvtLight::~CREvtLight() {
     // (No `oldResource` local: a local here adds redundant destroy-base
     // actions to the retail exception table.)
     if (field_20 != nullptr) {
-        void* mgr = reinterpret_cast<SceneResMgrView*>(gmScene)->resMgr;
+        CScnEnvLgtCtrlResList* mgr = gmScene->mLgtCtrl;
         scnLgtRemoveLgtItem(mgr, field_20);
         field_20 = nullptr;
         if (cf::CfGameManager::getGameSubManager() != nullptr) {
@@ -81,7 +68,7 @@ cf::CREvtLight::~CREvtLight() {
 extern "C" void CREvtLight_SetResource(CREvtLight* self, const char* resourceName, u32 fieldValue) {
     // Release old resource
     if (self->field_20 != nullptr) {
-        void* mgr = reinterpret_cast<SceneResMgrView*>(gmScene)->resMgr;
+        CScnEnvLgtCtrlResList* mgr = gmScene->mLgtCtrl;
         scnLgtRemoveLgtItem(mgr, self->field_20);
         self->field_20 = nullptr;
 
@@ -97,7 +84,7 @@ extern "C" void CREvtLight_SetResource(CREvtLight* self, const char* resourceNam
 
     // Load new resource
     if (resourceName != nullptr) {
-        void* mgr = reinterpret_cast<SceneResMgrView*>(gmScene)->resMgr;
+        CScnEnvLgtCtrlResList* mgr = gmScene->mLgtCtrl;
         void* handle = scnLgtCreateEnvController(mgr, resourceName, 7);
         self->field_20 = handle;
 
@@ -169,7 +156,7 @@ extern "C" int CREvtLight_AngleState(CREvtLightPose* self, cf::CfObject* target)
 
     // Convert with factor, then subtract offset. Computed in two steps so
     // MWCC keeps the retail's separate fmuls/fsubs (no fp-contract fusion).
-    f32 scaled = lbl_eu_80667F08 * angle;
+    f32 scaled = 0.024543693f * angle;
     f32 result = scaled - self->mAngle;
 
     // Normalize result into the expected wrap range. The first condition is
@@ -182,8 +169,8 @@ extern "C" int CREvtLight_AngleState(CREvtLightPose* self, cf::CfObject* target)
     }
 
     // Check thresholds
-    f32 threshold = lbl_eu_80667F0C * ml::deg2rad;
-    f32 halfThreshold = lbl_eu_80667F10 * threshold;
+    f32 threshold = 60.0f * ml::deg2rad;
+    f32 halfThreshold = 2.0f * threshold;
 
     if (result > halfThreshold) {
         return 2;
@@ -199,23 +186,3 @@ extern "C" int CREvtLight_AngleState(CREvtLightPose* self, cf::CfObject* target)
     }
     return 1;
 }
-// ============================================================================
-// Retail data owned by this TU (dissolved blob; decomp emitted .text only).
-// Defined here at EOF so -ipa codegen for the functions above is unaffected.
-// The .sdata2 float trio (F08/F0C/F10) is defined below with exact retail
-// bytes (F10 as f32 2.0f + a 4-byte zero tail word); consecutive const f32
-// objects pack at 4-align with no padding, and codegen is unchanged.
-// ============================================================================
-
-// The vtable (0x80533D90), RTTI record and "cf::CREvtLight" name string are
-// compiler-emitted for the class above.
-
-// [.sdata2] 0x80667F08-0x80667F18 (16B): lfs-read float trio + 4 zero tail
-// (section 8-align pad). F08 = pi/128 angle factor, F0C = 60.0, F10 = 2.0.
-#pragma section data_type ".sdata2" ".sdata2"
-extern "C" __declspec(section ".sdata2") const f32 lbl_eu_80667F08 = 0.024543693f;
-extern "C" __declspec(section ".sdata2") const f32 lbl_eu_80667F0C = 60.0f;
-extern "C" __declspec(section ".sdata2") const f32 lbl_eu_80667F10 = 2.0f;
-__declspec(section ".sdata2") __attribute__((used, aligned(4)))
-u32 CREvtLight_sdata2_tail[1] = { 0x00000000 };
-#pragma section data_type ".data" ".data"

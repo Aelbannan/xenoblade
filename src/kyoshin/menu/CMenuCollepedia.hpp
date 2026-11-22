@@ -96,8 +96,4 @@ struct CollepediaSubEntry {
 
 // vtable / PMF / shared data (MWCC does not mangle global-scope data names).
 extern u32 __ptmf_null[3];
-extern char lbl_eu_805372A0[];   // CMenuCollepedia composite vtable
-extern char lbl_eu_8050C688[];   // message-name string pool (Init title lookup)
 
-// Shared singleton (retail name; global-scope plain extern keeps unmangled symbol).
-extern u32 lbl_eu_806647D0;

@@ -2675,12 +2675,12 @@ void CMenuEnemyState::Init() {
 
         // First pass: snapshot the indicator-pane widths for the scale math.
         if (i == 0) {
-            field7C8 = reinterpret_cast<PaneSizeView*>((*pLayout1)->GetRootPane()
-                ->FindPaneByName(&sMenuEnemyNamePool[0xd3], true))->width;
-            field7CC = reinterpret_cast<PaneSizeView*>((*pLayout1)->GetRootPane()
-                ->FindPaneByName(&sMenuEnemyNamePool[0xdd], true))->width;
-            field7D0 = reinterpret_cast<PaneSizeView*>((*pLayout1)->GetRootPane()
-                ->FindPaneByName(&sMenuEnemyNamePool[0x11d], true))->width;
+            field7C8 = (*pLayout1)->GetRootPane()
+                ->FindPaneByName(&sMenuEnemyNamePool[0xd3], true)->GetSize().width;
+            field7CC = (*pLayout1)->GetRootPane()
+                ->FindPaneByName(&sMenuEnemyNamePool[0xdd], true)->GetSize().width;
+            field7D0 = (*pLayout1)->GetRootPane()
+                ->FindPaneByName(&sMenuEnemyNamePool[0x11d], true)->GetSize().width;
         }
 
         panel->unk44 = (u32)(*pLayout1)->GetRootPane()

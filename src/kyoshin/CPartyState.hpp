@@ -6,6 +6,8 @@
 
 #include "kyoshin/CBaseCur.hpp"
 #include "monolib/lib/UnkClass_8045F564.hpp"
+#include "monolib/work/IWorkEvent.hpp"
+#include "monolib/work/CEventFile.hpp"
 #include "monolib/device/CFileHandle.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 #include "kyoshin/code_80135FDC_Lyt.hpp"
@@ -19,11 +21,11 @@
 
 class CEventFile;
 
-class CPartyState {
+class CPartyState : public IWorkEvent {
 public:
     CPartyState();
-    ~CPartyState();
-    bool OnFileEvent(CEventFile* pEventFile);
+    virtual ~CPartyState();
+    virtual bool OnFileEvent(CEventFile* pEventFile);
     int isPartySettled();
     int isPartyIdle();
     int isPartyReady();
@@ -31,7 +33,6 @@ public:
     int isPartyCloseRequested();
     int getPartySelectIndex();
 
-    void* mVtbl;                                // 0x00 - lbl_eu_805353C8
     UnkClass_8045F564 mMemRegion;               // 0x04 (0x10 bytes)
     CFileHandle* mFileHandle;                   // 0x14
     nw4r::lyt::ArcResourceAccessor* mArcResAcc; // 0x18
@@ -195,9 +196,6 @@ extern "C" int getFileSize__11CDeviceFileFPCc(const char*, int);
 // 0x2C of *gmScene; returns an mtl alloc handle).
 class CScn;
 
-// Party-state layout arc path pointer (.sdata).
-extern char* lbl_eu_80662728;
-
 // Unit-local helpers (defined in this TU; unmangled retail symbols).
 extern "C" void refreshPartyHeader(CPartyState*);
 extern "C" void finishPartyPanelClose(CPartyState*);
@@ -235,11 +233,6 @@ extern "C" void* CtrlObjectParam_GetCharEntry(u32);
 extern "C" void TagCopyVec2f(float*, float*);
 extern "C" void writePanePos(nw4r::lyt::Pane*, float*);
 
-// Party-state string table (.rodata).
-extern char lbl_eu_80507D40[];
-// Party-state 5-float position table (.rodata).
-extern float lbl_eu_80507D20[];
-
 // Party-state panel math constants (.sdata2).
 extern const float lbl_eu_80668230;
 extern const float lbl_eu_80668234;
@@ -254,7 +247,6 @@ extern const u32 lbl_eu_80668220;
 
 // CPartyState vtable (.data) - stored at +0 by the constructor. Declared as
 // an array so MWCC uses full 32-bit (lis/addi) addressing like the retail.
-extern "C" void* lbl_eu_805353C8[];
 
 // Animation target frame for finishPartyIntroAnim (.sdata2, retail lbl_eu_80668218).
 // const lets MWCC hoist the lfs to the function top (matches the matched

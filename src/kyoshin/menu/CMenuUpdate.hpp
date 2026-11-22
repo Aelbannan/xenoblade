@@ -25,22 +25,6 @@ struct Unk_8049603C {
     f32 field_C;
 };
 
-// View of the object returned by CDeviceFont::getFontInfo: vtable slot 9
-// (offset 0x24) yields the handle bound via ApplyFontToTxtPanes. Never instantiated,
-// so no vtable is emitted; the genuine virtual call makes MWCC emit the retail
-// r12 dispatch chain.
-class CMenuUpdateFontView {
-public:
-    virtual void vf0() = 0;
-    virtual void vf1() = 0;
-    virtual void vf2() = 0;
-    virtual void vf3() = 0;
-    virtual void vf4() = 0;
-    virtual void vf5() = 0;
-    virtual void vf6() = 0;
-    virtual u32 getHandle() = 0; // +0x24
-};
-
 // "timg" texture object returned by the resource accessor; the pixel
 // dimensions are reached through a two-level chain (obj+8 -> dims).
 struct CMenuUpdateTexDims {
@@ -120,7 +104,6 @@ public:
     void UpsertEntry(int type, u32 arg1, u32 arg2, u32 arg3);
 
     // Accessors
-    u32 getField10() { return *(u32*)((u8*)this + 0x10); }
     void setField67(u8 val) { mField67 = val; }
     u8 getField64() { return mField64; }
     void setField64(u8 val) { mField64 = val; }

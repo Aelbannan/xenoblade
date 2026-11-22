@@ -180,10 +180,10 @@ extern "C" void __ct__cf_CfGimmick(void* self);
 // column names, gGimmickBdatColumns a pointer table (see CfGimmick.hpp).
 extern char lbl_eu_80507B60[];
 // Area-table column-name slots: 8 pointers to shared name strings (retail
-// .data lbl_eu_80534F00). The ctor stamps each slot's second byte with the
+// .data gGimObjAreaColumnNames). The ctor stamps each slot's second byte with the
 // 1-based digit through the pointer (shared-buffer shape, as retail).
-extern const char* lbl_eu_80534F00[8];   // area-table column names (8 slots)
-extern char* lbl_eu_80534F20[10];  // step-table column names (5 slots x 10)
+extern char* gGimObjAreaColumnNames[8];   // area-table column names (8 slots)
+extern char* gGimObjStepColumnNames[10];  // step-table column names (5 slots x 10)
 
 // Gimmick sub-object initializers (CfGimmick.cpp family; holder receives
 // &ctor-local bdat handle slot like the sibling gimmick ctors).

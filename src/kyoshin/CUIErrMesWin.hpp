@@ -27,9 +27,6 @@ extern "C" void __dt__12CUIErrMesWinFv();
 // String pool used by ErrWin_LoadText_4F40's error message.
 extern char lbl_eu_805135E0[];
 
-// cf::CfGameManager current-pad accessor (retail pre-mangled static).
-void* getCurrentPad__Q22cf13CfGameManagerFv();
-
 // Pad view for ErrWin_OnConfirm_4FE8: button word at +4.
 struct CErrMesPad {
     u8 _00[4];
@@ -65,13 +62,6 @@ bool IntersectionCapsule(const CAPSULE* pCapsule0, const CAPSULE* pCapsule1);
 }  // namespace math
 }  // namespace nw4r
 
-// Capsule parameters used by ErrWin_PlayVoice_5254's three sweeps (.sdata floats).
-extern f32 lbl_eu_80668FB8;
-extern f32 lbl_eu_80668FBC;
-extern f32 lbl_eu_80668FC0;
-extern f32 lbl_eu_80668FC4;
-extern f32 lbl_eu_80668FC8;
-
 // Global window-active flags cleared by the Term functions (.sbss words).
 extern u32 lbl_eu_80664C28;
 
@@ -96,9 +86,6 @@ struct CErrMesEntry {
 // noinline so ErrWin_ResetRecord_4B84's call stays a direct `bl func_802B5148` instead
 // of an inlined stub body).
 extern "C" __declspec(noinline) void func_802B5148(CErrMesSub* self);
-
-// CSysWin sub-object destructor (retail C-linkage, CSysWin.cpp).
-extern "C" void __dt__7CSysWinFv(u8* self, int flags);
 
 // Layout DrawInfo setup helper - retail emits the mangled name
 // SetWideLocAdjust__FPQ34nw4r3lyt8DrawInfo, so it is a plain C++ declaration.

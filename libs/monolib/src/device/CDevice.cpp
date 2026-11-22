@@ -89,17 +89,13 @@ struct CDeviceMsgQueueData {
     u32 unk1C4;                  // 0x1C4 (CDeviceBase::mFlags)
 };
 
-// Retail .sbss run, in address order: 0x80665650 (the CDevice singleton),
-// 0x80665654 (the exception singleton) and the 8-byte slot at 0x80665658.
+// Retail .sbss run, in address order: CDevice::spInstance,
+// the exception singleton and the 8-byte device-clock slot.
 CDevice* CDevice::spInstance;
 // Defined at file scope with C linkage (was anon-namespace -> MWCC mangled the
 // symbol as lbl_eu_80665654__21@unnamed@CDevice_cpp@, drifting the reloc name).
 extern "C" CDeviceException* lbl_eu_80665654 = nullptr;
 extern "C" { u64 lbl_eu_80665658; }
-
-extern "C" {
-extern CDevice* lbl_eu_80665650;             // CDevice::spInstance
-}
 
 // The region-name pointers are owned by another TU; keep them imported.
 extern "C" const char* lbl_eu_80663670;  // CDevice::devSys1String
@@ -149,7 +145,7 @@ bool CDevice::isAllReady(){
     // singleton load.
     int i;
     int foundIndex;
-    const CDeviceMsgQueueData* q = reinterpret_cast<const CDeviceMsgQueueData*>(lbl_eu_80665650);
+    const CDeviceMsgQueueData* q = reinterpret_cast<const CDeviceMsgQueueData*>(spInstance);
 
     // Inlined exception check + ring scan (same shape as isInitialized).
     bool busy;
@@ -183,7 +179,7 @@ bool CDevice::isAllReady(){
     // alias-mutate the list, so MWCC cannot cache it).
     node = reinterpret_cast<const CDeviceChildList*>(q)->sentinel->next;
     for(;
-        node != reinterpret_cast<const CDeviceChildList*>(lbl_eu_80665650)->sentinel;
+        node != reinterpret_cast<const CDeviceChildList*>(spInstance)->sentinel;
         node = node->next)
     {
         CWorkThread* thread = node->thread;
@@ -225,7 +221,7 @@ bool CDevice::isColdStartReady(){
     // on the singleton first, then a walk of the child list.
     int i;
     int foundIndex;
-    const CDeviceMsgQueueData* q = reinterpret_cast<const CDeviceMsgQueueData*>(lbl_eu_80665650);
+    const CDeviceMsgQueueData* q = reinterpret_cast<const CDeviceMsgQueueData*>(spInstance);
 
     // Inlined exception check + ring scan.
     bool busy;
@@ -258,7 +254,7 @@ bool CDevice::isColdStartReady(){
 
     node = reinterpret_cast<const CDeviceChildList*>(q)->sentinel->next;
     for(;
-        node != reinterpret_cast<const CDeviceChildList*>(lbl_eu_80665650)->sentinel;
+        node != reinterpret_cast<const CDeviceChildList*>(spInstance)->sentinel;
         node = node->next)
     {
         //BUG: no check that cast is valid - skip devices that were never created.
@@ -306,7 +302,7 @@ bool CDevice::isInitialized(){
     int foundIndex;
     // Retail caches the SDA singleton load in a callee-saved reg for the whole
     // frameless body; the ring-scan counter takes the other one.
-    const CDeviceMsgQueueData* q = reinterpret_cast<const CDeviceMsgQueueData*>(lbl_eu_80665650);
+    const CDeviceMsgQueueData* q = reinterpret_cast<const CDeviceMsgQueueData*>(spInstance);
 
     // Inlined exception check + ring scan.
     bool busy;
@@ -369,28 +365,28 @@ void CDevice::initDevices(){
     if(CDeviceVI::getInstance() == nullptr){
         // Retail allocates 0x2c8 bytes for CDeviceVI here; see the operator
         // new overload above (the shared header layout is 4 bytes short).
-        createDeviceVI("CDeviceVI", lbl_eu_80665650);
+        createDeviceVI("CDeviceVI", spInstance);
     }
     if(CDeviceGX::getInstance() == nullptr){
-        CDeviceGX::create("CDeviceGX", lbl_eu_80665650);
+        CDeviceGX::create("CDeviceGX", spInstance);
     }
     if(CDeviceFont::getInstance() == nullptr){
-        CDeviceFont::create("CDeviceFont", lbl_eu_80665650);
+        CDeviceFont::create("CDeviceFont", spInstance);
     }
     if(CDeviceRemotePad::getInstance() == nullptr){
-        CDeviceRemotePad::create("CDeviceRemotePAD", lbl_eu_80665650);
+        CDeviceRemotePad::create("CDeviceRemotePAD", spInstance);
     }
     if(CDeviceClock::getInstance() == nullptr){
-        CDeviceClock::create("CDeviceClock", lbl_eu_80665650);
+        CDeviceClock::create("CDeviceClock", spInstance);
     }
     if(CDeviceSC::getInstance() == nullptr){
-        CDeviceSC::create("CDeviceSC", lbl_eu_80665650);
+        CDeviceSC::create("CDeviceSC", spInstance);
     }
     if(CDeviceFile::getInstance() == nullptr){
-        CDeviceFile::create("CDeviceFile", lbl_eu_80665650);
+        CDeviceFile::create("CDeviceFile", spInstance);
     }
     if(CLibCri::getInstance() == nullptr){
-        CLibCri::create("CLibCri", lbl_eu_80665650);
+        CLibCri::create("CLibCri", spInstance);
     }
 
     //Feels a bit strange to put this in CDeviceGX

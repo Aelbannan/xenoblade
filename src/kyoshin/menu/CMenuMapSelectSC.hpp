@@ -23,8 +23,6 @@ class CTaskGame;
 #include "monolib/work/CWorkThreadSystem.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
 
-extern const f32 lbl_eu_806687C0;  // 0.0f - world-map timer reset value
-
 // World map screen UI process (split-screen version).
 // IUICf task base (CTTask<IUICf>, whose mMoveFunc/mDrawFunc PMF slots sit at
 // 0x3C/0x48 and whose IUICf flag bytes sit at 0x54/0x55), plus the IScnRender

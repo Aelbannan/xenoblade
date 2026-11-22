@@ -58,7 +58,7 @@ void CMenuPassiveSkill::Init() {
     BgTex_Acquire_3C14(&mBgTex);
 
     // --- Re-initialise the embedded CTitleAHelp ---
-    char* name = BdatTouchStringCell(lbl_eu_8050DB4C, lbl_eu_8050DB4C + 0xc, 1);
+    char* name = BdatTouchStringCell("MNU_passive", "name", 1);
 
     u8 tempTitle[0x38];
     __ct__11CTitleAHelpFPcUc((CTitleAHelp*)tempTitle, name, 0x5a);
@@ -347,7 +347,7 @@ extern "C" void updatePassiveSkillMenu(CMenuPassiveSkill* self) {
 //   on the +0xB8 object) enables the two turbo shortcuts, then the chain
 //   tests turbo/held flag words top to bottom.
 // - Wii chain: the top held-flag bit (bit 19) resets the +0x2B0 idle timer
-//   (playing sound op 2 if it had climbed past lbl_eu_806688F4), re-arms the
+//   (playing sound op 2 if it had climbed past 1.0f), re-arms the
 //   +0x180 state byte and handles the two turbo masks directly; everything
 //   else falls into the lower mirror chain.
 // The shared tail pushes the sub-object's state byte into the help widget.
@@ -357,7 +357,7 @@ extern "C" __declspec(noinline) void dispatchPassiveSkillInput(CMenuPassiveSkill
         return;
     }
 
-    // Idle timer tick, clamped at lbl_eu_806688F8.
+    // Idle timer tick, clamped at 10.0f.
     // Decl order cap,step,cur → f0,f1,f2 (Rule C). sum = cur+step keeps cap
     // live in f0 so the add dest cannot take f0 and should reuse step (f1),
     // giving retail fadds f1,f2,f1.
@@ -365,8 +365,8 @@ extern "C" __declspec(noinline) void dispatchPassiveSkillInput(CMenuPassiveSkill
     f32 step;
     f32 cur;
     cur = self->field_2B0;
-    step = lbl_eu_806688F4;
-    cap = lbl_eu_806688F8;
+    step = 1.0f;
+    cap = 10.0f;
     f32 sum = cur + step;
     self->field_2B0 = sum;
     if (sum > cap) {
@@ -418,10 +418,10 @@ extern "C" __declspec(noinline) void dispatchPassiveSkillInput(CMenuPassiveSkill
             CPassiveSkill_isSyswinOrLearned((UI_CPassiveSkill*)self->mPassiveSkill) == 0) {
             // Reset the idle timer (sound op 2 when it had run past the F4
             // threshold), re-arm the state byte and handle the turbo masks.
-            if (self->field_2B0 > lbl_eu_806688F4) {
+            if (self->field_2B0 > 1.0f) {
                 playUISound(2);
             }
-            self->field_2B0 = lbl_eu_806688F0;
+            self->field_2B0 = 0.0f;
             UI_CPassiveSkill_setByte180(self->mPassiveSkill, 1);
             u32 turboNow = pad->mTurboPressButtonFlags;
             if ((turboNow & 0x2001) != 0) {

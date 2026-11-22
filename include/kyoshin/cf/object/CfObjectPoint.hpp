@@ -21,8 +21,6 @@ extern const float lbl_eu_80666B4C;
 // 2-word sdata2 entry: 5.0f vertical-ray length, then an emitted zero word
 // (retail section is 0x10; no code reads the second word).
 extern const float lbl_eu_80666B50[2];
-// String table at this address (address-of references emit lis/addi HA/LO).
-extern const char lbl_eu_804FC648[];
 
 // BDAT manager reset/init (retail symbol unmangled; result discarded here).
 extern "C" void* Bdat_GetTable_AA34(void);

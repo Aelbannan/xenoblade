@@ -6,15 +6,6 @@
 #include "kyoshin/harness_catalog.hpp"
 #include "monolib/math/Random.hpp"
 
-// 0x4330000080000000 s32->f32 conversion magic (2^52 + 2^31): defining it
-// lets MWCC's constant pool name the factory's implicit (float)arg cast with
-// the retail symbol instead of a TU-local @N label (CFloorMap.cpp idiom).
-// 0x4330000080000000 s32->f32 conversion magic (2^52 + 2^31): defining it
-// lets MWCC's constant pool name the factory's implicit (float)arg cast's
-// magic with the retail symbol instead of a TU-local @N label.
-double lbl_eu_80668CA8 = 4503601774854144.0;
-
-
 // us-802a9988 (__ct__802A7254)
 // Factory for CVS_THREAD_HP. Takes a source voice handle and an integer
 // value (negative -> refuse). Gates on the handle's manager flag (bit 1) and
@@ -38,18 +29,16 @@ CVS_THREAD_HP* CVS_THREAD_HP::create(CVoiceHandle* handle, int arg) {
     int voiceId;
     if (((CVoiceVTV*)handle)->idle() == 0) {
         // HP-ratio math: slot 73 (0x12C) is the denominator, slot 72 (0x128)
-        // the numerator. Remainder ratio is (num - (float)arg) / den; the
-        // arg->float step uses MWCC's native xoris/0x4330 magic whose pool
-        // entry must carry the retail name lbl_eu_80668CA8.
+        // the numerator. Remainder ratio is (num - (float)arg) / den.
         f32 den = ((CVoiceVTV*)handle)->s73();
         f32 num = ((CVoiceVTV*)handle)->s72();
         f32 rem = num - (float)arg;
         rem = rem / den;
         den = ((CVoiceVTV*)handle)->s73();
         f32 ratio = ((CVoiceVTV*)handle)->s72() / den;
-        if (ratio <= lbl_eu_80668CA0 && lbl_eu_80668CA0 >= rem) {
+        if (ratio <= 0.1f && 0.1f >= rem) {
             voiceId = 0x516;
-        } else if (ratio <= lbl_eu_80668CA4 && lbl_eu_80668CA4 >= rem) {
+        } else if (ratio <= 0.5f && 0.5f >= rem) {
             voiceId = 0x515;
         } else {
             voiceId = -1;

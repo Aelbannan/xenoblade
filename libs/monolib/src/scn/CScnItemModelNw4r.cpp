@@ -2950,7 +2950,7 @@ extern "C" CScnItemModelNw4r* __ct__CScnItemModelNw4r(
             {
                 nw4r::g3d::ResMdl resMdl2(self->field_0x146C);
                 nw4r::g3d::ResNode node2 = resMdl2.GetResNode(0);
-                TexMan_CollectNodeIds(&node2, &list);
+                TexMan_CollectNodeIds(node2, &list);
             }
             // Mirror pair kept alive (retail stores it to the +0x38 stack
             // slots every iteration; volatile prevents the DCE that would

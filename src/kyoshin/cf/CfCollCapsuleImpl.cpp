@@ -1,12 +1,8 @@
 #include "types.h"
 #include "kyoshin/cf/CfCollCapsuleImpl.hpp"
-
-// Shared float constants used for capsule debug colors.
-extern const float lbl_eu_80666910; // 0.0f
-extern const float lbl_eu_80666914; // 1.0f
-extern const float lbl_eu_8066692C; // 0.1f
-extern const float lbl_eu_80666930; // 0.5f
-extern const float lbl_eu_80666934; // 0.15f
+// Canonical declarations of the shared debug-colour constants live in the
+// owning collision headers; do not repeat them here as per-TU extern copies.
+#include "kyoshin/cf/CfCollCylinderImpl.hpp"
 
 // Collision query helper: process capsule against collision context.
 // Retail names this symbol UNMANGLED (plain C linkage).

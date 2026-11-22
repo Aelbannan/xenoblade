@@ -11,11 +11,6 @@ extern "C" void* memcpy(void* dest, const void* src, size_t count);
 #pragma section sdata_type ".sdata" ".sdata"
 extern "C" u8 lbl_eu_80662248[8] = {0};
 #pragma pop      // .sdata object; CBattleState_UnkVirtualFunc3 returns its address
-extern "C" const float lbl_eu_80667400 = 1.0f;
-extern "C" const float lbl_eu_80667404 = 0.5f;
-extern "C" const double lbl_eu_80667408 = 1.5;
-extern "C" const float lbl_eu_80667410 = 0.0f;
-extern "C" const float lbl_eu_80667414 = 0.9f;
 
 extern "C" void BtlDmg_FilterNotifyDamage(void* ptr, u32 id, int arg);
 extern "C" void UIWin_CreateMenuUpdate(int a, u32 id, int b, int c);
@@ -121,70 +116,6 @@ void CBattleState::CBattleState_clearStagingEntries() {
 // pattern as cf::CAIAction's UnkVirtualFunc1/2 -- see
 // docs/MWCC_CASES.md).
 //
-// sdata2 float pool constant read via lbl_eu_80667414@sda21 (0.9f).
-extern const float lbl_eu_80667414;
-
-// vt+0x48 tail-call: this->CBattleState_notifyEntryUpdated(entry).
-void cf::CBattleState::CBattleState_addStagingEntry(cf::CBattleStateEntry* arg) {
-    cf::CBattleStateEntry* entries;
-    cf::CBattleStateEntry* p;
-    int n;
-    u32 one;
-    u32 id;
-    // (declaration order tuned to retail Chaitin colors:
-    //  id->r6, one->r7, entries->r5, trip->r0)
-
-    // Bit `arg->unk0C` set into the this+0x15AC bitfield (word-aligned byte
-    // offset = (id >> 3) & ~3, bit position = id & 0x1F). Retail schedules
-    // li r0,8 (loop trip) before the rlwinm chain.
-    id = arg->unk0C;
-    entries = (cf::CBattleStateEntry*)(this->unk8 + 0x1380);
-    one = 1;
-    n = 8;
-    *(u32*)(unk15AC + ((id >> 3) & ~3u)) |= one << (id & 0x1F);
-    p = entries;
-    for (; n != 0; n--, p++) {
-        if (p->unk0C == arg->unk0C) {
-            if (p->unk10 < arg->unk10) {
-                p->unk10 = arg->unk10;
-            }
-            if (arg->unk18 != 0) {
-                if (p->unk10 > arg->unk18) {
-                    p->unk10 = arg->unk18;
-                }
-            }
-            this->CBattleState_notifyEntryUpdated(p);
-            return;
-        }
-    }
-
-    for (n = 8; n != 0; n--, entries++) {
-        if (entries->unk0C == 0) {
-            entries->unk00 = arg->unk00;
-            entries->unk04 = arg->unk04;
-            entries->unk08 = arg->unk08;
-            entries->unk0C = arg->unk0C;
-            entries->unk10 = arg->unk10;
-            entries->unk14 = arg->unk14;
-            entries->unk16 = arg->unk16;
-            entries->unk18 = arg->unk18;
-            entries->unk1A = arg->unk1A;
-            entries->unk1C = arg->unk1C;
-            entries->unk20 = arg->unk20;
-            entries->unk24 = arg->unk24;
-            f32 scaled = lbl_eu_80667414 * entries->unk24;
-            entries->unk28 = arg->unk28;
-            entries->unk2C = arg->unk2C;
-            entries->unk2E = arg->unk2E;
-            entries->unk30 = arg->unk30;
-            entries->unk1C = entries->unk20;
-            entries->unk28 = scaled;
-            this->CBattleState_notifyEntryUpdated(entries);
-            return;
-        }
-    }
-}
-
 // symbols.txt mangles Fv, but retail leaves the id in r4. This lookup reads
 // the independent halfword state at +0x6 (twin of slot 0x80 getEventMask,
 // which reads +0x4).
@@ -1277,7 +1208,7 @@ P1_2c:
 
 P1_ge2E:
     if (id == 0x35) {
-        arg->unk24 = lbl_eu_80667400;
+        arg->unk24 = 1.0f;
     }
     goto P1_done;
 
@@ -1292,11 +1223,11 @@ P1_10:
     {
         u8* obj = (u8*)this->CBattleState_getOwner();
         if (*(u32*)(obj + 0x3374) & 0x20) {
-            arg->unk20 *= lbl_eu_80667404;
+            arg->unk20 *= 0.5f;
         } else {
             obj = (u8*)this->CBattleState_getOwner();
             if (*(u32*)(obj + 0x3374) & 0x40) {
-                arg->unk20 *= lbl_eu_80667408;
+                arg->unk20 *= 1.5;
             }
         }
     }
@@ -1306,7 +1237,7 @@ P1_done:
     }
 
     // -- Phase 2: set unk30 bit 0 based on unk20 vs constant ---------
-    if (lbl_eu_80667410 == arg->unk20) {
+    if (0.0f == arg->unk20) {
         arg->unk30 |= 1;
     } else {
         arg->unk30 &= ~1u;
@@ -1572,8 +1503,8 @@ after_dispatch:
                     dst->unk2E = arg->unk2E;
                     dst->unk30 = arg->unk30;
                     dst->unk1C = dst->unk20;
-                    if (lbl_eu_80667410 == dst->unk28) {
-                        dst->unk28 = lbl_eu_80667414 * dst->unk24;
+                    if (0.0f == dst->unk28) {
+                        dst->unk28 = 0.9f * dst->unk24;
                     }
                     this->CBattleState_notifyEntryUpdated(dst);
                     return;
@@ -1589,6 +1520,67 @@ after_dispatch:
 F_skip_scan:
     ;
 }
+// vt+0x48 tail-call: this->CBattleState_notifyEntryUpdated(entry).
+void cf::CBattleState::CBattleState_addStagingEntry(cf::CBattleStateEntry* arg) {
+    cf::CBattleStateEntry* entries;
+    cf::CBattleStateEntry* p;
+    int n;
+    u32 one;
+    u32 id;
+    // (declaration order tuned to retail Chaitin colors:
+    //  id->r6, one->r7, entries->r5, trip->r0)
+
+    // Bit `arg->unk0C` set into the this+0x15AC bitfield (word-aligned byte
+    // offset = (id >> 3) & ~3, bit position = id & 0x1F). Retail schedules
+    // li r0,8 (loop trip) before the rlwinm chain.
+    id = arg->unk0C;
+    entries = (cf::CBattleStateEntry*)(this->unk8 + 0x1380);
+    one = 1;
+    n = 8;
+    *(u32*)(unk15AC + ((id >> 3) & ~3u)) |= one << (id & 0x1F);
+    p = entries;
+    for (; n != 0; n--, p++) {
+        if (p->unk0C == arg->unk0C) {
+            if (p->unk10 < arg->unk10) {
+                p->unk10 = arg->unk10;
+            }
+            if (arg->unk18 != 0) {
+                if (p->unk10 > arg->unk18) {
+                    p->unk10 = arg->unk18;
+                }
+            }
+            this->CBattleState_notifyEntryUpdated(p);
+            return;
+        }
+    }
+
+    for (n = 8; n != 0; n--, entries++) {
+        if (entries->unk0C == 0) {
+            entries->unk00 = arg->unk00;
+            entries->unk04 = arg->unk04;
+            entries->unk08 = arg->unk08;
+            entries->unk0C = arg->unk0C;
+            entries->unk10 = arg->unk10;
+            entries->unk14 = arg->unk14;
+            entries->unk16 = arg->unk16;
+            entries->unk18 = arg->unk18;
+            entries->unk1A = arg->unk1A;
+            entries->unk1C = arg->unk1C;
+            entries->unk20 = arg->unk20;
+            entries->unk24 = arg->unk24;
+            f32 scaled = 0.9f * entries->unk24;
+            entries->unk28 = arg->unk28;
+            entries->unk2C = arg->unk2C;
+            entries->unk2E = arg->unk2E;
+            entries->unk30 = arg->unk30;
+            entries->unk1C = entries->unk20;
+            entries->unk28 = scaled;
+            this->CBattleState_notifyEntryUpdated(entries);
+            return;
+        }
+    }
+}
+
 #pragma inline_max_size(256)
 #pragma inline_max_total_size(800)
 #pragma auto_inline on

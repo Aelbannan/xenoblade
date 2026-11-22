@@ -8,11 +8,9 @@ class CEventFile;
 
 // Work thread that streams the system font file and hands it to CDeviceFont.
 // size: 0x210
-// __declspec(novtable): the retail vtable is the hand-laid lbl_eu_8056C8A8
-// (blob dissolve) stored explicitly by the ctor; novtable also keeps MWCC from
-// emitting a local vtable + weak stubs for the inherited virtuals.
-class __declspec(novtable) CDeviceFontLoader : public CWorkThread {
+class CDeviceFontLoader : public CWorkThread {
 public:
+    CDeviceFontLoader(const char* pName, CWorkThread* pParent);
     virtual ~CDeviceFontLoader();
     virtual bool OnFileEvent(CEventFile* pEventFile);
     virtual bool wkStandbyLogin();
@@ -26,10 +24,8 @@ public:
     CFileHandle* mFileHandle;  // 0x20C
 };
 
-// Retail symbols that cannot be expressed as C++ members: the ctor is emitted
-// unmangled, and setFontPath's retail mangling (Fv) does not encode its two
-// parameters.
+// setFontPath's retail mangling (Fv) does not encode its two parameters, so it
+// cannot be expressed as a C++ member.
 extern "C" {
-CDeviceFontLoader* __ct__CDeviceFontLoader(CDeviceFontLoader* self, const char* pName, CWorkThread* pParent);
 void setFontPath__17CDeviceFontLoaderFv(CDeviceFontLoader* self, u32 arg, const char* pPath);
 }

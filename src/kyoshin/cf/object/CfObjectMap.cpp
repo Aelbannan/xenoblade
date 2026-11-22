@@ -63,7 +63,7 @@ void cf::CfObjectMap::cleanupMap() {
     }
     CScnEnvLgtCtrlListItem* resource = this->field_0x2F3C;
     if (resource != 0) {
-        scnLgtRemoveLgtItem(reinterpret_cast<UnkSceneView*>(gmScene)->field_0x7C, resource);
+        scnLgtRemoveLgtItem(gmScene->mLgtCtrl, resource);
         this->field_0x2F3C = nullptr;
     }
     clearOccFrustums__Q22cf12CTaskCullingFv();
@@ -136,8 +136,8 @@ extern "C" int CfObjectMap_resolveResource(cf::CfObjectMap* self, u32 a, u32 b) 
         int field1 = (packed >> 20) & 0x7F;
         int field2 = (packed >> 10) & 0x3FF;
         Tok_FormatStr(reinterpret_cast<ml::FixStr<64>&>(buf), packed, 1, 0);
-        len += strlen(lbl_eu_804FC538);
-        strcat(buf, lbl_eu_804FC538);
+        len += strlen(".lod");
+        strcat(buf, ".lod");
         int size = getFileSize__11CDeviceFileFPCc(buf, 1);
         if (size > 0) {
             u32 rounded = (size + 0x7FF) & ~0x7FF;
@@ -273,7 +273,7 @@ extern "C" void CfObjectMap_updateEvents(cf::CfObjectMap* self) {
         }
         if (self->field_0xE8 != 0) {
             CScnEnvLgtCtrlListItem* fx = static_cast<CScnEnvLgtCtrlListItem*>(
-                scnLgtCreateEnvController(reinterpret_cast<UnkSceneView*>(gmScene)->field_0x7C,
+                scnLgtCreateEnvController(gmScene->mLgtCtrl,
                               self->field_0xE8, 7));
             self->field_0x2F3C = fx;
             if (fx != 0) {
@@ -299,7 +299,7 @@ extern "C" void CfObjectMap_updateEvents(cf::CfObjectMap* self) {
                 ml::CVec3 scale2(0.5f, 0.5f, 0.5f);
                 fx->v32(1, 1, &dir2, &scale2);
 
-                u32 bdat = getBdatStringColumnValue(::cf::CfBdat::spFldMapListFileData, &lbl_eu_804FC538[5], lbl_eu_80664184);
+                u32 bdat = getBdatStringColumnValue(::cf::CfBdat::spFldMapListFileData, "mapATR", lbl_eu_80664184);
                 if ((bdat & 1) == 0) {
                     fx->v31(1, 0);
                     ml::CVec3 dir3(0.15f, 46.0f, 0.15f);
@@ -344,7 +344,7 @@ extern "C" void CfObjectMap_updateFrame(cf::CfObjectMap* self) {
     }
     // v passed uncast so MWCC emits a separate clrlwi per u16 parameter site
     updateLODRange__8CTaskLODFv(v, value);
-    scnLgtPushLgtValue(reinterpret_cast<UnkSceneView*>(gmScene)->field_0x7C, v, value);
+    scnLgtPushLgtValue(gmScene->mLgtCtrl, v, value);
     if (gmPauseFlags & 0x01000000) {
         v = 2;
     } else {

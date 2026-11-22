@@ -70,8 +70,6 @@ extern "C" u8* getGlobalSda();
 extern "C" u32 UIWin_GetInstance();
 extern "C" u32 evtGetManagerAddr();
 extern u32 gmPauseFlags;   // .sbss mode bitfield (bit 0x01000000)
-extern const f32 lbl_eu_80665D88; // .sdata2 float
-extern const f32 lbl_eu_80665D8C; // .sdata2 float
 
 class CScnNw4r;
 class CView;

@@ -23,6 +23,32 @@ namespace nw4r { namespace db { void Panic(const char* file, int line, const cha
 #include "kyoshin/plugin/ocBdat.hpp"
 #include "kyoshin/code_80135FDC_State.hpp"
 
+// Retail exports these FloorMap_* helpers with C linkage (plain names, no
+// parameter suffix) like the other FloorMap_* entry points declared in
+// CFloorMap.hpp.
+extern "C" {
+void FloorMap_RefreshFloorRows(void* self);
+void FloorMap_RebuildMarkers(void* self);
+void FloorMap_ReleaseMarkers(void* self);
+void FloorMap_LoadStageLayout(CFloorMap* self);
+void FloorMap_UpdateFrame(void* self);
+void FloorMap_Draw(void* self, void* drawInfo);
+void FloorMap_Teardown(CFloorMapFull* p);
+void FloorMap_UpdateRowPanePos(void* self);
+void FloorMap_CursorNextFloor(void* self);
+void FloorMap_UpdateCursorMove(void* self);
+void FloorMap_UpdateWorldMap(void* self);
+void FloorMap_HandleMapDown(CFloorMapFull* p);
+void FloorMap_NormalizeMapPos(void* self);
+void FloorMap_ScrollDown(void* self);
+void FloorMap_ScrollUp(void* self);
+void FloorMap_ScrollRight(CFloorMapFull* fm);
+void FloorMap_ScrollLeft(CFloorMapFull* fm);
+void FloorMap_OpenRowWindow(void* self);
+void FloorMap_LoadMapFiles(void* self);
+void FloorMap_MoveToCursorRow(void* self);
+}
+
 // Retail-unmangled accessor; the shared owner header uses a different
 // (C++-linkage) return type, so this TU keeps its typed C declaration.
 extern "C" CFloorMapGimmickGlobal* getUnk80664658();
@@ -182,10 +208,9 @@ extern "C" void FloorMap_CursorPageDown(void* self) {
                 cur->field_0A = 4;
         }
     } else {
-        u8 c1 = count - 1;
-        cur->field_0A = c1;
+        cur->field_0A = count - 1;
         cur->field_0B = 0;
-        if ((s8)c1 < 0)
+        if ((s8)cur->field_0A < 0)
             cur->field_0A = 0;
     }
     FloorMap_RefreshCursorRows(cur);
@@ -2432,7 +2457,7 @@ void FloorMap_SetRowTexPalette(CFloorMapRowList* self, void* arg2, u32 arg3, u32
         nw4r::lyt::Pane* pane =
             self->mData->GetRootPane()->FindPaneByName(buf, 1);
         if (pane)
-            pane->SetVisible(__cntlzw(arg3 - (u8)i) & 0x20);
+            pane->SetVisible(i == arg3);
     }
 
     // Random visibility for the two special row kinds.
@@ -4316,7 +4341,7 @@ divides:
 // reference point, or 0.
 u32 FloorMap_FindFloorRow(void*) {
     u8 curMap = sCurrentMapId;
-    u32 result = 0;
+    u8 result = 0;
     // The floor height is widened with a plain s16 cast.
     if ((lbl_eu_80664184 & 0xFF) == curMap) {
         if (spFloorDataTable != 0) {

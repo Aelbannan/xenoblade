@@ -34,13 +34,13 @@ char gCfNandPartySnapshot[0x38];
 cf::CfNandManager* gpCfNandManager;
 unsigned char gCfNandFileEventPending;
 unsigned char gNandTeardownByte;
-unsigned short lbl_eu_8066476E;
+unsigned short gNandEventStatus; // name-guess: u16 NAND file-event status bitset; no retail name at 0x8066476E
 unsigned short gCfNandCaptureState;
 unsigned short gNandTeardownFlag;
 // name-guess: loaded from save image slot[0x66] in NandRestore, mirrored into gmPauseFlags 0x8000 and cleared by CfGameManager after load; no retail name found (map/KB searched).
 unsigned short gCfNandRestoredEventFlag;
 unsigned short gNandSbssGap64776;
-unsigned int lbl_eu_80664778;
+unsigned int gNandDirEntryCount; // name-guess: nand.readdir entry count; no retail name at 0x80664778
 void* gpCfNandCaptureBuf;
 void* gpCfNandCaptureBufTail;
 unsigned int gNandSbssPad64780;
@@ -223,7 +223,7 @@ extern "C" void MenuSnd_SetSeVolPush_95F4(f32 v);
 extern "C" void MenuSnd_SetMasterAndPush_9510(f32 v);
 
 extern char* lbl_eu_806628C0;
-extern u8 lbl_eu_80663E5D;
+extern u8 gmVoiceFlag5D;
 
 #pragma inline_max_size(0x4000)
 #pragma inline_max_total_size(0x8000)
@@ -334,7 +334,7 @@ inline static void expandWorkEntry(CfNandWorkEntrySrc* src, CfNandWorkEntryDst* 
     src->f34E4 = dst->f2BC;
 
     u8 flag = dst->f2C0 != 0;
-    lbl_eu_80663E5D = flag;
+    gmVoiceFlag5D = flag;
     gNandTeardownByte = flag;
     KizunagramUnpackChart(dst->kizuna, src->kizunaSrc);
 }
@@ -646,7 +646,7 @@ extern "C" CfNandPartySnapshot* NandCopyParty(CfNandPartySnapshot* snapshot) {
             entry->mPair.field_00 = *(u32*)&gmAimPoint[0];
             entry->mPair.field_04 = *(u32*)&gmAimPoint[1];
             entry->field_08 = *(u32*)&gmAimPoint[2];
-            entry->field_0C = lbl_eu_80663E54;
+            entry->field_0C = gmNandFloat54;
         }
         entry++;
     }
@@ -969,10 +969,10 @@ extern "C" void NandDispatchPendingEvent(void* self) {
                 mgr->mEventQueue.mHead = 0;
             }
         } else if (type == 17) {
-            lbl_eu_8066476E = 0;
+            gNandEventStatus = 0;
             if (ok != 0) {
                 u8 sub = mgr->mPending.mSubtype;
-                u32 count = lbl_eu_80664778;
+                u32 count = gNandDirEntryCount;
                 u8* list = (u8*)mgr->mPending.mPayload;
                 ml::FixStr<32> name;
                 if (sub != 0) {
@@ -992,7 +992,7 @@ extern "C" void NandDispatchPendingEvent(void* self) {
                 }
                 ok = found;
                 if (ok != 0) {
-                    lbl_eu_8066476E = lbl_eu_8066476E | (u16)(1 << mgr->mPending.mSubtype);
+                    gNandEventStatus = gNandEventStatus | (u16)(1 << mgr->mPending.mSubtype);
                 }
             } else {
                 result = 5;
@@ -1046,7 +1046,7 @@ extern "C" void NandDispatchPendingEvent(void* self) {
                         mgr->mEventQueue.mTail = 0;
                         mgr->mEventQueue.mHead = 0;
                     } else {
-                        lbl_eu_8066476E = lbl_eu_8066476E |
+                        gNandEventStatus = gNandEventStatus |
                                           (u16)(1 << mgr->mPending.mSubtype);
                         if (mgr->mPending.mSubtype != 3) {
                             mgr->mPending.mCb = 0;
@@ -1136,9 +1136,9 @@ extern "C" void NandFlushEvts(void* self) {
             mgr->mPending.mPayload = (u32)buf;
             nand.loadBanner(buf, ev.mTag);
         } else if (type == 17) {
-            lbl_eu_80664778 = 0;
+            gNandDirEntryCount = 0;
             mgr->mPending.mPayload = (u32)lbl_eu_80576AC0;
-            nand.readdir((char*)lbl_eu_80576AC0, 0x200, (u32*)&lbl_eu_80664778);
+            nand.readdir((char*)lbl_eu_80576AC0, 0x200, (u32*)&gNandDirEntryCount);
         } else if (type == 3 || type == 18) {
             nand.load(fileName.c_str(), (void*)mgr->mPending.mPayload, ev.mTag);
         } else if (type == 32) {
@@ -1335,7 +1335,7 @@ extern "C" int NandQueueChkBA0(void (*cb)(u32, u32, u32, u32)) {
 // Request the three-part NAND reset and clear the event-status word.
 extern "C" int NandQueueReset(void (*cb)(u32, u32, u32, u32)) {
     if (gpCfNandManager == 0) return 0;
-    lbl_eu_8066476E = 0;
+    gNandEventStatus = 0;
     int result = 0;
     for (u8 slot = 1; slot <= 3; slot++) {
         result = gpCfNandManager->queueEvent((u32)cb, 0x28000, 0, 8, slot, 0);
@@ -1519,7 +1519,7 @@ cf::CfNandManager::CfNandManager(void* arg)
     gCfNandRestoredEventFlag = 0;
     gpCfNandCaptureBuf = 0;
     gpCfNandCaptureBufTail = 0;
-    lbl_eu_8066476E = 0;
+    gNandEventStatus = 0;
     mMoveHook = *reinterpret_cast<MoveHook*>(lbl_eu_80536B20);
     mPending.mType = 0;
     mPending.mPayload = 0;

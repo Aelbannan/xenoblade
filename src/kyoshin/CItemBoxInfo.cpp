@@ -907,11 +907,11 @@ CItemBoxSelRec CItemBoxInfo::BuildSelRec(u32 item) {
     void* lookup = CtrlObjectParam_GetCharEntry((u8)count);
     u8 cat = (u8)CtrlObjectParam_GetCurrentRowKey(lookup);
     rec.flag2 = 0;
-    u8* entry = (u8*)lookup + cat * 0x49 + val * 2;
+    CItemBoxArtSlot* entry = &((CItemBoxCharEntry*)lookup)->mArtRows[cat].mArts[val];
     switch (rec.category) {
-        case 1: if (entry[0xE8] != 0) rec.flag2 = 1; break;
-        case 2: if ((entry[0xE9] >> 7) & 1) rec.flag2 = 1; break;
-        case 3: if ((entry[0xE9] >> 6) & 1) rec.flag2 = 1; break;
+        case 1: if (entry->mLevel != 0) rec.flag2 = 1; break;
+        case 2: if ((entry->mFlags >> 7) & 1) rec.flag2 = 1; break;
+        case 3: if ((entry->mFlags >> 6) & 1) rec.flag2 = 1; break;
     }
     return rec;
 }
@@ -5083,11 +5083,11 @@ CItemBoxSelRec CItemBoxInfo2::BuildSelRec(u32 item) {
     void* lookup = CtrlObjectParam_GetCharEntry((u8)count);
     u8 cat = (u8)CtrlObjectParam_GetCurrentRowKey(lookup);
     rec.flag2 = 0;
-    u8* entry = (u8*)lookup + cat * 0x49 + val * 2;
+    CItemBoxArtSlot* entry = &((CItemBoxCharEntry*)lookup)->mArtRows[cat].mArts[val];
     switch (rec.category) {
-        case 1: if (entry[0xE8] != 0) rec.flag2 = 1; break;
-        case 2: if ((entry[0xE9] >> 7) & 1) rec.flag2 = 1; break;
-        case 3: if ((entry[0xE9] >> 6) & 1) rec.flag2 = 1; break;
+        case 1: if (entry->mLevel != 0) rec.flag2 = 1; break;
+        case 2: if ((entry->mFlags >> 7) & 1) rec.flag2 = 1; break;
+        case 3: if ((entry->mFlags >> 6) & 1) rec.flag2 = 1; break;
     }
     return rec;
 }

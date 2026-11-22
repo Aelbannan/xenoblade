@@ -360,8 +360,8 @@ void CEquipChange::ConfirmSelect() {
         return;
     }
     // gate closed branch (.L_80204A8C)
-    CBdatCharData* data = (CBdatCharData*)CtrlObjectParam_GetCharEntry((u8)GetCollectedFlagByte(field_99));
-    if (data->field_176C == 1) {
+    cf::CtrlObjectParamEntry* data = (cf::CtrlObjectParamEntry*)CtrlObjectParam_GetCharEntry((u8)GetCollectedFlagByte(field_99));
+    if ((s32)data->mParam.unk15F0 == 1) {
         if ((u8)MapCursorToCat() == 3)
             return;
         playUISound(5);
@@ -395,8 +395,8 @@ void CEquipChange::ConfirmSelect() {
 // item cannot be equipped; 1 after the generic refresh; 2/3 from the weapon-row
 // paths. Retail frame saves 4 regs via stmw (opt-space prologue).
 int CEquipChange::RunMainFlow() {
-    CBdatCharData* obj = (CBdatCharData*)CtrlObjectParam_GetCharEntry((u8)GetCollectedFlagByte(field_99));
-    if (obj->field_176C == 1) {
+    cf::CtrlObjectParamEntry* obj = (cf::CtrlObjectParamEntry*)CtrlObjectParam_GetCharEntry((u8)GetCollectedFlagByte(field_99));
+    if ((s32)obj->mParam.unk15F0 == 1) {
         s8 cur = field_98;
         if (cur == 0 || cur == 4 || cur == 6 || cur == 8 || cur == 10 || cur == 12)
             return 0;
@@ -412,7 +412,7 @@ int CEquipChange::RunMainFlow() {
     if ((u8)cat != 3) {
     switch ((u8)cat) {
     case 2: {
-        s16 id = obj->field_26;
+        s16 id = obj->shortArr[5];
         if (id == -1)
             return 0;
         void* item = CItem_kindPtr(2, id);
@@ -428,7 +428,7 @@ int CEquipChange::RunMainFlow() {
         break;
     }
     case 4: {
-        s16 id = obj->field_1C;
+        s16 id = obj->shortArr[0];
         if (id == -1)
             return 0;
         void* item = CItem_kindPtr(4, id);
@@ -444,7 +444,7 @@ int CEquipChange::RunMainFlow() {
         break;
     }
     case 5: {
-        s16 id = obj->field_1E;
+        s16 id = obj->shortArr[1];
         if (id == -1)
             return 0;
         void* item = CItem_kindPtr(5, id);
@@ -460,7 +460,7 @@ int CEquipChange::RunMainFlow() {
         break;
     }
     case 6: {
-        s16 id = obj->field_20;
+        s16 id = obj->shortArr[2];
         if (id == -1)
             return 0;
         void* item = CItem_kindPtr(6, id);
@@ -476,7 +476,7 @@ int CEquipChange::RunMainFlow() {
         break;
     }
     case 7: {
-        s16 id = obj->field_22;
+        s16 id = obj->shortArr[3];
         if (id == -1)
             return 0;
         void* item = CItem_kindPtr(7, id);
@@ -492,7 +492,7 @@ int CEquipChange::RunMainFlow() {
         break;
     }
     case 8: {
-        s16 id = obj->field_24;
+        s16 id = obj->shortArr[4];
         if (id == -1)
             return 0;
         void* item = CItem_kindPtr(8, id);
@@ -565,12 +565,12 @@ int CEquipChange::RunMainFlow() {
         v = ((int)(u8)v - 3 > 0) ? 2 : 0;
     s16 id = -1;
     switch (kind) {
-    case 2: id = obj->field_26; break;
-    case 4: id = obj->field_1C; break;
-    case 5: id = obj->field_1E; break;
-    case 6: id = obj->field_20; break;
-    case 7: id = obj->field_22; break;
-    case 8: id = obj->field_24; break;
+    case 2: id = obj->shortArr[5]; break;
+    case 4: id = obj->shortArr[0]; break;
+    case 5: id = obj->shortArr[1]; break;
+    case 6: id = obj->shortArr[2]; break;
+    case 7: id = obj->shortArr[3]; break;
+    case 8: id = obj->shortArr[4]; break;
     default: break;
     }
     kind = (int)CItem_kindPtr((u8)kind, id);
@@ -649,17 +649,17 @@ int CEquipChange::GetEquippedResId(u32 param) {
     if (mEquipItemBox.getEIBOpenFlag() != 0) {
         if (param == 0 && mEquipItemBox.isEIBCatMatch() == 0)
             return 0;
-        CBdatCharData* obj = (CBdatCharData*)CtrlObjectParam_GetCharEntry((u8)GetCollectedFlagByte(field_99));
+        cf::CtrlObjectParamEntry* obj = (cf::CtrlObjectParamEntry*)CtrlObjectParam_GetCharEntry((u8)GetCollectedFlagByte(field_99));
         // signed compare (retail cmpi chain) - category value 2/4/5/6/7/8
         int r0 = (u8)mEquipItemBox.getEIBSelCat();
         CItemExt* item;
         switch (r0) {
-        case 2: item = CItem_kindPtr(2, obj->field_26); break;
-        case 4: item = CItem_kindPtr(4, obj->field_1C); break;
-        case 5: item = CItem_kindPtr(5, obj->field_1E); break;
-        case 6: item = CItem_kindPtr(6, obj->field_20); break;
-        case 7: item = CItem_kindPtr(7, obj->field_22); break;
-        case 8: item = CItem_kindPtr(8, obj->field_24); break;
+        case 2: item = CItem_kindPtr(2, obj->shortArr[5]); break;
+        case 4: item = CItem_kindPtr(4, obj->shortArr[0]); break;
+        case 5: item = CItem_kindPtr(5, obj->shortArr[1]); break;
+        case 6: item = CItem_kindPtr(6, obj->shortArr[2]); break;
+        case 7: item = CItem_kindPtr(7, obj->shortArr[3]); break;
+        case 8: item = CItem_kindPtr(8, obj->shortArr[4]); break;
         default: return 0;
         }
         // tail duplicated per branch in retail (.L_80205894 / .L_80205960)
@@ -667,17 +667,17 @@ int CEquipChange::GetEquippedResId(u32 param) {
             return item->field_00 >> 20;
     } else {
         // box gate closed - key off the cursor-run flag field_98
-        CBdatCharData* obj = (CBdatCharData*)CtrlObjectParam_GetCharEntry((u8)GetCollectedFlagByte(field_99));
+        cf::CtrlObjectParamEntry* obj = (cf::CtrlObjectParamEntry*)CtrlObjectParam_GetCharEntry((u8)GetCollectedFlagByte(field_99));
         s8 r0 = field_98;
         CItemExt* item;
         // retail chain tests 0/4/6/8/10/11 (extsb. + cmpwi, all tests first)
         switch (r0) {
-        case 0: item = CItem_kindPtr(2, obj->field_26); break;
-        case 4: item = CItem_kindPtr(4, obj->field_1C); break;
-        case 6: item = CItem_kindPtr(5, obj->field_1E); break;
-        case 8: item = CItem_kindPtr(6, obj->field_20); break;
-        case 10: item = CItem_kindPtr(7, obj->field_22); break;
-        case 11: item = CItem_kindPtr(8, obj->field_24); break;
+        case 0: item = CItem_kindPtr(2, obj->shortArr[5]); break;
+        case 4: item = CItem_kindPtr(4, obj->shortArr[0]); break;
+        case 6: item = CItem_kindPtr(5, obj->shortArr[1]); break;
+        case 8: item = CItem_kindPtr(6, obj->shortArr[2]); break;
+        case 10: item = CItem_kindPtr(7, obj->shortArr[3]); break;
+        case 11: item = CItem_kindPtr(8, obj->shortArr[4]); break;
         default: return 0;
         }
         if (item != NULL && item->field_00 != 0)
@@ -904,21 +904,21 @@ void CEquipChange::RebuildCursorList() {
     int count = 0;
     int nRecs = 0;
 
-    CBdatCharData* cd = (CBdatCharData*)CtrlObjectParam_GetCharEntry(GetCollectedFlagByte(field_99));
+    cf::CtrlObjectParamEntry* cd = (cf::CtrlObjectParamEntry*)CtrlObjectParam_GetCharEntry(GetCollectedFlagByte(field_99));
     CtrlObjectParam_SyncParamFromActorEx(cd, 1);
     // Stats sub-object at +0x17C is an embedded cf::CActorParam; refresh it
     // through its real +0x224 slot (CActorParam_getBattleParams), not a
     // manual vtable-word call (CfNandManager subSlot precedent).
-    ((cf::CActorParam*)((u8*)cd + 0x17C))->CActorParam_getBattleParams();
-    CtrlObjectParam_GetArtsStatsRow(&cd->field_1C, 5);
+    cd->mParam.CActorParam_getBattleParams();
+    CtrlObjectParam_GetArtsStatsRow(&cd->shortArr[0], 5);
 
-    s16 w4 = cd->field_1C;
-    s16 w5 = cd->field_1E;
-    s16 w6 = cd->field_20;
-    s16 w7 = cd->field_22;
-    s16 w8 = cd->field_24;
+    s16 w4 = cd->shortArr[0];
+    s16 w5 = cd->shortArr[1];
+    s16 w6 = cd->shortArr[2];
+    s16 w7 = cd->shortArr[3];
+    s16 w8 = cd->shortArr[4];
 
-    void* weaponItem = CItem_kindPtr(2, cd->field_26);
+    void* weaponItem = CItem_kindPtr(2, cd->shortArr[5]);
     void* catItems[5];
     catItems[0] = CItem_kindPtr(4, w4);
     catItems[1] = CItem_kindPtr(5, w5);
@@ -1430,17 +1430,17 @@ void CEquipChange::RefreshCategory(u8 cat) {
 void* CEquipChange::ResolveEquipItem() {
     // cat declared first - its home web (shared with mapped) gets priority.
     int cat;
-    CBdatCharData* obj = (CBdatCharData*)CtrlObjectParam_GetCharEntry((u8)GetCollectedFlagByte(field_99));
+    cf::CtrlObjectParamEntry* obj = (cf::CtrlObjectParamEntry*)CtrlObjectParam_GetCharEntry((u8)GetCollectedFlagByte(field_99));
     cat = MapCursorToCat();
     if ((u8)cat != 3) {
         s16 id = -1;
         switch ((u8)cat) {
-        case 2: id = obj->field_26; break;
-        case 4: id = obj->field_1C; break;
-        case 5: id = obj->field_1E; break;
-        case 6: id = obj->field_20; break;
-        case 7: id = obj->field_22; break;
-        case 8: id = obj->field_24; break;
+        case 2: id = obj->shortArr[5]; break;
+        case 4: id = obj->shortArr[0]; break;
+        case 5: id = obj->shortArr[1]; break;
+        case 6: id = obj->shortArr[2]; break;
+        case 7: id = obj->shortArr[3]; break;
+        case 8: id = obj->shortArr[4]; break;
         }
         return CItem_kindPtr((u8)cat, id);
     } else {
@@ -1474,12 +1474,12 @@ void* CEquipChange::ResolveEquipItem() {
         flag = (int)((u32)((u8)idx - 3) < 1);
     s16 wid = -1;
     switch ((u8)mapped) {
-    case 2: wid = obj->field_26; break;
-    case 4: wid = obj->field_1C; break;
-    case 5: wid = obj->field_1E; break;
-    case 6: wid = obj->field_20; break;
-    case 7: wid = obj->field_22; break;
-    case 8: wid = obj->field_24; break;
+    case 2: wid = obj->shortArr[5]; break;
+    case 4: wid = obj->shortArr[0]; break;
+    case 5: wid = obj->shortArr[1]; break;
+    case 6: wid = obj->shortArr[2]; break;
+    case 7: wid = obj->shortArr[3]; break;
+    case 8: wid = obj->shortArr[4]; break;
     }
     void* item = CItem_kindPtr((u8)mapped, wid);
     if (item == NULL)

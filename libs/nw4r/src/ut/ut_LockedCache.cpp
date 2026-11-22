@@ -73,15 +73,10 @@ public:
     mutable OSMutex mMutex; // at 0x4
 };
 
+LCImpl sLCImpl;
+
 } // namespace
 
-// Retail .bss 0x80653E88-0x80653EA8 (0x20): LCImpl (0x1C) + 0x4 pad. Absorbed from nw4r_data.s.
-struct LCImplPadded : LCImpl {
-    unsigned char _pad[4];
-};
-extern "C" {
-LCImplPadded lbl_eu_80653E88 __attribute__((aligned(8)));
-}
 // NOTE: the compiler-generated __sinit_ for this TU already reproduces the
 // retail static-init (mIsEnabled = false + OSInitMutex tail call); no
 // hand-written sinit is needed (it would only duplicate .text).
@@ -89,19 +84,19 @@ LCImplPadded lbl_eu_80653E88 __attribute__((aligned(8)));
 namespace LC {
 
 void Enable() {
-    lbl_eu_80653E88.Enable();
+    sLCImpl.Enable();
 }
 
 void Disable() {
-    lbl_eu_80653E88.Disable();
+    sLCImpl.Disable();
 }
 
 bool Lock() {
-    return lbl_eu_80653E88.Lock();
+    return sLCImpl.Lock();
 }
 
 void Unlock() {
-    lbl_eu_80653E88.Unlock();
+    sLCImpl.Unlock();
 }
 
 void LoadBlocks(void* pDst, void* pSrc, u32 blocks) {

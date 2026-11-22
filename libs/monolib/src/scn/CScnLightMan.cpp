@@ -111,5 +111,7 @@ extern "C" u32 lbl_eu_8056E578[8] = {
 // [.rodata] 0x80523F58-0x80523F98 (64B): RTTI name + texture name + default
 // light colour table + "SHA" tag.
 extern "C" __declspec(align(8)) const char lbl_eu_80523F58[0xD] = { 0x43,0x53,0x63,0x6E,0x4C,0x69,0x67,0x68,0x74,0x4D,0x61,0x6E,0x00 };
-extern "C" __declspec(align(4)) const char lbl_eu_80523F68[0xD] = { 0x73,0x68,0x61,0x64,0x6F,0x77,0x54,0x65,0x78,0x5F,0x49,0x34,0x00 };
+// name-guess: the retail bytes are the single string "shadowTex_I4"; no
+// symbol map name exists at this address and no code references the object.
+extern __declspec(align(4)) const char CScnLightMan_shadowTexName[0xD] = "shadowTex_I4";
 extern "C" __declspec(align(8)) const f32 lbl_eu_80523F78[7] = { 1.0f, 0.7f, 0.7f, 0.5f, 0.5f, 0.7f, 0.7f };

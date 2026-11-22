@@ -314,7 +314,7 @@ extern "C" void FloorMap_RefreshLayoutBlock(CFloorMapLayoutBlock*);
 extern "C" u32 FloorMap_FindFloorRow(void*);
 extern "C" void FloorMap_ResolveMapPos(void*, void*);
 extern "C" void FloorMap_ReloadMarkerPanes(void*, u8, u32, f32);
-void FloorMap_PlaceFloorMarker(CFloorMapFull* self, u32 idx);
+extern "C" void FloorMap_PlaceFloorMarker(CFloorMapFull* self, u32 idx);
 extern "C" void FloorMap_SetRowTexPalette(CFloorMapRowList*, void*, u32, u32, u32);
 
 // Per-map layout-name table copied by OnFileEvent branch 2 (28 u32 names,

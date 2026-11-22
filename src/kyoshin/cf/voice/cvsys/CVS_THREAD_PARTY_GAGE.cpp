@@ -5,6 +5,9 @@
 #include "kyoshin/cf/voice/cvsys/HpVoiceApi.hpp"
 #include "monolib/math/Random.hpp"
 
+// name-guess: the two party-gauge voice IDs (0x659/0x65A) read by advanceA.
+static u32 sPartyGageVoiceIds[2] = { 0x659, 0x65A };
+
 // us-802aa8a8 (constructor factory)
 // Factory/constructor.  Picks a gauge threshold level from the two owner
 // counts, allocates the two voice-handle buffers and the object itself, runs
@@ -79,7 +82,7 @@ void CVS_THREAD_PARTY_GAGE::advanceA() {
             voiceId = 0x641 + (HpVoice_CheckHpBase((CVoiceHandle*)self->partyMember) == 0);
             break;
         case 2:
-            voiceId = lbl_eu_80662D18[ml::math::mtRand(2)];
+            voiceId = sPartyGageVoiceIds[ml::math::mtRand(2)];
             break;
         }
 
@@ -257,12 +260,7 @@ u32 lbl_eu_80539C88[4] = {
     0,
 };
 
-__declspec(section ".sdata") extern u32 lbl_eu_80662D18[2] = {
-    0x659,
-    0x65A,
-};
-
-__declspec(section ".sdata") extern u32 __RTTI__Q22cf21CVS_THREAD_PARTY_GAGE[2] = {
+extern u32 __RTTI__Q22cf21CVS_THREAD_PARTY_GAGE[2] = {
     (u32)lbl_eu_805107C8,
     (u32)lbl_eu_80539C88,
 };

@@ -42,8 +42,6 @@
 extern "C" {
 extern u32 gmPauseFlags; // Secondary mode bitfield (bit 21/IBM bit 10 = realtime event busy)
 extern char lbl_eu_805039C8[]; // String table base; offsets used for layout/animation/pane names
-extern const f32 lbl_eu_806679E0; // 0.0f
-extern const f32 lbl_eu_806679EC; // 1.0f
 
 // Ctor imports
 // (retail unmangled names; storage lives elsewhere).
@@ -187,9 +185,9 @@ void CMenuPTGauge::Move() {
                     mLayout->GetRootPane()->FindPaneByName(lbl_eu_805039C8 + 0xd8, true); // +0xd8 = pane name for width fixup
                 if (pane != NULL) {
                     nw4r::lyt::Size size;
-                    // 128.0f * (0.0f / 300.0f) = 0.0f => collapse gauge to zero width
-                    size.width =
-                        128.0f * (lbl_eu_806679E0 / 300.0f);
+                    // Collapse the gauge pane using the zeroed gauge value.
+                    f32 gaugeZero = 0.0f;
+                    size.width = (gaugeZero / 300.0f) * 128.0f;
                     size.height = pane->GetSize().height;
                     pane->SetSize(size);
                 }
@@ -271,7 +269,7 @@ void CMenuPTGauge::Move() {
         mLayout->UnbindAllAnimation();
         mLayout->BindAnimation(mAnimSpecial);
         mLayout->SetAnimationEnable(mAnimSpecial, true);
-        mAnimSpecial->SetFrame(lbl_eu_806679E0);
+        mAnimSpecial->SetFrame(0.0f);
         mLayout->Animate(0);
         mGaugePrev = mGaugeBase;
         break;
@@ -514,7 +512,6 @@ void PTGaugeTickSP() {
 }
 // The int->float conversions in this TU are plain casts; MWCC emits the
 // 0x4330000080000000 correction double as a compiler literal.
-extern const float lbl_eu_80667A00;
 
 // the .sdata2 double path, clamp at zero (resetting action/base state), then
 // when the value changed resize the gauge pane proportionally.
@@ -545,7 +542,7 @@ void PTGaugeTickDn(CMenuPTGauge* self) {
 }
 void PTGaugeSpecUp(CMenuPTGauge* self, s32 partyVal) {
     // Advance the special animation one frame (result unused).
-    advanceAnimTransform(self->mAnimSpecial, lbl_eu_806679EC);
+    advanceAnimTransform(self->mAnimSpecial, 1.0f);
 
     // Chain gate (shared with Move case 2): when the chain counter is 5,
     // keep the special animation running and skip the reset below.
@@ -579,7 +576,7 @@ after_five:
         // Reset to the default action and re-bind the gauge animation for the
         // current party gauge value: >= 300 idle, 200..299 close, < 200 open.
         self->mActionIdx = 0;
-        self->mAnimSpecial->SetFrame(lbl_eu_806679E0);
+        self->mAnimSpecial->SetFrame(0.0f);
         self->mLayout->Animate(0);
         self->mGaugeBase = self->mGaugePrev;
 
@@ -588,21 +585,21 @@ after_five:
             self->mLayout->UnbindAllAnimation();
             self->mLayout->BindAnimation(self->mAnimIdle);
             self->mLayout->SetAnimationEnable(self->mAnimIdle, true);
-            self->mAnimIdle->SetFrame(lbl_eu_806679E0);
+            self->mAnimIdle->SetFrame(0.0f);
             self->mLayout->Animate(0);
         } else if (partyVal >= 200) {
             self->mLayout->Animate(0);
             self->mLayout->UnbindAllAnimation();
             self->mLayout->BindAnimation(self->mAnimClose);
             self->mLayout->SetAnimationEnable(self->mAnimClose, true);
-            self->mAnimClose->SetFrame(lbl_eu_806679E0);
+            self->mAnimClose->SetFrame(0.0f);
             self->mLayout->Animate(0);
         } else {
             self->mLayout->Animate(0);
             self->mLayout->UnbindAllAnimation();
             self->mLayout->BindAnimation(self->mAnimOpen);
             self->mLayout->SetAnimationEnable(self->mAnimOpen, true);
-            self->mAnimOpen->SetFrame(lbl_eu_806679E0);
+            self->mAnimOpen->SetFrame(0.0f);
             self->mLayout->Animate(0);
         }
     }
@@ -617,7 +614,7 @@ void PTGaugeClsAnm(CMenuPTGauge* self, s32 partyVal) {
         self->mLayout->UnbindAllAnimation();
         self->mLayout->BindAnimation(self->mAnimIdle);
         self->mLayout->SetAnimationEnable(self->mAnimIdle, true);
-        self->mAnimIdle->SetFrame(lbl_eu_806679E0);
+        self->mAnimIdle->SetFrame(0.0f);
         self->mLayout->Animate(0);
         playUISound(0x66);
     } else {
@@ -627,7 +624,7 @@ void PTGaugeClsAnm(CMenuPTGauge* self, s32 partyVal) {
             self->mLayout->UnbindAllAnimation();
             self->mLayout->BindAnimation(self->mAnimOpen);
             self->mLayout->SetAnimationEnable(self->mAnimOpen, true);
-            self->mAnimOpen->SetFrame(lbl_eu_806679E0);
+            self->mAnimOpen->SetFrame(0.0f);
             self->mLayout->Animate(0);
         }
     }
@@ -642,7 +639,7 @@ void PTGaugeClsAct(CMenuPTGauge* self, s32 partyVal) {
         self->mLayout->UnbindAllAnimation();
         self->mLayout->BindAnimation(self->mAnimOpen);
         self->mLayout->SetAnimationEnable(self->mAnimOpen, true);
-        self->mAnimOpen->SetFrame(lbl_eu_806679E0);
+        self->mAnimOpen->SetFrame(0.0f);
         self->mLayout->Animate(0);
         playUISound(0x65); // SE
     }
@@ -656,19 +653,19 @@ void PTGaugeEntAct(CMenuPTGauge* self, s32 partyVal) {
     advanceAnimTransform(self->mAnimOpen, 1.0f);
     // MWCC emits the 0x4330000080000000 s32->double correction constant for
     // the plain (float) cast; it is not a source subtraction.
-    if ((float)partyVal >= lbl_eu_80667A00) {
+    if ((float)partyVal >= 200.0f) {
         self->mGaugeBase = 2;
         self->mLayout->Animate(0);
         self->mLayout->UnbindAllAnimation();
         self->mLayout->BindAnimation(self->mAnimClose);
         self->mLayout->SetAnimationEnable(self->mAnimClose, true);
-        self->mAnimClose->SetFrame(lbl_eu_806679E0);
+        self->mAnimClose->SetFrame(0.0f);
         self->mLayout->Animate(0);
         playUISound(0x65); // SE
     } else {
         if (partyVal < 100) {
             self->mGaugeBase = 0;
-            self->mAnimOpen->SetFrame(lbl_eu_806679E0);
+            self->mAnimOpen->SetFrame(0.0f);
         }
     }
 }
@@ -697,7 +694,7 @@ void PTGaugeDispat(CMenuPTGauge* self, s32 partyVal) {
 // animation from frame 0.
 void PTGaugeIdlAct(CMenuPTGauge* self, s32 partyVal) {
     // Advance the idle animation one frame (result unused).
-    advanceAnimTransform(self->mAnimIdle, lbl_eu_806679EC);
+    advanceAnimTransform(self->mAnimIdle, 1.0f);
 
     if (partyVal < 300) {
         self->mGaugeBase = 2;
@@ -705,7 +702,7 @@ void PTGaugeIdlAct(CMenuPTGauge* self, s32 partyVal) {
         self->mLayout->UnbindAllAnimation();
         self->mLayout->BindAnimation(self->mAnimClose);
         self->mLayout->SetAnimationEnable(self->mAnimClose, true);
-        self->mAnimClose->SetFrame(lbl_eu_806679E0);
+        self->mAnimClose->SetFrame(0.0f);
         self->mLayout->Animate(0);
     }
 }

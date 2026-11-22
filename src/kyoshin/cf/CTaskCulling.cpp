@@ -44,8 +44,8 @@ struct OccFrustumEntry {
 };
 #pragma pack(pop)
 
-// Retail sbss singleton (config symbols.txt); mangled spInstance fails reloc name match.
-cf::CTaskCulling* lbl_eu_80664328;
+// The singleton is the class's real static member; MWCC emits its mangled name.
+cf::CTaskCulling* cf::CTaskCulling::spInstance;
 
 // Merged rodata string blob: "/" at +0, "occ" at +2 (retail .rodata label, owning TU or extern).
 extern const char lbl_eu_80503F58[];
@@ -68,17 +68,17 @@ namespace cf{
     unk98(),
     unkDC(),
     unk120(0){
-        lbl_eu_80664328 = this;
+        spInstance = this;
         pScene->unkB4 = this;
         unk94 = mtl::MemManager::allocate_head(mtl::MemManager::getHandleMEM2(), 0x1000, 4);
     }
 
     CTaskCulling::~CTaskCulling(){
-        lbl_eu_80664328 = nullptr;
+        spInstance = nullptr;
     }
 
 void CTaskCulling::setOccDisabled(unsigned long disable){
-    CTaskCulling* instance = lbl_eu_80664328;
+    CTaskCulling* instance = spInstance;
     
     if(instance != nullptr){
         if(disable != 0){
@@ -90,34 +90,34 @@ void CTaskCulling::setOccDisabled(unsigned long disable){
 }
 
     UNKTYPE* CTaskCulling::getOccBuffer(){
-        if(lbl_eu_80664328 == nullptr) return nullptr;
-        return lbl_eu_80664328->unk94;
+        if(spInstance == nullptr) return nullptr;
+        return spInstance->unk94;
     }
 
     bool CTaskCulling::update(ml::CFrustum* frustum){
-        if(lbl_eu_80664328 == nullptr) return false;
+        if(spInstance == nullptr) return false;
         return mOccCulling.update(frustum);
     }
 
 bool CTaskCulling::isOccluded(const ml::CVec3& intersectPoint, float distance){
-        if(lbl_eu_80664328 == nullptr) return false;
+        if(spInstance == nullptr) return false;
         if(unk120 & 8) return false;
         return mOccCulling.isOccluded(intersectPoint, distance);
     }
 
 bool CTaskCulling::isRayOccluded(const ml::CVec3& rayStartPos, const ml::CVec3& rayEndPos, int flags){
-        if(lbl_eu_80664328 == nullptr) return false;
+        if(spInstance == nullptr) return false;
         return mOccCulling.isRayOccluded(rayStartPos, rayEndPos, flags);
     }
 
 void CTaskCulling::clearOccFrustums(){
-    CTaskCulling* instance = lbl_eu_80664328;
+    CTaskCulling* instance = spInstance;
     if (instance == nullptr) return;
     instance->mOccCulling.clear();
 }
 
     void CTaskCulling::reloadOccFrustums(){
-        if(lbl_eu_80664328 == nullptr) return;
+        if(spInstance == nullptr) return;
 
         clearOccFrustums();
 
@@ -125,11 +125,11 @@ void CTaskCulling::clearOccFrustums(){
         u32 outA, outB, outC, outD;
 
         Tok_Unpack(gm->unk70, &outA, &outB, &outC, &outD);
-        Tok_FormatStr(lbl_eu_80664328->unk98, gm->unk70, 0, 0);
-        Tok_FormatStr(lbl_eu_80664328->unkDC, gm->unk70, 1, 0);
+        Tok_FormatStr(spInstance->unk98, gm->unk70, 0, 0);
+        Tok_FormatStr(spInstance->unkDC, gm->unk70, 1, 0);
 
         // Cached after the last external call.
-        ml::FixStr<64>* path = &lbl_eu_80664328->unkDC;
+        ml::FixStr<64>* path = &spInstance->unkDC;
         const char* sep = lbl_eu_80503F58;
 
         // Inlined FixStr path trim: find the last "/" and cut right after it
@@ -140,14 +140,14 @@ void CTaskCulling::clearOccFrustums(){
             path->mLength = index + 1;
         }
 
-        OccBufferHead* head = (OccBufferHead*)lbl_eu_80664328->unk94;
+        OccBufferHead* head = (OccBufferHead*)spInstance->unk94;
 
         if(std::strcmp(head->magic, sep + 2) == 0){
             OccFrustumEntry* entry = (OccFrustumEntry*)(head + 1); // entries at offset 0x10
 
             for (int i = 0; i < head->count; i++) {
-                if(lbl_eu_80664328 != nullptr){
-                    lbl_eu_80664328->mOccCulling.addFrustum(entry->vec0, entry->vec1, entry->vec2, entry->field_24);
+                if(spInstance != nullptr){
+                    spInstance->mOccCulling.addFrustum(entry->vec0, entry->vec1, entry->vec2, entry->field_24);
                 }
                 entry++;
             }
@@ -155,7 +155,7 @@ void CTaskCulling::clearOccFrustums(){
     }
 
 CTaskCulling* CTaskCulling::getInstance() {
-    return lbl_eu_80664328;
+    return spInstance;
 }
 
     void CTaskCulling::Init(){
@@ -169,7 +169,7 @@ CTaskCulling* CTaskCulling::getInstance() {
 
         mpScene->unkB4 = nullptr;
         //???
-        if(lbl_eu_80664328 != nullptr) (void)lbl_eu_80664328;
+        if(spInstance != nullptr) (void)spInstance;
 
         DELETE_OBJ(unk94);
     }

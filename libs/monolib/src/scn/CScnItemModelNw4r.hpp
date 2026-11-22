@@ -12,6 +12,7 @@
 #include "monolib/scn/CMdlDynamics.hpp"
 
 class CScnVirtualLight;  // full definition in CScnVirtualLight.hpp (scnVlUpdate arg)
+struct CScnEnvLgtCtrlResList;  // env-controller list owner (CScnEnvLgtCtrl.hpp)
 class CMdlLook;
 
 // nw4r g3d types used as pointers only here (complete definitions are pulled
@@ -66,7 +67,7 @@ struct CScnItemModelNw4rOwner {
     CScnVirtualLight* field_0x5C;   // 0x5C (scnVlUpdate arg, scnImN4UpdateBounds)
     u8 _60[0x18];                   // 0x60..0x78
     u8* field_0x78;                 // 0x78 (fog manager, FogManCopyFogParams arg in the ctor)
-    u8* field_7C;                   // 0x7C (light-env handle, scnImN4LgtModeSw)
+    CScnEnvLgtCtrlResList* field_7C;  // 0x7C (env-controller list owner, scnImN4LgtModeSw)
     u8 _80[0x4];                    // 0x80..0x84
     // Fade-control sub-object at +0x84 (f32 fade value at +8, read by
     // scnImN4UpdateVis's fade state machine).
@@ -519,8 +520,8 @@ extern "C" void simRefreshFadeChain(CScnItemModelNw4r* self);
 // Eye-anim state setter (defined in CMdlAnmEye.cpp).
 extern "C" void EyeAnm_SetState(CMdlAnmEye* self, u32 val);
 // Light-env init / clear (defined in CScnEnvLgtCtrl.cpp).
-extern "C" void scnLgtDeactLightMan(u8* self, CScnItemModelNw4rEnvLight* lgt);
-extern "C" void scnLgtRefreshLightMan(u8* self);
+extern "C" void scnLgtDeactLightMan(CScnEnvLgtCtrlResList* self, CScnItemModelNw4rEnvLight* lgt);
+extern "C" void scnLgtRefreshLightMan(CScnEnvLgtCtrlResList* self);
 
 // Retail destructor symbol is the unmangled member name; written as a
 // fragment function (like __dt__13CScnItemModelFv) so the vtable label is
@@ -793,7 +794,7 @@ extern "C" void scn80496SetupChildren(void* self, CScn* scn, void* model, u16 sl
 // Node-table helpers (defined in CScnTexWorkMan.cpp): count the non-degenerate
 // nodes under a ResNode and collect their ids into a node-id list.
 extern "C" int TexMan_CountRootNodes(nw4r::g3d::ResNode* pNode);
-extern "C" void TexMan_CollectNodeIds(nw4r::g3d::ResNode* pNode,
+extern "C" void TexMan_CollectNodeIds(nw4r::g3d::ResNode node,
                               CScnItemModelNw4rNodeIdList* pList);
 
 // Fog-manager param push (defined in CScnFogMan.cpp): (fogMan, fogType, color

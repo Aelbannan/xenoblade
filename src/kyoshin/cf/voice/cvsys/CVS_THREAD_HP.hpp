@@ -82,10 +82,6 @@ extern u32 lbl_eu_80539C10[3];
 // CVS_THREAD_HP vtable installed by the factory.
 extern u32 lbl_eu_80539C1C[7];
 
-// HP-ratio thresholds used by the factory to pick the HP-change voice ID.
-extern f32 lbl_eu_80668CA0;
-extern f32 lbl_eu_80668CA4;
-
 // Randomly pick one idle voice handle from the voice-manager circular list,
 // excluding `exclude` (NULL when none available). Retail symbol is the plain
 // unmangled name, so keep C linkage.

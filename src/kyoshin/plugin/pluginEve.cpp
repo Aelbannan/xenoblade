@@ -185,21 +185,6 @@ extern "C" int waitRealtimeEvent(VMThread* pThread) {
     return 0;
 }
 
-// View of CfObjectActor's CfObjectMove subobject at absolute offset 0x3E9C.
-// The retail "is talking?" dispatch is a virtual call on a CObjectState
-// subobject at +0x3E9C (vtable slot +0x2C = setStateBitMask0,
-// this = actor+0x3E9C). The C++ hierarchy layout in the headers places that
-// subobject later than retail, so the call goes through this view class:
-// CfActorTalkView's CObjectState base lands at +0x3E9C and a virtual call on
-// it folds the subobject offset into the vtable load + this-adjustment
-// exactly like the retail dispatch (same scheme as CfActorVt5C4Table).
-class CfActorTalkBasePad {
-public:
-    u8 _pad[0x3E9C];
-};
-class CfActorTalkView : public CfActorTalkBasePad, public cf::CObjectState {
-};
-
 // The retail symbol for this callback is the plain (C-style) name `onTalk`;
 // define it as a normal C++ function here and let the symbol-recovery tooling
 // map the emitted mangled name onto the retail symbol.
@@ -211,10 +196,9 @@ extern "C" int onTalk(VMThread* pThread) {
         cf::CfGameManager::getPlayer(0), 0,
         &__RTTI__Q22cf13CfObjectActor, &__RTTI__Q22cf12CfObjectMove,
         0);
-    CfActorTalkView* view = (CfActorTalkView*)actor;
     u8 ret;
-    if (view->setStateBitMask0(1, 1) != 0 ||
-        view->setStateBitMask0(2, 1) != 0) {
+    if (actor->setStateBitMask0(1, 1) != 0 ||
+        actor->setStateBitMask0(2, 1) != 0) {
         ret = 1;
     } else {
         ret = 2;
@@ -230,10 +214,9 @@ extern "C" int onTalkEnd(VMThread* pThread) {
         cf::CfGameManager::getPlayer(0), 0,
         &__RTTI__Q22cf13CfObjectActor, &__RTTI__Q22cf12CfObjectMove,
         0);
-    CfActorTalkView* view = (CfActorTalkView*)actor;
     u8 ret;
-    if (view->setStateBitMask0(1, 0) != 0 ||
-        view->setStateBitMask0(2, 0) != 0) {
+    if (actor->setStateBitMask0(1, 0) != 0 ||
+        actor->setStateBitMask0(2, 0) != 0) {
         ret = 1;
     } else {
         ret = 2;

@@ -1,16 +1,11 @@
 #include "kyoshin/plugin/pluginGame.hpp"
 
-extern "C" {
-    // Retail data sections (all defined by this TU):
-    // .rodata "game" (plugin name) + .sdata2 "cmd" (entry name) +
-    // .data PluginFuncData table {name, func} terminated by {NULL, NULL}.
-    __declspec(section ".rodata") __attribute__((used)) char lbl_eu_80504168[0x8] = "game";
-    __declspec(section ".sdata2") __attribute__((used)) char lbl_eu_80667DB8[0x8] = "cmd";
-    __declspec(section ".data") __attribute__((used)) PluginFuncData lbl_eu_80533490[2] = {
-        { lbl_eu_80667DB8, game_cmd },
-        { 0, 0 },
-    };
-}
+// name-guess: retail .data:0x80533490 is an anonymous PluginFuncData array
+// {{"cmd", game_cmd}, {0, 0}}; no name exists for it in any region's symbols.txt.
+static PluginFuncData sGameFuncData[2] = {
+    { "cmd", game_cmd },
+    { 0, 0 },
+};
 
 // Stubbed. This might've handled debug commands? (the ones listed in the bdat)
 int game_cmd(_sVMThread* pThread) {
@@ -18,5 +13,5 @@ int game_cmd(_sVMThread* pThread) {
 }
 
 void pluginGameRegist() {
-    vmPluginRegist(lbl_eu_80504168, lbl_eu_80533490);
+    vmPluginRegist("game", sGameFuncData);
 }

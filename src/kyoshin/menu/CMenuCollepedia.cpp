@@ -10,6 +10,10 @@
 #include "kyoshin/CTitleAHelpImports.hpp"
 #include "kyoshin/code_80135FDC_State.hpp"
 
+// name-guess: retail CollepediaCreateSingleton allocates a CMenuCollepedia and
+// stores it here; Colle_HasInstance reads it and Term clears it.
+CMenuCollepedia* spCollepediaInstance;
+
 // This-unit phase handlers (retail-unmangled func_ names), referenced by
 // Colle_HandleInput before their definitions below. extern "C" keeps the call
 // relocs bare (retail keeps the unmangled names at these call sites).
@@ -40,7 +44,7 @@ void CMenuCollepedia::Init() {
     BgTex_Acquire_3C14(&mBgTex);
 
     // --- Re-initialise the embedded CTitleAHelp ---
-    char* name = BdatTouchStringCell(lbl_eu_8050C688, lbl_eu_8050C688 + 0xc, 0x9);
+    char* name = BdatTouchStringCell("MNU_collect", "name", 0x9);
 
     mTitleAHelp = CTitleAHelp(name, 0x50);
 
@@ -142,7 +146,7 @@ void CMenuCollepedia::Term() {
     mTitleAHelp.teardown();
     clpFreeAllRes(&mCollepedia);
 
-    lbl_eu_806647D0 = 0;
+    spCollepediaInstance = 0;
     setPresentationFlag__Q22cf13CfGameManagerFv(0);
 }
 
@@ -341,4 +345,4 @@ void CMenuCollepedia::Colle_NavigateBack() {
     }
 }
 
-extern "C" int Colle_HasInstance(void) { return lbl_eu_806647D0 != 0; }
+extern "C" int Colle_HasInstance(void) { return spCollepediaInstance != 0; }

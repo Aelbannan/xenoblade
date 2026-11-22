@@ -14,7 +14,7 @@ using namespace cf;
 // name-guess: BDAT column-name string read for the lock config flags (retail lbl_eu_805086EC)
 extern const char sGimmickLockConfigColumn[0x0C];
 
-__declspec(section ".sdata") __attribute__((used)) const void* sGimmickLockIdColumns[2] = { "popID1", nullptr };
+__attribute__((used)) const void* sGimmickLockIdColumns[2] = { "popID1", nullptr };
 
 // Constructor: __ct__cf_CfGimmickLock (0x224 bytes).  The retail symbol is a
 // C-linkage name (no C++ mangling markers), so it is emitted as an extern "C"
@@ -542,7 +542,7 @@ extern "C" {
 extern char lbl_eu_80508668[];
 extern char lbl_eu_805358EC[];
 }
-__declspec(section ".rodata") __attribute__((used)) const char lbl_eu_805086D8[0x14] = "cf::CfGimmickLock";
-__declspec(section ".rodata") __attribute__((used)) const char sGimmickLockConfigColumn[0x0C] = "rockTYPE";
+__attribute__((used)) const char lbl_eu_805086D8[0x14] = "cf::CfGimmickLock";
+__attribute__((used)) const char sGimmickLockConfigColumn[0x0C] = "rockTYPE";
 
 __declspec(section ".sdata") __attribute__((used)) const void* __RTTI__Q22cf12CfGimmickElv[2] = { lbl_eu_80508668, lbl_eu_805358EC };

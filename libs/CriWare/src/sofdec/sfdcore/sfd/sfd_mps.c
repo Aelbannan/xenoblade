@@ -36,7 +36,8 @@ extern void* gpSfdCoreTraceCb;
 extern u32 sTraceSfmpsExecServer[];
 extern u32 lbl_eu_80607AF0;
 extern u8 lbl_eu_80607160[];
-extern u32 lbl_eu_8051C930[];
+typedef int (*SfmpsCopyPketFn)(); /* name-guess */
+extern const SfmpsCopyPketFn sfmps_CopyPketFn[4];
 extern s32 (*lbl_eu_80619BAC)(void*, void*);
 
 // External function declarations
@@ -641,8 +642,7 @@ int sfmps_CopyPketData(SfdHandle* self, s32 buf, s32 size, s32* out_size, s32* o
         }
     } else {
         /* no SJ: route through the per-kind copy dispatch table */
-        typedef s32 (*copy_fn_t)(void*, s32, s32, s32, s32, s32, s32*);
-        copy_fn_t fn = ((copy_fn_t*)lbl_eu_8051C930)[hd.f14];
+        SfmpsCopyPketFn fn = sfmps_CopyPketFn[hd.f14];
         *out_flag = fn(self, hd.f18, buf, pkt_size, hd.f00, hd.f04, copy_blk);
     }
 
@@ -1307,3 +1307,18 @@ u32 SFMPS_GetConcatCnt(SfdHandle* self) {
     SfdMps* ptr = self->trn[1].hdr;
     return ptr->endcodeCnt;
 }
+
+/* JP map: SFD_tr_sd_mps (MPEG system-stream demux transfer module interface) */
+int SFMPS_RequestStop(void); int SFMPS_Start(void); int SFMPS_Stop(void); int SFMPS_Pause(void);
+s32 SFMPS_GetWrite(void* h); s32 SFMPS_AddWrite(void* h); s32 SFMPS_GetRead(void* h); s32 SFMPS_AddRead(void* h);
+const SfdTrIf SFD_tr_sd_mps = {
+    SFMPS_Init, SFMPS_Finish, SFMPS_ExecServer, SFMPS_Create,
+    SFMPS_Destroy, SFMPS_RequestStop, SFMPS_Start, SFMPS_Stop,
+    SFMPS_Pause, SFMPS_GetWrite, SFMPS_AddWrite, SFMPS_GetRead,
+    SFMPS_AddRead, SFMPS_Seek, NULL,
+};
+
+/* JP map: sfmps_CopyPketFn (per-packet-kind copy handlers) */
+const SfmpsCopyPketFn sfmps_CopyPketFn[4] = {
+    sfmps_CopyAudio, sfmps_CopyVideo, sfmps_CopyPrvate, sfmps_CopyPadding,
+};

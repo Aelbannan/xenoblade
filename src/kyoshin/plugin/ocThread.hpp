@@ -58,7 +58,3 @@ void sinit_8003A4F8();
 #ifdef __cplusplus
 }
 #endif
-
-extern OCData lbl_eu_80524C60;
-extern OcThreadMsgStorage lbl_eu_805704C8;
-extern OcThreadLogStorage lbl_eu_80570538;

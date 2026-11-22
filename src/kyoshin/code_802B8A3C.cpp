@@ -8,6 +8,8 @@
 
 #include "kyoshin/code_802B8A3C.hpp"
 
+extern s32 OrderThreadVoiceIds[3]; // name-guess: retail 0x8053B7F4 voice-ID table.
+
 // us-802bb76c (completeOrderThreadVoice)
 // Completion callback: if no active voice is playing, invoke the playback
 // virtual (blank1, vtable slot 3 / offset 0x8).
@@ -16,6 +18,9 @@ void completeOrderThreadVoice(CVS_THREAD_ORDER* self) {
         self->PlayThreadVoice();
     }
 }
+
+// name-guess: values read from retail 0x8053B7F4 (0x9C5, 0x9C6, -1).
+s32 OrderThreadVoiceIds[3] = { 0x9C5, 0x9C6, -1 };
 
 // us-802bb4ac (__ct__CVS_THREAD_ORDER)
 // Factory/constructor for CVS_THREAD_ORDER. Reserves a discarded 0x78-byte
@@ -91,7 +96,7 @@ void startOrderThreadPlayback(CVS_THREAD_ORDER* self) {
 
     // Look up the voice id for this thread's slot; play only if positive.
     int idx = ((u32*)self)[8];   // owner/slot field at +0x20
-    s32 tableVal = lbl_eu_8053B7F4[idx];
+    s32 tableVal = OrderThreadVoiceIds[idx];
     if (tableVal <= 0) {
         return;
     }

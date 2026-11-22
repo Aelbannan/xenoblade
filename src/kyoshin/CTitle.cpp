@@ -19,6 +19,10 @@
 #include "kyoshin/code_80135FDC_State.hpp"
 #include "kyoshin/code_80135FDC_Lyt.hpp"
 
+// name-guess: the retail .sbss slot holds the live title instance for the
+// asynchronous file-event callback; no real name exists in any region's map.
+static CTitle* sCurrentTitle;
+
 // TU-local plain functions (defined below in address order) called by the
 // state-machine helpers in this file. noinline keeps real bl branches
 // (retail calls them, so the call must survive).
@@ -56,10 +60,10 @@ CTitleLogo::~CTitleLogo() {}
 // noinline: retail keeps bl from OnFileEvent, so the call must survive;
 extern "C" __declspec(noinline) void CTitleLogo_build(CTitleLogo* self, nw4r::lyt::ArcResourceAccessor* arcResAcc) {
     self->mAccessor = arcResAcc;
-    buildLayout(&self->mLayout, self->mAccessor, &lbl_eu_80513628[0]);
-    bindLayoutAnimTransform(self->mLayout, &self->mAnimTrans0, self->mAccessor, &lbl_eu_80513628[0x13]);
-    bindLayoutAnimTransform(self->mLayout, &self->mAnimTrans1, self->mAccessor, &lbl_eu_80513628[0x29]);
-    bindLayoutAnimTransform(self->mLayout, &self->mAnimTrans2, self->mAccessor, &lbl_eu_80513628[0x41]);
+    buildLayout(&self->mLayout, self->mAccessor, "mf99_title00.brlyt");
+    bindLayoutAnimTransform(self->mLayout, &self->mAnimTrans0, self->mAccessor, "mf99_title00_in.brlan");
+    bindLayoutAnimTransform(self->mLayout, &self->mAnimTrans1, self->mAccessor, "mf99_title00_roop.brlan");
+    bindLayoutAnimTransform(self->mLayout, &self->mAnimTrans2, self->mAccessor, "mf99_title00_out.brlan");
     self->mLayout->UnbindAllAnimation();
 }
 #pragma optimize_for_size off
@@ -219,19 +223,18 @@ CTitleMenu::~CTitleMenu() {}
 extern "C" __declspec(noinline) void CTitleMenu_build(CTitleMenu* self, nw4r::lyt::ArcResourceAccessor* arcResAcc) {
     GXColorS10 colorB;
     GXColorS10 colorA;
-    char* strs = lbl_eu_80513628;
     self->mAccessor = arcResAcc;
-    buildLayout(&self->mLayout, self->mAccessor, &strs[0x58]);
-    bindLayoutAnimTransform(self->mLayout, &self->mAnimTrans0, self->mAccessor, &strs[0x6b]);
-    bindLayoutAnimTransform(self->mLayout, &self->mAnimTrans1, self->mAccessor, &strs[0x88]);
-    bindLayoutAnimTransform(self->mLayout, &self->mAnimTrans2, self->mAccessor, &strs[0xa7]);
-    bindLayoutAnimTransform(self->mLayout, &self->mAnimTrans3, self->mAccessor, &strs[0xc4]);
-    bindLayoutAnimTransform(self->mLayout, &self->mAnimTrans4, self->mAccessor, &strs[0xda]);
-    bindLayoutAnimTransform(self->mLayout, &self->mAnimTrans5, self->mAccessor, &strs[0xf2]);
+    buildLayout(&self->mLayout, self->mAccessor, "mf99_title01.brlyt");
+    bindLayoutAnimTransform(self->mLayout, &self->mAnimTrans0, self->mAccessor, "mf99_title01_anykey_in.brlan");
+    bindLayoutAnimTransform(self->mLayout, &self->mAnimTrans1, self->mAccessor, "mf99_title01_anykey_roop.brlan");
+    bindLayoutAnimTransform(self->mLayout, &self->mAnimTrans2, self->mAccessor, "mf99_title01_anykey_on.brlan");
+    bindLayoutAnimTransform(self->mLayout, &self->mAnimTrans3, self->mAccessor, "mf99_title01_in.brlan");
+    bindLayoutAnimTransform(self->mLayout, &self->mAnimTrans4, self->mAccessor, "mf99_title01_roop.brlan");
+    bindLayoutAnimTransform(self->mLayout, &self->mAnimTrans5, self->mAccessor, "mf99_title01_out.brlan");
     self->mLayout->UnbindAllAnimation();
     if ((gmPauseFlags & 0x40000000) != 0) {
         // MWCC evaluates args right-to-left: colorA is built first.
-        PaneMatSetTevColorsByName(self->mLayout, &strs[0x109],
+        PaneMatSetTevColorsByName(self->mLayout, "pic_menu01_00",
                       setGXColorS10(&colorB, 0x80, 0x80, 0x80, 0x00),
                       setGXColorS10(&colorA, 0x80, 0x80, 0x80, 0xff));
     }
@@ -321,11 +324,10 @@ extern "C" void CTitleMenu_beginFinal(CTitleMenu* self) {
 extern "C" __declspec(noinline) void CTitleMenu_calcCursorPos(nw4r::math::VEC3* dest,
                                                     CTitleMenu* menu, u8 val) {
     char buf[0x28];
-    char* strs = lbl_eu_80513628;
-    sprintf(buf, strs + 0x117);
+    sprintf(buf, "nul_menu%02d");
     nw4r::lyt::Pane* pPaneA = menu->mLayout->GetRootPane()->FindPaneByName(buf, true);
     nw4r::lyt::Pane* pPaneB =
-        menu->mLayout->GetRootPane()->FindPaneByName(strs + 0x124, true);
+        menu->mLayout->GetRootPane()->FindPaneByName("nul_proportion", true);
     ScalePaneWorldPos(dest, pPaneA, pPaneB, menu->mLayout->GetRootPane());
 }
 #pragma optimize_for_size off
@@ -489,13 +491,13 @@ extern "C" void* __dt__6CTitleFv(void* self, int flags) {
 // callback, and expose this instance to the callback via the sbss singleton.
 extern "C" void CTitle_startLoad(CTitle* self) {
     self->mFileHandle = CDeviceFile::readFile(mtl::MemManager::getHandleMEM2(),
-                                              &lbl_eu_80513628[0x133], self, 0, 0);
+                                              "menu/jp/Title.arc", self, 0, 0);
     CDeviceFile::setHandleFlag1(self->mFileHandle);
     if (NandTitleFile(CTitle_fileEventCallback) == 0) {
         self->field_0x25 = 0;
     }
     self->field_0x1C = 0;
-    lbl_eu_80664C38 = self;
+    sCurrentTitle = self;
 }
 
 // Per-frame update: dispatch the title state-machine entry selected by
@@ -529,7 +531,7 @@ extern "C" void CTitle_teardown(CTitle* self) {
     releaseArcResourceAccessor(self->mAccessor);
     self->mAccessor = 0;
     self->mMemRegion.deleteRegion();
-    lbl_eu_80664C38 = 0;
+    sCurrentTitle = 0;
 }
 #pragma optimize_for_size off
 
@@ -672,8 +674,7 @@ extern "C" void CTitle_resetState(CTitle* self) {
 }
 
 extern "C" void CTitle_fileEventCallback(void* a, unsigned int b, unsigned char v) {
-    extern void* lbl_eu_80664C38;
-    CTitle* p = (CTitle*)lbl_eu_80664C38;
+    CTitle* p = sCurrentTitle;
     if (p) p->field_0x25 = v;
 }
 
@@ -686,12 +687,12 @@ extern "C" void CTitle_fileEventCallback(void* a, unsigned int b, unsigned char 
 bool CTitle::OnFileEvent(CEventFile* pEventFile) {
     if (mFileHandle == pEventFile->mFileHandle) {
         mMemRegion.createRegion(mtl::MemManager::getHandleMEM2(), 0x10000,
-                                &lbl_eu_80513628[0x145], 1);
+                                "CTitle", 1);
         Class_8045F858 regionGuard(&mMemRegion);
         void* fileData = mFileHandle->getData();
         mtl::MemManager::setMemInitFlag(false);
         mAccessor = CLibLayout::createArcResourceAccessor();
-        mAccessor->Attach(fileData, &lbl_eu_80513628[0x14c]);
+        mAccessor->Attach(fileData, "arc");
         CTitleLogo_build(&mLogo, mAccessor);
         CTitleMenu_build(&mMenu, mAccessor);
         mCur = CCur18(mAccessor);

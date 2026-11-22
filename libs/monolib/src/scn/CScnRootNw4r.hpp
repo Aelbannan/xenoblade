@@ -40,7 +40,7 @@ struct CScnRootNw4rRes;
 class CScnCameraMan;
 class CScnLightMan;
 class CScnFogMan;
-class CScnEnvLgtCtrl;
+struct CScnEnvLgtCtrlResList;
 class CScnItemPool;
 
 
@@ -98,9 +98,9 @@ extern "C" void RootNw4r_DrawDispatch(CScnRootNw4r* self, int flag);
 
 // Unmangled monolib callees (retail C-linkage names).
 extern "C" void Scn_SetCurrentScene(u32 value);
-extern "C" void scnLgtBindCamera(CScnEnvLgtCtrl* ctrl);
-extern "C" void scnLgtUpdateSceneLights(CScnEnvLgtCtrl* ctrl);
-extern "C" void scnLgtEnterMode20(CScnEnvLgtCtrl* ctrl);
+extern "C" void scnLgtBindCamera(CScnEnvLgtCtrlResList* ctrl);
+extern "C" void scnLgtUpdateSceneLights(CScnEnvLgtCtrlResList* ctrl);
+extern "C" void scnLgtEnterMode20(CScnEnvLgtCtrlResList* ctrl);
 // (CamMan_RefreshCurrentCamera is the CScnCameraMan member refreshCurrentCamera)
 extern "C" void LightManInvokeLightV3(CScnLightMan* man);
 extern "C" void FogManIsFogEnabled(CScnFogMan* man);

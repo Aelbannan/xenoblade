@@ -15,7 +15,6 @@
 #include <revolution/OS.h>
 
 extern unsigned char lbl_eu_8056B084[];
-extern const double lbl_eu_8066A138;  // 2^52 magic double for the int->float conversion
 
 // CX stream decompression. revolution/CX.h pulls in CXUncompression.h, whose
 // public header is missing its own API declarations in this tree (and is
@@ -25,14 +24,6 @@ extern "C" {
 u32 CXGetUncompressedSize(const u8* src);
 void CXUncompressHuffman(const u8* src, u8* dst);
 }
-
-// Rebuild a double from its two 32-bit halves; reproduces the retail int->float
-// conversion (bit pattern + the named sdata2 2^52 constant) so the pool reloc
-// keeps the retail label instead of an MWCC-synthesised entry.
-union F64Conv {
-    u32 w[2];
-    double d;
-};
 
 
 namespace nw4r {
@@ -468,10 +459,7 @@ u32 PackedFont::GetRequireBufferSize(const void* pResource, const char* pName,
     // Reserve space for `scale`-scaled glyph count (clamped to [1, B]) plus
     // the per-glyph tables. B and the sheet image size are re-read through
     // the groups struct (retail keeps only pName/groups live across call).
-    F64Conv conv;
-    conv.w[0] = 0x43300000;
-    conv.w[1] = (u32)count ^ 0x80000000;
-    int n = (int)((float)(conv.d - lbl_eu_8066A138) * scale);
+    int n = (int)((f32)count * scale);
     const GlyphGroupsBlock* pBlock =
         reinterpret_cast<const GlyphGroupsBlock*>(groups.field_0x4);
     int glyphTotal = pBlock->groupBCount;

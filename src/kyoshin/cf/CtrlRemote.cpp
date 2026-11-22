@@ -1588,9 +1588,9 @@ void CtrlRemote_FreeBuffer(cf::CtrlRemote* self, u8* ptr)
 // Returns the total number of bytes written.
 u32 CtrlRemote_DecodeLZSS(cf::CtrlRemote* self, CtrlRemoteBuf* buf, u32 arg)
 {
+    u16 flags = 0;
     u8* out = (u8*)self;
     u8* in = buf->mData;
-    u32 flags = 0;
     u32 total = 0;
     s32 bits = 1;
     while (true) {
@@ -1604,18 +1604,17 @@ u32 CtrlRemote_DecodeLZSS(cf::CtrlRemote* self, CtrlRemoteBuf* buf, u32 arg)
             *out++ = *in++;
             total++;
         } else {
-            // LZSS-style token: 12-bit back-distance (low byte | high nibble
-            // of second byte << 8), 0 terminates; run length is the second
-            // byte's low nibble + 3.
-            u32 dist = in[0] | ((in[1] & 0xF0) << 4);
-            if (dist == 0) {
+            u8 lo = in[0];
+            u8 hi = in[1];
+            in += 2;
+            u32 n = lo | ((hi & 0xF0) << 4);
+            if (n == 0) {
                 break;
             }
-            u8* src = out - dist;
-            u32 count = (in[1] & 0xF) + 3;
-            total += count;
-            in += 2;
-            for (; count != 0; count--) {
+            u8* src = out - n;
+            n = (hi & 0xF) + 3;
+            total += n;
+            for (; n != 0; n--) {
                 *out++ = *src++;
             }
         }
@@ -1679,10 +1678,8 @@ u32 CtrlRemote_DecodeDict(cf::CtrlRemote* self, CtrlRemoteBuf* buf, u32 arg)
     u32 size = buf->mSize;
     u32 pos = 0;
     u32 total = 0;
-    u8* d1;
-    u8* d2;
-    s32 n;
-    for (s32 i = 0; i < 0x100; i++) {
+    s32 i;
+    for (i = 0; i < 0x100; i++) {
         initTbl[i] = i;
     }
     while (pos < size) {
@@ -1697,15 +1694,11 @@ u32 CtrlRemote_DecodeDict(cf::CtrlRemote* self, CtrlRemoteBuf* buf, u32 arg)
             if (idx == 0x100) {
                 break;
             }
-            // Runs b + 1 times; MWCC emits this as an mtctr countdown.
-            d1 = &tblMain[idx];
-            d2 = &tblSub[idx];
-            n = b + 1;
-            while (--n >= 0) {
-                u8 c = in[pos++];
-                *d1++ = c;
+            for (i = 0; i <= b; i++) {
+                s32 c = in[pos++];
+                tblMain[idx] = c;
                 if (idx != c) {
-                    *d2++ = in[pos++];
+                    tblSub[idx] = in[pos++];
                 }
                 idx++;
             }
@@ -1714,23 +1707,20 @@ u32 CtrlRemote_DecodeDict(cf::CtrlRemote* self, CtrlRemoteBuf* buf, u32 arg)
             }
             b = in[pos++];
         }
-        u32 code = (in[pos] << 8) | in[pos + 1];
-        pos += 2;
-        const u8* p = &in[pos];
+        s32 code = in[pos++] << 8;
+        code += in[pos++];
         s32 sp = 0;
         while (true) {
-            u8 c;
+            s32 c;
             if (sp != 0) {
                 c = queue[--sp];
             } else {
-                if (code == 0) {
+                if (code-- == 0) {
                     break;
                 }
-                code--;
-                c = *p++;
-                pos++;
+                c = in[pos++];
             }
-            u8 rep = tblMain[c];
+            s32 rep = tblMain[c];
             if (c == rep) {
                 *out++ = c;
                 total++;

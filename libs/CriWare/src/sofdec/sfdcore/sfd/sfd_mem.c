@@ -47,3 +47,11 @@ s32 SFMEM_AddRead(void* h) {
 }
 
 int SFMEM_Seek(void) { return 0x0; }
+
+/* JP map: SFD_tr_in_mem (memory-input transfer module interface) */
+const SfdTrIf SFD_tr_in_mem = {
+    SFMEM_Init, SFMEM_Finish, SFMEM_ExecServer, SFMEM_Create,
+    SFMEM_Destroy, SFMEM_RequestStop, SFMEM_Start, SFMEM_Stop,
+    SFMEM_Pause, SFMEM_GetWrite, SFMEM_AddWrite, SFMEM_GetRead,
+    SFMEM_AddRead, SFMEM_Seek, NULL,
+};

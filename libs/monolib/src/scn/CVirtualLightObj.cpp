@@ -176,7 +176,7 @@ extern "C" void selectLightSlot(CLightEnv* self, u32 idx) {
     self->mField117C = idx;
 }
 
-extern "C" void resetLightSlotIndex(void* self) { *(u32*)((u8*)self + 0x117C) = -1; }
+extern "C" void resetLightSlotIndex(CLightEnv* self) { self->mField117C = -1; }
 
 // ---------------------------------------------------------------------------
 // bindOrientedLight: bind the slot's next light, orient it and arm slot 0.

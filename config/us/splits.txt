@@ -4926,15 +4926,19 @@ CriWare/src/sofdec/sfdcore/sfd/sfd_hds.c:
 CriWare/src/sofdec/sfdcore/sfd/sfd_lib.c:
 	.text       start:0x803C3310 end:0x803C36E8
 
-	.rodata        start:0x8051c590 end:0x8051cc20
+	.rodata        start:0x8051c590 end:0x8051c8b0
+	.data        start:0x80567ed8 end:0x80568f10
 CriWare/src/sofdec/sfdcore/sfd/sfd_mem.c:
 	.text       start:0x803C36E8 end:0x803C3798
+	.rodata        start:0x8051c8b0 end:0x8051c8f0
 
 CriWare/src/sofdec/sfdcore/sfd/sfd_mps.c:
 	.text       start:0x803C3798 end:0x803C570C
+	.rodata        start:0x8051c8f0 end:0x8051c940
 
 CriWare/src/sofdec/sfdcore/sfd/sfd_mpv.c:
 	.text       start:0x803C570C end:0x803CA4A0
+	.rodata        start:0x8051c940 end:0x8051ca10
 
 	.bss        start:0x80606e20 end:0x80619bb0
 CriWare/src/sofdec/sfdcore/sfd/sfd_mpvf.c:
@@ -4945,8 +4949,7 @@ CriWare/src/sofdec/sfdcore/sfd/sfd_pl2.c:
 
 CriWare/src/sofdec/sfdcore/sfd/sfd_ply.c:
 	.text       start:0x803CB938 end:0x803CE16C
-
-	.data        start:0x80567ed8 end:0x80568ea0
+	.rodata        start:0x8051ca10 end:0x8051cbf8
 CriWare/src/sofdec/sfdcore/sfd/sfd_pts.c:
 	.text       start:0x803CE16C end:0x803CE5A0
 
@@ -4960,8 +4963,7 @@ CriWare/src/sofdec/sfdcore/sfd/sfd_tim.c:
 	.text       start:0x803CF034 end:0x803D0D9C
 
 	.bss        start:0x80619bb0 end:0x80619bc8
-	.data        start:0x80568ea0 end:0x80568f10
-	.rodata        start:0x8051cc20 end:0x8051cc98
+	.rodata        start:0x8051cbf8 end:0x8051cc98
 CriWare/src/sofdec/sfdcore/sfd/sfd_trn.c:
 	.text       start:0x803D0D9C end:0x803D1400
 
@@ -6850,7 +6852,7 @@ monolib/src/core/code_804E36DC.cpp:
 monolib/src/core/ScheduleList.cpp:
 	.data	start:0x80570078 end:0x805700D8
 	.rodata	start:0x80524740 end:0x80524798
-	.sbss	start:0x80665A50 end:0x80665A68
+	.sbss	start:0x80665A50 end:0x80665A60
 	.sdata	start:0x80663C10 end:0x80663C30
 	.text	start:0x804E87D0 end:0x804E98E0
 monolib/src/scn/CMdlMaterial.cpp:
@@ -6890,6 +6892,7 @@ monolib/src/scn/CMdlDynamics.cpp:
 	.text	start:0x804ED8E8 end:0x804F25B0
 	.sdata2     start:0x8066b3d0 end:0x8066b400
 monolib/src/util/CErrorWii.cpp:
+	.sbss       start:0x80665A60 end:0x80665A68
 	extab       start:0x80021030 end:0x80021070
 	extabindex  start:0x8003934C end:0x800393AC
 	.text       start:0x804F25B0 end:0x804F2AB4

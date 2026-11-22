@@ -242,7 +242,7 @@ public:
     void func_8007D84C();
     void* getResetDataPtr();
     void loadBdatTableCache();
-    void func_8007DCB8();
+    static void func_8007DCB8();
     void getBdatEntryColumn();
     void syncBdatDataCache();
     u16 getField18Value();
@@ -261,9 +261,9 @@ public:
     void stubEmptyB();
     void resetItemGroupState();
     void getItemSlotData();
-    void getNullPtrA();
+    static void* getNullPtrA();
     void resetItemSlotA();
-    void getNullPtrB();
+    static void* getNullPtrB();
     void syncItemGroups();
     void func_8007F1FC();
     void setupBattleCamera();
@@ -273,9 +273,9 @@ public:
     void checkFlagEquality();
     static bool isTimerActive();
     void togglePauseFlag();
-    void getEventCounterA();
+    static u16 getEventCounterA();
     void setEventCounterA();
-    void getGlobalFlag34();
+    static u8 getGlobalFlag34();
     static void func_8007F9C4();
     static void refreshCameraIfCurrentView();
     static void resetCameraIfCurrentView();
@@ -285,7 +285,7 @@ public:
     void stubEmptyC();
     void stubEmptyD();
     void stubEmptyE();
-    void getNullPtrC();
+    static void* getNullPtrC();
     void processEffectList();
     void processEventList();
     void func_8007FF6C();
@@ -375,7 +375,7 @@ public:
     void getEventQueueCount();
     u16 popEventQueue();
     void pushEventQueue();
-    void flushEventQueue();
+    static void flushEventQueue();
     void drainEventQueue();
     CfMapEffectManager* getMapEffectManager();
     u32 getEffectFlagState();
@@ -415,7 +415,7 @@ public:
     void func_800838F4();
     void getDataArray219C();
     void compareFloatVectors();
-    void disableFlag20();
+    static void disableFlag20();
     void copyBdatTextEntryFull();
     void queueSceneEventA();
     void queueSceneEventB();
@@ -460,10 +460,10 @@ public:
     void clearGimmickFlags();
     void isGimmickActive();
     static u32 getGlobalWord64184Dup();
-    void getGlobalPtr6409C();
+    static u32 getGlobalPtr6409C();
     static u32 getGlobalPtr640A8();
-    void getGlobalWord640A4();
-    void getGlobalWord640F4();
+    static u32 getGlobalWord640A4();
+    static u32 getGlobalWord640F4();
     static int initPadSubSystem();
     static float updatePadState();
     void loadControllerConfigA();
@@ -475,7 +475,7 @@ public:
     void getControllerWordA3BC();
     void resetControllerState();
     void clearControllerState();
-    void getFieldD90Value();
+    static u32 getFieldD90Value();
     static u32 getCurrentSlotIndex();
     void setInputMaskByAmount();
     bool isFlag010000Set();
@@ -536,9 +536,7 @@ void gmCallNopA();
 void gmCallNopB();
 void gmCallInit1120();
 extern "C" void flushMpfBuffer__17UnkClass_8047BB54Fv(UnkClass_80083298SubF0* subobject);
-extern "C" bool func_800FF778__9CMainMenuFv();
 extern "C" CSysWinBuff* getInstance__11CSysWinBuffFv();
-extern "C" bool isInitialized__10CMenuPauseFv();
 extern "C" bool Scn_IsDefaultScale(CScn* scene);
 extern "C" bool Scn_IsScaleAtLeastOne(CScn* scene);
 extern "C" void MenuSnd_SetMasterAndPush_9510(float value);
@@ -617,7 +615,6 @@ extern CProcess* gmPadTask;
 
 extern "C" void func_8012F87C(u32 value);
 extern "C" void CCharVoiceMan_DestroySingleton();
-extern "C" void getBattleStateB__Q22cf14CBattleManagerFv();
 extern "C" void destroyHelpManager();
 extern "C" void __dt__80157150();
 extern "C" void* __dt__801A9F78(void* self, s32 deleteFlag);
@@ -630,16 +627,12 @@ extern "C" void CfScript_ResetMgr();
 extern "C" void CtrlRemote_InitSharedBufVoid();
 extern "C" u32 stopSoundMan__Fv();
 extern "C" void KyoshinHeap_Shutdown();
-extern "C" void Remove__8CProcessFv(CProcess* process);
 
 // --- UnkClass_8007DAE0::init / func_8008566C imports (retail C-linkage names)
 extern "C" void __ct__8009D604();
 extern "C" void __dt__801570F0();
-extern "C" void getBattleStateA__Q22cf14CBattleManagerFv();
 extern "C" void* __ct__Q22cf12CHelpManagerFv(void*);
 extern "C" void CCharVoiceMan_CreateSingleton();
-extern "C" CProcess* GetRootProcRealTime__12CTaskManagerFv();
-extern "C" CProcess* GetRootProcGame__12CTaskManagerFv();
 extern "C" CProcess* create__Q22cf9CfPadTaskFP8CProcess(CProcess* parent,
                                                           void* scene);
 extern "C" CProcess* __ct__Q22cf5CfResFv(CProcess* parent, void* scene);
@@ -717,9 +710,7 @@ extern "C" void func_8016F144(u32 object);
 extern "C" void Selector_FrameUpdate();
 extern "C" void func_8019FD2C();
 extern "C" void func_80069F2C();
-extern "C" void func_80462CD8__8CTaskLODFv(u16 first, u16 second, u16 third);
 extern "C" u32 getEffectFlagState__Q22cf13CfGameManagerFv();
-extern "C" void flushEventQueue__Q22cf13CfGameManagerFv();
 
 // --- func_8007F1FC imports (CtrlObjectParam / cfsys CTaskParty units) ---
 extern "C" void func_8009E3C0();

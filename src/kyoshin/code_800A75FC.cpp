@@ -130,7 +130,7 @@ extern "C" void KyoshinHeap_CreateRegions(GlobalStruct_80572B94* g) {
     // --- Create the three main handle allocations if not present ---
     if ((u32)g->field_0x00 == 0xFFFFFFFF) {
         u32 h = mtl::MemManager::create(
-            mtl::MemManager::getHandleMEM1(), 0x003B1E00, &lbl_eu_804FBF60[0]);
+            mtl::MemManager::getHandleMEM1(), 0x003B1E00, "CF_MEM1");
         g->field_0x00 = (int)h;
         u32 object = (u32)mtl::MemManager::getMaxAllocData(h);
         u8* dst = blk + 0x10;
@@ -141,7 +141,7 @@ extern "C" void KyoshinHeap_CreateRegions(GlobalStruct_80572B94* g) {
 
     if ((u32)g->field_0x04 == 0xFFFFFFFF) {
         u32 h = mtl::MemManager::create(
-            mtl::MemManager::getHandleMEM2(), 0x2872200, &lbl_eu_804FBF60[8]);
+            mtl::MemManager::getHandleMEM2(), 0x2872200, "CF_MEM2");
         g->field_0x04 = (int)h;
         u32 object = (u32)mtl::MemManager::getMaxAllocData(h);
         u8* dst = blk + 0x30;
@@ -152,7 +152,7 @@ extern "C" void KyoshinHeap_CreateRegions(GlobalStruct_80572B94* g) {
 
     if ((u32)g->field_0x08 == 0xFFFFFFFF) {
         u32 h = mtl::MemManager::create(
-            mtl::MemManager::getHandleMEM2(), 0x48B00, &lbl_eu_804FBF60[0x10]);
+            mtl::MemManager::getHandleMEM2(), 0x48B00, "CF_BDAT");
         g->field_0x08 = (int)h;
         u32 object = (u32)mtl::MemManager::getMaxAllocData(h);
         u8* dst = blk + 0x50;
@@ -1467,8 +1467,9 @@ s8 sKyoshinHeapInitialized;
 // ---------------------------------------------------------------------------
 // Retail .rodata / .data / remaining .bss / .sbss storage owned by this TU.
 //
-// .rodata holds the three heap names passed to mtl::MemManager::create by
-// KyoshinHeap_Init.  .data holds the per-stage 14-word offset tables and the
+// The three heap names passed to mtl::MemManager::create are plain literals at
+// their use sites; MWCC emits their .rodata pool in retail first-use order.
+// .data holds the per-stage 14-word offset tables and the
 // two 6-slot LblPtrTable arrays the runtime fills in.  Values are the retail
 // split's bytes (build/us/obj/kyoshin/code_800A75FC.o); the tables are read
 // only by the heap entry points that are still open (KyoshinHeap_CreateRegions /
@@ -1478,7 +1479,6 @@ s8 sKyoshinHeapInitialized;
 // nocommon/aligned attribute forms do not survive it either.  Keeping every
 // section at its retail size matters: ldscript.lcf concatenates sections
 // positionally, so a short .data/.bss/.sbss would move every later unit's data.
-__declspec(section ".rodata") char lbl_eu_804FBF60[0x18] = "CF_MEM1\0CF_MEM2\0CF_BDAT";
 #pragma section data_type ".data" ".data"
 u32 lbl_eu_80528188[14] = { 0x96000, 0x20800, 0x2F800, 0x32000, 0x2F800, 0x2A800, 0x39800, 0x32000, 0x2F800, 0x94000, 0x94000, 0x94000, 0x2F800, 0x2F800 };   // retail .data+0x000
 u32 lbl_eu_805281C0[14] = { 0x0, 0x28000, 0x1E000, 0x2D000, 0x23000, 0x2A800, 0x32000, 0x2A800, 0x1E000, 0x800, 0x800, 0x800, 0x23000, 0x23000 };   // retail .data+0x038

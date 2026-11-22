@@ -30,6 +30,7 @@ extern "C" void* Scn_QueryUnk80State();
 #include <nw4r/lyt/lyt_resourceAccessor.h>
 #include <nw4r/lyt/lyt_arcResourceAccessor.h>
 #include "monolib/util/MemManager.hpp"  // canonical mtl::MemManager::allocate
+#include "monolib/device/CDeviceFont.hpp"
 
 extern u32 lbl_eu_80664198;
 // Out-of-line accessor helpers (defined further down; retail calls them via bl)
@@ -94,9 +95,8 @@ void CMenuUpdate::Init() {
 
     // One-arg call: retail carries &mAnim2 into r4 from the preceding
     // bindLayoutAnimTransform argument setup instead of recomputing it here.
-    u8* font = (u8*)getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1);
-    u32 result2 = ((CMenuUpdateFontView*)font)->getHandle();
-    ApplyFontToTxtPanes((nw4r::lyt::Pane*)((void*)::getField10((u8*)mLayout)), (const nw4r::ut::Font*)((void*)result2));
+    CDeviceFontInfo* fontInfo = (CDeviceFontInfo*)getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1);
+    ApplyFontToTxtPanes((nw4r::lyt::Pane*)((void*)::getField10((u8*)mLayout)), fontInfo->getFont());
 
     // Disable the alt animation, enable the main one, then tick the layout.
     mLayout->SetAnimationEnable(mAnim2, false);
@@ -108,7 +108,7 @@ void CMenuUpdate::Init() {
     // init-then-adjust form so the null test runs on the raw this pointer.
     u8* renderPtr = (u8*)this;
     if (renderPtr != NULL) {
-        renderPtr += 0x70;
+        renderPtr = (u8*)&static_cast<IScnRender&>(*this);
     }
     addRenderCB__4CScnFP10IScnRenderUlUl(mScene, renderPtr, 7, 0);
     mMemRegion.validateHeap();
@@ -122,7 +122,7 @@ void CMenuUpdate::Term() {
     // init-then-adjust form so the null test runs on the raw this pointer.
     u8* renderPtr = (u8*)this;
     if (renderPtr != NULL) {
-        renderPtr += 0x70;
+        renderPtr = (u8*)&static_cast<IScnRender&>(*this);
     }
     removeRenderCB__4CScnFP10IScnRender(mScene, (IScnRender*)renderPtr);
     // Polymorphic delete: dispatches the virtual dtor at vtable+0x8 with the
@@ -189,7 +189,7 @@ extern "C" void MenuUpdate_MarkByte15Ready(void* self) { ((u8*)self)[0x15] = 1; 
 extern "C" void MenuUpdate_SignalGlobalField64() { if (lbl_eu_80664198) { ((void(*)(void*, u8))setField64)((void*)(u32)lbl_eu_80664198, 1); } }
 extern "C" void* noop_80142D5C(void* self) { return self; }
 extern "C" void* setVec2(void* self, f32 a, f32 b) { *(f32*)self = a; *(f32*)((u8*)self + 4) = b; return self; }
-extern "C" void setFieldFloat10(void* self, f32 val) { *(f32*)((u8*)self + 0x10) = val; }
+extern "C" void setFieldFloat10(void* self, f32 val) { static_cast<nw4r::lyt::AnimTransform*>(self)->SetFrame(val); }
 extern "C" void func_80143AC8(void* self, f32 a, f32 b) { setVec2(self, a, b); }
 extern "C" void func_80143AD4(void* self, f32 val) { setFieldFloat10(self, val); }
 // Returns self (see __ct__8014274C note).

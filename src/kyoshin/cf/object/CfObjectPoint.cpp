@@ -261,9 +261,9 @@ void CfObjectPoint::resetPointFlags() {
 void CfObjectPoint::loadPointData() {
     Bdat_GetTable_AA34();
     u8* fp = (u8*)getFP(mName);
-    u32 name = getBdatStringColumnValue(fp, lbl_eu_804FC648, mIndex8C);
+    u32 name = getBdatStringColumnValue(fp, "name", mIndex8C);
     this->CObjectParam_setObjectName(reinterpret_cast<const char*>(name));
-    u32 val = getBdatStringColumnValue(fp, lbl_eu_804FC648 + 5, mIndex8C);
+    u32 val = getBdatStringColumnValue(fp, "icon_type", mIndex8C);
     mFlag91 = *(u8*)&val;
 }
 
@@ -412,13 +412,10 @@ extern "C" void setPointPosition__Q22cf13CfObjectPointFv(
 }
 
 // Retail tables owned by this unit.
-// .rodata: BDAT column-name table ("name" +5 "icon_type"); the +5 address-of
-// reference in loadPointData lands on the second string.
 // .sdata2: 0.0f frame-delta floor (updatePointState), -1.0f default height
 // (setPointPosition), 5.0f vertical-ray length (setPointPosition). The retail
 // section is 0x10: the trailing word past the 5.0f is section alignment
 // padding (no code reads it). Types match include/kyoshin/cf/object/CfObjectPoint.hpp.
-extern const char lbl_eu_804FC648[0x10] = "name\0icon_type\0";
 #pragma section data_type ".sdata2" ".sdata2"
 extern __declspec(section ".sdata2") const float lbl_eu_80666B48 = 0.0f;
 extern __declspec(section ".sdata2") const float lbl_eu_80666B4C = -1.0f;

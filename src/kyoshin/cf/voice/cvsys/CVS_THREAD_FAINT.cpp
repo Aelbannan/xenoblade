@@ -217,7 +217,7 @@ u32 lbl_eu_80539B98[4] = {
     0,
 };
 
-__declspec(section ".sdata") extern u32 __RTTI__Q22cf16CVS_THREAD_FAINT[2] = {
+extern u32 __RTTI__Q22cf16CVS_THREAD_FAINT[2] = {
     (u32)lbl_eu_80510780,
     (u32)lbl_eu_80539B98,
 };

@@ -91,9 +91,9 @@ extern "C" void fetchSampleXY__Q23LOD17CLODCacheManagerSFv(s32* outA,
                                                            s32* outB);
 extern "C" void setupLodTev__Q23LOD17UnkClass_804645CCFv(void* rec);
 
-class CScnEnvLgtCtrl;  // scene env-light controller (scnLgtEnterMode20 target)
+struct CScnEnvLgtCtrlResList;  // scene env-controller list owner (scnLgtEnterMode20 target)
 extern "C" void* getScnRootSlot10(void* self);
-extern "C" void scnLgtEnterMode20(CScnEnvLgtCtrl* ctrl);
+extern "C" void scnLgtEnterMode20(CScnEnvLgtCtrlResList* ctrl);
 
 typedef void (*LodCallFn)();  // no-arg dispatch-table entry
 

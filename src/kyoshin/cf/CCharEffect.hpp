@@ -30,20 +30,12 @@ extern "C" void* getGimmickList__Q22cf13CfGameManagerFv();
 extern u32 lbl_eu_80664228;     // default slot value when NULL is registered
 // Name string compared via strstr by CharEffApplyToTarget.
 extern char lbl_eu_80501E38[];
-// Per-type handler table (-1/1/2) indexed by the effect type byte.
-extern s8 lbl_eu_80501DF8[];
-// sdata2 scale constant used by CharEffApplyToTarget.
-extern f32 lbl_eu_80667530;
 
 // CCharEffect's vtable, stored by __ct__CCharEffect. It is later
 // overridden by containing-object ctors (e.g. lbl_eu_8052FE68 for the
 // 80338 object), so CCharEffect instances are dispatched virtually in
 // some contexts. Declared as data: MWCC does not mangle global data names.
 extern u8 lbl_eu_8052FDB8[];
-extern u8 lbl_eu_8052FDD8[];
-extern u8 lbl_eu_8052FE08[];
-extern u8 lbl_eu_8052FE38[];
-extern u8 lbl_eu_8052FE68[];
 
 struct CCharEffectSlot;
 struct CCharEffectData;
@@ -181,11 +173,3 @@ struct CCharEffect {
     u8 pad_2EC[0x10];        // 0x2EC..0x2FB
     u32 mField2FC;           // 0x2FC
 };
-
-// External data referenced by CharEffUpdateAll / CharEffUpdateSlot (MWCC does not
-// mangle global data names).
-extern f32 lbl_eu_80667534;          // sdata2 float constant (CharEffUpdateSlot)
-extern f64 lbl_eu_80667538;          // sdata2 double constant 0x4330000080000000 (CharEffUpdateSlot)
-extern s8 lbl_eu_80501DCC[];         // per-type keep/release table (CharEffUpdateSlot)
-extern s8 lbl_eu_80501DA0[];         // per-type keep/release table (CharEffUpdateSlot)
-extern CCharEffectSlot* (*lbl_eu_8052FD08[])(CCharEffect*); // per-type handler table

@@ -1678,8 +1678,7 @@ void GetItemMulti_ClearRanks(CMenuGetItemMulti* self) {
     pane->SetVisible(false);
     pane = self->mLayout->GetRootPane()->FindPaneByName("nul_para_80", true);
     pane->SetVisible(false);
-    pane = self->mLayout->GetRootPane()->FindPaneByName("txt_havenum", true);
-    pane->SetVisible(false);
+    // Retail blanks this pane through the text setter only (no explicit hide).
     LayoutSetTextBoxFmtValue(self->mLayout, "txt_havenum", "", 0);
     pane = self->mLayout->GetRootPane()->FindPaneByName("txt_para01", true);
     pane->SetVisible(false);
@@ -1739,8 +1738,7 @@ void GetItemMulti_ClearRanks(CMenuGetItemMulti* self) {
     pane->SetVisible(false);
     pane = self->mLayout->GetRootPane()->FindPaneByName("txt_value61", true);
     pane->SetVisible(false);
-    pane = self->mLayout->GetRootPane()->FindPaneByName("txt_value30", true);
-    pane->SetVisible(false);
+    // Retail blanks this pane through the text setter only (no explicit hide).
     LayoutSetTextBoxFmtValue(self->mLayout, "txt_value30", "", 0);
 
     // Blank the four per-rank text/slot panes.

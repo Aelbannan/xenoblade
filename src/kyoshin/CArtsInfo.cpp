@@ -40,8 +40,8 @@ extern float lbl_eu_80668680; // 0.0f (HEAD-style retail extern)
 // char[] extern would force lis/addi absolute addressing).
 extern GXColorS10 sArtsPaneTevColorA;
 extern GXColorS10 sArtsPaneTevColorB;
-extern u32 sArtsChangeColorA;
-extern u32 sArtsChangeColorB;
+extern GXColorS10 sArtsChangeColorA;
+extern GXColorS10 sArtsChangeColorB;
 
 // Small data object (.sbss, addressed via @sda21): arts bdat file pointer.
 // void* (not u32): shared with kyoshin/cf/CItem.hpp (MWCC 10197).
@@ -78,20 +78,6 @@ extern "C" void CArtsInfo_AnimState7(CArtsInfo*);
 extern "C" void CArtsInfo_AnimState8(CArtsInfo*);
 extern "C" void CArtsInfo_AnimState9(CArtsInfo*);
 
-// Manual signed-int -> double conversion (docs/MWCC_PATTERNS.md 7i): build
-// the 0x4330000080000000 bit pattern and subtract the shared sdata2 magic so
-// the lfd references lbl_eu_80668698 instead of a TU-local pool label.
-static double ConvS32ToF64(s32 x) {
-    union {
-        double d;
-        u32 w[2];
-    } u;
-    // xoris word first, then 0x43300000, or MWCC hoists the lis out of order.
-    u.w[1] = (u32)x ^ 0x80000000;
-    u.w[0] = 0x43300000;
-    return u.d - lbl_eu_80668698;
-}
-
 // Definition (value 0x4330000080000000 = 2^52 + 2^31). NOTE: MWCC does NOT
 // pool plain-cast s32->float literals onto this named symbol (still emits
 // TU-private @N labels) - matching retail's sda21 refs here needs the
@@ -107,31 +93,30 @@ u8 CArtsInfo::getField48() { return field_0x48; }
 u8 CArtsInfo::getField49() { return field_0x49; }
 
 // __ct__CArtsInfo - constructor .text:0x0, size 0xAC
-CArtsInfo::CArtsInfo() : mCursor(nullptr) {
-    // Initialize all fields to zero/default
-    field_0x14 = 0;
-    field_0x18 = 0;
-    field_0x1C = 0;
-    mpLayout1 = nullptr;
-    mpAnimTrans1 = nullptr;
-    mpAnimTrans2 = nullptr;
-    mpAnimTrans3 = nullptr;
-    mpAnimTrans4 = nullptr;
-    mpLayout2 = nullptr;
-    mpAnimTrans5 = nullptr;
-    mpAnimTrans6 = nullptr;
-    field_0x40 = 0;
-    field_0x44 = 0;
-    field_0x48 = 0;
-    field_0x49 = 1;
-    field_0x4C = 0;
-    field_0x50 = 0;
-    field_0x54 = 0;
-    field_0x55 = 0;
-    field_0x56 = 0;
-    field_0x58 = 0;
-    field_0x5A = 0;
-}
+CArtsInfo::CArtsInfo()
+    : field_0x14(0),
+      field_0x18(0),
+      field_0x1C(0),
+      mpLayout1(nullptr),
+      mpAnimTrans1(nullptr),
+      mpAnimTrans2(nullptr),
+      mpAnimTrans3(nullptr),
+      mpAnimTrans4(nullptr),
+      mpLayout2(nullptr),
+      mpAnimTrans5(nullptr),
+      mpAnimTrans6(nullptr),
+      field_0x40(0),
+      field_0x44(0),
+      field_0x48(0),
+      field_0x49(1),
+      field_0x4C(0),
+      field_0x50(0),
+      field_0x54(0),
+      field_0x55(0),
+      field_0x56(0),
+      field_0x58(0),
+      field_0x5A(0),
+      mCursor(nullptr) {}
 
 // __dt__9CArtsInfoFv - destructor .text:0xAC, size 0x60. The member dtor
 // destroys the +0x5C CCur18 cursor and the +0x04 UnkClass_8045F564 member;
@@ -1038,11 +1023,8 @@ void CArtsInfo_FmtRow00(CArtsInfo* self, u8 arg2, int arg3) {
     u8 r = BdatGetU8ByTableKey((char*)"pc_arts", (char*)"cast", self->field_0x55);
     float d = (float)r;
     if (r != 0) {
-        d = d * 0.1f;
+        d *= 0.1f;
     }
-    // f = d - scale2 * (d * (float)x) - scale2 * (d * (float)y), each step
-    // folded through fnmsubs (retail: fmuls d*(float)x; fnmsubs f30, scale2,
-    // f1, f31).
     float f = d - 0.01f * (d * (float)CArtsInfo_GetEquipValue(self, 0x2d));
     f -= 0.01f * (d * (float)CArtsInfo_GetSkill5C(self));
     sprintf(buf1, (char*)"%s%.1f%s", s1, f, s2);
@@ -1098,7 +1080,7 @@ void CArtsInfo_FmtRow01(CArtsInfo* self, u8 arg2, int arg3) {
         CArtsInfo_DotToCommaDE(self, arg2, buf3);
         LayoutSetTextBoxText(self->mpLayout2, buf2, buf3, 0);
         if (fv != nxt) {
-            PaneMatSetTevColorsByName(self->mpLayout2, buf2, (const GXColorS10*)&sArtsChangeColorA, (const GXColorS10*)&sArtsChangeColorB);
+            PaneMatSetTevColorsByName(self->mpLayout2, buf2, &sArtsChangeColorA, &sArtsChangeColorB);
         }
     }
 }
@@ -1179,7 +1161,7 @@ void CArtsInfo_FmtRow03(CArtsInfo* self, u8 arg2, int arg3) {
         CArtsInfo_DotToCommaDE(self, arg2, buf1);
         LayoutSetTextBoxText(self->mpLayout2, buf2, buf1, 0);
         if (cur != nxt) {
-            PaneMatSetTevColorsByName(self->mpLayout2, buf2, (const GXColorS10*)&sArtsChangeColorA, (const GXColorS10*)&sArtsChangeColorB);
+            PaneMatSetTevColorsByName(self->mpLayout2, buf2, &sArtsChangeColorA, &sArtsChangeColorB);
         }
     }
 }
@@ -1218,7 +1200,7 @@ void CArtsInfo_FmtRow04(CArtsInfo* self, u8 arg2, int arg3, u8 arg4) {
         sprintf(buf1, (char*)"%d%s%d", v1n, str2, v2n);
         sprintf(buf2, (char*)"txt_value%02d_02", level);
         LayoutSetTextBoxText(self->mpLayout2, buf2, buf1, 0);
-        PaneMatSetTevColorsByName(self->mpLayout2, buf2, (const GXColorS10*)&sArtsChangeColorA, (const GXColorS10*)&sArtsChangeColorB);
+        PaneMatSetTevColorsByName(self->mpLayout2, buf2, &sArtsChangeColorA, &sArtsChangeColorB);
     }
 }
 
@@ -1242,10 +1224,8 @@ void CArtsInfo_FmtRow05(CArtsInfo* self, u8 arg2, int arg3) {
     int m1 = CArtsInfo_CalcDmg52(self);
     int m2 = CArtsInfo_CalcDmg53(self);
     if (m1 > m2) m1 = m2;
-    int s = m1 + stat;
-    int v1 = RoundHalfAway0(0.01f * (float)(g1 * s));
-    int t = m2 + stat;
-    int v2 = RoundHalfAway0(0.01f * (float)(g2 * t));
+    int v1 = RoundHalfAway0(0.01f * (float)(g1 * (m1 + stat)));
+    int v2 = RoundHalfAway0(0.01f * (float)(g2 * (m2 + stat)));
     char* str = BdatTouchStringCell((char*)"MNU_battle", (char*)"name", 0x52);
     sprintf(buf1, (char*)"%d%s%d", v1, str, v2);
     level = arg3 + 2;
@@ -1254,13 +1234,13 @@ void CArtsInfo_FmtRow05(CArtsInfo* self, u8 arg2, int arg3) {
     if (self->field_0x56 < 0xA) {
         int g1n = CArtsInfo_GetGridA(self, self->field_0x56 + 1, 0);
         int g2n = CArtsInfo_GetGridB(self, self->field_0x56 + 1, 0);
-        int v1n = RoundHalfAway0(0.01f * (float)(g1n * s));
-        int v2n = RoundHalfAway0(0.01f * (float)(g2n * t));
+        v1 = RoundHalfAway0(0.01f * (float)(g1n * (m1 + stat)));
+        v2 = RoundHalfAway0(0.01f * (float)(g2n * (m2 + stat)));
         char* str2 = BdatTouchStringCell((char*)"MNU_battle", (char*)"name", 0x52);
-        sprintf(buf1, (char*)"%d%s%d", v1n, str2, v2n);
+        sprintf(buf1, (char*)"%d%s%d", v1, str2, v2);
         sprintf(buf2, (char*)"txt_value%02d_02", level);
         LayoutSetTextBoxText(self->mpLayout2, buf2, buf1, 0);
-        PaneMatSetTevColorsByName(self->mpLayout2, buf2, (const GXColorS10*)&sArtsChangeColorA, (const GXColorS10*)&sArtsChangeColorB);
+        PaneMatSetTevColorsByName(self->mpLayout2, buf2, &sArtsChangeColorA, &sArtsChangeColorB);
     }
 }
 
@@ -1318,7 +1298,7 @@ void CArtsInfo_FmtRow06(CArtsInfo* self, u8 arg2, int arg3) {
         sprintf(buf1, (char*)"%d%s%d", value1n, str2, value2n);
         sprintf(buf2, (char*)"txt_value%02d_02", level);
         LayoutSetTextBoxText(self->mpLayout2, buf2, buf1, 0);
-        PaneMatSetTevColorsByName(self->mpLayout2, buf2, (const GXColorS10*)&sArtsChangeColorA, (const GXColorS10*)&sArtsChangeColorB);
+        PaneMatSetTevColorsByName(self->mpLayout2, buf2, &sArtsChangeColorA, &sArtsChangeColorB);
     }
 }
 
@@ -1335,8 +1315,7 @@ void CArtsInfo_FmtRow06(CArtsInfo* self, u8 arg2, int arg3) {
 // NOTE: the (float)(int) casts intentionally use MWCC's plain-cast form
 // (same retail schedule as CArtsInfo_FmtRow06: lis 0x4330 hoisted into the
 // prologue, one stack-slot pair per conversion site).
-// u32 const on arg2: entry param-copy lever (retail copies r4 before r3).
-void CArtsInfo_FmtRow07(CArtsInfo* self, u8 const arg2, int arg3) {
+void CArtsInfo_FmtRow07(CArtsInfo* self, u8 arg2, int arg3) {
     char buf1[32]; // sprintf at +0x28
     char buf2[32]; // sprintf at +0x8
     CArtsInfo_GetSkill20C(self, arg2);
@@ -1347,15 +1326,9 @@ void CArtsInfo_FmtRow07(CArtsInfo* self, u8 const arg2, int arg3) {
     int m1 = CArtsInfo_CalcDmg52(self);
     int m2 = CArtsInfo_CalcDmg53(self);
     if (m1 > m2) m1 = m2;
-    // Distinct locals so MWCC keeps the clamped m1 live in its own saved reg
-    // and computes s into a fresh one (retail: min@r29, s@r30).
-    int s = m1 + stat;
-    // t computed between the two conversions like retail (the (m2+stat) addi
-    // lands between the first and second RoundHalfAway0 calls).
-    int v1 = RoundHalfAway0(0.01f * (float)(g1 * s));
-    int t = m2 + stat;
-    int v2 = RoundHalfAway0(0.01f * (float)(g2 * t));
-    int base = BdatGetU8ByTableKey((char*)"pc_arts", (char*)"st_val", self->field_0x55);
+    int v1 = RoundHalfAway0(0.01f * (float)(g1 * (m1 + stat)));
+    int v2 = RoundHalfAway0(0.01f * (float)(g2 * (m2 + stat)));
+    u8 base = BdatGetU8ByTableKey((char*)"pc_arts", (char*)"st_val", self->field_0x55);
     switch (self->field_0x55) {
     case 0x68:
         base = 0x28;
@@ -1366,32 +1339,22 @@ void CArtsInfo_FmtRow07(CArtsInfo* self, u8 const arg2, int arg3) {
     case 0x70:
         base = 0x64;
         break;
-    default:
-        break;
     }
     v1 = RoundHalfAway0(0.01f * (float)(v1 * base));
     v2 = RoundHalfAway0(0.01f * (float)(v2 * base));
     u32 k = BdatGetU16ByTableKey((char*)"pc_arts", (char*)"st_type", self->field_0x55);
     if ((u16)k == 0x66) {
-        int a = CArtsInfo_GetEquipValue(self, 0x49);
-        v1 += RoundHalfAway0(0.01f * (float)(v1 * a));
-        a = CArtsInfo_GetEquipValue(self, 0x49);
-        v2 += RoundHalfAway0(0.01f * (float)(v2 * a));
+        v1 += RoundHalfAway0(0.01f * (float)(v1 * CArtsInfo_GetEquipValue(self, 0x49)));
+        v2 += RoundHalfAway0(0.01f * (float)(v2 * CArtsInfo_GetEquipValue(self, 0x49)));
     } else if ((u16)k == 0x67) {
-        int a = CArtsInfo_GetEquipValue(self, 0x9);
-        v1 += RoundHalfAway0(0.01f * (float)(v1 * a));
-        a = CArtsInfo_GetEquipValue(self, 0x9);
-        v2 += RoundHalfAway0(0.01f * (float)(v2 * a));
+        v1 += RoundHalfAway0(0.01f * (float)(v1 * CArtsInfo_GetEquipValue(self, 0x9)));
+        v2 += RoundHalfAway0(0.01f * (float)(v2 * CArtsInfo_GetEquipValue(self, 0x9)));
     } else if ((u16)k == 0x68) {
-        int a = CArtsInfo_GetEquipValue(self, 0x3a);
-        v1 += RoundHalfAway0(0.01f * (float)(v1 * a));
-        a = CArtsInfo_GetEquipValue(self, 0x3a);
-        v2 += RoundHalfAway0(0.01f * (float)(v2 * a));
+        v1 += RoundHalfAway0(0.01f * (float)(v1 * CArtsInfo_GetEquipValue(self, 0x3a)));
+        v2 += RoundHalfAway0(0.01f * (float)(v2 * CArtsInfo_GetEquipValue(self, 0x3a)));
     } else if ((u16)k == 0x69) {
-        int a = CArtsInfo_GetEquipValue(self, 0x5c);
-        v1 += RoundHalfAway0(0.01f * (float)(v1 * a));
-        a = CArtsInfo_GetEquipValue(self, 0x5c);
-        v2 += RoundHalfAway0(0.01f * (float)(v2 * a));
+        v1 += RoundHalfAway0(0.01f * (float)(v1 * CArtsInfo_GetEquipValue(self, 0x5c)));
+        v2 += RoundHalfAway0(0.01f * (float)(v2 * CArtsInfo_GetEquipValue(self, 0x5c)));
     }
     char* str = BdatTouchStringCell((char*)"MNU_battle", (char*)"name", 0x52);
     sprintf(buf1, (char*)"%d%s%d", v1, str, v2);
@@ -1401,37 +1364,29 @@ void CArtsInfo_FmtRow07(CArtsInfo* self, u8 const arg2, int arg3) {
     if (self->field_0x56 < 0xA) {
         int g1n = CArtsInfo_GetGridA(self, self->field_0x56 + 1, 0);
         int g2n = CArtsInfo_GetGridB(self, self->field_0x56 + 1, 0);
-        int v1n = RoundHalfAway0(0.01f * (float)(g1n * s));
-        int v2n = RoundHalfAway0(0.01f * (float)(g2n * t));
-        v1n = RoundHalfAway0(0.01f * (float)(v1n * base));
-        v2n = RoundHalfAway0(0.01f * (float)(v2n * base));
+        v1 = RoundHalfAway0(0.01f * (float)(g1n * (m1 + stat)));
+        v2 = RoundHalfAway0(0.01f * (float)(g2n * (m2 + stat)));
+        v1 = RoundHalfAway0(0.01f * (float)(v1 * base));
+        v2 = RoundHalfAway0(0.01f * (float)(v2 * base));
         u32 k2 = BdatGetU16ByTableKey((char*)"pc_arts", (char*)"st_type", self->field_0x55);
         if ((u16)k2 == 0x66) {
-            int a = CArtsInfo_GetEquipValue(self, 0x49);
-            v1n += RoundHalfAway0(0.01f * (float)(v1n * a));
-            a = CArtsInfo_GetEquipValue(self, 0x49);
-            v2n += RoundHalfAway0(0.01f * (float)(v2n * a));
+            v1 += RoundHalfAway0(0.01f * (float)(v1 * CArtsInfo_GetEquipValue(self, 0x49)));
+            v2 += RoundHalfAway0(0.01f * (float)(v2 * CArtsInfo_GetEquipValue(self, 0x49)));
         } else if ((u16)k2 == 0x67) {
-            int a = CArtsInfo_GetEquipValue(self, 0x9);
-            v1n += RoundHalfAway0(0.01f * (float)(v1n * a));
-            a = CArtsInfo_GetEquipValue(self, 0x9);
-            v2n += RoundHalfAway0(0.01f * (float)(v2n * a));
+            v1 += RoundHalfAway0(0.01f * (float)(v1 * CArtsInfo_GetEquipValue(self, 0x9)));
+            v2 += RoundHalfAway0(0.01f * (float)(v2 * CArtsInfo_GetEquipValue(self, 0x9)));
         } else if ((u16)k2 == 0x68) {
-            int a = CArtsInfo_GetEquipValue(self, 0x3a);
-            v1n += RoundHalfAway0(0.01f * (float)(v1n * a));
-            a = CArtsInfo_GetEquipValue(self, 0x3a);
-            v2n += RoundHalfAway0(0.01f * (float)(v2n * a));
+            v1 += RoundHalfAway0(0.01f * (float)(v1 * CArtsInfo_GetEquipValue(self, 0x3a)));
+            v2 += RoundHalfAway0(0.01f * (float)(v2 * CArtsInfo_GetEquipValue(self, 0x3a)));
         } else if ((u16)k2 == 0x69) {
-            int a = CArtsInfo_GetEquipValue(self, 0x5c);
-            v1n += RoundHalfAway0(0.01f * (float)(v1n * a));
-            a = CArtsInfo_GetEquipValue(self, 0x5c);
-            v2n += RoundHalfAway0(0.01f * (float)(v2n * a));
+            v1 += RoundHalfAway0(0.01f * (float)(v1 * CArtsInfo_GetEquipValue(self, 0x5c)));
+            v2 += RoundHalfAway0(0.01f * (float)(v2 * CArtsInfo_GetEquipValue(self, 0x5c)));
         }
         char* str2 = BdatTouchStringCell((char*)"MNU_battle", (char*)"name", 0x52);
-        sprintf(buf1, (char*)"%d%s%d", v1n, str2, v2n);
+        sprintf(buf1, (char*)"%d%s%d", v1, str2, v2);
         sprintf(buf2, (char*)"txt_value%02d_02", level);
         LayoutSetTextBoxText(self->mpLayout2, buf2, buf1, 0);
-        PaneMatSetTevColorsByName(self->mpLayout2, buf2, (const GXColorS10*)&sArtsChangeColorA, (const GXColorS10*)&sArtsChangeColorB);
+        PaneMatSetTevColorsByName(self->mpLayout2, buf2, &sArtsChangeColorA, &sArtsChangeColorB);
     }
 }
 
@@ -1456,7 +1411,7 @@ void CArtsInfo_FmtRow08(CArtsInfo* self, u8 arg2, int arg3) {
         sprintf(buf1, (char*)"%s%d%s", s1, nxt, s2);
         LayoutSetTextBoxText(self->mpLayout2, buf2, buf1, 0);
         if (cur != nxt) {
-            PaneMatSetTevColorsByName(self->mpLayout2, buf2, (const GXColorS10*)&sArtsChangeColorA, (const GXColorS10*)&sArtsChangeColorB);
+            PaneMatSetTevColorsByName(self->mpLayout2, buf2, &sArtsChangeColorA, &sArtsChangeColorB);
         }
     }
 }
@@ -1508,7 +1463,7 @@ void CArtsInfo_FmtRow09(CArtsInfo* self, u8 arg2, int arg3) {
         sprintf(buf1, (char*)"%d%s%d", v1n, str2, v2n);
         sprintf(buf2, (char*)"txt_value%02d_02", level);
         LayoutSetTextBoxText(self->mpLayout2, buf2, buf1, 0);
-        PaneMatSetTevColorsByName(self->mpLayout2, buf2, (const GXColorS10*)&sArtsChangeColorA, (const GXColorS10*)&sArtsChangeColorB);
+        PaneMatSetTevColorsByName(self->mpLayout2, buf2, &sArtsChangeColorA, &sArtsChangeColorB);
     }
 }
 
@@ -1517,39 +1472,27 @@ void CArtsInfo_FmtRow09(CArtsInfo* self, u8 arg2, int arg3) {
 // scaled again, then formatted into buf1. On level-up (< 0xA) the lookups are
 // re-fetched and the level grid recomputed for layout 2; the colour-pair
 // helper runs when the two formatted values differ.
-// u32 const on arg2: entry param-copy lever - retail copies r4 (arg2)
-// before r3 (self).
-void CArtsInfo_FmtRow0A(CArtsInfo* self, u8 const arg2, int arg3) {
-    // Declaration order = reverse frame-slot order (MWCC allocates
-    // last-declared lowest): cvB@+0x58, cvA@+0x48, buf1@+0x28, buf2@+0x08.
-    char buf2[32]; // sprintf at +0x8
+void CArtsInfo_FmtRow0A(CArtsInfo* self, u8 arg2, int arg3) {
     char buf1[32]; // sprintf at +0x28
+    char buf2[32]; // sprintf at +0x8
     char* s1 = CArtsInfo_GetSkill20C(self, arg2);
     char* s2 = CArtsInfo_GetSkillStr(self, arg2);
-    int base = CArtsInfo_GetStatF10(self);
+    int stat = CArtsInfo_GetStatF10(self);
     u8 v1 = BdatGetU8ByTableKey((char*)"pc_arts", (char*)"st_val", self->field_0x55);
     u8 v2 = BdatGetU8ByTableKey((char*)"pc_arts", (char*)"grow_st_val", self->field_0x55);
-    int cur = (int)(0.01f * ConvS32ToF64(base * 100));
-    // Grid offset folded into the conversion expression: retail interleaves
-    // the (level-1) multiply with the conversion store sequence. Note the
-    // operand order: the SECOND lookup (v2) is multiplied by (level-1), the
-    // FIRST (v1) is added.
-    int val1 =
-        (int)(0.01f * ConvS32ToF64((int)(cur * (v2 * (u32)(self->field_0x56 - 1) + v1))));
+    int cur = (int)(0.01f * (float)(stat * 100));
+    int val1 = (int)(0.01f * (float)(cur * (v1 + v2 * (self->field_0x56 - 1))));
     sprintf(buf1, (char*)"%s%d%s", s1, val1, s2);
     sprintf(buf2, (char*)"txt_value%02d_02", arg3 + 2);
     LayoutSetTextBoxText(self->mpLayout1, buf2, buf1, 0);
     if (self->field_0x56 < 0xA) {
-        u8 n1 = BdatGetU8ByTableKey((char*)"pc_arts", (char*)"st_val", self->field_0x55);
-        u8 n2 = BdatGetU8ByTableKey((char*)"pc_arts", (char*)"grow_st_val", self->field_0x55);
-        // Next-level grid folded into the conversion like retail (second
-        // lookup multiplied by level, first added).
-        int val2 =
-            (int)(0.01f * ConvS32ToF64((int)(cur * (n2 * (u32)self->field_0x56 + n1))));
+        v1 = BdatGetU8ByTableKey((char*)"pc_arts", (char*)"st_val", self->field_0x55);
+        v2 = BdatGetU8ByTableKey((char*)"pc_arts", (char*)"grow_st_val", self->field_0x55);
+        int val2 = (int)(0.01f * (float)(cur * (v1 + v2 * self->field_0x56)));
         sprintf(buf1, (char*)"%s%d%s", s1, val2, s2);
         LayoutSetTextBoxText(self->mpLayout2, buf2, buf1, 0);
         if (val1 != val2) {
-            PaneMatSetTevColorsByName(self->mpLayout2, buf2, (const GXColorS10*)&sArtsChangeColorA, (const GXColorS10*)&sArtsChangeColorB);
+            PaneMatSetTevColorsByName(self->mpLayout2, buf2, &sArtsChangeColorA, &sArtsChangeColorB);
         }
     }
 }
@@ -1591,15 +1534,13 @@ void CArtsInfo_FmtRow0B(CArtsInfo* self, u8 arg2, int arg3) {
     if (self->field_0x56 < 0xA) {
         int g1n = CArtsInfo_GetGridA(self, self->field_0x56 + 1, 0);
         int g2n = CArtsInfo_GetGridB(self, self->field_0x56 + 1, 0);
-        // Dead call kept: retail emits the conversion+call and drops the result.
-        RoundHalfAway0(0.01f * (float)(x1 * g1n));
+        int x2n = RoundHalfAway0(0.01f * (float)(x1 * g1n));
         int x3n = RoundHalfAway0(0.01f * (float)(x1 * g2n));
         char* str2 = BdatTouchStringCell((char*)"MNU_battle", (char*)"name", 0x52);
-        // Retail formats x1 (not the dropped first conversion) as the middle value.
-        sprintf(buf1, (char*)"%d%s%d", x1, str2, x3n);
+        sprintf(buf1, (char*)"%d%s%d", x2n, str2, x3n);
         sprintf(buf2, (char*)"txt_value%02d_02", level);
         LayoutSetTextBoxText(self->mpLayout2, buf2, buf1, 0);
-        PaneMatSetTevColorsByName(self->mpLayout2, buf2, (const GXColorS10*)&sArtsChangeColorA, (const GXColorS10*)&sArtsChangeColorB);
+        PaneMatSetTevColorsByName(self->mpLayout2, buf2, &sArtsChangeColorA, &sArtsChangeColorB);
     }
 }
 
@@ -1637,7 +1578,7 @@ void CArtsInfo_FmtRow0C(CArtsInfo* self, u8 arg2, int arg3) {
         sprintf(buf1, (char*)"%d%s%d", grid2, str2, grid1);
         sprintf(buf2, (char*)"txt_value%02d_02", level);
         LayoutSetTextBoxText(self->mpLayout2, buf2, buf1, 0);
-        PaneMatSetTevColorsByName(self->mpLayout2, buf2, (const GXColorS10*)&sArtsChangeColorA, (const GXColorS10*)&sArtsChangeColorB);
+        PaneMatSetTevColorsByName(self->mpLayout2, buf2, &sArtsChangeColorA, &sArtsChangeColorB);
     }
 }
 
@@ -1660,7 +1601,7 @@ void CArtsInfo_FmtRow0D(CArtsInfo* self, u8 arg2, int arg3) {
         sprintf(buf1, (char*)"%s%d%s", s1, nxt, s2);
         LayoutSetTextBoxText(self->mpLayout2, buf2, buf1, 0);
         if (cur != nxt) {
-            PaneMatSetTevColorsByName(self->mpLayout2, buf2, (const GXColorS10*)&sArtsChangeColorA, (const GXColorS10*)&sArtsChangeColorB);
+            PaneMatSetTevColorsByName(self->mpLayout2, buf2, &sArtsChangeColorA, &sArtsChangeColorB);
         }
     }
 }
@@ -1684,7 +1625,7 @@ void CArtsInfo_FmtRow0E(CArtsInfo* self, u8 arg2, int arg3) {
         sprintf(buf1, (char*)"%s%d%s", s1, nxt, s2);
         LayoutSetTextBoxText(self->mpLayout2, buf2, buf1, 0);
         if (cur != nxt) {
-            PaneMatSetTevColorsByName(self->mpLayout2, buf2, (const GXColorS10*)&sArtsChangeColorA, (const GXColorS10*)&sArtsChangeColorB);
+            PaneMatSetTevColorsByName(self->mpLayout2, buf2, &sArtsChangeColorA, &sArtsChangeColorB);
         }
     }
 }
@@ -1708,7 +1649,7 @@ void CArtsInfo_FmtRow0F(CArtsInfo* self, u8 arg2, int arg3) {
         sprintf(buf1, (char*)"%s%d%s", s1, nxt, s2);
         LayoutSetTextBoxText(self->mpLayout2, buf2, buf1, 0);
         if (cur != nxt) {
-            PaneMatSetTevColorsByName(self->mpLayout2, buf2, (const GXColorS10*)&sArtsChangeColorA, (const GXColorS10*)&sArtsChangeColorB);
+            PaneMatSetTevColorsByName(self->mpLayout2, buf2, &sArtsChangeColorA, &sArtsChangeColorB);
         }
     }
 }
@@ -1757,7 +1698,7 @@ void CArtsInfo_FmtRow10(CArtsInfo* self, u8 arg2, int arg3) {
         CArtsInfo_DotToCommaDE(self, arg2, buf1);
         LayoutSetTextBoxText(self->mpLayout2, buf2, buf1, 0);
         if (cur != nxt) {
-            PaneMatSetTevColorsByName(self->mpLayout2, buf2, (const GXColorS10*)&sArtsChangeColorA, (const GXColorS10*)&sArtsChangeColorB);
+            PaneMatSetTevColorsByName(self->mpLayout2, buf2, &sArtsChangeColorA, &sArtsChangeColorB);
         }
     }
 }
@@ -1794,7 +1735,7 @@ void CArtsInfo_FmtRow21(CArtsInfo* self, u8 arg2, int arg3) {
         CArtsInfo_DotToCommaDE(self, arg2, buf1);
         LayoutSetTextBoxText(self->mpLayout2, buf2, buf1, 0);
         if (cur != nxt) {
-            PaneMatSetTevColorsByName(self->mpLayout2, buf2, (const GXColorS10*)&sArtsChangeColorA, (const GXColorS10*)&sArtsChangeColorB);
+            PaneMatSetTevColorsByName(self->mpLayout2, buf2, &sArtsChangeColorA, &sArtsChangeColorB);
         }
     }
 }
@@ -1840,7 +1781,7 @@ void CArtsInfo_FmtRow12(CArtsInfo* self, u8 arg2, int arg3) {
         sprintf(buf1, (char*)"%s%d%s", s1, nxt, s2);
         LayoutSetTextBoxText(self->mpLayout2, buf2, buf1, 0);
         if (cur != nxt) {
-            PaneMatSetTevColorsByName(self->mpLayout2, buf2, (const GXColorS10*)&sArtsChangeColorA, (const GXColorS10*)&sArtsChangeColorB);
+            PaneMatSetTevColorsByName(self->mpLayout2, buf2, &sArtsChangeColorA, &sArtsChangeColorB);
         }
     }
 }
@@ -2130,7 +2071,7 @@ void CArtsInfo_FmtRow23(CArtsInfo* self, u8 arg2, int arg3) {
         sprintf(buf1, (char*)"%s%d%s", s1, nxt, s2);
         LayoutSetTextBoxText(self->mpLayout2, buf2, buf1, 0);
         if (cur != nxt) {
-            PaneMatSetTevColorsByName(self->mpLayout2, buf2, (const GXColorS10*)&sArtsChangeColorA, (const GXColorS10*)&sArtsChangeColorB);
+            PaneMatSetTevColorsByName(self->mpLayout2, buf2, &sArtsChangeColorA, &sArtsChangeColorB);
         }
     }
 }
@@ -2157,7 +2098,7 @@ void CArtsInfo_FmtRow24(CArtsInfo* self, u8 arg2, int arg3) {
         sprintf(buf1, (char*)"%s%d%s", s1, nxt, s2);
         LayoutSetTextBoxText(self->mpLayout2, buf2, buf1, 0);
         if (level != nxt) {
-            PaneMatSetTevColorsByName(self->mpLayout2, buf2, (const GXColorS10*)&sArtsChangeColorA, (const GXColorS10*)&sArtsChangeColorB);
+            PaneMatSetTevColorsByName(self->mpLayout2, buf2, &sArtsChangeColorA, &sArtsChangeColorB);
         }
     }
 }
@@ -2203,7 +2144,7 @@ void CArtsInfo_FmtRow26(CArtsInfo* self, u8 arg2, int arg3) {
         sprintf(buf1, (char*)"%d%s%d", 5, str2, nxt);
         LayoutSetTextBoxText(self->mpLayout2, buf2, buf1, 0);
         if (cur != nxt) {
-            PaneMatSetTevColorsByName(self->mpLayout2, buf2, (const GXColorS10*)&sArtsChangeColorA, (const GXColorS10*)&sArtsChangeColorB);
+            PaneMatSetTevColorsByName(self->mpLayout2, buf2, &sArtsChangeColorA, &sArtsChangeColorB);
         }
     }
 }
@@ -2259,16 +2200,11 @@ void CArtsInfo_DotToCommaDE(CArtsInfo* self, u32 arg2, char* str) {
     if (r != 0x4f) return;
 
     int len = strlen(str);
-    int c;
     int i = 0;
     while (i < len) {
-        c = *str;
-        if (c == 0x2e) {
-            *str = 0x2c; // '.' -> ','
-        } else if (c >= 0x81 && c <= 0x9f) {
-            i += 1;
-            str += 1;
-        } else if (c >= 0xe0 && c <= 0xef) {
+        if (*str == '.') {
+            *str = ',';
+        } else if ((0x81 <= *str && *str <= 0x9f) || (0xe0 <= *str && *str <= 0xef)) {
             i += 1;
             str += 1;
         }
@@ -2300,13 +2236,7 @@ int CArtsInfo::isField44GE6() {
 // layout have been loaded. The two request flags are the low bytes at +0x40
 // and +0x48; retail stores the same literal 1 to both.
 extern "C" void CArtsInfo_Refresh(CArtsInfo* self) {
-    if (self->mpLayout1 == nullptr) {
-        return;
-    }
-    if (self->field_0x4C == 0) {
-        return;
-    }
-    if (self->field_0x50 == 0) {
+    if (self->mpLayout1 == nullptr || self->field_0x4C == 0 || self->field_0x50 == 0) {
         return;
     }
     self->field_0x48 = 1;
@@ -2361,6 +2291,7 @@ bool CArtsInfo::OnFileEvent(CEventFile* event) {
             setLayoutTextBoxFont(mpLayout1, (char*)"txt_value08_02", (u32)lang);
             setLayoutTextBoxFont(mpLayout1, (char*)"txt_value09_02", (u32)lang);
             setLayoutTextBoxFont(mpLayout1, (char*)"txt_value10_02", (u32)lang);
+            setLayoutTextBoxFont(mpLayout1, (char*)"txt_value11_02", (u32)lang);
         }
         mpLayout1->SetAnimationEnable(mpAnimTrans2, false);
         mpLayout1->SetAnimationEnable(mpAnimTrans3, false);
@@ -2389,17 +2320,15 @@ bool CArtsInfo::OnFileEvent(CEventFile* event) {
         // MakeTplNameSysFile to get the message resource name.
         char* resName = MakeTplNameSysFile(
             BdatGetU16ByTableKey((char*)"MNU_kyeassign", detailPane, 43));
-        void* timg = ((nw4r::lyt::ArcResourceAccessor*)field_0x1C)->GetResource(0x74696d67, resName, 0);
-        if (timg != 0) {
-            CArtsMsgObj* msg = (CArtsMsgObj*)timg;
-            LayoutSetTextBoxFmtValue(mpLayout1, (char*)"pic_btn00", (char*)timg, 0);
-            PaneSetTexPaletteByName(mpLayout1, (char*)"pic_btn00", (TPLPalette*)((u32)msg->chain));
-            nw4r::lyt::Pane* msgPane1 =
-                root1->FindPaneByName((char*)"pic_btn00", true);
-            if (msgPane1 != 0) {
-                u16 row = msg->chain->pCoords->row;
-                u16 col = msg->chain->pCoords->col;
-                msgPane1->SetSize(nw4r::lyt::Size((float)(int)row, (float)(int)col));
+        TPLPalette* tpl = (TPLPalette*)CUICfManager_getArcResourceAccessor()->GetResource(0x74696d67, resName, 0);
+        if (tpl != 0) {
+            PaneSetTexPaletteByName(mpLayout1, (char*)"pic_btn00", tpl);
+            u16 width = tpl->descriptorArray->textureHeader->width;
+            u16 height = tpl->descriptorArray->textureHeader->height;
+            nw4r::lyt::Pane* btnPane = mpLayout1->GetRootPane()->FindPaneByName((char*)"pic_btn00", true);
+            if (btnPane != 0) {
+                nw4r::lyt::Size size((f32)width, (f32)height);
+                btnPane->SetSize(size);
             }
         }
 
@@ -2407,8 +2336,9 @@ bool CArtsInfo::OnFileEvent(CEventFile* event) {
         bindLayoutAnimTransform(mpLayout2, &mpAnimTrans5, (nw4r::lyt::ArcResourceAccessor*)field_0x1C, (char*)"mf15_arts30_set_inf_lvup_in.brlan");
         bindLayoutAnimTransform(mpLayout2, &mpAnimTrans6, (nw4r::lyt::ArcResourceAccessor*)field_0x1C, (char*)"mf15_arts30_set_inf_lvup.brlan");
 
+        nw4r::lyt::Pane* root2 = mpLayout2->GetRootPane();
         void* fontObj2 = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, mpLayout2);
-        ApplyFontToTxtPanes(mpLayout2->GetRootPane(),
+        ApplyFontToTxtPanes(root2,
                       (const nw4r::ut::Font*)((u32)((IDeviceFontInfo*)fontObj2)->getFont()));
 
         if (lang != 0) {
@@ -2427,45 +2357,33 @@ bool CArtsInfo::OnFileEvent(CEventFile* event) {
         mpLayout2->SetAnimationEnable(mpAnimTrans5, true);
         mpLayout2->Animate(0);
 
-        // Detail panes on layout2: hide each extra pane; the message pane's
-        // anchor triple is rotated before it is hidden.
-        setPaneVisible((mpLayout2->GetRootPane())->FindPaneByName((char*)"nul_inf", true), 0);
-        nw4r::lyt::Pane* pn1028 = (mpLayout2->GetRootPane())->FindPaneByName((char*)"pic_bl", true);
-        if (pn1028 != 0) {
-            const nw4r::math::VEC3& pos = pn1028->GetTranslate();
-            float x = pos.x;
-            float y = pos.y;
-            float z = pos.z;
-            pn1028->SetSRTElement(0, z);
-            pn1028->SetSRTElement(1, x);
-            pn1028->SetSRTElement(2, y);
-        }
+        // Detail panes on layout2: shift the info group to its fixed x
+        // position, then hide each extra pane.
+        nw4r::lyt::Pane* pane = (mpLayout2->GetRootPane())->FindPaneByName((char*)"nul_inf", true);
+        nw4r::math::VEC3 trans = pane->GetTranslate();
+        trans.x = lbl_eu_806686D0;
+        pane->SetTranslate(trans);
+        setPaneVisible((mpLayout2->GetRootPane())->FindPaneByName((char*)"pic_bl", true), 0);
         setPaneVisible((mpLayout2->GetRootPane())->FindPaneByName((char*)"nul_arw", true), 0);
         setPaneVisible((mpLayout2->GetRootPane())->FindPaneByName((char*)"txt_aptit", true), 0);
         setPaneVisible((mpLayout2->GetRootPane())->FindPaneByName((char*)"txt_ap", true), 0);
         setPaneVisible((mpLayout2->GetRootPane())->FindPaneByName((char*)"nul_meswin", true), 0);
-        nw4r::lyt::Pane* pn238 = (mpLayout2->GetRootPane())->FindPaneByName((char*)"txt_value02_02", true);
-        setPaneVisible(pn238, 0);
+        pane = (mpLayout2->GetRootPane())->FindPaneByName((char*)"txt_value02_02", true);
 
         // Snapshot the message pane's two vertex-colour pairs into the sbss
         // colour globals.
-        GXColorS10 col1 = PaneMatGetS16Quad(pn238, 0);
+        GXColorS10 col1 = PaneMatGetS16Quad(pane, 0);
         CopyVec4s(&sArtsPaneTevColorA, &col1);
-        GXColorS10 col2 = PaneMatGetS16Quad(pn238, 1);
+        GXColorS10 col2 = PaneMatGetS16Quad(pane, 1);
         CopyVec4s(&sArtsPaneTevColorB, &col2);
 
-        // Swap the last halfword of the two cached colour records (retail
-        // exchanges element [3] between sArtsPaneTevColorA/64750 via sda21).
-        s16 sw = *(s16*)((u8*)&sArtsPaneTevColorA + 6);
-        *(s16*)((u8*)&sArtsPaneTevColorA + 6) = *(s16*)((u8*)&sArtsPaneTevColorB + 6);
-        *(s16*)((u8*)&sArtsPaneTevColorB + 6) = sw;
+        // The change colours keep the pane's original alpha.
+        sArtsChangeColorA.a = sArtsPaneTevColorA.a;
+        sArtsChangeColorB.a = sArtsPaneTevColorB.a;
 
-        // Build a temporary cursor against the shared accessor and copy its
-        // body over the embedded one (vptr at +0 preserved; word copies).
-        CCur18 tmpCursor;
-        __ct__6CCur18FPQ34nw4r3lyt19ArcResourceAccessor(&tmpCursor, CUICfManager_getArcResourceAccessor());
-        mCursor = tmpCursor;
-        __dt__6CCur18Fv(&tmpCursor, -1);
+        // Rebuild the embedded cursor against the shared accessor (implicit
+        // operator= copies the body; the vptr at +0 is preserved).
+        mCursor = CCur18(CUICfManager_getArcResourceAccessor());
         mCursor.initLayout();
         CArtsInfo_BindAllPanes(this);
         CArtsInfo_Refresh(this);
@@ -2496,6 +2414,6 @@ bool CArtsInfo::OnFileEvent(CEventFile* event) {
 void sinit_8023BC8C() {
     SplitU32ToS16s(&sArtsPaneTevColorA, 0);
     SplitU32ToS16s(&sArtsPaneTevColorB, 0);
-    setGXColorS10((GXColorS10*)&sArtsChangeColorA, 0xff, 0xff, 0xfa, 0);
-    setGXColorS10((GXColorS10*)&sArtsChangeColorB, 0x25, 0x8a, 0xce, 0);
+    setGXColorS10(&sArtsChangeColorA, 0xff, 0xff, 0xfa, 0);
+    setGXColorS10(&sArtsChangeColorB, 0x25, 0x8a, 0xce, 0);
 }

@@ -284,12 +284,6 @@ CtrlPlayerObj* getCfObjectPc(cf::CfObjectMove* objMove);
 // Global-scope data arrays (MWCC does not mangle global variable names).
 extern u32 lbl_eu_80527E98[];
 extern u32 lbl_eu_80527F10[];
-// sdata2 float constants used by CtrlPc_FindSyncSource / CtrlPc_InstallArtsAction. const
-// declarations so MWCC treats the loads as constants and hoists them into
-// the prologue (see MWCC_CASES §extern const float hoist).
-extern const f32 lbl_eu_80666720;
-extern const f32 lbl_eu_80666724;
-extern const f32 lbl_eu_80666718;   // facing-angle scale used by CtrlPc_UpdateLockOnAim
 // Retail CtrlPc vtable data (.data at 0x80527DB0). Stored manually because
 // the class is __declspec(novtable).
 extern u8 lbl_eu_80527DB0[];

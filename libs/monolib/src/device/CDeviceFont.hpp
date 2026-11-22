@@ -144,13 +144,7 @@ extern char lbl_eu_80537700[];
 extern char lbl_eu_805376EC[];
 extern char lbl_eu_805376B8[];
 
-// Unmangled C-linkage imports used by wkUpdate (retail emits these names
-// literally, so they cannot be expressed as C++ members): the font-loader
-// ctor, its set-path helper, and the SC language query.
+// Unmangled C-linkage import used by wkUpdate: the SC language query.
 extern "C" {
-void* __ct__CDeviceFontLoader(CDeviceFontLoader* self, const char* name,
-                              CWorkThread* parent);
-void setFontPath__17CDeviceFontLoaderFv(CDeviceFontLoader* self, void* arg1,
-                                          const char* pPath);
 bool func_eu_8044A600();
 }

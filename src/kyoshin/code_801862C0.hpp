@@ -131,14 +131,6 @@ public:
 
 class CScnItemModel;
 
-// .sdata2 constants used by ArtsSelect_SpawnRow (retail .sdata2 pool; see owning absorb/typed defs in the defining TU)
-extern const f32 lbl_eu_806679C0;  // 0.0001 position scale
-extern const f32 lbl_eu_806679C4;  // 0.01 rotation scale
-extern const f32 lbl_eu_806679C8;  // 0.1 scale-column scale
-extern const f32 lbl_eu_806679CC;  // 1000.0 place-helper arg
-extern const f64 lbl_eu_806679D0;  // signed int-to-double magic
-extern const f64 lbl_eu_806679D8;  // unsigned int-to-double magic
-
 // Notifier at widget+0x98 is a CScnItemModel (retail vfunc88(int) at
 // vtable+0x88). See libs/monolib/src/scn/CScnItemModel.hpp.
 

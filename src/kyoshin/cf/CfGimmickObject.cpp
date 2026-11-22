@@ -28,7 +28,7 @@ int GimObjRefreshStepState(cf::CfGimmickObject* self);
 // come before the code so MWCC's compiler-generated GimObjDispatchStateRefresh dispatch
 // table lands after them at 0xD8, exactly like retail (zeros + section
 // relocs in the .o). Every object sits on an aligned offset.
-__declspec(section ".data") __attribute__((used))
+__attribute__((used))
 CfGimmickObjectPmfEntry lbl_eu_80534E70[6] = {
     {{ 0, 0xFFFFFFFFu, (u32)GimObjGateOnStateFlags }},
     {{ 0, 0xFFFFFFFFu, (u32)GimObjGateStepAvailability }},
@@ -37,7 +37,7 @@ CfGimmickObjectPmfEntry lbl_eu_80534E70[6] = {
     {{ 0, 0xFFFFFFFFu, (u32)GimObjStepDone }},
     {{ 0, 0xFFFFFFFFu, (u32)GimObjCheckStepBusy }},
 };
-__declspec(section ".data") __attribute__((used))
+__attribute__((used))
 CfGimmickObjectPmfEntry lbl_eu_80534EB8[6] = {
     {{ 0, 0xFFFFFFFFu, (u32)GimObjAdvanceStep }},
     {{ 0, 0xFFFFFFFFu, (u32)GimObjAdvanceStep }},
@@ -46,13 +46,13 @@ CfGimmickObjectPmfEntry lbl_eu_80534EB8[6] = {
     {{ 0, 0xFFFFFFFFu, (u32)GimObjTickSpawnSteps }},
     {{ 0, 0xFFFFFFFFu, (u32)GimObjRefreshStepState }},
 };
-__declspec(section ".data") __attribute__((used))
-const char* lbl_eu_80534F00[8] = {
+__attribute__((used))
+char* gGimObjAreaColumnNames[8] = { // name-guess: eight per-area bdat column-name slots
     "r1_quest_FLG", "r1_quest_STFLG", "r1_S_FLG_MIN", "r1_S_FLG_MAX",
     "r1_gimID", "r1_named_FLG", "r1_item", "r1_item_lost",
 };
-__declspec(section ".data") __attribute__((used))
-char* lbl_eu_80534F20[10] = {
+__attribute__((used))
+char* gGimObjStepColumnNames[10] = { // name-guess: ten per-step bdat column-name slots
     "s1pcwait", "s1camID", "s1ACT", "s1LODtype",
     "s1LODsub", "s1EF", "s1EFATR", "s1SE",
     "s1SEATR", "s1LODSTOP",
@@ -163,16 +163,16 @@ extern "C" cf::CfGimmickObject* __ct__cf_CfGimmickObject(
     for (int i = 0; i < 2; ++i) {
         char digit = (char)('1' + i);
         for (int k = 0; k < 8; ++k)
-            ((char*)lbl_eu_80534F00[k])[1] = digit;
+            gGimObjAreaColumnNames[k][1] = digit;
         CfGimmickObjectArea* e = &self->field_84[i];
-        e->field_00 = ctorCol16(holder, lbl_eu_80534F00[0], row);
-        e->field_02 = ctorCol16(holder, lbl_eu_80534F00[1], row);
-        e->field_04 = ctorCol16(holder, lbl_eu_80534F00[2], row);
-        e->field_06 = ctorCol16(holder, lbl_eu_80534F00[3], row);
-        e->field_08 = ctorCol16(holder, lbl_eu_80534F00[4], row);
-        e->field_0A = ctorCol16(holder, lbl_eu_80534F00[5], row);
-        e->field_0C = ctorCol16(holder, lbl_eu_80534F00[6], row);
-        e->field_0E = ctorCol16(holder, lbl_eu_80534F00[7], row);
+        e->field_00 = ctorCol16(holder, gGimObjAreaColumnNames[0], row);
+        e->field_02 = ctorCol16(holder, gGimObjAreaColumnNames[1], row);
+        e->field_04 = ctorCol16(holder, gGimObjAreaColumnNames[2], row);
+        e->field_06 = ctorCol16(holder, gGimObjAreaColumnNames[3], row);
+        e->field_08 = ctorCol16(holder, gGimObjAreaColumnNames[4], row);
+        e->field_0A = ctorCol16(holder, gGimObjAreaColumnNames[5], row);
+        e->field_0C = ctorCol16(holder, gGimObjAreaColumnNames[6], row);
+        e->field_0E = ctorCol16(holder, gGimObjAreaColumnNames[7], row);
     }
 
     self->field_152 = ctorCol16(holder, &colBase[0xf0], row);
@@ -181,21 +181,21 @@ extern "C" cf::CfGimmickObject* __ct__cf_CfGimmickObject(
     for (int i = 0; i < 5; ++i) {
         char digit = (char)('1' + i);
         for (int k = 0; k < 10; ++k)
-            lbl_eu_80534F20[k][1] = digit;
+            gGimObjStepColumnNames[k][1] = digit;
         CfGimmickObjectStep* s = &self->field_A4[i];
         if (i < 4)
-            s->field_00 = ctorCol16(holder, lbl_eu_80534F20[0], row);
+            s->field_00 = ctorCol16(holder, gGimObjStepColumnNames[0], row);
         else
             s->field_00 = 0;
-        s->field_02 = ctorCol16(holder, lbl_eu_80534F20[1], row);
-        s->field_04 = ctorCol8(holder, lbl_eu_80534F20[2], row);
-        s->field_05 = ctorCol8(holder, lbl_eu_80534F20[3], row);
-        s->field_06 = ctorCol8(holder, lbl_eu_80534F20[4], row);
-        s->field_07 = ctorCol8(holder, lbl_eu_80534F20[5], row);
-        s->field_08 = ctorCol8(holder, lbl_eu_80534F20[6], row);
-        s->field_0A = ctorCol16(holder, lbl_eu_80534F20[7], row);
-        s->field_0E = ctorCol8(holder, lbl_eu_80534F20[8], row);
-        s->field_0C = ctorCol16(holder, lbl_eu_80534F20[9], row);
+        s->field_02 = ctorCol16(holder, gGimObjStepColumnNames[1], row);
+        s->field_04 = ctorCol8(holder, gGimObjStepColumnNames[2], row);
+        s->field_05 = ctorCol8(holder, gGimObjStepColumnNames[3], row);
+        s->field_06 = ctorCol8(holder, gGimObjStepColumnNames[4], row);
+        s->field_07 = ctorCol8(holder, gGimObjStepColumnNames[5], row);
+        s->field_08 = ctorCol8(holder, gGimObjStepColumnNames[6], row);
+        s->field_0A = ctorCol16(holder, gGimObjStepColumnNames[7], row);
+        s->field_0E = ctorCol8(holder, gGimObjStepColumnNames[8], row);
+        s->field_0C = ctorCol16(holder, gGimObjStepColumnNames[9], row);
     }
 
     // Register both configured LOD tasks unless their shared flag bit is

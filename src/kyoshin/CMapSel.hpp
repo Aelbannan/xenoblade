@@ -104,9 +104,6 @@ extern "C" char lbl_eu_8050B4A8[];
 // BDAT map-table pointers (.sbss, sda21-relative).
 // Current map id (.sbss) - initial grid selection target.
 extern u32 lbl_eu_80664184;
-extern "C" float lbl_eu_80668738;
-extern "C" float lbl_eu_80668740;
-extern "C" float lbl_eu_80668744;
 // Canonical AnimRewindFrame (nw4r::lyt::AnimTransform*, float) is declared in
 // code_80135FDC.hpp. CMapSel.cpp includes that header and passes proper
 // AnimTransform* pointers; the guard below stays for TUs that include both
@@ -114,4 +111,3 @@ extern "C" float lbl_eu_80668744;
 // contract so code_802405F4.cpp's define stays a no-op).
 #ifndef KYOSHIN_SKIP_CMAPSEL_LEGACY_LAYOUT_IMPORTS
 #endif
-extern "C" const float lbl_eu_8066873C;

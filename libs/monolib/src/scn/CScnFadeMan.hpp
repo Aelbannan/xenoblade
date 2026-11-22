@@ -32,13 +32,3 @@ public:
     s32 mCurrentFrame;        //0x38
     s32 mFrameCount;          //0x3c
 };
-
-// Shared sdata2 constant-pool floats referenced by name so the relocs resolve to
-// the retail labels instead of a local pool entry. Declared at global scope with
-// plain extern (no C linkage block): MWCC emits the same symbol without
-// mangling these names.
-extern float lbl_eu_8066AB7C; // 8.8 fixed -> float combine scale
-extern float lbl_eu_8066AB80; // 1.0f
-extern float lbl_eu_8066AB78; // 0.0f
-extern float lbl_eu_8066AB90; // 1.2f
-

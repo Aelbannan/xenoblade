@@ -60,14 +60,14 @@ u16 CharStrmReader::ReadNextCharSJIS() {
 // Retail .data pools: encoding ReadFunc table (0x8056AE30) + RomFont default
 // reader copy (0x8056AE60). Typed as CharStrmReader::ReadFunc to match Font.h.
 extern "C" {
-__declspec(section ".data") __attribute__((aligned(8)))
+__attribute__((aligned(8)))
 nw4r::ut::CharStrmReader::ReadFunc lbl_eu_8056AE30[4] = {
     &nw4r::ut::CharStrmReader::ReadNextCharUTF8,
     &nw4r::ut::CharStrmReader::ReadNextCharUTF16,
     &nw4r::ut::CharStrmReader::ReadNextCharSJIS,
     &nw4r::ut::CharStrmReader::ReadNextCharCP1252,
 };
-__declspec(section ".data") __attribute__((aligned(8)))
+__attribute__((aligned(8)))
 nw4r::ut::CharStrmReader::ReadFunc lbl_eu_8056AE60 =
     &nw4r::ut::CharStrmReader::ReadNextCharCP1252;
 }

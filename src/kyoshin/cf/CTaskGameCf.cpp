@@ -78,10 +78,8 @@ namespace cf{
     CTaskGameCf::~CTaskGameCf(){}
     #pragma optimize_for_size off
 
-cf::CTaskGameCf* lbl_eu_80663D38;
-
 CTaskGameCf* CTaskGameCf::getInstance() {
-    return lbl_eu_80663D38;
+    return spInstance;
 }
 
     void CTaskGameCf::reqExit(){
@@ -90,13 +88,6 @@ CTaskGameCf* CTaskGameCf::getInstance() {
             gmGameFlags |= 0x200000;
         }
     }
-
-extern "C" const CTaskGameCf::MoveFunc lbl_eu_80525AB8;
-extern "C" const CTaskGameCf::MoveFunc lbl_eu_80525B30;
-extern "C" const u32 lbl_eu_80525B0C[3];
-// Pooled constant PTMF for startMission's mMoveFunc store (retail .data label);
-// referencing it by name keeps the pool reloc named instead of a private @label.
-extern "C" const CTaskGameCf::MoveFunc lbl_eu_80525AD0;
 
 void CTaskGameCf::startMode1New() {
     mMoveFunc = &CTaskGameCf::startNewGame;
@@ -119,7 +110,7 @@ void CTaskGameCf::startMode2Con() {
     #pragma optimize_for_size off
 
 void CTaskGameCf::Init() {
-    lbl_eu_80663D38 = this;
+    spInstance = this;
 }
 
     void CTaskGameCf::Term(){
@@ -159,9 +150,6 @@ void cf::CTaskGameCf::chainNextMove(){
     mMoveFunc = &CTaskGameCf::setPooledMove;
 }
 
-extern "C" CTaskGameCf::MoveFunc lbl_eu_80525B18;
-extern "C" const CTaskGameCf::MoveFunc lbl_eu_80525B24;
-
 void CTaskGameCf::setPooledMove(){
     mMoveFunc = &CTaskGameCf::bootGameWorld;
 }
@@ -173,7 +161,7 @@ void CTaskGameCf::setPooledMove(){
         if(!(unk_54 & 8)){
             CTaskGame_setVec4_tmp tmp;
             Scn_ReleaseUnk80(pTaskGame->getScene(), 0,
-                          reinterpret_cast<u32*>(CTaskGame_setVec4(&tmp, lbl_eu_80665D88, lbl_eu_80665D88, lbl_eu_80665D88, lbl_eu_80665D8C)));
+                          reinterpret_cast<u32*>(CTaskGame_setVec4(&tmp, 0.0f, 0.0f, 0.0f, 1.0f)));
         }
 
         MenuStateInitFlags();
@@ -234,8 +222,6 @@ void CTaskGameCf::setPooledMove(){
             CtrlRemote_SetSharedBit(0x20, 1);
         }
         CTaskGame_setLoadScreen(1, 0);
-        // Switch to the running-state move handler (pooled PTMF copy from
-        // the retail .data constant at lbl_eu_80525B24).
         mMoveFunc = &CTaskGameCf::tickExitCheck;
     }
     #pragma optimize_for_size off
@@ -265,7 +251,7 @@ void CTaskGameCf::setPooledMove(){
             // Reset scene color while the message system is unloaded (bit 24 of gmPauseFlags).
             if(!(gmPauseFlags & 0x01000000)){
                 CTaskGame_setVec4_tmp tmp;
-                Scn_ReleaseUnk80(pTaskGame->getScene(), 0, CTaskGame_setVec4(&tmp, lbl_eu_80665D88, lbl_eu_80665D88, lbl_eu_80665D88, lbl_eu_80665D8C));
+                Scn_ReleaseUnk80(pTaskGame->getScene(), 0, CTaskGame_setVec4(&tmp, 0.0f, 0.0f, 0.0f, 1.0f));
             }
 
             if(UIWin_GetInstance()){

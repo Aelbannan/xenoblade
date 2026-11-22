@@ -212,16 +212,9 @@ extern "C" void CfGimmickLock_Activate(cf::CfGimmickLock* self);
 extern "C" void CfGimmickLock_MarkSlots(cf::CfGimmickLock* self, int flag);
 
 // Small-data constants / globals.
-extern const f32 lbl_eu_806683B0;
-extern const f32 lbl_eu_806683B4;
-extern const f32 lbl_eu_806683B8;
-extern const f32 lbl_eu_806683BC;
-extern const f32 lbl_eu_806683C0;
-extern const f32 lbl_eu_806683C4;
 #include "kyoshin/cf/CfObjectEnumList.hpp"  // owning header for sEneColiProbe
 #include "kyoshin/cf/CfBdat.hpp"  // owning header for gLockBdatTable
 extern const void* sGimmickLockIdColumns[2];      // sda21 pointer table (first word is lock-id column name buffer)
-extern char lbl_eu_805086EC[];   // column-name string for configFlags
 extern void* gmCurrentView;    // scene/manager global
 extern u32 gGimmickPartyFlags;
 

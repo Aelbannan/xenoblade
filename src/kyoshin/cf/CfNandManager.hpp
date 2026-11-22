@@ -204,7 +204,7 @@ extern cf::CfNandManager* gpCfNandManager;
 extern u8 gCfNandFileEventPending;
 // u16 event-status word (.sbss) cleared by NandQueueReset, set by the ctor
 // and by NandFileEvent's file-event handling.
-extern u16 lbl_eu_8066476E;
+extern u16 gNandEventStatus;
 // NAND resource teardown globals (.sbss) cleared by NandTeardown.
 extern void* gpCfNandCaptureBuf;  // heap buffer freed via MemManager::deallocate
 
@@ -228,7 +228,7 @@ extern u32 __ptmf_null[3];
 
 // Party-snapshot fallback data (.bss, 3 words) for missing player slots
 // (NandCopyParty) and the fallback float (.sbss).
-extern f32 lbl_eu_80663E54;
+extern f32 gmNandFloat54;
 
 // First 8 bytes shared by the snapshot entry and the player info struct;
 // NandCopyParty copies it as one unit.

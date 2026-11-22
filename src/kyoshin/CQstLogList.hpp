@@ -140,12 +140,5 @@ extern u32 sQuestEntryCount;      // quest-list init flag (.sbss)
 extern u32 sSelectedQuestId;      // current quest id (.sbss)
 extern u32 sSelectedQuestIndex;      // current quest index (.sbss)
 extern u32 sSelectedQuestResource;      // current quest resource (.sbss)
-extern u32 lbl_eu_80662860;      // quest pane color (.sbss)
+extern u32 sQuestLogPaneColor;   // quest pane vertex colour
 extern u32 lbl_eu_80573D18[];    // quest name table (split1 .rodata)
-// const routes into readonly sdata2 - MWCC hoists the lfs above the frame
-// stores (MWCC_CASES:8787); plain extern float schedules it late.
-extern const float lbl_eu_80668584;  // anim frame target (sda21)
-// Scroll-bar init position constants (sda21 floats).
-extern const float lbl_eu_80668578;
-extern const float lbl_eu_8066857C;
-extern const float lbl_eu_80668580;

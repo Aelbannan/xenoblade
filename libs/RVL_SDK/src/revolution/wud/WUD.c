@@ -1223,6 +1223,41 @@ WUDDevInfo* WUDiGetDevInfo(BD_ADDR addr) {
 
 
 
+static WUDDevInfo* WUDiGetDevInfoIndex(int idx) {
+    WUDCB* p = &_wcb;
+    WUDDevInfo* pInfo;
+    BOOL enabled = OSDisableInterrupts();
+
+    if (idx >= 0 && idx < WUD_MAX_DEV_ENTRY_FOR_STD) {
+        pInfo = &p->stdDevs[idx];
+    } else {
+        pInfo = &p->smpDevs[idx - WUD_MAX_DEV_ENTRY_FOR_STD];
+    }
+
+    OSRestoreInterrupts(enabled);
+    return pInfo;
+}
+
+static u8 WUDiGetDevNumber(void) {
+    WUDCB* p = &_wcb;
+    BOOL enabled = OSDisableInterrupts();
+
+    u8 num = p->devNums;
+
+    OSRestoreInterrupts(enabled);
+    return num;
+}
+
+static u8 WUDiGetDevSmpNumber(void) {
+    WUDCB* p = &_wcb;
+    BOOL enabled = OSDisableInterrupts();
+
+    u8 num = p->devSmpNums;
+
+    OSRestoreInterrupts(enabled);
+    return num;
+}
+
 static u8 WUDiGetConnNumber(void) {
     WUDCB* p = &_wcb;
     BOOL enabled = OSDisableInterrupts();
@@ -1951,23 +1986,14 @@ u8 __wudSyncDone(void) {
     extern char lbl_80562618[];
     WUDCB* p = &_wcb;
     WUDSyncDeviceCallback cb;
-    BOOL enabled;
     int i;
     WUDDevInfo* pDev;
-
-    // Scan every device slot (std slots first, then SMP); sniff any device
-    // left in status 8 back down before finishing the sync.
 
     if (p->syncSkipChecks != 0) {
         for (i = 0; i < WUD_MAX_DEV_ENTRY; i++) {
             tBTM_PM_PWR_MD block;
 
-            enabled = OSDisableInterrupts();
-            // IV-first offset form keeps MWCC's base+IV strength reduction
-            // (walking-pointer hoist otherwise).
-            pDev = (u32)i <= 9 ? (WUDDevInfo*)((u8*)&_wcb + ((u32)i * 0x60) + 0xE4)
-                               : (WUDDevInfo*)((u8*)&_wcb + (((u32)i - 10) * 0x60) + 0x4A4);
-            OSRestoreInterrupts(enabled);
+            pDev = WUDiGetDevInfoIndex(i);
 
             if (pDev->status == 8) {
                 block.mode = BTM_PM_MD_SNIFF;
@@ -1985,12 +2011,7 @@ u8 __wudSyncDone(void) {
     OSCancelAlarm(&p->alarm);
 
     if (_wudAbortSync == 0) {
-        enabled = OSDisableInterrupts();
-        _wcb.discoverable = FALSE;
-        _wcb.connectable = TRUE;
-        OSRestoreInterrupts(enabled);
-
-        BTA_DmSetVisibility(0, 1);
+        WUDSetVisibility(FALSE, TRUE);
     }
 
     cb = p->syncType == WUD_SYNC_TYPE_STANDARD ? p->syncStdCB : p->syncSmpCB;
@@ -2015,20 +2036,15 @@ void __wudSyncHandler(void) {
 
     case WUD_STATE_SYNC_WAIT_FOR_START_SEARCH: {
         u8 linkNum;
-        u8 connNum;
         u8 nextState;
 
         if (p->syncLoopNum == 0) {
             nextState = WUD_STATE_SYNC_DONE;
         } else {
-            enabled = OSDisableInterrupts();
-            linkNum = p->linkedNum;
-            OSRestoreInterrupts(enabled);
+            linkNum = _WUDGetLinkNumber();
 
             if (linkNum == WUD_MAX_CHANNELS &&
-                (enabled = OSDisableInterrupts(),
-                 connNum = p->connectedNum, OSRestoreInterrupts(enabled),
-                 connNum) == WUD_MAX_CHANNELS) {
+                WUDiGetConnNumber() == WUD_MAX_CHANNELS) {
                 nextState = WUD_STATE_SYNC_DONE;
             } else {
                 p->UNK_0x748--;
@@ -2058,18 +2074,14 @@ void __wudSyncHandler(void) {
         } else if (p->syncType == WUD_SYNC_TYPE_STANDARD) {
             u8 linkNum;
 
-            enabled = OSDisableInterrupts();
-            linkNum = p->linkedNum;
-            OSRestoreInterrupts(enabled);
+            linkNum = _WUDGetLinkNumber();
 
             dm_inq.duration =
                 (linkNum == WUD_MAX_CHANNELS - 1 ? 10 : 5) - p->syncLoopNum;
         } else {
             u8 linkNum;
 
-            enabled = OSDisableInterrupts();
-            linkNum = p->linkedNum;
-            OSRestoreInterrupts(enabled);
+            linkNum = _WUDGetLinkNumber();
 
             dm_inq.duration =
                 linkNum == WUD_MAX_CHANNELS - 1 ? 10 - 2 : 5 - 2;
@@ -2108,19 +2120,12 @@ void __wudSyncHandler(void) {
 
             nextState = WUD_STATE_SYNC_WAIT_FOR_INCOMING;
 
-            enabled = OSDisableInterrupts();
-            linkNum = _wcb.linkedNum;
-            OSRestoreInterrupts(enabled);
+            linkNum = _WUDGetLinkNumber();
 
             _wcb.UNK_0x74A =
                 (linkNum == WUD_MAX_CHANNELS - 1) ? 0xC8 : 0x64;
 
-            enabled = OSDisableInterrupts();
-            _wcb.discoverable = FALSE;
-            _wcb.connectable = TRUE;
-            OSRestoreInterrupts(enabled);
-
-            BTA_DmSetVisibility(FALSE, TRUE);
+            WUDSetVisibility(FALSE, TRUE);
         }
 
         p->syncState = nextState;
@@ -2420,17 +2425,12 @@ void __wudSyncHandler(void) {
 
     case WUD_STATE_SYNC_WAIT_FOR_SEARCH_RESULT: {
         u8 linkNum;
-        u8 connNum;
         u8 nextState;
 
-        enabled = OSDisableInterrupts();
-        linkNum = p->linkedNum;
-        OSRestoreInterrupts(enabled);
+        linkNum = _WUDGetLinkNumber();
 
         if (linkNum == WUD_MAX_CHANNELS &&
-            (enabled = OSDisableInterrupts(),
-             connNum = p->connectedNum, OSRestoreInterrupts(enabled),
-             connNum) == WUD_MAX_CHANNELS) {
+            WUDiGetConnNumber() == WUD_MAX_CHANNELS) {
             DEBUGPrint(pMsg + 0x3F8);
             BTA_DmSearchCancel();
             nextState = WUD_STATE_SYNC_CANCEL_SEARCH;
@@ -2445,16 +2445,11 @@ void __wudSyncHandler(void) {
     case WUD_STATE_SYNC_WAIT_FOR_INCOMING: {
         u8 nextState = WUD_STATE_SYNC_WAIT_FOR_INCOMING;
         u8 linkNum;
-        u8 connNum;
 
-        enabled = OSDisableInterrupts();
-        linkNum = p->linkedNum;
-        OSRestoreInterrupts(enabled);
+        linkNum = _WUDGetLinkNumber();
 
         if (linkNum == WUD_MAX_CHANNELS &&
-            (enabled = OSDisableInterrupts(),
-             connNum = p->connectedNum, OSRestoreInterrupts(enabled),
-             connNum) == WUD_MAX_CHANNELS) {
+            WUDiGetConnNumber() == WUD_MAX_CHANNELS) {
             nextState = WUD_STATE_SYNC_DONE;
         }
 
@@ -2592,17 +2587,11 @@ u8 __wudDeleteDisconnectAll(void) {
 #pragma pop
 
 u8 __wudDeleteCleanupDatabase(void) {
-    u8 linkedNum;
     int i;
     WUDCB* p = &_wcb;
-    BOOL enabled;
     u32 crc;
 
-    enabled = OSDisableInterrupts();
-    linkedNum = p->linkedNum;
-    OSRestoreInterrupts(enabled);
-
-    if (linkedNum != 0) {
+    if (_WUDGetLinkNumber() != 0) {
         return WUD_STATE_DELETE_CLEANUP_DATABASE;
     }
 
@@ -3532,9 +3521,7 @@ void WUDShutdown(BOOL onReconnect) {
     extern char lbl_80562A64[];
     WUDCB* p = &_wcb;
     BOOL enabled;
-    u8 num;
     int i;
-    BOOL busy;
     WUDDevInfoList* pIt;
 
     DEBUGPrint(lbl_80562A64);
@@ -3542,23 +3529,7 @@ void WUDShutdown(BOOL onReconnect) {
     // Outer interrupt disable stays live until the end of the function.
     enabled = OSDisableInterrupts();
 
-    // WUDIsBusy(), which retail inlines here (own disable/restore pair).
-    {
-        BOOL e = OSDisableInterrupts();
-
-        if (p->syncState == WUD_STATE_SYNC_START &&
-            p->deleteState == WUD_STATE_DELETE_START &&
-            p->stackState == WUD_STATE_STACK_INITIALIZED &&
-            p->initState == 6) {
-            OSRestoreInterrupts(e);
-            busy = FALSE;
-        } else {
-            OSRestoreInterrupts(e);
-            busy = TRUE;
-        }
-    }
-
-    if (busy) {
+    if (WUDIsBusy()) {
         OSCancelAlarm(&p->alarm);
     }
 
@@ -3572,12 +3543,7 @@ void WUDShutdown(BOOL onReconnect) {
                sizeof(SCDevInfo));
     }
 
-    {
-        BOOL e = OSDisableInterrupts();
-        num = _wcb.devNums;
-        OSRestoreInterrupts(e);
-    }
-    _scArray.numRegist = num;
+    _scArray.numRegist = WUDiGetDevNumber();
 
     memset(&_spArray.regist, 0,
            sizeof(SCBtCmpDevInfo) * WUD_MAX_DEV_ENTRY_FOR_SMP);
@@ -3593,12 +3559,7 @@ void WUDShutdown(BOOL onReconnect) {
                    sizeof(LINK_KEY));
         }
 
-        {
-            BOOL e = OSDisableInterrupts();
-            num = _wcb.devSmpNums;
-            OSRestoreInterrupts(e);
-        }
-        _spArray.numRegist = num;
+        _spArray.numRegist = WUDiGetDevSmpNumber();
     } else {
         _spArray.numRegist = 0;
     }
@@ -3644,79 +3605,80 @@ void __wudShutdownHandler0(OSAlarm* pAlarm, OSContext* pContext) {
     OSSwitchFiberEx((u32)pAlarm, (u32)pContext, 0, 0, __wudShutdownHandler,
                     _wudHandlerStack + sizeof(_wudHandlerStack));
 }
+static void WUDiClearDevice(void) {
+    WUDCB* p = &_wcb;
+    BOOL enabled = OSDisableInterrupts();
+
+    memset(p->stdDevs, 0, sizeof(p->stdDevs));
+    memset(p->smpDevs, 0, sizeof(p->smpDevs));
+
+    p->devNums = 0;
+    p->devSmpNums = 0;
+    p->connectedNum = 0;
+    p->linkedNum = 0;
+    p->syncedNum = 0;
+
+    OSRestoreInterrupts(enabled);
+}
+
 void __wudClearControlBlock(void) {
     extern char lbl_80562A20[];
-    u8 h;
+    WUDCB* p = &_wcb;
     int i;
-    BOOL enabled;
 
     DEBUGPrint(lbl_80562A20);
 
-    for (h = 0; h < WUD_MAX_DEV_ENTRY; h++) {
-        _dev_handle_to_bda[h] = NULL;
-        _dev_handle_queue_size[h] = 0;
-        _dev_handle_notack_num[h] = 0;
+    for (i = 0; i < WUD_MAX_DEV_ENTRY; i++) {
+        _dev_handle_to_bda[(u8)i] = NULL;
+        _dev_handle_queue_size[(u8)i] = 0;
+        _dev_handle_notack_num[(u8)i] = 0;
     }
 
-    // Direct _wcb.* accesses: MWCC anchors them on a canonical &_wcb base
-    // pseudo that folds the same-TU handle arrays in as base+offset and
-    // rematerializes short-lived copies after calls, like retail.
-    _wcb.smpListHead = &_wcb.smpList[0];
-    _wcb.smpListTail = &_wcb.smpList[WUD_MAX_DEV_ENTRY_FOR_SMP - 1];
+    p->smpListTail = &p->smpList[WUD_MAX_DEV_ENTRY_FOR_SMP - 1];
+    p->smpListHead = &p->smpList[0];
 
     for (i = 0; i < WUD_MAX_DEV_ENTRY_FOR_SMP; i++) {
-        _wcb.smpList[i].devInfo =
-            &_wcb.smpDevs[WUD_MAX_DEV_ENTRY_FOR_SMP - 1 - i];
-        _wcb.smpList[i].prev = i == 0 ? NULL : &_wcb.smpList[i - 1];
-        _wcb.smpList[i].next = i == WUD_MAX_DEV_ENTRY_FOR_SMP - 1
+        p->smpList[i].devInfo =
+            &p->smpDevs[WUD_MAX_DEV_ENTRY_FOR_SMP - 1 - i];
+        p->smpList[i].prev = i == 0 ? NULL : &p->smpList[i - 1];
+        p->smpList[i].next = i == WUD_MAX_DEV_ENTRY_FOR_SMP - 1
                                    ? NULL
-                                   : &_wcb.smpList[i + 1];
+                                   : &p->smpList[i + 1];
     }
 
-    _wcb.stdListHead = &_wcb.stdList[0];
-    _wcb.stdListTail = &_wcb.stdList[WUD_MAX_DEV_ENTRY_FOR_STD - 1];
+    p->stdListTail = &p->stdList[WUD_MAX_DEV_ENTRY_FOR_STD - 1];
+    p->stdListHead = &p->stdList[0];
 
     for (i = 0; i < WUD_MAX_DEV_ENTRY_FOR_STD; i++) {
-        _wcb.stdList[i].devInfo = &_wcb.stdDevs[i];
-        _wcb.stdList[i].prev = i == 0 ? NULL : &_wcb.stdList[i - 1];
-        _wcb.stdList[i].next = i == WUD_MAX_DEV_ENTRY_FOR_STD - 1
+        p->stdList[i].devInfo = &p->stdDevs[i];
+        p->stdList[i].prev = i == 0 ? NULL : &p->stdList[i - 1];
+        p->stdList[i].next = i == WUD_MAX_DEV_ENTRY_FOR_STD - 1
                                    ? NULL
-                                   : &_wcb.stdList[i + 1];
+                                   : &p->stdList[i + 1];
     }
 
-    _wcb.syncState = WUD_STATE_SYNC_START;
-    _wcb.linkKeyState = WUD_STATE_LINK_KEY_START;
-    _wcb.deleteState = WUD_STATE_DELETE_START;
-    _wcb.stackState = WUD_STATE_STACK_START;
-    _wcb.initState = WUD_STATE_INIT_START;
-    _wcb.shutdownState = WUD_STATE_SHUTDOWN_START;
-    _wcb.syncSkipChecks = FALSE;
-    _wcb.syncType = WUD_SYNC_TYPE_STANDARD;
-    _wcb.syncLoopNum = 1;
-    _wcb.connectable = FALSE;
-    _wcb.discoverable = FALSE;
-    _wcb.libStatus = WUD_LIB_STATUS_0;
-    _wcb.pmID = 0;
-    _wcb.syncRssi = -65;
+    p->syncState = WUD_STATE_SYNC_START;
+    p->linkKeyState = WUD_STATE_LINK_KEY_START;
+    p->deleteState = WUD_STATE_DELETE_START;
+    p->stackState = WUD_STATE_STACK_START;
+    p->initState = WUD_STATE_INIT_START;
+    p->shutdownState = WUD_STATE_SHUTDOWN_START;
+    p->syncSkipChecks = FALSE;
+    p->syncType = WUD_SYNC_TYPE_STANDARD;
+    p->syncLoopNum = 1;
+    p->connectable = FALSE;
+    p->discoverable = FALSE;
+    p->libStatus = WUD_LIB_STATUS_0;
+    p->pmID = 0;
+    p->syncRssi = -65;
 
-    memset(_wcb.hostAddr, 0, sizeof(BD_ADDR));
-    memset(_wcb.pairAddr, 0, sizeof(BD_ADDR));
+    memset(p->hostAddr, 0, sizeof(BD_ADDR));
+    memset(p->pairAddr, 0, sizeof(BD_ADDR));
 
-    _wcb.bufferStatus0 = 0;
-    _wcb.bufferStatus1 = 0xa;
+    p->bufferStatus0 = 0;
+    p->bufferStatus1 = 0xa;
 
-    enabled = OSDisableInterrupts();
-
-    memset(_wcb.stdDevs, 0, sizeof(_wcb.stdDevs));
-    memset(_wcb.smpDevs, 0, sizeof(_wcb.smpDevs));
-
-    _wcb.devNums = 0;
-    _wcb.devSmpNums = 0;
-    _wcb.connectedNum = 0;
-    _wcb.linkedNum = 0;
-    _wcb.syncedNum = 0;
-
-    OSRestoreInterrupts(enabled);
+    WUDiClearDevice();
 }
 BOOL __wudStartSyncDevice(u8 syncType, s8 syncLoopNum, u8 target,
                            BOOL syncSkipChecks) {
@@ -4011,12 +3973,7 @@ void __wudInitSub(void) {
     _wudReadNand = TRUE;
     OSRestoreInterrupts(enabled);
 
-    enabled = OSDisableInterrupts();
-    _wcb.discoverable = FALSE;
-    _wcb.connectable = TRUE;
-    OSRestoreInterrupts(enabled);
-
-    BTA_DmSetVisibility(FALSE, TRUE);
+    WUDSetVisibility(FALSE, TRUE);
 }
 void WUDiMoveTopOfUnusedStdDevice(WUDDevInfo* pInfo) {
     WUDCB* p = &_wcb;
@@ -4096,7 +4053,6 @@ void __wudSecurityEventStackCallback(tBTA_DM_SEC_EVT event,
     WUDCB* p = &_wcb;
     WUDDevInfo* pInfo;
     BOOL enabled;
-    u8 linkedNum;
     int i;
 
     DEBUGPrint(pMsg + 0xA7C);
@@ -4211,15 +4167,15 @@ void __wudSecurityEventStackCallback(tBTA_DM_SEC_EVT event,
             pInfo = &_wudDiscWork;
         }
 
-        if (pInfo == NULL ||
-            (enabled = OSDisableInterrupts(),
-             linkedNum = p->linkedNum, OSRestoreInterrupts(enabled),
-             linkedNum) == WUD_MAX_CHANNELS) {
+        if (pInfo == NULL || _WUDGetLinkNumber() == WUD_MAX_CHANNELS) {
             char* pReason;
 
             btm_remove_acl(pLinkUp->bd_addr);
 
-            pReason = pInfo != NULL ? pMsg + 0xC30 : pMsg + 0xC24;
+            pReason = pMsg + 0xC30;
+            if (pInfo == NULL) {
+                pReason = pMsg + 0xC24;
+            }
             DEBUGPrint(pMsg + 0xBFC, pReason, pLinkUp->bd_addr[0],
                        pLinkUp->bd_addr[1], pLinkUp->bd_addr[2],
                        pLinkUp->bd_addr[3], pLinkUp->bd_addr[4],
@@ -4642,9 +4598,6 @@ void __wudDeviceStatusEventStackCallback(tBTM_DEV_STATUS status) {
 void __wudLinkKeyEventStackCallback(void* p1) {
     char* pMsg = _wudWiiRemoteDescriptor;
     tBTM_BD_ADDR_LINK_KEY_PAIR* pPair;
-    // NOTE(residual): retail materializes &_wcb through a volatile scratch
-    // (lis r4 / addi r28,r4); every source shape tried fuses it into r28.
-    // See docs/MWCC_PATTERNS.md §1l. Leave the direct init - closest form.
     WUDCB* p = &_wcb;
     int j;
     WUDDevInfo* pInfo;
@@ -4699,7 +4652,7 @@ void __wudLinkKeyEventStackCallback(void* p1) {
                     // register sharing with the outer loop).
                     for (i = 0; i < WUD_MAX_DEV_ENTRY_FOR_SMP; i++) {
                         if (p->smpDevs[i].status == 0) {
-                            pNewInfo = &p->smpDevs[i];
+                            pNewInfo = &_wcb.smpDevs[i];
                             break;
                         }
                     }
@@ -4786,9 +4739,9 @@ void __wudPowerMangeEventStackCallback(BD_ADDR addr, tBTM_PM_STATUS status,
 
     pInfo = WUDiGetDevInfo(addr);
     if (pInfo == NULL) {
-        pInfo = &_wudDiscWork;
-
-        if (memcmp(pInfo->devAddr, addr, sizeof(BD_ADDR)) != 0) {
+        if (memcmp(_wudDiscWork.devAddr, addr, sizeof(BD_ADDR)) == 0) {
+            pInfo = &_wudDiscWork;
+        } else {
             DEBUGPrint(pMsg + 0x108c);
 
             DEBUGPrint(pMsg + 0x10d0, addr[0], addr[1], addr[2], addr[3],

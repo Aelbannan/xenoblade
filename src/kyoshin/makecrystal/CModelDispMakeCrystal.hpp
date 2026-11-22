@@ -264,14 +264,4 @@ extern "C" char* strcpy(char* dst, const char* src);
 // Defined in CMenuItem.cpp with C++ linkage.
 unsigned long ItemMenu_IsPresent();
 
-// Constructor data imports.
-// Non-const singletons would sink MWCC's SDA loads below aliasing stores
-// (see CModelDispMakeCrystal.cpp .sdata2 notes); each is a const [1] whose
-// [0] reads hoist like retail. Defined by the TU's .cpp pool block.
-extern const f32 lbl_eu_806684A8[1];
-extern const f32 lbl_eu_806684B0[1];
-extern const f32 lbl_eu_806684B4[1];
-extern const f32 lbl_eu_806684B8[1];
-extern const f32 lbl_eu_806684BC[1];
-extern const f32 lbl_eu_806684C0[1];
 

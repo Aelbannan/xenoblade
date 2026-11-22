@@ -16,7 +16,6 @@ extern "C" const f32 lbl_eu_8066A0F0; // 0.0f
 extern "C" const f32 lbl_eu_8066A0F4; // LPF scale lower bound
 extern "C" const f32 lbl_eu_8066A0F8; // LPF scale upper bound
 extern "C" const f32 lbl_eu_8066A0FC; // LPF scale step
-extern "C" const u16 lbl_eu_805223E0[]; // LPF freq table 80..16000 (24 entries)
 
 namespace nw4r {
 namespace snd {
@@ -191,6 +190,8 @@ private:
     // Pan curve tables
     static const int PAN_CURVE_NUM = PAN_CURVE_LINEAR + 1;
     static const f32* PanTableTable[PAN_CURVE_NUM];
+
+    static const u16 CalcLpfFreqTable[24];
 
     // Biquad filter coefficients (b0, b1, b2, a1, a2)
     static const int COEF_TABLE_MIN = 0;

@@ -30,6 +30,20 @@ struct CItemBoxItem {
     u8 mState;   // +0x07
 };
 
+// Per-art learn state inside a CItemBoxArtRow: level byte (non-zero once
+// learned) and a flag byte whose top bits gate the arts-book sources.
+struct CItemBoxArtSlot {
+    u8 mLevel;  // +0x00 // name-guess
+    u8 mFlags;  // +0x01 // name-guess
+};
+
+// 0x49-byte arts row indexed by the character's current row key: one header
+// byte followed by 36 art slots indexed by the pc_arts idx.
+struct CItemBoxArtRow {
+    u8 mHead;                   // +0x00 // name-guess
+    CItemBoxArtSlot mArts[36];  // +0x01 // name-guess
+};
+
 // Character-param entry returned by CtrlObjectParam_GetCharEntry. The six
 // s16 values at +0x1C..+0x27 are the equipped item ids for the six slots
 // (the weapon sits at +0x26), and +0x3534 is the counter/arts area. Shared by
@@ -40,7 +54,9 @@ struct CItemBoxCharEntry {
     u16 mBdatRow;            // +0x0C // name-guess: bdat row key copied into CItemBoxSlotEntry::h
     u8 _0E[0x1C - 0x0E];
     s16 slotIds[6];          // +0x1C..+0x27
-    u8 _28[0x17C - 0x28];
+    u8 _28[0xE7 - 0x28];
+    CItemBoxArtRow mArtRows[2]; // +0xE7 // name-guess: rows selected by GetCurrentRowKey
+    u8 _179[0x17C - 0x179];
     cf::CActorParam mParam;  // +0x17C (embedded actor parameter block)
     u8 _3500[0x3534 - 0x34FC]; // +0x3500..+0x3533
     u8 counterArea[0x8A0];   // +0x3534

@@ -779,11 +779,3 @@ extern "C" void* getEffOwner____FPv(void* obj);
 // findObjectById__Fi is declared (void* return) by code_802B8A3C.hpp via
 // CBattleManager.hpp - same mangled name, do not redeclare here.
 
-// sdata2 / sdata literals referenced by this unit (global scope: not mangled).
-extern f32 lbl_eu_80666CEC;
-extern f32 lbl_eu_80666CE4;
-extern const char* lbl_eu_80661D48;
-extern f32 lbl_eu_80666CE0;
-extern f32 lbl_eu_80666CE8;
-extern f32 lbl_eu_80666CF0;
-extern f32 lbl_eu_80666CF4;

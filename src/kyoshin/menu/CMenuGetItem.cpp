@@ -4,6 +4,7 @@
 #include "kyoshin/menu/CMenuGetItem.hpp"
 
 #include "monolib/device/CDeviceVI.hpp"
+#include "monolib/device/CDeviceFont.hpp"
 #include "monolib/lib/UnkClass_8045F564.hpp"
 #include "monolib/scn/CScn.hpp"
 #include "monolib/scn/IScnRender.hpp"
@@ -15,6 +16,7 @@
 #include "kyoshin/code_80135FDC.hpp"
 
 #include <nw4r/lyt/lyt_layout.h>
+#include <nw4r/lyt/lyt_pane.h>
 #include <nw4r/lyt/lyt_drawInfo.h>
 #include <revolution/GX.h>
 
@@ -28,14 +30,6 @@
 // GetItem singleton instance (retail SDA symbol).
 extern CMenuGetItem* lbl_eu_806641A8;
 
-// View of the nw4r Pane bytes this TU touches (retail nw4r keeps the visible
-// flag in the low bit of the byte at +0xBB; the repo's nw4r headers don't
-// model that field).
-struct PaneFlagView {
-    u8 _00[0xBB];
-    u8 flags; // 0xBB - bit 0 = visible
-};
-
 // View of the CProcess remove flag (CProcess keeps mIsRemove private at +0x39
 // with no accessor; the factories read it through this view).
 struct ProcessRemoveView {
@@ -43,21 +37,10 @@ struct ProcessRemoveView {
     u8 mIsRemove; // 0x39
 };
 
-// View of the AnimTransform float this TU touches (current-frame counter at
-// +0x10; repo nw4r AnimTransform is a skeleton without members).
-struct AnimFrameView {
-    u8 _00[0x10];
-    f32 frame; // 0x10
-};
-
 // C-linkage imports (retail names are unmangled free functions in this TU;
 // MWCC mangles plain global-scope free functions with a __F suffix, so the
 // declarations must sit under extern "C" to emit the retail reloc names).
 extern "C" u8 isLandTelopActive();
-// Pre-mangled static member name (CDeviceFont::getFontInfo(u32, Layout*));
-// extern "C" keeps the literal identifier (no double mangling).
-extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32 arg, nw4r::lyt::Layout* layout);
-
 // Already-open get-item handlers (stubs below; the factories call them). The
 // noinline keeps the retail `bl` at the call sites (empty bodies would be
 // inlined away by MWCC); extern "C" keeps the call relocs unmangled.
@@ -110,12 +93,12 @@ void CMenuGetItem::Init() {
 
         // Bind the font: push the font object's pane back onto the root pane.
         nw4r::lyt::Pane* rootPane = mLayout->GetRootPane();
-        void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, mLayout);
+        void* fontObj = CDeviceFont::getFontInfo(1, mLayout);
         u32 fontResult = ((u32 (*)(void*))(((void**)fontObj)[0x24 / 4]))(fontObj);
         ApplyFontToTxtPanes(rootPane, (const nw4r::ut::Font*)fontResult);
 
         mLayout->SetAnimationEnable(mField_78, true);
-        reinterpret_cast<AnimFrameView*>(mField_78)->frame = 0.0f;
+        mField_78->SetFrame(0.0f);
         mLayout->Animate(0);
 
         // Resolve the three variant panes by name.
@@ -155,16 +138,13 @@ void CMenuGetItem::Init() {
 
     u8 v = mField_2AF - 1;
     if (mField_7C != NULL) {
-        reinterpret_cast<PaneFlagView*>(mField_7C)->flags =
-            (reinterpret_cast<PaneFlagView*>(mField_7C)->flags & 0xFE) | (v > 0);
+        mField_7C->SetVisible(v > 0);
     }
     if (mField_80 != NULL) {
-        reinterpret_cast<PaneFlagView*>(mField_80)->flags =
-            (reinterpret_cast<PaneFlagView*>(mField_80)->flags & 0xFE) | (v > 1);
+        mField_80->SetVisible(v > 1);
     }
     if (mField_84 != NULL) {
-        reinterpret_cast<PaneFlagView*>(mField_84)->flags =
-            (reinterpret_cast<PaneFlagView*>(mField_84)->flags & 0xFE) | (v > 2);
+        mField_84->SetVisible(v > 2);
     }
 
     LayoutSetTextBoxFmtValue(mLayout, (char*)"txt_item", (char*)title, 0);

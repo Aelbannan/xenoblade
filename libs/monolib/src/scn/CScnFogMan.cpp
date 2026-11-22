@@ -26,11 +26,6 @@
 #undef FogManCopyFogParams
 #include "libs/monolib/src/scn/CScnFogMan.hpp"
 
-// Retail flash constants (fog default colour/parameters). Referenced directly
-// so the emitted lfs relocations hit the exact retail labels.
-extern const f32 lbl_eu_8066ABD4;
-extern const double lbl_eu_8066ABD8;
-
 // NW4R assert strings living in this TU's blob (see data below):
 // each Panic site references its own copy of the file/message pair.
 extern char lbl_eu_8056EBE0[];

@@ -36,6 +36,9 @@ struct UnkClass_8046368C {
     f32 field_0xC;   // 0x0C
     u8  pad_10[0x1C - 0x10];
     f32 field_0x1C;  // 0x1C
+
+    static void selectCubicLookup();
+    static void selectLinearLookup();
 };
 
 /**
@@ -101,10 +104,7 @@ u32* sLodPairOffsets;    // index -> pair-table offset
 void* sLodPairTable;   // pair table, stride 2 (u16 entries)
 f32 sLodThresholdDist;     // LOD threshold distance
 u16 sLodEntryKeyThreshold;     // per-entry distance key threshold (8B retail span)
-u16 lbl_eu_8066575A;     // pad within the 8B span
-u32 lbl_eu_8066575C;     // pad within the 8B span
-LOD::LODRecordFn sLodRecordLookupFn;  // active record lookup fn (8B retail span)
-u32 lbl_eu_80665764;     // pad within the 8B span
+LOD::LODRecordFn sLodRecordLookupFn __attribute__((aligned(8)));  // active record lookup fn (8B retail span)
 __declspec(align(8)) u32 sLodCacheTailFlag;  // retail tail global (aligns .sbss 8)
 extern void (*sLodRecordDispatchTable[])(LOD::UnkClass_8046368C*);  // .data dispatch
 
@@ -149,7 +149,7 @@ extern "C" void initLodTables__Q23LOD17CLODCacheManagerSFv(void* self)
 // ===========================================================================
 // us-8046765c  selectCubicLookup  (select the record-lookup function)
 // ===========================================================================
-extern "C" void selectCubicLookup__Q23LOD17UnkClass_8046368CFv()
+void UnkClass_8046368C::selectCubicLookup()
 {
     sLodRecordLookupFn = catmullRomBin__Q23LOD17CLODCacheManagerSFv;
 }
@@ -157,7 +157,7 @@ extern "C" void selectCubicLookup__Q23LOD17UnkClass_8046368CFv()
 // ===========================================================================
 // us-8046766c  selectLinearLookup  (select the other record-lookup function)
 // ===========================================================================
-extern "C" void selectLinearLookup__Q23LOD17UnkClass_8046368CFv()
+void UnkClass_8046368C::selectLinearLookup()
 {
     sLodRecordLookupFn = lerpDistEntry__Q23LOD17CLODCacheManagerSFv;
 }

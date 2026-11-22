@@ -6,11 +6,6 @@
 #include <revolution/MTX.h>
 #include <revolution/os/OSCache.h>
 
-// Retail nw4r data-pool constants referenced by the billboard kernels.  Named
-// after the retail symbols so the generated sda21 float relocations match
-// retail exactly (instead of TU-local pool labels).
-extern const f32 lbl_eu_80669C38;  // adjugate singularity epsilon (f32 view)
-
 namespace nw4r {
 namespace g3d {
 namespace detail {
@@ -23,6 +18,10 @@ namespace detail {
 static const u32 G3D_CALCVIEW_MAX_MTX = 32;
 
 namespace {
+
+// name-guess: no named symbol at retail .sdata2:0x80669C38; the 8-byte pair
+// {1.0e-18f, 0.0f} is the singular-determinant threshold used by the PS kernels.
+static const f32 scBillboardEpsilon[2] = { 1.0e-18f, 0.0f };
 
 // Forward declarations
 
@@ -72,10 +71,10 @@ asm void GetModelLocalAxisY2(register math::VEC3* pOut,
     ps_msub    f11, f1, f7, f11
     ps_mul     f12, f1, f8
     ps_msub    f13, f3, f8, f13
-    lis        r12, lbl_eu_80669C38@ha
+    lis        r12, scBillboardEpsilon@ha
     psq_l      f3, 0x18(pMtx), 1, 0
     ps_msub    f12, f5, f6, f12
-    addi       r12, r12, lbl_eu_80669C38@l
+    addi       r12, r12, scBillboardEpsilon@l
     ps_mul     f7, f0, f13
     ps_mul     f9, f0, f5
     psq_l      f6, 0x0(r12), 1, 0
@@ -135,7 +134,7 @@ void GetModelLocalAxisY2(math::VEC3* pOut, const math::MTX34* pMtx,
     f32 det = r0 * ix0 + r1 * ix1 + r2 * ix2;
     f32 absDet = det >= 0.0f ? det : -det;
     pOut->z = 0.0f;
-    if (absDet < lbl_eu_80669C38) {
+    if (absDet < scBillboardEpsilon[0]) {
         pOut->x = 0.0f;
         pOut->y = 0.0f;
         return;
@@ -186,10 +185,10 @@ asm void GetModelLocalAxisY3(register math::VEC3* pOut,
     ps_msub    f11, f1, f7, f11
     ps_mul     f12, f1, f8
     ps_msub    f13, f3, f8, f13
-    lis        r12, lbl_eu_80669C38@ha
+    lis        r12, scBillboardEpsilon@ha
     psq_l      f3, 0x18(pMtx), 1, 0
     ps_msub    f12, f5, f6, f12
-    addi       r12, r12, lbl_eu_80669C38@l
+    addi       r12, r12, scBillboardEpsilon@l
     ps_mul     f7, f0, f13
     ps_mul     f9, f0, f5
     psq_l      f6, 0x0(r12), 1, 0
@@ -254,7 +253,7 @@ void GetModelLocalAxisY3(math::VEC3* pOut, const math::MTX34* pMtx,
     // Determinant = right . X.  A (near-)singular parent yields no axis.
     f32 det = r0 * ix0 + r1 * ix1 + r2 * ix2;
     f32 absDet = det >= 0.0f ? det : -det;
-    if (absDet < lbl_eu_80669C38) {
+    if (absDet < scBillboardEpsilon[0]) {
         pOut->x = 0.0f;
         pOut->y = 0.0f;
         pOut->z = 0.0f;
@@ -295,8 +294,8 @@ void Calc_BILLBOARD_STD(math::MTX34* pOut, const math::MTX34* pMtxArray,
     // Degenerate Y axis: if both X and Y components are negligible the
     // column points straight down Z (at the camera) and no billboard
     // rotation can be built.
-    if (__fabs(localY.x) >= 1e-18f ||
-        __fabs(localY.y) >= 1e-18f) {
+    if (__fabs(localY.x) >= scBillboardEpsilon[0] ||
+        __fabs(localY.y) >= scBillboardEpsilon[0]) {
         math::VEC3Normalize(&localY, &localY);
 
         const math::MTX34* pMtx = &pMtxArray[mtxId];
@@ -385,9 +384,9 @@ void Calc_BILLBOARD_PERSP_STD(math::MTX34* pOut, const math::MTX34* pMtxArray,
     math::VEC3 up(pOut->_01, pOut->_11, pOut->_21);
     math::VEC3 dir(-pOut->_03, -pOut->_13, -pOut->_23);
 
-    if (__fabs(dir.x) >= 1e-18f ||
-        __fabs(dir.y) >= 1e-18f ||
-        __fabs(dir.z) >= 1e-18f) {
+    if (__fabs(dir.x) >= scBillboardEpsilon[0] ||
+        __fabs(dir.y) >= scBillboardEpsilon[0] ||
+        __fabs(dir.z) >= scBillboardEpsilon[0]) {
         PSVECNormalize(reinterpret_cast<const Vec*>(&dir),
                        reinterpret_cast<Vec*>(&dir));
 
@@ -395,9 +394,9 @@ void Calc_BILLBOARD_PERSP_STD(math::MTX34* pOut, const math::MTX34* pMtxArray,
                           reinterpret_cast<const Vec*>(&dir),
                           reinterpret_cast<Vec*>(&right));
 
-        if (__fabs(right.x) >= 1e-18f ||
-            __fabs(right.y) >= 1e-18f ||
-            __fabs(right.z) >= 1e-18f) {
+        if (__fabs(right.x) >= scBillboardEpsilon[0] ||
+            __fabs(right.y) >= scBillboardEpsilon[0] ||
+            __fabs(right.z) >= scBillboardEpsilon[0]) {
             PSVECNormalize(reinterpret_cast<const Vec*>(&right),
                            reinterpret_cast<Vec*>(&right));
             PSVECCrossProduct(reinterpret_cast<const Vec*>(&dir),
@@ -719,9 +718,9 @@ void Calc_BILLBOARD_Y(math::MTX34* pOut, const math::MTX34* pMtxArray,
     up.z = 0.0f;
 
     // Degenerate Y column (all three components negligible) -> zero it.
-    if (__fabs(yAxis.x) < 1e-18f &&
-        __fabs(yAxis.y) < 1e-18f &&
-        __fabs(yAxis.z) < 1e-18f) {
+    if (__fabs(yAxis.x) < scBillboardEpsilon[0] &&
+        __fabs(yAxis.y) < scBillboardEpsilon[0] &&
+        __fabs(yAxis.z) < scBillboardEpsilon[0]) {
         math::MTX34Zero(pOut);
         return;
     }
@@ -745,7 +744,7 @@ void Calc_BILLBOARD_Y(math::MTX34* pOut, const math::MTX34* pMtxArray,
     yAxis.z *= invLen1;
 
     // Degenerate implied up direction -> zero it.
-    if (__fabs(up.x) < 1e-18f && __fabs(up.y) < 1e-18f) {
+    if (__fabs(up.x) < scBillboardEpsilon[0] && __fabs(up.y) < scBillboardEpsilon[0]) {
         math::MTX34Zero(pOut);
         return;
     }

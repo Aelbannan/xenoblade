@@ -42,7 +42,7 @@ CTitleAHelp::~CTitleAHelp() {}
 
 void CTitleAHelp::CTitleAHelp_load() {
     u32 allocHandle = mtl::MemManager::getHandleMEM2();
-    mFileHandle = CDeviceFile::readFile(allocHandle, "/menu/TitleAHelp.arc", this, 0, 0);
+    mFileHandle = CDeviceFile::readFile(allocHandle, "menu/jp/TitleAHelp.arc", this, 0, 0);
     CDeviceFile::setHandleFlag1(mFileHandle);
 }
 
@@ -118,10 +118,9 @@ void CTitleAHelp::markReplayClose() {
     }
 }
 
-extern char lbl_eu_805054BC[];
 void CTitleAHelp::setNameText(char* arg) {
     if(mLayout == nullptr) return;
-    LayoutSetTextBoxFmtValue(mLayout, lbl_eu_805054BC + 0x17, arg, 0);
+    LayoutSetTextBoxFmtValue(mLayout, "txt_tit", arg, 0);
 }
 
 // Lays out the title-A help screen: swaps button textures by bdat key assign
@@ -134,20 +133,20 @@ void CTitleAHelp::func_801C41E8(u8 arg) {
     char buf2[0x20];
 
     for (u8 i = 0; i < 6; i++) {
-        sprintf(buf1, lbl_eu_805054BC + 0x1f, i);
-        sprintf(buf2, lbl_eu_805054BC + 0x2b, i);
+        sprintf(buf1, "pic_btn%02d", i);
+        sprintf(buf2, "txt_hlp%02d", i);
 
         u16 tableVal = row->cell[i];
         if (tableVal != 0) {
             setPaneVisible(mLayout->GetRootPane()->FindPaneByName(buf1, true), 1);
             setPaneVisible(mLayout->GetRootPane()->FindPaneByName(buf2, true), 1);
 
-            const char* fileID = lbl_eu_805054BC + 0x37;
+            const char* fileID = "fileID_1";
             if (cf::CfGameManager::isClassicController(-1) != 0) {
-                fileID = lbl_eu_805054BC + 0x40;
+                fileID = "fileID_2";
             }
 
-            u16 keyVal = BdatGetU16ByTableKey(lbl_eu_805054BC + 0x49, fileID, tableVal);
+            u16 keyVal = BdatGetU16ByTableKey("MNU_kyeassign", fileID, tableVal);
             char* texName = MakeTplNameSysFile(keyVal);
 
             nw4r::lyt::ArcResourceAccessor* accessor = ::CUICfManager_getArcResourceAccessor();
@@ -167,7 +166,7 @@ void CTitleAHelp::func_801C41E8(u8 arg) {
                 }
             }
 
-            char* helpText = BdatTouchStringCell(lbl_eu_805054BC + 0x49, lbl_eu_805054BC + 0x57, tableVal);
+            char* helpText = BdatTouchStringCell("MNU_kyeassign", "help", tableVal);
             LayoutSetTextBoxFmtValue(mLayout, buf2, helpText, 0);
         } else {
             setPaneVisible(mLayout->GetRootPane()->FindPaneByName(buf1, true), 0);
@@ -184,7 +183,7 @@ void CTitleAHelp::func_801C41E8(u8 arg) {
     char buf4[0x20];
 
     for (u8 i = 0; i < 6; i++) {
-        sprintf(buf3, lbl_eu_805054BC + 0x2b, i);
+        sprintf(buf3, "txt_hlp%02d", i);
 
         nw4r::lyt::TextBox* textBox = (nw4r::lyt::TextBox*)mLayout->GetRootPane()->FindPaneByName(buf3, true);
         if (!isPaneVisible(textBox)) return;
@@ -207,7 +206,7 @@ void CTitleAHelp::func_801C41E8(u8 arg) {
         }
         someWidth -= 4;
 
-        sprintf(buf4, lbl_eu_805054BC + 0x1f, i);
+        sprintf(buf4, "pic_btn%02d", i);
         nw4r::lyt::Pane* picPane = mLayout->GetRootPane()->FindPaneByName(buf4, true);
 
         copyVEC3(&newVec, &oldVec);
@@ -217,7 +216,7 @@ void CTitleAHelp::func_801C41E8(u8 arg) {
         someWidth = (int)((f32)someWidth + picPane->GetSize().width);
 
         if (i < 5) {
-            sprintf(buf3, lbl_eu_805054BC + 0x2b, i + 1);
+            sprintf(buf3, "txt_hlp%02d", i + 1);
             nw4r::lyt::TextBox* nextPane = (nw4r::lyt::TextBox*)mLayout->GetRootPane()->FindPaneByName(buf3, true);
             if (!isPaneVisible(nextPane)) return;
 
@@ -233,18 +232,18 @@ void CTitleAHelp::func_801C41E8(u8 arg) {
 
 void CTitleAHelp::func_801C4654(u32 arg) {
     if(mLayout == nullptr) return;
-    nw4r::lyt::Pane* pane = mLayout->GetRootPane()->FindPaneByName(lbl_eu_805054BC + 0x5c, true);
+    nw4r::lyt::Pane* pane = mLayout->GetRootPane()->FindPaneByName("nul_ttl", true);
     setPaneVisible(pane, arg);
 }
 
 void CTitleAHelp::setInfoText(char* arg) {
     if(mLayout == nullptr) return;
-    LayoutSetTextBoxFmtValue(mLayout, lbl_eu_805054BC + 0x64, arg, 0);
+    LayoutSetTextBoxFmtValue(mLayout, "txt_caution", arg, 0);
 }
 
 void CTitleAHelp::func_801C46DC(u32 arg) {
     if(mLayout == nullptr) return;
-    nw4r::lyt::Pane* pane = mLayout->GetRootPane()->FindPaneByName(lbl_eu_805054BC + 0x70, true);
+    nw4r::lyt::Pane* pane = mLayout->GetRootPane()->FindPaneByName("nul_caution", true);
     setPaneVisible(pane, arg);
 }
 
@@ -252,18 +251,17 @@ void CTitleAHelp::setActive(u8 arg) {
     unk28 = arg;
 }
 
-// retail: r4 = lbl_eu_805054BC+0x17 (string), r5/r6 = &lbl_eu_80664468/70 (.sbss addrs)
-extern char lbl_eu_805054BC[];
+// Retail passes the shared name string plus the .sbss color pair directly.
 extern u32 lbl_eu_80664468;
 extern u32 lbl_eu_80664470;
 extern u32 lbl_eu_80664478;
 extern u32 lbl_eu_80664480;
 void CTitleAHelp::applyPaneTevColors() {
-    PaneMatSetTevColorsByName(mLayout, lbl_eu_805054BC + 0x17, (const GXColorS10*)&lbl_eu_80664468, (const GXColorS10*)&lbl_eu_80664470);
+    PaneMatSetTevColorsByName(mLayout, "txt_tit", (const GXColorS10*)&lbl_eu_80664468, (const GXColorS10*)&lbl_eu_80664470);
 }
 
 void CTitleAHelp::applyPaneTevColorsAlt() {
-    PaneMatSetTevColorsByName(mLayout, lbl_eu_805054BC + 0x17, (const GXColorS10*)&lbl_eu_80664478, (const GXColorS10*)&lbl_eu_80664480);
+    PaneMatSetTevColorsByName(mLayout, "txt_tit", (const GXColorS10*)&lbl_eu_80664478, (const GXColorS10*)&lbl_eu_80664480);
 }
 
 void CTitleAHelp::stepOpenAnim() {
@@ -305,18 +303,18 @@ void CTitleAHelp::stepHiddenAnim() {
 bool CTitleAHelp::OnFileEvent(CEventFile* pEventFile) {
     if(mFileHandle == pEventFile->mFileHandle) {
         u32 allocHandle = mtl::MemManager::getHandleMEM2();
-        unk4.createRegion(allocHandle, 0x3200, &lbl_eu_805054BC[0x7c], 1);
+        unk4.createRegion(allocHandle, 0x3200, "CTitleAHelp", 1);
 
         Class_8045F858 memRegion(&unk4);
         void* data = mFileHandle->getData();
         mtl::MemManager::setMemInitFlag(false);
 
         mArcResourceAccessor = CLibLayout::createArcResourceAccessor();
-        mArcResourceAccessor->Attach(data, &lbl_eu_805054BC[0x88]);
+        mArcResourceAccessor->Attach(data, "arc");
 
-        buildLayout(&mLayout, mArcResourceAccessor, &lbl_eu_805054BC[0x8c]);
-        bindLayoutAnimTransform(mLayout, &mAnimTrans20, mArcResourceAccessor, &lbl_eu_805054BC[0x9f]);
-        bindLayoutAnimTransform(mLayout, &mAnimTrans24, mArcResourceAccessor, &lbl_eu_805054BC[0xb5]);
+        buildLayout(&mLayout, mArcResourceAccessor, "mf00_hlp_tit.brlyt");
+        bindLayoutAnimTransform(mLayout, &mAnimTrans20, mArcResourceAccessor, "mf00_hlp_tit_in.brlan");
+        bindLayoutAnimTransform(mLayout, &mAnimTrans24, mArcResourceAccessor, "mf00_hlp_tit_change.brlan");
 
         // Retail loads the root pane (layout + 0x10) before the font call and
         // keeps it live across ApplyFontToTxtPanes.
@@ -331,7 +329,7 @@ bool CTitleAHelp::OnFileEvent(CEventFile* pEventFile) {
 
         // Hide the caution pane; retail re-reads layout+0x10 here rather than
         // reusing the root pane held for ApplyFontToTxtPanes.
-        setPaneVisible(mLayout->GetRootPane()->FindPaneByName(&lbl_eu_805054BC[0x70], true), false);
+        setPaneVisible(mLayout->GetRootPane()->FindPaneByName("nul_caution", true), false);
 
         setNameText(mName);
         func_801C41E8(unk34);

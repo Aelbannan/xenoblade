@@ -111,8 +111,8 @@ public:
 typedef reslist<IUIWindow*>::iterator WindowIter;
 typedef _reslist_node<IUIWindow*> WindowNode;
 
-extern "C" void Term__Q216CUIWindowManager5CTestFv(){}
-extern "C" void Move__Q216CUIWindowManager5CTestFv(){}
+void CUIWindowManager::CTest::Term() {}
+void CUIWindowManager::CTest::Move() {}
 
 // Init support: temp CProcess vtables + null PTMF callback slots are
 // declared in the extern "C" block above.
@@ -424,8 +424,8 @@ void UIWin_ControlWindowLists(bool arg1, bool arg2) {
         }
     }
 }
-extern "C" void Draw__Q216CUIWindowManager5CTestFv(void* self) {}
-extern "C" void Init__Q216CUIWindowManager5CTestFv(void* self) {}
+void CUIWindowManager::CTest::Draw() {}
+void CUIWindowManager::CTest::Init() {}
 // Window-dispatch entry (retail keeps a flat unmangled free-function
 // symbol, so C linkage is required for the call relocs to bind). The first
 // arg is ignored by the retail body.

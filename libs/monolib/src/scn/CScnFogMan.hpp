@@ -2,7 +2,7 @@
 
 #include <types.h>
 
-class CScnEnvLgtCtrl;  // full definition in CScnEnvLgtCtrl.hpp
+struct CScnEnvLgtCtrlResList;  // env-controller list owner (CScnEnvLgtCtrl.hpp)
 
 // A word-packed 4-component vector (color/parameters) read by FogManCopyFogParams
 // as raw 32-bit words.
@@ -18,7 +18,7 @@ struct SWordVec {
 // consumed by fog mode 2.
 struct SFogRootView {
     u8 pad_0x00[0x7c];
-    CScnEnvLgtCtrl* field_0x7c;
+    CScnEnvLgtCtrlResList* field_0x7c;
 };
 
 class CScnFogMan {
@@ -64,7 +64,7 @@ public:
 };
 
 // Cross-TU import (definition in CScnEnvLgtCtrl.cpp): set +0x00 bit 0x20 /
-// clear bit 0x10 on the environment-light controller, then walk its
+// clear bit 0x10 on the env-controller list owner, then walk its
 // light-object ring applying the fog-manager state. Retail keeps the bare
 // C-linkage name.
-extern "C" void scnLgtApplyFogByte(CScnEnvLgtCtrl* self);
+extern "C" void scnLgtApplyFogByte(CScnEnvLgtCtrlResList* self);

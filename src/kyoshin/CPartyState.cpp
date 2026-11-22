@@ -1,3 +1,4 @@
+#define IWORK_EVENT_INLINE_DTOR // ~CPartyState elides the empty base dtor (retail)
 // Auto-scaffolded catalog TU for kyoshin/CPartyState
 // Replace stubs with high-level C/C++ during decomp.
 
@@ -16,11 +17,17 @@
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 #include "kyoshin/code_80135FDC_Lyt.hpp"
 
+// Retail rodata prefix: archive path and pane-position table.
+
+// object keeps the retail .sdata indirection.
+static const char sPartyStateArcPath[] = "menu/jp/PartyState.arc";
+static const char* sPartyStateArcPathPtr = sPartyStateArcPath;
+// name-guess: five-entry pane-position table (retail lbl_eu_80507D20).
+static const CPartyStateFiveFloats sPartyPanePositions = { { 0.0f, 17.0f, 34.0f, 51.0f, 68.0f } };
 // Sets the vtable, builds the scratch memory region, zeroes the panel state
 // fields, constructs the embedded cursor, and initializes the byte flags.
 CPartyState::CPartyState()
-    : mVtbl((void*)lbl_eu_805353C8),
-      mFileHandle(0), mArcResAcc(0), mLayout(0),
+    : mFileHandle(0), mArcResAcc(0), mLayout(0),
       mAnimTrans1(0), mAnimTrans0(0),
       field_0x28(0), field_0x2C(0), field_0x30(0), field_0x31(1), mCur22(nullptr) {
     field_0x4C = 0;
@@ -200,7 +207,7 @@ same:
 // pane, accumulate its translate, and move the cursor sub-panes onto it.
 extern "C" void refreshPartyCursor(CPartyState* self) {
     char buf[0x28];
-    sprintf(buf, lbl_eu_80507D40, self->field_0x4F[(s8)self->field_0x4C]);
+    sprintf(buf, "nul_pc%02d", self->field_0x4F[(s8)self->field_0x4C]);
     nw4r::lyt::Pane* pane = self->mLayout->GetRootPane()->FindPaneByName(buf, true);
     nw4r::math::VEC3 tmp;
     AccumPaneWorldPos(&tmp, pane);
@@ -212,7 +219,7 @@ extern "C" void refreshPartyCursor(CPartyState* self) {
         self->mCur22.HighlightPane(3);
     }
     if ((s8)self->field_0x4D >= 0) {
-        sprintf(buf, lbl_eu_80507D40, self->field_0x4F[(s8)self->field_0x4D]);
+        sprintf(buf, "nul_pc%02d", self->field_0x4F[(s8)self->field_0x4D]);
         nw4r::lyt::Pane* pane2 = self->mLayout->GetRootPane()->FindPaneByName(buf, true);
         nw4r::math::VEC3 tmp2;
         AccumPaneWorldPos(&tmp2, pane2);
@@ -325,41 +332,6 @@ extern "C" void swapPartyMembers(CPartyState* self) {
     self->field_0x57 = 1;
 }
 
-// Scale a party-slot pane's position by the ratio of the slot's play-time
-// value to the current party member's progress. The ratio is clamped to
-// [0, 1] and applied to the pane X translate.
-extern "C" void scalePartySlotPane(CPartyState* self, u32 memberIdx, const char* paneName) {
-    CPartyCharData* data = (CPartyCharData*)CtrlObjectParam_GetCharEntry(memberIdx);
-    u8 slot = (u8)data->slotArea.field_0x3DD0;
-    s32 cur = ((u32*)data->slotArea.records)[0x222 + slot];
-    u32 found = 0;
-    for (u8 i = 1; i <= 5; i++) {
-        if (data->slotArea.records[slot].entries[i].word == 0) {
-            found = BdatGetU8ByTableKey(&lbl_eu_80507D40[0x11a], &lbl_eu_80507D40[0x127],
-                                  (u8)(i + slot * 5 + (memberIdx - 1) * 0x19)) * 100;
-            break;
-        }
-    }
-    float fCur = (float)cur;
-    float fFound = (float)found;
-    float ratio;
-    if (fCur != 0.0f && fFound != 0.0f) {
-        ratio = fCur / fFound;
-    } else {
-        ratio = 0.0f;
-    }
-    if (ratio > 1.0f) {
-        ratio = 1.0f;
-    }
-    nw4r::lyt::Pane* pane = self->mLayout->GetRootPane()->FindPaneByName(paneName, true);
-    if (pane != NULL) {
-        float tmp[2];
-        TagCopyVec2f(tmp, const_cast<float*>(&pane->GetSize().width));
-        tmp[0] = lbl_eu_80668234 * ratio;
-        writePanePos(pane, tmp);
-    }
-}
-
 // Rebuild the party-select screen: mix the .sdata2 seed bytes into the slot
 // table (0x4F/0x56), then format each member slot's panes (name, level, HP,
 // face texture) and the party-list tail slots.
@@ -406,11 +378,10 @@ extern "C" void rebuildPartySelect(CPartyState* self) {
         }
     }
 
-    char* strs = lbl_eu_80507D40;
 
     for (u32 i = 0; i < 7; i++) {
         u8 slotByte = self->field_0x4F[i];
-        sprintf(buf78, strs, slotByte);
+        sprintf(buf78, "nul_pc%02d", slotByte);
         if ((u32)i >= count) {
             nw4r::lyt::Pane* pane = self->mLayout->GetRootPane()->FindPaneByName(buf78, true);
             setPaneVisible(pane, 0);
@@ -426,48 +397,48 @@ extern "C" void rebuildPartySelect(CPartyState* self) {
         u32 v4 = s->mVtbl->fn[0x7C](s);
         char* v5 = (char*)s->mVtbl->fn[0x26](s);
 
-        sprintf(buf58, strs + 0xb, v0);
+        sprintf(buf58, "%02d", v0);
         if (v0 >= 0x63) {
             v3 = 0;
             v4 = 0;
         }
         if (v1 > 0x270f) v1 = 0x270f;
         if (v2 > 0x270f) v2 = 0x270f;
-        sprintf(buf78, strs + 0x10, slotByte);
+        sprintf(buf78, "txt_pc%02dvalue700", slotByte);
         LayoutSetTextBoxText(self->mLayout, buf78, buf58, 0);
-        sprintf(buf78, strs + 0x23, slotByte);
+        sprintf(buf78, "txt_pc%02dvalue703", slotByte);
         setLayoutTextBoxNumber(self->mLayout, buf78, v1);
-        sprintf(buf78, strs + 0x36, slotByte);
+        sprintf(buf78, "txt_pc%02dvalue704", slotByte);
         setLayoutTextBoxNumber(self->mLayout, buf78, v2);
-        sprintf(buf78, strs + 0x49, slotByte);
+        sprintf(buf78, "txt_pc%02dpara705", slotByte);
         LayoutSetTextBoxFmtValue(self->mLayout, buf78, v5, 0);
-        sprintf(buf78, strs + 0x5b, slotByte);
+        sprintf(buf78, "pic_gage_skl%02d", slotByte);
         scalePartySlotPane(self, member, buf78);
-        sprintf(buf78, strs + 0x6c, slotByte);
+        sprintf(buf78, "pic_gage_exp%02d", slotByte);
         // Retail converts the two counters via unsigned-int-to-float.
         positionPartyPane(self, (float)v3, (float)v4, member, (u32)buf78);
 
         if (i >= 3) {
-            u16 id = BdatGetU16Direct(::cf::CfBdat::spBtlPcListFileData, strs + 0x7d, member);
+            u16 id = BdatGetU16Direct(::cf::CfBdat::spBtlPcListFileData, "icon_type2", member);
             char* name = MakeTplNameSysFile((u16)id);
             u32 tex = (u32)self->mArcResAcc->GetResource(0x74696D67, name, 0);
             if (tex != 0) {
-                sprintf(buf78, strs + 0x88, slotByte);
+                sprintf(buf78, "pic_face%02d", slotByte);
                 PaneSetTexPaletteByName(self->mLayout, (const char*)buf78, (TPLPalette*)tex);
             }
         } else {
             CPartyCharData* data2 = (CPartyCharData*)CtrlObjectParam_GetCharEntry(member);
             u32 next = i + 1;
-            sprintf(buf78, strs + 0x95, next);
+            sprintf(buf78, "nul_sklcat%02d", next);
             nw4r::lyt::Pane* pane = self->mLayout->GetRootPane()->FindPaneByName(buf78, true);
             if (data2->field_0x176C == 1 || CtrlRemote_TouchBitByArg(0x3356) == 0) {
                 setPaneVisible(pane, 0);
             } else {
                 setPaneVisible(pane, 1);
-                sprintf(buf78, strs + 0xa4, member, data2->slotArea.field_0x3DD0 + 1);
+                sprintf(buf78, "mf20_skl01_pc%02dcat%02d.tpl", member, data2->slotArea.field_0x3DD0 + 1);
                 u32 tex = (u32)self->mArcResAcc->GetResource(0x74696D67, buf78, 0);
                 if (tex != 0) {
-                    sprintf(buf78, strs + 0xc1, next);
+                    sprintf(buf78, "pic_sklcat%02d", next);
                     PaneSetTexPaletteByName(self->mLayout, (const char*)buf78, (TPLPalette*)tex);
                 }
             }
@@ -477,18 +448,18 @@ extern "C" void rebuildPartySelect(CPartyState* self) {
     u8 count2 = code80135FDC_getByte_6407E();
     for (u32 k = 0; k < 3; k++) {
         if ((u32)(u8)k >= count2) {
-            sprintf(buf38, strs + 0xd0, k + 1);
+            sprintf(buf38, "pic_guest%02d_bs", k + 1);
             nw4r::lyt::Pane* pane = self->mLayout->GetRootPane()->FindPaneByName(buf38, true);
             setPaneVisible(pane, 0);
             continue;
         }
         u8 m2 = GetCollectedFlagWord8(k);
         if (m2 == 0) continue;
-        u16 id = BdatGetU16Direct(::cf::CfBdat::spFldNpcListFileData, strs + 0xe1, m2);
+        u16 id = BdatGetU16Direct(::cf::CfBdat::spFldNpcListFileData, "rlt_texture", m2);
         char* name = MakeTplNameSysFile((u16)id);
         u32 tex = (u32)CUICfManager_getArcResourceAccessor()->GetResource(0x74696D67, name, 0);
         if (tex != 0) {
-            sprintf(buf18, strs + 0xed, k + 1);
+            sprintf(buf18, "pic_guest%02d_face", k + 1);
             PaneSetTexPaletteByName(self->mLayout, (const char*)buf18, (TPLPalette*)tex);
         }
     }
@@ -502,19 +473,54 @@ extern "C" void refreshPartyHeader(CPartyState* self) {
     u32 t = raw >> 12;
     char buf[8];
     if (t > 0x63) {
-        sprintf(buf, lbl_eu_80507D40 + 0xb, (t > 0x3e7) ? 0x3e7 : t);
+        sprintf(buf, "%02d", (t > 0x3e7) ? 0x3e7 : t);
     } else {
-        sprintf(buf, lbl_eu_80507D40 + 0xb, (t > 0x63) ? 0x63 : t);
+        sprintf(buf, "%02d", (t > 0x63) ? 0x63 : t);
     }
-    LayoutSetTextBoxText(self->mLayout, lbl_eu_80507D40 + 0x100, buf, 0);
+    LayoutSetTextBoxText(self->mLayout, "txt_othval02", buf, 0);
     u8 secs;
     if (t > 0x3e7) {
         secs = 0x3b;
     } else {
         secs = (raw >> 6) & 0x3f;
     }
-    sprintf(buf, lbl_eu_80507D40 + 0xb, secs);
-    LayoutSetTextBoxText(self->mLayout, lbl_eu_80507D40 + 0x10d, buf, 0);
+    sprintf(buf, "%02d", secs);
+    LayoutSetTextBoxText(self->mLayout, "txt_othval03", buf, 0);
+}
+
+// Scale a party-slot pane's position by the ratio of the slot's play-time
+// value to the current party member's progress. The ratio is clamped to
+// [0, 1] and applied to the pane X translate.
+extern "C" void scalePartySlotPane(CPartyState* self, u32 memberIdx, const char* paneName) {
+    CPartyCharData* data = (CPartyCharData*)CtrlObjectParam_GetCharEntry(memberIdx);
+    u8 slot = (u8)data->slotArea.field_0x3DD0;
+    s32 cur = ((u32*)data->slotArea.records)[0x222 + slot];
+    u32 found = 0;
+    for (u8 i = 1; i <= 5; i++) {
+        if (data->slotArea.records[slot].entries[i].word == 0) {
+            found = BdatGetU8ByTableKey("BTL_PSVskill", "point_PP",
+                                  (u8)(i + slot * 5 + (memberIdx - 1) * 0x19)) * 100;
+            break;
+        }
+    }
+    float fCur = (float)cur;
+    float fFound = (float)found;
+    float ratio;
+    if (fCur != 0.0f && fFound != 0.0f) {
+        ratio = fCur / fFound;
+    } else {
+        ratio = 0.0f;
+    }
+    if (ratio > 1.0f) {
+        ratio = 1.0f;
+    }
+    nw4r::lyt::Pane* pane = self->mLayout->GetRootPane()->FindPaneByName(paneName, true);
+    if (pane != NULL) {
+        float tmp[2];
+        TagCopyVec2f(tmp, const_cast<float*>(&pane->GetSize().width));
+        tmp[0] = lbl_eu_80668234 * ratio;
+        writePanePos(pane, tmp);
+    }
 }
 
 // Position a party panel pane by name: compute a ratio (0 when either input
@@ -534,8 +540,7 @@ extern "C" void positionPartyPane(CPartyState* self, float f1, float f2, u32 arg
     nw4r::lyt::Pane* pane = self->mLayout->GetRootPane()->FindPaneByName((const char*)name, true);
     if (pane != NULL) {
         int idx = (int)((lbl_eu_80668244 * ratio) * lbl_eu_80668240);
-        CPartyStateFiveFloats table;
-        table = *(const CPartyStateFiveFloats*)lbl_eu_80507D20;
+        CPartyStateFiveFloats table = sPartyPanePositions;
         float value = lbl_eu_80668248 * ratio + table.f[(u8)idx];
         float tmp[2];
         TagCopyVec2f(tmp, reinterpret_cast<float*>(reinterpret_cast<u8*>(pane) + 0x4c));
@@ -556,17 +561,16 @@ bool CPartyState::OnFileEvent(CEventFile* pEventFile) {
         // Set up the scratch heap region and attach the exchanged file data as
         // the nw4r layout archive, then build the layout + two animations.
         mtl::ALLOC_HANDLE mem2 = mtl::MemManager::getHandleMEM2();
-        char* strs = lbl_eu_80507D40;
-        mMemRegion.createRegion(mem2, 0x18000, strs + 0x130, 1);
+            mMemRegion.createRegion(mem2, 0x18000, "CPartyState", 1);
         Class_8045F858 memHost(&mMemRegion);
 
         u8* fileData = (u8*)mFileHandle->getData();
         mtl::MemManager::setMemInitFlag(false);
         mArcResAcc = CLibLayout::createArcResourceAccessor();
-        mArcResAcc->Attach(fileData, strs + 0x13c);
-        buildLayout(&mLayout, mArcResAcc, strs + 0x140);
-        bindLayoutAnimTransform(mLayout, &mAnimTrans1, mArcResAcc, strs + 0x150);
-        bindLayoutAnimTransform(mLayout, &mAnimTrans0, mArcResAcc, strs + 0x163);
+        mArcResAcc->Attach(fileData, "arc");
+        buildLayout(&mLayout, mArcResAcc, "mf02_pt00.brlyt");
+        bindLayoutAnimTransform(mLayout, &mAnimTrans1, mArcResAcc, "mf02_pt00_in.brlan");
+        bindLayoutAnimTransform(mLayout, &mAnimTrans0, mArcResAcc, "mf02_pt00_info_in.brlan");
 
         // Bind the font: root pane + font object slot 7, push back onto root.
         nw4r::lyt::Pane* rootPane = mLayout->GetRootPane();
@@ -575,20 +579,20 @@ bool CPartyState::OnFileEvent(CEventFile* pEventFile) {
 
         u32 textVal = (u32)CUICfManager_getPackedFont9C();
         if (textVal != 0) {
-            setLayoutTextBoxFont(mLayout, strs + 0x100, textVal);
-            setLayoutTextBoxFont(mLayout, strs + 0x10d, textVal);
-            setLayoutTextBoxFont(mLayout, strs + 0x17b, textVal);
-            setLayoutTextBoxFont(mLayout, strs + 0x189, textVal);
+            setLayoutTextBoxFont(mLayout, "txt_othval02", textVal);
+            setLayoutTextBoxFont(mLayout, "txt_othval03", textVal);
+            setLayoutTextBoxFont(mLayout, "txt_othunit02", textVal);
+            setLayoutTextBoxFont(mLayout, "txt_othval01", textVal);
             for (u8 i = 1; i <= 7; i++) {
-                sprintf(buf68, strs + 0x196, i);
+                sprintf(buf68, "txt_pc%02dpara704", i);
                 setLayoutTextBoxFont(mLayout, buf68, textVal);
-                sprintf(buf68, strs + 0x10, i);
+                sprintf(buf68, "txt_pc%02dvalue700", i);
                 setLayoutTextBoxFont(mLayout, buf68, (u32)CUICfManager_getPackedFontD8());
-                sprintf(buf68, strs + 0x1a8, i);
+                sprintf(buf68, "txt_pc%02dpara700", i);
                 setLayoutTextBoxFont(mLayout, buf68, (u32)CUICfManager_getPackedFontD8());
-                sprintf(buf68, strs + 0x23, i);
+                sprintf(buf68, "txt_pc%02dvalue703", i);
                 setLayoutTextBoxFont(mLayout, buf68, textVal);
-                sprintf(buf68, strs + 0x36, i);
+                sprintf(buf68, "txt_pc%02dvalue704", i);
                 setLayoutTextBoxFont(mLayout, buf68, textVal);
             }
         }
@@ -596,25 +600,24 @@ bool CPartyState::OnFileEvent(CEventFile* pEventFile) {
         mLayout->SetAnimationEnable(mAnimTrans1, true);
         mLayout->Animate(0);
 
-        char* s2 = BdatTouchStringCell(strs + 0x1ba, strs + 0x1c4, 2);
-        char* s3 = BdatTouchStringCell(strs + 0x1ba, strs + 0x1c4, 3);
-        char* s4 = BdatTouchStringCell(strs + 0x1ba, strs + 0x1c4, 4);
-        BdatTouchStringCell(strs + 0x1ba, strs + 0x1c4, 5);
+        char* s2 = BdatTouchStringCell("MNU_party", "name", 2);
+        char* s3 = BdatTouchStringCell("MNU_party", "name", 3);
+        char* s4 = BdatTouchStringCell("MNU_party", "name", 4);
+        BdatTouchStringCell("MNU_party", "name", 5);
         for (u8 i = 1; i <= 7; i++) {
-            sprintf(buf48, strs + 0x1a8, i);
+            sprintf(buf48, "txt_pc%02dpara700", i);
             LayoutSetTextBoxFmtValue(mLayout, buf48, s2, 0);
-            sprintf(buf48, strs + 0x1c9, i);
+            sprintf(buf48, "txt_pc%02dpara703", i);
             LayoutSetTextBoxFmtValue(mLayout, buf48, s3, 0);
-            sprintf(buf48, strs + 0x196, i);
+            sprintf(buf48, "txt_pc%02dpara704", i);
             LayoutSetTextBoxFmtValue(mLayout, buf48, s4, 0);
         }
         refreshPartyHeader(this);
-        strs = lbl_eu_80507D40;
-        char* s8 = BdatTouchStringCell(strs + 0x1ba, strs + 0x1c4, 8);
-        sprintf(buf28, strs + 0x1db, CItemBlock_getPtr20E8(), s8);
-        LayoutSetTextBoxText(mLayout, strs + 0x189, buf28, 0);
-        char* s9 = BdatTouchStringCell(strs + 0x1ba, strs + 0x1c4, 9);
-        LayoutSetTextBoxFmtValue(mLayout, strs + 0x17b, s9, 0);
+        char* s8 = BdatTouchStringCell("MNU_party", "name", 8);
+        sprintf(buf28, "%d%s", CItemBlock_getPtr20E8(), s8);
+        LayoutSetTextBoxText(mLayout, "txt_othval01", buf28, 0);
+        char* s9 = BdatTouchStringCell("MNU_party", "name", 9);
+        LayoutSetTextBoxFmtValue(mLayout, "txt_othunit02", s9, 0);
 
         mCur22 = CCur22(mArcResAcc);
         reinterpret_cast<CPartyStateCur*>(&mCur22)->vfn0();
@@ -631,7 +634,7 @@ bool CPartyState::OnFileEvent(CEventFile* pEventFile) {
 // picked by file size: MEM1 when small, the common-archive MEM2 region for
 // mid sizes, plain MEM2 otherwise.
 extern "C" void loadPartyLayoutArc(CPartyState* self) {
-    int fileSize = getFileSize__11CDeviceFileFPCc(lbl_eu_80662728, 1);
+    int fileSize = getFileSize__11CDeviceFileFPCc(sPartyStateArcPathPtr, 1);
     int mem1Max = (int)mtl::MemManager::getMaxAllocSize(mtl::MemManager::getHandleMEM1());
     int mem2Max = (int)mtl::MemManager::getMaxAllocSize(gmScene->getAllocHandle());
     mtl::ALLOC_HANDLE handle = mtl::MemManager::getHandleMEM2();
@@ -640,7 +643,7 @@ extern "C" void loadPartyLayoutArc(CPartyState* self) {
     } else if (fileSize < mem2Max - 0x80000) {
         handle = gmScene->getAllocHandle();
     }
-    self->mFileHandle = CDeviceFile::readFile(handle, lbl_eu_80662728,
+    self->mFileHandle = CDeviceFile::readFile(handle, sPartyStateArcPathPtr,
         reinterpret_cast<IWorkEvent*>(self), 0, 0);
     CDeviceFile::setHandleFlag1(self->mFileHandle);
 }

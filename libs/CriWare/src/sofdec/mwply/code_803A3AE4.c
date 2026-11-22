@@ -4,18 +4,19 @@ __attribute__((aligned(8))) const char lbl_eu_8051BF28[0x28] = {
     0x45, 0x32, 0x30, 0x35, 0x33, 0x30, 0x30, 0x31, 0x20, 0x4D, 0x57, 0x53, 0x46, 0x44, 0x5F, 0x4D, 0x61, 0x6C, 0x6C, 0x6F, 0x63, 0x3A, 0x20, 0x63, 0x6E, 0x74, 0x20, 0x6F, 0x76, 0x65, 0x72, 0x2E, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 };
 
-extern char lbl_eu_8051C8B0[];
-extern char lbl_eu_8051C8F0[];
-extern char lbl_eu_8051C940[];
+struct SfdTrIf;
+extern const struct SfdTrIf SFD_tr_in_mem;
+extern const struct SfdTrIf SFD_tr_sd_mps;
+extern const struct SfdTrIf SFD_tr_vd_mpv;
 extern char lbl_eu_8051C4E0[];
 extern char lbl_eu_8051CCD8[];
 extern char lbl_eu_8051C550[];
 extern char lbl_eu_8051CC98[];
 
 __attribute__((aligned(4))) const void * const lbl_eu_8051BF50[9] = {
-    lbl_eu_8051C8B0,
-    lbl_eu_8051C8F0,
-    lbl_eu_8051C940,
+    &SFD_tr_in_mem,
+    &SFD_tr_sd_mps,
+    &SFD_tr_vd_mpv,
     lbl_eu_8051C4E0,
     0,0,
     lbl_eu_8051CCD8,
@@ -24,18 +25,18 @@ __attribute__((aligned(4))) const void * const lbl_eu_8051BF50[9] = {
 };
 
 __attribute__((aligned(4))) const void * const lbl_eu_8051BF74[9] = {
-    lbl_eu_8051C8B0,
+    &SFD_tr_in_mem,
     0,
-    lbl_eu_8051C940,
+    &SFD_tr_vd_mpv,
     0,0,0,
     lbl_eu_8051CCD8,
     0,0
 };
 
 __attribute__((aligned(4))) const void * const lbl_eu_8051BF98[10] = {
-    lbl_eu_8051C8B0,
-    lbl_eu_8051C8F0,
-    lbl_eu_8051C940,
+    &SFD_tr_in_mem,
+    &SFD_tr_sd_mps,
+    &SFD_tr_vd_mpv,
     0,0,0,
     lbl_eu_8051CCD8,
     0,

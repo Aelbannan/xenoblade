@@ -50,32 +50,32 @@ CActParamData::~CActParamData() {}
 // the real virtuals without a TU-local pad.
 struct CActParamAnimView;
 
-extern "C" void actAnimVt40(void* self);
-extern "C" void actAnimVt38(void* self);
-extern "C" void actAnimVt3C(void* self);
-extern "C" void actAnimVt44(void* self);
+extern "C" void actAnimVt40(void* self, u32 a);
+extern "C" void actAnimVt38(void* self, u32 a);
+extern "C" void actAnimVt3C(void* self, u32 a);
+extern "C" void actAnimVt44(void* self, u32 a);
 extern "C" void actAnimVt48(void* self);
-extern "C" void actAnimVt4C(void* self);
-extern "C" void actAnimVt50(void* self);
-extern "C" void actAnimVt58(void* self);
-extern "C" void actAnimVt20(void* self);
-extern "C" void actAnimVt24(void* self);
-extern "C" void actAnimVt28(void* self);
-extern "C" void actAnimVt2C(void* self);
-extern "C" void actAnimVt5C(void* self);
-extern "C" void actAnimVt60(void* self);
+extern "C" void actAnimVt4C(void* self, u32 a);
+extern "C" void actAnimVt50(void* self, u32 a);
+extern "C" void actAnimVt58(void* self, u32 a);
+extern "C" void actAnimVt20(void* self, u32 a);
+extern "C" void actAnimVt24(void* self, u32 a);
+extern "C" void actAnimVt28(void* self, u32 a);
+extern "C" void actAnimVt2C(void* self, u32 a);
+extern "C" void actAnimVt5C(void* self, u32 a, s32 b);
+extern "C" void actAnimVt60(void* self, u32 a, s32 b);
 extern "C" void actAnimVt64(void* self);
 extern "C" void actAnimVt68(void* self, u32 a);
-extern "C" void actAnimVt6C(void* self);
-extern "C" void actAnimVt70(void* self);
-extern "C" void actAnimVt74(void* self);
+extern "C" void actAnimVt6C(void* self, u32 a);
+extern "C" void actAnimVt70(void* self, u32 a);
+extern "C" void actAnimVt74(void* self, u32 a);
 extern "C" void actAnimVt78(void* self);
-extern "C" void actAnimVt9C(void* self);
+extern "C" void actAnimVt9C(void* self, u32 a, s32 b);
 extern "C" void callAnimFrame(void* self);
 extern "C" void callAnimTrans(void* self);
 extern "C" void callAnimEffect(void* self);
-extern "C" void actAnimVtC8(void* self);
-extern "C" void actAnimVtCC(void* self);
+extern "C" void actAnimVtC8(void* self, u32 a);
+extern "C" void actAnimVtCC(void* self, u32 a);
 extern "C" void callAnimChain(void* self);
 extern "C" void callAnimLoop(void* self);
 extern "C" void callAnimMotion(void* self);
@@ -173,32 +173,32 @@ struct CActParamAnimView {
 };
 // alias removed - CActParamAnimView is the view type
 
-extern "C" void actAnimVt40(void* self) { ((CActParamAnim*)self)->fireSpeedOkGt(); }
-extern "C" void actAnimVt38(void* self) { ((CActParamAnim*)self)->startUnfinishedAnim(); }
-extern "C" void actAnimVt3C(void* self) { ((CActParamAnim*)self)->startFinishedAnim(); }
-extern "C" void actAnimVt44(void* self) { ((CActParamAnim*)self)->fireAnimParam(); }
+extern "C" void actAnimVt40(void* self, u32 a) { ((CActParamAnim*)self)->fireSpeedOkGt(a); }
+extern "C" void actAnimVt38(void* self, u32 a) { ((CActParamAnim*)self)->startUnfinishedAnim(a); }
+extern "C" void actAnimVt3C(void* self, u32 a) { ((CActParamAnim*)self)->startFinishedAnim(a); }
+extern "C" void actAnimVt44(void* self, u32 a) { ((CActParamAnim*)self)->fireAnimParam(a); }
 extern "C" void actAnimVt48(void* self) { ((CActParamAnim*)self)->__vt_48(); }
-extern "C" void actAnimVt4C(void* self) { ((CActParamAnim*)self)->startOwnerFlag8Anim(); }
-extern "C" void actAnimVt50(void* self) { ((CActParamAnim*)self)->startOwnerFlag2Anim(); }
-extern "C" void actAnimVt58(void* self) { ((CActParamAnim*)self)->stepAnimState(); }
-extern "C" void actAnimVt20(void* self) { ((CActParamAnim*)self)->startFlag2000Anim(); }
-extern "C" void actAnimVt24(void* self) { ((CActParamAnim*)self)->startFlag0800Anim(); }
-extern "C" void actAnimVt28(void* self) { ((CActParamAnim*)self)->startFlag0400Anim(); }
-extern "C" void actAnimVt2C(void* self) { ((CActParamAnim*)self)->startFlag1000Anim(); }
-extern "C" void actAnimVt5C(void* self) { ((CActParamAnim*)self)->fireCountGate(); }
-extern "C" void actAnimVt60(void* self) { ((CActParamAnim*)self)->fireWord378Gt(); }
+extern "C" void actAnimVt4C(void* self, u32 a) { ((CActParamAnim*)self)->startOwnerFlag8Anim(a); }
+extern "C" void actAnimVt50(void* self, u32 a) { ((CActParamAnim*)self)->startOwnerFlag2Anim(a); }
+extern "C" void actAnimVt58(void* self, u32 a) { ((CActParamAnim*)self)->stepAnimState(a); }
+extern "C" void actAnimVt20(void* self, u32 a) { ((CActParamAnim*)self)->startFlag2000Anim(a); }
+extern "C" void actAnimVt24(void* self, u32 a) { ((CActParamAnim*)self)->startFlag0800Anim(a); }
+extern "C" void actAnimVt28(void* self, u32 a) { ((CActParamAnim*)self)->startFlag0400Anim(a); }
+extern "C" void actAnimVt2C(void* self, u32 a) { ((CActParamAnim*)self)->startFlag1000Anim(a); }
+extern "C" void actAnimVt5C(void* self, u32 a, s32 b) { ((CActParamAnim*)self)->fireCountGate(a, b); }
+extern "C" void actAnimVt60(void* self, u32 a, s32 b) { ((CActParamAnim*)self)->fireWord378Gt(a, b); }
 extern "C" void actAnimVt64(void* self) { ((CActParamAnim*)self)->func_8004F884(); }
 extern "C" void actAnimVt68(void* self, u32 a) { ((CActParamAnim*)self)->fireBlendDflt(a); }
-extern "C" void actAnimVt6C(void* self) { ((CActParamAnim*)self)->fireParamGate(); }
-extern "C" void actAnimVt70(void* self) { ((CActParamAnim*)self)->fireBlendCust(); }
-extern "C" void actAnimVt74(void* self) { ((CActParamAnim*)self)->startIfActive(); }
+extern "C" void actAnimVt6C(void* self, u32 a) { ((CActParamAnim*)self)->fireParamGate(a); }
+extern "C" void actAnimVt70(void* self, u32 a) { ((CActParamAnim*)self)->fireBlendCust(a); }
+extern "C" void actAnimVt74(void* self, u32 a) { ((CActParamAnim*)self)->startIfActive(a); }
 extern "C" void actAnimVt78(void* self) { ((CActParamAnim*)self)->__vt_78(); }
-extern "C" void actAnimVt9C(void* self) { ((CActParamAnim*)self)->fireTwinCount(); }
+extern "C" void actAnimVt9C(void* self, u32 a, s32 b) { ((CActParamAnim*)self)->fireTwinCount(a, b); }
 extern "C" void callAnimFrame(void* self) { (void)((CActParamAnim*)self)->isAnimFrameActive(); }
 extern "C" void callAnimTrans(void* self) { (void)((CActParamAnim*)self)->isAnimTransActive(); }
 extern "C" void callAnimEffect(void* self) { (void)((CActParamAnim*)self)->isAnimEffectActive(); }
-extern "C" void actAnimVtC8(void* self) { ((CActParamAnim*)self)->fireFlag4D4Gt(); }
-extern "C" void actAnimVtCC(void* self) { ((CActParamAnim*)self)->fire4D4ZeroGt(); }
+extern "C" void actAnimVtC8(void* self, u32 a) { ((CActParamAnim*)self)->fireFlag4D4Gt(a); }
+extern "C" void actAnimVtCC(void* self, u32 a) { ((CActParamAnim*)self)->fire4D4ZeroGt(a); }
 extern "C" void callAnimChain(void* self) { (void)((CActParamAnim*)self)->isAnimChainActive(); }
 extern "C" void callAnimLoop(void* self) { (void)((CActParamAnim*)self)->isAnimLoopActive(); }
 extern "C" void callAnimMotion(void* self) { (void)((CActParamAnim*)self)->isAnimMotionActive(); }
@@ -237,9 +237,9 @@ extern "C" void callAnimRot1(void* self, u32 a) { ((CActParamAnimView*)self)->is
 extern "C" void callAnimUpdate0(void* self, u32 a) { ((CActParamAnimView*)self)->isAnimUpdateActive(a, 0); }
 extern "C" void callAnimUpdate1(void* self, u32 a) { ((CActParamAnimView*)self)->isAnimUpdateActive(a, 1); }
 
-extern "C" void actAnimVt90(void* self) { ((CActParamAnim*)self)->fireAngleBand(); }
-extern "C" void actAnimVt94(void* self) { ((CActParamAnim*)self)->fireAngleHiGt(); }
-extern "C" void actAnimVt30(void* self) { ((CActParamAnim*)self)->fireSpeedGate(); }
+extern "C" void actAnimVt90(void* self, u32 a) { ((CActParamAnim*)self)->fireAngleBand(a); }
+extern "C" void actAnimVt94(void* self, u32 a) { ((CActParamAnim*)self)->fireAngleHiGt(a); }
+extern "C" void actAnimVt30(void* self, u32 a) { ((CActParamAnim*)self)->fireSpeedGate(a); }
 extern "C" int actAnimSlot03(void* self, u32 a) { return ((CActParamAnim*)self)->fireTimerGate(a, 3); }
 extern "C" int actAnimSlot04(void* self, u32 a) { return ((CActParamAnim*)self)->fireTimerGate(a, 4); }
 extern "C" int actAnimSlot05(void* self, u32 a) { return ((CActParamAnim*)self)->fireTimerGate(a, 5); }
@@ -269,10 +269,10 @@ extern "C" int actAnimSlot29(void* self, u32 a) { return ((CActParamAnim*)self)-
 extern "C" int actAnimSlot30(void* self, int a) { return ((CActParamAnim*)self)->fireTimerGate((u32)a, 30); }
 extern "C" int actAnimSlot31(void* self, u32 a) { return ((CActParamAnim*)self)->fireTimerGate(a, 31); }
 
-extern "C" void actAnimVt34(void* self) { ((CActParamAnim*)self)->fireBlendGate(); }
-extern "C" void actAnimVt98(void* self) { ((CActParamAnim*)self)->fireOpenGate1(); }
-extern "C" void actAnimVt88(void* self) { ((CActParamAnim*)self)->fireAngleGate(); }
-extern "C" void actAnimVt8C(void* self) { ((CActParamAnim*)self)->fireAngleLoGt(); }
+extern "C" void actAnimVt34(void* self, u32 a) { ((CActParamAnim*)self)->fireBlendGate(a); }
+extern "C" void actAnimVt98(void* self, u32 a) { ((CActParamAnim*)self)->fireOpenGate1(a); }
+extern "C" void actAnimVt88(void* self, u32 a) { ((CActParamAnim*)self)->fireAngleGate(a); }
+extern "C" void actAnimVt8C(void* self, u32 a) { ((CActParamAnim*)self)->fireAngleLoGt(a); }
 
 
 // View over sub-object A/B for the ref-entry reads in getParamRefS16A/B:
@@ -413,9 +413,9 @@ void actParamThunk_2(){}
 
 // Former former pad pad removed - wrappers now forward to CActParamAnim.
 struct CActParamAnimView;
-extern "C" void actAnimVt90(void* self);
-extern "C" void actAnimVt94(void* self);
-extern "C" void actAnimVt30(void* self);
+extern "C" void actAnimVt90(void* self, u32 a);
+extern "C" void actAnimVt94(void* self, u32 a);
+extern "C" void actAnimVt30(void* self, u32 a);
 extern "C" int actAnimSlot03(void* self, u32 a);
 extern "C" int actAnimSlot04(void* self, u32 a);
 extern "C" int actAnimSlot05(void* self, u32 a);
@@ -1323,6 +1323,10 @@ extern "C" void walkParamRecords(CActParamData* self,
     // 2^52 magic shared by every u16->double conversion below.
     double base = 4503599627370496.0;
     u32 bitSel = (mode >> 9) & 1;
+    // Single zero-compare operand: retail loads one pooled 0.0f and reuses it
+    // at every zero test below (a folded literal 0.0f would pool a second,
+    // separate zero and cost a callee-saved FPR).
+    f32 zero = 0.0f;
     ActParamD3CRec* rec = reinterpret_cast<ActParamD3CRec*>(
         reinterpret_cast<u8*>(stream) + off);
     goto check;
@@ -1336,7 +1340,7 @@ body9:
         cvt.w[1] = rec->mShort08;
         cvt.w[0] = convHi;
         double val = cvt.d - base;
-        if (lbl_eu_80665F80 == val) {
+        if (zero == val) {
             // The callback returns the replacement time value.
             val = static_cast<ActParamObj5*>(self->mEntry04)->notify14();
         }
@@ -1347,7 +1351,7 @@ body9:
             int h = 0;
             if (val > member->mFloat50) {
                 if (static_cast<ActParamData388*>(self->mEntry04)->mFloat388 >
-                    0.0f) {
+                    zero) {
                     h = 1;
                 }
             }
@@ -1360,7 +1364,7 @@ body9:
                 int h = 0;
                 if (val == member->mFloat50) {
                     if (static_cast<ActParamData388*>(self->mEntry04)
-                            ->mFloat388 > 0.0f) {
+                            ->mFloat388 > zero) {
                         h = 1;
                     }
                 }
@@ -1396,12 +1400,12 @@ bodyF:
         cvt.w[1] = rec->mShort08;
         cvt.w[0] = convHi;
         double val = cvt.d - base;
-        if (lbl_eu_80665F80 == val) {
+        if (zero == val) {
             // The callback returns the replacement time value.
             val = static_cast<ActParamObj5*>(self->mEntry04)->notify14();
         }
         int en;
-        if (member->mFloat50 <= 0.0f &&
+        if (member->mFloat50 <= zero &&
             member->mFloat54 >= 8.0f) {
             en = 0;
         } else {
@@ -1412,7 +1416,7 @@ bodyF:
                 hit = 0;
                 if (val > member->mFloat50) {
                     if (static_cast<ActParamData388*>(self->mEntry04)
-                            ->mFloat388 > 0.0f) {
+                            ->mFloat388 > zero) {
                         hit = 1;
                     }
                 }
@@ -1426,7 +1430,7 @@ bodyF:
                     int h = 0;
                     if (val == member->mFloat50) {
                         if (static_cast<ActParamData388*>(self->mEntry04)
-                                ->mFloat388 > 0.0f) {
+                                ->mFloat388 > zero) {
                             h = 1;
                         }
                     }

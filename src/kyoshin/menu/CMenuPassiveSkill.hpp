@@ -37,7 +37,7 @@ public:
     u8 mPassiveSkill[0x1F4];  // 0xB8..0x2AB
     u8 field_2AC;             // 0x2AC - widgets-ready flag set by pollPassiveSkillReady
     u8 _pad2AD[3];            // 0x2AD..0x2AF
-    f32 field_2B0;            // 0x2B0 - idle timer, seeded from lbl_eu_806688F0
+    f32 field_2B0;            // 0x2B0 - idle timer, seeded with 0.0f
 };
 
 // Canonical TU-private imports and layout views for CMenuPassiveSkill.cpp.
@@ -63,15 +63,13 @@ extern "C" void ArtsInfo_SetReadyFlag();
 // C-ABI widget ctor import (US strips its member manglings).
 extern "C" void* __ct__UI_CPassiveSkill(u8* self);
 
-// Float constant seeded into field_2B0 by the constructor.
-extern f32 lbl_eu_806688F0;
+// field_2B0 is seeded with 0.0f by the constructor.
 
 
 // Widget-rebuild imports used by Init (retail-unmangled C symbols).
 extern "C" void __as__17UnkClass_8045F564FRC17UnkClass_8045F564(void* dst, void* src);
 extern "C" void __ct__6CBgTexFUc(CBgTex* self, u8 arg);
 extern "C" void __ct__11CTitleAHelpFPcUc(CTitleAHelp* self, char* name, u8 arg);
-extern char lbl_eu_8050DB4C[];
 extern "C" void BgTex_Acquire_3C14(CBgTex* self);
 // CTitleAHelp::CTitleAHelp_load() is declared in kyoshin/CTitleAHelp.hpp.
 extern "C" void addRenderCB__4CScnFP10IScnRenderUlUl(CScn* scn, IScnRender* render,
@@ -229,9 +227,7 @@ extern "C" void UI_CPassiveSkill_setByte180(u8* self, u8 value);
 // Shared event-file byte + classic-controller query (retail unmangled).
 extern "C" CMenuPassivePadView* getCfPadData__Q22cf13CfGameManagerFv();
 
-// Timer-tick addend / clamp cap seeded around field_2B0.
-extern f32 lbl_eu_806688F4;
-extern f32 lbl_eu_806688F8;
+// Timer tick uses 1.0f / 10.0f literals around field_2B0.
 
 // ---------------------------------------------------------------------------
 // Retail-unmangled imports (US strips these member manglings; C linkage binds

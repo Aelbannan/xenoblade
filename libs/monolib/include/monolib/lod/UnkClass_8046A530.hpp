@@ -28,10 +28,10 @@ public:
     /* 8046EAA8 */ void isLodActive();
     /* 8046EAAC */ void setVariation();
     /* 8046EB24 */ void advanceLodAnim();
-    /* 8046ECFC */ void updateLodWalk();
-    /* 8046F07C */ void updateLodBatch0();
-    /* 8046FAB0 */ void updateLodBatch1();
-    /* 80470550 */ void updateLodBatch2();
+    /* 8046ECFC */ void updateLodWalk(u8* elem);
+    /* 8046F07C */ void updateLodBatch0(u8* elem, f32 c);
+    /* 8046FAB0 */ void updateLodBatch1(u8* elem, f32 c);
+    /* 80470550 */ void updateLodBatch2(u8* elem, f32 c);
     /* 80470F84 */ void checkLodFlagState();
     /* 80470FA8 */ void getLodVisState();
 

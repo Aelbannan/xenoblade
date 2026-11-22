@@ -119,22 +119,6 @@ struct CEqChCursorRec {
 // CEquipItemBox.hpp).
 #define lbl_eu_806640D8_arr ((void**)(void*)&::cf::CfBdat::spBtlSkillListFileData)
 
-// Character-data table returned by CtrlObjectParam_GetCharEntry; +0x176C holds a state word
-// that is 1 when the character is busy (same object as CPartyCharData). The
-// +0x1C..+0x26 s16 slots hold the per-category equipped item ids (weapon/
-// armour rows) read by CEquipChange::RunMainFlow / CEquipChange::RebuildCursorList.
-struct CBdatCharData {
-    u8 _pad[0x1C];
-    s16 field_1C;   // 0x1C
-    s16 field_1E;   // 0x1E
-    s16 field_20;   // 0x20
-    s16 field_22;   // 0x22
-    s16 field_24;   // 0x24
-    s16 field_26;   // 0x26
-    u8 _pad2[0x176C - 0x28];
-    s32 field_176C;   // 0x176C - busy flag
-};
-
 // 8-byte colour pair copied from lbl_eu_80508120 by CEquipChange::RefreshCursorPos's palette
 // copy loop (the loop writes 8 pairs into the 7-pair local - retail shape).
 struct CEquipColorPair {

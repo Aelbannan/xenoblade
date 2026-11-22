@@ -953,12 +953,6 @@ stop:
         return false;
     }
 
-    // (wkUpdate__16 / wkStandbyLogout__16: the member definitions themselves
-    // carry the retail mangled names - duplicate extern "C" wrappers here
-    // would shadow the bodies with 0x10-byte tail calls.)
-    extern "C" void wkUpdate__16CLibCriMoviePlayFv();
-    extern "C" bool wkStandbyLogout__16CLibCriMoviePlayFv();
-
     // Sets the pause override flag on the movie matching id (id == -1
     // matches none). The player handle is loaded before evaluating the pause
     // conditions so the call argument is ready ahead of the branches.

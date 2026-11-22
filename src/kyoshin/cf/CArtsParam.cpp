@@ -3,6 +3,8 @@
 #include <monolib/device/CDeviceVI.hpp>
 
 #include "kyoshin/cf/CArtsParam.hpp"
+#include "kyoshin/cf/CfObjectEnumList.hpp"
+#include "kyoshin/cf/voice/CCharVoice.hpp"
 #include "kyoshin/cf/CPcEffect07.hpp"
 #include "kyoshin/cf/object/CActorParam.hpp"
 #include <nw4r/math/math_triangular.h>
@@ -31,7 +33,6 @@ static const u64 sArtsSelectFlags[12] = {
 extern "C" int checkArtsFull(void* param, void* actor, int flags);
 extern "C" int isBattleStatusActive(void* obj, int id);
 extern "C" void startEnumObjects(void* list, u32 type, u32 filter);
-extern "C" void* getObjectAt(void* list, u32 idx);
 extern "C" void* MapFx_ResolveOwner(void* src);
 
 // float constants (retail .sdata2 pool) used by the effect-dispatch paths
@@ -221,7 +222,7 @@ extern u16 gmGlobalFlag42;               // current area id
 // names at these call sites drift until the headers are updated).
 extern int getEffectBankByte();
 extern int IdTable_GetSum(void* self, int id, void* out);
-extern void* lookupBattleStatusEntry(void* self, unsigned int id);
+extern "C" cf::CBattleStateEntry* lookupBattleStatusEntry(void* self, unsigned int id);
 extern void* appendObjectById(void* list, int index);
 extern int getAnimEff(void* obj);
 #include "kyoshin/cf/CtrlRemoteApi.hpp"
@@ -324,10 +325,10 @@ int checkArtsFull(void* param, void* actor, int flags) {
                             }
                         }
                         if (!(p->unk78 & 2)) {
-                            void* entry = lookupBattleStatusEntry((u8*)obj + 8, 0x95);
+                            cf::CBattleStateEntry* entry = lookupBattleStatusEntry((u8*)obj + 8, 0x95);
                             if (entry != 0) {
                                 splashKind = 1;
-                                f30 = (f32)*(u32*)((u8*)entry + 0x10) * ml::deg2rad;
+                                f30 = (f32)entry->unk10 * ml::deg2rad;
                             }
                         }
                         u32 sv2;
@@ -338,11 +339,11 @@ int checkArtsFull(void* param, void* actor, int flags) {
                             f31 = obj->v110()[0];
                         }
                         f32 vec70[3];
-                        void* vpos = obj->mSub.s73();
+                        CVoiceModelPos* vpos = obj->mSub.s73();
                         if (vpos != 0) {
-                            vec70[0] = *(f32*)((u8*)vpos + 0xc);
-                            vec70[1] = *(f32*)((u8*)vpos + 0x1c);
-                            vec70[2] = *(f32*)((u8*)vpos + 0x2c);
+                            vec70[0] = vpos->x;
+                            vec70[1] = vpos->y;
+                            vec70[2] = vpos->z;
                         } else {
                             vec70[0] = ((f32*)obj->mSub.s41())[0];
                             vec70[1] = ((f32*)obj->mSub.s41())[4];
@@ -481,9 +482,9 @@ int checkArtsFull(void* param, void* actor, int flags) {
                         int validCount = 0;
                         int reject = 0;
                         int i = 0;
-                        void* list = holder.get();
-                        while (i < *(u32*)((u8*)list + 0x620)) {
-                            void* list2 = holder.get();
+                        cf::CfObjEnumList* list = holder.get();
+                        while (i < list->mPtrCount) {
+                            cf::CfObjEnumList* list2 = holder.get();
                             void* target = getObjectAt(list2, i);
                             if (target != 0 && MapFx_ResolveOwner(target) != 0) {
                                 if (!(p->unk78 & 2)) {
@@ -600,10 +601,10 @@ int checkArtsFull(void* param, void* actor, int flags) {
         if ((obj->field_3F00 & 2) && obj->field_3F28 == 6) {
             if (p->unk48 == 0xf8) {
                 CfEnumListHolder holder2;
-                void* list = holder2.get();
+                cf::CfObjEnumList* list = holder2.get();
                 startEnumObjects(list, 0x20, 0x800);
                 list = holder2.get();
-                if (*(u32*)((u8*)list + 0x620) <= 1) result |= 0x80;
+                if (list->mPtrCount <= 1) result |= 0x80;
             }
             if (p->unk48 == 0x119 && obj->v192() < 3) result |= 0x80;
         }

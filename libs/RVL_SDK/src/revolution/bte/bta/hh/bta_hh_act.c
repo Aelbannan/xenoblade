@@ -686,22 +686,20 @@ static tBTA_HH_STATUS bta_hh_get_trans_status(UINT32 result)
 /*  Data action (matched, retained for reference)                      */
 /* ------------------------------------------------------------------ */
 
-void bta_hh_data_act(void *p_cb, void *p_data)
+void bta_hh_data_act(tBTA_HH_DEV_CB *p_cb, tBTA_HH_CBACK_DATA *p_data)
 {
-    void *p_buf;
-    unsigned short off;
-    unsigned short len;
-    unsigned char rpt;
+    BT_HDR *p_buf;
+    UINT16 off;
+    UINT16 len;
+    UINT8 rpt;
 
-    p_buf = *(void **)((char *)p_data + 0xc);
-    off = ((BT_HDR *)p_buf)->offset;
-    rpt = (unsigned char)(*(unsigned short *)((char *)p_data + 6));
-    len = ((BT_HDR *)p_buf)->len;
-    bta_hh_co_data(rpt, (char *)p_buf + off + 8, len,
-                   *((unsigned char *)p_cb + 0x1b),
-                   *((unsigned char *)p_cb + 0x13),
-                   *((unsigned char *)p_cb + 0x15));
-    utl_freebuf(&p_buf);
+    p_buf = p_data->p_data;
+    off = p_buf->offset;
+    rpt = (UINT8)p_data->hdr.layer_specific;
+    len = p_buf->len;
+    bta_hh_co_data(rpt, (UINT8 *)(p_buf + 1) + off, len,
+                   p_cb->mode, p_cb->sub_class, p_cb->app_id);
+    utl_freebuf((void **)&p_buf);
 }
 
 /* Handshake event from the HID host.  (Not part of the active batch; the

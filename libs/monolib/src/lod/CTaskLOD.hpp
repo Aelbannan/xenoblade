@@ -4,14 +4,14 @@
 #include "monolib/work/CTTask.hpp"
 #include "monolib/lod/LODMemMan.hpp"
 
-class CScnEnvLgtCtrl;  // scene-light control ring (CScnEnvLgtCtrl.hpp)
+struct CScnEnvLgtCtrlResList;  // scene env-controller list owner (CScnEnvLgtCtrl.hpp)
 
 // Pointee of CTaskLOD::mParam1 (offset 0x54): an opaque manager object whose
 // +0x7C slot holds the scene-light control list head handed to scnLgtCallLightV26
 // by the activateLOD/deactivateLOD/setLODEnable wrappers.
 struct LODParam1Obj {
     u8 _00[0x7C]; /* 0x00 */
-    CScnEnvLgtCtrl* field_0x7C;  // +0x7C light-control list head /* 0x7C */
+    CScnEnvLgtCtrlResList* field_0x7C;  // +0x7C light-control list head /* 0x7C */
 };
 
 /*

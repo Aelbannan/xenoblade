@@ -25,6 +25,10 @@
 #include "kyoshin/cf/object/CfObjectSelectorObj.hpp"
 #include "kyoshin/cf/CPcEffect07.hpp"
 #include "monolib/math/CVec3.hpp"
+#include "monolib/math/Random.hpp"
+#include <nw4r/math/math_triangular.h>
+#include <nw4r/math/math_arithmetic.h>
+#include <nw4r/db/db_assert.h>
 #include "kyoshin/cf/CfCamSymbols.hpp"
 // BMIf removed: CVision real vt used via mVision.
 #include "kyoshin/UnkClass_805764CC.hpp"
@@ -733,7 +737,6 @@ extern "C" int isBattleEventKind1(int);
 extern "C" int classifyBattleCommand(int);
 extern "C" int isBattleEventKind3(int);
 extern "C" int isBattleStatusKind0(int);
-extern "C" int mtRand__Q22ml4mathFi(int n);
 extern "C" f32 lbl_eu_80666DF4;  // 15.0f
 extern "C" f32 lbl_eu_80666DD0;  // 0.6f
 // 0.01f (existing lbl_80666DD8 without eu_ is a different symbol)
@@ -791,7 +794,6 @@ extern "C" void CCharVoiceMan_EnqueueDamageVoice(void*, void*, void*);          
 extern "C" void CCharVoiceMan_ClearPlayerVoiceCount(void*);                        // battle-voice clear
 extern "C" void CCharVoiceMan_EnqueueHurtVoice(void*, void*, void*);          // battle-voice enqueue (3 args)
 void SysWinLog_PollSequenceProgress(CScenarioLogOwner*, s32, CScenarioLogArg2*); // battle-voice (3 args)
-extern "C" f32 Atan2FIdx__Q24nw4r4mathFff(f32 y, f32 x);      // nw4r math
 extern "C" void seedReloadTmr(s32);
 extern "C" s32 CPartsChange_SubmitSpawnRequest(u32, u16);
 extern "C" void CCharVoiceMan_EnqueueBattleEventVoice(void*, void*, void*);
@@ -1010,7 +1012,6 @@ static __inline cf::CfObjectMove* getObjectMove(void* actorAccessor) {
     return move;
 }
 
-extern "C" int mtRand__Q22ml4mathFii(int a, int b);
 extern "C" void* getFP__FPCc(const char* str);
 // Bdat_GetTable_AA34: already declared (void form) by a visible shared header.
 
@@ -1316,7 +1317,7 @@ extern "C" s32 func_800EC918(
             if (tgt != nullptr) {
                 rollVal = mod100((s32)tgt->field_B0);
             } else {
-                rollVal = mtRand__Q22ml4mathFi(100);
+                rollVal = ml::math::mtRand(100);
             }
 
             if (rollVal < resistanceChance) {
@@ -1343,7 +1344,7 @@ extern "C" s32 func_800EC918(
                     if (tgt != nullptr) {
                         rollVal2 = (s32)tgt->field_B4;
                     } else {
-                        rollVal2 = mtRand__Q22ml4mathFi(100);
+                        rollVal2 = ml::math::mtRand(100);
                     }
                     s32 rate = entry27->unk10;
                     if (rollVal2 < rate) {
@@ -1413,7 +1414,7 @@ extern "C" s32 func_800EC918(
         if (triggersResistance) {
             s32 roll = tgt != nullptr
                 ? mod100((s32)tgt->field_AC)
-                : mtRand__Q22ml4mathFi(100);
+                : ml::math::mtRand(100);
             if (roll < 0x32) {
                 return CBattleMan_ApplyHitStop10(
                     self, (BattleObjAccessor*)acc, evt, tgt);
@@ -1448,7 +1449,7 @@ extern "C" s32 func_800EC918(
                                 self, (BattleObjAccessor*)acc, evt, tgt);
                         }
                     } else {
-                        if (mtRand__Q22ml4mathFi(100) < (s32)stackVal2) {
+                        if (ml::math::mtRand(100) < (s32)stackVal2) {
                             return CBattleMan_ApplyHitStop10(
                                 self, (BattleObjAccessor*)acc, evt, tgt);
                         }
@@ -1477,7 +1478,7 @@ extern "C" s32 func_800EC918(
                 cf::CBattleStateEntry* entry22 = (cf::CBattleStateEntry*)findBattleStatusEntry((&acc->subObject), 0x22);
                 s32 rollVal;
                 if (tgt != nullptr) rollVal = (s32)tgt->field_B4;
-                else rollVal = mtRand__Q22ml4mathFi(100);
+                else rollVal = ml::math::mtRand(100);
                 s32 rate = entry22->unk10;
                 if (rollVal < rate) {
                     return CBattleMan_ApplyHitStop10(self, (BattleObjAccessor*)acc, evt, tgt);
@@ -1551,7 +1552,7 @@ extern "C" s32 func_800EC918(
             cf::CBattleStateEntry* entry15 = (cf::CBattleStateEntry*)findBattleStatusEntry((&acc->subObject), 0x15);
             s32 rollVal;
             if (tgt != nullptr) rollVal = (s32)tgt->field_B4;
-            else rollVal = mtRand__Q22ml4mathFi(100);
+            else rollVal = ml::math::mtRand(100);
             s32 rate = entry15->unk10;
             if (rollVal < rate) {
                 return CBattleMan_ApplyHitStop10(self, (BattleObjAccessor*)acc, evt, tgt);
@@ -1570,7 +1571,7 @@ extern "C" s32 func_800EC918(
             cf::CBattleStateEntry* entry1A = (cf::CBattleStateEntry*)findBattleStatusEntry((&acc->subObject), 0x1A);
             s32 rollVal;
             if (tgt != nullptr) rollVal = (s32)tgt->field_B4;
-            else rollVal = mtRand__Q22ml4mathFi(100);
+            else rollVal = ml::math::mtRand(100);
             if (rollVal < entry1A->unk10) {
                 return CBattleMan_ApplyHitStop10(self, (BattleObjAccessor*)acc, evt, tgt);
             }
@@ -1583,7 +1584,7 @@ extern "C" s32 func_800EC918(
             cf::CBattleStateEntry* entry17 = (cf::CBattleStateEntry*)findBattleStatusEntry((&acc->subObject), 0x17);
             s32 rollVal;
             if (tgt != nullptr) rollVal = (s32)tgt->field_B4;
-            else rollVal = mtRand__Q22ml4mathFi(100);
+            else rollVal = ml::math::mtRand(100);
             if (rollVal < entry17->unk10) {
                 return CBattleMan_ApplyHitStop10(self, (BattleObjAccessor*)acc, evt, tgt);
             }
@@ -1596,7 +1597,7 @@ extern "C" s32 func_800EC918(
             cf::CBattleStateEntry* entry18 = (cf::CBattleStateEntry*)findBattleStatusEntry((&acc->subObject), 0x18);
             s32 rollVal;
             if (tgt != nullptr) rollVal = (s32)tgt->field_B4;
-            else rollVal = mtRand__Q22ml4mathFi(100);
+            else rollVal = ml::math::mtRand(100);
             if (rollVal < entry18->unk10) {
                 return CBattleMan_ApplyHitStop10(self, (BattleObjAccessor*)acc, evt, tgt);
             }
@@ -1609,7 +1610,7 @@ extern "C" s32 func_800EC918(
             cf::CBattleStateEntry* entry24 = (cf::CBattleStateEntry*)findBattleStatusEntry((&acc->subObject), 0x24);
             s32 rollVal;
             if (tgt != nullptr) rollVal = (s32)tgt->field_B4;
-            else rollVal = mtRand__Q22ml4mathFi(100);
+            else rollVal = ml::math::mtRand(100);
             if (rollVal < entry24->unk10) {
                 return CBattleMan_ApplyHitStop10(self, (BattleObjAccessor*)acc, evt, tgt);
             }
@@ -1622,7 +1623,7 @@ extern "C" s32 func_800EC918(
             cf::CBattleStateEntry* entry1C = (cf::CBattleStateEntry*)findBattleStatusEntry((&acc->subObject), 0x1C);
             s32 rollVal;
             if (tgt != nullptr) rollVal = (s32)tgt->field_B4;
-            else rollVal = mtRand__Q22ml4mathFi(100);
+            else rollVal = ml::math::mtRand(100);
             if (rollVal < entry1C->unk10) {
                 return CBattleMan_ApplyHitStop10(self, (BattleObjAccessor*)acc, evt, tgt);
             }
@@ -1635,7 +1636,7 @@ extern "C" s32 func_800EC918(
             cf::CBattleStateEntry* entry1D = (cf::CBattleStateEntry*)findBattleStatusEntry((&acc->subObject), 0x1D);
             s32 rollVal;
             if (tgt != nullptr) rollVal = (s32)tgt->field_B4;
-            else rollVal = mtRand__Q22ml4mathFi(100);
+            else rollVal = ml::math::mtRand(100);
             if (rollVal < entry1D->unk10) {
                 return CBattleMan_ApplyHitStop10(self, (BattleObjAccessor*)acc, evt, tgt);
             }
@@ -1708,7 +1709,7 @@ extern "C" s32 func_800EC918(
                 }
                 s32 rollVal;
                 if (tgt != nullptr) rollVal = (s32)tgt->field_B4;
-                else rollVal = mtRand__Q22ml4mathFi(100);
+                else rollVal = ml::math::mtRand(100);
                 if ((s32)f28 <= rollVal) flag = 1;      // fctiwz; cmpw; bgt skip; li r16,1
             } else {
                 flag = 1;                               // .L_800EE6CC
@@ -1798,7 +1799,7 @@ extern "C" s32 func_800EC918(
                     cf::CBattleStateEntry* entry21 = (cf::CBattleStateEntry*)findBattleStatusEntry((&acc->subObject), 0x21);
                     s32 rollVal;
                     if (tgt != nullptr) rollVal = (s32)tgt->field_B4;
-                    else rollVal = mtRand__Q22ml4mathFi(100);
+                    else rollVal = ml::math::mtRand(100);
                     if (rollVal < entry21->unk10) rollFlag = 1;
                 }
                 if ((acc->field_3374 & 0x80) &&    // rlwinm. 0,0,24,24; beq
@@ -1844,7 +1845,7 @@ extern "C" s32 func_800EC918(
                     cf::CBattleStateEntry* entry21 = (cf::CBattleStateEntry*)findBattleStatusEntry((&acc->subObject), 0x21);
                     s32 rollVal;
                     if (tgt != nullptr) rollVal = (s32)tgt->field_B4;
-                    else rollVal = mtRand__Q22ml4mathFi(100);
+                    else rollVal = ml::math::mtRand(100);
                     if (rollVal < entry21->unk10) rollFlag = 1;
                 }
             }
@@ -1923,7 +1924,7 @@ extern "C" s32 func_800EC918(
                         cf::CBattleStateEntry* entry20 = (cf::CBattleStateEntry*)findBattleStatusEntry((&acc->subObject), 0x20);
                         s32 rollVal;
                         if (tgt != nullptr) rollVal = (s32)tgt->field_B4;
-                        else rollVal = mtRand__Q22ml4mathFi(100);
+                        else rollVal = ml::math::mtRand(100);
                         if (rollVal < entry20->unk10) rollFlag = 1;
                     }
                     if ((acc->field_3374 & 0x80) &&      // .L_800EEE00
@@ -1973,7 +1974,7 @@ extern "C" s32 func_800EC918(
                         cf::CBattleStateEntry* entry20 = (cf::CBattleStateEntry*)findBattleStatusEntry((&acc->subObject), 0x20);
                         s32 rollVal;
                         if (tgt != nullptr) rollVal = (s32)tgt->field_B4;
-                        else rollVal = mtRand__Q22ml4mathFi(100);
+                        else rollVal = ml::math::mtRand(100);
                         if (rollVal < entry20->unk10) rollFlag = 1;
                     }
                 }
@@ -2483,7 +2484,7 @@ extern "C" s32 func_800EC918(
             cf::CBattleStateEntry* entry26 = (cf::CBattleStateEntry*)findBattleStatusEntry((&acc->subObject), 0x26);
             s32 rollVal;
             if (tgt != nullptr) rollVal = (s32)tgt->field_B4;  // cmpwi r26,0
-            else rollVal = mtRand__Q22ml4mathFi(100);
+            else rollVal = ml::math::mtRand(100);
             if (rollVal < entry26->unk10) {  // cmpw; bge skip
                 return CBattleMan_ApplyHitStop10(self, (BattleObjAccessor*)acc, evt, tgt);
             }
@@ -2516,7 +2517,7 @@ extern "C" s32 func_800EC918(
             }
         } else {
             // .L_800F0800: tgt == 0 path -- plain rand(100) gate
-            if (mtRand__Q22ml4mathFi(100) >= evt->field_10) {
+            if (ml::math::mtRand(100) >= evt->field_10) {
                 return 0;                           // li r3,0; b .L_800F41D4
             }
             // .L_800F081C: ((cf::CfObjectActor*)acc)->CfObjectActor_takeDamageValue(-vf128(acc), 0x90000000)
@@ -3033,7 +3034,7 @@ extern "C" s32 func_800EC918(
 
     case 246: {
         // rnd = mtRand(evt->field_14, evt->field_10)  [lha +0x14 / lwz +0x10]
-        s32 rnd = mtRand__Q22ml4mathFii(evt->field_14, evt->field_10);
+        s32 rnd = ml::math::mtRand(evt->field_14, evt->field_10);
 
         // acc->vf154((f32)(-rnd));  pc->vf154((f32)rnd);
         {
@@ -3401,7 +3402,7 @@ extern "C" s32 func_800EC918(
         evt->field_30 = copyBattleEvent(eventWorkspace.case249Event, *evt) | 2;
         if (pc == acc) {                   // cmplw r23,r24 ; bne .L_800F2E58
             const s32 eventTypes[5] = { 0x58, 0x59, 0x5A, 0x5B, 0x5C };
-            eventWorkspace.case249Event.eventType = eventTypes[mtRand__Q22ml4mathFi(5)];
+            eventWorkspace.case249Event.eventType = eventTypes[ml::math::mtRand(5)];
             func_800EC918(self, pc, acc, &eventWorkspace.case249Event, tgt);
         }
         // .L_800F2E58
@@ -3415,7 +3416,7 @@ extern "C" s32 func_800EC918(
     }
 
     case 260: {
-        s32 roll = mtRand__Q22ml4mathFi(100);          // r16
+        s32 roll = ml::math::mtRand(100);          // r16
         s32 chosen = 0;                                // r15
         s32 i = 3;                                     // r17 start index
         u32 f15F0 = acc->field_15F0;              // lwz r0,0x15f0(r24)
@@ -3581,7 +3582,7 @@ CtrlObjectParam_RunPartyArtsFlow(obj, 0, (void*)(uintptr_t)((u32)((cf::CActorPar
             s32 rate = artsVal * 5 + 50;               // slwi 2 ; add ; addi 0x32
             if (((cf::CActorParam*)pc)->CActorParam_getStatusCount() == 1) rate -= 25;   // subi r14,r14,0x19
             if (((cf::CActorParam*)pc)->CActorParam_getStatusCount() == 0) rate = 0;     // li r14,0
-            if (mtRand__Q22ml4mathFi(100) < rate) {    // cmpw ; bge skip
+            if (ml::math::mtRand(100) < rate) {    // cmpw ; bge skip
                 ((cf::CBattleState*)&acc->subObject)->CBattleState_clearStatusId(0x112);         // vfunc 0x20: clear status
             }
         }
@@ -3607,7 +3608,7 @@ CtrlObjectParam_RunPartyArtsFlow(obj, 0, (void*)(uintptr_t)((u32)((cf::CActorPar
     case 287: {
         s32 artsNo = spawnBankByte();                  // bl spawnBankByte
         if (artsNo < 0) return 0;                      // bge .L_800F3768 ; li r3,0
-        if (mtRand__Q22ml4mathFi(100) < evt->field_10) {
+        if (ml::math::mtRand(100) < evt->field_10) {
             spawnBankByte();                           // bl again; return ignored
         }
         const s32 artsNumbers[6] = { 6, 4, 7, 8, 9, 5 };
@@ -4357,8 +4358,6 @@ extern "C" void rebuildByDistanceCone(void*, void*, f32, f32, f32, s32);
 extern "C" void __ct__800FBA18(void*, f32, f32, f32, s32);
 extern "C" void rebuildByDualCone(void*, void*, f32, f32, f32, f32, f32, s32);
 extern "C" void dispatchBattleAI(void*, void*, void*, void*);
-extern "C" f32 FrSqrt__Q24nw4r4mathFf(f32);
-extern "C" void Warning__Q24nw4r2dbFPCciPCce(const char*, int, const char*, ...);
 extern "C" void* getObjectIdAt(void*, int);
 extern f64 lbl_eu_80666E08;
 extern f64 lbl_eu_80666DE0;
@@ -4369,7 +4368,6 @@ extern f32 lbl_eu_80666DFC;
 extern f32 lbl_eu_80666E14;
 extern f32 lbl_eu_80666E28;
 extern f32 lbl_eu_80666E18;
-extern "C" s32 getCurrentSlotIndex__Q22cf13CfGameManagerFv(void);
 extern "C" u32 getAnimModelId(void*);
 
 void initBattleActorState(void* self_, void* actor_) {
@@ -4513,11 +4511,11 @@ void initBattleActorState(void* self_, void* actor_) {
             if (dy != lbl_eu_80666DDC) {
                 f32 distSq = power * power + dy * dy;
                 if (distSq < lbl_eu_80666DDC) {
-                    Warning__Q24nw4r2dbFPCciPCce(lbl_eu_80526324, 0x273,
+                    nw4r::db::Warning(lbl_eu_80526324, 0x273,
                                                  lbl_eu_80526300);
                 }
                 if (distSq > lbl_eu_80666DDC) {
-                    distSq = distSq * FrSqrt__Q24nw4r4mathFf(distSq);
+                    distSq = distSq * nw4r::math::FrSqrt(distSq);
                 }
                 power = distSq;
             }
@@ -4730,7 +4728,11 @@ static inline ml::CVec3* actorPos(cf::CfObjectActor* actor) {
 // Half-width of an actor's frontal hit cone.
 static inline f32 halfHitRange(cf::CActorParam* actor) {
     f32 range = actor->CActorParam_getHitRange();
-    return range * lbl_eu_80666DE8;
+    // The retail 0.5f cone scale lives in the shared .sdata2 pool constant;
+    // reading it into a local keeps the multiply's operand slots in source
+    // order (retail fmuls f0, f1, f0), which a folded literal reverses.
+    f32 scale = lbl_eu_80666DE8;
+    return range * scale;
 }
 
 // Bounds of an actor's side hit window: the half cone widened by the
@@ -4738,17 +4740,19 @@ static inline f32 halfHitRange(cf::CActorParam* actor) {
 static inline f32 sideConeMin(cf::CActorParam* actor) {
     f32 center = actor->CActorParam_getHitCenter();
     f32 range = actor->CActorParam_getHitRange();
-    return -(range * lbl_eu_80666DE8 + center);
+    f32 scale = lbl_eu_80666DE8;
+    return -(range * scale + center);
 }
 static inline f32 sideConeMax(cf::CActorParam* actor) {
     f32 center = actor->CActorParam_getHitCenter();
     f32 range = actor->CActorParam_getHitRange();
-    return range * lbl_eu_80666DE8 + center;
+    f32 scale = lbl_eu_80666DE8;
+    return range * scale + center;
 }
 
 // Bearing of (x, z) in radians (FIdx -> rad), relative to the given facing.
 static inline f32 relativeBearing(f32 x, f32 z, f32 facing) {
-    f32 bearing = lbl_eu_80666E10 * Atan2FIdx__Q24nw4r4mathFff(x, z);
+    f32 bearing = lbl_eu_80666E10 * nw4r::math::Atan2FIdx(x, z);
     return bearing - facing;
 }
 
@@ -4765,7 +4769,7 @@ extern "C" void dispatchBattleAI(void* mgr, void* obj, void* enemy, void* arg4){
     // 13-entry random ai table; the two vt[0x28] flags pin entries 0 and 4.
     for(int i = 0; i < 13; i++){
         if(move->field_78 & 0x40) continue;
-        move->table[i] = mtRand__Q22ml4mathFi(100);
+        move->table[i] = ml::math::mtRand(100);
         if(((cf::CBattleManager*)mgr)->CheckUnk84Flag(0x2000) != 0){
             if(i == 4 || i == 0) move->table[i] = 0x63;
         }else if(((cf::CBattleManager*)mgr)->CheckUnk84Flag(0x4000) != 0){
@@ -4784,7 +4788,7 @@ extern "C" void dispatchBattleAI(void* mgr, void* obj, void* enemy, void* arg4){
     // Relative angle, wrapped into [-pi, pi).
     f32 angle;
     if(((cf::CfObjectActor*)enemy)->unk64 & 0x02){
-        f32 bearing = lbl_eu_80666E10 * Atan2FIdx__Q24nw4r4mathFff(diff.x, diff.z);
+        f32 bearing = lbl_eu_80666E10 * nw4r::math::Atan2FIdx(diff.x, diff.z);
         angle = bearing - ((cf::CfObjectActor*)enemy)->CfObject_getMoveHeadAngle();
         while(ml::pi <= angle) angle -= ml::tau;
         while(angle < -ml::pi) angle += ml::tau;
@@ -5079,7 +5083,7 @@ void prepareBattleMove(void* self, BattleObjAccessor* arg1, void* arg2, void* mo
                 else if ((u32)(lv + 2) > 4) chance += (f32)(lv * 8);
                 chance -= (f32)*(s16*)((u8*)prm2 + 0x36);
                 if (atk->unk64 & 0x2) chance += k50_0f * (f32)*(s16*)((u8*)prm1 + 0x36);
-                if (getCurrentSlotIndex__Q22cf13CfGameManagerFv() == 4) {
+                if (cf::CfGameManager::getCurrentSlotIndex() == 4) {
                     if (atk->unk64 & 0x2) {
                         if (isBattleStatusActive((u8*)arg1 + 8, 0xa2)) {
                             cf::CBattleStateEntry* e = (cf::CBattleStateEntry*)findBattleStatusEntry((u8*)arg1 + 8, 0xa2);
@@ -9137,7 +9141,7 @@ SysWinLog_DrivePair((CScenarioLogOwner*)target, (CScenarioLogOwner*)attacker);
                                 *(f32*)((u8*)st2 + 0x46C) = ((cf::CfObjectActor*)(attacker))->CfObject_getMoveHeadAngle();
                             } else {
                                 *(f32*)((u8*)st2 + 0x46C) =
-                                    0.024543693f * Atan2FIdx__Q24nw4r4mathFff(d.x, d.z);
+                                    0.024543693f * nw4r::math::Atan2FIdx(d.x, d.z);
                             }
                             if (((cf::CBattleManager*)self)->mChain.mHead.field_2 < 1 || ((cf::CBattleManager*)self)->mChain.mHead.field_2 > 0x18) {
                                 *(f32*)((u8*)st2 + 0x468) = getArtsFacing(sub);
@@ -9160,7 +9164,7 @@ SysWinLog_DrivePair((CScenarioLogOwner*)target, (CScenarioLogOwner*)attacker);
                                 *(f32*)((u8*)st2 + 0x478) = ((cf::CfObjectActor*)(attacker))->CfObject_getMoveHeadAngle();
                             } else {
                                 *(f32*)((u8*)st2 + 0x478) =
-                                    0.024543693f * Atan2FIdx__Q24nw4r4mathFff(d.x, d.z);
+                                    0.024543693f * nw4r::math::Atan2FIdx(d.x, d.z);
                             }
                             if (((cf::CBattleManager*)self)->mChain.mHead.field_2 < 1 || ((cf::CBattleManager*)self)->mChain.mHead.field_2 > 0x18) {
                                 *(f32*)((u8*)st2 + 0x470) = getArtsClampedRate(sub);
@@ -10107,7 +10111,7 @@ postLoop:
                         if (dx * dx + dz * dz <= 0.010000001f) {
                             md2->mFacing46C = ((cf::CfObjectActor*)(actor))->CfObject_getMoveHeadAngle();
                         } else {
-                            md2->mFacing46C = Atan2FIdx__Q24nw4r4mathFff(dx, dz) * 0.024543693f;
+                            md2->mFacing46C = nw4r::math::Atan2FIdx(dx, dz) * 0.024543693f;
                         }
                         if (chapterInRange(self)) {
                             md2->mFacing468 = lbl_eu_80666DD4;   // 1.0f (0x8D5C)
@@ -10132,7 +10136,7 @@ postLoop:
                         if (dx * dx + dz * dz <= 0.010000001f) {
                             md2->mFacing478 = ((cf::CfObjectActor*)(actor))->CfObject_getMoveHeadAngle();
                         } else {
-                            md2->mFacing478 = Atan2FIdx__Q24nw4r4mathFff(dx, dz) * 0.024543693f;
+                            md2->mFacing478 = nw4r::math::Atan2FIdx(dx, dz) * 0.024543693f;
                         }
                         if (chapterInRange(self)) {
 f32 v = getArtsScaledSpeed((const u8*)sub);
@@ -10498,7 +10502,7 @@ CtrlObjectParam_RunPartyArtsFlow(arts, (s32)(uintptr_t)((cf::CActorParam*)target
                         if (((cf::CActorParam*)obj)->CActorParam_getStatusTable() &&       // called twice (retail)
                             IdTable_QuerySumMaxFloat((void*)(uintptr_t)((cf::CActorParam*)obj)->CActorParam_getStatusTable(),
                                           0x35, &out14, &out10, (u32*)&out0c) &&
-                            (s32)mtRand__Q22ml4mathFi(100) < (s32)out10) {
+                            (s32)ml::math::mtRand(100) < (s32)out10) {
                             // 0x800EA908: propagate the (0x35, 0x1000) chain event
                             // to every listed actor.
                             std::memset(&ev, 0, sizeof(ev));
@@ -11038,7 +11042,7 @@ extern "C" s32 emitBattleMoveEvents(void* mgr /*r24*/, void* actorA /*r25*/, voi
         if (stat != nullptr) {
             if ((u32)(stat->unk84[11] % 100) < (u32)threshold) goto fail_10;
         } else {
-            if (mtRand__Q22ml4mathFi(100) < threshold) return 0;
+            if (ml::math::mtRand(100) < threshold) return 0;
         }
     }
 
@@ -11048,7 +11052,7 @@ extern "C" s32 emitBattleMoveEvents(void* mgr /*r24*/, void* actorA /*r25*/, voi
             if (isBattleEventKind1(evt->cmd)) {
                 cf::CBattleStateEntry* e = (cf::CBattleStateEntry*)findBattleStatusEntry((u8*)actorB + 8, 39);
                 if (e != nullptr) {
-                    u32 roll = stat != nullptr ? stat->unk84[12] : (u32)mtRand__Q22ml4mathFi(100);
+                    u32 roll = stat != nullptr ? stat->unk84[12] : (u32)ml::math::mtRand(100);
                     if (roll < (u32)e->unk10) goto fail_10;
                 }
             }
@@ -11077,7 +11081,7 @@ extern "C" s32 emitBattleMoveEvents(void* mgr /*r24*/, void* actorA /*r25*/, voi
             if (stat != nullptr) {
                 if ((stat->unk84[10] % 100) < 50) goto fail_10;
             } else {
-                if (mtRand__Q22ml4mathFi(100) < 50) goto fail_10;
+                if (ml::math::mtRand(100) < 50) goto fail_10;
             }
         }
     }
@@ -11087,7 +11091,7 @@ extern "C" s32 emitBattleMoveEvents(void* mgr /*r24*/, void* actorA /*r25*/, voi
         if (isBattleStatusKind1(evt->cmd)) {
             u32 val;
             if (IdTable_GetSum((void*)((cf::CActorParam*)(actorB))->CActorParam_getStatusTable(), 124, &val)) {
-                u32 roll = stat != nullptr ? stat->unk84[12] : (u32)mtRand__Q22ml4mathFi(100);
+                u32 roll = stat != nullptr ? stat->unk84[12] : (u32)ml::math::mtRand(100);
                 if (roll < val) goto fail_10;
             }
         }
@@ -11102,7 +11106,7 @@ extern "C" s32 emitBattleMoveEvents(void* mgr /*r24*/, void* actorA /*r25*/, voi
     case 4:
         if (isBattleStatusActive((u8*)actorB + 8, 21) != nullptr) {
             cf::CBattleStateEntry* e = (cf::CBattleStateEntry*)findBattleStatusEntry((u8*)actorB + 8, 21);
-            u32 roll = stat != nullptr ? stat->unk84[12] : (u32)mtRand__Q22ml4mathFi(100);
+            u32 roll = stat != nullptr ? stat->unk84[12] : (u32)ml::math::mtRand(100);
             if (roll < (u32)e->unk10) goto fail_10;
         }
         break;
@@ -11115,7 +11119,7 @@ extern "C" s32 emitBattleMoveEvents(void* mgr /*r24*/, void* actorA /*r25*/, voi
     case 6:
         if (isBattleStatusActive((u8*)actorB + 8, 23) != nullptr) {
             cf::CBattleStateEntry* e = (cf::CBattleStateEntry*)findBattleStatusEntry((u8*)actorB + 8, 23);
-            u32 roll = stat != nullptr ? stat->unk84[12] : (u32)mtRand__Q22ml4mathFi(100);
+            u32 roll = stat != nullptr ? stat->unk84[12] : (u32)ml::math::mtRand(100);
             if (roll < (u32)e->unk10) goto fail_10;
         }
         break;
@@ -11124,7 +11128,7 @@ extern "C" s32 emitBattleMoveEvents(void* mgr /*r24*/, void* actorA /*r25*/, voi
     case 7:
         if (isBattleStatusActive((u8*)actorB + 8, 24) != nullptr) {
             cf::CBattleStateEntry* e = (cf::CBattleStateEntry*)findBattleStatusEntry((u8*)actorB + 8, 24);
-            u32 roll = stat != nullptr ? stat->unk84[12] : (u32)mtRand__Q22ml4mathFi(100);
+            u32 roll = stat != nullptr ? stat->unk84[12] : (u32)ml::math::mtRand(100);
             if (roll < (u32)e->unk10) goto fail_10;
         }
         break;
@@ -11133,7 +11137,7 @@ extern "C" s32 emitBattleMoveEvents(void* mgr /*r24*/, void* actorA /*r25*/, voi
     case 9:
         if (isBattleStatusActive((u8*)actorB + 8, 26) != nullptr) {
             cf::CBattleStateEntry* e = (cf::CBattleStateEntry*)findBattleStatusEntry((u8*)actorB + 8, 26);
-            u32 roll = stat != nullptr ? stat->unk84[12] : (u32)mtRand__Q22ml4mathFi(100);
+            u32 roll = stat != nullptr ? stat->unk84[12] : (u32)ml::math::mtRand(100);
             if (roll < (u32)e->unk10) goto fail_10;
         }
         break;
@@ -11149,7 +11153,7 @@ extern "C" s32 emitBattleMoveEvents(void* mgr /*r24*/, void* actorA /*r25*/, voi
     case 11:
         if (isBattleStatusActive((u8*)actorB + 8, 28) != nullptr) {
             cf::CBattleStateEntry* e = (cf::CBattleStateEntry*)findBattleStatusEntry((u8*)actorB + 8, 28);
-            u32 roll = stat != nullptr ? stat->unk84[12] : (u32)mtRand__Q22ml4mathFi(100);
+            u32 roll = stat != nullptr ? stat->unk84[12] : (u32)ml::math::mtRand(100);
             if (roll < (u32)e->unk10) goto fail_10;
         }
         break;
@@ -11158,7 +11162,7 @@ extern "C" s32 emitBattleMoveEvents(void* mgr /*r24*/, void* actorA /*r25*/, voi
     case 12:
         if (isBattleStatusActive((u8*)actorB + 8, 29) != nullptr) {
             cf::CBattleStateEntry* e = (cf::CBattleStateEntry*)findBattleStatusEntry((u8*)actorB + 8, 29);
-            u32 roll = stat != nullptr ? stat->unk84[12] : (u32)mtRand__Q22ml4mathFi(100);
+            u32 roll = stat != nullptr ? stat->unk84[12] : (u32)ml::math::mtRand(100);
             if (roll < (u32)e->unk10) goto fail_10;
         }
         break;
@@ -11194,7 +11198,7 @@ extern "C" s32 emitBattleMoveEvents(void* mgr /*r24*/, void* actorA /*r25*/, voi
                     u32 r = 0;                                   // r29 (re-reset per retail)
                     if (isBattleStatusActive((u8*)actorB + 8, 32) != nullptr) {
                         cf::CBattleStateEntry* e = (cf::CBattleStateEntry*)findBattleStatusEntry((u8*)actorB + 8, 32);
-                        u32 roll = stat != nullptr ? stat->unk84[12] : (u32)mtRand__Q22ml4mathFi(100);
+                        u32 roll = stat != nullptr ? stat->unk84[12] : (u32)ml::math::mtRand(100);
                         if (roll < (u32)e->unk10) r = 1;
                     }
                     if (((BattleActor*)actorB)->flags_3374 & 0x80) {
@@ -11233,7 +11237,7 @@ extern "C" s32 emitBattleMoveEvents(void* mgr /*r24*/, void* actorA /*r25*/, voi
                 if (!(evt->field_10 & 5)) {
                     if (isBattleStatusActive((u8*)actorB + 8, 32) != nullptr) {
                         cf::CBattleStateEntry* e = (cf::CBattleStateEntry*)findBattleStatusEntry((u8*)actorB + 8, 32);
-                        u32 roll = stat != nullptr ? stat->unk84[12] : (u32)mtRand__Q22ml4mathFi(100);
+                        u32 roll = stat != nullptr ? stat->unk84[12] : (u32)ml::math::mtRand(100);
                         if (roll < (u32)e->unk10) goto fail_10;
                     }
                 }
@@ -11280,7 +11284,7 @@ extern "C" s32 emitBattleMoveEvents(void* mgr /*r24*/, void* actorA /*r25*/, voi
                 u32 r = 0;                                   // r29 (re-reset per retail)
                 if (isBattleStatusActive((u8*)actorB + 8, 33) != nullptr) {
                     cf::CBattleStateEntry* e = (cf::CBattleStateEntry*)findBattleStatusEntry((u8*)actorB + 8, 33);
-                    u32 roll = stat != nullptr ? stat->unk84[12] : (u32)mtRand__Q22ml4mathFi(100);
+                    u32 roll = stat != nullptr ? stat->unk84[12] : (u32)ml::math::mtRand(100);
                     if (roll < (u32)e->unk10) r = 1;
                 }
                 if (((BattleActor*)actorB)->flags_3374 & 0x80) {
@@ -11307,7 +11311,7 @@ extern "C" s32 emitBattleMoveEvents(void* mgr /*r24*/, void* actorA /*r25*/, voi
             if (!(evt->field_10 & 5)) {
                 if (isBattleStatusActive((u8*)actorB + 8, 33) != nullptr) {
                     cf::CBattleStateEntry* e = (cf::CBattleStateEntry*)findBattleStatusEntry((u8*)actorB + 8, 33);
-                    u32 roll = stat != nullptr ? stat->unk84[12] : (u32)mtRand__Q22ml4mathFi(100);
+                    u32 roll = stat != nullptr ? stat->unk84[12] : (u32)ml::math::mtRand(100);
                     if (roll < (u32)e->unk10) goto fail_10;
                 }
             }
@@ -11330,7 +11334,7 @@ extern "C" s32 emitBattleMoveEvents(void* mgr /*r24*/, void* actorA /*r25*/, voi
         if (isBattleStatusActive((u8*)actorB + 8, 34) != nullptr) {
             if (actorB != actorA) {
                 cf::CBattleStateEntry* e = (cf::CBattleStateEntry*)findBattleStatusEntry((u8*)actorB + 8, 34);
-                u32 roll = stat != nullptr ? stat->unk84[12] : (u32)mtRand__Q22ml4mathFi(100);
+                u32 roll = stat != nullptr ? stat->unk84[12] : (u32)ml::math::mtRand(100);
                 if (roll < (u32)e->unk10) goto fail_10;
             }
         }
@@ -11342,7 +11346,7 @@ extern "C" s32 emitBattleMoveEvents(void* mgr /*r24*/, void* actorA /*r25*/, voi
         if (isBattleStatusActive((u8*)actorB + 8, 34) != nullptr) {
             if (actorB != actorA) {
                 cf::CBattleStateEntry* e = (cf::CBattleStateEntry*)findBattleStatusEntry((u8*)actorB + 8, 34);
-                u32 roll = stat != nullptr ? stat->unk84[12] : (u32)mtRand__Q22ml4mathFi(100);
+                u32 roll = stat != nullptr ? stat->unk84[12] : (u32)ml::math::mtRand(100);
                 if (roll < (u32)e->unk10) goto fail_10;
             }
         }
@@ -11352,7 +11356,7 @@ extern "C" s32 emitBattleMoveEvents(void* mgr /*r24*/, void* actorA /*r25*/, voi
     case 19:
         if (isBattleStatusActive((u8*)actorB + 8, 36) != nullptr) {
             cf::CBattleStateEntry* e = (cf::CBattleStateEntry*)findBattleStatusEntry((u8*)actorB + 8, 36);
-            u32 roll = stat != nullptr ? stat->unk84[12] : (u32)mtRand__Q22ml4mathFi(100);
+            u32 roll = stat != nullptr ? stat->unk84[12] : (u32)ml::math::mtRand(100);
             if (roll < (u32)e->unk10) goto fail_10;
         }
         break;
@@ -11365,7 +11369,7 @@ extern "C" s32 emitBattleMoveEvents(void* mgr /*r24*/, void* actorA /*r25*/, voi
         }
         if (isBattleStatusActive((u8*)actorB + 8, 0x26) != nullptr) {
             cf::CBattleStateEntry* e = (cf::CBattleStateEntry*)findBattleStatusEntry((u8*)actorB + 8, 0x26);
-            u32 roll = stat != nullptr ? stat->unk84[12] : (u32)mtRand__Q22ml4mathFi(100);
+            u32 roll = stat != nullptr ? stat->unk84[12] : (u32)ml::math::mtRand(100);
             if (roll < (u32)e->unk10) goto fail_10;
         }
         if (stat != nullptr) {
@@ -11396,7 +11400,7 @@ extern "C" s32 emitBattleMoveEvents(void* mgr /*r24*/, void* actorA /*r25*/, voi
         }
         if (isBattleStatusActive((u8*)actorB + 8, 0x26) != nullptr) {
             cf::CBattleStateEntry* e = (cf::CBattleStateEntry*)findBattleStatusEntry((u8*)actorB + 8, 0x26);
-            u32 roll = stat != nullptr ? stat->unk84[12] : (u32)mtRand__Q22ml4mathFi(100);
+            u32 roll = stat != nullptr ? stat->unk84[12] : (u32)ml::math::mtRand(100);
             if (roll < (u32)e->unk10) goto fail_10;
         }
         if (stat != nullptr) {
@@ -11514,7 +11518,7 @@ extern "C" s32 emitBattleMoveEvents(void* mgr /*r24*/, void* actorA /*r25*/, voi
     case 220:
         if (isBattleStatusActive((u8*)actorB + 8, 38) != nullptr) {
             cf::CBattleStateEntry* e = (cf::CBattleStateEntry*)findBattleStatusEntry((u8*)actorB + 8, 38);
-            u32 roll = stat != nullptr ? stat->unk84[12] : (u32)mtRand__Q22ml4mathFi(100);
+            u32 roll = stat != nullptr ? stat->unk84[12] : (u32)ml::math::mtRand(100);
             if (roll < (u32)e->unk10) goto fail_10;
         }
         if (stat != nullptr) {
@@ -11533,7 +11537,7 @@ extern "C" s32 emitBattleMoveEvents(void* mgr /*r24*/, void* actorA /*r25*/, voi
                 }
             }
         } else {
-            if (mtRand__Q22ml4mathFi(100) >= (s32)evt->field_10) goto fail_10;
+            if (ml::math::mtRand(100) >= (s32)evt->field_10) goto fail_10;
         }
         if (stat != nullptr) {
             stat->mFlagsArray[0].flags |= 0x90000000;
@@ -11599,7 +11603,7 @@ extern "C" s32 emitBattleMoveEvents(void* mgr /*r24*/, void* actorA /*r25*/, voi
                 if (IsValidPtr(sub)) {
                     power += k2_5f * (f64)(s32)artsSubGetMax(sub);   // 2.5f, fmadds
                 }
-                u32 roll = IsValidPtr(stat) ? stat->unk84[12] : (u32)mtRand__Q22ml4mathFi(100);
+                u32 roll = IsValidPtr(stat) ? stat->unk84[12] : (u32)ml::math::mtRand(100);
                 if ((u32)(s32)(f64)power <= (u32)roll) brk = 1;
             }
         }

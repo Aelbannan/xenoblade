@@ -48,16 +48,6 @@ struct ShopBuyData {
     ShopBuyData128 mD9;     // 0xD9..0x159 (16 x 8B copy loop)
 };
 
-/* Local shim for cf::CfPadData - only the flag words ShopBuy_HandleInput reads
- * (CfPadData.hpp owns the full type but pulls CPad/monolib umbrella headers
- * into this TU). 0x00/0x04 are CPad held/pressed flags, 0x104 turbo flags. */
-struct ShopBuyPadData {
-    u32 mHeldFlags;                   // +0x00 (CPad::mHeldButtonFlags)
-    u32 mPressedFlags;                // +0x04 (CPad::mPressedButtonFlags)
-    u8 _pad08[0x104 - 0x08];          // 0x08..0x103
-    u32 mTurboFlags;                  // +0x104 (CfPadData::mTurboPressButtonFlags)
-};
-
 /*
  * Shop buy menu screen process.
  *
@@ -84,6 +74,8 @@ public:
     virtual void Move();
     virtual void cbRenderBefore();
 
+    static CMenuShopBuy* sInstance;
+
     CScn* mScene;               // 0x5C: owning scene
     u32 mField60;               // 0x60: ctor arg 3
     CBgTex mBgTex;              // 0x64
@@ -102,14 +94,8 @@ extern "C" void BgTex_Release_3D9C(CBgTex* self);
 // ShopBuy_HandleInput pad/flag callees (retail unmangled names). ItemBoxLine_IsBusy is
 // declared int (not u8) so the caller compares with cmpwi directly.
 extern "C" int MenuTutorialIsCreated();
-extern "C" ShopBuyPadData* getCfPadData__Q22cf13CfGameManagerFv();
-extern "C" void __as__17UnkClass_8045F564FRC17UnkClass_8045F564(void* dest, void* src);
 // CTitleAHelp::CTitleAHelp_load() is declared in kyoshin/CTitleAHelp.hpp.
 extern "C" void BgTex_Acquire_3C14(CBgTex* self);
-extern "C" void addRenderCB__4CScnFP10IScnRenderUlUl(CScn*, IScnRender*, u32, u32);
-extern char lbl_eu_80503B20[];  // split1 .rodata string pool (Init title name)
-extern const f32 lbl_eu_80667A24;  // .sdata2 float pool constants (timer inc/clamp)
-extern const f32 lbl_eu_80667A28;
 
 // Subobject ctors/dtors (retail keeps the unmangled names).
 
@@ -137,7 +123,6 @@ extern "C" CMenuShopBuy* ShopBuy_CreateMenu(CProcess* parent, CScn* scene, u32 a
 // CScn.hpp pulls broken monolib umbrella headers (kyoshin headers already
 // define an opaque CScn), so the render-callback removal is called through
 // its retail C name (same scheme as CMenuBattleEnd / CMenuCollepedia).
-extern "C" void removeRenderCB__4CScnFP10IScnRender(CScn*, IScnRender*);
 
 // Task-game gate helpers. Declared with C linkage because CTaskGame.hpp pulls
 // broken monolib umbrella headers that redefine CScn (same scheme as
@@ -145,5 +130,3 @@ extern "C" void removeRenderCB__4CScnFP10IScnRender(CScn*, IScnRender*);
 
 // Shared data imports (MWCC does not mangle global-scope data names).
 extern u32 gmPauseFlags;       // render-gate mode bitfield (.sbss; bit 21 = busy)
-extern u32 lbl_eu_806642F8;       // shop-buy singleton flag (cleared by Term)
-extern const f32 lbl_eu_80667A20; // .sdata2 float pool constant (ctor mFloat6FC init)

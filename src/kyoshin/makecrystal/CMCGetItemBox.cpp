@@ -1175,10 +1175,11 @@ extern "C" void refreshMCGetItemBoxSlots(CMCGetItemBox* self) {
         // Retail computes the pages low word first (subfic right after the
         // finds), then reloads it when building the second scratch record.
         u32 pagesLow = (u32)(u8)(3 - count);
-        pos.y = (float&)self->field_30C;
-        pos.x = (float&)self->field_308;
+        // Retail moves the three raw words into the VEC3 (integer lwz/stw).
+        (u32&)pos.y = self->field_30C;
+        (u32&)pos.x = self->field_308;
         u8 nextPage = (u8)(sub->counter + 1);
-        pos.z = (float&)self->field_310;
+        (u32&)pos.z = self->field_310;
         // Retail parks the scale in f2 right after the z-store.
         float scale = 16.0f;
         pos.x += scale * (f32)(s32)(nextPage - 1) +

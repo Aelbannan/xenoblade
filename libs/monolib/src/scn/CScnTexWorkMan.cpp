@@ -1,8 +1,8 @@
 // Decompiled for monolib/src/scn/CScnTexWorkMan
 //
 // Texture-work manager: owns a texture-work memory pool (MemManager region),
-// a per-node entry table, and walks the model's node tree clamping a
-// position/scale pair into each node's box corners (recursive).
+// the model's per-node world matrices, and walks the model's node tree to
+// accumulate the world-space bounds of the node positions (recursive).
 
 #include <harness_catalog.h>
 #include <nw4r/db/db_assert.h>
@@ -30,31 +30,6 @@ extern char lbl_eu_8056E1C8[];    // assert source file (node-id asserts, line 0
 extern char lbl_eu_8056E1A8[];    // assert format
 extern char lbl_eu_80529678[];    // assert source file (line 0x53 asserts)
 extern char lbl_eu_80529658[];    // assert format
-extern const char lbl_eu_80524020[];    // memory-region name passed to MemManager::create
-
-// Shared .sdata2 float constants used by this unit (retail pool).
-
-// Game-fork resource data: the nw4r ResMdlData/ResNodeData layouts in this
-// game add a node index at 0x10 and node-dictionary offsets at 0x5c/0x60/0x64
-// (both resource types share the extension).
-struct CScnTexWorkManResData {
-    u8 field_0x00[0x10];
-    s32 field_0x10;  // node index into the work-man entry table
-    u8 field_0x14[0x5c - 0x14];
-    s32 field_0x5c;  // node-dictionary offset (entry-table nodes)
-    s32 field_0x60;  // node-dictionary offset (recursion 2)
-    s32 field_0x64;  // node-dictionary offset (recursion 1)
-};
-
-// 0x30-byte per-node entry: one scalar clamp bound per axis.
-struct CScnTexWorkManEntry {
-    u8 field_0x00[0x0c];
-    f32 field_0x0c;  // x-axis bound
-    u8 field_0x10[0x1c - 0x10];
-    f32 field_0x1c;  // y-axis bound
-    u8 field_0x20[0x2c - 0x20];
-    f32 field_0x2c;  // z-axis bound
-};
 
 // Texture-work object cursor word at +0x28 (read by TexMan_ReleaseArg_02D8).
 struct CScnTexWorkManCursor {
@@ -69,6 +44,37 @@ struct CScnTexWorkManNodeIdList {
     u32 count;   // 0x4
 };
 
+// The retail game's nw4r build keeps the g3d_resnode_ac.h accessor asserts.
+// name-guess: unit-local mirrors of the asserting ResNode accessors.
+static inline const nw4r::g3d::ResNodeData& ResNodeRefChk(const nw4r::g3d::ResNode& node) {
+    if (!node.IsValid()) {
+        nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
+                        lbl_eu_80663910, lbl_eu_806639BC);
+    }
+    return *node.ptr();
+}
+
+// name-guess: asserting ResNode::ref() mirror (g3d_resnode_ac.h).
+static inline const nw4r::g3d::ResNodeData& ResNodeRef(nw4r::g3d::ResNode* node) {
+    if (!node->IsValid()) {
+        nw4r::db::Panic(lbl_eu_8056E850, 0x2c, lbl_eu_8056E834,
+                        lbl_eu_80663910, lbl_eu_806639B8);
+    }
+    return *node->ptr();
+}
+
+// name-guess: asserting ResCommon::ofs_to_obj<ResNode> mirror.
+static inline nw4r::g3d::ResNode ResNodeOfsToObj(const nw4r::g3d::ResNodeData& data, s32 ofs) {
+    if (ofs != 0) {
+        u8* p = (u8*)&data + ofs;
+        if (((u32)p & 3) != 0) {
+            nw4r::db::Panic(lbl_eu_8056E820, 0x2c, lbl_eu_8056E7F8);
+        }
+        return nw4r::g3d::ResNode(p);
+    }
+    return nw4r::g3d::ResNode(NULL);
+}
+
 extern "C" u32 lbl_eu_8056E7D0[];
 class __declspec(novtable) CScnTexWorkMan : public CDeviceVICb {
 public:
@@ -77,7 +83,7 @@ public:
 
     /* 0x04 */ u32 field_0x4;
     u8 field_0x8[0xec - 0x8];
-    /* 0xec */ CScnTexWorkManEntry* mEntries;
+    /* 0xec */ ml::CMat34* mEntries; // per-node world matrices (indexed by mtxID)
     u8 field_0xf0[0x146c - 0xf0];
     /* 0x146c */ nw4r::g3d::ResMdlData* mResMdl1;
     u8 field_0x1470[0x147c - 0x1470];
@@ -86,8 +92,10 @@ public:
 
 // Cross-TU / self-recursive helpers with retail unmangled reloc names.
 extern "C" void TexMan_ClampBoxes(CScnTexWorkMan* self,
-                              const nw4r::g3d::ResNode* pNode,
-                              ml::CVec3* pos, ml::CVec3* scale);
+                                  nw4r::g3d::ResNode* pNode,
+                                  ml::CVec3* pMin, ml::CVec3* pMax);
+extern "C" nw4r::g3d::ResNode TexMan_NodeFromNode_090C(nw4r::g3d::ResNode* node);
+extern "C" nw4r::g3d::ResNode TexMan_NodeFromMdl_09A8(nw4r::g3d::ResNode* node);
 extern "C" void* TexObj_InitExt(u8* obj, u8* image, u16 w, u16 h, u32 fmt,
                                u8* p6);
 
@@ -105,7 +113,7 @@ CScnTexWorkMan::CScnTexWorkMan(u32 param1, u32 param2, u32 param3) {
     this->field_0x4 = param1;
     sTexWorkInstanceCount++;
     if (lbl_eu_806639A8 == mtl::INVALID_HANDLE) {
-        lbl_eu_806639A8 = mtl::MemManager::create(param2, param3, lbl_eu_80524020);
+        lbl_eu_806639A8 = mtl::MemManager::create(param2, param3, "CScnTexWorkMan");
         sTexWorkMemPoolSize = param2;
         sTexWorkMaxAllocSize = mtl::MemManager::getMaxAllocSize(lbl_eu_806639A8);
         sTexWorkRegionBase = (u32)mtl::MemManager::getMaxAllocData(lbl_eu_806639A8);
@@ -126,23 +134,9 @@ CScnTexWorkMan::~CScnTexWorkMan() {
 
 // Resolve a ResMdl's node dictionary (offset field at 0x60) to a ResNode,
 // with the nw4r null/alignment asserts.
-extern "C" nw4r::g3d::ResNode TexMan_NodeFromMdl_09A8(nw4r::g3d::ResNode mdl) {
-    if (mdl.ptr() == NULL) {
-        nw4r::db::Panic(lbl_eu_8056E850, 0x2c, lbl_eu_8056E834,
-                        lbl_eu_80663910, lbl_eu_806639B8);
-    }
-    const CScnTexWorkManResData* data2 =
-        (const CScnTexWorkManResData*)mdl.ptr();
-    nw4r::g3d::ResNode node;
-    if (data2->field_0x60 != 0) {
-        node = nw4r::g3d::ResNode((u8*)data2 + data2->field_0x60);
-        if (((u32)node.ptr() & 3) != 0) {
-            nw4r::db::Panic(lbl_eu_8056E820, 0x2c, lbl_eu_8056E7F8);
-        }
-    } else {
-        node = nw4r::g3d::ResNode(NULL);
-    }
-    return node;
+extern "C" nw4r::g3d::ResNode TexMan_NodeFromMdl_09A8(nw4r::g3d::ResNode* node) {
+    const nw4r::g3d::ResNodeData& data = ResNodeRef(node);
+    return ResNodeOfsToObj(data, data.toChildNode);
 }
 
 // Initialize the position/scale defaults and clamp them against the model's
@@ -191,116 +185,46 @@ extern "C" void* TexMan_AllocBuffer_0208(void* p, u16 w, u16 h, u32 fmt) {
     return obj;
 }
 
-// Clamp one component vector against the box's three bounds, one component
-// per axis (pos is max-clamped, scale is min-clamped). The bounds triple is
-// rebuilt per axis in the unrolled loop (retail re-loads all three per axis).
-static void clampVecMax(f32* v, const CScnTexWorkManEntry* entry) {
-    for (int i = 0; i < 3; i++) {
-        f32 tri[3] = {entry->field_0x0c, entry->field_0x1c, entry->field_0x2c};
-        if (v[i] > tri[i]) {
-            v[i] = tri[i];
-        }
-    }
-}
-static void clampVecMin(f32* v, const CScnTexWorkManEntry* entry) {
-    for (int i = 0; i < 3; i++) {
-        f32 tri[3] = {entry->field_0x0c, entry->field_0x1c, entry->field_0x2c};
-        if (v[i] < tri[i]) {
-            v[i] = tri[i];
-        }
-    }
+// name-guess: asserting ResNode::GetParentNode() mirror.
+static inline nw4r::g3d::ResNode ResNodeGetParent(nw4r::g3d::ResNode* node) {
+    const nw4r::g3d::ResNodeData& data = ResNodeRef(node);
+    return ResNodeOfsToObj(data, data.toParentNode);
 }
 
-// Walk the node tree from pNode, clamping pos/scale into every entry box.
-extern "C" void TexMan_ClampBoxes(CScnTexWorkMan* self,
-                              const nw4r::g3d::ResNode* pNode,
-                              ml::CVec3* pos, ml::CVec3* scale) {
-    nw4r::g3d::ResNode node1;
-    bool valid = (pNode->ptr() != NULL);
-    if (valid) {
-        if (pNode->IsValid() == false) {
-            nw4r::db::Panic(lbl_eu_8056E850, 0x2c, lbl_eu_8056E834,
-                            lbl_eu_80663910, lbl_eu_806639B8);
-        }
-        const CScnTexWorkManResData* data =
-            (const CScnTexWorkManResData*)pNode->ptr();
-        if (data->field_0x5c != 0) {
-            node1 = nw4r::g3d::ResNode((u8*)data + data->field_0x5c);
-            if (((u32)node1.ptr() & 3) != 0) {
-                nw4r::db::Panic(lbl_eu_8056E820, 0x2c, lbl_eu_8056E7F8);
-            }
-        } else {
-            node1 = nw4r::g3d::ResNode(NULL);
-        }
-        valid = node1.IsValid();
+// name-guess: the node's world matrix (entry table indexed by the node's mtxID).
+static inline ml::CMat34& NodeWorldMtx(CScnTexWorkMan* self, const nw4r::g3d::ResNode& node) {
+    if (!node.IsValid()) {
+        nw4r::db::Panic(lbl_eu_80529678, 0x53, lbl_eu_80529658);
     }
-    if (valid) {
-        if (pNode->IsValid() == false) {
-            nw4r::db::Panic(lbl_eu_8056E850, 0x2c, lbl_eu_8056E834,
-                            lbl_eu_80663910, lbl_eu_806639B8);
-        }
-        const CScnTexWorkManResData* data =
-            (const CScnTexWorkManResData*)pNode->ptr();
-        if (data->field_0x5c != 0) {
-            node1 = nw4r::g3d::ResNode((u8*)data + data->field_0x5c);
-            if (((u32)node1.ptr() & 3) != 0) {
-                nw4r::db::Panic(lbl_eu_8056E820, 0x2c, lbl_eu_8056E7F8);
-            }
-        } else {
-            node1 = nw4r::g3d::ResNode(NULL);
-        }
-        if (node1.IsValid() == false) {
-            nw4r::db::Panic(lbl_eu_80529678, 0x53, lbl_eu_80529658);
-        }
-        s32 idx1 = node1.ptr() != NULL
-                       ? ((const CScnTexWorkManResData*)node1.ptr())->field_0x10
-                       : 0;
-        CScnTexWorkManEntry* entry1 = &self->mEntries[idx1];
-        if (pNode->IsValid() == false) {
-            nw4r::db::Panic(lbl_eu_80529678, 0x53, lbl_eu_80529658);
-        }
-        s32 idx2 = pNode->ptr() != NULL
-                       ? ((const CScnTexWorkManResData*)pNode->ptr())->field_0x10
-                       : 0;
-        CScnTexWorkManEntry* entry2 = &self->mEntries[idx2];
-        clampVecMax((f32*)pos, entry1);
-        clampVecMax((f32*)pos, entry2);
-        clampVecMin((f32*)scale, entry1);
-        clampVecMin((f32*)scale, entry2);
+    return self->mEntries[node.GetMtxID()];
+}
+
+// Walk the node tree from pNode, growing the [pMin, pMax] box by the world
+// translation of every node that has a parent (and of that parent).
+extern "C" void TexMan_ClampBoxes(CScnTexWorkMan* self, nw4r::g3d::ResNode* pNode,
+                                  ml::CVec3* pMin, ml::CVec3* pMax) {
+    if (pNode->IsValid() && ResNodeGetParent(pNode).IsValid()) {
+        nw4r::g3d::ResNode parent = ResNodeGetParent(pNode);
+        ml::CMat34& parentMtx = NodeWorldMtx(self, parent);
+        ml::CMat34& nodeMtx = NodeWorldMtx(self, *pNode);
+        if (pMin->x > parentMtx.getTranslation().x) pMin->x = parentMtx.getTranslation().x;
+        if (pMin->y > parentMtx.getTranslation().y) pMin->y = parentMtx.getTranslation().y;
+        if (pMin->z > parentMtx.getTranslation().z) pMin->z = parentMtx.getTranslation().z;
+        if (pMin->x > nodeMtx.getTranslation().x) pMin->x = nodeMtx.getTranslation().x;
+        if (pMin->y > nodeMtx.getTranslation().y) pMin->y = nodeMtx.getTranslation().y;
+        if (pMin->z > nodeMtx.getTranslation().z) pMin->z = nodeMtx.getTranslation().z;
+        if (pMax->x < parentMtx.getTranslation().x) pMax->x = parentMtx.getTranslation().x;
+        if (pMax->y < parentMtx.getTranslation().y) pMax->y = parentMtx.getTranslation().y;
+        if (pMax->z < parentMtx.getTranslation().z) pMax->z = parentMtx.getTranslation().z;
+        if (pMax->x < nodeMtx.getTranslation().x) pMax->x = nodeMtx.getTranslation().x;
+        if (pMax->y < nodeMtx.getTranslation().y) pMax->y = nodeMtx.getTranslation().y;
+        if (pMax->z < nodeMtx.getTranslation().z) pMax->z = nodeMtx.getTranslation().z;
     }
     if (pNode->IsValid()) {
-        if (pNode->IsValid() == false) {
-            nw4r::db::Panic(lbl_eu_8056E850, 0x2c, lbl_eu_8056E834,
-                            lbl_eu_80663910, lbl_eu_806639B8);
-        }
-        const CScnTexWorkManResData* data =
-            (const CScnTexWorkManResData*)pNode->ptr();
-        nw4r::g3d::ResNode node2;
-        if (data->field_0x64 != 0) {
-            node2 = nw4r::g3d::ResNode((u8*)data + data->field_0x64);
-            if (((u32)node2.ptr() & 3) != 0) {
-                nw4r::db::Panic(lbl_eu_8056E820, 0x2c, lbl_eu_8056E7F8);
-            }
-        } else {
-            node2 = nw4r::g3d::ResNode(NULL);
-        }
-        TexMan_ClampBoxes(self, &node2, pos, scale);
-        if (pNode->IsValid() == false) {
-            nw4r::db::Panic(lbl_eu_8056E850, 0x2c, lbl_eu_8056E834,
-                            lbl_eu_80663910, lbl_eu_806639B8);
-        }
-        const CScnTexWorkManResData* data2 =
-            (const CScnTexWorkManResData*)pNode->ptr();
-        nw4r::g3d::ResNode node3;
-        if (data2->field_0x60 != 0) {
-            node3 = nw4r::g3d::ResNode((u8*)data2 + data2->field_0x60);
-            if (((u32)node3.ptr() & 3) != 0) {
-                nw4r::db::Panic(lbl_eu_8056E820, 0x2c, lbl_eu_8056E7F8);
-            }
-        } else {
-            node3 = nw4r::g3d::ResNode(NULL);
-        }
-        TexMan_ClampBoxes(self, &node3, pos, scale);
+        nw4r::g3d::ResNode sib = TexMan_NodeFromNode_090C(pNode);
+        TexMan_ClampBoxes(self, &sib, pMin, pMax);
+        nw4r::g3d::ResNode child = TexMan_NodeFromMdl_09A8(pNode);
+        TexMan_ClampBoxes(self, &child, pMin, pMax);
     }
 }
 
@@ -377,489 +301,44 @@ extern "C" nw4r::g3d::ResNode TexMan_FindNode_0AF4(void* self, const char* name)
 
 // Resolve a ResNode's next sibling (offset field at 0x64) with the nw4r
 // null/alignment asserts.
-extern "C" nw4r::g3d::ResNode TexMan_NodeFromNode_090C(nw4r::g3d::ResNode pNode) {
-    if (pNode.ptr() == NULL) {
-        nw4r::db::Panic(lbl_eu_8056E850, 0x2c, lbl_eu_8056E834,
-                        lbl_eu_80663910, lbl_eu_806639B8);
-    }
-    const CScnTexWorkManResData* data =
-        (const CScnTexWorkManResData*)pNode.ptr();
-    nw4r::g3d::ResNode node;
-    if (data->field_0x64 != 0) {
-        node = nw4r::g3d::ResNode((u8*)data + data->field_0x64);
-        if (((u32)node.ptr() & 3) != 0) {
-            nw4r::db::Panic(lbl_eu_8056E820, 0x2c, lbl_eu_8056E7F8);
-        }
-    } else {
-        node = nw4r::g3d::ResNode(NULL);
-    }
-    return node;
+extern "C" nw4r::g3d::ResNode TexMan_NodeFromNode_090C(nw4r::g3d::ResNode* node) {
+    const nw4r::g3d::ResNodeData& data = ResNodeRef(node);
+    return ResNodeOfsToObj(data, data.toNextSibling);
 }
 
-// Count every node whose bounding volume (volume_min/volume_max, 0x44..0x58)
-// is not the all-sentinel degenerate box, walking the tree as: node itself,
-// then the node's next sibling subtree and its child subtree. Each component
-// check re-dereferences pNode (retail reloads 0x0(r30) each time), guarded by
-// the retail node-null assert.
-void TexMan_CountSubtreeNodes(nw4r::g3d::ResNode* pNode, int* pCounter) {
-    // Retail keeps the whole walk inside a single outer validity branch
-    // (one beq to the shared epilogue, then bne over the assert).
-    if (pNode->ptr() != NULL) {
-    if (pNode->ptr() == NULL) {
-        nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
-                        lbl_eu_80663910, lbl_eu_806639BC);
-    }
-    if (0.0f != pNode->ptr()->volume_min.x) goto L_count;
-    if (pNode->ptr() == NULL) {
-        nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
-                        lbl_eu_80663910, lbl_eu_806639BC);
-    }
-    if (0.0f != pNode->ptr()->volume_min.y) goto L_count;
-    if (pNode->ptr() == NULL) {
-        nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
-                        lbl_eu_80663910, lbl_eu_806639BC);
-    }
-    if (0.0f != pNode->ptr()->volume_min.z) goto L_count;
-    if (pNode->ptr() == NULL) {
-        nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
-                        lbl_eu_80663910, lbl_eu_806639BC);
-    }
-    if (0.0f != pNode->ptr()->volume_max.x) goto L_count;
-    if (pNode->ptr() == NULL) {
-        nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
-                        lbl_eu_80663910, lbl_eu_806639BC);
-    }
-    if (0.0f != pNode->ptr()->volume_max.y) goto L_count;
-    if (pNode->ptr() == NULL) {
-        nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
-                        lbl_eu_80663910, lbl_eu_806639BC);
-    }
-    if (0.0f == pNode->ptr()->volume_max.z) goto L_ok;
-L_count:
-    (*pCounter)++;
-L_ok:
-    if (pNode->ptr() == NULL) {
-        nw4r::db::Panic(lbl_eu_8056E850, 0x2c, lbl_eu_8056E834,
-                        lbl_eu_80663910, lbl_eu_806639B8);
-    }
-    nw4r::g3d::ResNode sib;
-    if (pNode->ptr()->toNextSibling != 0) {
-        sib = nw4r::g3d::ResNode((u8*)pNode->ptr() + pNode->ptr()->toNextSibling);
-        if (((u32)sib.ptr() & 3) != 0) {
-            nw4r::db::Panic(lbl_eu_8056E820, 0x2c, lbl_eu_8056E7F8);
+// Count every node with a non-degenerate bounding volume in the subtree.
+extern "C" void TexMan_CountSubtreeNodes(nw4r::g3d::ResNode node, int* pCounter) {
+    if (node.IsValid()) {
+        if (0.0f != ResNodeRefChk(node).volume_min.x || 0.0f != ResNodeRefChk(node).volume_min.y ||
+            0.0f != ResNodeRefChk(node).volume_min.z || 0.0f != ResNodeRefChk(node).volume_max.x ||
+            0.0f != ResNodeRefChk(node).volume_max.y || 0.0f != ResNodeRefChk(node).volume_max.z) {
+            (*pCounter)++;
         }
-    } else {
-        sib = nw4r::g3d::ResNode(NULL);
-    }
-    if (sib.ptr() != NULL) {
-        if (sib.ptr() == NULL) {
-            nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
-                            lbl_eu_80663910, lbl_eu_806639BC);
-        }
-        if (0.0f != sib.ptr()->volume_min.x) goto L_countSib;
-        if (sib.ptr() == NULL) {
-            nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
-                            lbl_eu_80663910, lbl_eu_806639BC);
-        }
-        if (0.0f != sib.ptr()->volume_min.y) goto L_countSib;
-        if (sib.ptr() == NULL) {
-            nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
-                            lbl_eu_80663910, lbl_eu_806639BC);
-        }
-        if (0.0f != sib.ptr()->volume_min.z) goto L_countSib;
-        if (sib.ptr() == NULL) {
-            nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
-                            lbl_eu_80663910, lbl_eu_806639BC);
-        }
-        if (0.0f != sib.ptr()->volume_max.x) goto L_countSib;
-        if (sib.ptr() == NULL) {
-            nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
-                            lbl_eu_80663910, lbl_eu_806639BC);
-        }
-        if (0.0f != sib.ptr()->volume_max.y) goto L_countSib;
-        if (sib.ptr() == NULL) {
-            nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
-                            lbl_eu_80663910, lbl_eu_806639BC);
-        }
-        if (0.0f == sib.ptr()->volume_max.z) goto L_okSib;
-L_countSib:
-        (*pCounter)++;
-L_okSib:
-        nw4r::g3d::ResNode sib2 = TexMan_NodeFromNode_090C(sib);
-        TexMan_CountSubtreeNodes(&sib2, pCounter);
-        nw4r::g3d::ResNode sib3 = TexMan_NodeFromMdl_09A8(sib);
-        TexMan_CountSubtreeNodes(&sib3, pCounter);
-    }
-    if (pNode->ptr() == NULL) {
-        nw4r::db::Panic(lbl_eu_8056E850, 0x2c, lbl_eu_8056E834,
-                        lbl_eu_80663910, lbl_eu_806639B8);
-    }
-    nw4r::g3d::ResNode child;
-    if (pNode->ptr()->toChildNode != 0) {
-        child = nw4r::g3d::ResNode((u8*)pNode->ptr() + pNode->ptr()->toChildNode);
-        if (((u32)child.ptr() & 3) != 0) {
-            nw4r::db::Panic(lbl_eu_8056E820, 0x2c, lbl_eu_8056E7F8);
-        }
-    } else {
-        child = nw4r::g3d::ResNode(NULL);
-    }
-    if (child.ptr() != NULL) {
-        if (child.ptr() == NULL) {
-            nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
-                            lbl_eu_80663910, lbl_eu_806639BC);
-        }
-        if (0.0f != child.ptr()->volume_min.x) goto L_countChild;
-        if (child.ptr() == NULL) {
-            nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
-                            lbl_eu_80663910, lbl_eu_806639BC);
-        }
-        if (0.0f != child.ptr()->volume_min.y) goto L_countChild;
-        if (child.ptr() == NULL) {
-            nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
-                            lbl_eu_80663910, lbl_eu_806639BC);
-        }
-        if (0.0f != child.ptr()->volume_min.z) goto L_countChild;
-        if (child.ptr() == NULL) {
-            nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
-                            lbl_eu_80663910, lbl_eu_806639BC);
-        }
-        if (0.0f != child.ptr()->volume_max.x) goto L_countChild;
-        if (child.ptr() == NULL) {
-            nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
-                            lbl_eu_80663910, lbl_eu_806639BC);
-        }
-        if (0.0f != child.ptr()->volume_max.y) goto L_countChild;
-        if (child.ptr() == NULL) {
-            nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
-                            lbl_eu_80663910, lbl_eu_806639BC);
-        }
-        if (0.0f == child.ptr()->volume_max.z) goto L_okChild;
-L_countChild:
-        (*pCounter)++;
-L_okChild:
-        nw4r::g3d::ResNode child2 = TexMan_NodeFromNode_090C(child);
-        TexMan_CountSubtreeNodes(&child2, pCounter);
-        nw4r::g3d::ResNode child3 = TexMan_NodeFromMdl_09A8(child);
-        TexMan_CountSubtreeNodes(&child3, pCounter);
-    }
+        TexMan_CountSubtreeNodes(TexMan_NodeFromNode_090C(&node), pCounter);
+        TexMan_CountSubtreeNodes(TexMan_NodeFromMdl_09A8(&node), pCounter);
     }
 }
 
-// Same tree walk as TexMan_CountSubtreeNodes, but keeps the count in a local and returns
-// it: used for the model root node. Retail caches the node-data pointer once
-// (single 0x0(r3) load up front).
-int TexMan_CountRootNodes(nw4r::g3d::ResNode* pNode) {
+extern "C" int TexMan_CountRootNodes(nw4r::g3d::ResNode* pNode) {
     int counter = 0;
-    const nw4r::g3d::ResNodeData* node = pNode->ptr();
-    if (node != NULL) {
-    if (node == NULL) {
-        nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
-                        lbl_eu_80663910, lbl_eu_806639BC);
-    }
-    if (0.0f != node->volume_min.x) goto L_count;
-    if (node == NULL) {
-        nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
-                        lbl_eu_80663910, lbl_eu_806639BC);
-    }
-    if (0.0f != node->volume_min.y) goto L_count;
-    if (node == NULL) {
-        nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
-                        lbl_eu_80663910, lbl_eu_806639BC);
-    }
-    if (0.0f != node->volume_min.z) goto L_count;
-    if (node == NULL) {
-        nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
-                        lbl_eu_80663910, lbl_eu_806639BC);
-    }
-    if (0.0f != node->volume_max.x) goto L_count;
-    if (node == NULL) {
-        nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
-                        lbl_eu_80663910, lbl_eu_806639BC);
-    }
-    if (0.0f != node->volume_max.y) goto L_count;
-    if (node == NULL) {
-        nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
-                        lbl_eu_80663910, lbl_eu_806639BC);
-    }
-    if (0.0f == node->volume_max.z) goto L_ok;
-L_count:
-    counter++;
-L_ok:
-    if (node == NULL) {
-        nw4r::db::Panic(lbl_eu_8056E850, 0x2c, lbl_eu_8056E834,
-                        lbl_eu_80663910, lbl_eu_806639B8);
-    }
-    nw4r::g3d::ResNode sib;
-    if (node->toNextSibling != 0) {
-        sib = nw4r::g3d::ResNode((u8*)node + node->toNextSibling);
-        if (((u32)sib.ptr() & 3) != 0) {
-            nw4r::db::Panic(lbl_eu_8056E820, 0x2c, lbl_eu_8056E7F8);
-        }
-    } else {
-        sib = nw4r::g3d::ResNode(NULL);
-    }
-    if (sib.ptr() != NULL) {
-        if (sib.ptr() == NULL) {
-            nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
-                            lbl_eu_80663910, lbl_eu_806639BC);
-        }
-        if (0.0f != sib.ptr()->volume_min.x) goto L_countSib;
-        if (sib.ptr() == NULL) {
-            nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
-                            lbl_eu_80663910, lbl_eu_806639BC);
-        }
-        if (0.0f != sib.ptr()->volume_min.y) goto L_countSib;
-        if (sib.ptr() == NULL) {
-            nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
-                            lbl_eu_80663910, lbl_eu_806639BC);
-        }
-        if (0.0f != sib.ptr()->volume_min.z) goto L_countSib;
-        if (sib.ptr() == NULL) {
-            nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
-                            lbl_eu_80663910, lbl_eu_806639BC);
-        }
-        if (0.0f != sib.ptr()->volume_max.x) goto L_countSib;
-        if (sib.ptr() == NULL) {
-            nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
-                            lbl_eu_80663910, lbl_eu_806639BC);
-        }
-        if (0.0f != sib.ptr()->volume_max.y) goto L_countSib;
-        if (sib.ptr() == NULL) {
-            nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
-                            lbl_eu_80663910, lbl_eu_806639BC);
-        }
-        if (0.0f == sib.ptr()->volume_max.z) goto L_okSib;
-L_countSib:
-        counter++;
-L_okSib:
-        nw4r::g3d::ResNode sib2 = TexMan_NodeFromNode_090C(sib);
-        TexMan_CountSubtreeNodes(&sib2, &counter);
-        nw4r::g3d::ResNode sib3 = TexMan_NodeFromMdl_09A8(sib);
-        TexMan_CountSubtreeNodes(&sib3, &counter);
-    }
-    if (node == NULL) {
-        nw4r::db::Panic(lbl_eu_8056E850, 0x2c, lbl_eu_8056E834,
-                        lbl_eu_80663910, lbl_eu_806639B8);
-    }
-    nw4r::g3d::ResNode child;
-    if (node->toChildNode != 0) {
-        child = nw4r::g3d::ResNode((u8*)node + node->toChildNode);
-        if (((u32)child.ptr() & 3) != 0) {
-            nw4r::db::Panic(lbl_eu_8056E820, 0x2c, lbl_eu_8056E7F8);
-        }
-    } else {
-        child = nw4r::g3d::ResNode(NULL);
-    }
-    if (child.ptr() != NULL) {
-        if (child.ptr() == NULL) {
-            nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
-                            lbl_eu_80663910, lbl_eu_806639BC);
-        }
-        if (0.0f != child.ptr()->volume_min.x) goto L_countChild;
-        if (child.ptr() == NULL) {
-            nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
-                            lbl_eu_80663910, lbl_eu_806639BC);
-        }
-        if (0.0f != child.ptr()->volume_min.y) goto L_countChild;
-        if (child.ptr() == NULL) {
-            nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
-                            lbl_eu_80663910, lbl_eu_806639BC);
-        }
-        if (0.0f != child.ptr()->volume_min.z) goto L_countChild;
-        if (child.ptr() == NULL) {
-            nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
-                            lbl_eu_80663910, lbl_eu_806639BC);
-        }
-        if (0.0f != child.ptr()->volume_max.x) goto L_countChild;
-        if (child.ptr() == NULL) {
-            nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
-                            lbl_eu_80663910, lbl_eu_806639BC);
-        }
-        if (0.0f != child.ptr()->volume_max.y) goto L_countChild;
-        if (child.ptr() == NULL) {
-            nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
-                            lbl_eu_80663910, lbl_eu_806639BC);
-        }
-        if (0.0f == child.ptr()->volume_max.z) goto L_okChild;
-L_countChild:
-        counter++;
-L_okChild:
-        nw4r::g3d::ResNode child2 = TexMan_NodeFromNode_090C(child);
-        TexMan_CountSubtreeNodes(&child2, &counter);
-        nw4r::g3d::ResNode child3 = TexMan_NodeFromMdl_09A8(child);
-        TexMan_CountSubtreeNodes(&child3, &counter);
-    }
-    }
+    TexMan_CountSubtreeNodes(*pNode, &counter);
     return counter;
 }
 
-// Same tree walk as TexMan_CountSubtreeNodes, but non-degenerate nodes are collected by
-// id (node->id at 0xc, or 0 for a null node) into pList instead of counted.
-void TexMan_CollectNodeIds(nw4r::g3d::ResNode* pNode, CScnTexWorkManNodeIdList* pList) {
-    // Retail keeps the whole walk inside a single outer validity branch.
-    if (pNode->ptr() != NULL) {
-    if (pNode->ptr() == NULL) {
-        nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
-                        lbl_eu_80663910, lbl_eu_806639BC);
-    }
-    if (0.0f != pNode->ptr()->volume_min.x) goto L_push;
-    if (pNode->ptr() == NULL) {
-        nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
-                        lbl_eu_80663910, lbl_eu_806639BC);
-    }
-    if (0.0f != pNode->ptr()->volume_min.y) goto L_push;
-    if (pNode->ptr() == NULL) {
-        nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
-                        lbl_eu_80663910, lbl_eu_806639BC);
-    }
-    if (0.0f != pNode->ptr()->volume_min.z) goto L_push;
-    if (pNode->ptr() == NULL) {
-        nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
-                        lbl_eu_80663910, lbl_eu_806639BC);
-    }
-    if (0.0f != pNode->ptr()->volume_max.x) goto L_push;
-    if (pNode->ptr() == NULL) {
-        nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
-                        lbl_eu_80663910, lbl_eu_806639BC);
-    }
-    if (0.0f != pNode->ptr()->volume_max.y) goto L_push;
-    if (pNode->ptr() == NULL) {
-        nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
-                        lbl_eu_80663910, lbl_eu_806639BC);
-    }
-    if (0.0f == pNode->ptr()->volume_max.z) goto L_ok;
-L_push:
-    if (pNode->ptr() == NULL) {
-        nw4r::db::Panic(lbl_eu_8056E1C8, 0x38, lbl_eu_8056E1A8);
-    }
-    {
-        const nw4r::g3d::ResNodeData* n = pNode->ptr();
-        u32 id = (n != NULL) ? n->id : 0;
-        pList->array[pList->count++] = id;
-    }
-L_ok:
-    if (pNode->ptr() == NULL) {
-        nw4r::db::Panic(lbl_eu_8056E850, 0x2c, lbl_eu_8056E834,
-                        lbl_eu_80663910, lbl_eu_806639B8);
-    }
-    nw4r::g3d::ResNode sib;
-    if (pNode->ptr()->toNextSibling != 0) {
-        sib = nw4r::g3d::ResNode((u8*)pNode->ptr() + pNode->ptr()->toNextSibling);
-        if (((u32)sib.ptr() & 3) != 0) {
-            nw4r::db::Panic(lbl_eu_8056E820, 0x2c, lbl_eu_8056E7F8);
+extern "C" void TexMan_CollectNodeIds(nw4r::g3d::ResNode node, CScnTexWorkManNodeIdList* pList) {
+    if (node.IsValid()) {
+        if (0.0f != ResNodeRefChk(node).volume_min.x || 0.0f != ResNodeRefChk(node).volume_min.y ||
+            0.0f != ResNodeRefChk(node).volume_min.z || 0.0f != ResNodeRefChk(node).volume_max.x ||
+            0.0f != ResNodeRefChk(node).volume_max.y || 0.0f != ResNodeRefChk(node).volume_max.z) {
+            if (!node.IsValid()) {
+                nw4r::db::Panic(lbl_eu_8056E1C8, 0x38, lbl_eu_8056E1A8);
+            }
+            pList->array[pList->count++] = node.GetID();
         }
-    } else {
-        sib = nw4r::g3d::ResNode(NULL);
-    }
-    if (sib.ptr() != NULL) {
-        if (sib.ptr() == NULL) {
-            nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
-                            lbl_eu_80663910, lbl_eu_806639BC);
-        }
-        if (0.0f != sib.ptr()->volume_min.x) goto L_pushSib;
-        if (sib.ptr() == NULL) {
-            nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
-                            lbl_eu_80663910, lbl_eu_806639BC);
-        }
-        if (0.0f != sib.ptr()->volume_min.y) goto L_pushSib;
-        if (sib.ptr() == NULL) {
-            nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
-                            lbl_eu_80663910, lbl_eu_806639BC);
-        }
-        if (0.0f != sib.ptr()->volume_min.z) goto L_pushSib;
-        if (sib.ptr() == NULL) {
-            nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
-                            lbl_eu_80663910, lbl_eu_806639BC);
-        }
-        if (0.0f != sib.ptr()->volume_max.x) goto L_pushSib;
-        if (sib.ptr() == NULL) {
-            nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
-                            lbl_eu_80663910, lbl_eu_806639BC);
-        }
-        if (0.0f != sib.ptr()->volume_max.y) goto L_pushSib;
-        if (sib.ptr() == NULL) {
-            nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
-                            lbl_eu_80663910, lbl_eu_806639BC);
-        }
-        if (0.0f == sib.ptr()->volume_max.z) goto L_okSib;
-L_pushSib:
-        if (sib.ptr() == NULL) {
-            nw4r::db::Panic(lbl_eu_8056E1C8, 0x38, lbl_eu_8056E1A8);
-        }
-        {
-            const nw4r::g3d::ResNodeData* n = sib.ptr();
-            u32 id = (n != NULL) ? n->id : 0;
-            pList->array[pList->count++] = id;
-        }
-L_okSib:
-        nw4r::g3d::ResNode sib2 = TexMan_NodeFromNode_090C(sib);
-        TexMan_CollectNodeIds(&sib2, pList);
-        nw4r::g3d::ResNode sib3 = TexMan_NodeFromMdl_09A8(sib);
-        TexMan_CollectNodeIds(&sib3, pList);
-    }
-    if (pNode->ptr() == NULL) {
-        nw4r::db::Panic(lbl_eu_8056E850, 0x2c, lbl_eu_8056E834,
-                        lbl_eu_80663910, lbl_eu_806639B8);
-    }
-    nw4r::g3d::ResNode child;
-    if (pNode->ptr()->toChildNode != 0) {
-        child = nw4r::g3d::ResNode((u8*)pNode->ptr() + pNode->ptr()->toChildNode);
-        if (((u32)child.ptr() & 3) != 0) {
-            nw4r::db::Panic(lbl_eu_8056E820, 0x2c, lbl_eu_8056E7F8);
-        }
-    } else {
-        child = nw4r::g3d::ResNode(NULL);
-    }
-    if (child.ptr() != NULL) {
-        if (child.ptr() == NULL) {
-            nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
-                            lbl_eu_80663910, lbl_eu_806639BC);
-        }
-        if (0.0f != child.ptr()->volume_min.x) goto L_pushChild;
-        if (child.ptr() == NULL) {
-            nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
-                            lbl_eu_80663910, lbl_eu_806639BC);
-        }
-        if (0.0f != child.ptr()->volume_min.y) goto L_pushChild;
-        if (child.ptr() == NULL) {
-            nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
-                            lbl_eu_80663910, lbl_eu_806639BC);
-        }
-        if (0.0f != child.ptr()->volume_min.z) goto L_pushChild;
-        if (child.ptr() == NULL) {
-            nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
-                            lbl_eu_80663910, lbl_eu_806639BC);
-        }
-        if (0.0f != child.ptr()->volume_max.x) goto L_pushChild;
-        if (child.ptr() == NULL) {
-            nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
-                            lbl_eu_80663910, lbl_eu_806639BC);
-        }
-        if (0.0f != child.ptr()->volume_max.y) goto L_pushChild;
-        if (child.ptr() == NULL) {
-            nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
-                            lbl_eu_80663910, lbl_eu_806639BC);
-        }
-        if (0.0f == child.ptr()->volume_max.z) goto L_okChild;
-L_pushChild:
-        if (child.ptr() == NULL) {
-            nw4r::db::Panic(lbl_eu_8056E1C8, 0x38, lbl_eu_8056E1A8);
-        }
-        {
-            const nw4r::g3d::ResNodeData* n = child.ptr();
-            u32 id = (n != NULL) ? n->id : 0;
-            pList->array[pList->count++] = id;
-        }
-L_okChild:
-        nw4r::g3d::ResNode child2 = TexMan_NodeFromNode_090C(child);
-        TexMan_CollectNodeIds(&child2, pList);
-        nw4r::g3d::ResNode child3 = TexMan_NodeFromMdl_09A8(child);
-        TexMan_CollectNodeIds(&child3, pList);
-    }
+        TexMan_CollectNodeIds(TexMan_NodeFromNode_090C(&node), pList);
+        TexMan_CollectNodeIds(TexMan_NodeFromMdl_09A8(&node), pList);
     }
 }
-
-
 
 // ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
 namespace TWMBlob {
@@ -890,9 +369,6 @@ extern "C" char lbl_eu_8056E850[24] = { 0x67, 0x33, 0x64, 0x5F, 0x72, 0x65, 0x73
 
 // [.rodata] 0x80524010-0x80524030 (32B)
 extern "C" __declspec(align(4)) const char lbl_eu_80524010[0x10] = {
-    0x43,0x53,0x63,0x6E,0x54,0x65,0x78,0x57,0x6F,0x72,0x6B,0x4D,0x61,0x6E,0x00,0x00,
-};
-extern "C" __declspec(align(4)) const char lbl_eu_80524020[0x10] = {
     0x43,0x53,0x63,0x6E,0x54,0x65,0x78,0x57,0x6F,0x72,0x6B,0x4D,0x61,0x6E,0x00,0x00,
 };
 

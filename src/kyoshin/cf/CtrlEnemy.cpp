@@ -5,6 +5,7 @@
 #include "kyoshin/cf/CtrlMoveBase.hpp"
 #include "kyoshin/cf/object/CfObjectMoveApi.hpp"
 #include "kyoshin/cf/CfMapItemManager.hpp"
+#include "kyoshin/cf/object/CBattleState.hpp"
 #include "kyoshin/harness_catalog.hpp"
 
 #include "kyoshin/cf/CtrlEnemy.hpp"
@@ -278,7 +279,7 @@ void* CtrlEnemy_UnkFunc_80087EEC(cf::CtrlEnemy* self) {
         getUnk80664658()->mFlags & 0x20000) {
         return 0;
     }
-    if (((cf::CtrlEnemyBM*)getInstance__Q22cf14CBattleManagerFv())->m028(
+    if (((cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv())->CheckUnk84Flag(
             0x1000) != 0) {
         return 0;
     }
@@ -355,7 +356,7 @@ void* CtrlEnemy_UnkFunc_80087EEC(cf::CtrlEnemy* self) {
         break;
     }
     // Scan candidates: nearest eligible enemy wins.
-    for (i = 0; i < (int)((cf::CtrlEnemyEnumList*)holder.get())->field_620; i++) {
+    for (i = 0; i < (int)((cf::CVisionEnumList*)holder.get())->count; i++) {
         id = (int)getObjectIdAt(holder.get(), i);
         obj = (cf::CtrlEnemyActor*)MapFx_ResolveOwner(findObjectById(id));
         if (obj->field_3F60 != 0 &&
@@ -398,11 +399,11 @@ void* CtrlEnemy_UnkFunc_80087EEC(cf::CtrlEnemy* self) {
             distSq = distSqTmp[0] * distSqTmp[0] + distSqTmp[1] * distSqTmp[1] +
                      distSq * distSq;
             if (isBattleStatusActive((u8*)obj + 8, artId) != 0) {
-                cf::CtrlEnemyArtsInfo* info =
-                    (cf::CtrlEnemyArtsInfo*)findBattleStatusEntry((u8*)obj + 8, artId);
+                cf::CBattleStateEntry* info =
+                    (cf::CBattleStateEntry*)findBattleStatusEntry((u8*)obj + 8, artId);
                 // Remaining-power ratio, squared, as a double wall.
                 f32 scale = *actor->v268();
-                powTmp = (f64)(0x64 - (s32)info->field_10);
+                powTmp = (f64)(0x64 - info->unk10);
                 powTmp = powTmp * scale / 100.0f;
                 powTmp = powTmp * powTmp;
                 if (powTmp < (f64)distSq) {
@@ -418,11 +419,6 @@ void* CtrlEnemy_UnkFunc_80087EEC(cf::CtrlEnemy* self) {
     return 0;
 }
 
-bool CBattleManager_CheckUnk84Flag(cf::CBattleManager* obj, unsigned int mask)
-{
-    return (*(unsigned int*)((char*)obj + 0x84) & mask) != 0;
-}
-
 // Retail CtrlEnemy_UnkFunc_80088620 (0x80088FF8): hunt the battle enum list
 // for an enemy whose vtable-0xE0 id matches the battle actor's, and return
 // the enemy's vtable-0x2E8 action object if found. Gate: the battle actor
@@ -431,7 +427,7 @@ bool CBattleManager_CheckUnk84Flag(cf::CBattleManager* obj, unsigned int mask)
 // the sub-object slot-0xAC position feeds the 800FB044 target ctor first.
 void* CtrlEnemy_UnkFunc_80088620(cf::CtrlEnemy* self) {
     if (self->field_0x80->v260() == 0) return 0;
-    if (((cf::CtrlEnemyBM*)getInstance__Q22cf14CBattleManagerFv())->m028(0x1000) !=
+    if (((cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv())->CheckUnk84Flag(0x1000) !=
         0) {
         return 0;
     }
@@ -441,7 +437,7 @@ void* CtrlEnemy_UnkFunc_80088620(cf::CtrlEnemy* self) {
     void* pos = self->field_0x80->mSub.s0AC();
     f32 gauge = *self->field_0x80->v268();
     __ct__800FB044(holder.get(), gauge, pos, 0);
-    for (u32 i = 0; i < ((cf::CtrlEnemyEnumList*)holder.get())->field_620; i++) {
+    for (u32 i = 0; i < ((cf::CVisionEnumList*)holder.get())->count; i++) {
         cf::CtrlEnemyActor* obj = (cf::CtrlEnemyActor*)MapFx_ResolveOwner(
             findObjectById((int)getObjectIdAt(holder.get(), i)));
         if (obj == 0) continue;
@@ -527,16 +523,7 @@ extern "C" void CtrlEnemy_delegateTo80089B24(u8* self) { moveBaseSway(((cf::Ctrl
 extern "C" void CtrlEnemy_delegateTo80089E88(u8* self) { moveBaseRoute(((cf::CtrlEnemy*)self)->mSub84); }
 extern "C" void CtrlEnemy_delegateTo80089F68(u8* self) { moveBaseScnCmd((cf::CCtrlMoveBase*)((cf::CtrlEnemy*)self)->mSub84); }
 
-// Typed view of cf::CBattleManager's +0x84 flag word (real member at +0x84
-// in kyoshin/cf/CBattleManager.hpp). This TU only forward-declares
-// CBattleManager, so the view keeps the read typed without pulling the heavy
-// header (which could perturb inlining/codegen in this TU).
-struct CBattleManager84View {
-    u8 _pad00[0x84];               // 0x00-0x83 (vptr + lists)
-    u32 mFlags84;                  // 0x84 (flag word)
-};
-
-extern "C" int CBattleManager_CheckUnk84Flag(u8* self, u32 mask) {
-    return (((CBattleManager84View*)self)->mFlags84 & mask) != 0;
+extern "C" int CBattleManager_CheckUnk84Flag(cf::CBattleManager* self, u32 mask) {
+    return (self->unk84 & mask) != 0;
 }
 

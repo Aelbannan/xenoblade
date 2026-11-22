@@ -107,9 +107,9 @@ ml::CVec3* VecMath_NormalizeInPlace(ml::CVec3* v) {
     return v;
 }
 
-float VecMath_NormalizeRetMag(ml::CVec3* v) {
-    // Normalize v in place; returns the magnitude (0.0f if v is already
-    // (near-)zero). Matches ml::CVec3::isZero + PSVECMag + VEC3Scale.
+extern "C" float VecMath_NormalizeRetMag(ml::CVec3* v) {
+    // Normalize v in place; returns the magnitude (0.0f if v is (near-)zero).
+    float mag = 0.0f;
     bool result = false;
     bool temp = false;
     if (ml::math::abs(v->x) <= ml::epsilon && ml::math::abs(v->y) <= ml::epsilon) {
@@ -118,32 +118,32 @@ float VecMath_NormalizeRetMag(ml::CVec3* v) {
     if (temp && ml::math::abs(v->z) <= ml::epsilon) {
         result = true;
     }
-    if (result) {
-        return 0.0f;
+    if (!result) {
+        mag = PSVECMag(*v);
+        nw4r::math::VEC3Scale(*v, *v, 1.0f / mag);
     }
-    float mag = PSVECMag((const Vec*)v);
-    float inv = 1.0f / mag;
-    nw4r::math::VEC3Scale(*v, *v, inv);
     return mag;
 }
 
-float VecMath_LengthXZ(const ml::CVec3& v) {
-    // XZ-plane length sqrt: len2 = x*x + z*z, with the nw4r FSqrt warning path
-    // (negative len2) and a 0 return for (near-)zero vectors.
-    bool temp = false;
+extern "C" float VecMath_LengthXZ(const ml::CVec3& v) {
+    // XZ-plane length (0 for (near-)zero vectors), via the nw4r FSqrt shape.
+    float len = 0.0f;
     bool result = false;
+    bool temp = false;
     if (ml::math::abs(v.x) <= ml::epsilon && ml::math::abs(v.y) <= ml::epsilon) {
         temp = true;
     }
     if (temp && ml::math::abs(v.z) <= ml::epsilon) {
         result = true;
     }
-    if (result) return 0.0f;
-    float len2 = v.x * v.x + v.z * v.z;
-    if (!(len2 >= 0.0f)) {
-        nw4r::db::Warning(lbl_eu_80526324, 0x273, lbl_eu_80526300);
+    if (!result) {
+        float len2 = v.x * v.x + v.z * v.z;
+        if (!(len2 >= 0.0f)) {
+            nw4r::db::Warning(lbl_eu_80526324, 0x273, lbl_eu_80526300);
+        }
+        len = len2 <= 0.0f ? 0.0f : len2 * nw4r::math::FrSqrt(len2);
     }
-    return len2 <= 0.0f ? 0.0f : len2 * nw4r::math::FrSqrt(len2);
+    return len;
 }
 
 float VecMath_SafeSqrtF(float x) {
@@ -181,7 +181,7 @@ bool VecMath_IsTurnLeftXZ(const ml::CVec3& a, const ml::CVec3& b, const ml::CVec
     return ab.z * ac.x - ab.x * ac.z > 0.0f;
 }
 
-void VecMath_LerpVec(ml::CVec3* out, const ml::CVec3& a, const ml::CVec3& b, float t) {
+extern "C" void VecMath_LerpVec(ml::CVec3* out, const ml::CVec3& a, const ml::CVec3& b, float t) {
     // Linear interpolation: out = a + (b - a) * t.
     // The nw4r VEC3Sub/Scale/Add PS kernels emit the retail psq_l/ps_sub/
     // ps_muls0/ps_add sequences; each result is copied out via set(), and the
@@ -201,7 +201,7 @@ void VecMath_LerpVec(ml::CVec3* out, const ml::CVec3& a, const ml::CVec3& b, flo
     *out = res;
 }
 
-void VecMath_CatmullRom(ml::CVec3* out, const ml::CVec3& p0, const ml::CVec3& p1,
+extern "C" void VecMath_CatmullRom(ml::CVec3* out, const ml::CVec3& p0, const ml::CVec3& p1,
                   const ml::CVec3& p2, const ml::CVec3& p3, float t) {
     // Catmull-Rom spline segment evaluation via the Hermite basis:
     // out = p1*b00 + (p2-p0)*h*b10 + (p3-p1)*h*b11 + p2*b01.
@@ -316,10 +316,8 @@ extern "C" void VecMath_BuildFacingMatrix(ml::CMat34* out, const ml::CVec3* src,
 
 extern "C" float VecMath_ClosestPtSeg(const ml::CVec3& a, const ml::CVec3& b,
                                const ml::CVec3& c, float* outT, ml::CVec3* out) {
-    // Closest-point-on-segment helper: returns the squared distance from c to
-    // the segment ab, writing the closest point and its parameter value.
-    // Retail keeps every PS kernel inlined; each sub/scale/add result is
-    // copied out component-wise (cf. VecMath_IsNearSegXZ).
+    // Closest point on segment ab to c: writes the point and its parameter,
+    // returns the squared distance.
     ml::CVec3 ab;
     ml::CVec3 ac;
     ml::CVec3 cb;
@@ -330,56 +328,34 @@ extern "C" float VecMath_ClosestPtSeg(const ml::CVec3& a, const ml::CVec3& b,
     ml::CVec3 tCb;
     ml::CVec3 tScaled;
     ml::CVec3 tSum;
-    nw4r::math::VEC3Sub((nw4r::math::VEC3*)&tAb, (const nw4r::math::VEC3*)&b,
-                        (const nw4r::math::VEC3*)&a);
-    nw4r::math::VEC3Sub((nw4r::math::VEC3*)&tAc, (const nw4r::math::VEC3*)&c,
-                        (const nw4r::math::VEC3*)&a);
-    nw4r::math::VEC3Sub((nw4r::math::VEC3*)&tCb, (const nw4r::math::VEC3*)&c,
-                        (const nw4r::math::VEC3*)&b);
-    ab.x = tAb.x;
-    ab.y = tAb.y;
-    ab.z = tAb.z;
-    ac.x = tAc.x;
-    ac.y = tAc.y;
-    ac.z = tAc.z;
-    cb.x = tCb.x;
-    cb.y = tCb.y;
-    cb.z = tCb.z;
-    float dot = nw4r::math::VEC3Dot((const nw4r::math::VEC3*)&ac,
-                                    (const nw4r::math::VEC3*)&ab);
+    nw4r::math::VEC3Sub(tAb, b, a);
+    ab.set(tAb);
+    nw4r::math::VEC3Sub(tAc, c, a);
+    ac.set(tAc);
+    nw4r::math::VEC3Sub(tCb, c, b);
+    cb.set(tCb);
+    float dot = nw4r::math::VEC3Dot(ac, ab);
     if (dot <= 0.0f) {
         *out = a;
         *outT = 0.0f;
-        return nw4r::math::VEC3Dot((const nw4r::math::VEC3*)&ac,
-                                   (const nw4r::math::VEC3*)&ac);
+        return nw4r::math::VEC3Dot(ac, ac);
     }
-    float lenAbSq = nw4r::math::VEC3Dot((const nw4r::math::VEC3*)&ab,
-                                        (const nw4r::math::VEC3*)&ab);
+    float lenAbSq = nw4r::math::VEC3Dot(ab, ab);
     if (dot >= lenAbSq) {
         *out = b;
         *outT = 1.0f;
-        return nw4r::math::VEC3Dot((const nw4r::math::VEC3*)&cb,
-                                   (const nw4r::math::VEC3*)&cb);
+        return nw4r::math::VEC3Dot(cb, cb);
     }
-    float t = dot / lenAbSq;
-    *outT = t;
-    nw4r::math::VEC3Scale((nw4r::math::VEC3*)&tScaled,
-                          (const nw4r::math::VEC3*)&ab, t);
-    scaled.x = tScaled.x;
-    scaled.y = tScaled.y;
-    scaled.z = tScaled.z;
-    nw4r::math::VEC3Add((nw4r::math::VEC3*)&tSum, (const nw4r::math::VEC3*)&a,
-                        (const nw4r::math::VEC3*)&scaled);
-    sum.x = tSum.x;
-    sum.y = tSum.y;
-    sum.z = tSum.z;
+    *outT = dot / lenAbSq;
+    nw4r::math::VEC3Scale(tScaled, ab, *outT);
+    scaled.set(tScaled);
+    nw4r::math::VEC3Add(tSum, scaled, a);
+    sum.set(tSum);
     *out = sum;
-    return nw4r::math::VEC3Dot((const nw4r::math::VEC3*)&ac,
-                               (const nw4r::math::VEC3*)&ac) -
-           dot * t;
+    return nw4r::math::VEC3Dot(ac, ac) - dot * *outT;
 }
 
-bool VecMath_IsNearSegXZ(const nw4r::math::VEC3& a, const nw4r::math::VEC3& b,
+extern "C" bool VecMath_IsNearSegXZ(const nw4r::math::VEC3& a, const nw4r::math::VEC3& b,
                   const nw4r::math::VEC3& c, float r2) {
     float dot, len2, t;
     // Project c onto the XZ line through a-b and test whether the closest
@@ -417,7 +393,7 @@ bool VecMath_IsNearSegXZ(const nw4r::math::VEC3& a, const nw4r::math::VEC3& b,
     return nw4r::math::VEC3Dot(&ac, &ac) - dot * t <= r2;
 }
 
-float VecMath_SegmentParam(const ml::CVec3& a, const ml::CVec3& b, const ml::CVec3& c) {
+extern "C" float VecMath_SegmentParam(const ml::CVec3& a, const ml::CVec3& b, const ml::CVec3& c) {
     // Project c onto the line ab: t = dot(a->b, a->c) / |ab|^2, guarded when
     // |ab|^2 is tiny, then clamped to [0, 1]. VEC3Sub/VEC3Dot are the nw4r PS
     // kernels; each sub result is copied out via set(). Declaration order is
@@ -517,7 +493,7 @@ extern "C" int VecMath_SegSphereProbe(cf::CfObject* self, const ml::CVec3& a, co
     return cond;
 }
 
-bool VecMath_CircleOverlapXZ(const nw4r::math::VEC3& a, const nw4r::math::VEC3& b, float r1, float r2) {
+extern "C" bool VecMath_CircleOverlapXZ(const nw4r::math::VEC3& a, const nw4r::math::VEC3& b, float r1, float r2) {
     // Circle-vs-circle overlap test on the XZ plane: true when the squared
     // distance between a and b (y treated as 0) is within (r1+r2)^2.
     nw4r::math::VEC3 dv;
@@ -603,7 +579,7 @@ extern "C" int VecMath_PushOutCircleXZ(cf::CfObject* self, nw4r::math::VEC3* poi
     return cond;
 }
 
-bool VecMath_PushApartCircles(const ml::CVec3& a, const ml::CVec3& b, ml::CVec3* out, float r1, float r2) {
+extern "C" bool VecMath_PushApartCircles(const ml::CVec3& a, const ml::CVec3& b, ml::CVec3* out, float r1, float r2) {
     // Sphere-vs-sphere (XZ) push-apart helper. Returns whether the two circles
     // overlap; when they do and out is non-null, out = a pushed to the far
     // side of b along the (normalised) centre-to-centre direction.
@@ -1077,7 +1053,7 @@ extern "C" void renderCylinder__Q22cf18CfDebugDrawManagerFb(
     }
 }
 #pragma pop
-int VecMath_GroundProbeDown(ml::CVec3* a, ml::CVec3* b, ml::CVec3* c, float f, float g) {
+extern "C" int VecMath_GroundProbeDown(ml::CVec3* a, ml::CVec3* b, ml::CVec3* c, float f, float g) {
     // Push b up along the +Y capsule axis until the segment probe against c
     // misses, snapping to the probe object's height reference when it does.
     *b = *a;
@@ -1097,6 +1073,7 @@ int VecMath_GroundProbeDown(ml::CVec3* a, ml::CVec3* b, ml::CVec3* c, float f, f
         ScnRes_CopyEntryHead(&tmp68, 0);
         ScnRes_CopyEntryMid(&tmp74, 0);
     }
+    int ret = 1;
     if (result != 0) {
         tmp44.set(0.0f, -f, 0.0f);
         nw4r::math::VEC3Add(tAdd, *b, tmp44);
@@ -1108,23 +1085,25 @@ int VecMath_GroundProbeDown(ml::CVec3* a, ml::CVec3* b, ml::CVec3* c, float f, f
             d1c.set(d1);
             nw4r::math::VEC3Sub(d2, *b, tmp5c);
             d2c.set(d2);
-            float lenObj = nw4r::math::VEC3Dot(d2c, d2c);
-            float lenAxis = nw4r::math::VEC3Dot(d1c, d1c);
-            if (lenObj >= lenAxis) {
-                b->y = tmp68.z;
-            } else {
+            float lenObj = nw4r::math::VEC3LenSq(d2c);
+            float lenAxis = nw4r::math::VEC3LenSq(d1c);
+            if (lenObj < lenAxis) {
                 b->y = 0.2f + sEneColiProbe->field_0x64;
+            } else {
+                b->y = tmp68.y;
             }
-            return 0;
+            ret = 0;
+        } else {
+            b->y = tmp68.y;
         }
-        b->y = tmp68.z;
-        return 1;
+    } else {
+        b->y = a->y;
+        ret = 0;
     }
-    b->y = a->y;
-    return 0;
+    return ret;
 }
 
-int VecMath_GroundProbeDual(const ml::CVec3* self, ml::CVec3* arg2, ml::CVec3* arg3, float f1, float f2) {
+extern "C" int VecMath_GroundProbeDual(const ml::CVec3* self, ml::CVec3* arg2, ml::CVec3* arg3, float f1, float f2) {
     // Axis-aligned capsule/segment ground probe (X-axis variant of
     // VecMath_GroundProbeDown): raise arg2, probe the scene twice, then pick the closer
     // reference height and walk the segment against the probe object.
@@ -1168,15 +1147,15 @@ int VecMath_GroundProbeDual(const ml::CVec3* self, ml::CVec3* arg2, ml::CVec3* a
             // interleave their paired-single loads; the component copies then
             // batch after (retail order).
             nw4r::math::VEC3Sub(d1, *arg2, tmp68);
-            nw4r::math::VEC3Sub(d2, *arg2, tmp5c);
             d1c.set(d1);
+            nw4r::math::VEC3Sub(d2, *arg2, tmp5c);
             d2c.set(d2);
-            float lenObj = nw4r::math::VEC3Dot(d2c, d2c);
-            float lenAxis = nw4r::math::VEC3Dot(d1c, d1c);
-            if (lenObj >= lenAxis) {
-                arg2->y = tmp68.y;
-            } else {
+            float lenObj = nw4r::math::VEC3LenSq(d2c);
+            float lenAxis = nw4r::math::VEC3LenSq(d1c);
+            if (lenObj < lenAxis) {
                 arg2->y = 0.2f + sEneColiProbe->field_0x64;
+            } else {
+                arg2->y = tmp68.y;
             }
             ret = 0;
         } else {

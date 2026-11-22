@@ -25,13 +25,11 @@ extern "C" {
     extern u32 lbl_eu_80526A70[];
     extern u32 lbl_eu_80526AD0[];
     extern u32 lbl_eu_80526B30[];
-    extern u32 lbl_eu_80526B90[];
     extern u32 lbl_eu_80526BF0[];
     extern u32 lbl_eu_80526C50[];
     extern u32 lbl_eu_80526CB0[];
     extern u32 lbl_eu_80526D10[];
     extern u32 lbl_eu_80526D70[];
-    extern u32 lbl_eu_80526920[];
 }
 
 // ============================================================
@@ -393,7 +391,7 @@ extern "C" void CfRes_attachEntryData(ResInfoEntry* self, u32* data, u32 size) {
 // ============================================================
 // CfRes_findKypEntryA (0xB4) - find entry by name
 // ============================================================
-extern "C" __declspec(noinline) void* CfRes_findKypEntryA(ResInfoEntry* self) {
+extern "C" void* CfRes_findKypEntryA(ResInfoEntry* self) {
     void* base;
     u8* p;
     void* result = 0;
@@ -429,7 +427,7 @@ extern "C" __declspec(noinline) void* CfRes_findKypEntryA(ResInfoEntry* self) {
 // ============================================================
 // CfRes_findKypEntryB (0xD0) - find entry by name, return index
 // ============================================================
-extern "C" __declspec(noinline) void* CfRes_findKypEntryB(ResInfoEntry* self, u32* outIdx) {
+extern "C" void* CfRes_findKypEntryB(ResInfoEntry* self, u32* outIdx) {
     *outIdx = 0;
     void* base;
     u8* p;

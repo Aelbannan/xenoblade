@@ -91,12 +91,7 @@ extern "C" void __dt__11CTitleAHelpFv(CTitleAHelp* _this, int flags);
 // Data imports (MWCC does not mangle global-scope data names).
 extern u32 lbl_eu_80664184;   // current map id (bdat row) -> floor map select
 extern u32 gmPauseFlags;   // global mode bitfield (bit 0x400 = world-map gate)
-extern u8 lbl_eu_80537130[];  // CMenuMapSelectSC final vtable; IScnRender vtable at +0x24
 extern u32 __ptmf_null[3];    // null pointer-to-member-function constant
-extern char lbl_eu_8050C5A4[];  // world-map title/help string table base
-extern const f32 lbl_eu_806687C0;  // 0.0f - world-map timer reset value
-extern const f32 lbl_eu_806687C4;  // 1.0f - world-map timer increment per frame
-extern const f32 lbl_eu_806687C8;  // 10.0f - world-map timer cap
 
 #include "kyoshin/CTaskGame.hpp"
 
@@ -122,7 +117,7 @@ extern "C" void MapSelectSCCopyWidgetState(S* dst, const S* src);
 // initialisers run in declaration order: parent ref, CTitleAHelp, CFade,
 // CFloorMap, then the state byte and timer).
 CMenuMapSelectSC::CMenuMapSelectSC(CProcess* parent)
-    : mParentRef(parent), mTitleAHelp(0, 0), mState(0), mTimer(lbl_eu_806687C0) {}
+    : mParentRef(parent), mTitleAHelp(0, 0), mState(0), mTimer(0.0f) {}
 
 CMenuMapSelectSC::~CMenuMapSelectSC() {}
 
@@ -130,7 +125,7 @@ void CMenuMapSelectSC::Init() {
     setPresentationFlag__Q22cf13CfGameManagerFv(1);
 
     // --- Re-initialise the embedded CTitleAHelp via a temporary ---
-    char* name = BdatTouchStringCell(lbl_eu_8050C5A4, lbl_eu_8050C5A4 + 8, 1);
+    char* name = BdatTouchStringCell("MNU_map", "name", 1);
 
     u8 tempTitle[0x38];
     __ct__11CTitleAHelpFPcUc(reinterpret_cast<CTitleAHelp*>(tempTitle), name, 0x4a);
@@ -424,7 +419,7 @@ extern "C" void MapSelectSCPrepFloorMap(CMenuMapSelectSC* self) {
 extern "C" void MapSelectSCShowMapText(CMenuMapSelectSC* self) {
     if (FloorMap_GetField42Gated(&self->mFloorMap) != 0) {
         self->mTitleAHelp.func_801C4654(0);
-        char* name = BdatTouchStringCell(lbl_eu_8050C5A4, lbl_eu_8050C5A4 + 8, 3);
+        char* name = BdatTouchStringCell("MNU_map", "name", 3);
         self->mTitleAHelp.setInfoText(name);
         if (CtrlRemote_TouchBitByArg(0x3212) != 0) {
             self->mTitleAHelp.func_801C46DC(1);
@@ -450,8 +445,9 @@ extern "C" void MapSelectSCHandleInput(CMenuMapSelectSC* self) {
     // Explicit intermediate store keeps the unconditional stfs of the
     // incremented value ahead of the clamp compare (retail order:
     // fadds; stfs; fcmpo; ble; stfs).
-    f32 timerCap = lbl_eu_806687C8;
-    f32 t = self->mTimer + lbl_eu_806687C4;
+    f32 t = self->mTimer;
+    t += 1.0f;
+    f32 timerCap = 10.0f;
     self->mTimer = t;
     if (t > timerCap) {
         self->mTimer = timerCap;
@@ -572,10 +568,10 @@ extern "C" void MapSelectSCHandleInput(CMenuMapSelectSC* self) {
             FloorMap_GetField208Gated(&self->mFloorMap) != 0 &&
             FloorMap_IsSysWinBusy(&self->mFloorMap) == 0) {
             self->mTitleAHelp.func_801C41E8(0x4f);
-            if (self->mTimer > lbl_eu_806687C4) {
+            if (self->mTimer > 1.0f) {
                 playUISound(2);
             }
-            self->mTimer = lbl_eu_806687C0;
+            self->mTimer = 0.0f;
             FloorMap_SetPaneFlag(&self->mFloorMap, 1);
             if ((pad->mTurboPressButtonFlags & 0x4) != 0) {
                 FloorMap_UpdateRowPanePos(&self->mFloorMap);

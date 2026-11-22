@@ -14,7 +14,7 @@ struct __data_CfGimmickJump {
     unsigned char b[0x14];
     unsigned char c[0x30];
 };
-__declspec(section ".data") __attribute__((used, aligned(8))) const __data_CfGimmickJump __data_CfGimmickJump_blob = {
+__attribute__((used, aligned(8))) __data_CfGimmickJump __data_CfGimmickJump_blob = {
     {0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00},
     {0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00},
     {0x00,0x00,0x00,0x00,0xFF,0xFF,0xFF,0xFF,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xFF,0xFF,0xFF,0xFF,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xFF,0xFF,0xFF,0xFF,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xFF,0xFF,0xFF,0xFF,0x00,0x00,0x00,0x00}
@@ -23,10 +23,8 @@ __declspec(section ".data") __attribute__((used, aligned(8))) const __data_CfGim
 #define lbl_eu_805359D4 ((char*)&__data_CfGimmickJump_blob.b)
 #define lbl_eu_805359E8 ((char*)&__data_CfGimmickJump_blob.c)
 // .rodata strings (retail 0x70): class-name tag + bdat column-name blob.
-__declspec(section ".rodata") __attribute__((used))
+__attribute__((used))
 const char lbl_eu_80508728[0x14] = "cf::CfGimmickJump";
-__declspec(section ".rodata") __attribute__((used))
-char lbl_eu_8050873C[0x5C] = "lnPosX\0lnPosY\0lnPosZ\0lnRotY\0rectype\0jpEF\0jpSE\0jumpS\0wait\0EFATR\0rkWait\0top\0time\0exTime";
 // .sdata2 pool
 // Single struct freezes retail declaration order (MWCC would reorder
 // individual consts by first use); tail (150.0f, 0.0f) matches retail.
@@ -53,7 +51,6 @@ namespace cf {
 
 extern "C" {
 extern char lbl_eu_80535A18[];
-extern char lbl_eu_8050873C[];
 extern char gGimmickBdatColumns[];
 
 extern void __ct__cf_CfGimmick(void* self);
@@ -188,12 +185,11 @@ extern "C" CfGimmickJump* __ct__cf_CfGimmickJump(CfGimmickJump* self,
     CfGimmick_LoadBdatAreaRotation(self, &self->rotation, bdat, &table);
     CfGimmick_LoadBdatClAreaExtents(self, &self->transformedPosition, bdat, &table);
 
-    char* columns = lbl_eu_8050873C;
-    u32 value = (u32)getBdatStringColumnValue(table, columns, row);
-    value = (u32)getBdatStringColumnValue(table, columns + 7, row);
-    value = (u32)getBdatStringColumnValue(table, columns + 0x0E, row);
+    u32 value = (u32)getBdatStringColumnValue(table, "lnPosX", row);
+    value = (u32)getBdatStringColumnValue(table, "lnPosY", row);
+    value = (u32)getBdatStringColumnValue(table, "lnPosZ", row);
 
-    value = (u32)getBdatStringColumnValue(table, columns + 0x15, row);
+    value = (u32)getBdatStringColumnValue(table, "lnRotY", row);
     if (value != 0) {
         self->targetAngle = ml::deg2rad * (f32)(s16)value;
         self->targetX = self->position.x;
@@ -203,33 +199,33 @@ extern "C" CfGimmickJump* __ct__cf_CfGimmickJump(CfGimmickJump* self,
         self->flags |= 0x1000;
     }
 
-    value = (u32)getBdatStringColumnValue(table, columns + 0x1C, row);
+    value = (u32)getBdatStringColumnValue(table, "rectype", row);
     self->flags66 = (u8)value;
     value = (u32)getBdatStringColumnValue(table, gGimmickBdatColumns + 0x30, row);
     self->resourceId = (u16)value;
-    value = (u32)getBdatStringColumnValue(table, columns + 0x24, row);
+    value = (u32)getBdatStringColumnValue(table, "jpEF", row);
     self->duration = (u16)value;
-    value = (u32)getBdatStringColumnValue(table, columns + 0x29, row);
+    value = (u32)getBdatStringColumnValue(table, "jpSE", row);
     self->effectFlags = (u8)value;
-    value = (u32)getBdatStringColumnValue(table, columns + 0x2E, row);
+    value = (u32)getBdatStringColumnValue(table, "jumpS", row);
     self->effectId = (u16)value;
-    value = (u32)getBdatStringColumnValue(table, columns + 0x34, row);
+    value = (u32)getBdatStringColumnValue(table, "wait", row);
     self->waitFrames = (u8)value;
-    value = (u32)getBdatStringColumnValue(table, columns + 0x39, row);
+    value = (u32)getBdatStringColumnValue(table, "EFATR", row);
     self->jumpFrames = (u8)value;
-    value = (u32)getBdatStringColumnValue(table, columns + 0x3F, row);
+    value = (u32)getBdatStringColumnValue(table, "rkWait", row);
     self->jumpFlags = (u8)value;
 
-    value = (u32)getBdatStringColumnValue(table, columns + 0x46, row);
-    value = (u32)getBdatStringColumnValue(table, columns + 0x4A, row);
+    value = (u32)getBdatStringColumnValue(table, "top", row);
+    value = (u32)getBdatStringColumnValue(table, "time", row);
     self->height = (f32)(u16)value;
-    value = (u32)getBdatStringColumnValue(table, columns + 0x4A, row);
+    value = (u32)getBdatStringColumnValue(table, "time", row);
     if (value != 0) {
         self->maxFrameScale = self->height / self->frameScale;
     } else {
     }
 
-    value = (u32)getBdatStringColumnValue(table, columns + 0x4F, row);
+    value = (u32)getBdatStringColumnValue(table, "exTime", row);
     if (self->frameScale < ml::pi) {
         self->frameScale = ml::pi;
     } else {

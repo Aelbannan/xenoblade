@@ -18,16 +18,6 @@ extern "C" void setParent__11CDeviceFileFP11CWorkThread(CWorkThread* parent);
 // CDeviceFile instance-field clear (retail clearParent__11CDeviceFileFv);
 // the read-only CDeviceFile.hpp omits it entirely.
 extern "C" void clearParent__11CDeviceFileFv(CDeviceFile* self);
-// Work-memory allocation path used by wkStandbyLogin: retail placement-
-// constructs the raw CProc subobject in work memory (no derived ctor).
-// getWorkMem/allocate/entryWork are declared in CViewRoot.hpp.
-extern "C" void __ct__5CProcFPCcP11CWorkThreads(void* self, const char* pName, CWorkThread* pParent, int maxChild);
-
-// Retail .rodata string pool (0x80522F44): "CDesktopBackGround\0CDesktopException\0".
-extern const char lbl_eu_80522F44[];
-// Retail .sdata2 color constants used by the ctor frame color and the
-// wkStandbyLogin clear-color fills.
-extern const f32 lbl_eu_8066A450[];
 
 // Type tag whose RTTI locator is the .sdata descriptor at 0x80663760
 // ({name, 0}); typeid(Desktop).name() is the view name.
@@ -39,7 +29,6 @@ class Desktop {};
 // at the bottom of this TU. Their names in symbols.txt are the MWCC manglings
 // of CDesktopBackGround::spInstance and CDesktopException::spInstance.
 extern "C" u32 lbl_eu_806656A8;   // DesktopIcon* CDesktop::spIcon (CDeviceGX TU)
-extern "C" CDesktop* lbl_eu_806656AC; // CDesktop::spInstance (CDeviceGX TU)
 extern u8 lbl_eu_806656B0;     // bool CDesktop::sIconInitialized (CDeviceGX TU)
 
 
@@ -207,7 +196,7 @@ bool CDesktop::wkStandbyLogin(){
 // gone, clear the VI flags, detach the desktop from CDeviceFile, and run the
 // base CProc logout.
 bool CDesktop::wkStandbyLogout(){
-    if(hasChild(this) == false && CProcRoot::getInstance()->getWorkThread(lbl_eu_80522F44) == nullptr){
+    if(hasChild(this) == false && CProcRoot::getInstance()->getWorkThread("CDesktopBackGround") == nullptr){
         CDeviceVI::setFlag0(true);
         clearParent__11CDeviceFileFv(reinterpret_cast<CDeviceFile*>(this));
         return CProc::wkStandbyLogout();

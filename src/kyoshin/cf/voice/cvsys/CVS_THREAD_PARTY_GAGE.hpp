@@ -66,7 +66,6 @@ extern "C" {
 
 // This subclass's vtable.
 extern u32 lbl_eu_80539C6C[7];
-extern u32 lbl_eu_80662D18[2];
 
 // Phantom vtable view over a CVS_THREAD vtable pointer (stored at +0x1C) so
 // slot-2 (offset 0x08) dispatch is emitted as a real r12-chained virtual

@@ -4,96 +4,9 @@
 #include "monolib/core.hpp"
 #include "monolib/work.hpp"
 
-// ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
 #define spInstance lbl_eu_80665708
 extern "C" CLibHbmControl* lbl_eu_80665708;
-extern void* __dt__5CProcFv(void* self, int flag);
-extern bool wkStandbyLogin__5CProcFv(void* self);
-extern bool wkStandbyLogout__5CProcFv(void* self);
-extern void callExitFunc__11CWorkSystemFv();
-namespace HBMBlob {
-extern "C" void* __dt__14CLibHbmControlFv();
-extern "C" void wkUpdate__14CLibHbmControlFv();
-extern "C" void wkRender__14CLibHbmControlFv();
-extern "C" bool wkStandbyLogin__14CLibHbmControlFv();
-extern "C" bool wkStandbyLogout__14CLibHbmControlFv();
-extern "C" void WorkEvent1__10IWorkEventFPvPCc();
-extern "C" void OnFileEvent__10IWorkEventFP10CEventFile();
-extern "C" void WorkEvent3__10IWorkEventFPv();
-extern "C" void WorkEvent4__10IWorkEventFv();
-extern "C" void OnPauseTrigger__10IWorkEventFb();
-extern "C" void WorkEvent6__10IWorkEventFv();
-extern "C" void WorkEvent7__10IWorkEventFv();
-extern "C" void WorkEvent8__10IWorkEventFv();
-extern "C" void WorkEvent9__10IWorkEventFv();
-extern "C" void WorkEvent10__10IWorkEventFv();
-extern "C" void WorkEvent11__10IWorkEventFv();
-extern "C" void WorkEvent12__10IWorkEventFv();
-extern "C" void WorkEvent13__10IWorkEventFv();
-extern "C" void WorkEvent14__10IWorkEventFv();
-extern "C" void WorkEvent15__10IWorkEventFv();
-extern "C" void WorkEvent16__10IWorkEventFv();
-extern "C" void WorkEvent17__10IWorkEventFv();
-extern "C" void WorkEvent18__10IWorkEventFv();
-extern "C" void WorkEvent19__10IWorkEventFv();
-extern "C" void WorkEvent20__10IWorkEventFv();
-extern "C" void WorkEvent21__10IWorkEventFv();
-extern "C" void WorkEvent22__10IWorkEventFv();
-extern "C" void WorkEvent23__10IWorkEventFv();
-extern "C" void WorkEvent24__10IWorkEventFv();
-extern "C" void WorkEvent25__10IWorkEventFv();
-extern "C" void WorkEvent26__10IWorkEventFv();
-extern "C" void WorkEvent27__10IWorkEventFv();
-extern "C" void WorkEvent28__10IWorkEventFv();
-extern "C" void WorkEvent29__10IWorkEventFv();
-extern "C" void WorkEvent30__10IWorkEventFv();
-extern "C" void WorkEvent31__10IWorkEventFv();
-extern "C" void wkRenderAfter__11CWorkThreadFv();
-extern "C" void wkStandbyExceptionRetry__11CWorkThreadFUl();
-extern "C" u32 __RTTI__10IWorkEvent;
-extern "C" u32 __RTTI__11CWorkThread;
-extern "C" u32 __RTTI__5CProc;
-}
 
-// [.rodata] 0x80523190-0x805231B0 (0x20 = 32B): two copies of the class name.
-extern "C" __declspec(align(8)) const char lbl_eu_80523190[0x20] = {
-    0x43,0x4C,0x69,0x62,0x48,0x62,0x6D,0x43,0x6F,0x6E,0x74,0x72,0x6F,0x6C,0x00,0x00,
-    0x43,0x4C,0x69,0x62,0x48,0x62,0x6D,0x43,0x6F,0x6E,0x74,0x72,0x6F,0x6C,0x00,0x00,
-};
-extern "C" u32 __RTTI__14CLibHbmControl[2];
-extern "C" u32 lbl_eu_8056D290[40] = {
-    (u32)&__RTTI__14CLibHbmControl, 0x00000000,
-    (u32)&HBMBlob::__dt__14CLibHbmControlFv,
-    (u32)&HBMBlob::WorkEvent1__10IWorkEventFPvPCc, (u32)&HBMBlob::OnFileEvent__10IWorkEventFP10CEventFile,
-    (u32)&HBMBlob::WorkEvent3__10IWorkEventFPv, (u32)&HBMBlob::WorkEvent4__10IWorkEventFv,
-    (u32)&HBMBlob::OnPauseTrigger__10IWorkEventFb,
-    (u32)&HBMBlob::WorkEvent6__10IWorkEventFv, (u32)&HBMBlob::WorkEvent7__10IWorkEventFv,
-    (u32)&HBMBlob::WorkEvent8__10IWorkEventFv, (u32)&HBMBlob::WorkEvent9__10IWorkEventFv,
-    (u32)&HBMBlob::WorkEvent10__10IWorkEventFv, (u32)&HBMBlob::WorkEvent11__10IWorkEventFv,
-    (u32)&HBMBlob::WorkEvent12__10IWorkEventFv, (u32)&HBMBlob::WorkEvent13__10IWorkEventFv,
-    (u32)&HBMBlob::WorkEvent14__10IWorkEventFv, (u32)&HBMBlob::WorkEvent15__10IWorkEventFv,
-    (u32)&HBMBlob::WorkEvent16__10IWorkEventFv, (u32)&HBMBlob::WorkEvent17__10IWorkEventFv,
-    (u32)&HBMBlob::WorkEvent18__10IWorkEventFv, (u32)&HBMBlob::WorkEvent19__10IWorkEventFv,
-    (u32)&HBMBlob::WorkEvent20__10IWorkEventFv, (u32)&HBMBlob::WorkEvent21__10IWorkEventFv,
-    (u32)&HBMBlob::WorkEvent22__10IWorkEventFv, (u32)&HBMBlob::WorkEvent23__10IWorkEventFv,
-    (u32)&HBMBlob::WorkEvent24__10IWorkEventFv, (u32)&HBMBlob::WorkEvent25__10IWorkEventFv,
-    (u32)&HBMBlob::WorkEvent26__10IWorkEventFv, (u32)&HBMBlob::WorkEvent27__10IWorkEventFv,
-    (u32)&HBMBlob::WorkEvent28__10IWorkEventFv, (u32)&HBMBlob::WorkEvent29__10IWorkEventFv,
-    (u32)&HBMBlob::WorkEvent30__10IWorkEventFv, (u32)&HBMBlob::WorkEvent31__10IWorkEventFv,
-    (u32)&HBMBlob::wkUpdate__14CLibHbmControlFv, (u32)&HBMBlob::wkRender__14CLibHbmControlFv,
-    (u32)&HBMBlob::wkRenderAfter__11CWorkThreadFv,
-    (u32)&HBMBlob::wkStandbyLogin__14CLibHbmControlFv, (u32)&HBMBlob::wkStandbyLogout__14CLibHbmControlFv,
-    (u32)&HBMBlob::wkStandbyExceptionRetry__11CWorkThreadFUl,
-};
-extern "C" u32 lbl_eu_8056D330[8] = {
-    (u32)&HBMBlob::__RTTI__10IWorkEvent, 0x00000000,
-    (u32)&HBMBlob::__RTTI__11CWorkThread, 0x00000000,
-    (u32)&HBMBlob::__RTTI__5CProc, 0x00000000,
-    0x00000000, 0x00000000,
-};
-extern "C" u32 __RTTI__14CLibHbmControl[2] = { (u32)&lbl_eu_80523190, (u32)&lbl_eu_8056D330 };
-
-// Own-class virtuals as plain free functions (retail names).
 CLibHbmControl::CLibHbmControl(const char* pName, CWorkThread* pParent) : CProc(pName, pParent, MAX_CHILD),
 mHbmPhase(0),
 mWaitTimer(0) {
@@ -102,15 +15,8 @@ mWaitTimer(0) {
     std::memset(&mHBMControllerData, 0, sizeof(HBMControllerData));
 }
 
-void* __dt__14CLibHbmControlFv(CLibHbmControl* self, int flag) {
-    if (self != nullptr) {
-        spInstance = nullptr;
-        __dt__5CProcFv(self, 0);
-        if (flag > 0) {
-            operator delete(self);
-        }
-    }
-    return self;
+CLibHbmControl::~CLibHbmControl() {
+    spInstance = nullptr;
 }
 
 CLibHbmControl* CLibHbmControl::getInstance(){
@@ -129,34 +35,34 @@ bool CLibHbmControl::isActive(){
 // Phase 1: wait for file I/O, countdown timer, then → 2 (or back to 0 on error)
 // Phase 2: init HBM system  → 3
 // Phase 3: active - polls WPAD controllers, processes HBM button selections
-void wkUpdate__14CLibHbmControlFv(CLibHbmControl* self){
-    switch(self->mHbmPhase){
+void CLibHbmControl::wkUpdate(){
+    switch(mHbmPhase){
         case 0:
             CLibHbm::loadHbmArcFile();
-            self->mWaitTimer = 0xD2;
-            self->mHbmPhase++;
+            mWaitTimer = 0xD2;
+            mHbmPhase++;
             break;
         case 1:
             if(!CDeviceFileCri::getInstance()->isException()){
-                self->mWaitTimer--;
-                if(self->mWaitTimer <= 0){
-                    self->wkSetEvent(CWorkThread::EVT_NONE);
+                mWaitTimer--;
+                if(mWaitTimer <= 0){
+                    wkSetEvent(CWorkThread::EVT_NONE);
                 }
 
                 break;
             }
 
-            self->wkSetEvent(CWorkThread::EVT_NONE);
+            wkSetEvent(CWorkThread::EVT_NONE);
 
             if(CLibHbm::checkFlag6()){
-                self->mHbmPhase = 0;
+                mHbmPhase = 0;
             }else if(CLibHbm::isHbmMemPointerValid()){
-                self->mHbmPhase++;
+                mHbmPhase++;
             }
             break;
         case 2:
             CLibHbm::initHbm();
-            self->mHbmPhase++;
+            mHbmPhase++;
             break;
         case 3:
             for(int i = 0; i < WPAD_MAX_CONTROLLERS; i++){
@@ -170,14 +76,14 @@ void wkUpdate__14CLibHbmControlFv(CLibHbmControl* self){
 
     HBMUpdateSound();
 
-    HBMSelectBtnNum selectBtnNum = HBMCalc(&self->mHBMControllerData);
+    HBMSelectBtnNum selectBtnNum = HBMCalc(&mHBMControllerData);
 
     switch(selectBtnNum){
         case HBM_SELECT_HOMEBTN:
-            self->wkSetEvent(CWorkThread::EVT_NONE);
+            wkSetEvent(CWorkThread::EVT_NONE);
             break;
         case HBM_SELECT_BTN1:
-            callExitFunc__11CWorkSystemFv();
+            CWorkSystem::callExitFunc();
             VIWaitForRetrace();
             VIWaitForRetrace();
             VIWaitForRetrace();
@@ -185,7 +91,7 @@ void wkUpdate__14CLibHbmControlFv(CLibHbmControl* self){
             OSReturnToMenu();
             break;
         case HBM_SELECT_BTN2:
-            callExitFunc__11CWorkSystemFv();
+            CWorkSystem::callExitFunc();
             VISetBlack(1);
             VIFlush();
             VIWaitForRetrace();
@@ -197,7 +103,7 @@ void wkUpdate__14CLibHbmControlFv(CLibHbmControl* self){
     }
 }
 
-void wkRender__14CLibHbmControlFv(CLibHbmControl* self){
+void CLibHbmControl::wkRender(){
     
 }
 
@@ -205,14 +111,14 @@ void wkRender__14CLibHbmControlFv(CLibHbmControl* self){
 
 /* create disabled */
 
-bool wkStandbyLogin__14CLibHbmControlFv(CLibHbmControl* self) {
+bool CLibHbmControl::wkStandbyLogin() {
     // Locals corresponding to callee-saved registers used in the context ring push.
     // Declared early so the compiler assigns them to r25-r31 and emits _savegpr_25.
     s32 saved_r25, saved_r26, saved_r27, saved_r28;
     s32 saved_r29, saved_r30, saved_r31;
 
     CView* view = CDesktop::getView();
-    CView* subView = self->pssCreateView(self->mName.c_str(), view, 0);
+    CView* subView = pssCreateView(mName.c_str(), view, 0);
 
     // Context ring push: compute entry position
     s32 sum = subView->mContextMsg.mRing.mFront + subView->mContextMsg.mRing.mSize;
@@ -240,13 +146,13 @@ bool wkStandbyLogin__14CLibHbmControlFv(CLibHbmControl* self) {
     subView->unk460 = 2;
 
     // Copy this->mName to subView's own mName (CView::mName at 0x400)
-    subView->mName.mLength = strlen(self->mName.c_str());
-    strcpy(subView->mName.mString, self->mName.c_str());
+    subView->mName.mLength = strlen(mName.c_str());
+    strcpy(subView->mName.mString, mName.c_str());
 
     // If the inherited CWorkThread::mName is empty, copy to it too
     if (subView->CWorkThread::mName.mLength == 0) {
-        subView->CWorkThread::mName.mLength = strlen(self->mName.c_str());
-        strcpy(subView->CWorkThread::mName.mString, self->mName.c_str());
+        subView->CWorkThread::mName.mLength = strlen(mName.c_str());
+        strcpy(subView->CWorkThread::mName.mString, mName.c_str());
     }
 
     // Set view rect to full screen
@@ -269,15 +175,19 @@ bool wkStandbyLogin__14CLibHbmControlFv(CLibHbmControl* self) {
     subView->unk444.w = zero;
 
     CWorkControl::pause(true);
-    return wkStandbyLogin__5CProcFv(self);
+    return CProc::wkStandbyLogin();
 }
 
 
-bool wkStandbyLogout__14CLibHbmControlFv(CLibHbmControl* self) {
-    if (self->mChildren.empty()) {
+bool CLibHbmControl::wkStandbyLogout() {
+    if (mChildren.empty()) {
         CLibHbm::deleteHbm();
         CWorkControl::pause(false);
-        return wkStandbyLogout__5CProcFv(self);
+        return CProc::wkStandbyLogout();
     }
     return false;
+}
+
+CLibHbmControl* CLibHbmControl::create() {
+    return CLibHbmControl::create("CLibHbmControl", CLibHbm::getInstance());
 }

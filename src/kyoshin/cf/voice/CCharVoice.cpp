@@ -13,12 +13,6 @@ extern char lbl_eu_805106D4[];   // empty default voice name ("")
 extern char*       lbl_eu_80662C98[2]; // voice path template pair (path, null)
 extern char        lbl_eu_805398B0[];  // vtable for CCharVoice
 
-// Volume/coefficient floats used by the archive-voice sound system.
-extern float lbl_eu_80668C58;
-extern float lbl_eu_80668C5C;
-extern float lbl_eu_80668C60;
-extern float lbl_eu_80668C64;
-
 // ---------------------------------------------------------------
 // Imported functions from other TUs.  The retail symbol names are
 // unrecovered placeholders without C++ mangling, so these keep C
@@ -181,7 +175,7 @@ extern "C" void updatePosition(CCharVoice* self)
         }
 
         MenuSnd_SetSlotPan_9C40(self->mSoundHandle, (f32*)&pos, (s32)ch,
-                      lbl_eu_80668C58, lbl_eu_80668C5C, lbl_eu_80668C60);
+                      10.0f, 40.0f, 0.5f);
 
     } else if (flags & 4) {
         if (self->mBattleSndHandle == 0xFFFF) return;
@@ -219,7 +213,7 @@ extern "C" void stopVoiceA(CCharVoice* self)
 
     if ((flags & 2) || (flags & 0x80000000)) {
         if (self->mSoundHandle != -1) {
-            MenuSnd_SilenceByName_8986C(self->mFileName, lbl_eu_80668C64);
+            MenuSnd_SilenceByName_8986C(self->mFileName, 0.0f);
             self->mVoiceId     = -1;
             self->mSoundHandle = -1;
         }
@@ -254,7 +248,7 @@ extern "C" bool playGated(CCharVoice* self, float volume,
 
         if ((flags & 2) || (flags & 0x80000000)) {
             if (self->mSoundHandle != -1) {
-                MenuSnd_SilenceByName_8986C(self->mFileName, lbl_eu_80668C64);
+                MenuSnd_SilenceByName_8986C(self->mFileName, 0.0f);
                 self->mVoiceId     = -1;
                 self->mSoundHandle = -1;
             }
@@ -276,7 +270,7 @@ extern "C" bool playGated(CCharVoice* self, float volume,
         // indices self->mField34+{0,1,3,4} (skipping the separator at +2).  Retail
         // reloads self->mField34 for each store, so reference the member raw, and
         // hoists the MenuSnd_TryPlayGated_97A0 volume arg load to the top of the block.
-        float sndLevel = lbl_eu_80668C64;
+        float sndLevel = 0.0f;
         int v100 = voiceId / 100;
         int rem  = voiceId % 100;
         int a    = (u32)v100 / 10;                       // thousands
@@ -332,7 +326,7 @@ extern "C" void stopVoiceB(CCharVoice* self)
 
     if ((flags & 2) || (flags & 0x80000000)) {
         if (self->mSoundHandle != -1) {
-            MenuSnd_SilenceByName_8986C(self->mFileName, lbl_eu_80668C64);
+            MenuSnd_SilenceByName_8986C(self->mFileName, 0.0f);
             self->mVoiceId     = -1;
             self->mSoundHandle = -1;
         }
@@ -378,8 +372,3 @@ struct VoiceNameLocator {
 };
 VoiceNameLocator __RTTI__Q22cf12CChainEffect = { lbl_eu_80510690, lbl_eu_805398A0 };
 char* lbl_eu_80662C98[2] = { (char*)lbl_eu_805106A8, 0 };
-#pragma section data_type ".sdata2" ".sdata2"
-extern __declspec(section ".sdata2") float lbl_eu_80668C58 = 10.0f;
-extern __declspec(section ".sdata2") float lbl_eu_80668C5C = 40.0f;
-extern __declspec(section ".sdata2") float lbl_eu_80668C60 = 0.5f;
-extern __declspec(section ".sdata2") float lbl_eu_80668C64 = 0.0f;

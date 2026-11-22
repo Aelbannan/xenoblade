@@ -50,15 +50,6 @@ public:
     virtual u32 v7() = 0;  // vtable offset 0x24
 };
 
-// Minimal CPad / CfPadData view (offsets read by handleQuestInput: pressed
-// buttons at +0x4, turbo/edge flags at +0x104).
-struct CPadView {
-    u8 pad0[0x4];
-    u32 field_04;       // +0x04 pressed-button flags
-    u8 pad8[0x104 - 0x8];
-    u32 field_104;      // +0x104 turbo/edge flags
-};
-
 // ---------------------------------------------------------------------------
 // Quest window (retail sizeof 0xEC; the factory allocates 0xEC on the work
 // heap).
@@ -305,15 +296,9 @@ void refreshQuestContent(CQuestWindow* self);
 
 #include "kyoshin/CTaskGame.hpp"
 
-// Quest-window state record behind the retail .sbss singleton
-// spQuestWindow; only the +0xDA byte is read by isQuestWindowOpen.
-struct QuestWindowState {
-    u8 pad[0xDA];  // +0x00..0xD9
-    u8 field_0xDA; // +0xDA
-};
-
 // Retail .sbss pointer (global-scope data symbols are not mangled by MWCC).
-extern QuestWindowState* spQuestWindow;
+// The object is the real CQuestWindow; isQuestWindowOpen reads its +0xDA byte.
+extern CQuestWindow* spQuestWindow;
 
 u32 getQuestWindow();
 void resetQuestWindow();

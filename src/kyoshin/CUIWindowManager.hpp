@@ -267,6 +267,10 @@ public:
     class CTest : public CTTask<CTest> {
     public:
         ~CTest();
+        virtual void Init();
+        virtual void Term();
+        virtual void Move();
+        virtual void Draw();
     };
 
     static CUIWindowManager* getInstance();

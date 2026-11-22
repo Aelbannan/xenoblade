@@ -89,8 +89,8 @@ public:
     void updateItemD0();
 };
 
-class CScnEnvLgtCtrl;
-extern "C" u32 scnLgtStepLightItems(CScnEnvLgtCtrl* self);
+struct CScnEnvLgtCtrlResList;
+extern "C" u32 scnLgtStepLightItems(CScnEnvLgtCtrlResList* self);
 
 // Direct-call destructor hit by CScn::Term() on the +0x7c subobject
 // (retail flat symbol __dt__804C0E48).

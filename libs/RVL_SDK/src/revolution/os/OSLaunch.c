@@ -53,8 +53,8 @@ void __OSRelaunchTitle(u32 flags) {
     if (ESP_GetTitleId(&titleId) != 0)
         __OSReturnToMenuForError();
 
-    ticketView = (ESTicketView*)OSAllocFromMEM1ArenaLo(0xE0, 0x20);
-    if (ticketView == (ESTicketView*)NULL)
+    ticketView = OSAllocFromMEM1ArenaLo(0xE0, 0x20);
+    if (ticketView == (void*)NULL)
         __OSReturnToMenuForError();
 
     memset(ticketView, 0, 0xE0);

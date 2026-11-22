@@ -1,19 +1,6 @@
 #include "kyoshin/plugin/pluginWait.hpp"
 #include "monolib/device/CDeviceVI.hpp"
 
-extern "C" {
-    // Retail data sections (all defined by this TU):
-    // .rodata "wait" (plugin name) + .sdata2 "frame" (entry name) +
-    // .data PluginFuncData table {name, func} terminated by {NULL, NULL}.
-    // Sizes include retail zero padding (rodata/sdata2 0x8 each).
-    __declspec(section ".rodata") __attribute__((used)) char lbl_eu_804FA438[0x8] = "wait";
-    __declspec(section ".sdata2") __attribute__((used)) char lbl_eu_80665B88[0x8] = "frame";
-    __declspec(section ".data") __attribute__((used)) PluginFuncData lbl_eu_80524BB8[2] = {
-        { lbl_eu_80665B88, wait_frame },
-        { 0, 0 },
-    };
-}
-
 /**
  * VM plugin: wait_frame for SB scripts.
  * Suspends the calling script thread for N frames.
@@ -48,8 +35,13 @@ int wait_frame(VMThread* pThread) {
     return 0;
 }
 
+PluginFuncData sPluginWaitFuncs[2] = {
+    { "frame", wait_frame },
+    { nullptr, nullptr },
+};
+
 // Registers the wait plugin with the VM, linking script function names
 // to our C handler implementations.
 void pluginWaitRegist(){
-    vmPluginRegist(lbl_eu_804FA438, lbl_eu_80524BB8);
+    vmPluginRegist("wait", sPluginWaitFuncs);
 }

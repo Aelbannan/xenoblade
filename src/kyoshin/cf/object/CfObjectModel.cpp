@@ -511,7 +511,7 @@ ml::CVec3* cf::CfObjectModel::CfObject_getPosVector() {
     return reinterpret_cast<ml::CVec3*>(reinterpret_cast<uintptr_t>(this) + 0x3C);
 }
 
-void* cf::CfObjectModel::CfObject_getPosTriple() { void* p = this->mSubObj98; if (p != 0) { return (u8*)p + 0x310; } return (u8*)this + 0x3c; }
+void* cf::CfObjectModel::CfObject_getPosTriple() { void* p = this->mSubObj98; if (p != 0) { return (u8*)p + 0x310; } return &this->mPos3C; }
 
 // Copies the vector into the sub-object transform's rotation and refreshes
 // it, then mirrors the vector into this object's +0x48 position (retail
@@ -552,12 +552,12 @@ void cf::CfObjectModel::CfObject_setMoveHeadAngle(float value) {
 }
 
 float cf::CfObjectModel::CfObject_getMoveHeadAngle() {
-    void* ptr = *(void**)((unsigned char*)this + 0x98);
+    void* ptr = this->mSubObj98;
     if (ptr != 0) {
         void* result = simGetLeafActData(ptr);
-        return *(float*)((unsigned char*)result + 0xc8);
+        return static_cast<ml::CAttrTransform*>(result)->mPrevRot.y;
     } else {
-        return *(float*)((unsigned char*)this + 0x4c);
+        return this->mField4C;
     }
 }
 

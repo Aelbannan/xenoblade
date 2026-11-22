@@ -15,7 +15,7 @@ class ICulling;
 class CScnItemPool;
 class CScnFilterMan;
 class CScnFadeMan;
-class CScnEnvLgtCtrl;
+struct CScnEnvLgtCtrlResList;
 struct CScnFrame;
 
 struct ScnRenderCB {
@@ -73,7 +73,7 @@ public:
     CScnFilterMan* mFilterMan; //0x070
     void* unk74; //0x074 subsystem released by Term
     void* unk78; //0x078 subsystem released by Term
-    CScnEnvLgtCtrl* mLgtCtrl; //0x07C light control (destroyed directly by Term)
+    CScnEnvLgtCtrlResList* mLgtCtrl; //0x07C light control (destroyed directly by Term)
     CScnFadeMan* mFadeMan; //0x080
     CScnFrame* mFrame84; //0x084 scene frame (mElapsed/mStep read by Scn_GetFrameDelta/SetTimeScale)
     void* unk88; //0x088 scene-root subobject destroyed by ~CScn

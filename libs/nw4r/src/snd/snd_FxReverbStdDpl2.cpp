@@ -26,24 +26,30 @@ struct FxReverbStdParam {
 // Retail .sdata2 float constants referenced by name so the SDA21 relocations
 // match the stripped retail object (MWCC_CASES §1b float pools).
 
-// Retail vtable (shared data split .data 0x8056A7E8). The class is defined as
-// a plain struct so MWCC emits no local __vt__/RTTI and no weak vtable-support
-// stubs or base-class dtors (retail snd_FxReverbStdDpl2.o is text-only and its
-// split budget is exact: every emitted helper would overflow it).
-extern "C" u8 lbl_eu_8056A7E8[];
+// FxReverbStdDpl2's vtable is emitted by MWCC from this real FxBase-derived
+// class; the retail deleting dtor is defined in kyoshin/cf/code_801C2C14.cpp.
+class FxReverbStdDpl2 : public FxBase {
+public:
+    FxReverbStdDpl2();
 
-// ---------------------------------------------------------------------------
-// Plain-layout view of the FxReverbStdDpl2 object (retail offsets):
-//   0x00 vptr (set by the ctor from lbl_eu_8056A7E8)
-//   0x04 ut::LinkListNode (prev/next, zeroed by the ctor)
-//   0x0C mIsActive, 0x10 mOutputMode, 0x14 mHeap, 0x18 mAllocCount
-//   0x1C detail::FxReverbStdParam mParam (0x28 bytes)
-//   0x44 AXFX_REVERBSTD_EXP mMono (0xE8 bytes)
-//   0x12C AXFX_REVERBSTD_EXP_DPL2 mDpl2 (0x104 bytes)
-struct FxReverbStdDpl2 {
-    void* vtbl;                       // 0x0
-    void* linkPrev;                   // 0x4
-    void* linkNext;                   // 0x8
+    virtual ~FxReverbStdDpl2() { Shutdown(); ReleaseWorkBuffer(); }
+
+    virtual bool StartUp();  // vtable 0xC
+    virtual void Shutdown(); // vtable 0x10
+
+    virtual void UpdateBuffer(int channels, void** ppBuffer, u32 size,
+                              SampleFormat format, f32 sampleRate,
+                              OutputMode mode); // vtable 0x14
+
+    virtual void OnChangeOutputMode(); // vtable 0x18
+
+    virtual bool AssignWorkBuffer(void* pBuffer, u32 size); // vtable 0x1C
+    virtual void ReleaseWorkBuffer();                       // vtable 0x20
+
+    u32 GetRequiredMemSize();
+    bool SetParam(const detail::FxReverbStdParam& rParam);
+
+private:
     bool mIsActive;                   // 0xC
     s32 mOutputMode;                  // 0x10
     MEMiHeapHead* mHeap;              // 0x14
@@ -57,31 +63,21 @@ struct FxReverbStdDpl2 {
     }
 };
 
-// ---------------------------------------------------------------------------
-// All methods defined under their exact retail mangled names as extern "C"
-// free functions (no class members => no vtable/key-function emission).
-extern "C" bool SetParam__Q34nw4r3snd15FxReverbStdDpl2FRCQ44nw4r3snd6detail16FxReverbStdParam(FxReverbStdDpl2* self, const detail::FxReverbStdParam& rParam);
-extern "C" void Shutdown__Q34nw4r3snd15FxReverbStdDpl2Fv(FxReverbStdDpl2* self);
-extern "C" bool StartUp__Q34nw4r3snd15FxReverbStdDpl2Fv(FxReverbStdDpl2* self);
+FxReverbStdDpl2::FxReverbStdDpl2() {
+    mIsActive = false;
+    mHeap = nullptr; // 0x14
+    mAllocCount = 0; // 0x18
 
-extern "C" FxReverbStdDpl2* __ct__Q34nw4r3snd15FxReverbStdDpl2Fv(FxReverbStdDpl2* self) {
-    self->linkPrev = nullptr;
-    self->linkNext = nullptr;
-    self->vtbl = (void*)lbl_eu_8056A7E8;
-    self->mIsActive = false;
-    self->mHeap = nullptr; // 0x14
-    self->mAllocCount = 0; // 0x18
-
-    self->mParam.preDelayTime = 0.02f;
-    self->mParam.fusedTime = 3.0f;
-    self->mParam.coloration = 0.6f;
-    self->mParam.damping = 0.4f;
-    self->mParam.outGain = 1.0f;
-    self->mParam.iirType = 5;
-    self->mParam.preDelayTimeMax = 0.02f;
-    self->mParam.fusedMode = 0;
-    self->mParam.earlyGain = 0.0f;
-    self->mParam.fusedGain = 1.0f;
+    mParam.preDelayTime = 0.02f;
+    mParam.fusedTime = 3.0f;
+    mParam.coloration = 0.6f;
+    mParam.damping = 0.4f;
+    mParam.outGain = 1.0f;
+    mParam.iirType = 5;
+    mParam.preDelayTimeMax = 0.02f;
+    mParam.fusedMode = 0;
+    mParam.earlyGain = 0.0f;
+    mParam.fusedGain = 1.0f;
 
     detail::FxReverbStdParam param;
     param.preDelayTime = 0.02f;
@@ -94,15 +90,14 @@ extern "C" FxReverbStdDpl2* __ct__Q34nw4r3snd15FxReverbStdDpl2Fv(FxReverbStdDpl2
     param.fusedMode = 0;
     param.earlyGain = 0.0f;
     param.fusedGain = 1.0f;
-    SetParam__Q34nw4r3snd15FxReverbStdDpl2FRCQ44nw4r3snd6detail16FxReverbStdParam(self, param);
-    return self;
+    SetParam(param);
 }
 
-extern "C" u32 GetRequiredMemSize__Q34nw4r3snd15FxReverbStdDpl2Fv(FxReverbStdDpl2* self) {
-    u32 memSize = ut::RoundUp(AXFXReverbStdExpGetMemSize(&self->mMono) +
+u32 FxReverbStdDpl2::GetRequiredMemSize() {
+    u32 memSize = ut::RoundUp(AXFXReverbStdExpGetMemSize(&mMono) +
                                   detail::AxfxImpl::HEAP_SIZE_MIN,
                               32);
-    u32 required = ut::RoundUp(AXFXReverbStdExpGetMemSizeDpl2(&self->mDpl2) +
+    u32 required = ut::RoundUp(AXFXReverbStdExpGetMemSizeDpl2(&mDpl2) +
                                   detail::AxfxImpl::HEAP_SIZE_MIN,
                               32);
     if (required < memSize) {
@@ -111,23 +106,23 @@ extern "C" u32 GetRequiredMemSize__Q34nw4r3snd15FxReverbStdDpl2Fv(FxReverbStdDpl
     return required;
 }
 
-extern "C" bool AssignWorkBuffer__Q34nw4r3snd15FxReverbStdDpl2FPvUl(FxReverbStdDpl2* self, void* pBuffer, u32 size) {
-    return self->GetImpl()->CreateHeap(pBuffer, size);
+bool FxReverbStdDpl2::AssignWorkBuffer(void* pBuffer, u32 size) {
+    return GetImpl()->CreateHeap(pBuffer, size);
 }
 
-extern "C" void ReleaseWorkBuffer__Q34nw4r3snd15FxReverbStdDpl2Fv(FxReverbStdDpl2* self) {
-    self->GetImpl()->DestroyHeap();
+void FxReverbStdDpl2::ReleaseWorkBuffer() {
+    GetImpl()->DestroyHeap();
 }
 
-extern "C" bool StartUp__Q34nw4r3snd15FxReverbStdDpl2Fv(FxReverbStdDpl2* self) {
-    u32 memSize = ut::RoundUp(AXFXReverbStdExpGetMemSize(&self->mMono) +
+bool FxReverbStdDpl2::StartUp() {
+    u32 memSize = ut::RoundUp(AXFXReverbStdExpGetMemSize(&mMono) +
                                   detail::AxfxImpl::HEAP_SIZE_MIN,
                               32);
-    u32 required = ut::RoundUp(AXFXReverbStdExpGetMemSizeDpl2(&self->mDpl2) +
+    u32 required = ut::RoundUp(AXFXReverbStdExpGetMemSizeDpl2(&mDpl2) +
                                   detail::AxfxImpl::HEAP_SIZE_MIN,
                               32);
     u32 total = required < memSize ? memSize : required;
-    if (total > self->GetImpl()->GetHeapTotalSize()) {
+    if (total > GetImpl()->GetHeapTotalSize()) {
         return false;
     }
 
@@ -136,112 +131,112 @@ extern "C" bool StartUp__Q34nw4r3snd15FxReverbStdDpl2Fv(FxReverbStdDpl2* self) {
 
     BOOL success;
     if (detail::AxManager::GetInstance().GetOutputMode() == OUTPUT_MODE_DPL2) {
-        self->mOutputMode = 1;
-        self->GetImpl()->HookAlloc(&allocHook, &freeHook);
+        mOutputMode = 1;
+        GetImpl()->HookAlloc(&allocHook, &freeHook);
 
-        success = AXFXReverbStdExpInitDpl2(&self->mDpl2);
-        self->GetImpl()->RestoreAlloc(allocHook, freeHook);
+        success = AXFXReverbStdExpInitDpl2(&mDpl2);
+        GetImpl()->RestoreAlloc(allocHook, freeHook);
 
-        (void)AXFXReverbStdExpGetMemSizeDpl2(&self->mDpl2); // debug leftover
+        (void)AXFXReverbStdExpGetMemSizeDpl2(&mDpl2); // debug leftover
     } else {
-        self->mOutputMode = 0;
-        self->GetImpl()->HookAlloc(&allocHook, &freeHook);
+        mOutputMode = 0;
+        GetImpl()->HookAlloc(&allocHook, &freeHook);
 
-        success = AXFXReverbStdExpInit(&self->mMono);
-        self->GetImpl()->RestoreAlloc(allocHook, freeHook);
+        success = AXFXReverbStdExpInit(&mMono);
+        GetImpl()->RestoreAlloc(allocHook, freeHook);
 
-        (void)AXFXReverbStdExpGetMemSize(&self->mMono); // debug leftover
+        (void)AXFXReverbStdExpGetMemSize(&mMono); // debug leftover
     }
 
-    self->mIsActive = true;
+    mIsActive = true;
 
     return success;
 }
 
-extern "C" void Shutdown__Q34nw4r3snd15FxReverbStdDpl2Fv(FxReverbStdDpl2* self) {
-    if (!self->mIsActive) {
+void FxReverbStdDpl2::Shutdown() {
+    if (!mIsActive) {
         return;
     }
 
-    self->mIsActive = false;
+    mIsActive = false;
 
     AXFXAllocHook allocHook;
     AXFXFreeHook freeHook;
-    self->GetImpl()->HookAlloc(&allocHook, &freeHook);
+    GetImpl()->HookAlloc(&allocHook, &freeHook);
 
-    if (self->mOutputMode == 1) {
-        AXFXReverbStdExpShutdownDpl2(&self->mDpl2);
+    if (mOutputMode == 1) {
+        AXFXReverbStdExpShutdownDpl2(&mDpl2);
     } else {
-        AXFXReverbStdExpShutdown(&self->mMono);
+        AXFXReverbStdExpShutdown(&mMono);
     }
 
-    self->GetImpl()->RestoreAlloc(allocHook, freeHook);
+    GetImpl()->RestoreAlloc(allocHook, freeHook);
 }
 
-extern "C" bool SetParam__Q34nw4r3snd15FxReverbStdDpl2FRCQ44nw4r3snd6detail16FxReverbStdParam(FxReverbStdDpl2* self, const detail::FxReverbStdParam& rParam) {
-    self->mParam = rParam;
+bool FxReverbStdDpl2::SetParam(const detail::FxReverbStdParam& rParam) {
+    mParam = rParam;
 
     f32 preDelayTimeMax =
         ut::Max(rParam.preDelayTimeMax, 0.0f);
-    bool changed = (preDelayTimeMax != self->mMono.preDelayTimeMax);
+    bool changed = (preDelayTimeMax != mMono.preDelayTimeMax);
 
-    self->mDpl2.earlyMode = rParam.iirType;
-    self->mMono.earlyMode = rParam.iirType;
-    self->mDpl2.preDelayTimeMax = preDelayTimeMax;
-    self->mMono.preDelayTimeMax = preDelayTimeMax;
+    mDpl2.earlyMode = rParam.iirType;
+    mMono.earlyMode = rParam.iirType;
+    mDpl2.preDelayTimeMax = preDelayTimeMax;
+    mMono.preDelayTimeMax = preDelayTimeMax;
 
     f32 preDelayTime =
         ut::Clamp(rParam.preDelayTime, 0.0f, rParam.preDelayTimeMax);
-    self->mDpl2.preDelayTime = preDelayTime;
-    self->mMono.preDelayTime = preDelayTime;
+    mDpl2.preDelayTime = preDelayTime;
+    mMono.preDelayTime = preDelayTime;
 
-    self->mDpl2.fusedMode = rParam.fusedMode;
-    self->mMono.fusedMode = rParam.fusedMode;
+    mDpl2.fusedMode = rParam.fusedMode;
+    mMono.fusedMode = rParam.fusedMode;
 
     // Retail clamps fusedTime only on the lower side (ut::Max), unlike the
     // other gain/time fields below which use a full upper/lower Clamp.
     f32 fusedTime = ut::Max(rParam.fusedTime, 0.0f);
-    self->mDpl2.fusedTime = fusedTime;
-    self->mMono.fusedTime = fusedTime;
+    mDpl2.fusedTime = fusedTime;
+    mMono.fusedTime = fusedTime;
 
     f32 coloration =
         ut::Clamp(rParam.coloration, 0.0f, 1.0f);
-    self->mDpl2.coloration = coloration;
-    self->mMono.coloration = coloration;
+    mDpl2.coloration = coloration;
+    mMono.coloration = coloration;
 
     f32 damping = ut::Clamp(rParam.damping, 0.0f, 1.0f);
-    self->mDpl2.damping = damping;
-    self->mMono.damping = damping;
+    mDpl2.damping = damping;
+    mMono.damping = damping;
 
     f32 earlyGain =
         ut::Clamp(rParam.earlyGain, 0.0f, 1.0f);
-    self->mDpl2.earlyGain = earlyGain;
-    self->mMono.earlyGain = earlyGain;
+    mDpl2.earlyGain = earlyGain;
+    mMono.earlyGain = earlyGain;
 
     f32 fusedGain =
         ut::Clamp(rParam.fusedGain, 0.0f, 1.0f);
-    self->mDpl2.fusedGain = fusedGain;
-    self->mMono.fusedGain = fusedGain;
+    mDpl2.fusedGain = fusedGain;
+    mMono.fusedGain = fusedGain;
 
     f32 outGain = ut::Clamp(rParam.outGain, 0.0f, 1.0f);
-    self->mDpl2.outGain = outGain;
-    self->mMono.outGain = outGain;
+    mDpl2.outGain = outGain;
+    mMono.outGain = outGain;
 
-    self->mMono.busIn = NULL;
-    self->mMono.busOut = NULL;
-    self->mMono.sendGain = 0.0f;
-    self->mDpl2.busIn = NULL;
-    self->mDpl2.busOut = NULL;
-    self->mDpl2.sendGain = 0.0f;
+    mMono.busIn = NULL;
+    mMono.busOut = NULL;
+    mMono.sendGain = 0.0f;
+    mDpl2.busIn = NULL;
+    mDpl2.busOut = NULL;
+    mDpl2.sendGain = 0.0f;
 
-    if (!self->mIsActive) {
+    if (!mIsActive) {
         return true;
     }
 
-    u32 memSize = ut::RoundUp(AXFXReverbStdExpGetMemSize(&self->mMono) +
+    u32 memSize = ut::RoundUp(AXFXReverbStdExpGetMemSize(&mMono) +
                                   detail::AxfxImpl::HEAP_SIZE_MIN,
                               32);
-    u32 required = ut::RoundUp(AXFXReverbStdExpGetMemSizeDpl2(&self->mDpl2) +
+    u32 required = ut::RoundUp(AXFXReverbStdExpGetMemSizeDpl2(&mDpl2) +
                                   detail::AxfxImpl::HEAP_SIZE_MIN,
                               32);
     if (required < memSize) {
@@ -249,7 +244,7 @@ extern "C" bool SetParam__Q34nw4r3snd15FxReverbStdDpl2FRCQ44nw4r3snd6detail16FxR
     }
 
     // Available work-buffer space = end offset of the heap.
-    MEMiHeapHead* heap = self->mHeap;
+    MEMiHeapHead* heap = mHeap;
     u32 total;
     if (heap == NULL) {
         total = 0;
@@ -264,25 +259,25 @@ extern "C" bool SetParam__Q34nw4r3snd15FxReverbStdDpl2FRCQ44nw4r3snd6detail16FxR
     if (changed) {
         AXFXAllocHook allocHook;
         AXFXFreeHook freeHook;
-        self->GetImpl()->HookAlloc(&allocHook, &freeHook);
+        GetImpl()->HookAlloc(&allocHook, &freeHook);
 
-        if (self->mOutputMode == 1) {
-            success = AXFXReverbStdExpSettingsDpl2(&self->mDpl2);
+        if (mOutputMode == 1) {
+            success = AXFXReverbStdExpSettingsDpl2(&mDpl2);
         } else {
-            success = AXFXReverbStdExpSettings(&self->mMono);
+            success = AXFXReverbStdExpSettings(&mMono);
         }
 
-        self->GetImpl()->RestoreAlloc(allocHook, freeHook);
-    } else if (self->mOutputMode == 1) {
-        success = AXFXReverbStdExpSettingsUpdateDpl2(&self->mDpl2);
+        GetImpl()->RestoreAlloc(allocHook, freeHook);
+    } else if (mOutputMode == 1) {
+        success = AXFXReverbStdExpSettingsUpdateDpl2(&mDpl2);
     } else {
-        success = AXFXReverbStdExpSettingsUpdate(&self->mMono);
+        success = AXFXReverbStdExpSettingsUpdate(&mMono);
     }
 
     return success != 0;
 }
 
-extern "C" void UpdateBuffer__Q34nw4r3snd15FxReverbStdDpl2FiPPvUlQ34nw4r3snd12SampleFormatfQ34nw4r3snd10OutputMode(FxReverbStdDpl2* self, int channels, void** ppBuffer, u32 size,
+void FxReverbStdDpl2::UpdateBuffer(int channels, void** ppBuffer, u32 size,
                                    SampleFormat format, f32 sampleRate,
                                    OutputMode mode) {
 #pragma unused(channels)
@@ -290,55 +285,40 @@ extern "C" void UpdateBuffer__Q34nw4r3snd15FxReverbStdDpl2FiPPvUlQ34nw4r3snd12Sa
 #pragma unused(format)
 #pragma unused(sampleRate)
 
-    if (!self->mIsActive) {
+    if (!mIsActive) {
         return;
     }
 
-    if ((mode == OUTPUT_MODE_DPL2) != self->mOutputMode) {
+    if ((mode == OUTPUT_MODE_DPL2) != mOutputMode) {
         return;
     }
 
-    if (self->mOutputMode == 1) {
+    if (mOutputMode == 1) {
         AXFX_BUFFERUPDATE_DPL2 buffer;
         buffer.left = (s32*)ppBuffer[0];
         buffer.right = (s32*)ppBuffer[1];
         buffer.left_surround = (s32*)ppBuffer[2];
         buffer.right_surround = (s32*)ppBuffer[3];
-        AXFXReverbStdExpCallbackDpl2(&buffer, &self->mDpl2);
+        AXFXReverbStdExpCallbackDpl2(&buffer, &mDpl2);
     } else {
         AXFX_BUFFERUPDATE buffer;
         buffer.left = (s32*)ppBuffer[0];
         buffer.right = (s32*)ppBuffer[1];
         buffer.surround = (s32*)ppBuffer[2];
-        AXFXReverbStdExpCallback(&buffer, &self->mMono);
+        AXFXReverbStdExpCallback(&buffer, &mMono);
     }
 }
 
-// Fake SI interface for the virtual dispatch in OnChangeOutputMode: retail
-// dispatches Shutdown/StartUp through the object's vtable (slots 0x10/0xC),
-// which a plain-struct call cannot express.
-struct FxReverbStdDpl2If {
-    virtual void v0();
-    virtual void v1();
-    virtual void v2();
-    virtual bool v3();
-    virtual void v4();
-};
-
-extern "C" void OnChangeOutputMode__Q34nw4r3snd15FxReverbStdDpl2Fv(FxReverbStdDpl2* self) {
+void FxReverbStdDpl2::OnChangeOutputMode() {
     bool dpl2 =
         (detail::AxManager::GetInstance().GetOutputMode() == OUTPUT_MODE_DPL2);
-    if (self->mOutputMode == dpl2) {
+    if (mOutputMode == dpl2) {
         return;
     }
 
-    reinterpret_cast<FxReverbStdDpl2If*>(self)->v2();  // slot 0x10: Shutdown
-    reinterpret_cast<FxReverbStdDpl2If*>(self)->v1();  // slot 0xC: StartUp
+    Shutdown(); // vtable 0x10
+    StartUp();  // vtable 0xC
 }
 
 } // namespace snd
 } // namespace nw4r
-
-// Absorb: .data 0x28 via pad_data_section (retail zeros)
-extern "C" void* __ct__Q34nw4r3snd15FxReverbStdDpl2Fv;
-__declspec(section ".data") __attribute__((aligned(8), used)) const void* snd_FxReverbStdDpl2_data_anchor[4] = { (const void*)&__ct__Q34nw4r3snd15FxReverbStdDpl2Fv, nullptr, nullptr, nullptr };

@@ -771,6 +771,59 @@ typedef struct SfdTraceCtx {
     SfdTraceVtbl* vtbl;    /* 0x00 */
 } SfdTraceCtx;
 
+/* Trace records handed to SfdTraceVtbl::trace.  Each module function owns one
+ * static record in sfd_lib's .data: the function name, then an argument list
+ * for the entry event (+0x04) and, for most functions, one for the exit event
+ * (+0x6C).  Each argument slot is { pointer to the traced value, value-type
+ * code, argument name } (type 0x4 = s32, 0x5 = error code, 0x6 = byte count,
+ * 0xA = string, 0xB = handle).  The caller patches the value pointers just
+ * before firing the event. */
+typedef struct SfdTrcArg {      /* name-guess: CRI type name unknown */
+    void* value;                  /* 0x00 */
+    s32 type;                     /* 0x04 */
+    const char* name;             /* 0x08 */
+} SfdTrcArg;                    /* 0x0C */
+
+typedef struct SfdTrcArgs {     /* name-guess */
+    s32 field_0x00;               /* 0x00 always 0 in retail data */
+    s32 count;                    /* 0x04 number of used args */
+    SfdTrcArg args[8];          /* 0x08 */
+} SfdTrcArgs;                   /* 0x68 */
+
+typedef struct SfdTrcRec {      /* name-guess */
+    const char* func;             /* 0x00 */
+    SfdTrcArgs entry;           /* 0x04 */
+    SfdTrcArgs exit;            /* 0x6C */
+} SfdTrcRec;                    /* 0xD4 */
+
+typedef struct SfdTrcRecIn {    /* name-guess: entry-only record */
+    const char* func;             /* 0x00 */
+    SfdTrcArgs entry;           /* 0x04 */
+} SfdTrcRecIn;                  /* 0x6C */
+
+/* Transfer-module interface (JP map: SFD_tr_in_mem, SFD_tr_sd_mps,
+ * SFD_tr_vd_mpv, ...).  Slot order follows the SFxxx_ entry points each
+ * module exports.  The slots stay untyped (void*) because the decompiled
+ * entry points do not yet agree on one signature per slot (int/s32/void*
+ * returns differ between modules). */
+typedef struct SfdTrIf {          /* name-guess */
+    void* init;                   /* 0x00 */
+    void* finish;                 /* 0x04 */
+    void* execServer;             /* 0x08 */
+    void* create;                 /* 0x0C */
+    void* destroy;                /* 0x10 */
+    void* requestStop;            /* 0x14 */
+    void* start;                  /* 0x18 */
+    void* stop;                   /* 0x1C */
+    void* pause;                  /* 0x20 */
+    void* getWrite;               /* 0x24 */
+    void* addWrite;               /* 0x28 */
+    void* getRead;                /* 0x2C */
+    void* addRead;                /* 0x30 */
+    void* seek;                   /* 0x34 */
+    void* ext;                    /* 0x38 */
+} SfdTrIf;                        /* 0x3C */
+
 
 /* ------------------------------------------------------------------------- */
 /* System work area                                                          */

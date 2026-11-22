@@ -1,18 +1,24 @@
 #include "kyoshin/CNandData.hpp"
 
-// ---------------------------------------------------------------------------
-// NAND save-slot display data. The retail CNandData split object carries NO
-// data sections: every static lives in the retail data objects (split1.s)
-// under flat address labels, declared in CNandData.hpp. The Japanese
-// title/description strings are unused by any retail code path and are not
-// emitted at all.
-// ---------------------------------------------------------------------------
-
-// The singleton instance itself stays DEFINED here: MWCC emits the 0x10-byte
-// boundary structure (retail lbl_eu_80577348) before it for the __sinit_
-// __register_global_object call, and the postprocess strip turns both into
-// UNDEF references to the retail .bss symbols.
 CNandData CNandData::sInstance;
+
+const char* CNandData::scNandBannerFilename = "bannerTexture.tpl";
+
+const char* CNandData::sNandIconTextureFilenames[9] = {
+    "iconTexture[0].tpl",
+    "iconTexture[1].tpl",
+    "iconTexture[2].tpl",
+    "iconTexture[3].tpl",
+    "iconTexture[4].tpl",
+    "iconTexture[5].tpl",
+    "iconTexture[6].tpl",
+    "iconTexture[7].tpl",
+    0,
+};
+
+int CNandData::sNandIconTextureSomething[9] = {
+    2, 2, 2, 2, 2, 2, 2, 2, 0,
+};
 
 // Initializes the NAND save banner shown in the system menu:
 //  - title / description fetched from BDAT,
@@ -26,7 +32,7 @@ void NandData_SetupBanner_11C0()
     const char* desc = getErrMesText20();
     CNandData::sInstance.mNandBanner.setSubtitle(desc);
 
-    CNandData::sInstance.mNandBanner.setBannerPath(lbl_eu_80662E00);
-    CNandData::sInstance.mNandBanner.setFileList(lbl_eu_8053A3D8, lbl_eu_8053A3FC);
+    CNandData::sInstance.mNandBanner.setBannerPath(CNandData::scNandBannerFilename);
+    CNandData::sInstance.mNandBanner.setFileList(CNandData::sNandIconTextureFilenames, CNandData::sNandIconTextureSomething);
     CNandData::sInstance.mNandBanner.mFlags &= ~0x10;
 }

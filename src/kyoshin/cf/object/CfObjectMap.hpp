@@ -46,12 +46,6 @@ struct UnkMapPool2F2C {
     u8 field_0x0[0xC];
 };
 
-// View of the global scene object (gmScene) used to reach its
-// resource manager at +0x7C.
-struct UnkSceneView {
-    u8 field_0x0[0x7C];
-    void* field_0x7C;   // 0x7C
-};
 
 #include "kyoshin/code_801F3BE0.hpp"
 #include "kyoshin/cf/CfSoundMan.hpp"
@@ -63,6 +57,8 @@ namespace cf {
 namespace cf {
 class CfMapEffectManager;
 }
+
+struct CScnEnvLgtCtrlResList;  // env-controller list owner (CScn::mLgtCtrl)
 
 extern "C" {
     // ---- CTaskLOD task helpers ----
@@ -98,9 +94,9 @@ extern "C" {
     // ---- scene / resource helpers ----
     bool Scn_IsAnimActiveOrNull(void* ptr);
     int getFileSize__11CDeviceFileFPCc(const char* path, int flags);
-    void* scnLgtCreateEnvController(void* mgr, const void* name, int flag);
-    void scnLgtRemoveLgtItem(void* mgr, void* resource);
-    void scnLgtPushLgtValue(void* mgr, u16 value, float amount);
+    void* scnLgtCreateEnvController(CScnEnvLgtCtrlResList* mgr, const void* name, int flag);
+    void scnLgtRemoveLgtItem(CScnEnvLgtCtrlResList* mgr, void* resource);
+    void scnLgtPushLgtValue(CScnEnvLgtCtrlResList* mgr, u16 value, float amount);
     void* Scn_InitGlobalB(void* r3, void* r4, void* r5);
     void* scnImN4BuildByIdx(void* r3, void* r4, u32 r5, u32 r6, u32 r7, u32 r8);
     void CfModel_InstallSub(void* r3, void* r4);
@@ -146,19 +142,6 @@ void Scn_SetTimeScale(CScn* scene, float value);
 extern CView* gmCurrentView;     // global scene object (secondary)
 extern u32 gmPauseFlags;        // global flag word
 extern u32 lbl_eu_80664184;        // bdat row index
-extern char lbl_eu_804FC538[];     // map file-name suffix
-extern const float lbl_eu_80666A38;
-extern const float lbl_eu_80666A3C;
-extern const float lbl_eu_80666A40;
-extern const float lbl_eu_80666A44;
-extern const float lbl_eu_80666A48;
-extern const float lbl_eu_80666A4C;
-extern const float lbl_eu_80666A50;
-extern const float lbl_eu_80666A54;
-extern const float lbl_eu_80666A58;
-extern const float lbl_eu_80666A5C;
-extern const float lbl_eu_80666A60;
-extern const float lbl_eu_80666A64;
 
 namespace cf {
     //size: 0x2F50

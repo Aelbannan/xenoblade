@@ -1,6 +1,6 @@
 #include <nw4r/ut.h>
 
-// Absorbed .data 0x8056AF34-0x8056B0E0 (0x1AC): vtables + jumptable. Retail bytes via relocs.
+// This TU owns the adjacent retail vtable and jumptable data objects.
 extern "C" {
 void __dt__Q44nw4r2ut6detail11ResFontBaseFv();
 void __dt__Q34nw4r2ut7ResFontFv();
@@ -38,10 +38,6 @@ __attribute__((section(".data"), aligned(4))) unsigned int resfontbase_data[107]
     0, 0, (unsigned int)&__dt__Q34nw4r2ut10PackedFontFv, (unsigned int)&GetWidth__Q44nw4r2ut6detail11ResFontBaseCFv, (unsigned int)&GetHeight__Q44nw4r2ut6detail11ResFontBaseCFv, (unsigned int)&GetAscent__Q44nw4r2ut6detail11ResFontBaseCFv, (unsigned int)&GetDescent__Q44nw4r2ut6detail11ResFontBaseCFv, (unsigned int)&GetBaselinePos__Q44nw4r2ut6detail11ResFontBaseCFv, (unsigned int)&GetCellHeight__Q44nw4r2ut6detail11ResFontBaseCFv, (unsigned int)&GetCellWidth__Q44nw4r2ut6detail11ResFontBaseCFv, (unsigned int)&GetMaxCharWidth__Q44nw4r2ut6detail11ResFontBaseCFv, (unsigned int)&GetType__Q44nw4r2ut6detail11ResFontBaseCFv, (unsigned int)&GetTextureFormat__Q44nw4r2ut6detail11ResFontBaseCFv, (unsigned int)&GetLineFeed__Q44nw4r2ut6detail11ResFontBaseCFv, (unsigned int)&GetDefaultCharWidths__Q44nw4r2ut6detail11ResFontBaseCFv, (unsigned int)&SetDefaultCharWidths__Q44nw4r2ut6detail11ResFontBaseFRCQ34nw4r2ut10CharWidths, (unsigned int)&SetAlternateChar__Q44nw4r2ut6detail11ResFontBaseFUs, (unsigned int)&SetLineFeed__Q44nw4r2ut6detail11ResFontBaseFi, (unsigned int)&GetCharWidth__Q44nw4r2ut6detail11ResFontBaseCFUs, (unsigned int)&GetCharWidths__Q44nw4r2ut6detail15ArchiveFontBaseCFUs, (unsigned int)&GetGlyph__Q34nw4r2ut10PackedFontCFPQ34nw4r2ut5GlyphUs, (unsigned int)&HasGlyph__Q44nw4r2ut6detail15ArchiveFontBaseCFUs, (unsigned int)&GetEncoding__Q44nw4r2ut6detail11ResFontBaseCFv
 };
 #define lbl_eu_8056AF34 ((void*)resfontbase_data)
-#define lbl_eu_8056AF90 ((void*)(resfontbase_data + 23))
-#define lbl_eu_8056AFF0 ((void*)(resfontbase_data + 47))
-#define jumptable_eu_8056B050 ((void*)(resfontbase_data + 71))
-#define lbl_eu_8056B084 ((void*)(resfontbase_data + 84))
 }
 
 namespace nw4r {

@@ -16,9 +16,6 @@
 namespace cf {}
 using namespace cf;
 
-// Sentinel used for the invalid resource state halfwords (+0x0A/+0x0E).
-static const s16 RES_STATE_INVALID = -1;
-
 // Retail ctor: stores the parent ref first, seeds the constant fields
 // (0.0f float, state halfwords), installs the manual vtable at +0x10 and
 // zeroes the 2-word work area at +0x14 via memset.
@@ -191,9 +188,9 @@ cf::CfResObjImpl::~CfResObjImpl() {}
 // in the .o so typed pointer tables match raw.
 
 // .rodata 0x28: two RTTI type strings with padding.
-__declspec(section ".rodata") __attribute__((used))
+__attribute__((used))
 const char lbl_eu_80503100[0x14] = "cf::CfResObjImpl";
-__declspec(section ".rodata") __attribute__((used))
+__attribute__((used))
 const char lbl_eu_80503114[0x14] = "cf::CfResImpl";
 
 // Forward decls for the .data <-> .sdata cross-references below.
@@ -202,14 +199,14 @@ extern const void* lbl_eu_806623D8[2];
 extern const void* lbl_eu_80530FB0[4];
 
 // .data 0x24: PMF dispatch rows ({0,0,0} + two {0,-1,func}).
-__declspec(section ".data") __attribute__((used))
+__attribute__((used))
 CfPmfEntry lbl_eu_80530F20[3] = {
     { 0, 0, 0 },
     { 0, 0xFFFFFFFFu, (u32)ResObj_ReleaseModels_C98C },
     { 0, 0xFFFFFFFFu, (u32)ResObj_Noop_CCDC },
 };
 // .data 0x6C: hand-built vtable (RTTI + 0 + dtor + 24 slots).
-__declspec(section ".data") __attribute__((used))
+__attribute__((used))
 cf::CfResObjImplVtbl lbl_eu_80530F44 = { {
     (u32)__RTTI__Q22cf12CfResObjImpl,
     0,
@@ -241,7 +238,7 @@ cf::CfResObjImplVtbl lbl_eu_80530F44 = { {
 } };
 
 // .data 0x10: RTTI descriptor (already 8-aligned, last object).
-__declspec(section ".data") __attribute__((used))
+__attribute__((used))
 const void* lbl_eu_80530FB0[4] = { lbl_eu_806623D8, 0, 0, 0 };
 
 // .sbss 0x8: one-time PMF-table init flag (byte) plus padding.
@@ -252,11 +249,11 @@ __attribute__((used))
 static u32 s_sbssPad;
 
 // .sdata 0x10: RTTI descriptor pairs.
-__declspec(section ".sdata") __attribute__((used))
+__attribute__((used))
 const void* __RTTI__Q22cf12CfResObjImpl[2] = { lbl_eu_80503100, lbl_eu_80530FB0 };
-__declspec(section ".sdata") __attribute__((used))
+__attribute__((used))
 const void* lbl_eu_806623D8[2] = { lbl_eu_80503114, 0 };
 
 // .sdata2 0x8: float seed pair (code reads the low word as 0.0f).
-__declspec(section ".sdata2") __attribute__((used))
+__attribute__((used))
 const double lbl_eu_80667690 = 0.0;

@@ -40,6 +40,16 @@
 #include "kyoshin/code_80135FDC_Lyt.hpp"
 
 
+// name-guess: us/eu/jp symbol maps carry no recovered names for these five
+// retail .sbss objects; the names describe their observed scenario-log roles.
+extern "C" {
+u8 sSysWinLogBattleActive;       // name-guess: no map name; battle-list presence flag (0x80664910)
+u8 sSysWinLogSequenceShown;      // name-guess: no map name; one-shot shown flag (0x80664911)
+u8 sSysWinLogSequenceGate;       // name-guess: no map name; sequence gate flag (0x80664912)
+u32 sSysWinLogProgressCounter;   // name-guess: no map name; sequence progress counter (0x80664914)
+u8 sSysWinLogDeviceLatches[8];   // name-guess: no map name; device latch bytes (0x80664918)
+}
+
 // True when the pause flag is clear (game not frozen by a subwindow).
 static inline bool isSceneActive() {
     return gNandTeardownFlag == 0;
@@ -111,10 +121,10 @@ struct CScenarioFlagObj {
 // Clears the "scenario log open / state" globals to their closed values.
 // ---------------------------------------------------------------------------
 void SysWinLog_ResetState() {
-    lbl_eu_80664910 = 0;
-    lbl_eu_80664911 = 0;
-    lbl_eu_80664912 = 0;
-    lbl_eu_80664914 = 0;
+    sSysWinLogBattleActive = 0;
+    sSysWinLogSequenceShown = 0;
+    sSysWinLogSequenceGate = 0;
+    sSysWinLogProgressCounter = 0;
 }
 
 
@@ -130,13 +140,13 @@ void SysWinLog_PollBattleStart() {
         ++count;
     }
     if (count > 0) {
-        if (lbl_eu_80664912 != 0) {
+        if (sSysWinLogSequenceGate != 0) {
             bool booting = getQueuedFileEventCount__Q22cf13CfGameManagerFv() <= 3;
             if (!booting && isSceneActive()) {
                 queueEventId__Q22cf13CfGameManagerFv(0x3A);
             }
         }
-        lbl_eu_80664910 = 1;
+        sSysWinLogBattleActive = 1;
     }
 }
 
@@ -165,7 +175,7 @@ extern "C" void SysWinLog_TickCounter0B(void* self) {
 // IScnRender sub-vtables)
 
 void SysWinLog_PollBattleEnd() {
-    if (lbl_eu_80664910 != 0) {
+    if (sSysWinLogBattleActive != 0) {
         // Walk the battle-manager ring until we're back at the sentinel and
         // count how many active battle entries there are. (Declaration order
         // mirrors the matched SysWinLog_PollBattleStart loop so MWCC colors the node r3 /
@@ -181,7 +191,7 @@ void SysWinLog_PollBattleEnd() {
             ++count;
         }
         if (count <= 0) {
-            if (lbl_eu_80664911 == 0) {
+            if (sSysWinLogSequenceShown == 0) {
                 bool booting = getQueuedFileEventCount__Q22cf13CfGameManagerFv() <= 3;
                 if (!booting && isSceneActive()) {
                     queueEventId__Q22cf13CfGameManagerFv(0xC);
@@ -207,8 +217,8 @@ void SysWinLog_PollBattleEnd() {
             }
         }
     }
-    lbl_eu_80664910 = 0;
-    lbl_eu_80664912 = 0;
+    sSysWinLogBattleActive = 0;
+    sSysWinLogSequenceGate = 0;
 }
 
 
@@ -389,7 +399,7 @@ void SysWinLog_AdvanceOwnerLadder(CScenarioLogOwner* self) {
                 scenarioClose(0x45);
             }
         }
-        lbl_eu_80664911 = 1;
+        sSysWinLogSequenceShown = 1;
     }
 }
 
@@ -447,8 +457,8 @@ void SysWinLog_PollSequenceProgress(CScenarioLogOwner* arg0, s32 arg1, CScenario
                 if (v38 >= 0x32) {
                     scenarioClose(0x39);
                 }
-                if ((s32)lbl_eu_80664914 <= 0) {
-                    lbl_eu_80664912 = 1;
+                if ((s32)sSysWinLogProgressCounter <= 0) {
+                    sSysWinLogSequenceGate = 1;
                 }
             }
         }
@@ -460,10 +470,10 @@ void SysWinLog_PollSequenceProgress(CScenarioLogOwner* arg0, s32 arg1, CScenario
         }
         if ((const u8*)arg0 == (const u8*)cf::CfGameManager::getPlayer(0)) {
             if (arg1 > 0) {
-                lbl_eu_80664911 = 1;
+                sSysWinLogSequenceShown = 1;
             }
         }
-        lbl_eu_80664914 += 1;
+        sSysWinLogProgressCounter += 1;
     }
 }
 
@@ -630,7 +640,7 @@ extern "C" void SysWinLog_DriveCounters(CSysWinDevice* arg0, void* arg1) {
 // SysWinLog_LatchOneShot (us-8028297c)
 // Device-side one-shot latch: when the device's owner has scenario flag bit 2
 // live, store the device's usable result (vtable 0x2bc) into the one-shot
-// byte lbl_eu_80664918.
+// byte sSysWinLogDeviceLatches[0].
 // ---------------------------------------------------------------------------
 void SysWinLog_LatchOneShot(CSysWinDevice* self) {
     int flag = 0;
@@ -639,7 +649,7 @@ void SysWinLog_LatchOneShot(CSysWinDevice* self) {
         flag = 1;
     }
     if (flag != 0) {
-        lbl_eu_80664918 = (u8)((CSysWinDevView*)self)->mAt2BC();
+        sSysWinLogDeviceLatches[0] = (u8)((CSysWinDevView*)self)->mAt2BC();
     }
 }
 
@@ -662,7 +672,7 @@ void SysWinLog_GateDevice(CSysWinDevice* self) {
     if (flag == false) {
         goto gate_done;
     }
-    if (lbl_eu_80664918 != 0) {
+    if (sSysWinLogDeviceLatches[0] != 0) {
         goto gate_done;
     }
     if (((CSysWinDevView*)self)->mAt2BC() != 0) {
@@ -673,7 +683,7 @@ gate_done:
     return;
 walk:
     SysWinLog_DriveCounters(self, 0);
-    lbl_eu_80664918 = 1;
+    sSysWinLogDeviceLatches[0] = 1;
 }
 
 
@@ -703,7 +713,7 @@ void SysWinLog_ScanDeviceOwners(CSysWinDevice* self) {
     // One || chain for all three guards: the flag recheck stays (mid-chain
     // disjuncts can't be folded past the lbl byte read) and the final test
     // renders as retail's branch-over-branch (bne body; b epilogue).
-    if (flag == 0 || lbl_eu_80664918 != 0 ||
+    if (flag == 0 || sSysWinLogDeviceLatches[0] != 0 ||
         ((CSysWinDevView*)self)->mAt2BC() == 0) {
         return;
     }
@@ -740,7 +750,7 @@ void SysWinLog_ScanDeviceOwners(CSysWinDevice* self) {
     found = 0;
 emit:
     SysWinLog_DriveCounters(self, found);
-    lbl_eu_80664918 = 1;
+    sSysWinLogDeviceLatches[0] = 1;
 }
 
 // ---------------------------------------------------------------------------

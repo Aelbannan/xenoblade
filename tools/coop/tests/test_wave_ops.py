@@ -111,6 +111,11 @@ class ReviewDecideTests(_Env):
         notes = [json.loads(l).get("note") for l in wave.HISTORY.read_text().splitlines()]
         self.assertEqual(notes[0], "ok (patch edited by reviewer)")
 
+    def test_history_tolerates_decision_lines(self):
+        wave.HISTORY.write_text(json.dumps({"wave": "W8", "task": "W8-00", "unit": "u", "symbol": "f", "src_sha": "x"})
+                                + "\n" + json.dumps({"wave": "W8", "task": "W8-00", "decision": "drop", "note": ""}) + "\n")
+        self.assertEqual(list(wave._history()), [("u", "f")])
+
     def test_retry_wave_may_not_retry(self):
         (wave.WAVES / "W9r").mkdir()
         (wave.WAVES / "W9r" / "targets.tsv").write_text("\t".join(_row(0, "ds")) + "\n")

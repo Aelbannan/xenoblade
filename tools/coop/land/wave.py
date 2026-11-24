@@ -110,7 +110,8 @@ def _history() -> dict[tuple[str, str], dict]:
         for line in HISTORY.read_text().splitlines():
             if line.strip():
                 r = json.loads(line)
-                h[(r["unit"], r["symbol"])] = r
+                if "unit" in r and "symbol" in r:  # decision lines (wave decide/record) carry neither
+                    h[(r["unit"], r["symbol"])] = r
     return h
 
 

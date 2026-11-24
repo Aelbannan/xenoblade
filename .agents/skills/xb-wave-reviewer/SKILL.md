@@ -48,7 +48,14 @@ Write `/tmp/xb/waves/W/review.tsv`: one line per task in `targets.tsv`, as
 `.venv/bin/python3 -m tools.coop.land wave check-review W` before you finish.
 
 - `land`
-- `hold`: bad shape. The orchestrator moves the patch to `/tmp/xb/plans/held/`.
+- `hold`: bad shape. The orchestrator moves the patch to `/tmp/xb/plans/held/`. The REASON **must
+  start with a shape tag**: `[shape:<slug>] <one-line why>`.
+  - Use an existing slug when one fits. List them with `.venv/bin/python3 -m tools.coop.land wave shapes`;
+    descriptions are in `tools/coop/land/shapes.json`.
+  - For a genuinely new shape, pick a short kebab-case slug and write
+    `/tmp/xb/waves/W/shapes/<slug>.md`: line 1 is a one-line description, then a 1–3 line example.
+  - Tag the shape itself, not the function (`self-view-ptr`, not `cfcam-update`). Repeated holds of
+    one slug are what turn it into worker guidance and, later, an enforced counter.
 - `drop`: no useful change.
 - `retry-ds`: BLOCKED or PARTIAL for a reason other than register allocation, and you can see a way
   forward. Put at most 6 lines of advice in `/tmp/xb/waves/W/hints/<task>.md`. Only in the first

@@ -5,7 +5,7 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-from tools.coop.land import wave, wave_ops
+from tools.coop.land import shapes, wave, wave_ops
 
 COLS = wave_ops.COLS
 
@@ -19,7 +19,9 @@ class _Env(unittest.TestCase):
         self.tmp = tempfile.TemporaryDirectory()
         t = Path(self.tmp.name)
         self.patches = [mock.patch.object(wave, "WAVES", t / "waves"), mock.patch.object(wave, "PLANS", t / "plans"),
-                        mock.patch.object(wave, "HISTORY", t / "hist.jsonl"), mock.patch.object(wave_ops, "ORCH", t / "orch")]
+                        mock.patch.object(wave, "HISTORY", t / "hist.jsonl"), mock.patch.object(wave_ops, "ORCH", t / "orch"),
+                        mock.patch.object(shapes, "HISTORY", t / "hist.jsonl"), mock.patch.object(shapes, "REGISTRY", t / "shapes.json"),
+                        mock.patch.object(shapes, "EXAMPLES", t / "examples")]
         for p in self.patches:
             p.start()
         self.d = wave.WAVES / "W9"
@@ -65,18 +67,27 @@ class ReviewDecideTests(_Env):
             (wave.PLANS / f"W9-{i:02d}.patch").write_text("--- a\n")
 
     def test_check_review_errors(self):
-        (self.d / "review.tsv").write_text("W9-00\tland\tok\nW9-01\tmaybe\tx\nW9-02\tretry-ds\tneeds sig\n")
+        (self.d / "review.tsv").write_text("W9-00\tland\tok\nW9-01\tmaybe\tx\nW9-02\tretry-ds\tneeds sig\nW9-03\thold\tbad\n")
         errs = "\n".join(wave_ops.check_review("W9"))
         self.assertIn("decision 'maybe'", errs)
         self.assertIn("retry-ds without hints/W9-02.md", errs)
-        self.assertIn("W9-03: no review row", errs)
+        self.assertIn("W9-03: hold reason must start with [shape:<slug>]", errs)
 
     def test_decide(self):
         (self.d / "hints").mkdir()
         (self.d / "hints" / "W9-02.md").write_text("callee takes 2 args\n")
         (self.d / "review.tsv").write_text(
-            "W9-00\tland\tclean\nW9-01\thold\tsingle-use inline\nW9-02\tretry-ds\tsig\nW9-03\tdrop\tnone\n")
+            "W9-00\tland\tclean\nW9-01\thold\t[shape:self-view] const u32* view\nW9-02\tretry-ds\tsig\nW9-03\tdrop\tnone\n")
+        self.assertTrue(any("needs shapes/self-view.md" in e for e in wave_ops.check_review("W9")))
+        (self.d / "shapes").mkdir()
+        (self.d / "shapes" / "self-view.md").write_text("re-reading a member through a local pointer\nconst u32* p = &self->flags;\n")
+        for t in ("W9-00", "W9-01"):
+            (self.d / t / "final" / "src").mkdir(parents=True)
+            (self.d / t / "final" / "src" / "a.cpp").write_text("x\n")
         r = wave_ops.decide("W9")
+        self.assertEqual(shapes.registry()["self-view"]["desc"], "re-reading a member through a local pointer")
+        self.assertTrue((shapes.EXAMPLES / "held" / "W9" / "W9-01" / "final" / "src" / "a.cpp").is_file())
+        self.assertTrue((shapes.EXAMPLES / "landed" / "W9" / "W9-00").is_dir())
         self.assertEqual(r["lands"], ["W9-00"])
         self.assertEqual((wave_ops.ORCH / "W9.multi").read_text(), "W9-00\t\t\t\t\n")
         self.assertTrue((wave.PLANS / "held" / "W9-01.patch").is_file())
@@ -93,6 +104,45 @@ class ReviewDecideTests(_Env):
         (wave.WAVES / "W9r" / "targets.tsv").write_text("\t".join(_row(0, "ds")) + "\n")
         (wave.WAVES / "W9r" / "review.tsv").write_text("W9-00\tretry-ds\tagain\n")
         self.assertTrue(any("decision 'retry-ds'" in e for e in wave_ops.check_review("W9r")))
+
+
+class ShapeLoopTests(_Env):
+    def hold(self, wave_, task, slug):
+        wave.record(wave_, task, "hold", f"[shape:{slug}] why")
+
+    def example(self, kind, wave_, task, orig, final):
+        for sub, text in (("orig", orig), ("final", final)):
+            f = shapes.EXAMPLES / kind / wave_ / task / sub / "src" / "a.cpp"
+            f.parent.mkdir(parents=True, exist_ok=True)
+            f.write_text(text)
+
+    def test_tiers_and_pack_section(self):
+        shapes.save_registry({"self-view": {"desc": "member via local pointer", "example": "const u32* p = &self->f;",
+                                            "counter": None}})
+        self.hold("W1", "W1-00", "self-view")
+        self.assertEqual(shapes.pack_section(), "")  # one hold: not yet advisory
+        self.hold("W1", "W1-03", "self-view")
+        self.assertIn("**self-view** (rejected 2x)", shapes.pack_section())
+        t = shapes.tally()["self-view"]
+        self.assertEqual(shapes.status("self-view", t, shapes.registry()), "advisory")
+        self.hold("W2r", "W2-05", "self-view")
+        t = shapes.tally()["self-view"]
+        self.assertEqual((t["count"], t["waves"]), (3, {"W1", "W2"}))
+        self.assertEqual(shapes.status("self-view", t, shapes.registry()), "promote")
+        shapes.save_registry({"self-view": {"desc": "d", "example": "", "counter": None, "enforceable": False}})
+        self.assertEqual(shapes.status("self-view", t, shapes.registry()), "advisory")
+
+    def test_check_counter(self):
+        view = "void f(S* self) {\n    const u32* p = &self->flags;\n}\n"
+        shapes.save_registry({"self-view": {"desc": "d", "example": "", "counter": "scalar_ptr_alias"}})
+        self.hold("W1", "W1-00", "self-view")
+        self.example("held", "W1", "W1-00", "void f(S* self) {}\n", view)
+        self.example("landed", "W1", "W1-02", "int a;\n", "int b;\n")
+        self.assertEqual(shapes.check_counter("self-view"), [])
+        self.example("landed", "W1", "W1-04", "int a;\n", view)
+        self.assertTrue(any("false positive" in e for e in shapes.check_counter("self-view")))
+        shapes.save_registry({"self-view": {"desc": "d", "example": "", "counter": "no_such"}})
+        self.assertTrue(any("not a bans.py counter" in e for e in shapes.check_counter("self-view")))
 
 
 class PermissionTests(unittest.TestCase):

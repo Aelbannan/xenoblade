@@ -1,0 +1,42 @@
+{
+ "addr-extern": {
+  "desc": "data reached through an address-suffixed extern instead of fixing the split/owner",
+  "example": "extern u8 Data_8066B550[8];",
+  "counter": "addr_extern",
+  "added": "W1"
+ },
+ "cast-addr-alias": {
+  "desc": "a local seen through another type via a pointer cast of its address",
+  "example": "Vec* pMag = (Vec*)&tmp;",
+  "counter": "cast_addr_alias",
+  "added": "W1"
+ },
+ "reorder-vs-original": {
+  "desc": "reordering statements/members against a known original to change register or schedule",
+  "example": "swapping two independent nw4r statements",
+  "counter": null,
+  "enforceable": false,
+  "why": "semantic: depends on the original's order",
+  "added": "W1"
+ },
+ "scalar-self-view": {
+  "desc": "re-reading one member through a local pointer to it",
+  "example": "const u32* p = &self->flags;",
+  "counter": "scalar_ptr_alias",
+  "added": "W1"
+ },
+ "sdk-idiom-rewrite": {
+  "desc": "rewriting a known SDK/middleware idiom (BTE macro, nw4r, CRI, MSL, RVL SDK) to steer codegen",
+  "example": "expanding a BTE macro by hand",
+  "counter": null,
+  "enforceable": false,
+  "why": "needs lineage knowledge, not text",
+  "added": "W1"
+ },
+ "single-use-inline": {
+  "desc": "new file-local static inline helper with one call site, added to steer codegen",
+  "example": "static inline f32 getX(const S* s) { return s->x; }",
+  "counter": "single_use_inline",
+  "added": "W1"
+ }
+}

@@ -151,10 +151,11 @@ def build(unit: str, symbol: str, task: str) -> str:
             "itself; update its callers in your files the same way.\n") if premangled else ""
     incl = "\n".join(l for l in src.splitlines() if l.startswith("#include"))
     rel = files[0] if files else "?"
+    from tools.coop.land import shapes  # late: shapes imports ledger
     return f"""# Task {task}: match `{symbol}` in `{unit}`
 
 {RULES}
-## Files
+{shapes.pack_section()}## Files
 
 {chr(10).join('- ' + f for f in files)}
 (only these files; if the fix needs a member or type in any other header, report `BLOCKED type-missing` naming the exact member and your evidence)

@@ -55,7 +55,7 @@ The goal is to match the original source shape! No cheating, temporary hacks, or
   workers + the cheap orchestrator; max 3 concurrent), claude `claude-opus-5-5` (wave planner/reviewer only).
   Never Codex.
 - Wave roles each have a skill — load the one your launch message names, nothing else:
-  `xb-orchestrator` (plumbing), `xb-wave-planner`, `xb-wave-reviewer`. Matching workers need none: their
+  `xb-orchestrator` (plumbing), `xb-wave-planner`, `xb-wave-reviewer`, `xb-rule-curator`. Matching workers need none: their
   pack (`/tmp/xb/packs/<task>.md`) is the whole brief. Flow: `docs/orchestrator_deepseek.md`.
 - If your context is compacted mid-task, re-read your role skill (and any state file it names) before
   continuing; do not work from a summary of the rules.

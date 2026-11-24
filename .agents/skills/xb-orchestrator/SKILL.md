@@ -139,6 +139,24 @@ XB_LAND_OWNER=1 .venv/bin/python3 -m tools.coop.land apply /tmp/xb/orch/{W}.mult
 The gate reverts the plans it rejects. That is a normal outcome, not a reason to stop. Note how many
 passed and how many were rejected.
 
+## 6b. Promote recurring shapes (only when there are candidates)
+```bash
+.venv/bin/python3 -m tools.coop.land wave shapes --promote
+```
+If it prints no `PROMOTE` lines, skip this step. Otherwise, make at most one curator run per wave:
+```bash
+$P run --provider claude --model claude-opus-5-5 --thinking high --mode auto \
+  --workspace wks_5ac8e57131b986e1 --title "{W} rule curator" --wait-timeout 45m \
+  "Use the xb-rule-curator skill (.agents/skills/xb-rule-curator/SKILL.md). Slugs: <the PROMOTE slugs>." \
+  > /tmp/xb/orch/{W}_curator.out 2>&1
+.venv/bin/python3 -m tools.coop.land wave check-counter <each slug the curator reported ENFORCED>
+.venv/bin/python3 -m unittest discover -s tools/coop/tests -t . -q
+```
+The output must contain `CURATE-OK`, and both commands must pass. The curator may also report a
+slug as `NOT-ENFORCEABLE`; that is fine. If a check fails, send the ERROR lines to the curator once;
+if it fails again, stop and report. Put every promoted counter in the step 7 commit message and the
+step 8 report, so the human can veto it.
+
 ## 7. Checkpoint
 ```bash
 .venv/bin/python3 -m tools.coop.land.checkpoint > /tmp/xb/orch/cp{CP}.txt 2>&1; tail -12 /tmp/xb/orch/cp{CP}.txt
@@ -159,6 +177,7 @@ Reply in at most 8 lines:
 - landed / held / dropped / rejected counts;
 - the commit hash;
 - the path of plan.md;
-- any new lines in followups.md.
+- any new lines in followups.md;
+- any counters promoted in step 6b.
 
 Then stop. Do not start another wave.

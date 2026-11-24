@@ -8,6 +8,7 @@ One wave = **plan (Opus) → match (hy4 / DeepSeek workers) → batch review (Op
 | planner | claude `claude-opus-5-5`, thinking medium | `.agents/skills/xb-wave-planner` (also `.claude/skills/`) |
 | workers | pi hy4-flash-free / deepseek-v4.1-flash | none: the generated pack + prompt from `wave prep` |
 | reviewer | claude `claude-opus-5-5`, thinking high | `.agents/skills/xb-wave-reviewer` (also `.claude/skills/`) |
+| rule curator (only when a shape recurs) | claude `claude-opus-5-5`, thinking high | `.agents/skills/xb-rule-curator` (also `.claude/skills/`) |
 
 Launch it from a normal terminal (outside any restricted process):
 

@@ -84,3 +84,10 @@ workflow is in `CLAUDE.md`.
 The cheap-orchestrator steps (`wave launch|manage|check-plan|check-review|decide`,
 `tools/coop/land/wave_ops.py`) exit non-zero with `ERROR:` lines so a DeepSeek orchestrator only
 follows exit codes; see `docs/orchestrator_deepseek.md`.
+
+Rejected-shape loop (`tools/coop/land/shapes.py`, registry `tools/coop/land/shapes.json`): reviewer
+holds carry `[shape:<slug>]`; `wave decide` archives held/landed examples under
+`state/shape_examples/`. A slug held ≥2 times is listed in every worker pack. A slug held ≥3 times
+across ≥2 waves is a `wave shapes --promote` candidate: the `xb-rule-curator` skill turns it into a
+`bans.py` counter, and `wave check-counter` accepts the counter only if it rises on every held example
+and on no landed one. Slugs the curator marks `"enforceable": false` stay advisory.

@@ -20,14 +20,14 @@ import subprocess
 import time
 from pathlib import Path
 
-from tools.coop.land import wave
+from tools.coop.land import shapes, wave
 
 PASEO = "/Applications/Paseo.app/Contents/Resources/bin/paseo"
 WORKSPACE = "wks_5ac8e57131b986e1"
 ORCH = Path("/tmp/xb/orch")
 TASK_TIMEOUT = 2 * 3600
 DECISIONS = ("land", "hold", "drop", "retry-ds")
-COMMANDS = ("launch", "manage", "check-plan", "check-review", "decide")
+COMMANDS = ("launch", "manage", "check-plan", "check-review", "decide", "shapes", "check-counter")
 COLS = ("task", "model", "unit", "symbol", "pct", "structural", "size", "src")
 
 
@@ -247,6 +247,12 @@ def check_review(w: str) -> list[str]:
             errs.append(f"{r[0]}: decision {r[1]!r} (want one of {allowed})")
         if r[1] == "land" and not (wave.PLANS / f"{r[0]}.patch").is_file():
             errs.append(f"{r[0]}: land but no {wave.PLANS}/{r[0]}.patch")
+        if r[1] == "hold":
+            slug = shapes.tag(r[2])
+            if not slug:
+                errs.append(f"{r[0]}: hold reason must start with [shape:<slug>]")
+            elif slug not in shapes.registry() and not (d / "shapes" / f"{slug}.md").is_file():
+                errs.append(f"{r[0]}: new shape {slug!r} needs shapes/{slug}.md (line 1 description, then example)")
         if r[1] == "retry-ds" and not (d / "hints" / f"{r[0]}.md").is_file():
             errs.append(f"{r[0]}: retry-ds without hints/{r[0]}.md")
     errs += [f"{t}: no review row" for t in tasks if t not in got]
@@ -262,8 +268,15 @@ def decide(w: str) -> dict:
     rows = _rows(d / "review.tsv", 3)
     targets = {t["task"]: t for t in wave._targets(w)}
     lands, retries, counts = [], [], {k: 0 for k in DECISIONS}
+    reg = shapes.registry()
+    for f in sorted((d / "shapes").glob("*.md")) if (d / "shapes").is_dir() else []:
+        if f.stem not in reg:
+            reg[f.stem] = {**shapes.read_new_shape(f), "added": w}
+    shapes.save_registry(reg)
     for task, dec, reason, *_ in rows:
         counts[dec] += 1
+        if dec in ("land", "hold"):
+            shapes.archive("landed" if dec == "land" else "held", w, task, d / task)
         wave.record(w, task, "hold" if dec == "retry-ds" else dec, reason)
         if dec == "land":
             lands.append(task)
@@ -304,6 +317,8 @@ def add_parsers(sub) -> None:
     s = sub.add_parser("check-plan"); s.add_argument("wave")
     s = sub.add_parser("check-review"); s.add_argument("wave")
     s = sub.add_parser("decide"); s.add_argument("wave")
+    s = sub.add_parser("shapes"); s.add_argument("--promote", action="store_true"); s.add_argument("--show")
+    s = sub.add_parser("check-counter"); s.add_argument("slug", nargs="+")
 
 
 def run(a) -> int:
@@ -327,4 +342,27 @@ def run(a) -> int:
         if r["retry_wave"]:
             print(f"retry wave: {r['retry_wave']} (run prep / launch / manage / collect on it)")
         return 0
+    if a.cmd == "shapes":
+        reg, tal = shapes.registry(), shapes.tally()
+        if a.show:
+            e = reg.get(a.show, {})
+            print(f"{a.show}: {e.get('desc', '(not in registry)')}\ncounter: {e.get('counter')}\nexample:\n{e.get('example', '')}")
+            for kind in ("held", "landed"):
+                tasks = tal.get(a.show, {}).get("tasks", []) if kind == "held" else None
+                for p in shapes.examples(kind, tasks):
+                    print(f"{kind}\t{p}")
+            return 0
+        for slug, t in sorted(tal.items(), key=lambda kv: -kv[1]["count"]):
+            st = shapes.status(slug, t, reg)
+            if a.promote and st != "promote":
+                continue
+            print(f"{'PROMOTE' if st == 'promote' else st}\t{slug}\t{t['count']} holds\t{len(t['waves'])} waves"
+                  f"\t{(reg.get(slug) or {}).get('desc', '?')}")
+        return 0
+    if a.cmd == "check-counter":
+        errs = [e for s in a.slug for e in shapes.check_counter(s)]
+        for e in errs:
+            print("ERROR:", e)
+        print("check-counter: " + ("OK" if not errs else f"{len(errs)} error(s)"))
+        return 1 if errs else 0
     return 2

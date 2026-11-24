@@ -10,7 +10,9 @@ One wave = **plan (Opus) → match (hy4 / DeepSeek workers) → batch review (Op
 | reviewer | claude `claude-opus-5-5`, thinking high | `.agents/skills/xb-wave-reviewer` (also `.claude/skills/`) |
 | rule curator (only when a shape recurs) | claude `claude-opus-5-5`, thinking high | `.agents/skills/xb-rule-curator` (also `.claude/skills/`) |
 
-Launch it from a normal terminal (outside any restricted process):
+**You (the human) must launch it** from a normal terminal, outside any restricted process. The
+harness denies agent spawning that another agent authorized ("Create Unsafe Agents"), so an
+orchestrator launched by Claude cannot start the planner, workers or reviewer (W2 test, 2026-11-24):
 
 ```bash
 P=/Applications/Paseo.app/Contents/Resources/bin/paseo

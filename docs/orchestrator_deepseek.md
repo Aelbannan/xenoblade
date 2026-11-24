@@ -10,9 +10,12 @@ One wave = **plan (Opus) → match (hy4 / DeepSeek workers) → batch review (Op
 | reviewer | claude `claude-opus-5-5`, thinking high | `.agents/skills/xb-wave-reviewer` (also `.claude/skills/`) |
 | rule curator (only when a shape recurs) | claude `claude-opus-5-5`, thinking high | `.agents/skills/xb-rule-curator` (also `.claude/skills/`) |
 
-**You (the human) must launch it** from a normal terminal, outside any restricted process. The
-harness denies agent spawning that another agent authorized ("Create Unsafe Agents"), so an
-orchestrator launched by Claude cannot start the planner, workers or reviewer (W2 test, 2026-11-24):
+Agent spawning needs allow rules in the pi auto classifier
+(`~/.pi/agent/extensions/pi-automode-classifier/config.json`: `rules.allow` for
+`/Applications/Paseo.app/Contents/Resources/bin/paseo run|send|ls|permit|stop|logs|inspect|wait *`).
+Without them, the chat decider denies an Opus or worker launch that another agent authorized ("Create
+Unsafe Agents"; W2 test, 2026-11-24). The rules match only the literal path, so the skill never calls
+paseo through a variable. Launch it from a normal terminal (outside any restricted process):
 
 ```bash
 P=/Applications/Paseo.app/Contents/Resources/bin/paseo

@@ -34,7 +34,9 @@ Never redo a done step. Never re-launch workers whose `.result` files exist. Do 
 of these rules; the SKILL.md is the source of truth.
 
 ## Fixed facts
-- Python: `.venv/bin/python3` only. Paseo CLI: `P=/Applications/Paseo.app/Contents/Resources/bin/paseo`.
+- Python: `.venv/bin/python3` only. Paseo CLI: always call it by its **full literal path**
+  `/Applications/Paseo.app/Contents/Resources/bin/paseo`. Never put it in a variable or alias (`$P run …`): the permission
+  classifier only allows the literal path, and a variable form will be denied.
 - Workspace: `--workspace wks_5ac8e57131b986e1`. Agent titles must be ≤ 60 chars.
 - Worker models (provider `pi`, `--thinking high`):
   - `hy4` = `opencode-go/hy4-flash-free` (default, no rate limit).
@@ -73,14 +75,14 @@ This writes `/tmp/xb/waves/{W}/targets.tsv` with 30 candidates.
 
 ## 2. Plan (Opus, one blocking run)
 ```bash
-$P run --provider claude --model claude-opus-5-5 --thinking medium --mode auto \
+/Applications/Paseo.app/Contents/Resources/bin/paseo run --provider claude --model claude-opus-5-5 --thinking medium --mode auto \
   --workspace wks_5ac8e57131b986e1 --title "{W} plan" --wait-timeout 45m \
   "Use the xb-wave-planner skill (.agents/skills/xb-wave-planner/SKILL.md). Wave: {W}." \
   > /tmp/xb/orch/{W}_plan.out 2>&1
 .venv/bin/python3 -m tools.coop.land wave check-plan {W}
 ```
-Save the planner's agent id (from `$P ls`) in the state file. `check-plan` must print `OK` and the plan output must contain `PLAN-OK`. If check-plan fails, send
-its ERROR lines once to the planner (`$P send <planner-id> "check-plan failed: … Fix the files and
+Save the planner's agent id (from `/Applications/Paseo.app/Contents/Resources/bin/paseo ls`) in the state file. `check-plan` must print `OK` and the plan output must contain `PLAN-OK`. If check-plan fails, send
+its ERROR lines once to the planner (`/Applications/Paseo.app/Contents/Resources/bin/paseo send <planner-id> "check-plan failed: … Fix the files and
 end with PLAN-OK."`), then re-run check-plan. If it fails a second time, stop and report.
 
 ## 3. Prep and launch workers
@@ -106,13 +108,13 @@ for more than 2 hours and marks it `BLOCKED timeout`. Exit codes:
 ## 5. Collect and batch review (Opus, one blocking run)
 ```bash
 .venv/bin/python3 -m tools.coop.land wave collect {W} > /tmp/xb/orch/{W}_collect.txt
-$P run --provider claude --model claude-opus-5-5 --thinking high --mode auto \
+/Applications/Paseo.app/Contents/Resources/bin/paseo run --provider claude --model claude-opus-5-5 --thinking high --mode auto \
   --workspace wks_5ac8e57131b986e1 --title "{W} review" --wait-timeout 60m \
   "Use the xb-wave-reviewer skill (.agents/skills/xb-wave-reviewer/SKILL.md). Wave: {W}." \
   > /tmp/xb/orch/{W}_review.out 2>&1
 .venv/bin/python3 -m tools.coop.land wave check-review {W}
 ```
-Save the reviewer's agent id (from `$P ls`) in the state file. If check-review fails, send the
+Save the reviewer's agent id (from `/Applications/Paseo.app/Contents/Resources/bin/paseo ls`) in the state file. If check-review fails, send the
 ERROR lines to the reviewer once, as in step 2; stop if it fails again.
 
 ## 6. Decide, retry once, land
@@ -126,7 +128,7 @@ ERROR lines to the reviewer once, as in step 2; stop if it fails again.
 1. Run `wave prep {W}r`, `wave launch {W}r` and `wave manage {W}r` (as in steps 3–4), then
    `wave collect {W}r > /tmp/xb/orch/{W}r_collect.txt`.
 2. Send the reviewer this message:
-   `$P send <reviewer-id> "Retries for {W}: review wave {W}r the same way (land/hold/drop only). End with REVIEW-OK."`
+   `/Applications/Paseo.app/Contents/Resources/bin/paseo send <reviewer-id> "Retries for {W}: review wave {W}r the same way (land/hold/drop only). End with REVIEW-OK."`
 3. Run `wave check-review {W}r`, then `wave decide {W}r`.
 4. Run `cat /tmp/xb/orch/{W}r.multi >> /tmp/xb/orch/{W}.multi`.
 
@@ -152,7 +154,7 @@ and the step 8 report, for the human.
 ```
 If it prints no `PROMOTE` lines, skip this step. Otherwise, make at most one curator run per wave:
 ```bash
-$P run --provider claude --model claude-opus-5-5 --thinking high --mode auto \
+/Applications/Paseo.app/Contents/Resources/bin/paseo run --provider claude --model claude-opus-5-5 --thinking high --mode auto \
   --workspace wks_5ac8e57131b986e1 --title "{W} rule curator" --wait-timeout 45m \
   "Use the xb-rule-curator skill (.agents/skills/xb-rule-curator/SKILL.md). Slugs: <the PROMOTE slugs>." \
   > /tmp/xb/orch/{W}_curator.out 2>&1

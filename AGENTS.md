@@ -35,7 +35,8 @@ The goal is to match the original source shape! No cheating, temporary hacks, or
 
 - **NEVER USE GIT** — do not run `git` (status, diff, add, commit, push, checkout, stash, rebase,
   reset, clean, or any other subcommand). Leave all version control to the human; agents only edit
-  working-tree files.
+  working-tree files. **Sole exception:** an agent running the `xb-orchestrator` skill may run the
+  exact git commands in that skill's checkpoint step, and nothing else.
 - Submit LLM-assisted matching upstream; commit `orig/`, `main.dol`, RELs, or disc assets; or decompile to asm/registers outside the §17.6 PS backend.
 - Run Dolphin inside the restricted process — its universal binary reports missing NEON, so launch it outside the restricted process.
 - Call `objcopy` with a single file operand — GNU objcopy treats a missing output as in-place
@@ -47,11 +48,17 @@ The goal is to match the original source shape! No cheating, temporary hacks, or
   Use `/tmp`, a gitignored scratch dir, or delete when done. Leave the root layout unchanged unless
   the task explicitly requires a root-level project file.
 
-## Subagents (paseo)
+## Subagents (paseo) and roles
 
-**Read `.agents/skills/paseo-subagents/SKILL.md` before launching or steering subagents** — paseo
-launch/interaction workflow plus the approved provider/model (`pi` +
-`opencode-go/muse-spark-1.3-contributor`) and thinking tiers.
+- Launch/steer mechanics: `.agents/skills/paseo-subagents/SKILL.md`.
+- Models: pi `opencode-go/hy4-flash-free` (default worker), pi `opencode-go/deepseek-v4.1-flash` (harder
+  workers + the cheap orchestrator; max 3 concurrent), claude `claude-opus-5-5` (wave planner/reviewer only).
+  Never Codex.
+- Wave roles each have a skill — load the one your launch message names, nothing else:
+  `xb-orchestrator` (plumbing), `xb-wave-planner`, `xb-wave-reviewer`. Matching workers need none: their
+  pack (`/tmp/xb/packs/<task>.md`) is the whole brief. Flow: `docs/orchestrator_deepseek.md`.
+- If your context is compacted mid-task, re-read your role skill (and any state file it names) before
+  continuing; do not work from a summary of the rules.
 
 ## More commands
 

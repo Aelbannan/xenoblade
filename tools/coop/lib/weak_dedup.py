@@ -874,6 +874,7 @@ def linked_view_for(decomp_object: Path, unit_ranges, symbol_addrs: dict[str, in
 
     out = _VIEW_DIR / f"{decomp_object.stem}.{digest}.o"
     if not out.is_file():
+        out.parent.mkdir(parents=True, exist_ok=True)  # $TMPDIR is cleaned by the OS
         tmp = out.with_suffix(f".{os.getpid()}.tmp")
         tmp.write_bytes(rewrite(elf, excl, weak))
         tmp.replace(out)

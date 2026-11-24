@@ -186,7 +186,12 @@ def prep(wave: str) -> list[dict]:
             shutil.copyfile(ROOT / f, dst)
         res = d / f"{task}.result"
         res.unlink(missing_ok=True)
-        (d / f"{task}.prompt").write_text(PROMPT.format(root=ROOT, pack=pk, task=task, result=res))
+        prompt = PROMPT.format(root=ROOT, pack=pk, task=task, result=res)
+        hint = d / "hints" / f"{task}.md"  # optional planner note (wave plan step)
+        if hint.is_file():
+            prompt += "\nPlanner note for this task (advice, not a licence to break the brief's rules):\n" \
+                      + hint.read_text().strip() + "\n"
+        (d / f"{task}.prompt").write_text(prompt)
         rows.append({**t, "prompt": str(d / f"{task}.prompt"), "model_id": MODELS.get(t["model"], t["model"])})
     return rows
 

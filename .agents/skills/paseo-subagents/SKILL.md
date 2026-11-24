@@ -16,7 +16,7 @@ https://paseo.sh/docs/orchestration.md.
 
 ## Required runtime
 
-- **Provider `pi`**, **model `opencode-go/muse-spark-1.3-contributor`** (OpenCode Go).
+- **Provider `pi`**, **model `opencode-go/hy4-flash-free`** (OpenCode Go).
 - **Thinking level = lowest that fits**: `medium` routine, `high` multi-file, `xhigh`
   hard/uncertain. Levels: `minimal|low|medium|high|xhigh`; never `off`.
 - Pass model/thinking explicitly — other paseo providers/models are not approved.
@@ -30,7 +30,7 @@ https://paseo.sh/docs/orchestration.md.
 ## Launch
 
 - Ad-hoc: `paseo_create_agent` with `title`, `provider: "pi"`,
-  `model: "opencode-go/muse-spark-1.3-contributor"`, `settings: { thinkingOptionId: "<level>" }`,
+  `model: "opencode-go/hy4-flash-free"`, `settings: { thinkingOptionId: "<level>" }`,
   `workspaceId: <your workspace id>` (same workspace — see above), and a **self-contained**
   `initialPrompt` — subagents do not inherit `AGENTS.md`/context, so include: repo path, exact
   target/unit/symbols, acceptance policy (§Never rules, no git, no size hacks, FULL_MATCH), and the

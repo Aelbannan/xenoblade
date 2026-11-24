@@ -68,9 +68,12 @@ XB_LAND_OWNER=1 .venv/bin/python3 -m tools.coop.land apply /tmp/xb/orch/batchN.m
 
 - Only the orchestrator runs `check` / `apply` (`XB_LAND_OWNER=1`), and only on a quiet tree
   (`ledger.unledgered()` empty except the queued plans); the runner aborts otherwise.
-- Checkpoint = `/tmp/xb/orch/cpNN.sh` checks (report, link/extab/text-order gates, registry, faithful
-  ratchet, tests), a commit (the pre-commit hook verifies every staged gated file against the
+- Checkpoint = `.venv/bin/python3 -m tools.coop.land.checkpoint` (build, report compare vs
+  `build/us/checkpoints/report_last.json`, link/extab/text-order gates, registry, faithful ratchet, tests;
+  `--accept` after the commit), a commit (the pre-commit hook verifies every staged gated file against the
   ledger), `git push origin <branch>`, then `git fetch . <branch>:main && git push origin main`.
   Push only to origin (Aelbannan/xenoblade); never upstream; never force-push. Agents never use git.
-- Record follow-ups in `/tmp/xb/orch/followups.txt` and user questions in
-  `/tmp/xb/orch/milestone_questions.txt`; report at milestones, not per agent.
+- Record follow-ups and user questions in `docs/orchestrator_followups.md` (tracked; /tmp/xb is
+  wiped on reboot); report at milestones, not per agent.
+- Cheap-orchestrator mode (DeepSeek drives, Opus plans + batch-reviews): `docs/orchestrator_deepseek.md`;
+  role skills `xb-orchestrator`, `xb-wave-planner`, `xb-wave-reviewer` in `.agents/skills/`.

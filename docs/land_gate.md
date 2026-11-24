@@ -81,3 +81,6 @@ agent wave: register-allocation-only residuals are never selected, `collect` res
 writes patches and auto-holds anything that raises a counter. Mechanical fix candidates come from
 `tools/coop/census_fixes.py {splits,sigs}` and `tools/coop/census_unit_rules.py`. The orchestrator
 workflow is in `CLAUDE.md`.
+The cheap-orchestrator steps (`wave launch|manage|check-plan|check-review|decide`,
+`tools/coop/land/wave_ops.py`) exit non-zero with `ERROR:` lines so a DeepSeek orchestrator only
+follows exit codes; see `docs/orchestrator_deepseek.md`.

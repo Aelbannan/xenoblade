@@ -41,7 +41,8 @@ of these rules; the SKILL.md is the source of truth.
   - `ds` = `opencode-go/deepseek-v4.1-flash`. You also run on DeepSeek, and it returns 429 beyond 3
     concurrent, so run **at most 2 ds workers at once**.
 - Opus: `--provider claude --model claude-opus-5-5 --mode auto`. **Exactly two Opus runs per
-  wave** (plan, review), plus at most one follow-up `send` to the reviewer for retries.
+  wave** (plan, review). The only extra Opus messages allowed: one correction `send` each when
+  check-plan / check-review fails, and one retry-review `send`.
 - Wave files: `/tmp/xb/waves/{W}/`. Patches: `/tmp/xb/plans/`. Logs and state: `/tmp/xb/orch/`.
   `mkdir -p` them first.
 
@@ -61,7 +62,7 @@ Write the reason to `/tmp/xb/orch/{W}.STOP`, reply with it, and end, if:
 - `wave collect` prints a `STRAY` row;
 - the gate's `apply` reports an abort, or "tree not quiet";
 - the checkpoint prints `CHECKPOINT FAILED`;
-- Opus did not write the file it was asked for, or did not end with its OK line.
+- `check-plan` / `check-review` still fails after one correction round.
 
 ## 1. Select
 ```bash
@@ -76,34 +77,31 @@ $P run --provider claude --model claude-opus-5-5 --thinking medium --mode auto \
   --workspace wks_5ac8e57131b986e1 --title "{W} plan" --wait-timeout 45m \
   "Use the xb-wave-planner skill (.agents/skills/xb-wave-planner/SKILL.md). Wave: {W}." \
   > /tmp/xb/orch/{W}_plan.out 2>&1
+.venv/bin/python3 -m tools.coop.land wave check-plan {W}
 ```
-Checks:
-- `tail -3` of the output contains `PLAN-OK`;
-- `targets.tsv` has 8 tab-separated columns on every row and 10–24 rows.
+Save the planner's agent id (from `$P ls`) in the state file. `check-plan` must print `OK` and the plan output must contain `PLAN-OK`. If check-plan fails, send
+its ERROR lines once to the planner (`$P send <planner-id> "check-plan failed: … Fix the files and
+end with PLAN-OK."`), then re-run check-plan. If it fails a second time, stop and report.
 
 ## 3. Prep and launch workers
 ```bash
-.venv/bin/python3 -m tools.coop.land wave prep {W}     # table: task, model, model_id, prompt path
+.venv/bin/python3 -m tools.coop.land wave prep {W}
+.venv/bin/python3 -m tools.coop.land wave launch {W}
 ```
-Launch one worker per row. Start every hy4 row at once. Start ds rows 2 at a time, and start the
-next when one of them has written its `.result` file. Record each agent id in the state file.
-```bash
-$P run --no-wait --provider pi --model <model_id> --thinking high --workspace wks_5ac8e57131b986e1 \
-  --title "{W}-NN <symbol, cut to fit 60 chars>" --label wave={W} "$(cat /tmp/xb/waves/{W}/<task>.prompt)"
-```
+`launch` is idempotent. It starts every hy4 task and up to 2 ds tasks, and records agent ids in
+`/tmp/xb/waves/{W}/agents.json`. Never launch workers by hand.
 
-## 4. Wait (and handle permissions)
-Repeat until the command reports a result for every task:
+## 4. Manage until done
 ```bash
-.venv/bin/python3 -m tools.coop.land wave wait {W} --timeout 1200
+.venv/bin/python3 -m tools.coop.land wave manage {W} --timeout 1200
 ```
-Between calls, run `$P permit ls`:
-- **Allow** requests whose paths are all inside /Users/ahmed/projects/xenoblade or /tmp/xb.
-- **Deny** everything else, any malformed path, and any request to run git.
-- Command: `$P permit allow|deny <agent> <req_id>`.
-
-If a task still has no result after 2 hours, `$P stop` its agent and write
-`BLOCKED <task>: timeout` into its `.result` file yourself.
+`manage` starts the next ds task as slots free up and answers our workers' permission requests: it
+allows requests inside the repo or /tmp/xb, denies git, the land gate, `rm -rf`, `.ctx.c` and
+anything outside, and logs each answer to `permissions.log`. It also stops any task that has run
+for more than 2 hours and marks it `BLOCKED timeout`. Exit codes:
+- `0` (`ALL DONE`): go to step 5;
+- `3` (`PENDING …`): run it again;
+- anything else: stop and report.
 
 ## 5. Collect and batch review (Opus, one blocking run)
 ```bash
@@ -112,34 +110,30 @@ $P run --provider claude --model claude-opus-5-5 --thinking high --mode auto \
   --workspace wks_5ac8e57131b986e1 --title "{W} review" --wait-timeout 60m \
   "Use the xb-wave-reviewer skill (.agents/skills/xb-wave-reviewer/SKILL.md). Wave: {W}." \
   > /tmp/xb/orch/{W}_review.out 2>&1
+.venv/bin/python3 -m tools.coop.land wave check-review {W}
 ```
-Checks:
-- the output ends with `REVIEW-OK`;
-- `review.tsv` has one well-formed row per task in `targets.tsv`.
+Save the reviewer's agent id (from `$P ls`) in the state file. If check-review fails, send the
+ERROR lines to the reviewer once, as in step 2; stop if it fails again.
 
-Save the reviewer's agent id (from `$P ls`) in the state file.
-
-## 6. Record, retry once, land
-For every review row:
+## 6. Decide, retry once, land
 ```bash
-.venv/bin/python3 -m tools.coop.land wave record {W} <task> <land|hold|drop> "<reason>"
+.venv/bin/python3 -m tools.coop.land wave decide {W}
 ```
-Record `retry-ds` rows as `hold`.
+`decide` records every decision, moves non-landing patches to `plans/held/`, writes
+`/tmp/xb/orch/{W}.multi`, and, if there were `retry-ds` rows, prepares the retry wave `{W}r`.
 
-**Retries (only if there are `retry-ds` rows):**
-1. Copy those rows from `targets.tsv` into `/tmp/xb/waves/{W}r/targets.tsv`, with column 2 set to `ds`.
-2. Copy their hint files into `/tmp/xb/waves/{W}r/hints/`.
-3. Run steps 3–4 for wave `{W}r`, then `wave collect {W}r`.
-4. Send the reviewer this message:
-   `$P send <reviewer-id> "Retries for {W}: review wave {W}r the same way. Write /tmp/xb/waves/{W}r/review.tsv (land/hold/drop only). End with REVIEW-OK."`
-5. Record those decisions under `{W}r`.
+**If it printed `retry wave: {W}r`:**
+1. Run `wave prep {W}r`, `wave launch {W}r` and `wave manage {W}r` (as in steps 3–4), then
+   `wave collect {W}r > /tmp/xb/orch/{W}r_collect.txt`.
+2. Send the reviewer this message:
+   `$P send <reviewer-id> "Retries for {W}: review wave {W}r the same way (land/hold/drop only). End with REVIEW-OK."`
+3. Run `wave check-review {W}r`, then `wave decide {W}r`.
+4. Run `cat /tmp/xb/orch/{W}r.multi >> /tmp/xb/orch/{W}.multi`.
 
 There are no further retries.
 
-**Land:**
+**Land** (skip this if `{W}.multi` is empty):
 ```bash
-.venv/bin/python3 -m tools.coop.land wave queue {W} <land tasks…> --out /tmp/xb/orch/{W}.multi
-# landed {W}r tasks: wave queue {W}r <tasks…> --out /tmp/xb/orch/{W}r.multi; cat it >> /tmp/xb/orch/{W}.multi
 XB_LAND_OWNER=1 .venv/bin/python3 -m tools.coop.land apply /tmp/xb/orch/{W}.multi --log /tmp/xb/orch/{W}.log
 ```
 The gate reverts the plans it rejects. That is a normal outcome, not a reason to stop. Note how many

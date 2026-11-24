@@ -52,4 +52,5 @@ residuals, functions over 0x400 bytes and functions already tried at this source
      evidence.
    - Copy any that are real debt into `followups.md`.
 
-End your reply with the line `PLAN-OK`. Keep the reply itself short; the files are the output.
+Validate with `.venv/bin/python3 -m tools.coop.land wave check-plan W` (it must print OK), then end
+your reply with the line `PLAN-OK`. Keep the reply itself short; the files are the output.

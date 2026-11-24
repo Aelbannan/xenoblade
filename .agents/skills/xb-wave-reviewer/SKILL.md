@@ -44,10 +44,11 @@ The goal is the original source shape. No compiler steering. SDK and middleware 
 
 ## Output
 Write `/tmp/xb/waves/W/review.tsv`: one line per task in `targets.tsv`, as
-`TASK<TAB>DECISION<TAB>REASON`, where DECISION is one of:
+`TASK<TAB>DECISION<TAB>REASON`, where DECISION is one of the following. Validate it yourself with
+`.venv/bin/python3 -m tools.coop.land wave check-review W` before you finish.
 
 - `land`
-- `hold`: bad shape. Move the patch to `/tmp/xb/plans/held/`.
+- `hold`: bad shape. The orchestrator moves the patch to `/tmp/xb/plans/held/`.
 - `drop`: no useful change.
 - `retry-ds`: BLOCKED or PARTIAL for a reason other than register allocation, and you can see a way
   forward. Put at most 6 lines of advice in `/tmp/xb/waves/W/hints/<task>.md`. Only in the first

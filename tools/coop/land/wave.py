@@ -154,7 +154,9 @@ def select(wave: str, n: int = 20, lo: float = 80.0, hi: float = 99.99, max_size
     d = WAVES / wave
     d.mkdir(parents=True, exist_ok=True)
     cols = ("task", "model", "unit", "symbol", "pct", "structural", "size", "src")
-    (d / "targets.tsv").write_text("".join("\t".join(str(p[k]) for k in cols) + "\n" for p in picked))
+    body = "".join("\t".join(str(p[k]) for k in cols) + "\n" for p in picked)
+    (d / "targets.tsv").write_text(body)
+    (d / "targets.sel.tsv").write_text(body)  # untouched selection: check-plan compares against it
     return picked
 
 
@@ -336,7 +338,11 @@ def main(argv: list[str]) -> int:
     s = sub.add_parser("record"); s.add_argument("wave"); s.add_argument("task")
     s.add_argument("decision", choices=("land", "hold", "drop")); s.add_argument("note", nargs="?", default="")
     s = sub.add_parser("queue"); s.add_argument("wave"); s.add_argument("tasks", nargs="+"); s.add_argument("--out", required=True)
+    from tools.coop.land import wave_ops
+    wave_ops.add_parsers(sub)
     a = ap.parse_args(argv)
+    if a.cmd in wave_ops.COMMANDS:
+        return wave_ops.run(a)
     if a.cmd == "census":
         c = census(a.jobs)
         n = sum(len(v) for v in c["units"].values())

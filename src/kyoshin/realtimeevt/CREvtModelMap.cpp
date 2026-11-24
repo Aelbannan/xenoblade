@@ -73,7 +73,6 @@ struct CScnEnvLgtCtrlResList;  // env-controller list owner (CScn::mLgtCtrl)
 
 extern "C" {
 void Tok_FormatStr(ml::FixStr<64>& buf, u32 packed, int prefixFlag, int suffixFlag);
-u32 EvtSeqGetCounter100();
 u32 EvtSeqGetStateBit5();
 u32 REvtCam_IsField98Set();
 s32 REvtCam_IsMode2B0Eq1();

@@ -2,6 +2,7 @@
 
 #include <types.h>
 #include "kyoshin/realtimeevt/CREvtObj.hpp"
+#include "kyoshin/cf/EvtSeqApi.hpp"
 #include "monolib/core/CSchedule.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 
@@ -125,7 +126,6 @@ struct ChrAnmResult;
 // Bdat / data loading
 extern "C" u32 EvtSeqResolveListEntryAddr(int idx);
 extern "C" void* EvtSeqFindEventByNameData(void* ptr);
-extern "C" u32 EvtSeqGetCounter100();
 extern "C" u32 EvtSeqIsSlotIndexFour();
 extern "C" unsigned char REvtCam_GetFieldA5Flag();
 extern "C" int EvtSeqResolveAnmChr(u8* data, const char* name, s32* out);

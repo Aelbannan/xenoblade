@@ -140,14 +140,14 @@ void cf::CREvtEffect::refreshChrAnim() {
     resultAtr->GetRotateDeg((nw4r::math::VEC3*)mAnm1Rotate);
     resultAtr->GetScale((nw4r::math::VEC3*)mAnm1Scale);
 
-    // Normalize the alpha in mAnm1Scale.z: keep the integer part and drop the
-    // fractional part once it falls below the epsilon threshold.
+    // Normalize the alpha in mAnm1Scale.z: keep the integer part and add one
+    // when the fractional part is above the 0.9 threshold.
     f32 alpha = mAnm1Scale[2];
-    if (alpha > 1.0f) {
+    if (alpha > 0.0f) {
         int intPart = (int)alpha;
         f32 fracPart = alpha - (f32)intPart;
         if (fracPart > 0.9f) {
-            fracPart = 0.9f;
+            fracPart = 1.0f;
         }
         mAnm1Scale[2] = (f32)(int)mAnm1Scale[2] + fracPart;
     }

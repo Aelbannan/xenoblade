@@ -19,6 +19,7 @@
 
 #include <types.h>
 #include "kyoshin/realtimeevt/CREvtObj.hpp"
+#include "kyoshin/cf/EvtSeqApi.hpp"
 
 // Script data structure referenced by CREvtMovie::mScriptData.
 // Layout: [0x08] = event counter, [0x0C] = SFD script name (no extension).
@@ -71,7 +72,7 @@ void evtStartMoviePlayback(const char* path, int flag, void* handle);
 // Counter/timing functions.
 // EvtSeqGetWalkIndex is an unsigned tick counter; 8016A378/8016A35C return
 // signed timestamps (compared with a signed `cmpi` in retail).
-int EvtSeqGetCounter100(void);
+// EvtSeqGetCounter100 is declared in kyoshin/cf/EvtSeqApi.hpp.
 
 // Memory availability probe (CLibCri member, defined in the CLibCri TU).
 void* getMovieWorkSize__7CLibCriFv(void);

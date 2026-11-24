@@ -99,6 +99,18 @@ class ReviewDecideTests(_Env):
         decisions = [json.loads(l)["decision"] for l in wave.HISTORY.read_text().splitlines()]
         self.assertEqual(decisions, ["land", "hold", "hold", "drop"])
 
+    def test_decide_flags_reviewer_edited_patch(self):
+        import hashlib
+        (self.d / "patch_shas.json").write_text(json.dumps(
+            {f"W9-{i:02d}": hashlib.sha1(b"--- a\n").hexdigest() for i in range(4)}))
+        (wave.PLANS / "W9-00.patch").write_text("--- a\n(one hunk stripped)\n")
+        (self.d / "review.tsv").write_text("W9-00\tland\tok\nW9-01\tland\tok\nW9-02\tdrop\tx\nW9-03\tdrop\tx\n")
+        r = wave_ops.decide("W9")
+        self.assertEqual(r["edited"], ["W9-00"])
+        self.assertEqual(r["symbols"]["W9-01"], "fn1__Fv")
+        notes = [json.loads(l).get("note") for l in wave.HISTORY.read_text().splitlines()]
+        self.assertEqual(notes[0], "ok (patch edited by reviewer)")
+
     def test_retry_wave_may_not_retry(self):
         (wave.WAVES / "W9r").mkdir()
         (wave.WAVES / "W9r" / "targets.tsv").write_text("\t".join(_row(0, "ds")) + "\n")

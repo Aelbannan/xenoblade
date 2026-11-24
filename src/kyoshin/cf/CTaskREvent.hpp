@@ -1,5 +1,6 @@
 #pragma once
 #include "kyoshin/cf/CtrlRemoteApi.hpp"
+#include "kyoshin/cf/EvtSeqApi.hpp"
 
 class CScnItemCamera;
 
@@ -356,7 +357,6 @@ extern "C" {
     REvtActor* getCfObjectPc__FPQ22cf12CfObjectMove(REvtActor* obj);
     REvtActor* getEffOwner____FPv(REvtActor* obj);
     // Imports for cf::CTaskREvent::Move
-    u32 EvtSeqGetCounter100();
     int CTaskGame_isStreamPaused();
     void Scn_SetStopFlag(u8* self, u32 flag);
     void func_80086B5C__Q22cf13CfGameManagerFv(u32 a, u32 b);

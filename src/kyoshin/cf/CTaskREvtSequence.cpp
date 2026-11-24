@@ -1795,7 +1795,7 @@ extern "C" void* EvtSeqFindEventByNameData(void* nameData) {
 
 int cf::CREvtModel::vfunc_0C() { return (int)mModel; }
 
-u32 EvtSeqGetCounter100() {
+int EvtSeqGetCounter100() {
     UnkState_80664268* p = spEvtSeqState;
     if (p == 0) {
         return 0;

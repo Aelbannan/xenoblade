@@ -293,6 +293,9 @@ def collect(wave: str) -> list[dict]:
         with HISTORY.open("a") as h:
             h.write(json.dumps({"wave": wave, "task": task, "unit": t["unit"], "symbol": t["symbol"],
                                 "result": result, "verdict": verdict, "src_sha": _file_sha(t["src"])}) + "\n")
+    shas = {r["task"]: hashlib.sha1(p.read_bytes()).hexdigest()
+            for r in rows for p in (PLANS / f"{r['task']}.patch", PLANS / "held" / f"{r['task']}.patch") if p.is_file()}
+    (d / "patch_shas.json").write_text(json.dumps(shas, indent=1))  # decide reports reviewer edits
     stray = [f for f in ledger.unledgered() if f not in owned_all]
     cols = ("task", "model", "verdict", "lines", "result", "flags")
     (d / "summary.tsv").write_text("".join("\t".join(str(r[k]) for k in cols) + "\n" for r in rows))

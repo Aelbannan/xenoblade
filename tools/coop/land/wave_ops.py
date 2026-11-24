@@ -13,6 +13,7 @@ Exit codes: 0 ok; 1 validation errors; 3 ``manage`` timed out with tasks still p
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import re
 import shutil
@@ -273,7 +274,14 @@ def decide(w: str) -> dict:
         if f.stem not in reg:
             reg[f.stem] = {**shapes.read_new_shape(f), "added": w}
     shapes.save_registry(reg)
+    shas_f = d / "patch_shas.json"
+    shas = json.loads(shas_f.read_text()) if shas_f.is_file() else {}
+    edited = []
     for task, dec, reason, *_ in rows:
+        cur = next((p for p in (wave.PLANS / f"{task}.patch", wave.PLANS / "held" / f"{task}.patch") if p.is_file()), None)
+        if cur and task in shas and hashlib.sha1(cur.read_bytes()).hexdigest() != shas[task]:
+            edited.append(task)
+            reason += " (patch edited by reviewer)"
         counts[dec] += 1
         if dec in ("land", "hold"):
             shapes.archive("landed" if dec == "land" else "held", w, task, d / task)
@@ -293,7 +301,8 @@ def decide(w: str) -> dict:
         wave.queue(w, lands, str(multi))
     else:
         multi.write_text("")
-    out = {"counts": counts, "multi": str(multi), "lands": lands, "retry_wave": None}
+    out = {"counts": counts, "multi": str(multi), "lands": lands, "retry_wave": None, "edited": edited,
+           "symbols": {t: targets[t]["symbol"] for t in targets}}
     if retries:
         rw = f"{w}r"
         rd = _wd(rw)
@@ -378,6 +387,11 @@ def run(a) -> int:
         c = r["counts"]
         print(f"decide {a.wave}: land {c['land']} hold {c['hold']} drop {c['drop']} retry-ds {c['retry-ds']}")
         print(f"queue: {r['multi']} ({len(r['lands'])} plans)")
+        for t in r["lands"]:
+            print(f"land\t{t}\t{r['symbols'][t]}" + ("\t(patch edited by reviewer)" if t in r["edited"] else ""))
+        for t in r["edited"]:
+            if t not in r["lands"]:
+                print(f"edited\t{t}\t{r['symbols'][t]}\t(patch edited by reviewer, not landing)")
         if r["retry_wave"]:
             print(f"retry wave: {r['retry_wave']} (run prep / launch / manage / collect on it)")
         return 0

@@ -17,3 +17,7 @@ u32 EvtSeqGetStateBit19();
 int EvtSeqCheckWalkGate(u8* gate);
 void EvtSeqDtorThunk54(void* self);
 void EvtSeqRenderThunk58(void* self);
+
+// Unlike the functions above, this one has C linkage in retail (unmangled symbol
+// EvtSeqGetCounter100). Retail callers compare its result signed (cmpw), so it returns int.
+extern "C" int EvtSeqGetCounter100();

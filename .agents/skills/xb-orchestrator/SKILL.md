@@ -185,7 +185,8 @@ If the commit hook refuses a file, stop and report. Never unstage files to get p
 ## 8. Report and end
 Reply in at most 8 lines:
 - the checkpoint line;
-- landed / held / dropped / rejected counts;
+- landed / held / dropped / rejected counts, naming each landed task with the symbol from the
+  `wave decide` output (never from memory), and flagging any `(patch edited by reviewer)`;
 - the commit hash;
 - the path of plan.md;
 - any new lines in followups.md;

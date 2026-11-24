@@ -25,6 +25,4 @@ Reviewers append here; the orchestrator never edits source for these.
 ## Questions for the human (milestone)
 - bdat column first-byte read idiom: which spelling is the original?
 - nw4r g3d assert-inline layout: what evidence is needed to restore the original layout?
-- (W2 orchestrator) W2-19 (CREvtEffect refreshChrAnim, 100% in-unit) was gate-rejected: "full build failed" because its `extern "C" int EvtSeqGetCounter100()` in CREvtEffect.hpp conflicts with the u32 declarations above. Canonicalise the declaration first (one header, one type, verified against retail callers), then re-land the patch (/tmp/xb/plans/W2-19.patch).
-- (W2 test) `addr_extern` excludes every `lbl_` name, so `lbl_eu_8066AAA8`-style region-tagged labels used as float-pool externs (W2-14, W2-20) passed the auto-screen; only the reviewer caught them. Consider a counter for `lbl_(eu|jp)_<addr>` used as a fresh extern in a us TU.
-- (W2 test) Reviewer edits to a patch (W2-29 hunk strip) are invisible in summary.tsv; consider `wave decide` noting patches whose sha changed after collect.
+- RESOLVED (W2 follow-up batch): EvtSeqGetCounter100 is declared once in EvtSeqApi.hpp as `extern "C" int`, and W2-19 re-landed with it. Original note: W2-19 (CREvtEffect refreshChrAnim, 100% in-unit) was gate-rejected: "full build failed" because its `extern "C" int EvtSeqGetCounter100()` in CREvtEffect.hpp conflicts with the u32 declarations above. Canonicalise the declaration first (one header, one type, verified against retail callers), then re-land the patch (/tmp/xb/plans/W2-19.patch).

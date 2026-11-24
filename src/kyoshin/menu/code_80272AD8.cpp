@@ -335,17 +335,13 @@ void PlayAward_MoveCursorUp(CPlayAwardList* self) {
 // 9-entry page / 8-entry remainder pages. Refresh the list + scroll bar.
 void PlayAward_MoveCursorDown(CPlayAwardList* self) {
     u8 count = self->mEntryArray.field_1008[self->mEntryArray.mPageIndex];
-    s16 off;
-    int delta;
     if (count >= 9) {
         s16 cur = self->field_0x8C + 1;
         self->field_0x8C = cur;
         if (cur >= 9) {
             self->field_0x8C = 8;
-            delta = count - 9;
-            off = (s16)(self->field_0x8E + 1);
-            self->field_0x8E = off;
-            if (off > delta) {
+            s16 off = ++self->field_0x8E;
+            if (off > count - 9) {
                 self->field_0x8C = 0;
                 self->field_0x8E = 0;
             }

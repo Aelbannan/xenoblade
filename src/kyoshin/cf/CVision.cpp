@@ -1122,8 +1122,10 @@ extern "C" void manageVisionPlayerCallbacks(CVision* self) {
 
 
 extern "C" void openVisionForPairs(CVision* self) {
-    CVisionFusion* p2 = 0;
+    u32 dlt, obj, pfn;
+    u32* src;
     CVisionFusion* p1 = 0;
+    CVisionFusion* p2 = 0;
     CVisionSub* sub;
     if (self->sub.field_00 == 0) {
         sub = 0;
@@ -1211,15 +1213,15 @@ extern "C" void openVisionForPairs(CVision* self) {
         CCharVoiceMan_ReleaseVoices(1);
         CVisionPtmf cb;
         // Retail walks the triplet with an updating load (lwzu).
-        u32* src = &visionCallbackResumeFromFaderAlt[0];
-        u32 pfn = *src++;
-        u32 obj = *src++;
-        u32 dlt = *src;
+        src = &visionCallbackResumeFromFaderAlt[0];
+        pfn = *src++;
+        obj = *src++;
+        dlt = *src;
         cb.mPfn = pfn;
         cb.mObj = obj;
         cb.mDelta = dlt;
         f32 f_6194 = self->field_26194;
-        f32 f_cd4 = lbl_eu_80667CD4;
+        f32 f_cd4 = 0.0f;
         self->mPtmf.mPfn = pfn;
         self->mPtmf.mObj = obj;
         // Third word is re-read from the stack copy in retail.

@@ -219,22 +219,20 @@ void ScheduleList::sweepMatched(u8* x) {
 // ---------------------------------------------------------------------------
 // SchedList_AddItem: allocate a CSchedule, initialize it with the six forwarded
 // arguments, and push it onto the ring's first free slot.
+//
+// The tail is reslist<CSchedule*>::push_back inlined in place: the sentinel is
+// captured before the free-slot scan, then setItem's try/catch guarded store
+// (which carries the exception-frame sp-save) and the splice onto the sentinel.
 // ---------------------------------------------------------------------------
 CSchedule* ScheduleList::add(ScheduleEntry* entries, u8* p8, u8* pc,
                              u32 fa, u32 fb, u8* p10) {
-    SLNode* sentinel;
-    SLNode* temp;
-    u32 capacity;
-    u32 i;
     CSchedule* p;
-    CSchedule* tmp;
 
     if (mtl::MemManager::getMaxAllocSize(slAllocHandle()) >= 0xf0) {
-        tmp = new (slAllocHandle()) CSchedule;
+        p = new (slAllocHandle()) CSchedule;
     } else {
-        tmp = 0;
+        p = 0;
     }
-    p = tmp;
     if (p == 0) {
         return 0;
     }
@@ -244,32 +242,15 @@ CSchedule* ScheduleList::add(ScheduleEntry* entries, u8* p8, u8* pc,
         }
         return 0;
     }
-    sentinel = mRes.mStartNodePtr;
-    i = 0;
-    capacity = mRes.mCapacity;
-    while (i < capacity) {
-        if (mRes.mList[i].mNext == 0) {
-            break;
-        }
-        i++;
-    }
-    temp = &mRes.mList[i];
-    // reslist setItem: the original wraps the store in try/catch(...){throw;}
-    // - under -Cpp_exceptions on each inlined instance carries null-guards
-    // plus an exception-frame sp-save.
-    if (temp != 0) {
-        if (temp != 0) {
-            try {
-                temp->mItem = p;
-            } catch (...) {
-                throw;
-            }
-        }
-    }
-    temp->mNext = sentinel;
-    temp->mPrev = sentinel->mPrev;
-    sentinel->mPrev->mNext = temp;
-    sentinel->mPrev = temp;
+
+    SLNode* startNode = mRes.mStartNodePtr;
+    int i = mRes.findFirstEmptySlotIndex();
+    SLNode* temp = &mRes.mList[i];
+    temp->setItem(p);
+    temp->mNext = startNode;
+    temp->mPrev = startNode->mPrev;
+    startNode->mPrev->mNext = temp;
+    startNode->mPrev = temp;
     return p;
 }
 

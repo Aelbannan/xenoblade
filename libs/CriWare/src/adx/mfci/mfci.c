@@ -244,12 +244,12 @@ static void mfciParseSizeTail(char** pp, unsigned long* outSize) {
 
 int mfCiReqRd(MfCiFile* sct, int size, void* buf) {
     MfCiGlobals* g = (MfCiGlobals*)&mfci_errfn;
+    int size2;
     char* p;
     int parsed;
     int n;
     int rdSize;
     int rdOff;
-    int size2;
     int avail;
     int n2;
 
@@ -291,9 +291,9 @@ int mfCiReqRd(MfCiFile* sct, int size, void* buf) {
         SVM_Unlock();
         return 0;
     }
-    sct->status = 2;
     sct->rdOff = rdOff;
     sct->rdSize = rdSize;
+    sct->status = 2;
     if (strlen(sct->name) >= 0x12) {
         CRICRW_Sprintf(g->errbuf, 0x12C, "E01100308:length of '%s' is over %d bytes.(mfci_get_adr_size)", sct->name, 0x12);
         if (g->errfn != NULL)
@@ -310,9 +310,9 @@ int mfCiReqRd(MfCiFile* sct, int size, void* buf) {
     if (sct->rdSize - n2 > 0)
         memset((u8*)buf + n2, 0, sct->rdSize - n2);
     SVM_Lock();
-    sct->status = 1;
-    sct->pos = sct->pos + sct->trSize;
     sct->numTr = sct->trSize * sct->sctsize;
+    sct->pos = sct->pos + sct->trSize;
+    sct->status = 1;
     SVM_Unlock();
     return sct->trSize;
 }

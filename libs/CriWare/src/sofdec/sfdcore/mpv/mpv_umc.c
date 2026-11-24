@@ -564,14 +564,16 @@ void MPVUMC_PpicSkipped(MpvHn* ctx, s32 n) {
     ctx->mbIndex = end - (n - 1);
     ctx->mbRow -= n - 1;
     while (ctx->mbRow < 0) {
-        ctx->mbColumn -= 1;
         ctx->mbRow += (s32)ctx->picAtr.field_0x08;
+        ctx->mbColumn -= 1;
     }
     s32 zero = 0;
     while (ctx->mbIndex < end) {
         s32 sizes[2];
-        sizes[0] = ctx->mbRow * 8 + ctx->mbColumn * 8 * ctx->refSub.stride;
-        sizes[1] = ctx->mbRow * 16 + ctx->mbColumn * 16 * ctx->refSub.chromaStride;
+        s32 x8 = ctx->mbColumn * 8;
+        s32 x16 = ctx->mbColumn * 16;
+        sizes[0] = ctx->mbRow * 8 + x8 * ctx->refSub.stride;
+        sizes[1] = ctx->mbRow * 16 + x16 * ctx->refSub.chromaStride;
         mpvumc_PpicSkipMb(sizes, &ctx->refSub, &ctx->outFrame);
         if (++ctx->mbRow >= (s32)ctx->picAtr.field_0x08) {
             ctx->mbRow = zero;

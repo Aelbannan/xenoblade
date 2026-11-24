@@ -15,9 +15,9 @@ CWorkThread** CWorkThreadSystem::sWorkThreads[2];
 // flat ctor below is a CWorkThread member, which CWorkThreadSystem befriends.
 
 // Read-write mirror of the private CMsgParam<8> tail (see CDevice.cpp): lets
-// wkSetEvent/wkCheckTimeout/wkStandby hand-expand the self enqueue, which
+// wkSetEventChild/wkCheckTimeout/wkStandby hand-expand the self enqueue, which
 // retail inlines at these sites only (the child sites stay out-of-line bl
-// enqueue calls).
+// enqueue calls). wkSetEvent reaches the same fields through mMsgQueue.mRing.
 struct CWorkThreadQueueLayout {
     u8 pad[0x80];                 //0x00..0x7F
     void* queueVtbl;              //0x80
@@ -254,57 +254,48 @@ done:
 }
 
 // Retail unrolls three descendant generations of this walk inline and leaves
-// the fourth to the recursive call.
+// the fourth to the recursive call.  The walk state is declared with the child
+// pointers first: that ordering is what gives retail's colouring of the seven
+// loop values (r31/r26 for gen 1, r25/r27 gen 2, r24/r28 gen 3, r23 gen 4).
 void CWorkThread::wkSetEvent(EVT evt){
     if(evt == EVT_NONE){
         mFlags |= THREAD_FLAG_NO_EVENT;
     }else{
-        // Hand-expanded mMsgQueue.enqueue(evt) (retail inlines the self call).
+        // Hand-expanded mMsgQueue.enqueue(evt) (retail inlines the self call at
+        // this site only; the child sites below stay real bl calls).  The reads
+        // of the uninitialized `entry` are volatile in retail too: nine garbage
+        // loads off the frame, copied straight back into the ring slot.
         volatile CMsgParamEntry entry;
 
-        // Ring buffer index: (mFront + mSize) % mCapacity, entry stride 0x24.
-        CMsgParamEntry& target =
-            reinterpret_cast<CWorkThreadQueueLayout*>(this)->mArrayPtr
-                [(int)(reinterpret_cast<CWorkThreadQueueLayout*>(this)->mFront +
-                       reinterpret_cast<CWorkThreadQueueLayout*>(this)->mSize) %
-                 (int)reinterpret_cast<CWorkThreadQueueLayout*>(this)->mCapacity];
-
-        u32 value4 = entry.wid;
-        u32 value8 = entry.unk8;
-        u32 valueC = entry.unkC;
-        u32 value10 = entry.unk10;
-        u32 value14 = entry.unk14;
-        u32 value18 = entry.unk18;
-        u32 value1C = entry.unk1C;
-        u16 value20 = entry.unk20;
-        u8 value22 = entry.unk22;
+        // Ring buffer index: (mFront + mSize) % mCapacity, entry stride 0x24,
+        // signed modulo (retail emits divw).
+        CMsgParamEntry& target = mMsgQueue.mRing.mArrayPtr
+            [(int)(mMsgQueue.mRing.mFront + mMsgQueue.mRing.mSize) %
+             (int)mMsgQueue.mRing.mCapacity];
 
         target.command = evt;
-        target.wid = value4;
-        target.unk8 = value8;
-        target.unkC = valueC;
-        target.unk10 = value10;
-        target.unk14 = value14;
-        target.unk18 = value18;
-        target.unk1C = value1C;
-        target.unk20 = value20;
-        target.unk22 = value22;
+        target.wid = entry.wid;
+        target.unk8 = entry.unk8;
+        target.unkC = entry.unkC;
+        target.unk10 = entry.unk10;
+        target.unk14 = entry.unk14;
+        target.unk18 = entry.unk18;
+        target.unk1C = entry.unk1C;
+        target.unk20 = entry.unk20;
+        target.unk22 = entry.unk22;
         target.unk23 = 0;
 
-        reinterpret_cast<CWorkThreadQueueLayout*>(this)->mSize++;
-        reinterpret_cast<CWorkThreadQueueLayout*>(this)->field6 =
-            reinterpret_cast<CWorkThreadQueueLayout*>(this)->mSize - 1;
+        mMsgQueue.mRing.mSize++;
+        mMsgQueue.mRing.field6 = mMsgQueue.mRing.mSize - 1;
     }
 
-    // Walk state declared up front; MWCC colors these like retail's unrolled
-    // generations (node/item pointer pairs per generation).
+    CWorkThread* c1;
+    CWorkThread* c2;
+    CWorkThread* c3;
     _reslist_node<CWorkThread*>* n1;
     _reslist_node<CWorkThread*>* n2;
     _reslist_node<CWorkThread*>* n3;
     _reslist_node<CWorkThread*>* n4;
-    CWorkThread* c1;
-    CWorkThread* c2;
-    CWorkThread* c3;
 
     for(n1 = mChildren.mStartNodePtr->mNext;
         n1 != mChildren.mStartNodePtr; n1 = n1->mNext){

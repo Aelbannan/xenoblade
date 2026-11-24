@@ -2743,12 +2743,14 @@ s32 sfmpv_ReprocessShc(SfdHandle* self, SfdMpvSession* shc, s32* out) {
     *out = 0;
     v = (s32)self->see.avplay;
     hd = self->trn[2].hdr;
+    /* header slot: usable only when a decode session exists and the frame
+     * count is still 0 */
     if (v == 0) {
         p = NULL;
     } else if (hd->frmSeq > 0) {
-        p = &self->see.avplay->audHd;
-    } else {
         p = NULL;
+    } else {
+        p = &self->see.avplay->audHd;
     }
     if (p == NULL) {
         return 0;

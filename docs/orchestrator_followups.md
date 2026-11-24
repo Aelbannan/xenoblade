@@ -23,15 +23,24 @@ Reviewers append here; the orchestrator never edits source for these.
 - (W3 reviewer) CViewFrame `getFrame2ViewRect__10CViewFrameFR7CRect16PC10CViewFrame` is defined as an extern "C" free function with 3 args under a pre-mangled name (the mangle uses a global ::CRect16, not ml::CRect16). Decide the real declaration: a member with this=r3? CRect16 in the global namespace? Then fix symbols.txt or the class.
 - (W3r reviewer) scnLgtFillLightVec4 (W3-27, held twice): retail computes z, y, x and then stores x, y, z. That is the right-to-left argument order of an inlined constructor. Header design: give CScnEnvLgtCtrlLgtVec3f a real (x, y, z) constructor or operator*, or retype it to ml::CVec3 with evidence, then retry. Keep the `const CScnEnvLgtCtrlLgtParamEntry* ctl` part of the held patch: it is plausible and removes 2 structural diffs.
 
+- (W4 reviewer) MPSDEC_DecHdMpeg1 (W4-17, dropped): retail's high-word-first pair loads need pair-typed/reordered MPS_SYSHDR members in mps_types.h, which was outside the worker's file set. Header task: retype those members with evidence, then retry.
+- (W4 reviewer) ScheduleList::add (W4-20, landed): the tail is reslist::push_back copied inline. Check whether a plain `mRes.push_back(p)` also gives 100% (const T& might force `p` onto the stack). If it does, use the call.
+- (W4 reviewer) UnkClass_80466348.cpp: `u8ToF_a638`/`s32ToF_a628` (lines 120-121) are invented trivial cast inlines. W4-18 replaced them in setAmbColorWithAlpha2 with direct casts and reached 100%. Sweep the other call sites (lines ~641-677) the same way and drop the helpers if every function stays ✓.
+- (W4 reviewer) code_804A6C60 ColiInitFlatSegment (W4-24, held addr-extern): retail reaches SDA2 1.0f/0.0f at lbl_eu_8066AE3C/8066AE44 through sda21 relocs. Check .sdata2 ownership for this TU (split) so plain literals pool to those addresses.
+- (W4 reviewer) code_800B06A4.hpp:1894 `__ct__cf_CfHikariItemManager` alias is unused after W4-07 lands; delete it, together with the matching ctx.c line on regen.
+
 ## Tasks parked from earlier waves
 - NW4HBM-LINKLIST-INIT, CAMMAN-VIEWFALLOFF, OPEN-CFTFILE-FMTSTR.
 - CtrlPc: regain after the approved revert (faithful 17 -> 26).
 - code_804BC9EC.hpp label 1 -> 2.
 
 ## Questions for the human (milestone)
-- bdat column first-byte read idiom: which spelling is the original?
-- nw4r g3d assert-inline layout: what evidence is needed to restore the original layout?
+- DECIDED 2026-11-24 (user): bdat column first-byte read idiom (retail `stw r3` then `lbz`/`lhz +0`, ~10 TUs) -> declare ONE canonical `BdatValue` union (u32/u16/u8 members) in the bdat header and read `.b`/`.h`; no pointer puns at call sites. Task: hub-header change (single owner) + includer sweep.
+- DECIDED 2026-11-24 (user): nw4r g3d assert inlines -> retail Panic filename (`g3d_rescommon_ac.h`, `g3d_resnode_ac.h`) + line numbers are sufficient evidence; place the real assert inline at that line in the real nw4r header (bytes must still match; per-library assert flag) and replace the hand Panic calls. Task: NW4R-G3D-ASSERT-INLINES (single owner).
 - RESOLVED (W2 follow-up batch): EvtSeqGetCounter100 is declared once in EvtSeqApi.hpp as `extern "C" int`, and W2-19 re-landed with it. Original note: W2-19 (CREvtEffect refreshChrAnim, 100% in-unit) was gate-rejected: "full build failed" because its `extern "C" int EvtSeqGetCounter100()` in CREvtEffect.hpp conflicts with the u32 declarations above. Canonicalise the declaration first (one header, one type, verified against retail callers), then re-land the patch (/tmp/xb/plans/W2-19.patch).
 - (W3 planner) String-pool order debt: CItemBoxGrid (RefreshCategoryTabs__12CItemBoxGridFv: literals at retail +1312/+1327 vs decomp +496/+511).
 - (W3 planner) refreshNpcRowFlags (CtrlMoveNpc): decomp-only relocs at +0x40/+0x44 where retail resolves inline — check symbol/split before re-queuing.
 - (W3 planner) func_8009E120 (CtrlObjectParam) uses the DECOMP_PPC_RLWINM escape; suspected bdatResolveItem 2nd param is u16 (callee-signature; sent to W3 as ds).
+- (W4 planner) code_800B06A4.hpp declares `extern "C" void* __ct__cf_CfHikariItemManager(void*)`, a hand alias of the real ctor `__ct__Q22cf19CfHikariItemManagerFv` (retail reloc at buildSingleton+0x140). Sent to W4-07; if not landed, replace it with `new (handle) cf::CfHikariItemManager` mechanically.
+- (W4 planner) kyoshin/cf/CItem .text is 0x10 over its split budget (0x69D0 vs 0x69C0); find the long function.
+- (W4 planner) MPVDEC_CheckVersion: in-source note documents a wall (switch gives signed cmpi, ifs merge the two `li -1` blocks) under GC/3.0a5.2; check the mpv_dec unit's compiler version/flags against the other CRI sofdec units.

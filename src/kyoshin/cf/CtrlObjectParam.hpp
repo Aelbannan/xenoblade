@@ -457,10 +457,10 @@ namespace cf {
         u8   field_58;   // +0x58
         u8   pad_59[3];
         f32  field_5C;   // +0x5C
-        u32  field_60;   // +0x60
-        u32  field_64;   // +0x64
-        u32  field_68;   // +0x68
-        u32  field_6C;   // +0x6C
+        // +0x60/+0x68 are 8-byte units: retail copies each of them with one
+        // load-both/store-both lwz pair (two u32 members would interleave).
+        u64  field_60;   // +0x60
+        u64  field_68;   // +0x68
         u32  field_70;   // +0x70
         u32  field_74;   // +0x74
     };

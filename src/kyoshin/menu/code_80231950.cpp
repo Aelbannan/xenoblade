@@ -1338,9 +1338,9 @@ extern "C" void artsFillTable(SArts322BC* self, u8 arg) {
         p->id = 3;
     }
     for (u8 i = 0; i < p->count; i++) {
-        u32 artId = BdatGetU8ByTableKey(lbl_eu_8050AC70 + 0x1C8, lbl_eu_8050AC70 + 0x1FE,
+        u8 artId = BdatGetU8ByTableKey(lbl_eu_8050AC70 + 0x1C8, lbl_eu_8050AC70 + 0x1FE,
                                   p->id + i);
-        if (ResTbox_IsCellBitSet((u8*)elems, charIdx, (u8)artId) == 0) {
+        if (ResTbox_IsCellBitSet((u8*)elems, charIdx, artId) == 0) {
             continue;
         }
         const u8* elemBytes = (const u8*)&elems[charIdx];
@@ -1360,15 +1360,9 @@ extern "C" void artsFillTable(SArts322BC* self, u8 arg) {
         *(u32*)&row[0xC] =
             (u32)BdatTouchStringCell((char*)lbl_eu_8050AC70 + 0x1C8, lbl_eu_8050AC70 + 0x5B,
                                p->id + i);
-        // Signed base blocks the bool-proof on the single-bit mask, so the
-        // setnz normalisation survives alongside the narrow extract.
         const u32 lo = ((const u8*)&w)[1];
-        // Deferred normalisation: shifts materialise wide values first, the
-        // !=0 tests then emit the setnz pairs.
-        u32 f7 = lo >> 7;
-        u32 f6 = lo >> 6;
-        row[8] = f7 != 0;
-        row[9] = f6 != 0;
+        row[8] = ((lo & 0x80) >> 7) != 0;
+        row[9] = ((lo & 0x40) >> 6) != 0;
     }
     reinterpret_cast<CScrollBar*>(self->field_0x28)->UpdateThumb(5, self->field_0x12C);
     reinterpret_cast<CScrollBar*>(self->field_0x28)->PlaceThumb((u16)self->field_0x21);

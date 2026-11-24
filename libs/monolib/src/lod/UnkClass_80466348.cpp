@@ -746,9 +746,9 @@ void LOD::UnkClass_80466348::setAmbColorWithAlpha0(UnkClass_80466348* self) {
 void LOD::UnkClass_80466348::setAmbColorWithAlpha2(UnkClass_80466348* self) {
     // Ambient color: each RGB byte is scaled by its LUT factor and 806657E4,
     // then clamped to 255; alpha is the latch scaled by 80665808.
-    s32 r = (s32)(u8ToF_a638(self->field_0x0) * sAmbientAltScaleLut[0] * sAmbientIntensityScale);
-    s32 g = (s32)(u8ToF_a638(self->field_0x1) * sAmbientAltScaleLut[1] * sAmbientIntensityScale);
-    s32 b = (s32)(u8ToF_a638(self->field_0x2) * sAmbientAltScaleLut[2] * sAmbientIntensityScale);
+    s32 r = (s32)((f32)(u8)self->field_0x0 * sAmbientAltScaleLut[0] * sAmbientIntensityScale);
+    s32 g = (s32)((f32)(u8)self->field_0x1 * sAmbientAltScaleLut[1] * sAmbientIntensityScale);
+    s32 b = (s32)((f32)(u8)self->field_0x2 * sAmbientAltScaleLut[2] * sAmbientIntensityScale);
     if (r > 255) r = 255;
     if (g > 255) g = 255;
     if (b > 255) b = 255;
@@ -756,7 +756,7 @@ void LOD::UnkClass_80466348::setAmbColorWithAlpha2(UnkClass_80466348* self) {
         (u8)r,
         (u8)g,
         (u8)b,
-        (u8)(s32)(s32ToF_a628((s32)sAmbientAlpha) * sAmbientAlphaScale),
+        (u8)(s32)((f32)(s32)sAmbientAlpha * sAmbientAlphaScale),
     };
     GXSetChanAmbColor(GX_COLOR0A0, out);
 }

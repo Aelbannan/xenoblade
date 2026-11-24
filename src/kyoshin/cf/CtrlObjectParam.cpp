@@ -1371,6 +1371,15 @@ void* cf::CActorParam::CActorParam_getBattleParams() {
     return &this->unk17E4;
 }
 
+// absorb: split1 retail data sections
+// (typed .rodata/.sdata2 live at the top of this file)
+const void* lbl_eu_805280D8[4] = {
+    (void*)"hp_lv99",
+    (void*)lbl_eu_804FBC28,
+    (void*)lbl_eu_804FBC34,
+    (void*)lbl_eu_804FBC40
+};
+
 // -- CtrlObjectParam_RampArtsStatStep (us-800a183c) -------------------------------------------
 // Arts-stat ramp: resolve the stat record via vtable slot 0x20C, bail when
 // the head equals the target level (or the target exceeds 99), then walk the
@@ -1397,9 +1406,6 @@ extern "C" void CtrlObjectParam_RampArtsStatStep(u8* selfV, u16 valueArg) {
     pCol = reinterpret_cast<const char* const*>(lbl_eu_805280D8);
     statBdat = ::cf::CfBdat::spBtlPcListFileData;
     i = 0;
-    f32 cDiv = 50.0f;
-    f32 cBase = 25.0f;
-    f32 cScale = 120.0f;
     do {
         // Retail stores the raw column word to a stack slot and reloads the
         // low half as u16 (stw + lhz round-trip).
@@ -1411,11 +1417,9 @@ extern "C" void CtrlObjectParam_RampArtsStatStep(u8* selfV, u16 valueArg) {
         else if (i == 1) current = param->field_1C;
         else if (i == 2) current = param->field_1E;
         else if (i == 3) current = param->field_20;
-        f32 fCur = current;
         u32 diff = colByte - current;
-        f32 fDiff = diff;
-        f32 fVal = value;
-        u32 newVal = (u32)(fCur + ((cBase + cScale * fDiff / (cScale - fVal)) / cDiv));
+        u32 newVal = (u32)((f32)current +
+                           ((25.0f + 120.0f * (f32)diff / (120.0f - (f32)value)) / 50.0f));
         u32 delta = newVal - current;
         if (i == 0) param->field_10 += delta;
         else if (i == 1) param->field_1C += (s16)delta;
@@ -1459,15 +1463,9 @@ extern "C" void CtrlObjectParam_RampArtsStatStep(u8* selfV, u16 valueArg) {
     other->field_57 = param->field_57;
     other->field_58 = param->field_58;
     other->field_5C = param->field_5C;
-    // Paired word copies: load both, then store both (retail schedule).
-    u32 t60 = param->field_60;
-    u32 t64 = param->field_64;
-    other->field_60 = t60;
-    other->field_64 = t64;
-    u32 t68 = param->field_68;
-    u32 t6C = param->field_6C;
-    other->field_68 = t68;
-    other->field_6C = t6C;
+    // Tail word pairs (retail copies both words of each 8-byte unit at once).
+    other->field_60 = param->field_60;
+    other->field_68 = param->field_68;
     other->field_70 = param->field_70;
     other->field_74 = param->field_74;
 }
@@ -2853,12 +2851,3 @@ done:;
 extern "C" void CtrlObjectParam_SetEquipSlot5(void* a, void* c) {
     CtrlObjectParam_WriteEquipSlotValue(reinterpret_cast<cf::CtrlObjectParamEntry*>(a), 5, c);
 }
-
-// absorb: split1 retail data sections
-// (typed .rodata/.sdata2 live at the top of this file)
-const void* lbl_eu_805280D8[4] = {
-    (void*)"hp_lv99",
-    (void*)lbl_eu_804FBC28,
-    (void*)lbl_eu_804FBC34,
-    (void*)lbl_eu_804FBC40
-};

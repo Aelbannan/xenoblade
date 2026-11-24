@@ -3061,9 +3061,10 @@ extern "C" void buildSingleton(UnkClass_805764CC* self) {
     p = mtl::MemManager::allocate(0x220, CfRes_getAllocHandle());
     self->field_0xCFC =
         p != 0 ? __ct__801F3BE8((CGimmickGlobal*)p) : (CGimmickGlobal*)p;
-    p = mtl::MemManager::allocate(0x11a4, CfRes_getAllocHandle());
+
     self->field_0xD00 =
-        (u32)(p != 0 ? __ct__cf_CfHikariItemManager(p) : p);
+        (u32)new ((mtl::ALLOC_HANDLE)CfRes_getAllocHandle()) cf::CfHikariItemManager;
+
     p = mtl::MemManager::allocate(0x554, CfRes_getAllocHandle());
     self->field_0xCAC =
         (u32)(p != 0 ? __ct__80205A7C(p) : p);

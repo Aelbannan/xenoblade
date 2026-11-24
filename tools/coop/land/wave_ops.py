@@ -322,6 +322,10 @@ def add_parsers(sub) -> None:
 
 
 def run(a) -> int:
+    w = getattr(a, "wave", None)
+    if w and a.cmd != "check-plan" and not (_wd(w) / "targets.tsv").is_file():
+        print(f"ERROR: {_wd(w) / 'targets.tsv'} missing (wrong wave name, or `wave select` not run)")
+        return 1
     if a.cmd == "launch":
         for line in launch(a.wave, a.ds_max, a.dry_run):
             print(line)

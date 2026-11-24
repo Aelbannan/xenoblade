@@ -138,6 +138,13 @@ XB_LAND_OWNER=1 .venv/bin/python3 -m tools.coop.land apply /tmp/xb/orch/{W}.mult
 ```
 The gate reverts the plans it rejects. That is a normal outcome, not a reason to stop. Note how many
 passed and how many were rejected.
+```bash
+.venv/bin/python3 -m tools.coop.land wave gate-alarm {W} --log /tmp/xb/orch/{W}.log
+```
+Each `ALARM` line means one ban counter rejected more than 2 reviewer-approved plans: the counter is
+too broad, or the review was too lax. The command records it in `docs/orchestrator_followups.md`.
+Do not stop, and do not touch the counter; just repeat each ALARM line in the step 7 commit message
+and the step 8 report, for the human.
 
 ## 6b. Promote recurring shapes (only when there are candidates)
 ```bash
@@ -178,6 +185,7 @@ Reply in at most 8 lines:
 - the commit hash;
 - the path of plan.md;
 - any new lines in followups.md;
-- any counters promoted in step 6b.
+- any counters promoted in step 6b;
+- any gate-alarm ALARM lines.
 
 Then stop. Do not start another wave.

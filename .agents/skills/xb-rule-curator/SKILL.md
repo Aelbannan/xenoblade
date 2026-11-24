@@ -18,6 +18,9 @@ Read first:
 - `tools/coop/land/shapes.py`
 
 ## For each slug
+0. **Check the gate alarms.** Read the `## Gate alarms` section of `docs/orchestrator_followups.md`.
+   A counter that triggered an alarm rejected too many approved plans, so learn from it: keep your new
+   counter narrower than that one.
 1. **Look at the evidence.** Run `.venv/bin/python3 -m tools.coop.land wave shapes --show <slug>`.
    It prints the registry entry and the archived examples: `held/<W>/<T>/{orig,final}` (rejected)
    and every `landed/…` example (accepted, your false-positive corpus).

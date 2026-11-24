@@ -27,7 +27,7 @@ WORKSPACE = "wks_5ac8e57131b986e1"
 ORCH = Path("/tmp/xb/orch")
 TASK_TIMEOUT = 2 * 3600
 DECISIONS = ("land", "hold", "drop", "retry-ds")
-COMMANDS = ("launch", "manage", "check-plan", "check-review", "decide", "shapes", "check-counter")
+COMMANDS = ("launch", "manage", "check-plan", "check-review", "decide", "shapes", "check-counter", "gate-alarm")
 COLS = ("task", "model", "unit", "symbol", "pct", "structural", "size", "src")
 
 
@@ -308,6 +308,39 @@ def decide(w: str) -> dict:
     return out
 
 
+# --------------------------------------------------------------------------- gate alarm
+FOLLOWUPS = wave.ROOT / "docs" / "orchestrator_followups.md"
+_REVERT = re.compile(r"^REVERTED (\S+): (.*)$")
+_BAN = re.compile(r"\bban:(\w+) \+\d+")
+
+
+def gate_alarm(log_path: Path, max_rejects: int = 2) -> dict[str, list[str]]:
+    """{ban key: [tasks]} for counters that rejected more than ``max_rejects`` reviewer-approved plans.
+
+    Every plan in an apply queue was already approved by the wave reviewer, so a counter rejecting
+    many of them is either too broad (a curated counter's false positives) or a sign of lax review.
+    """
+    per: dict[str, list[str]] = {}
+    for line in log_path.read_text(errors="replace").splitlines() if log_path.is_file() else []:
+        m = _REVERT.match(line.strip())
+        if not m:
+            continue
+        for key in sorted(set(_BAN.findall(m.group(2)))):
+            per.setdefault(key, []).append(m.group(1))
+    return {k: v for k, v in per.items() if len(v) > max_rejects}
+
+
+def record_alarm(w: str, alarms: dict[str, list[str]], followups: Path | None = None) -> None:
+    f = followups or FOLLOWUPS
+    text = f.read_text() if f.is_file() else ""
+    if "## Gate alarms" not in text:
+        text = text.rstrip("\n") + "\n\n## Gate alarms (counter rejected > 2 reviewer-approved plans in one wave)\n"
+    text += "".join(f"- {w}: ban:{k} rejected {len(t)} plans ({', '.join(t)}): counter too broad, "
+                    "or review too lax? Check the reverted patches before the next promotion.\n"
+                    for k, t in sorted(alarms.items()))
+    f.write_text(text)
+
+
 # --------------------------------------------------------------------------- CLI
 def add_parsers(sub) -> None:
     s = sub.add_parser("launch"); s.add_argument("wave"); s.add_argument("--ds-max", type=int, default=2)
@@ -319,6 +352,8 @@ def add_parsers(sub) -> None:
     s = sub.add_parser("decide"); s.add_argument("wave")
     s = sub.add_parser("shapes"); s.add_argument("--promote", action="store_true"); s.add_argument("--show")
     s = sub.add_parser("check-counter"); s.add_argument("slug", nargs="+")
+    s = sub.add_parser("gate-alarm"); s.add_argument("wave"); s.add_argument("--log", required=True)
+    s.add_argument("--max", type=int, default=2)
 
 
 def run(a) -> int:
@@ -369,4 +404,14 @@ def run(a) -> int:
             print("ERROR:", e)
         print("check-counter: " + ("OK" if not errs else f"{len(errs)} error(s)"))
         return 1 if errs else 0
+    if a.cmd == "gate-alarm":
+        alarms = gate_alarm(Path(a.log), a.max)
+        for k, t in sorted(alarms.items()):
+            print(f"ALARM ban:{k} rejected {len(t)} reviewer-approved plans: {' '.join(t)}")
+        if alarms:
+            record_alarm(a.wave, alarms)
+            print(f"recorded in {FOLLOWUPS.relative_to(wave.ROOT)}")
+        else:
+            print("gate-alarm: OK")
+        return 0
     return 2

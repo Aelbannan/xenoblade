@@ -90,4 +90,6 @@ holds carry `[shape:<slug>]`; `wave decide` archives held/landed examples under
 `state/shape_examples/`. A slug held ≥2 times is listed in every worker pack. A slug held ≥3 times
 across ≥2 waves is a `wave shapes --promote` candidate: the `xb-rule-curator` skill turns it into a
 `bans.py` counter, and `wave check-counter` accepts the counter only if it rises on every held example
-and on no landed one. Slugs the curator marks `"enforceable": false` stay advisory.
+and on no landed one. Slugs the curator marks `"enforceable": false` stay advisory. After each `apply`, `wave gate-alarm W --log L` flags any ban
+counter that rejected more than 2 reviewer-approved plans, and records it in `docs/orchestrator_followups.md`;
+`REVERTED` log lines carry the category (`hard:<unit>:ban:<key> +N`) for this.

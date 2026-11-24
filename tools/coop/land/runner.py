@@ -307,7 +307,9 @@ class Repo:
             self.restore(snap)
             if any(f == "configure.py" or f.startswith("config/") for p in group for f in p.files):
                 run([PY, "configure.py"])
-            return False, "; ".join(f"{v.kind}:{v.unit}" for v in verdict.violations[:6])
+            # hard violations keep their category ("hard:U:ban:x +1") so `wave gate-alarm` can count counters
+            return False, "; ".join(f"{v.kind}:{v.unit}" + (f":{v.detail}" if v.kind == "hard" else "")
+                                    for v in verdict.violations[:6])
         n = ledger.record(hashes, task=",".join(p.task for p in group))
         log(f"   ledger: +{n} file state(s)")
         self.base = after

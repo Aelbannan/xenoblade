@@ -145,6 +145,24 @@ class ShapeLoopTests(_Env):
         self.assertTrue(any("not a bans.py counter" in e for e in shapes.check_counter("self-view")))
 
 
+class GateAlarmTests(unittest.TestCase):
+    def test_counts_ban_rejections_per_counter(self):
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        log, fu = Path(tmp.name) / "a.log", Path(tmp.name) / "fu.md"
+        log.write_text("GROUP 0 (4): T1 T2 T3 T4\n"
+                       "REVERTED T1: hard:main/a:ban:self_view +1; lost:main/a\n"
+                       "REVERTED T2: hard:main/b:ban:self_view +2\n"
+                       "REVERTED T3: hard:main/c:ban:self_view +1; hard:main/c:label +1\n"
+                       "REVERTED T4: lost:main/d\n"
+                       "APPLIED OK T5\n")
+        self.assertEqual(wave_ops.gate_alarm(log), {"self_view": ["T1", "T2", "T3"]})
+        self.assertEqual(wave_ops.gate_alarm(log, max_rejects=3), {})
+        fu.write_text("# Follow-ups\n")
+        wave_ops.record_alarm("W9", wave_ops.gate_alarm(log), fu)
+        self.assertIn("- W9: ban:self_view rejected 3 plans (T1, T2, T3)", fu.read_text())
+
+
 class PermissionTests(unittest.TestCase):
     R = str(wave.ROOT)
 

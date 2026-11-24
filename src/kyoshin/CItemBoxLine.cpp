@@ -879,20 +879,19 @@ void CItemBoxLine::TabPrev() {
 // ============================================================================
 void CItemBoxLine::CursorPageBack() {
     if (reinterpret_cast<CSysWin*>(&mSysWin)->isOpened() != 0) {
-        if (field50 == 9) {
-            return;
-        }
-        if (reinterpret_cast<CSysWin*>(&mSysWin)->isActive() != 0) {
-            u8 v = field3A3 - 1;
-            field3A3 = v;
-            if ((s8)v < 0) {
-                field3A3 = 1;
+        if (field50 >= 9) {
+            if (reinterpret_cast<CSysWin*>(&mSysWin)->isActive() != 0) {
+                u8 v = field3A3 - 1;
+                field3A3 = v;
+                if ((s8)v < 0) {
+                    field3A3 = 1;
+                }
+                u8 tmp[12];
+                CSysWin::getPaneScreenPos(reinterpret_cast<nw4r::math::VEC3*>(tmp), reinterpret_cast<CSysWin*>(&mSysWin), field3A3);
+                mCur70.setRootPaneTranslate((const nw4r::math::VEC3*)(tmp));
+                playUISound(1);
             }
-            u8 tmp[12];
-            CSysWin::getPaneScreenPos(reinterpret_cast<nw4r::math::VEC3*>(tmp), reinterpret_cast<CSysWin*>(&mSysWin), field3A3);
-            mCur70.setRootPaneTranslate((const nw4r::math::VEC3*)(tmp));
         }
-        playUISound(1);
         return;
     }
     if (field3A0 != 0) {
@@ -913,9 +912,9 @@ void CItemBoxLine::CursorPageBack() {
         if (mNumSel.IsIdle() == 0) return;
         u8 idx = (u8)(unk38C + unk38E);
         CIBLTab* tabs = &unk3A4;
-        u16 lim = ItemBoxLine_ProbePageSlot((void*)tabs, idx);
+        u32 lim = ItemBoxLine_ProbePageSlot((void*)tabs, idx);
         field392 += 1;
-        if (!((u16)field392 > lim)) field392 = 1;
+        if ((u32)field392 > lim) field392 = 1;
         mNumSel.CountUp();
         mNumSel.SetCount((u8)field392);
         mNumSel.SetTotal(field392 * ItemBoxLine_GetTabEntryValue(tabs, idx));

@@ -94,12 +94,12 @@ Top TUs by accepted-but-dirty bytes:
 
 The `ptr-arith`/`deref-arith` rows above are **line-based proxies**: a line carrying a cast plus an offset bumps `ptr-arith`, and the same line's deref independently bumps `deref-arith`, so one expression can move two counters. This section counts individual expressions with `tools/coop/detect_pointer_arithmetic.py` and splits every TU by whether the enclosing function is already accepted (`targets.json`). Sites inside accepted functions are the **actionable backlog** (typed field/pointer rewrites are byte-identical and `hexdiff`-verifiable now); sites in unmatched functions are a **churn budget** — those bodies get rewritten while matching, so cleaning them early is wasted work plus `-ipa file` line-shift risk. **Target: `ptr-acc` -> 0; `ptr-sites` follows as TUs reach acceptance.** These counts are informational and not part of the strict regression gate: acceptance migration moves existing sites into the accepted set, so the accepted total is not monotonic.
 
-- expression sites: 3599  |  inside accepted functions: **596**  |  unmatched: 3003
+- expression sites: 3597  |  inside accepted functions: **596**  |  unmatched: 3001
 
 | expression shape | sites | accepted |
 |---|---|---|
 | `cast_byte_ptr_arith` | 1575 | 295 |
-| `ptr_offset_deref` | 794 | 95 |
+| `ptr_offset_deref` | 792 | 95 |
 | `cast_byte_offset_deref` | 518 | 89 |
 | `reinterpret_arith` | 360 | 69 |
 | `subscript_on_cast` | 331 | 38 |
@@ -473,7 +473,7 @@ Top TUs by view debt:
 | src/kyoshin/cf/CfCollCylinderImpl.cpp | 0 | 2 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CfCollSphereImpl.cpp | 0 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CfGameManager.cpp | 100 | 55 | 24 | 63 | 6 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 21 | 2 |
-| src/kyoshin/cf/CfGimmick.cpp | 18 | 40 | 26 | 10 | 0 | 0 | 0 | 0 | 5 | 0 | 0 | 0 | 12 | 0 |
+| src/kyoshin/cf/CfGimmick.cpp | 18 | 40 | 26 | 10 | 0 | 0 | 0 | 0 | 5 | 0 | 0 | 0 | 10 | 0 |
 | src/kyoshin/cf/CfGimmickElv.cpp | 1 | 15 | 41 | 9 | 5 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 6 | 0 |
 | src/kyoshin/cf/CfGimmickEne.cpp | 9 | 3 | 1 | 9 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CfGimmickItem.cpp | 0 | 1 | 5 | 1 | 0 | 0 | 1 | 0 | 6 | 0 | 0 | 0 | 3 | 0 |
@@ -4202,7 +4202,7 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "extern_c_nonlbl_def": 40,
   "goto_count": 5,
   "init_side_effect": 0,
-  "ptr_sites": 12,
+  "ptr_sites": 10,
   "schedule_pragma": 0,
   "self_params": 26,
   "view_debt": 1,

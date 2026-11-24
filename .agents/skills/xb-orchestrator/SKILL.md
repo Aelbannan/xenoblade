@@ -81,7 +81,8 @@ This writes `/tmp/xb/waves/{W}/targets.tsv` with 30 candidates.
   > /tmp/xb/orch/{W}_plan.out 2>&1
 .venv/bin/python3 -m tools.coop.land wave check-plan {W}
 ```
-Save the planner's agent id (from `/Applications/Paseo.app/Contents/Resources/bin/paseo ls`) in the state file. `check-plan` must print `OK` and the plan output must contain `PLAN-OK`. If check-plan fails, send
+Save the planner's agent id (from `/Applications/Paseo.app/Contents/Resources/bin/paseo ls`) in the state file. `check-plan` must print `OK`; it is the only gate (the `paseo run` output file shows a status table,
+not Opus's reply, so do not look for `PLAN-OK` there). If check-plan fails, send
 its ERROR lines once to the planner (`/Applications/Paseo.app/Contents/Resources/bin/paseo send <planner-id> "check-plan failed: … Fix the files and
 end with PLAN-OK."`), then re-run check-plan. If it fails a second time, stop and report.
 
@@ -161,7 +162,8 @@ If it prints no `PROMOTE` lines, skip this step. Otherwise, make at most one cur
 .venv/bin/python3 -m tools.coop.land wave check-counter <each slug the curator reported ENFORCED>
 .venv/bin/python3 -m unittest discover -s tools/coop/tests -t . -q
 ```
-The output must contain `CURATE-OK`, and both commands must pass. The curator may also report a
+Both commands must pass (they are the gate; read the curator's ENFORCED / NOT-ENFORCEABLE lines with
+`/Applications/Paseo.app/Contents/Resources/bin/paseo logs <curator-id> | tail -20`). The curator may also report a
 slug as `NOT-ENFORCEABLE`; that is fine. If a check fails, send the ERROR lines to the curator once;
 if it fails again, stop and report. Put every promoted counter in the step 7 commit message and the
 step 8 report, so the human can veto it.

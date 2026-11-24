@@ -84,8 +84,10 @@ void cf::CREvtMovie::vfunc_1C() {
     // Check if already playing or finished
     if (evtHasMoviePlayer() != 0) return;
 
-    // Check timing: elapsed time since last event
-    if (EvtSeqGetEntryLimit() - EvtSeqGetCounter100() >= 25) return;  // too early
+    // Check timing: elapsed time since last event. The
+    // delta is signed (retail compares it with cmpwi).
+    int elapsed = EvtSeqGetEntryLimit() - EvtSeqGetCounter100();
+    if (elapsed >= 25) return;  // too early
 
     // Check memory availability
     u32 criSize = (u32)getMovieWorkSize__7CLibCriFv();

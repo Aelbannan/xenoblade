@@ -243,10 +243,9 @@ void CQuestItem::Rebuild() {
 // fold this body into every call site (tripling RegisterLearnedSkills).
 void CQuestItem::PushUniqueItemId(u32 id) {
     if (HasSlotIdMatch(id)) return;
-    if ((BdatGetItemType(id) & 0xFFFF) == 12) return;
-    u16 count = mCount;
-    mIds[count] = (u16)id;
-    mCount = count + 1;
+    u32 type = (u16)BdatGetItemType(id);
+    if (type == 12) return;
+    mIds[mCount++] = (u16)id;
 }
 
 // Search for a matching short id in an array, return 1 if found.

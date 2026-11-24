@@ -833,10 +833,13 @@ extern "C" int CfGimmick_PostGimmickName(int index) {
             cap = Bdat_GetRowBase_B41C(bdat);
             cnt = Bdat_GetMaxRow_B1EC(bdat);
             if (cap + cnt > index) {
-                u8* col = *(u8**)(gGimmickBdatColumns + 0x44);
+                // Column 0x11 (name1) is the gimmick-name slot of the shared
+                // bdat column table; retail patches its prefix digit to '3'
+                // and re-reads the same slot as the column argument.
+                u8* col = (u8*)gGimmickBdatColumns[0x11];
                 col[4] = 0x33;
                 name = (const char*)getBdatStringColumnValue(
-                    bdat, *(char**)(gGimmickBdatColumns + 0x44), index);
+                    bdat, (const char*)gGimmickBdatColumns[0x11], index);
                 // Retail inlines the CfGimmick_IsMessageSystemBusy boolean (neg/or/srwi) here.
                 if (UIWin_GetInstance() != 0) {
                     if (CfGimmick_IsMessageSystemBusy() == 0) {
@@ -849,7 +852,8 @@ extern "C" int CfGimmick_PostGimmickName(int index) {
             }
         }
     }
-    name = (const char*)gGimmickFallbackName;
+    // gGimmickFallbackName is the {name, terminator} pair; retail loads element 0.
+    name = (const char*)gGimmickFallbackName[0];
     if (UIWin_GetInstance() != 0 && CfGimmick_IsMessageSystemBusy() == 0) {
         sprintf(gGimmickMessageBuffer, "%s", name);
         UIWin_CreateSysWin0(gGimmickMessageBuffer, 0, 0);

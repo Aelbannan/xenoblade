@@ -214,7 +214,7 @@ void uusb_WriteCtrlDataCB(IPCResult result, void* arg) {
     if (usb.ctrl_pending < 5 && usb.ctrl_write_q.count != 0) {
         buf = (BT_HDR*)GKI_dequeue(&usb.ctrl_write_q);
         rc = IUSB_WriteCtrlMsgAsync(usb.fd, 0x20, 0, 0, 0, buf->len,
-                                    (u8*)buf + buf->offset + BT_HDR_SIZE,
+                                    (u8*)(buf + 1) + buf->offset,
                                     uusb_WriteCtrlDataCB, buf);
         if (rc < IPC_RESULT_OK) {
             /* Submission rejected: restore the buffer to the queue head. */

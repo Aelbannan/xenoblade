@@ -15,7 +15,7 @@ extern "C" {
 #endif
 
 void* ArtsSelect_GetContainer(void);
-void* ArtsSelect_Clear(void* p);
+void ArtsSelect_Clear(void* p);
 
 // CArtsSelectSlot: one (arts id, source ptr) entry.
 struct CArtsSelectSlot {

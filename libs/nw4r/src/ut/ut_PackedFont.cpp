@@ -499,42 +499,42 @@ int PackedFont::StreamingConstruct(ConstructContext* pCtx, const void* pArchive,
     }
 
     int status = 3;
-    CachedStreamReader* pReader = &pCtx->mReader;
-    pReader->Attach(pArchive, size);
+    CachedStreamReader& reader = pCtx->mReader;
+    reader.Attach(pArchive, size);
     while (status == 3) {
         switch (pCtx->field_0xC) {
         case 0:
-            status = ConstructOpDispatch(pCtx, pReader);
+            status = ConstructOpDispatch(pCtx, &reader);
             break;
         case 1:
-            status = ConstructOpAnalyzeFileHeader(pCtx, pReader);
+            status = ConstructOpAnalyzeFileHeader(pCtx, &reader);
             break;
         case 2:
-            status = ConstructOpAnalyzeGLGRPacked(pCtx, pReader);
+            status = ConstructOpAnalyzeGLGRPacked(pCtx, &reader);
             break;
         case 3:
-            status = ConstructOpAnalyzeFINF(pCtx, pReader);
+            status = ConstructOpAnalyzeFINF(pCtx, &reader);
             break;
         case 4:
-            status = ConstructOpAnalyzeCMAP(pCtx, pReader);
+            status = ConstructOpAnalyzeCMAP(pCtx, &reader);
             break;
         case 5:
-            status = ConstructOpAnalyzeCWDH(pCtx, pReader);
+            status = ConstructOpAnalyzeCWDH(pCtx, &reader);
             break;
         case 6:
-            status = ConstructOpCopy(pCtx, pReader);
+            status = ConstructOpCopy(pCtx, &reader);
             break;
         case 7:
-            status = ConstructOpSkip(pCtx, pReader);
+            status = ConstructOpSkip(pCtx, &reader);
             break;
         case 8:
-            status = ConstructOpFatalError(pCtx, pReader);
+            status = ConstructOpFatalError(pCtx, &reader);
             break;
         case 9:
-            status = ConstructOpAnalyzeTGLP(pCtx, pReader);
+            status = ConstructOpAnalyzeTGLP(pCtx, &reader);
             break;
         case 10:
-            status = ConstructOpPrepairCopyPackedSheet(pCtx, pReader);
+            status = ConstructOpPrepairCopyPackedSheet(pCtx, &reader);
             // Signed compare: retail emits cmpwi here (int-typed check).
             if ((int)pCtx->field_0xC == 9) {
                 reinterpret_cast<u32*>(field_0x34)[field_0x28] =

@@ -1346,12 +1346,16 @@ CViewFrame::CViewFrame() {
     this->mContentY = 0;
 }
 
-// Compute the frame-to-view offset rect. Retail quirk: the caller passes a
-// CRect16 as the object pointer, a CViewFrame as 'frame', and the source rect
-// as 'src' (the member name is kept for symbol compatibility). Applies the
-// same border-expand/split gates as getFrame2ViewOffset: the position grows
-// by the border (+split gap on y), the size shrinks by twice the border
-// (again + split gap on y).
+// Expand a rect (copied field by field from 'src') into the frame's view
+// rect, using the same border-expand/split gates as getFrame2ViewOffset: the
+// position grows by the border (plus the split gap on y), the size shrinks by
+// twice the border (plus the split gap on y).
+//
+// The retail definition takes the destination rect in r3, the frame in r4 and
+// the source rect in r5, i.e. three arguments, while its symbol name encodes
+// only (CRect16&, const CViewFrame*) and a global ::CRect16 that does not
+// exist in this tree (ml::CRect16 mangles as Q22ml7CRect16). The definition
+// keeps the retail symbol spelling until the symbol is renamed.
 extern "C" void getFrame2ViewRect__10CViewFrameFR7CRect16PC10CViewFrame(
     ml::CRect16* out, const CViewFrame* frame, const ml::CRect16* src) {
     // Field-wise halfword copy (retail sign-extends each field).
@@ -1360,10 +1364,8 @@ extern "C" void getFrame2ViewRect__10CViewFrameFR7CRect16PC10CViewFrame(
     out->mSize.x = src->mSize.x;
     out->mSize.y = src->mSize.y;
 
-    // Position pass: flags word cached in a local (retail keeps it in one
-    // reg across both gates); each individual bit-test re-loads the mode word.
-    // Declaration order drives MWCC register assignment toward retail
-    // (gateOuter=r5, flags=r6, view=r8, gateInner=r9, xAdj=r10, yAdj=r11).
+    // Position pass: the view's flag word is cached once and reused by both
+    // gate tests; unk278 is read again for each individual bit test.
     int gateInner;
     int gateOuter;
     s16 xAdj = 0;
@@ -1381,30 +1383,28 @@ extern "C" void getFrame2ViewRect__10CViewFrameFR7CRect16PC10CViewFrame(
     }
     if (gateInner != 0) {
         int split = 0;
-        s16 border = frame->mBorder;
-        yAdj = border;
-        xAdj = yAdj;
+        xAdj = frame->mBorder;
+        yAdj = xAdj;
         if ((flags & 2) != 0) {
-            u32 mode = view->unk278;
-            if ((mode & 1) == 0 && (mode & 2) == 0) {
+            if ((view->unk278 & 1) == 0 && (view->unk278 & 2) == 0) {
                 split = 1;
             }
         }
         if (split != 0) {
-            yAdj = (s16)(border + (s16)(border + 0x16));
+            yAdj = (s16)(xAdj + (s16)(xAdj + 0x16));
         }
     }
-    // Size pass: identical gates, but the adjustments are doubled and
-    // subtracted (retail emits neg/extsh + add). Declared before the position
-    // updates so allocation overlaps pass-1 ranges, matching retail colors.
-    s16 sxAdj = 0;
-    s16 syAdj = 0;
-    int gateInner2 = 0;
-    int gateOuter2 = 0;
-
+    // Size pass: the same gates again, but the adjustments are doubled and
+    // subtracted from the size instead of added to the position.
     out->mPos.x = (s16)(out->mPos.x + xAdj);
     out->mPos.y = (s16)(out->mPos.y + yAdj);
 
+    int gateInner2;
+    int gateOuter2;
+    s16 sxAdj = 0;
+    s16 syAdj = 0;
+    gateInner2 = 0;
+    gateOuter2 = 0;
     CView* view2 = frame->mOwner;
     u32 flags2 = view2->unk27C;
 
@@ -1415,13 +1415,12 @@ extern "C" void getFrame2ViewRect__10CViewFrameFR7CRect16PC10CViewFrame(
         gateInner2 = 1;
     }
     if (gateInner2 != 0) {
-        s16 border = frame->mBorder;
         int split = 0;
+        s16 border = frame->mBorder;
         sxAdj = (s16)(border * 2);
         syAdj = sxAdj;
         if ((flags2 & 2) != 0) {
-            u32 mode = view2->unk278;
-            if ((mode & 1) == 0 && (mode & 2) == 0) {
+            if ((view2->unk278 & 1) == 0 && (view2->unk278 & 2) == 0) {
                 split = 1;
             }
         }

@@ -11,6 +11,18 @@
   "counter": "cast_addr_alias",
   "added": "W1"
  },
+ "data-object-reshape": {
+  "desc": "Data object boundaries changed against retail symbols.txt (one retail object split into several globals, or several retail objects merged into one array) to steer codegen or relocs.",
+  "example": "Example: retail `sVlcDefaultPtrs` (size 0xB0) split into `sVlcDefaultPtrs`..`sVlcDefaultPtrs_5`, while other code still indexes `sVlcDefaultPtrs + 0x28` past the new bound.",
+  "counter": null,
+  "added": "W3"
+ },
+ "decl-drift": {
+  "desc": "A local/import declaration retyped so it disagrees with the callee's actual definition (extern \"C\" hides the mismatch at link time).",
+  "example": "Example: `extern \"C\" u32 bdatResolveItem(u32, u16, u32);` in CtrlObjectParam.hpp while CfBdat.cpp defines `bdatResolveItem(u32 owner, u32 itemId, u32 flags)`.",
+  "counter": null,
+  "added": "W3"
+ },
  "reorder-vs-original": {
   "desc": "reordering statements/members against a known original to change register or schedule",
   "example": "swapping two independent nw4r statements",
@@ -38,5 +50,11 @@
   "example": "static inline f32 getX(const S* s) { return s->x; }",
   "counter": "single_use_inline",
   "added": "W1"
+ },
+ "steer-temp": {
+  "desc": "A named scalar temporary introduced (or reused, or applied to only some of several parallel expressions) solely to sequence stores or move register allocation.",
+  "example": "Example: `s32 v = 0; *out1 = v; v = 1; *out2 = v;` instead of `*out1 = 0; *out2 = 1;`; or splitting only the R channel of an R/G/B triple into conv/prod temps with swapped operands.",
+  "counter": null,
+  "added": "W3"
  }
 }

@@ -316,8 +316,8 @@ s32 mwPlyCalcWorkCprmSfd(PlyCprm* self) {
 
     if (mwsfcre_IsOuterFrmPoolUsed(self) == 1) {
         /* Frames come from the caller-supplied pool: no library allocation. */
-        siz[1] = 0;
         siz[0] = 0;
+        siz[1] = 0;
     } else {
         /* Width/frame-count cache lives in callee-saved regs in retail:
          * the loads sit before the mode check, so they stay live across the
@@ -344,10 +344,15 @@ s32 mwPlyCalcWorkCprmSfd(PlyCprm* self) {
         siz[1] = unit * 2;
     }
 
-    /* Retail shape: accumulator over (out0..szFrames,out4), a separate
-     * (out1+out2+out3) subtree, then out5 and the 0x5060 header constant. */
-    total = out[0] + siz[1] + siz[0] + out[4];
-    half = out[1] + out[2] + out[3];
+    /* Retail shape: one left-deep accumulator over out0, the frame-buffer
+     * sizes and out4; a separate (out1+out2+out3) subtree that is added to
+     * it; then out5 and the 0x5060 header constant.  Each step is its own
+     * statement so the tree stays left-deep (as in the retail object). */
+    total = out[0] + siz[1];
+    total += siz[0];
+    total += out[4];
+    half = out[1] + out[2];
+    half += out[3];
     total = half + total;
     total = out[5] + total;
     result = total + 0x5060;

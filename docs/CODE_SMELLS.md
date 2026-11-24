@@ -15,7 +15,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | extern "C" declarations (non-lbl_*, imports) | 4908 |
 | extern "C" definitions (forced names) | 4363 |
 | `self`/register-style params | 9232 |
-| `void*` (params + locals) | 6202 |
+| `void*` (params + locals) | 6203 |
 | raw pointer offset arithmetic | 2047 |
 | deref-through-cast arithmetic | 349 |
 | inline asm / `register` | 102 |
@@ -395,7 +395,7 @@ Top TUs by view debt:
 | src/kyoshin/CItemBoxGrid.cpp | 2 | 5 | 3 | 134 | 111 | 17 | 0 | 0 | 49 | 0 | 0 | 0 | 152 | 16 |
 | src/kyoshin/CItemBoxGridSubMenu.cpp | 0 | 1 | 2 | 2 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 0 |
 | src/kyoshin/CItemBoxInfo.cpp | 15 | 1 | 2 | 165 | 46 | 41 | 0 | 0 | 2 | 0 | 0 | 0 | 82 | 1 |
-| src/kyoshin/CItemBoxLine.cpp | 23 | 4 | 17 | 10 | 0 | 0 | 0 | 0 | 16 | 0 | 0 | 0 | 0 | 0 |
+| src/kyoshin/CItemBoxLine.cpp | 23 | 4 | 17 | 11 | 0 | 0 | 0 | 0 | 16 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CKizunaTalkList.cpp | 4 | 0 | 1 | 10 | 5 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 10 | 0 |
 | src/kyoshin/CKizunagram.cpp | 14 | 52 | 112 | 20 | 0 | 0 | 4 | 10 | 3 | 0 | 0 | 0 | 1 | 1 |
 | src/kyoshin/CLoad.cpp | 1 | 1 | 18 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -3380,7 +3380,7 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "init_side_effect": 0,
   "schedule_pragma": 0,
   "self_params": 17,
-  "void_ptr": 10
+  "void_ptr": 11
  },
  "src/kyoshin/CKizunaTalkList.cpp": {
   "asm_insn_shim": 0,

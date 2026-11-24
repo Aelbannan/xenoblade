@@ -33,10 +33,10 @@ void* ArtsSelect_GetContainer(void) {
 }
 
 /* Clears the whole arts-select container: all 16 hash buckets (46 slots of
-   (id, ptr) each) and the fast-path cache pair at 0x1700/0x1704. Returns p.
+   (id, ptr) each) and the fast-path cache pair at 0x1700/0x1704. Returns no value.
    Note: tbl/bucket declared before i/j pins register colors (bucket=r6,
    counter=r7). */
-void* ArtsSelect_Clear(void* p) {
+void ArtsSelect_Clear(void* p) {
     CArtsSelectContainer* tbl = (CArtsSelectContainer*)p;
     CArtsSelectBucket* bucket = tbl->buckets;
     int i;
@@ -49,7 +49,7 @@ void* ArtsSelect_Clear(void* p) {
     }
     tbl->field_1700 = 0;
     tbl->field_1704 = 0;
-    return p;
+    // Clears in place; there is no result to hand back.
 }
 
 void* ArtsSelect_Insert(void* self, void* src) {

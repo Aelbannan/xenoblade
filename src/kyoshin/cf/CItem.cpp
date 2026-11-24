@@ -705,12 +705,11 @@ extern "C" void CItem_refRow2(u32 unused, CItemData* self) {
         u32 v;
         u8 b[4];
     } t6;
-    // Declared in retail register-color order (r30..r26).
+    // Declared in retail register-color order (r30..r27).
     s32 i;
     u32 n;
     void* handle;
     u32 row;
-    u8 min;
     u32 word = self->field_00;
     handle = ::cf::CfBdat::spItmDropCrystalListFileData;
     row = (word >> 5) & 0x7FF;
@@ -738,18 +737,22 @@ extern "C" void CItem_refRow2(u32 unused, CItemData* self) {
     // One variable chains count -> roll index -> max.
     n = (u32)(((-(s32)t6.b[0] | (s32)t6.b[0]) >> 31) & 2);
     if (ml::math::mtRand(100) < 25) n++;
-    min = sItemSlotSizeRange[2 * n];
+    // Retail walks the two halfword columns with an incrementing pointer that
+    // is live from here to the end of the loop (an indexing loop would keep a
+    // scaled index instead).
+    u16* hp = halfs;
+    u8 min = sItemSlotSizeRange[2 * n];
     n = sItemSlotSizeRange[2 * n + 1];
-    for (i = 0; i < 4; i++) {
+    for (i = 0; i < 4; i++, hp++) {
         // && form: retail lowers this as beq/bge both branching forward to
         // the zero path (an || form flips the branch layout).
-        if (halfs[i] != 0 && i < 2) {
+        if (*hp != 0 && i < 2) {
             // Ternary keeps retail's branchy cmplw/bl/mr/mr/b/mr select;
             // the explicit __rlwinm puts the single u16 truncation on the
             // join path (per-arm casts emit it twice).
             u32 rnd = (min < n) ? (u32)ml::math::mtRand(min, n) : n;
             rnd = __rlwinm(rnd, 0, 16, 31);
-            CItem_initItemImplInstances(self)->vf50(self, i, halfs[i]);
+            CItem_initItemImplInstances(self)->vf50(self, i, *hp);
             if (i == 1) {
                 CItem_initItemImplInstances(self)->vf68(self, i, (rnd >> 1) & 0x7FFF);
             } else {

@@ -428,13 +428,14 @@ void AnmScnRes::GetLight(LightObj* pDiff, LightObj* pSpec, u32 refNumber) {
 
         if (pSpec != NULL) {
             if (pResult->flags & LightAnmResult::FLAG_SPECULAR_ENABLE) {
-                math::VEC3 dir = pResult->aim - pResult->pos;
+                math::VEC3 dir;
+                VEC3Sub(&dir, &pResult->aim, &pResult->pos);
 
                 PSVECNormalize(reinterpret_cast<const Vec*>(&dir),
                           reinterpret_cast<Vec*>(&dir));
 
                 pSpec->Clear();
-                pSpec->InitLightColor(static_cast<GXColor>(pResult->specColor));
+                pSpec->InitLightColor(pResult->specColor);
                 pSpec->InitSpecularDir(dir.x, dir.y, dir.z);
                 pSpec->InitLightShininess(pResult->shininess);
 

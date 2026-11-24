@@ -2490,20 +2490,20 @@ int CItemBoxLine::ProbeAvailability(u32 key) {
     u8 b = BdatGetU8Direct((const void*)table, "pc_type", v);
     u8 c = BdatGetU8Direct((const void*)table, "get_arts", v);
     u8 d = BdatGetU8ByTableKey("pc_arts", "idx", c);
-    u8* base = (u8*)CtrlObjectParam_GetCharEntry(b);
-    u32 f = (u8)CtrlObjectParam_GetCurrentRowKey(base);
-    u32 d2 = (u32)d << 1;
-    u32 prod = f * 0x49;
-    u8* p = base + prod + d2;
+    void* lookup = CtrlObjectParam_GetCharEntry((u8)b);
+    u8 cat = (u8)CtrlObjectParam_GetCurrentRowKey(lookup);
+    // Same typed art-row walk as CItemBoxInfo::BuildSelRec.
+    CItemBoxArtSlot* entry = &((CItemBoxCharEntry*)lookup)->mArtRows[cat].mArts[d];
+
     switch (a) {
     case 1:
-        if (p[0xe8] != 0) return 1;
+        if (entry->mLevel != 0) return 1;
         break;
     case 2:
-        if ((p[0xe9] >> 7) & 1) return 1;
+        if ((entry->mFlags >> 7) & 1) return 1;
         break;
     case 3:
-        if ((p[0xe9] >> 6) & 1) return 1;
+        if ((entry->mFlags >> 6) & 1) return 1;
         break;
     }
     return 0;

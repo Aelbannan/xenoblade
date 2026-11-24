@@ -1414,7 +1414,7 @@ out:
 // ---------------------------------------------------------------------------
 // SFD_GetFrm
 // ---------------------------------------------------------------------------
-int SFD_GetFrm(void* self, void** outFrm) {
+int SFD_GetFrm(SfdHandle* self, SfdFrmInfo** outFrm) {
     int result = 0;
     void* ctx;
 
@@ -1424,9 +1424,9 @@ int SFD_GetFrm(void* self, void** outFrm) {
     }
 
     {
-        int frmState = FIELD(int, self, 0x68);
+        int frmState = self->field_0x0068;
         if (frmState == 0) {
-            FIELD(int, self, 0x68) = 1;
+            self->field_0x0068 = 1;
             result = 0;
         } else if (frmState == 1) {
             result = 0;
@@ -1445,19 +1445,19 @@ int SFD_GetFrm(void* self, void** outFrm) {
     result = SFTRN_CallTrtTrif(self, 6, 0xB, (int)outFrm, 0);
 
     if (*outFrm) {
-        int gc = FIELD(int, self, 0x978);
-        if (gc == FIELD(int, self, 0x97C)) {
+        int gc = self->field_0x0978;
+        if (gc == self->field_0x097c) {
             if (gc == 0) {
-                FIELD(u64, self, 0x2760) = SFTMR_GetTmr(self);
+                self->field_0x2760 = SFTMR_GetTmr(self);
             }
-            FIELD(int, self, 0x978)++;
+            self->field_0x0978++;
         }
         ctx = gpSfdCoreTraceCb;
         if (ctx) {
-            void* frm = *outFrm;
+            SfdFrmInfo* frm = *outFrm;
             sTraceSfdGetFrm.exit.args[0].value = frm;
-            sTraceSfdGetFrm.exit.args[1].value = &((SfdFrmInfo*)frm)->time;
-            sTraceSfdGetFrm.exit.args[2].value = &((SfdFrmInfo*)frm)->field_0x10;
+            sTraceSfdGetFrm.exit.args[1].value = &frm->time;
+            sTraceSfdGetFrm.exit.args[2].value = &frm->field_0x10;
             ((SfdTraceCtx*)ctx)->vtbl->trace(ctx, &sTraceSfdGetFrm.exit);
         }
     } else {

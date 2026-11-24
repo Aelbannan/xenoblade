@@ -177,8 +177,12 @@ static char __wpadDebugStrings[0x3B8] = {
 };
 static char lbl_80560E68[0x14] = "Received report 20\n";
 
-// Sensor bar / DPD calibration data, per channel (retail .sdata label, owning TU or extern)
-extern f32 _wpadCalibrationX[5][WPAD_MAX_CONTROLLERS];
+// Sensor bar / DPD calibration data, per channel
+f32 _wpadCalibrationX[WPAD_MAX_CONTROLLERS];
+f32 _wpadCalibrationY[WPAD_MAX_CONTROLLERS];
+f32 _wpadCenterX[WPAD_MAX_CONTROLLERS];
+f32 _wpadCenterY[WPAD_MAX_CONTROLLERS];
+f32 _wpadRolag[WPAD_MAX_CONTROLLERS];
 
 // Shared MWCC literal-pool constants
 extern f64 double_8066C258;  // 0x4330000000000000: unsigned int->double magic
@@ -220,8 +224,8 @@ static u8 _recv_3e[WPAD_MAX_CONTROLLERS];
 static u8 _recv_3f[WPAD_MAX_CONTROLLERS];
 
 // Raw extension data and its "invalid" marker
-static u8 _wpadExtRawData[21];
-static const u8 _cExtInvalidData[21] = {
+u8 _wpadExtRawData[21];
+const u8 _cExtInvalidData[21] = {
     0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
     0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
 };
@@ -363,15 +367,17 @@ void __parse_dpd_data(s32 chan, WPADStatusEx** status, u8 fmt, u8* data, s32 siz
 
         cx.w[1] = ((u32)(*status)->obj[i].x) ^ 0x8000;
         cy.w[1] = ((u32)(*status)->obj[i].y) ^ 0x8000;
-        dx = cx.d - m + _wpadCalibrationX[0][chan] - _wpadCalibrationX[2][chan];
-        dy = cy.d - m + _wpadCalibrationX[1][chan] - _wpadCalibrationX[3][chan];
+        dx = cx.d - m + _wpadCalibrationX[chan];
+        dy = cy.d - m + _wpadCalibrationY[chan];
+        dx -= _wpadCenterX[chan];
+        dy -= _wpadCenterY[chan];
 
-        (*status)->obj[i].x = (s16)(_wpadCalibrationX[2][chan] +
-            (dx * (f32)cos(float_8066C238 * _wpadCalibrationX[4][chan]) -
-             dy * (f32)sin(float_8066C238 * _wpadCalibrationX[4][chan])));
-        (*status)->obj[i].y = (s16)(_wpadCalibrationX[3][chan] +
-            (dx * (f32)sin(float_8066C238 * _wpadCalibrationX[4][chan]) +
-             dy * (f32)cos(float_8066C238 * _wpadCalibrationX[4][chan])));
+        (*status)->obj[i].x = (s16)(_wpadCenterX[chan] +
+            (dx * (f32)cos(float_8066C238 * _wpadRolag[chan]) -
+             dy * (f32)sin(float_8066C238 * _wpadRolag[chan])));
+        (*status)->obj[i].y = (s16)(_wpadCenterY[chan] +
+            (dx * (f32)sin(float_8066C238 * _wpadRolag[chan]) +
+             dy * (f32)cos(float_8066C238 * _wpadRolag[chan])));
     }
 }
 
@@ -672,7 +678,6 @@ void __a1_31_data_type(u8 chan, u8* data, WPADStatusEx* status) {
 
 void __wpadGetDevConfig(s32 chan, s32 err) {
     const char* dbg = (const char*)__a1_input_reports_array;
-    f32 (*cal)[WPAD_MAX_CONTROLLERS] = _wpadCalibrationX;
     WPADCB* cb = __rvl_p_wpadcb[chan];
     u8* buf = cb->wmReadDataPtr;
     u8 i;
@@ -806,35 +811,35 @@ void __wpadGetDevConfig(s32 chan, s32 err) {
     deltaX = (f32)atan((126.5f + difaveX) / 1332.5f) - (f32)atan(126.5f / 1332.5f);
     deltaY = (f32)atan((93.0f + difaveY) / 1337.4f) - (f32)atan(93.0f / 1337.4f);
 
-    cal[0][chan] = -1.0f * (f32)tan(deltaX) * 1332.5f;
-    cal[1][chan] = -1.0f * (f32)tan(deltaY) * 1337.4f;
+    _wpadCalibrationX[chan] = -1.0f * (f32)tan(deltaX) * 1332.5f;
+    _wpadCalibrationY[chan] = -1.0f * (f32)tan(deltaY) * 1337.4f;
 
     DEBUGPrint(dbg + 0x130, difaveX, difaveY);
     DEBUGPrint(dbg + 0x150, deltaX, deltaY);
-    DEBUGPrint(dbg + 0x170, cal[0][chan], cal[1][chan]);
+    DEBUGPrint(dbg + 0x170, _wpadCalibrationX[chan], _wpadCalibrationY[chan]);
 
-    cal[2][chan] = 0.0f;
-    cal[3][chan] = 0.0f;
+    _wpadCenterX[chan] = 0.0f;
+    _wpadCenterY[chan] = 0.0f;
     for (i = 0; i < WPAD_MAX_DPD_OBJECTS; i++) {
-        centX[i] += cal[0][chan];
-        centY[i] += cal[1][chan];
-        cal[2][chan] += centX[i];
-        cal[3][chan] += centY[i];
+        centX[i] += _wpadCalibrationX[chan];
+        centY[i] += _wpadCalibrationY[chan];
+        _wpadCenterX[chan] += centX[i];
+        _wpadCenterY[chan] += centY[i];
     }
-    cal[2][chan] *= 0.25f;
-    cal[3][chan] *= 0.25f;
-    DEBUGPrint(dbg + 0x1A4, cal[2][chan], cal[3][chan]);
+    _wpadCenterX[chan] *= 0.25f;
+    _wpadCenterY[chan] *= 0.25f;
+    DEBUGPrint(dbg + 0x1A4, _wpadCenterX[chan], _wpadCenterY[chan]);
 
     // Sensor bar rotation angle ("rolag")
-    cal[4][chan] = 0.0f;
+    _wpadRolag[chan] = 0.0f;
     for (i = 0; i < WPAD_MAX_DPD_OBJECTS; i++) {
-        angle[i] = (f32)atan((centY[i] - cal[3][chan]) /
-                             (centX[i] - cal[2][chan]));
+        angle[i] = (f32)atan((centY[i] - _wpadCenterY[chan]) /
+                             (centX[i] - _wpadCenterX[chan]));
         b[i] = (f32)atan(((f32)dummyObjY[i] - 383.5f) / ((f32)dummyObjX[i] - 511.5f));
-        cal[4][chan] += angle[i] - b[i];
+        _wpadRolag[chan] += angle[i] - b[i];
     }
-    cal[4][chan] *= 0.25f;
-    DEBUGPrint(dbg + 0x1C0, cal[4][chan]);
+    _wpadRolag[chan] *= 0.25f;
+    DEBUGPrint(dbg + 0x1C0, _wpadRolag[chan]);
 
     // Accelerometer calibration block
     for (i = 0; i < 2; i++) {

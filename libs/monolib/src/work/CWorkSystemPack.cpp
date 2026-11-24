@@ -236,25 +236,14 @@ static void InitPackNodeArray(PackItemList* list, u32 bytes, int count) {
 // manually (CWorkSystemCache pattern).
 CWorkSystemPack::CWorkSystemPack(const char* pName, CWorkThread* pParent)
     : CWorkThread(pName, pParent, 0) {
-    int i; // declared early: birth order keeps the loop index off the zero-reg copy path
-
-    // The real polymorphic class emits its own retail vptr store in this
-    // position; the reslist member ctors then run in declaration order.
+    // The polymorphic class's vptr is installed by the compiler-generated
+    // prologue; the reslist member ctors then run in declaration order.
     sWorkSystemPackInstance = this;
     mType = CWorkThread::THREAD_CWORKSYSTEMPACK;
 
     // Node arrays: the arc list starts with one free slot, the pack list with 16.
-    mArcList.mList = (ArcItemListNode*)mtl::MemManager::allocate_array(0xC, CWorkThreadSystem::getWorkMem());
-    mArcList.mList[0].mNext = 0;
-    mArcList.mCapacity = 1;
-
-    mPackList.mList = (PackItemListNode*)mtl::MemManager::allocate_array(0xC0, CWorkThreadSystem::getWorkMem());
-    int j = 0;
-    while (j < 16) {
-        mPackList.mList[j].mNext = 0;
-        j++;
-    }
-    mPackList.mCapacity = 16;
+    mArcList.reserve(CWorkThreadSystem::getWorkMem(), 1);
+    mPackList.reserve(CWorkThreadSystem::getWorkMem(), 16);
 
     // Register the static arc / pkh filename tables (both NULL-terminated).
     // 'it = p - 1; while (*++it)' reproduces retail's subi/lwzu walk rotation.

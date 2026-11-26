@@ -1,0 +1,2 @@
+title: Wave reviewer
+agent: { provider: claude, model: claude-opus-5-5, thinking: high, mode: auto }

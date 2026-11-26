@@ -1,0 +1,284 @@
+title: Matching wave
+description: >-
+  One Xenoblade matching wave: select, Opus plan, cheap workers, Opus batch review, land gate,
+  optional retry sub-wave and rule curator, then checkpoint, commit and push. Start it in the main
+  checkout (not a new workspace): the workers, the land gate and /tmp/xb share one tree. The rules
+  live in .agents/skills/xb-*/SKILL.md; docs/orchestrator_deepseek.md explains the flow.
+
+concurrency: 1                 # one wave at a time: the tree, the build and the gate ledger are shared
+isolation: none
+manager: { mode: none }        # the plugin drives the graph; failures that need a person are `ask` gates
+
+inputs:
+  wave: { type: string, required: true, description: "Wave id, e.g. W5" }
+  checkpoint: { type: number, required: true, description: "Next checkpoint number (last 'Checkpoint N' commit + 1)" }
+  targets: { type: number, default: 30, description: "Candidates for `wave select --n`; the planner keeps 10-24, so use at least 10" }
+
+steps:
+  - id: select
+    title: Census and select
+    role:
+      name: wave_orchestrator
+      prompt: |
+        Wave: {{ inputs.wave }}. Next checkpoint: {{ inputs.checkpoint }}.
+        Do step 1 of the skill, with `--n {{ inputs.targets }}`.
+    inputs: [wave, checkpoint, targets]
+    outcomes: [success, blocked, failure]
+    on:
+      blocked:
+        ask: "Wave select is blocked. Read the step's report."
+        max_loops: 3
+        choices:
+          resume: { label: Resume with this answer }
+          abort: { label: Abort the wave, outcome: failure, comment: optional, color: danger }
+
+  - id: plan
+    title: Plan (Opus)
+    needs: [select]
+    role:
+      name: wave_planner
+      prompt: |
+        Use the xb-wave-planner skill. Wave: {{ inputs.wave }}.
+        If you were given feedback (check-plan errors), fix the files you find in the wave directory.
+    inputs: [wave]
+    timeout: 1h
+
+  - id: prep
+    title: Check plan and prep
+    needs: [plan]
+    role:
+      name: wave_orchestrator
+      prompt: |
+        Wave: {{ inputs.wave }}. Next checkpoint: {{ inputs.checkpoint }}.
+        Run `wave check-plan` (end of skill step 2). If it fails, report `plan_invalid` with its
+        ERROR lines. If it prints OK, run `wave prep` (first command of step 3).
+    inputs: [wave, checkpoint]
+    outcomes: [success, plan_invalid, blocked, failure]
+    on:
+      plan_invalid: { goto: plan, max_loops: 1 }     # one correction round, then the loop-limit gate
+      blocked:
+        ask: "Wave prep is blocked. Read the step's report."
+        max_loops: 3
+        choices:
+          resume: { label: Resume with this answer }
+          abort: { label: Abort the wave, outcome: failure, comment: optional, color: danger }
+
+  - id: match
+    title: Workers (hy4 / DeepSeek)
+    description: >-
+      `wave launch` and `wave manage` start and supervise the workers in the shared tree (hy4 all at
+      once, at most 2 DeepSeek), then `wave collect` harvests the patches. It is a separate step from
+      review because collect restores the tree and must not run twice.
+    needs: [prep]
+    role: { name: wave_orchestrator, silence: 45m, prompt: "Wave: {{ inputs.wave }}. Next checkpoint: {{ inputs.checkpoint }}. Run `wave launch` (step 3), then step 4, then only the `wave collect` command of step 5. Record it as `5a` in the state file. A STRAY row is a stop condition." }
+    inputs: [wave, checkpoint]
+    timeout: 8h
+    outcomes: [success, blocked, failure]
+    on:
+      blocked:
+        ask: "The workers or collect are blocked (for example an unresolved STRAY row). Read the step's report."
+        max_loops: 3
+        choices:
+          resume: { label: Resume with this answer }
+          abort: { label: Abort the wave, outcome: failure, comment: optional, color: danger }
+
+  - id: review
+    title: Batch review (Opus)
+    needs: [match]
+    role:
+      name: wave_reviewer
+      prompt: |
+        Use the xb-wave-reviewer skill. Wave: {{ inputs.wave }}.
+        If you were given feedback (check-review errors), fix your review.tsv and related files.
+    inputs: [wave]
+    timeout: 90m
+
+  - id: decide
+    title: Check review and decide
+    needs: [review]
+    role:
+      name: wave_orchestrator
+      prompt: |
+        Wave: {{ inputs.wave }}. Next checkpoint: {{ inputs.checkpoint }}.
+        Run `wave check-review` (end of skill step 5). If it fails, report `review_invalid` with its
+        ERROR lines. If it prints OK, run the `wave decide` command at the start of step 6, only
+        that. Record its landed task/symbol lines in the state file. Set the output `retry` to true
+        only if it printed `retry wave:`.
+    inputs: [wave, checkpoint]
+    outputs:
+      retry: { type: boolean, description: "wave decide printed a retry wave" }
+    outcomes: [success, review_invalid, blocked, failure]
+    on:
+      review_invalid: { goto: review, max_loops: 1 }
+      blocked:
+        ask: "Wave decide is blocked. Read the step's report."
+        max_loops: 3
+        choices:
+          resume: { label: Resume with this answer }
+          abort: { label: Abort the wave, outcome: failure, comment: optional, color: danger }
+
+  # ---------------------------------------------------------------- retry sub-wave (once)
+  - id: retry_match
+    title: Retry workers
+    needs: [decide]
+    when: { steps.decide.outputs.retry: true }
+    role: { name: wave_orchestrator, silence: 45m, prompt: "Wave: {{ inputs.wave }}. Next checkpoint: {{ inputs.checkpoint }}. Do only item 1 of the retry list in skill step 6: prep, launch, manage and collect the retry wave {{ inputs.wave }}r." }
+    inputs: [wave, checkpoint]
+    timeout: 8h
+    outcomes: [success, blocked, failure]
+    on:
+      blocked:
+        ask: "The retry sub-wave is blocked. Read the step's report."
+        max_loops: 3
+        choices:
+          resume: { label: Resume with this answer }
+          abort: { label: Abort the wave, outcome: failure, comment: optional, color: danger }
+
+  - id: retry_review
+    title: Retry review (Opus)
+    needs: [retry_match]
+    when: { steps.decide.outputs.retry: true }
+    role:
+      name: wave_reviewer
+      prompt: |
+        Use the xb-wave-reviewer skill. Wave: {{ inputs.wave }}r. This is the retry review of
+        wave {{ inputs.wave }}: decide land, hold or drop only.
+    inputs: [wave]
+    timeout: 90m
+
+  - id: retry_decide
+    title: Retry decide
+    needs: [retry_review]
+    when: { steps.decide.outputs.retry: true }
+    role:
+      name: wave_orchestrator
+      prompt: |
+        Wave: {{ inputs.wave }}. Next checkpoint: {{ inputs.checkpoint }}.
+        Do items 3 and 4 of the retry list in skill step 6 for {{ inputs.wave }}r. If
+        `wave check-review {{ inputs.wave }}r` fails, report `review_invalid` with its ERROR lines
+        and run nothing else. Append the retry queue to the main queue exactly once.
+    inputs: [wave, checkpoint]
+    outcomes: [success, review_invalid, blocked, failure]
+    on:
+      review_invalid: { goto: retry_review, max_loops: 1 }
+      blocked:
+        ask: "The retry decide is blocked. Read the step's report."
+        max_loops: 3
+        choices:
+          resume: { label: Resume with this answer }
+          abort: { label: Abort the wave, outcome: failure, comment: optional, color: danger }
+
+  # ---------------------------------------------------------------- land
+  - id: land
+    title: Land through the gate
+    needs: [retry_decide]
+    role:
+      name: wave_orchestrator
+      prompt: |
+        Wave: {{ inputs.wave }}. Next checkpoint: {{ inputs.checkpoint }}.
+        Do the "Land" part of skill step 6 (`apply` if the queue is not empty, then `gate-alarm`),
+        then run the `wave shapes --promote` command of step 6b, but no curator. Record any ALARM
+        lines in the state file. Set `promote` to true only if there were PROMOTE lines, and put
+        their slugs in `slugs` (space-separated, or `none`).
+    inputs: [wave, checkpoint]
+    outputs:
+      promote: { type: boolean, description: "wave shapes --promote printed PROMOTE lines" }
+      slugs: { type: string, description: "The PROMOTE slugs, space-separated, or none" }
+    timeout: 4h
+    outcomes: [success, blocked, failure]
+    on:
+      blocked:
+        ask: "The land gate aborted (for example 'tree not quiet') or failed in a way the rules do not settle. Read the step's report."
+        max_loops: 3
+        choices:
+          resume: { label: Resume with this answer }
+          abort: { label: Abort the wave, outcome: failure, comment: optional, color: danger }
+
+  # ---------------------------------------------------------------- rule curator (recurring shapes)
+  - id: curate
+    title: Rule curator (Opus)
+    needs: [land]
+    when: { steps.land.outputs.promote: true }
+    role:
+      name: rule_curator
+      prompt: |
+        Use the xb-rule-curator skill. Slugs: {{ inputs.slugs }}.
+        In the `enforced` output, list the slugs you reported ENFORCED (space-separated, or `none`).
+        If you were given feedback (failed checks), fix your counter changes.
+    inputs: { slugs: "{{ steps.land.outputs.slugs }}" }
+    outputs:
+      enforced: { type: string, description: "ENFORCED slugs, space-separated, or none" }
+    timeout: 1h
+
+  - id: check_counters
+    title: Check new counters
+    needs: [curate]
+    when: { steps.land.outputs.promote: true }
+    role:
+      name: wave_orchestrator
+      prompt: |
+        Wave: {{ inputs.wave }}. Next checkpoint: {{ inputs.checkpoint }}.
+        Do the two checks of skill step 6b. Enforced slugs: {{ inputs.enforced }}. If that is
+        `none`, skip `check-counter` and run only the tests. If a check fails, report
+        `counters_invalid` with the ERROR lines. Record promoted counters in the state file.
+    inputs:
+      wave: ~
+      checkpoint: ~
+      enforced: "{{ steps.curate.outputs.enforced }}"
+    outcomes: [success, counters_invalid, blocked, failure]
+    on:
+      counters_invalid: { goto: curate, max_loops: 1 }
+      blocked:
+        ask: "The curated counters cannot be checked. Read the step's report."
+        max_loops: 3
+        choices:
+          resume: { label: Resume with this answer }
+          abort: { label: Abort the wave, outcome: failure, comment: optional, color: danger }
+
+  # ---------------------------------------------------------------- checkpoint
+  - id: checkpoint
+    title: Checkpoint, commit, push
+    needs: [check_counters]
+    role:
+      name: wave_orchestrator
+      prompt: |
+        Wave: {{ inputs.wave }}. Next checkpoint: {{ inputs.checkpoint }}.
+        Do skill steps 7 and 8. This is the only phase that runs git: exactly the commands of
+        step 7, with standing approval (no confirmation needed). Record each one in the state file
+        as it succeeds, so a re-run continues after the last one. A rejected push is `blocked`:
+        never force, rebase, merge or reset to get past it. Your report summary is the step 8
+        report, including ALARM lines and promoted counters from the state file.
+        Then read the "Questions for the human" section of docs/orchestrator_followups.md (do not
+        edit it). A bullet is open unless it starts with DECIDED or RESOLVED. Set
+        `has_open_questions`, and list the open ones, shortened to a line each, in `open_questions`
+        (or `none`).
+    inputs: [wave, checkpoint]
+    outputs:
+      has_open_questions: { type: boolean }
+      open_questions: { type: string, description: "One line per open question, or none" }
+    timeout: 2h
+    outcomes: [success, blocked, failure]
+    on:
+      blocked:
+        ask: "The checkpoint, commit or push failed in a way the rules do not settle. Read the step's report."
+        max_loops: 3
+        choices:
+          resume: { label: Resume with this answer }
+          abort: { label: Abort the wave, outcome: failure, comment: optional, color: danger }
+
+  # Asked only after the wave has landed and been pushed, so it never holds routine landing.
+  - id: open_questions
+    title: Open questions
+    needs: [checkpoint]
+    when: { steps.checkpoint.outputs.has_open_questions: true }
+    gate:
+      question: |
+        Open questions in docs/orchestrator_followups.md:
+        {{ steps.checkpoint.outputs.open_questions }}
+        Answer them, or defer. To close one, mark it DECIDED or RESOLVED in that file, or it is asked
+        again after the next wave.
+      choices:
+        answered: { label: Noted, comment: optional }
+        later: { label: Later, comment: optional }
+    on:
+      later: complete

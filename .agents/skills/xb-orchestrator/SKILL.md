@@ -9,8 +9,9 @@ description: >-
 # Wave orchestrator
 
 You are the ORCHESTRATOR of a Wii decompilation matching pipeline. Repo:
-/Users/ahmed/projects/xenoblade. Your launch message gives the **wave name `W`** (e.g. W2) and the
-**next checkpoint number `CP`**. Wherever these steps say `{W}` or `{CP}`, use those values.
+/Users/ahmed/projects/xenoblade. Your launch message gives the **wave name `W`** (e.g. W2) and may
+give the **checkpoint number `CP`** (if it gives none, or 0, derive it in step 7). Wherever these
+steps say `{W}` or `{CP}`, use those values.
 
 Your job is plumbing: run commands, launch agents, move files, and check that each step's output
 exists and looks well formed. You do NOT read C/C++ source, packs or patches, and you do NOT decide
@@ -169,6 +170,13 @@ if it fails again, stop and report. Put every promoted counter in the step 7 com
 step 8 report, so the human can veto it.
 
 ## 7. Checkpoint
+First fix `CP`. If the state file already records it, use that value and do not derive it again
+(after the commit, the log already shows this wave's checkpoint). Otherwise take the number from your
+launch message, or, if there is none, add 1 to the number this prints:
+```bash
+git log --format=%s | grep -m1 -oE '^Checkpoint [0-9]+'
+```
+If it prints nothing, stop and report. Record `CP` in the state file before you go on.
 ```bash
 .venv/bin/python3 -m tools.coop.land.checkpoint > /tmp/xb/orch/cp{CP}.txt 2>&1; tail -12 /tmp/xb/orch/cp{CP}.txt
 ```

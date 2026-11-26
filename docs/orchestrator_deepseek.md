@@ -33,13 +33,16 @@ supervisor polling. Each Opus run is a step of its own, the DeepSeek `wave_orche
 one plumbing phase per step (following the `xb-orchestrator` skill), and the hy4 / DeepSeek workers
 are still started by `wave launch` / `wave manage`, because they must share one tree.
 
-- Inputs: `wave`, `checkpoint` (next checkpoint number) and optionally `targets` (default 30).
+- Inputs: `wave`, and optionally `targets` (default 30) and `checkpoint` (default 0: the number is
+  derived from `git log`, see step 7 of the `xb-orchestrator` skill).
 - Start it in the main checkout, `/Users/ahmed/projects/xenoblade`, not in a new workspace.
 - Differences from the skill's single-agent run: a failed `check-plan` / `check-review` /
   `check-counter` loops back to a new run of the Opus step (once, then a loop-limit gate) instead of
   a `paseo send`, and a retry sub-wave is reviewed by a new reviewer run.
-- Stop conditions become questions to the human. Open items under "Questions for the human" in
-  `orchestrator_followups.md` open a gate after the wave has been pushed.
+- Stop conditions become questions to the human. Follow-ups do not open a gate: the checkpoint
+  report lists the new ones, and an open gate would hold up the next wave.
+- Tool permission requests are not auto-approved (`permissions.on_request: escalate`): `wave manage`
+  answers its workers' requests, and any other request waits for the human.
 - Checkpoints push `HEAD` to `main` as a fast-forward. If `main` gains a commit of its own (such as
   a merged pull request), merge it into the matching branch before the next checkpoint.
 

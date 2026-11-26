@@ -26,6 +26,23 @@ $P run --no-wait --provider pi --model opencode-go/deepseek-v4.1-flash --thinkin
 
 To run a wave without letting the orchestrator commit, add "Skip step 7" to the launch message.
 
+## As a Paseo playbook
+
+`.paseo/plugins/playbooks/matching-wave.yaml` runs one wave as a graph, with no manager agent and no
+supervisor polling. Each Opus run is a step of its own, the DeepSeek `wave_orchestrator` role does
+one plumbing phase per step (following the `xb-orchestrator` skill), and the hy4 / DeepSeek workers
+are still started by `wave launch` / `wave manage`, because they must share one tree.
+
+- Inputs: `wave`, `checkpoint` (next checkpoint number) and optionally `targets` (default 30).
+- Start it in the main checkout, `/Users/ahmed/projects/xenoblade`, not in a new workspace.
+- Differences from the skill's single-agent run: a failed `check-plan` / `check-review` /
+  `check-counter` loops back to a new run of the Opus step (once, then a loop-limit gate) instead of
+  a `paseo send`, and a retry sub-wave is reviewed by a new reviewer run.
+- Stop conditions become questions to the human. Open items under "Questions for the human" in
+  `orchestrator_followups.md` open a gate after the wave has been pushed.
+- Checkpoints push `HEAD` to `main` as a fast-forward. If `main` gains a commit of its own (such as
+  a merged pull request), merge it into the matching branch before the next checkpoint.
+
 ## Why it is split this way
 
 - **Opus makes the two judgement calls.** Wave 1 showed these need judgement: picking targets a cheap

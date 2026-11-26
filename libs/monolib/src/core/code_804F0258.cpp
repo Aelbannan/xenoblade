@@ -980,10 +980,10 @@ Warning__Q24nw4r2dbFPCciPCce(lbl_eu_80526324, 0x273, lbl_eu_80526300);
     return true;
 }
 
-extern "C" s32 getAnimPos(CAnimPlayerRef* self, ml::CVec3* out) {
+extern "C" s32 getAnimPos(const CAnimPlayerRef* self, ml::CVec3* out) {
     if (self->mPlayer == 0) return 0;
-    CAnimPlayer* p = self->mPlayer;
-    // Force z,y,x evaluation order so registers match retail.
+    const CAnimPlayer* p = self->mPlayer;
+    // Translation column of the player's world matrix.
     f32 z = p->m[2][3];
     f32 y = p->m[1][3];
     f32 x = p->m[0][3];

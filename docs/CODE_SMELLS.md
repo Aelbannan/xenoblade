@@ -14,8 +14,8 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | extern "C" (total lines) | 11897 |
 | extern "C" declarations (non-lbl_*, imports) | 4908 |
 | extern "C" definitions (forced names) | 4363 |
-| `self`/register-style params | 9232 |
-| `void*` (params + locals) | 6203 |
+| `self`/register-style params | 9233 |
+| `void*` (params + locals) | 6202 |
 | raw pointer offset arithmetic | 2047 |
 | deref-through-cast arithmetic | 349 |
 | inline asm / `register` | 102 |
@@ -94,14 +94,14 @@ Top TUs by accepted-but-dirty bytes:
 
 The `ptr-arith`/`deref-arith` rows above are **line-based proxies**: a line carrying a cast plus an offset bumps `ptr-arith`, and the same line's deref independently bumps `deref-arith`, so one expression can move two counters. This section counts individual expressions with `tools/coop/detect_pointer_arithmetic.py` and splits every TU by whether the enclosing function is already accepted (`targets.json`). Sites inside accepted functions are the **actionable backlog** (typed field/pointer rewrites are byte-identical and `hexdiff`-verifiable now); sites in unmatched functions are a **churn budget** — those bodies get rewritten while matching, so cleaning them early is wasted work plus `-ipa file` line-shift risk. **Target: `ptr-acc` -> 0; `ptr-sites` follows as TUs reach acceptance.** These counts are informational and not part of the strict regression gate: acceptance migration moves existing sites into the accepted set, so the accepted total is not monotonic.
 
-- expression sites: 3597  |  inside accepted functions: **596**  |  unmatched: 3001
+- expression sites: 3595  |  inside accepted functions: **596**  |  unmatched: 2999
 
 | expression shape | sites | accepted |
 |---|---|---|
 | `cast_byte_ptr_arith` | 1575 | 295 |
 | `ptr_offset_deref` | 792 | 95 |
 | `cast_byte_offset_deref` | 518 | 89 |
-| `reinterpret_arith` | 360 | 69 |
+| `reinterpret_arith` | 358 | 69 |
 | `subscript_on_cast` | 331 | 38 |
 | `cast_int_arith` | 21 | 10 |
 
@@ -585,7 +585,7 @@ Top TUs by view debt:
 | src/kyoshin/help/CHelp_Target.cpp | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/main.cpp | 0 | 0 | 0 | 6 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/makecrystal/CMCCrystalBox.cpp | 1 | 0 | 1 | 26 | 7 | 1 | 0 | 0 | 4 | 0 | 0 | 0 | 6 | 0 |
-| src/kyoshin/makecrystal/CMCCrystalInfo.cpp | 7 | 2 | 49 | 5 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 9 | 3 |
+| src/kyoshin/makecrystal/CMCCrystalInfo.cpp | 7 | 2 | 50 | 4 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 7 | 3 |
 | src/kyoshin/makecrystal/CMCCrystalList.cpp | 28 | 4 | 71 | 10 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 |
 | src/kyoshin/makecrystal/CMCCrystalSupport.cpp | 3 | 6 | 10 | 1 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 1 |
 | src/kyoshin/makecrystal/CMCEffStart.cpp | 37 | 0 | 0 | 6 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -5498,11 +5498,11 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "extern_c_nonlbl_def": 2,
   "init_side_effect": 0,
   "ptr_arith": 3,
-  "ptr_sites": 9,
+  "ptr_sites": 7,
   "ptr_sites_accepted": 3,
   "schedule_pragma": 0,
-  "self_params": 49,
-  "void_ptr": 5
+  "self_params": 50,
+  "void_ptr": 4
  },
  "src/kyoshin/makecrystal/CMCCrystalList.cpp": {
   "asm_insn_shim": 0,

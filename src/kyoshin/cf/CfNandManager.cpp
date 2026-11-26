@@ -1377,12 +1377,9 @@ extern "C" cf::CfNandManager* create__Q22cf13CfNandManagerFv(void* parent, void*
     if (gpCfNandManager != 0) {
         return 0;
     }
-    mtl::ALLOC_HANDLE workMem = CWorkThreadSystem::getWorkMem();
     cf::CfNandManager* mgr =
-        (cf::CfNandManager*)mtl::MemManager::allocate(0x194, workMem);
-    if (mgr != 0) {
-        new (mgr) cf::CfNandManager(arg);
-    }
+        new (mtl::MemManager::allocate(0x194, CWorkThreadSystem::getWorkMem()))
+            cf::CfNandManager(arg);
     ((CProcess*)mgr)->Regist((CProcess*)parent, false);
     return mgr;
 }

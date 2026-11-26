@@ -445,15 +445,10 @@ void MCCrystal_ClearTexts(CMCCrystalInfo* self)
 
 // Sets the ready/active flags once both the layout and its resource accessor
 // are present.
-extern "C" void func_8021B500(void* this_) {
-    unsigned int* p34 = reinterpret_cast<unsigned int*>(static_cast<char*>(this_) + 0x34);
-    unsigned int* p30 = reinterpret_cast<unsigned int*>(static_cast<char*>(this_) + 0x30);
-    if (*p34 != 0) {
-        if (*p30 != 0) {
-            *reinterpret_cast<unsigned char*>(static_cast<char*>(this_) + 0x48) = 1;
-            *reinterpret_cast<unsigned char*>(static_cast<char*>(this_) + 0x50) = 1;
-        }
-    }
+extern "C" void func_8021B500(CMCCrystalInfo* self) {
+    if (self->mLayout == 0 || self->mField30 == 0) return;
+    self->mIsActive = 1;
+    self->mEnabled = 1;
 }
 
 // Bind the crystal-info intro animation to the layout and start it playing.

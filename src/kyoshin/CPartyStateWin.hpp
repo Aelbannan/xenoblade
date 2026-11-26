@@ -80,22 +80,38 @@ struct CPartyStateWinWordPair {
     u32 hi;  // 0x04
 };
 
-// 0xFF0-byte state block copied by PartyStateWin_CopyBlockFF0: three leading u32, three
-// SCopy_80191C88 blobs (0x53C each), a trailing u32, a single word copied
-// before the loop and four word-pairs (words[1..8]) copied by the loop.
+// The 0x53C-byte sub-blocks of CPartyStateWinBlock are class objects: retail
+// assigns each of them through a compiler-generated copy-assignment helper
+// (three bl calls). name-guess: the concrete class name was not recovered; the
+// helper is exposed as CopyPTSubBlob here.
+extern "C" void CopyPTSubBlob(u8* dst, const u8* src);
+
+struct CPartyStateWinSubBlock {
+    u8 data[0x53c];
+
+    CPartyStateWinSubBlock& operator=(const CPartyStateWinSubBlock& src) {
+        CopyPTSubBlob(data, src.data);
+        return *this;
+    }
+};
+
+// State block copied by the compiler-generated CPartyStateWinBlock::operator=:
+// three leading u32, three 0x53C sub-blocks (each via its assignment helper),
+// two u32, the 0xFC8 word-pair and four word-pairs walked by the counted loop.
+// The word at 0xFEC belongs to the enclosing object and is not assigned.
 struct CPartyStateWinBlock {
     u32 field_0x0;       // 0x000
     u32 field_0x4;       // 0x004
     u32 field_0x8;       // 0x008
-    u8 copy0[0x53c];     // 0x00C..0x548 (SCopy_80191C88 blob)
+    CPartyStateWinSubBlock copy0;  // 0x00C..0x548
     u32 field_0x548;     // 0x548
     u32 field_0x54c;     // 0x54C
-    u8 copy1[0x53c];     // 0x550..0xA8C (SCopy_80191C88 blob)
-    u8 copy2[0x53c];     // 0xA8C..0xFC8 (SCopy_80191C88 blob)
-    u32 field_0xfc8;     // 0xFC8
-    u32 word0;           // 0xFCC (copied separately before the loop)
-    CPartyStateWinWordPair pairs[4];  // 0xFD0..0xFEC (words[1..8])
-    u32 field_0xfec;     // 0xFEC..0xFF0 (not copied)
+    CPartyStateWinSubBlock copy1;  // 0x550..0xA8C
+    CPartyStateWinSubBlock copy2;  // 0xA8C..0xFC8
+    // name-guess: retail loads 0xFC8 into r6 and 0xFCC into r3 as a lo/hi pair
+    // before the pair loop, matching the other CPartyStateWinWordPair members.
+    CPartyStateWinWordPair pairFc8;  // 0xFC8..0xFD0
+    CPartyStateWinWordPair pairs[4]; // 0xFD0..0xFEC
 };
 
 // 0x24-byte ring-buffer record pushed by PartyStateWin_PushRingRecord into the view object
@@ -266,11 +282,6 @@ extern "C" void PartyStateWin_RefreshTitleHelp(CPartyStateWin*);
 // block and returns dst, matching retail's mr r3,r30; extern "C" so the call
 // sites in PartyStateWin_CopyWinBlob emit the retail name).
 extern "C" u8* PartyStateWin_CopyBlockFF0(u8* dst, u8* src);
-
-// State-blob copy helper called by PartyStateWin_CopyBlockFF0 (retail unmangled; defined
-// in code_8018F8D8.cpp). Opaque byte pointers because SCopy_80191C88's
-// header cannot be included here.
-extern "C" void CopyPTSubBlob(u8* dst, const u8* src);
 
 // C-linkage imports for the embedded CPartyState sub-object used by
 // PartyStateWin_StateSettle / PartyStateWin_RefreshTitleHelp. func_801FD5C4 returns u8 here (the caller

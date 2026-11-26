@@ -370,10 +370,7 @@ s32 sfmpvf_IsChkFirst(SfdFrame* a, SfdFrame* b) {
     if (b->field_0xF4 > a->field_0xF4) {
         return 0;
     }
-    {
-        s32 x = a->field_0xF8 ^ b->field_0xF8;
-        return ((x >> 1) - (x & a->field_0xF8)) < 0;
-    }
+    return b->field_0xF8 < a->field_0xF8;
 }
 
 typedef void (*SFMPVF_ReadCb)(SfdHandle*, SfdFrame*);

@@ -100,45 +100,14 @@ CPartyStateWinCopy* PartyStateWin_CopyWinBlob(CPartyStateWinCopy* dst,
     return dst;
 }
 
-// Copies a 0xFF0-byte block from src to dst (retail shape: three u32 + one
-// SCopy_80191C88 blob, two u32, two more blobs, then a 4x2-word loop) and returns dst
-// (retail ends with mr r3,r30). src is intentionally non-const: MWCC would otherwise
-// hoist the trailing loads above the stores and batch them, while the retail
-// interleaves each load with its store.
+// Compiler-generated copy assignment of CPartyStateWinBlock (retail returns
+// `this` in r3): three leading words, three 0x53C sub-objects assigned through
+// their copy-assignment helpers, two words, the 0xFC8 word-pair and a counted
+// four-iteration word-pair loop.
 extern "C" u8* PartyStateWin_CopyBlockFF0(u8* dst, u8* src) {
     CPartyStateWinBlock* d = reinterpret_cast<CPartyStateWinBlock*>(dst);
     CPartyStateWinBlock* s = reinterpret_cast<CPartyStateWinBlock*>(src);
-    d->field_0x0 = s->field_0x0;
-    d->field_0x4 = s->field_0x4;
-    d->field_0x8 = s->field_0x8;
-    CopyPTSubBlob(d->copy0, s->copy0);
-    d->field_0x548 = s->field_0x548;
-    d->field_0x54c = s->field_0x54c;
-    CopyPTSubBlob(d->copy1, s->copy1);
-    CopyPTSubBlob(d->copy2, s->copy2);
-    // Tail: word0, then the four word-pairs, walked by explicit pointers at
-    // word0 with +4/+8 offsets. Best -O4,p shape: retail lwz/lwzu + stw/stwu
-    // 8-byte counted loop, but MWCC interleaves load/store per word here
-    // (retail batches both loads; that shape needs -O4,s - unit flag, see
-    // MWCC_CASES wall #6). The field_0xfc8 load is hoisted into a temp
-    // so its store lands after the word0 copy (retail order).
-    // Retail schedule: hoist field_0xfc8 into a temp before the word0 copy,
-    // store word0, then field_0xfc8.
-    u32 fc8 = s->field_0xfc8;
-    u32 w0 = s->word0;
-    u32* wd = &d->word0;
-    u32* ws = &s->word0;
-    d->word0 = w0;
-    d->field_0xfc8 = fc8;
-    // Pair loop mirrors the retail load/store schedule exactly: both source
-    // words load first (second via a pre-increment walk, giving lwzu), then
-    // both stores land (second via pre-increment, giving stwu).
-    for (int i = 0; i < 4; i++) {
-        wd[1] = ws[1];
-        wd[2] = ws[2];
-        wd += 2;
-        ws += 2;
-    }
+    *d = *s;
     return dst;
 }
 

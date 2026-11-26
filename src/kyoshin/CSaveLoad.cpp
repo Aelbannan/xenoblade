@@ -766,24 +766,26 @@ void CSaveLoad::openDel() {
 
 // Check save/load state and return a status code:
 // 0 = not ready (state mismatch, window active, or sub-window active)
-// 0x69 = ready (no cursor) - mField129 == 0, CSLCur_getSlot returns 0
-// 0x6A = ready (has cursor) - mField129 == 0, CSLCur_getSlot returns > 0
-// 0x6B = ready (has cursor, mField129 != 0) - CSLCur_getSlot returns > 0
+// 0x69 = ready (no cursor) - mField129 == 0, CSLData::getSlot returns 0
+// 0x6A = ready (has cursor) - mField129 == 0, CSLData::getSlot returns > 0
+// 0x6B = ready (has cursor, mField129 != 0) - CSLData::getSlot returns > 0
 u8 CSaveLoad::getHelpKind() {
     if (mField121 != 3) return 0;
     if (reinterpret_cast<CSysWin*>(&mSysWin98)->isOpened() != 0) return 0;
     if (reinterpret_cast<CSysWin*>(&mSysWinD4)->isOpened() != 0) return 0;
     if (mSub.mShown != 0) return 0;
 
+    u8 kind;
     if (mField129 != 0) {
-        // Cursor active: return 0x6B if valid, 0 otherwise
-        CSLSaveSlot* rv = mData.getSlot(mField124);
-        return rv != nullptr ? 0x6B : 0;
+        // Cursor active: 0x6B if a slot exists, 0 otherwise
+        kind = mData.getSlot(mField124) != nullptr ? 0x6B : 0;
+    } else if (mData.getSlot(mField124) != nullptr) {
+        // Cursor inactive: 0x6A if a slot exists, 0x69 otherwise
+        kind = 0x6A;
     } else {
-        // Cursor inactive: return 0x6A if valid, 0x69 otherwise
-        CSLSaveSlot* rv = mData.getSlot(mField124);
-        return rv != nullptr ? 0x6A : 0x69;
+        kind = 0x69;
     }
+    return kind;
 }
 
 void CSaveLoad::tickOpenA() {

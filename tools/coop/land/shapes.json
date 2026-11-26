@@ -23,6 +23,12 @@
   "counter": null,
   "added": "W3"
  },
+ "offset-cast-respell": {
+  "desc": "A byte-offset cast respelled as a struct-pointer cast of the same byte arithmetic (or a second recomputed pointer), instead of typing the container member as a real array of the struct.",
+  "example": "Example: `CArtsSelectSlot* cur = (CArtsSelectSlot*)(base + j * 8); ... CArtsSelectSlot* entry = (CArtsSelectSlot*)hit; return entry[j].unk04;`\n         (was `*(u32*)(base + j * 8)` / `*(void**)(hit + (j << 3) + 4)`)",
+  "counter": null,
+  "added": "5"
+ },
  "operand-flip-steer": {
   "desc": "Splitting one arithmetic expression into accumulating statements, or flipping operand order (`t = x + t` in place of `t += x`), to steer MWCC's schedule or registers instead of writing the natural expression.",
   "example": "total = out[0]; total = siz[1] + total; total = siz[0] + total;   // was: total = out[0] + siz[1] + siz[0] ...",

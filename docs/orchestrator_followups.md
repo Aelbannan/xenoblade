@@ -29,6 +29,14 @@ Reviewers append here; the orchestrator never edits source for these.
 - (W4 reviewer) code_804A6C60 ColiInitFlatSegment (W4-24, held addr-extern): retail reaches SDA2 1.0f/0.0f at lbl_eu_8066AE3C/8066AE44 through sda21 relocs. Check .sdata2 ownership for this TU (split) so plain literals pool to those addresses.
 - (W4 reviewer) code_800B06A4.hpp:1894 `__ct__cf_CfHikariItemManager` alias is unused after W4-07 lands; delete it, together with the matching ctx.c line on regen.
 
+- (W5 reviewer) isMCGetItemBoxActive (CMCGetItemBox.hpp:131 / .cpp:494) returns `int` in retail, not `u8`: the 5-65 ds probe with `int` on the declaration, definition and parent reached 100% for CheckReady, the callee and the caller. Callee-signature prestep, then re-run 5-65 (CModelDispMakeCrystal).
+- (W5 reviewer) CfObject slot +0x88 / CfObject_pushRefreshValue (5-72, BLOCKED): declaring it `void` byte-matches, but MWCC rejects the override while CfObject.hpp:45 / CfObjectMove.hpp:435 say `void*`, and the CfObjectMove body needs `return this`. Header design: check whether these are really the same vtable slot / the same virtual before retyping the chain.
+- (W5 reviewer) CVS_THREAD_HP (5-17): retail's triple-copy PTMF idiom reaches 95.1% only through the data at lbl_eu_80539C04. Find that object's owner and real symbol (split/data), then retry.
+- (W5 reviewer) Unit compiler/flags question: mpv_err (5-22: Wii/1.1 fixes the stw/cmpi order) and CfResReloadImpl (5-33: Wii/1.1 or -O3 give retail store order, GC/3.0a5.2 -O4,p always swaps). Check these units' compiler version/flags against their neighbours, together with the W4 MPVDEC_CheckVersion note.
+- (W5 reviewer) MPV_SkipFrmSj (5-23, held steer-temp): the patch reached 100% with a `MpvHn* h = (MpvHn*)hn` copy. Retry with the parameter itself typed `MpvHn* hn` (as MPV_RequestStop does) plus the `p = sj` alias removal. Cheap hy4 task.
+- (W5 reviewer) SchedRes_AllocEntries (code_804DEDA8, 5-34 held): the `u32 size` parameter is the buffer address (it is aligned to 32 and stored as the table base). Retype it to `void* buf` with evidence and try `buf = aligned; ... return (u8*)buf + count * 0x18`. Do not reuse it for the end pointer.
+- (W5 reviewer) CPartyStateWin (5-18 landed): CopyPTSubBlob (0x801933A4, size 0x5E0) is probably the out-of-line compiler-generated operator= of the real 0x53C class. Once that class is identified, replace the forwarding inline operator= in CPartyStateWin.hpp with the real class.
+
 ## Tasks parked from earlier waves
 - NW4HBM-LINKLIST-INIT, CAMMAN-VIEWFALLOFF, OPEN-CFTFILE-FMTSTR.
 - CtrlPc: regain after the approved revert (faithful 17 -> 26).
@@ -44,3 +52,4 @@ Reviewers append here; the orchestrator never edits source for these.
 - (W4 planner) code_800B06A4.hpp declares `extern "C" void* __ct__cf_CfHikariItemManager(void*)`, a hand alias of the real ctor `__ct__Q22cf19CfHikariItemManagerFv` (retail reloc at buildSingleton+0x140). Sent to W4-07; if not landed, replace it with `new (handle) cf::CfHikariItemManager` mechanically.
 - (W4 planner) kyoshin/cf/CItem .text is 0x10 over its split budget (0x69D0 vs 0x69C0); find the long function.
 - (W4 planner) MPVDEC_CheckVersion: in-source note documents a wall (switch gives signed cmpi, ifs merge the two `li -1` blocks) under GC/3.0a5.2; check the mpv_dec unit's compiler version/flags against the other CRI sofdec units.
+- (W5 planner) CfObjectActor::CfObject_pushRefreshValue(float): retail has no `mr r3, r31` before the epilogue, so it returns void, not `void* this`. If the CfObjectMove base / vtable slot +0x5C4 declare `void*`, fix the signature across the header (sent to 5-72 as ds).
